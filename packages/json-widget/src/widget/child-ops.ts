@@ -1,7 +1,7 @@
-import type { WidgetPath, WidgetPathSegment } from '../document/path.js';
+import type { WidgetPath } from '../document/path.js';
 import { appendBoxChildPath, appendChildrenPath, widgetPathKey } from '../document/path.js';
 import type { GenericWidget } from './tree.js';
-import { getWidgetChildAtSegment, getWidgetChildren } from './tree.js';
+import { getWidgetChildren } from './tree.js';
 import { isFiniteNumber, isGenericWidget, isSingleChildContainerType } from './type-guards.js';
 
 export type ArrayChildWidget = GenericWidget;
@@ -58,13 +58,6 @@ function containerKind(
       if (Array.isArray(widget.children)) return 'array';
       return null;
   }
-}
-
-export function getChildAtSegment(
-  widget: GenericWidget,
-  segment: WidgetPathSegment,
-): GenericWidget | null {
-  return getWidgetChildAtSegment(widget, segment);
 }
 
 export function getChildren(widget: GenericWidget): readonly GenericWidget[] {

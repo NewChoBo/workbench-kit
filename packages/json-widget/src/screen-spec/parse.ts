@@ -1,6 +1,6 @@
 import { isObjectRecord } from '../is-object-record.js';
 import { compileScreenSpecToJson } from './compile.js';
-import type { JdwScreenSpec, ScreenNode } from './types.js';
+import type { JdwScreenSpec } from './types.js';
 
 export interface ParsedScreenSpec {
   readonly value: JdwScreenSpec | null;
@@ -124,8 +124,4 @@ export function compileScreenSpecText(source: string): CompiledScreenSpecText {
   } catch (error) {
     return { spec: parsed.value, json: null, error: parseError(error) };
   }
-}
-
-export function isScreenNode(value: unknown): value is ScreenNode {
-  return validateScreenNode(value, 'node') === null;
 }
