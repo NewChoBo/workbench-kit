@@ -70,13 +70,6 @@ export function applyExplorerPathReveal(
   });
 }
 
-export function isExplorerHostCommand(commandId: string): boolean {
-  return (
-    commandId === BUILTIN_EXPLORER_REVEAL_COMMAND_ID ||
-    commandId === BUILTIN_EXPLORER_FOCUS_COMMAND_ID
-  );
-}
-
 export async function runExplorerHostCommandSideEffects(
   commandId: string,
   args: readonly unknown[],

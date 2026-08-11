@@ -1,8 +1,5 @@
 import { useMemo } from 'react';
-import {
-  buildKeybindingManagementEntries,
-  type KeybindingDefinition,
-} from '@workbench-kit/platform';
+import { buildKeybindingManagementEntries } from '@workbench-kit/platform';
 import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
 import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
 
@@ -121,10 +118,4 @@ function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistr
   }
 
   return commands;
-}
-
-export function toKeybindingOverrideDefinitions(
-  overrides: readonly KeybindingDefinition[],
-): KeybindingDefinition[] {
-  return overrides.map((binding) => ({ ...binding }));
 }

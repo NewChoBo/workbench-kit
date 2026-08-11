@@ -1,7 +1,6 @@
 import {
   isWorkbenchCommandExecutionPolicy,
   type ResolveWorkbenchCommandExecutionPolicyInput,
-  type WorkbenchCommandExecutionPolicy,
 } from '@workbench-kit/react/workbench';
 import type { WorkbenchStorageReader } from '@workbench-kit/workbench-core';
 
@@ -21,14 +20,6 @@ export function readWorkbenchAiChatCommandPolicyInput(
       ? configuredDefault
       : undefined,
     mutatingDefaultPolicy: 'approval-required',
-  };
-}
-
-export function createWorkbenchAiChatCommandPolicyById(
-  entries: Readonly<Record<string, WorkbenchCommandExecutionPolicy>>,
-): ResolveWorkbenchCommandExecutionPolicyInput {
-  return {
-    policyByCommandId: entries,
   };
 }
 

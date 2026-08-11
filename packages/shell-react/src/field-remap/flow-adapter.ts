@@ -14,14 +14,6 @@ import {
   type ValueTransformRegistry,
 } from '@workbench-kit/field-remap';
 
-export type FieldRemapFlowNodeKind =
-  | 'source-object'
-  | 'target-object'
-  | 'transform'
-  | 'draft-transform'
-  | 'combine-operator'
-  | 'split-operator';
-
 export type FieldRemapPort = {
   fieldId: string;
   label: string;
