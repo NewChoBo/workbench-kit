@@ -9,7 +9,6 @@ import {
 import {
   resolveWidgetSourceActiveRange,
   resolveWidgetPathForEditorPosition,
-  resolveWidgetSourceRevealPosition,
 } from './WidgetSourceEditor.js';
 
 vi.mock('@workbench-kit/monaco', async () => {
@@ -29,16 +28,6 @@ const sourceRoot: GenericWidget = {
 };
 
 describe('WidgetSourceEditor helpers', () => {
-  it('resolves a selected widget path to a source editor position', () => {
-    const source = formatWidgetDocumentJson(sourceRoot);
-    const position = resolveWidgetSourceRevealPosition(source, [{ kind: 'children', index: 1 }]);
-
-    expect(position).toMatchObject({
-      column: 7,
-      lineNumber: 11,
-    });
-  });
-
   it('resolves a selected widget path to a source editor range', () => {
     const source = formatWidgetDocumentJson(sourceRoot);
     const range = resolveWidgetSourceActiveRange(source, [
@@ -57,7 +46,7 @@ describe('WidgetSourceEditor helpers', () => {
   it('resolves editor cursor position back to a valid widget path', () => {
     const source = formatWidgetDocumentJson(sourceRoot);
     const document = createWidgetDocument(source);
-    const position = resolveWidgetSourceRevealPosition(source, [
+    const range = resolveWidgetSourceActiveRange(source, [
       { kind: 'children', index: 1 },
       { kind: 'children', index: 0 },
     ]);
@@ -65,8 +54,8 @@ describe('WidgetSourceEditor helpers', () => {
     const path = resolveWidgetPathForEditorPosition(
       source,
       document.root,
-      position!.lineNumber,
-      position!.column,
+      range!.startLineNumber,
+      range!.startColumn,
     );
 
     expect(widgetPathKey(path!)).toBe('$.children[1].children[0]');

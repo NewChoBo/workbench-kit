@@ -11,7 +11,6 @@ import {
 import {
   JsonCodeEditorPane,
   type JsonEditorRange,
-  type JsonEditorPosition,
   type JsonEditorProblem,
 } from '../jdw/JsonCodeEditorPane.js';
 import { JDW_WIDGET_DOCUMENT_MIME } from '../jdw/document.js';
@@ -32,19 +31,6 @@ export interface WidgetSourceEditorProps {
   readonly showProblemsPanel?: boolean | undefined;
   readonly theme?: WorkspaceEditorTheme | undefined;
   readonly onSelectPath?: ((path: WidgetPath) => void) | undefined;
-}
-
-export function resolveWidgetSourceRevealPosition(
-  source: string,
-  path: WidgetPath | null | undefined,
-): JsonEditorPosition | null {
-  const position = resolveWidgetSourceActiveRange(source, path);
-  if (!position) return null;
-
-  return {
-    column: position.startColumn,
-    lineNumber: position.startLineNumber,
-  };
 }
 
 export function resolveWidgetSourceActiveRange(
