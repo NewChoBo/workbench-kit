@@ -46,7 +46,7 @@ for back-compat.
 ## Node helpers
 
 ```ts
-import { atomicWriteText } from '@workbench-kit/platform/node';
+import { atomicWriteBytes, atomicWriteText } from '@workbench-kit/platform/node';
 ```
 
 Other Node/window helpers:
@@ -65,7 +65,7 @@ Pure leaf helpers ship dual `exports` so a CommonJS Electron `main` process can
 `require()` them from the published `@prototype` tarball (no host-local forks):
 
 ```js
-const { atomicWriteText } = require('@workbench-kit/platform/atomic-write');
+const { atomicWriteBytes, atomicWriteText } = require('@workbench-kit/platform/atomic-write');
 const {
   shouldHideOnClose,
   shouldQuitWhenAllWindowsClosed,
@@ -78,7 +78,7 @@ const {
 - CI smoke: `pnpm check:platform-cjs-leaves` (pack → `require` parity).
 
 Hosts still own BrowserWindow / tray wiring, when tray mode is active, and
-storage paths written via `atomicWriteText`.
+storage paths written via `atomicWriteText` or `atomicWriteBytes`.
 
 ## Related docs
 

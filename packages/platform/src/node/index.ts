@@ -1,4 +1,4 @@
-export { atomicWriteText, type AtomicWriteDependencies } from './atomic-write.js';
+export { atomicWriteBytes, atomicWriteText, type AtomicWriteDependencies } from './atomic-write.js';
 export {
   createNodeJsonDocumentStore,
   resolveDocumentPathUnderRoot,

@@ -4,9 +4,9 @@ import path from 'node:path';
 
 import { afterEach, describe, expect, it } from 'vitest';
 
-import { atomicWriteText } from './atomic-write.js';
+import { atomicWriteBytes, atomicWriteText } from './atomic-write.js';
 
-describe('atomicWriteText', () => {
+describe('atomic writes', () => {
   const fixtures: string[] = [];
 
   afterEach(async () => {
@@ -36,6 +36,17 @@ describe('atomicWriteText', () => {
 
     expect(await readFile(filePath, 'utf8')).toBe('{"ok":true}');
     expect(await listTempSiblings(nestedDirectory, 'document.json')).toEqual([]);
+  });
+
+  it('writes binary bytes without text conversion', async () => {
+    const fixtureRoot = await createFixtureRoot();
+    const filePath = path.join(fixtureRoot, 'asset.bin');
+    const contents = Uint8Array.from([0, 1, 127, 128, 255]);
+
+    await atomicWriteBytes(filePath, contents);
+
+    expect(await readFile(filePath)).toEqual(Buffer.from(contents));
+    expect(await listTempSiblings(fixtureRoot, 'asset.bin')).toEqual([]);
   });
 
   it('cleans the temp file and keeps the target when rename throws', async () => {

@@ -14,9 +14,26 @@ async function defaultRenameFile(sourcePath: string, destinationPath: string): P
  * Atomically replaces a text file via temp write, fsync, then rename.
  * On failure, closes any open handle, removes the temp file, and rethrows.
  */
-export async function atomicWriteText(
+export function atomicWriteText(
   filePath: string,
   contents: string,
+  dependencies?: AtomicWriteDependencies,
+): Promise<void> {
+  return atomicWrite(filePath, (handle) => handle.writeFile(contents, 'utf8'), dependencies);
+}
+
+/** Atomically replaces a binary file with the same durability and cleanup contract. */
+export function atomicWriteBytes(
+  filePath: string,
+  contents: Uint8Array,
+  dependencies?: AtomicWriteDependencies,
+): Promise<void> {
+  return atomicWrite(filePath, (handle) => handle.writeFile(contents), dependencies);
+}
+
+async function atomicWrite(
+  filePath: string,
+  writeContents: (handle: FileHandle) => Promise<void>,
   dependencies?: AtomicWriteDependencies,
 ): Promise<void> {
   const directory = path.dirname(filePath);
@@ -29,7 +46,7 @@ export async function atomicWriteText(
   let handle: FileHandle | undefined;
   try {
     handle = await open(tempPath, 'wx');
-    await handle.writeFile(contents, 'utf8');
+    await writeContents(handle);
     await handle.sync();
     await handle.close();
     handle = undefined;
