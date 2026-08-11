@@ -6,6 +6,7 @@ import { defineConfig } from 'tsup';
  */
 export default defineConfig({
   entry: {
+    'allowlisted-https-fetch': 'src/network/create-allowlisted-https-fetch.ts',
     'atomic-write': 'src/node/atomic-write.ts',
     'tray-close-policy': 'src/window/tray-close-policy.ts',
   },

@@ -52,7 +52,11 @@ function linkPackedPackage(consumerDir, packedRoot, directoryName) {
 function verifyPlatformLeaves() {
   const fixture = packWorkspacePackage('@workbench-kit/platform', 'platform', 'wbk-platform-cjs-');
   try {
-    for (const leaf of ['atomic-write.cjs', 'tray-close-policy.cjs']) {
+    for (const leaf of [
+      'allowlisted-https-fetch.cjs',
+      'atomic-write.cjs',
+      'tray-close-policy.cjs',
+    ]) {
       const leafPath = path.join(fixture.packedRoot, 'dist', leaf);
       if (!fs.existsSync(leafPath)) {
         throw new Error(`Packed platform tarball missing dist/${leaf}`);
@@ -60,6 +64,13 @@ function verifyPlatformLeaves() {
     }
 
     linkPackedPackage(fixture.consumerDir, fixture.packedRoot, 'platform');
+    verifyLegacyTypeScriptSubpaths(
+      fixture.consumerDir,
+      [
+        "import { createAllowlistedHttpsFetch } from '@workbench-kit/platform/allowlisted-https-fetch';",
+      ],
+      ['createAllowlistedHttpsFetch'],
+    );
     const consumerEntry = path.join(fixture.consumerDir, 'smoke.cjs');
     fs.writeFileSync(
       consumerEntry,
@@ -69,17 +80,26 @@ function verifyPlatformLeaves() {
         "const fs = require('node:fs');",
         "const os = require('node:os');",
         "const path = require('node:path');",
+        'const { createAllowlistedHttpsFetch } =',
+        "  require('@workbench-kit/platform/allowlisted-https-fetch');",
         "const { atomicWriteBytes, atomicWriteText } = require('@workbench-kit/platform/atomic-write');",
         'const { shouldHideOnClose, shouldQuitWhenAllWindowsClosed } =',
         "  require('@workbench-kit/platform/tray-close-policy');",
         'assert.equal(typeof atomicWriteText, "function");',
         'assert.equal(typeof atomicWriteBytes, "function");',
+        'assert.equal(typeof createAllowlistedHttpsFetch, "function");',
         'assert.equal(shouldHideOnClose({ trayEnabled: true }), true);',
         'assert.equal(',
         "  shouldQuitWhenAllWindowsClosed({ platform: 'darwin', trayEnabled: false }),",
         '  false,',
         ');',
         '(async () => {',
+        '  const fetchHttps = createAllowlistedHttpsFetch({',
+        "    allowedHosts: ['api.example.com'],",
+        '    fetch: async (input) => ({ input }),',
+        '  });',
+        "  assert.equal((await fetchHttps('https://api.example.com/items')).input, 'https://api.example.com/items');",
+        "  await assert.rejects(fetchHttps('https://blocked.example.com/items'), /allowlist/);",
         "  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'wbk-atomic-cjs-'));",
         "  const filePath = path.join(dir, 'nested', 'doc.txt');",
         "  await atomicWriteText(filePath, 'hello-cjs');",
@@ -107,25 +127,12 @@ function verifyPlatformLeaves() {
   }
 }
 
-function verifyLegacyTypeScriptSubpaths(consumerDir) {
+function verifyLegacyTypeScriptSubpaths(consumerDir, imports, referencedNames) {
   const typeEntry = path.join(consumerDir, 'smoke.ts');
   const tsconfigPath = path.join(consumerDir, 'tsconfig.json');
   fs.writeFileSync(
     typeEntry,
-    [
-      "import { createApplicationQuitGuard } from '@workbench-kit/electron-shell/application-quit-guard';",
-      "import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';",
-      "import { createAllowlistedInvoke } from '@workbench-kit/electron-shell/preload';",
-      "import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';",
-      "import { createWindowControlsBridge } from '@workbench-kit/electron-shell/window-controls';",
-      '',
-      'void createApplicationQuitGuard;',
-      'void openAllowlistedExternalLink;',
-      'void createAllowlistedInvoke;',
-      'void requireOwnedWindowForSender;',
-      'void createWindowControlsBridge;',
-      '',
-    ].join('\n'),
+    [...imports, '', ...referencedNames.map((name) => `void ${name};`), ''].join('\n'),
   );
   fs.writeFileSync(
     tsconfigPath,
@@ -171,7 +178,23 @@ function verifyElectronShellLeaves() {
     }
 
     linkPackedPackage(fixture.consumerDir, fixture.packedRoot, 'electron-shell');
-    verifyLegacyTypeScriptSubpaths(fixture.consumerDir);
+    verifyLegacyTypeScriptSubpaths(
+      fixture.consumerDir,
+      [
+        "import { createApplicationQuitGuard } from '@workbench-kit/electron-shell/application-quit-guard';",
+        "import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';",
+        "import { createAllowlistedInvoke } from '@workbench-kit/electron-shell/preload';",
+        "import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';",
+        "import { createWindowControlsBridge } from '@workbench-kit/electron-shell/window-controls';",
+      ],
+      [
+        'createApplicationQuitGuard',
+        'openAllowlistedExternalLink',
+        'createAllowlistedInvoke',
+        'requireOwnedWindowForSender',
+        'createWindowControlsBridge',
+      ],
+    );
 
     const consumerEntry = path.join(fixture.consumerDir, 'smoke.cjs');
     fs.writeFileSync(

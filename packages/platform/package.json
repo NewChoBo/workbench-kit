@@ -3,6 +3,14 @@
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
   "type": "module",
+  "types": "./src/index.ts",
+  "typesVersions": {
+    "*": {
+      "allowlisted-https-fetch": [
+        "src/network/create-allowlisted-https-fetch.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "tsup",
     "test": "vitest run src",
@@ -10,6 +18,12 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./allowlisted-https-fetch": {
+      "types": "./src/network/create-allowlisted-https-fetch.ts",
+      "require": "./dist/allowlisted-https-fetch.cjs",
+      "import": "./src/network/create-allowlisted-https-fetch.ts",
+      "default": "./src/network/create-allowlisted-https-fetch.ts"
+    },
     "./node": "./src/node/index.ts",
     "./atomic-write": {
       "types": "./src/node/atomic-write.ts",

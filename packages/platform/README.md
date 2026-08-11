@@ -53,6 +53,7 @@ Other Node/window helpers:
 
 | Subpath                                           | Role                            |
 | ------------------------------------------------- | ------------------------------- |
+| `@workbench-kit/platform/allowlisted-https-fetch` | HTTPS hostname allowlist fetch  |
 | `@workbench-kit/platform/node`                    | Node persistence helpers        |
 | `@workbench-kit/platform/atomic-write`            | Atomic file write               |
 | `@workbench-kit/platform/resize-rect`             | Window resize math              |
@@ -65,6 +66,7 @@ Pure leaf helpers ship dual `exports` so a CommonJS Electron `main` process can
 `require()` them from the published `@prototype` tarball (no host-local forks):
 
 ```js
+const { createAllowlistedHttpsFetch } = require('@workbench-kit/platform/allowlisted-https-fetch');
 const { atomicWriteBytes, atomicWriteText } = require('@workbench-kit/platform/atomic-write');
 const {
   shouldHideOnClose,
