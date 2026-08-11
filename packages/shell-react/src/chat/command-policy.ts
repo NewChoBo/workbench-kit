@@ -1,18 +1,13 @@
-import type {
-  ResolveWorkbenchCommandExecutionPolicyInput,
-  WorkbenchCommandExecutionPolicy,
+import {
+  isWorkbenchCommandExecutionPolicy,
+  type ResolveWorkbenchCommandExecutionPolicyInput,
+  type WorkbenchCommandExecutionPolicy,
 } from '@workbench-kit/react/workbench';
 import type { WorkbenchStorageReader } from '@workbench-kit/workbench-core';
 
 import { readPersistedLocalPreferences } from '../management/preference-settings-storage.js';
 
 export const WORKBENCH_AI_CHAT_COMMAND_DEFAULT_POLICY_KEY = 'workbench.chat.aiCommandDefaultPolicy';
-
-function isWorkbenchCommandExecutionPolicy(
-  value: unknown,
-): value is WorkbenchCommandExecutionPolicy {
-  return value === 'auto-allow' || value === 'approval-required' || value === 'auto-deny';
-}
 
 export function readWorkbenchAiChatCommandPolicyInput(
   storageKey?: string,

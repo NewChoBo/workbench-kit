@@ -1,3 +1,4 @@
+import { workspaceExplorerParentPaths } from '@workbench-kit/react/workbench/workspace';
 import type { WorkspaceSelectionState } from '@workbench-kit/workspace';
 
 import {
@@ -67,11 +68,6 @@ export function applyExplorerPathReveal(
     focusedPath: normalizedPath,
     paths: [normalizedPath],
   });
-}
-
-function workspaceExplorerParentPaths(path: string): string[] {
-  const segments = path.split('/').filter(Boolean);
-  return segments.slice(0, -1).map((_, index) => segments.slice(0, index + 1).join('/'));
 }
 
 export function isExplorerHostCommand(commandId: string): boolean {
