@@ -41,6 +41,7 @@ import { usePreviewViewport } from '../layout/usePreviewViewport.js';
 import { JdwPreview } from '../jdw/JdwPreview.js';
 import { readWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
 import { canAddChildren, insertedWidgetPathForParent } from './widget-tree-layout.js';
+import type { WidgetTreeAssetDropOperation } from './WidgetTreeView.js';
 
 const RESIZE_HANDLE_POSITIONS = [
   'n',
@@ -68,12 +69,7 @@ export interface WidgetTreeCanvasPreviewProps {
   readonly onSelectPath: (path: WidgetPath) => void;
 }
 
-export interface WidgetTreeCanvasAssetDropOperation {
-  readonly asset: WidgetPlacementAsset;
-  readonly parentPath: WidgetPath;
-  readonly insertIndex: number;
-  readonly nextPath: WidgetPath;
-}
+export type WidgetTreeCanvasAssetDropOperation = WidgetTreeAssetDropOperation;
 
 interface WidgetTreeCanvasAssetDropTarget {
   readonly insertIndex: number;

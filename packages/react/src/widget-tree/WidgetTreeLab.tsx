@@ -31,10 +31,7 @@ import { WorkbenchLabeledPane } from '../layout/panel';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import type { JsonEditorProblem } from '../jdw/JsonCodeEditorPane.js';
 import { WidgetAssetPalette } from './WidgetAssetPalette.js';
-import {
-  WidgetTreeCanvasPreview,
-  type WidgetTreeCanvasAssetDropOperation,
-} from './WidgetTreeCanvasPreview.js';
+import { WidgetTreeCanvasPreview } from './WidgetTreeCanvasPreview.js';
 import { WidgetInspectorPanel } from './WidgetInspectorPanel.js';
 import { WidgetSourceEditor } from './WidgetSourceEditor.js';
 import { WidgetTreeSidePanel } from './WidgetTreeSidePanel.js';
@@ -375,24 +372,6 @@ export function WidgetTreeLab({
     }
   };
 
-  const handlePlaceAssetPreviewPath = (operation: WidgetTreeCanvasAssetDropOperation) => {
-    if (!document.root) return;
-
-    const parent = getWidgetAtPath(document.root, operation.parentPath);
-    if (!parent || !canAddChildren(parent)) return;
-
-    const changed = applyPatch({
-      type: 'insert-child',
-      parentPath: operation.parentPath,
-      index: operation.insertIndex,
-      child: materializeWidgetPlacementAsset(operation.asset, parent),
-    });
-    if (changed) {
-      setSelection((current) => selectWidgetPath(current, operation.nextPath));
-      focusPropertyDetailTab();
-    }
-  };
-
   const handleRemovePath = (pathToRemove: WidgetPath) => {
     if (pathToRemove.length === 0) return;
     const parentPath = pathToRemove.slice(0, -1);
@@ -518,7 +497,7 @@ export function WidgetTreeLab({
         root={document.root}
         selectedPath={selectedPath}
         onPatch={handleCanvasPatch}
-        onPlaceAssetPath={readOnly ? undefined : handlePlaceAssetPreviewPath}
+        onPlaceAssetPath={readOnly ? undefined : handlePlaceAssetPath}
         onSelectPath={handlePreviewSelectPath}
       />
     </WorkbenchLabeledPane>
