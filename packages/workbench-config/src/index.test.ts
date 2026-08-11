@@ -8,8 +8,32 @@ import {
   parseWorkbenchKeybindingsConfig,
   parseWorkbenchLayoutConfig,
   parseWorkbenchLayoutConfigJson,
+  parseWorkbenchSettingsConfig,
   WorkbenchConfigValidationError,
 } from './index.js';
+
+describe('parseWorkbenchSettingsConfig', () => {
+  it('validates known settings and preserves extension-contributed values', () => {
+    expect(
+      parseWorkbenchSettingsConfig({
+        'editor.fontSize': 14,
+        'extension.sample.enabled': true,
+        'workbench.colorTheme': 'dark-plus',
+      }),
+    ).toEqual({
+      'editor.fontSize': 14,
+      'extension.sample.enabled': true,
+      'workbench.colorTheme': 'dark-plus',
+    });
+
+    expect(() => parseWorkbenchSettingsConfig({ 'workbench.colorTheme': false })).toThrow(
+      'Expected workbench.colorTheme to be a string.',
+    );
+    expect(() => parseWorkbenchSettingsConfig({ 'editor.fontSize': 0 })).toThrow(
+      'Expected editor.fontSize to be a number >= 1.',
+    );
+  });
+});
 
 describe('parseWorkbenchExtensionsConfig', () => {
   it('parses enabled and recommended extension IDs', () => {

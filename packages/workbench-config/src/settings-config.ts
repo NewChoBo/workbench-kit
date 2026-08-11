@@ -7,7 +7,21 @@ export function parseWorkbenchSettingsConfig(input: unknown): WorkbenchSettingsC
     throw new WorkbenchConfigValidationError('Expected settings config to be an object.');
   }
 
-  return { ...(input as Record<string, unknown>) };
+  const settings = { ...(input as Record<string, unknown>) };
+  const colorTheme = settings['workbench.colorTheme'];
+  if (colorTheme !== undefined && typeof colorTheme !== 'string') {
+    throw new WorkbenchConfigValidationError('Expected workbench.colorTheme to be a string.');
+  }
+
+  const editorFontSize = settings['editor.fontSize'];
+  if (
+    editorFontSize !== undefined &&
+    (typeof editorFontSize !== 'number' || !Number.isFinite(editorFontSize) || editorFontSize < 1)
+  ) {
+    throw new WorkbenchConfigValidationError('Expected editor.fontSize to be a number >= 1.');
+  }
+
+  return settings;
 }
 
 export function parseWorkbenchSettingsConfigJson(jsonText: string): WorkbenchSettingsConfig {

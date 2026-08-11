@@ -121,6 +121,7 @@ sources stay easy to assemble for tests:
 | -------------------------------- | ----------------------------------------------- |
 | `.workbench/extensions.json`     | `WorkbenchProvider` `extensionsConfig`          |
 | `.workbench/layout.default.json` | Initial sidebar visibility and active container |
+| `.workbench/settings.json`       | Initial workspace preference values             |
 | `.workbench/workspace.json`      | Workspace metadata shown in the sample overview |
 
 ## Showcase Coverage
