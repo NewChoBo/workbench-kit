@@ -5,18 +5,14 @@ import {
   WORKBENCH_SECTIONED_PANEL_PROGRAMMATIC_SCROLL_SETTLE_MS_INSTANT,
   WORKBENCH_SECTIONED_PANEL_PROGRAMMATIC_SCROLL_SETTLE_MS_SMOOTH,
   createWorkbenchSectionedPanelIntersectionRootMargin,
-  isWorkbenchSectionedPanelAtScrollBottom,
   isWorkbenchSectionedPanelAtScrollEnd,
   isWorkbenchSectionedPanelAtScrollStart,
-  isWorkbenchSectionedPanelAtScrollTop,
   isWorkbenchSectionedPanelScrollable,
   readWorkbenchSectionedPanelScrollMetrics,
-  resolveWorkbenchSectionedPanelActiveAnchorFromIntersection,
   resolveWorkbenchSectionedPanelActiveAnchorFromScroll,
   resolveWorkbenchSectionedPanelClampedScrollTarget,
   resolveWorkbenchSectionedPanelProgrammaticScrollSettleMs,
   resolveWorkbenchSectionedPanelScrollTarget,
-  resolveWorkbenchSectionedPanelScrollTop,
   shouldPreserveNavClickActiveAnchor,
 } from './sectionedPanelScrollSpy';
 
@@ -62,44 +58,11 @@ describe('sectionedPanelScrollSpy', () => {
         scrollPosition: 700,
       }),
     ).toBe(true);
-
-    expect(isWorkbenchSectionedPanelAtScrollTop({ scrollTop: 0 })).toBe(true);
-    expect(
-      isWorkbenchSectionedPanelAtScrollBottom({
-        clientHeight: 200,
-        scrollHeight: 900,
-        scrollTop: 700,
-      }),
-    ).toBe(true);
-  });
-
-  it('activates the last intersecting section in document order', () => {
-    expect(
-      resolveWorkbenchSectionedPanelActiveAnchorFromIntersection({
-        anchorOrder,
-        entries: [
-          { intersectionRatio: 1, isIntersecting: true, target: { id: 'general' } },
-          { intersectionRatio: 0.4, isIntersecting: true, target: { id: 'request' } },
-        ],
-        fallbackAnchorId: 'general',
-      }),
-    ).toBe('request');
-  });
-
-  it('falls back when no section intersects the active band', () => {
-    expect(
-      resolveWorkbenchSectionedPanelActiveAnchorFromIntersection({
-        anchorOrder,
-        entries: [{ intersectionRatio: 0, isIntersecting: false, target: { id: 'general' } }],
-        fallbackAnchorId: 'general',
-      }),
-    ).toBe('general');
   });
 
   it('scrolls a section to the configured offset', () => {
     expect(resolveWorkbenchSectionedPanelScrollTarget({ sectionStart: 320 })).toBe(296);
     expect(resolveWorkbenchSectionedPanelScrollTarget({ offset: 24, sectionStart: 10 })).toBe(0);
-    expect(resolveWorkbenchSectionedPanelScrollTop({ sectionTop: 320 })).toBe(296);
   });
 
   it('builds the intersection observer root margin per axis', () => {

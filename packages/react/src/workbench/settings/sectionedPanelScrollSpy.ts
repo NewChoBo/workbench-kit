@@ -30,12 +30,6 @@ export const WORKBENCH_SECTIONED_PANEL_INTERSECTION_THRESHOLDS = [0, 0.25, 0.5, 
 
 export type WorkbenchSectionedPanelScrollSpyAxis = 'vertical' | 'horizontal';
 
-export interface WorkbenchSectionedPanelIntersectionEntry {
-  intersectionRatio: number;
-  isIntersecting: boolean;
-  target: { id: string };
-}
-
 export interface WorkbenchSectionedPanelScrollPosition {
   anchorId: string;
   /** Section start along the active scroll axis (top or left). */
@@ -106,70 +100,6 @@ export function isWorkbenchSectionedPanelAtScrollEnd({
   scrollSize: number;
 }): boolean {
   return scrollPosition + clientSize >= scrollSize - bottomThreshold;
-}
-
-/** @deprecated Use `isWorkbenchSectionedPanelAtScrollStart`. */
-export function isWorkbenchSectionedPanelAtScrollTop({
-  scrollTop,
-  topThreshold = WORKBENCH_SECTIONED_PANEL_SCROLL_THRESHOLD,
-}: {
-  scrollTop: number;
-  topThreshold?: number | undefined;
-}): boolean {
-  return isWorkbenchSectionedPanelAtScrollStart({
-    scrollPosition: scrollTop,
-    startThreshold: topThreshold,
-  });
-}
-
-/** @deprecated Use `isWorkbenchSectionedPanelAtScrollEnd`. */
-export function isWorkbenchSectionedPanelAtScrollBottom({
-  bottomThreshold = WORKBENCH_SECTIONED_PANEL_SCROLL_THRESHOLD,
-  clientHeight,
-  scrollHeight,
-  scrollTop,
-}: {
-  bottomThreshold?: number | undefined;
-  clientHeight: number;
-  scrollHeight: number;
-  scrollTop: number;
-}): boolean {
-  return isWorkbenchSectionedPanelAtScrollEnd({
-    bottomThreshold,
-    clientSize: clientHeight,
-    scrollPosition: scrollTop,
-    scrollSize: scrollHeight,
-  });
-}
-
-export function resolveWorkbenchSectionedPanelActiveAnchorFromIntersection({
-  anchorOrder,
-  entries,
-  fallbackAnchorId,
-}: {
-  anchorOrder: readonly string[];
-  entries: readonly WorkbenchSectionedPanelIntersectionEntry[];
-  fallbackAnchorId?: string | undefined;
-}): string | undefined {
-  const intersectingAnchorIds = new Set(
-    entries
-      .filter((entry) => entry.isIntersecting && entry.target.id)
-      .map((entry) => entry.target.id),
-  );
-
-  if (intersectingAnchorIds.size === 0) {
-    return fallbackAnchorId;
-  }
-
-  let nextActive = fallbackAnchorId;
-
-  for (const anchorId of anchorOrder) {
-    if (intersectingAnchorIds.has(anchorId)) {
-      nextActive = anchorId;
-    }
-  }
-
-  return nextActive ?? fallbackAnchorId;
 }
 
 export function resolveWorkbenchSectionedPanelActiveAnchorFromScroll({
@@ -248,17 +178,6 @@ export function resolveWorkbenchSectionedPanelScrollTarget({
   sectionStart: number;
 }): number {
   return Math.max(0, sectionStart - offset);
-}
-
-/** @deprecated Use `resolveWorkbenchSectionedPanelScrollTarget`. */
-export function resolveWorkbenchSectionedPanelScrollTop({
-  offset = WORKBENCH_SECTIONED_PANEL_SCROLL_SPY_OFFSET,
-  sectionTop,
-}: {
-  offset?: number | undefined;
-  sectionTop: number;
-}): number {
-  return resolveWorkbenchSectionedPanelScrollTarget({ offset, sectionStart: sectionTop });
 }
 
 export function createWorkbenchSectionedPanelIntersectionRootMargin(
