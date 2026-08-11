@@ -1,4 +1,4 @@
-import { assertKnownKeys, assertRecord } from './parse-helpers.js';
+import { assertKnownKeys, assertRecord, parseConfigJson } from './parse-helpers.js';
 import { WorkbenchConfigValidationError } from './validation-error.js';
 
 export const WORKBENCH_KIT_WORKBENCH_CONFIG_VERSION = '0.0.0' as const;
@@ -85,15 +85,7 @@ export function parseWorkbenchExtensionsConfig(input: unknown): WorkbenchExtensi
 }
 
 export function parseWorkbenchExtensionsConfigJson(jsonText: string): WorkbenchExtensionsConfig {
-  try {
-    return parseWorkbenchExtensionsConfig(JSON.parse(jsonText) as unknown);
-  } catch (error) {
-    if (error instanceof WorkbenchConfigValidationError) {
-      throw error;
-    }
-
-    throw new WorkbenchConfigValidationError('Expected extensions config to be valid JSON.');
-  }
+  return parseConfigJson(jsonText, parseWorkbenchExtensionsConfig, 'extensions config');
 }
 
 export function parseWorkbenchExtensionsLock(input: unknown): WorkbenchExtensionsLock {
@@ -136,15 +128,7 @@ export function parseWorkbenchExtensionsLock(input: unknown): WorkbenchExtension
 }
 
 export function parseWorkbenchExtensionsLockJson(jsonText: string): WorkbenchExtensionsLock {
-  try {
-    return parseWorkbenchExtensionsLock(JSON.parse(jsonText) as unknown);
-  } catch (error) {
-    if (error instanceof WorkbenchConfigValidationError) {
-      throw error;
-    }
-
-    throw new WorkbenchConfigValidationError('Expected extensions lock to be valid JSON.');
-  }
+  return parseConfigJson(jsonText, parseWorkbenchExtensionsLock, 'extensions lock');
 }
 
 export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfig {
@@ -204,15 +188,7 @@ export function parseWorkbenchLayoutConfig(input: unknown): WorkbenchLayoutConfi
 }
 
 export function parseWorkbenchLayoutConfigJson(jsonText: string): WorkbenchLayoutConfig {
-  try {
-    return parseWorkbenchLayoutConfig(JSON.parse(jsonText) as unknown);
-  } catch (error) {
-    if (error instanceof WorkbenchConfigValidationError) {
-      throw error;
-    }
-
-    throw new WorkbenchConfigValidationError('Expected layout config to be valid JSON.');
-  }
+  return parseConfigJson(jsonText, parseWorkbenchLayoutConfig, 'layout config');
 }
 
 export {

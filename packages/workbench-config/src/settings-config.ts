@@ -1,3 +1,4 @@
+import { parseConfigJson } from './parse-helpers.js';
 import { WorkbenchConfigValidationError } from './validation-error.js';
 
 export type WorkbenchSettingsConfig = Readonly<Record<string, unknown>>;
@@ -25,13 +26,5 @@ export function parseWorkbenchSettingsConfig(input: unknown): WorkbenchSettingsC
 }
 
 export function parseWorkbenchSettingsConfigJson(jsonText: string): WorkbenchSettingsConfig {
-  try {
-    return parseWorkbenchSettingsConfig(JSON.parse(jsonText) as unknown);
-  } catch (error) {
-    if (error instanceof WorkbenchConfigValidationError) {
-      throw error;
-    }
-
-    throw new WorkbenchConfigValidationError('Expected settings config to be valid JSON.');
-  }
+  return parseConfigJson(jsonText, parseWorkbenchSettingsConfig, 'settings config');
 }

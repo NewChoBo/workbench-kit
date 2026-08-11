@@ -8,6 +8,21 @@ export function assertRecord(value: unknown, label: string): Record<string, unkn
   return value as Record<string, unknown>;
 }
 
+export function parseConfigJson<T>(
+  jsonText: string,
+  parseConfig: (input: unknown) => T,
+  configLabel: string,
+): T {
+  try {
+    return parseConfig(JSON.parse(jsonText) as unknown);
+  } catch (error) {
+    if (error instanceof WorkbenchConfigValidationError) {
+      throw error;
+    }
+    throw new WorkbenchConfigValidationError(`Expected ${configLabel} to be valid JSON.`);
+  }
+}
+
 export function readRequiredString(record: Record<string, unknown>, key: string): string {
   const value = record[key];
   if (typeof value !== 'string' || value.trim().length === 0) {

@@ -1,6 +1,7 @@
 import {
   assertKnownKeys,
   assertRecord,
+  parseConfigJson,
   readOptionalString,
   readRequiredString,
 } from './parse-helpers.js';
@@ -52,15 +53,7 @@ export function parseWorkbenchUserCommandsConfig(input: unknown): WorkbenchUserC
 export function parseWorkbenchUserCommandsConfigJson(
   jsonText: string,
 ): WorkbenchUserCommandsConfig {
-  try {
-    return parseWorkbenchUserCommandsConfig(JSON.parse(jsonText) as unknown);
-  } catch (error) {
-    if (error instanceof WorkbenchConfigValidationError) {
-      throw error;
-    }
-
-    throw new WorkbenchConfigValidationError('Expected user commands config to be valid JSON.');
-  }
+  return parseConfigJson(jsonText, parseWorkbenchUserCommandsConfig, 'user commands config');
 }
 
 function parseUserCommandDefinition(input: unknown, index: number): WorkbenchUserCommandDefinition {

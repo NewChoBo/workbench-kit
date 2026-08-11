@@ -1,6 +1,7 @@
 import {
   assertKnownKeys,
   assertRecord,
+  parseConfigJson,
   readOptionalString,
   readRequiredString,
 } from './parse-helpers.js';
@@ -26,15 +27,7 @@ export function parseWorkbenchKeybindingsConfig(
 export function parseWorkbenchKeybindingsConfigJson(
   jsonText: string,
 ): readonly WorkbenchKeybindingDefinition[] {
-  try {
-    return parseWorkbenchKeybindingsConfig(JSON.parse(jsonText) as unknown);
-  } catch (error) {
-    if (error instanceof WorkbenchConfigValidationError) {
-      throw error;
-    }
-
-    throw new WorkbenchConfigValidationError('Expected keybindings config to be valid JSON.');
-  }
+  return parseConfigJson(jsonText, parseWorkbenchKeybindingsConfig, 'keybindings config');
 }
 
 function parseWorkbenchKeybindingDefinition(
