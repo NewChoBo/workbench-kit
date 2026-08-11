@@ -1,6 +1,5 @@
+import { parseCommandInspectorUri } from '@workbench-kit/react/workbench/management';
 import type { EditorHost } from '@workbench-kit/workbench-extension-sdk';
-
-const COMMAND_INSPECTOR_URI_PREFIX = 'workbench://command/inspect/' as const;
 
 export const COMMAND_INSPECTOR_EDITOR_ID = 'workbench-kit.builtin.commands.inspector' as const;
 export const COMMAND_INSPECTOR_EDITOR_HOST_RENDER_KIND =
@@ -43,23 +42,6 @@ export class CommandInspectorEditorHost implements EditorHost {
       kind: COMMAND_INSPECTOR_EDITOR_HOST_RENDER_KIND,
       resourceUri: this.options.resourceUri,
     };
-  }
-}
-
-export function parseCommandInspectorUri(resourceUri: string): string | undefined {
-  if (!resourceUri.startsWith(COMMAND_INSPECTOR_URI_PREFIX)) {
-    return undefined;
-  }
-
-  const encodedId = resourceUri.slice(COMMAND_INSPECTOR_URI_PREFIX.length);
-  if (!encodedId) {
-    return undefined;
-  }
-
-  try {
-    return decodeURIComponent(encodedId);
-  } catch {
-    return undefined;
   }
 }
 

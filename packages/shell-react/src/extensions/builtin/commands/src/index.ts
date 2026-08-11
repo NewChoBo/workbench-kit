@@ -1,9 +1,9 @@
+import { parseCommandInspectorUri } from '@workbench-kit/react/workbench/management';
 import type { ExtensionContext } from '@workbench-kit/workbench-extension-sdk';
 
 import {
   COMMAND_INSPECTOR_EDITOR_ID,
   CommandInspectorEditorHost,
-  parseCommandInspectorUri,
 } from './command-inspector-editor-host.js';
 
 export const EXTENSION_ID = 'workbench-kit.builtin.commands' as const;
@@ -21,9 +21,9 @@ export {
   COMMAND_INSPECTOR_EDITOR_ID,
   CommandInspectorEditorHost,
   isCommandInspectorEditorHostRenderData,
-  parseCommandInspectorUri,
   type CommandInspectorEditorHostRenderData,
 } from './command-inspector-editor-host.js';
+export { parseCommandInspectorUri };
 
 export function activate(context: ExtensionContext): void {
   context.editorResolvers.registerResolver({
