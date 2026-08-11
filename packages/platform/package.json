@@ -8,6 +8,9 @@
     "*": {
       "allowlisted-https-fetch": [
         "src/network/create-allowlisted-https-fetch.ts"
+      ],
+      "window-bounds-persistence": [
+        "src/window/window-bounds-persistence.ts"
       ]
     }
   },
@@ -38,7 +41,13 @@
       "import": "./src/window/tray-close-policy.ts",
       "default": "./src/window/tray-close-policy.ts"
     },
-    "./versioned-browser-state": "./src/storage/versioned-browser-state.ts"
+    "./versioned-browser-state": "./src/storage/versioned-browser-state.ts",
+    "./window-bounds-persistence": {
+      "types": "./src/window/window-bounds-persistence.ts",
+      "require": "./dist/window-bounds-persistence.cjs",
+      "import": "./src/window/window-bounds-persistence.ts",
+      "default": "./src/window/window-bounds-persistence.ts"
+    }
   },
   "dependencies": {
     "@workbench-kit/base": "workspace:*"

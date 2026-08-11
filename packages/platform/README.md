@@ -52,14 +52,15 @@ import { atomicWriteBytes, atomicWriteText } from '@workbench-kit/platform/node'
 
 Other Node/window helpers:
 
-| Subpath                                           | Role                            |
-| ------------------------------------------------- | ------------------------------- |
-| `@workbench-kit/platform/allowlisted-https-fetch` | HTTPS hostname allowlist fetch  |
-| `@workbench-kit/platform/node`                    | Node persistence helpers        |
-| `@workbench-kit/platform/atomic-write`            | Atomic file write               |
-| `@workbench-kit/platform/resize-rect`             | Window resize math              |
-| `@workbench-kit/platform/tray-close-policy`       | Tray close policy helpers       |
-| `@workbench-kit/platform/versioned-browser-state` | Versioned browser state adapter |
+| Subpath                                             | Role                                |
+| --------------------------------------------------- | ----------------------------------- |
+| `@workbench-kit/platform/allowlisted-https-fetch`   | HTTPS hostname allowlist fetch      |
+| `@workbench-kit/platform/node`                      | Node persistence helpers            |
+| `@workbench-kit/platform/atomic-write`              | Atomic file write                   |
+| `@workbench-kit/platform/resize-rect`               | Window resize math                  |
+| `@workbench-kit/platform/tray-close-policy`         | Tray close policy helpers           |
+| `@workbench-kit/platform/versioned-browser-state`   | Versioned browser state adapter     |
+| `@workbench-kit/platform/window-bounds-persistence` | Debounced Window bounds persistence |
 
 ## Electron main (CommonJS) consumption
 
@@ -73,6 +74,10 @@ const {
   shouldHideOnClose,
   shouldQuitWhenAllWindowsClosed,
 } = require('@workbench-kit/platform/tray-close-policy');
+const {
+  bindSecondaryWindowBoundsPersistence,
+  bindWindowBoundsPersistence,
+} = require('@workbench-kit/platform/window-bounds-persistence');
 ```
 
 - ESM / TypeScript hosts keep using the same subpaths via `import` (source leaves).

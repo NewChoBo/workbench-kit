@@ -56,6 +56,7 @@ function verifyPlatformLeaves() {
       'allowlisted-https-fetch.cjs',
       'atomic-write.cjs',
       'tray-close-policy.cjs',
+      'window-bounds-persistence.cjs',
     ]) {
       const leafPath = path.join(fixture.packedRoot, 'dist', leaf);
       if (!fs.existsSync(leafPath)) {
@@ -68,8 +69,13 @@ function verifyPlatformLeaves() {
       fixture.consumerDir,
       [
         "import { createAllowlistedHttpsFetch } from '@workbench-kit/platform/allowlisted-https-fetch';",
+        "import { bindSecondaryWindowBoundsPersistence, bindWindowBoundsPersistence } from '@workbench-kit/platform/window-bounds-persistence';",
       ],
-      ['createAllowlistedHttpsFetch'],
+      [
+        'bindSecondaryWindowBoundsPersistence',
+        'bindWindowBoundsPersistence',
+        'createAllowlistedHttpsFetch',
+      ],
     );
     const consumerEntry = path.join(fixture.consumerDir, 'smoke.cjs');
     fs.writeFileSync(
@@ -85,9 +91,13 @@ function verifyPlatformLeaves() {
         "const { atomicWriteBytes, atomicWriteText } = require('@workbench-kit/platform/atomic-write');",
         'const { shouldHideOnClose, shouldQuitWhenAllWindowsClosed } =',
         "  require('@workbench-kit/platform/tray-close-policy');",
+        'const { bindSecondaryWindowBoundsPersistence, bindWindowBoundsPersistence } =',
+        "  require('@workbench-kit/platform/window-bounds-persistence');",
         'assert.equal(typeof atomicWriteText, "function");',
         'assert.equal(typeof atomicWriteBytes, "function");',
         'assert.equal(typeof createAllowlistedHttpsFetch, "function");',
+        'assert.equal(typeof bindSecondaryWindowBoundsPersistence, "function");',
+        'assert.equal(typeof bindWindowBoundsPersistence, "function");',
         'assert.equal(shouldHideOnClose({ trayEnabled: true }), true);',
         'assert.equal(',
         "  shouldQuitWhenAllWindowsClosed({ platform: 'darwin', trayEnabled: false }),",
