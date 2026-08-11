@@ -241,7 +241,12 @@ export function CatalogBrowsePane({
           {items.map((item) => {
             const selected = selectedItemId === item.id;
             return (
-              <CatalogBrowseItemWrapper itemId={item.id} key={item.id}>
+              <div
+                className="ui-catalog-browse__item"
+                data-ui-catalog-browse-item-container={item.id}
+                key={item.id}
+                role="listitem"
+              >
                 {renderGridItem ? (
                   renderGridItem(item, { selected })
                 ) : (
@@ -260,7 +265,7 @@ export function CatalogBrowsePane({
                     variant="cover"
                   />
                 )}
-              </CatalogBrowseItemWrapper>
+              </div>
             );
           })}
           <BrowseScrollFooter
@@ -328,24 +333,6 @@ export function CatalogBrowsePane({
           />
         </ScrollArea>
       ) : null}
-    </div>
-  );
-}
-
-function CatalogBrowseItemWrapper({
-  children,
-  itemId,
-}: {
-  readonly children: ReactNode;
-  readonly itemId: string;
-}): ReactNode {
-  return (
-    <div
-      className="ui-catalog-browse__item"
-      data-ui-catalog-browse-item-container={itemId}
-      role="listitem"
-    >
-      {children}
     </div>
   );
 }
