@@ -106,14 +106,6 @@ const TRANSFORM_X = 320;
 const TARGET_X = 620;
 const TRANSFORM_ROW_GAP = 72;
 
-export function sourceObjectNodeId(): string {
-  return SOURCE_OBJECT_NODE_ID;
-}
-
-export function targetObjectNodeId(): string {
-  return TARGET_OBJECT_NODE_ID;
-}
-
 /** Handle id for a field/slot port on an object node. */
 export function portHandleId(fieldOrSlotId: string): string {
   return fieldOrSlotId;

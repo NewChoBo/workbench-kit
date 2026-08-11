@@ -7,7 +7,6 @@ import {
   findTargetSlot,
   isTransformChainCompatible,
   optionFieldsForStep,
-  patchOptionStep,
   resizeOptionSteps,
   sanitizeOptionRecord,
   type CombineMappingOperator,
@@ -211,29 +210,6 @@ export function removeTransformStepFromEdge(edge: MappingEdge, stepIndex: number
     ...edge,
     transformIds: current.length > 0 ? current : undefined,
     transformOptionSteps: resizeOptionSteps(optionSteps, current.length),
-  };
-}
-
-export function patchTransformStepOptionOnEdge(
-  edge: MappingEdge,
-  stepIndex: number,
-  key: string,
-  value: unknown,
-): MappingEdge {
-  const length = edge.transformIds?.length ?? 0;
-  if (stepIndex < 0 || stepIndex >= length) {
-    return edge;
-  }
-  return {
-    ...edge,
-    transformOptionSteps: patchOptionStep(
-      edge.transformOptionSteps,
-      length,
-      stepIndex,
-      key,
-      value,
-      edge.transformOptions,
-    ),
   };
 }
 
