@@ -6,6 +6,7 @@ import {
   buildNpmPublishArgs,
   clearNpmRegistryAuth,
   npmViewExists,
+  packWorkspacePackage,
   packageDirectoryNameForPackageName,
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
@@ -24,7 +25,8 @@ run('npm', ['ping', '--registry', NPM_REGISTRY]);
 console.log('[preflight-npm] Using GitHub Actions trusted publishing (OIDC).');
 console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved at publish time.');
 
-resetDirectory(packDir);
+fs.rmSync(packDir, { recursive: true, force: true });
+fs.mkdirSync(packDir, { recursive: true });
 buildFreshWorkspaceArtifacts({ logPrefix: 'preflight-npm', repoRoot: root });
 
 // Probe a small sample only. Dry-running every NPM_PUBLISH_ORDER package burns
@@ -47,7 +49,7 @@ for (const probePackage of probePackages) {
   const probeDir = packageDirFor(probePackage);
   const probeJson = readJson(path.join(probeDir, 'package.json'));
   const probeSpec = `${probeJson.name}@${probeJson.version}`;
-  const tarball = packPackage(probePackage);
+  const tarball = packWorkspacePackage({ packageName: probePackage, packDir, run });
 
   const args = buildNpmPublishArgs({ tarball, distTag, dryRun: true });
 
@@ -82,26 +84,6 @@ function publishPermissionError(packageName) {
 
 function packageDirFor(packageName) {
   return path.join(root, 'packages', packageDirectoryNameForPackageName(packageName));
-}
-
-function packPackage(packageName) {
-  const output = run(
-    'pnpm',
-    ['--filter', packageName, 'pack', '--pack-destination', packDir, '--json'],
-    { encoding: 'utf8' },
-  );
-  const result = JSON.parse(output.trim());
-  return result.filename;
-}
-
-function resetDirectory(target) {
-  const resolvedRoot = path.resolve(root);
-  const resolvedTarget = path.resolve(target);
-  if (!resolvedTarget.startsWith(resolvedRoot + path.sep)) {
-    throw new Error(`Refusing to remove directory outside repository: ${resolvedTarget}`);
-  }
-  fs.rmSync(resolvedTarget, { recursive: true, force: true });
-  fs.mkdirSync(resolvedTarget, { recursive: true });
 }
 
 function readJson(filePath) {

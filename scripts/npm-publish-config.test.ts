@@ -1,6 +1,25 @@
 import { describe, expect, it, vi } from 'vitest';
 
-import { npmViewExists } from './npm-publish-config.mjs';
+import { npmViewExists, packWorkspacePackage } from './npm-publish-config.mjs';
+
+describe('packWorkspacePackage', () => {
+  it('packs the requested package into the requested directory', () => {
+    const run = vi.fn(() => JSON.stringify({ filename: 'pack/base.tgz' }));
+
+    expect(
+      packWorkspacePackage({
+        packageName: '@workbench-kit/base',
+        packDir: 'pack',
+        run,
+      }),
+    ).toBe('pack/base.tgz');
+    expect(run).toHaveBeenCalledWith(
+      'pnpm',
+      ['--filter', '@workbench-kit/base', 'pack', '--pack-destination', 'pack', '--json'],
+      { encoding: 'utf8' },
+    );
+  });
+});
 
 describe('npmViewExists', () => {
   it('reports an existing package version', () => {

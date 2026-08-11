@@ -7,6 +7,7 @@ import {
   clearNpmRegistryAuth,
   isTrustedPublisherAvailable,
   npmViewExists,
+  packWorkspacePackage,
   packageDirectoryNameForPackageName,
   parsePublishMode,
   requireTrustedPublisherAuth,
@@ -38,7 +39,8 @@ const publishCandidates = preparePublishCandidates({
   isPackagePublished: (packageName) => npmViewExists(packageName),
   isVersionPublished: isPublished,
   onPrepare: () => {
-    resetDirectory(packDir);
+    fs.rmSync(packDir, { recursive: true, force: true });
+    fs.mkdirSync(packDir, { recursive: true });
     buildFreshWorkspaceArtifacts({ logPrefix: 'publish', repoRoot: root });
   },
   onSkip: ({ reason, spec }) => {
@@ -58,7 +60,7 @@ const publishCandidates = preparePublishCandidates({
 for (const { packageJson: pkg } of publishCandidates) {
   const spec = `${pkg.name}@${pkg.version}`;
 
-  const tarball = packPackage(pkg.name);
+  const tarball = packWorkspacePackage({ packageName: pkg.name, packDir, run });
   const args = buildNpmPublishArgs({ tarball, distTag, dryRun });
 
   console.log(
@@ -116,16 +118,6 @@ function packageDirFor(packageName) {
   return path.join(root, 'packages', packageDirectoryNameForPackageName(packageName));
 }
 
-function packPackage(packageName) {
-  const output = run(
-    'pnpm',
-    ['--filter', packageName, 'pack', '--pack-destination', packDir, '--json'],
-    { encoding: 'utf8' },
-  );
-  const result = JSON.parse(output.trim());
-  return result.filename;
-}
-
 function isPublished(spec) {
   return npmViewExists(spec, registry);
 }
@@ -142,16 +134,6 @@ function publishFailureError(packageName, error) {
     ].join('\n'),
     { cause: error },
   );
-}
-
-function resetDirectory(target) {
-  const resolvedRoot = path.resolve(root);
-  const resolvedTarget = path.resolve(target);
-  if (!resolvedTarget.startsWith(resolvedRoot + path.sep)) {
-    throw new Error(`Refusing to remove directory outside repository: ${resolvedTarget}`);
-  }
-  fs.rmSync(resolvedTarget, { recursive: true, force: true });
-  fs.mkdirSync(resolvedTarget, { recursive: true });
 }
 
 function readJson(filePath) {

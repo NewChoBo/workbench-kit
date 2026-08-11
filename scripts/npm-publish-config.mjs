@@ -13,6 +13,15 @@ export function packageDirectoryNameForPackageName(packageName) {
   return PACKAGE_DIRECTORY_BY_NAME[shortName] ?? shortName;
 }
 
+export function packWorkspacePackage({ packageName, packDir, run = runCommand }) {
+  const output = run(
+    'pnpm',
+    ['--filter', packageName, 'pack', '--pack-destination', packDir, '--json'],
+    { encoding: 'utf8' },
+  );
+  return JSON.parse(output.trim()).filename;
+}
+
 export function isTrustedPublisherAvailable() {
   return (
     process.env.GITHUB_ACTIONS === 'true' && Boolean(process.env.ACTIONS_ID_TOKEN_REQUEST_TOKEN)
