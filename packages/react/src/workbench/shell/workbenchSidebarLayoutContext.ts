@@ -38,9 +38,3 @@ export function toWorkbenchSidebarLayoutContextValue<TViewId extends string>(
 ): WorkbenchSidebarLayoutContextStore {
   return value as unknown as WorkbenchSidebarLayoutContextStore;
 }
-
-export function fromWorkbenchSidebarLayoutContextValue<TViewId extends string>(
-  value: WorkbenchSidebarLayoutContextStore,
-): WorkbenchSidebarLayoutContextValue<TViewId> {
-  return value as unknown as WorkbenchSidebarLayoutContextValue<TViewId>;
-}

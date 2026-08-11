@@ -35,18 +35,3 @@ export const JDW_FIXTURE_ROW_FLEX = `{
   }
 }
 `;
-
-export const JDW_FIXTURE_GRID_CELLS = `{
-  "type": "grid",
-  "args": {
-    "columns": 2,
-    "gap": 8,
-    "padding": 12,
-    "children": [
-      { "type": "text", "args": { "text": "A", "col": 0, "row": 0 } },
-      { "type": "text", "args": { "text": "B", "col": 1, "row": 0 } },
-      { "type": "text", "args": { "text": "Wide", "col": 0, "row": 1, "colSpan": 2 } }
-    ]
-  }
-}
-`;

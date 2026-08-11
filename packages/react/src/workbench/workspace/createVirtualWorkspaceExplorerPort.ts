@@ -6,10 +6,7 @@ import {
 } from '@workbench-kit/workspace';
 
 import type { VirtualWorkspaceApi } from './useVirtualWorkspace';
-import type {
-  WorkspaceExplorerControllerPort,
-  WorkspaceExplorerMutationResult,
-} from './workspaceExplorerController';
+import type { WorkspaceExplorerControllerPort } from './workspaceExplorerController';
 
 export function createVirtualWorkspaceExplorerPort({
   onNotify,
@@ -128,14 +125,4 @@ export function applyVirtualWorkspaceRenameSelection(
       : selection.focusedPath,
     paths: selection.paths.map(renameDescendantPath),
   };
-}
-
-export function toWorkspaceExplorerMutationResult(
-  value: WorkspaceExplorerMutationResult | void | undefined,
-): WorkspaceExplorerMutationResult | undefined {
-  if (!value) {
-    return undefined;
-  }
-
-  return value;
 }
