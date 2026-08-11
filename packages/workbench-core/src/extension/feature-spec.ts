@@ -3,15 +3,14 @@ import type {
   EditorDocumentViewContribution,
   ExtensionFeatureSpec,
   ExtensionSettingFeatureSpec,
-  ExtensionViewContainerFeatureSpec,
-  ExtensionViewFeatureSpec,
-  MenuContribution,
-  ViewContainerContribution,
-  ViewContribution,
   WorkbenchExtensionManifest,
 } from '@workbench-kit/workbench-extension-sdk';
 
-import { isRecord } from './is-record.js';
+import {
+  normalizeMenuContributions,
+  normalizeViewContainers,
+  normalizeViews,
+} from './contribution-normalizers.js';
 
 export interface WorkbenchExtensionFeatureDescription {
   readonly extensionPath?: string | undefined;
@@ -51,7 +50,7 @@ export function createExtensionFeatureSpec(
     id: manifest.id,
     keybindings: [...(contributes?.keybindings ?? [])],
     localizations: [...(contributes?.localizations ?? [])],
-    menus: normalizeMenuFeatureSpecs(contributes?.menus),
+    menus: normalizeMenuContributions(contributes?.menus),
     name: manifest.name,
     panels: [...(contributes?.panels ?? [])],
     permissions: [...(manifest.permissions ?? [])],
@@ -60,8 +59,8 @@ export function createExtensionFeatureSpec(
     statusBar: [...(contributes?.statusBar ?? [])],
     themes: [...(contributes?.themes ?? [])],
     version: manifest.version,
-    viewContainers: normalizeViewContainerFeatureSpecs(contributes?.viewContainers),
-    views: normalizeViewFeatureSpecs(contributes?.views),
+    viewContainers: normalizeViewContainers(contributes?.viewContainers),
+    views: normalizeViews(contributes?.views),
   };
 }
 
@@ -84,63 +83,4 @@ function normalizeSettingFeatureSpecs(
     ...property,
     key,
   }));
-}
-
-function normalizeMenuFeatureSpecs(value: unknown): MenuContribution[] {
-  if (value === undefined) {
-    return [];
-  }
-
-  if (Array.isArray(value)) {
-    return value as MenuContribution[];
-  }
-
-  if (!isRecord(value)) {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([menu, entries]) => {
-    if (!Array.isArray(entries)) {
-      return [];
-    }
-
-    return entries.map((entry) => ({ ...(entry as object), menu }) as MenuContribution);
-  });
-}
-
-function normalizeViewContainerFeatureSpecs(value: unknown): ExtensionViewContainerFeatureSpec[] {
-  if (!isRecord(value)) {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([location, containers]) => {
-    if (!Array.isArray(containers)) {
-      return [];
-    }
-
-    return containers.map((container) => ({
-      ...(container as ViewContainerContribution),
-      location,
-    }));
-  });
-}
-
-function normalizeViewFeatureSpecs(value: unknown): ExtensionViewFeatureSpec[] {
-  if (!isRecord(value)) {
-    return [];
-  }
-
-  return Object.entries(value).flatMap(([containerId, views]) => {
-    if (!Array.isArray(views)) {
-      return [];
-    }
-
-    return views.map((view) => {
-      const partialView = view as ViewContribution;
-      return {
-        ...partialView,
-        containerId: partialView.containerId ?? containerId,
-      };
-    });
-  });
 }
