@@ -7,8 +7,6 @@ import {
   paneVisibilityToPrimaryViewMode,
   resolveDefaultEditorPaneVisibility,
   resolveEffectiveEditorPaneVisibility,
-  sanitizeEditorPaneVisibility,
-  toggleEditorPaneVisibility,
 } from './pane-visibility.js';
 
 describe('editor-pane-visibility', () => {
@@ -67,29 +65,9 @@ describe('editor-pane-visibility', () => {
     );
   });
 
-  it('prevents turning off the last visible pane', () => {
-    expect(toggleEditorPaneVisibility({ code: true, form: false, preview: false }, 'code')).toEqual(
-      {
-        code: true,
-        form: false,
-        preview: false,
-      },
-    );
-  });
-
-  it('can enable an additional pane via legacy toggle helper', () => {
-    expect(
-      toggleEditorPaneVisibility({ code: true, form: false, preview: false }, 'preview'),
-    ).toEqual({
-      code: true,
-      form: false,
-      preview: true,
-    });
-  });
-
   it('sanitizes ineligible form/preview panes', () => {
     expect(
-      sanitizeEditorPaneVisibility(
+      resolveEffectiveEditorPaneVisibility(
         { code: false, form: true, preview: true },
         { formEligible: false, previewEligible: true },
       ),

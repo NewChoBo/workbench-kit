@@ -71,29 +71,6 @@ export function countVisibleEditorPanes(visibility: EditorPaneVisibility): numbe
   return Number(visibility.code) + Number(visibility.form) + Number(visibility.preview);
 }
 
-export function toggleEditorPaneVisibility(
-  visibility: EditorPaneVisibility,
-  pane: EditorPaneKind,
-): EditorPaneVisibility {
-  const nextValue = !visibility[pane];
-
-  if (!nextValue && countVisibleEditorPanes(visibility) <= 1) {
-    return visibility;
-  }
-
-  return {
-    ...visibility,
-    [pane]: nextValue,
-  };
-}
-
-export function sanitizeEditorPaneVisibility(
-  visibility: EditorPaneVisibility,
-  options: { formEligible: boolean; previewEligible: boolean },
-): EditorPaneVisibility {
-  return resolveEffectiveEditorPaneVisibility(visibility, options);
-}
-
 export function resolveEffectiveEditorPaneVisibility(
   preference: EditorPaneVisibility,
   options: { formEligible: boolean; previewEligible: boolean },
