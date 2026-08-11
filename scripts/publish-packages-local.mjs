@@ -4,6 +4,7 @@ import {
   NPM_PUBLISH_ORDER,
   NPM_REGISTRY,
   buildNpmPublishArgs,
+  npmViewExists,
   packageDirectoryNameForPackageName,
 } from './npm-publish-config.mjs';
 import { runCommand } from './lib/run-command.mjs';
@@ -92,14 +93,7 @@ function packPackage(packageName) {
 }
 
 function isPublished(spec) {
-  try {
-    run('npm', ['view', spec, 'version', '--registry', NPM_REGISTRY], {
-      stdio: 'ignore',
-    });
-    return true;
-  } catch {
-    return false;
-  }
+  return npmViewExists(spec, NPM_REGISTRY);
 }
 
 function resetDirectory(target) {

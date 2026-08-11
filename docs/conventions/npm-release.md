@@ -65,6 +65,10 @@ npm view @workbench-kit/react dist-tags
 npm view @workbench-kit/react@prototype version
 ```
 
+Publish planning treats only npm `E404` responses as an unpublished package or
+version. Authentication, connectivity, and other registry lookup failures stop
+the release instead of falling through to a publish attempt.
+
 Consumers should install with `@prototype`, for example:
 
 ```powershell

@@ -106,15 +106,34 @@ function pathJoinCwdNpmrc() {
   return `${process.cwd()}/.npmrc`;
 }
 
-export function npmViewExists(specOrName, registry = NPM_REGISTRY) {
+export function npmViewExists(specOrName, registry = NPM_REGISTRY, run = runCommand) {
   try {
-    runCommand('npm', ['view', specOrName, 'version', '--registry', registry], {
-      stdio: 'ignore',
+    run('npm', ['view', specOrName, 'version', '--registry', registry], {
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'pipe'],
     });
     return true;
-  } catch {
-    return false;
+  } catch (error) {
+    if (/\bE404\b/u.test(npmErrorOutput(error))) {
+      return false;
+    }
+
+    throw new Error(
+      `npm registry lookup failed for ${specOrName}; refusing to treat the package as unpublished.`,
+      { cause: error },
+    );
   }
+}
+
+function npmErrorOutput(error) {
+  if (typeof error !== 'object' || error === null) {
+    return String(error);
+  }
+
+  return [error.stderr, error.stdout, error.message]
+    .filter((value) => typeof value === 'string' || Buffer.isBuffer(value))
+    .map(String)
+    .join('\n');
 }
 
 export function probePackageForTrustedPublisher() {
