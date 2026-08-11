@@ -10,6 +10,7 @@ import {
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 import { runCommand } from './lib/run-command.mjs';
+import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 
 const root = process.cwd();
 const distTag = process.env.NPM_DIST_TAG || 'prototype';
@@ -24,6 +25,7 @@ console.log('[preflight-npm] Using GitHub Actions trusted publishing (OIDC).');
 console.log('[preflight-npm] Skipping npm whoami because OIDC auth is resolved at publish time.');
 
 resetDirectory(packDir);
+buildFreshWorkspaceArtifacts({ logPrefix: 'preflight-npm', repoRoot: root });
 
 // Probe a small sample only. Dry-running every NPM_PUBLISH_ORDER package burns
 // several minutes of OIDC round-trips and does not prove real publish will succeed.

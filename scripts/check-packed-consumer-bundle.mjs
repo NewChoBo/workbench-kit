@@ -5,6 +5,7 @@ import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { runCommand } from './lib/run-command.mjs';
+import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 import { packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
@@ -54,10 +55,9 @@ fs.mkdirSync(nodeModulesDir, { recursive: true });
 
 try {
   assertExternalFixture();
-  console.log('[check-packed-consumer] Building fresh workspace artifacts...');
-  runCommand('pnpm', ['build:workspace'], {
-    cwd: repoRoot,
-    stdio: 'inherit',
+  buildFreshWorkspaceArtifacts({
+    logPrefix: 'check-packed-consumer',
+    repoRoot,
   });
   packageNames.forEach(packPackage);
   linkExternalPackages();

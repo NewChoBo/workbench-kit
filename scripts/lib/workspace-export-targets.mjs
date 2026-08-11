@@ -39,6 +39,14 @@ export function findMissingGeneratedExportTargets(workspacePackages) {
   ];
 }
 
+export function buildFreshWorkspaceArtifacts({ logPrefix, repoRoot, run = runCommand }) {
+  console.log(`[${logPrefix}] Building fresh workspace artifacts...`);
+  run('pnpm', ['build:workspace'], {
+    cwd: repoRoot,
+    stdio: 'inherit',
+  });
+}
+
 export function ensureGeneratedWorkspaceExportTargets({
   logPrefix,
   repoRoot,
@@ -53,10 +61,7 @@ export function ensureGeneratedWorkspaceExportTargets({
   console.log(
     `[${logPrefix}] Building workspace artifacts for ${missingTargets.length} missing generated target(s)...`,
   );
-  run('pnpm', ['build:workspace'], {
-    cwd: repoRoot,
-    stdio: 'inherit',
-  });
+  buildFreshWorkspaceArtifacts({ logPrefix, repoRoot, run });
 
   const remainingTargets = findMissingGeneratedExportTargets(workspacePackages);
   if (remainingTargets.length > 0) {

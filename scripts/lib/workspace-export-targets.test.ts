@@ -5,6 +5,7 @@ import path from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
+  buildFreshWorkspaceArtifacts,
   collectExportTargets,
   ensureGeneratedWorkspaceExportTargets,
   findMissingGeneratedExportTargets,
@@ -19,6 +20,22 @@ afterEach(() => {
 });
 
 describe('workspace export targets', () => {
+  it('builds fresh workspace artifacts on demand', () => {
+    const run = vi.fn();
+
+    buildFreshWorkspaceArtifacts({
+      logPrefix: 'test-fresh-artifacts',
+      repoRoot: 'repo-root',
+      run,
+    });
+
+    expect(run).toHaveBeenCalledOnce();
+    expect(run).toHaveBeenCalledWith('pnpm', ['build:workspace'], {
+      cwd: 'repo-root',
+      stdio: 'inherit',
+    });
+  });
+
   it('collects nested conditional export targets', () => {
     expect(
       collectExportTargets({

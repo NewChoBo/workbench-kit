@@ -12,6 +12,7 @@ import {
   requireTrustedPublisherAuth,
 } from './npm-publish-config.mjs';
 import { runCommand } from './lib/run-command.mjs';
+import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 
 const root = process.cwd();
 const { dryRun, updatesOnly } = parsePublishMode();
@@ -30,6 +31,7 @@ if (updatesOnly) {
 const publishOrder = NPM_PUBLISH_ORDER;
 
 resetDirectory(packDir);
+buildFreshWorkspaceArtifacts({ logPrefix: 'publish', repoRoot: root });
 
 for (const packageName of publishOrder) {
   const packageDir = packageDirFor(packageName);

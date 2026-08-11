@@ -7,6 +7,7 @@ import {
   packageDirectoryNameForPackageName,
 } from './npm-publish-config.mjs';
 import { runCommand } from './lib/run-command.mjs';
+import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 
 const root = process.cwd();
 const dryRun = process.argv.includes('--dry-run');
@@ -17,6 +18,7 @@ const packDir = path.join(root, '.npm-pack');
 assertLocalNpmAuth();
 
 resetDirectory(packDir);
+buildFreshWorkspaceArtifacts({ logPrefix: 'publish-local', repoRoot: root });
 
 for (const packageName of NPM_PUBLISH_ORDER) {
   const packageDir = packageDirFor(packageName);
