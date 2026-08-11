@@ -241,13 +241,13 @@ to this doc or an open improvement ticket.
 
 ### Phase 3 — Shell & primitive alignment
 
-| ID   | Task                                           | Notes                                                                           |
-| ---- | ---------------------------------------------- | ------------------------------------------------------------------------------- |
-| P3-1 | Document `ide-*` → `ui-workbench-*` rename map | Breaking for class-based consumers                                              |
-| P3-2 | Story host wrapper                             | `WorkbenchStoryHost` with standard height/flex; remove story inline layout      |
-| P3-3 | Adopt `WorkbenchLayoutBase` in CanvasShell     | Replace inline overflow/minHeight                                               |
-| P3-4 | Sidebar view primitive unification             | Explorer → same frame contract as Search/Commands OR document intentional split |
-| P3-5 | Shell view host section wrapper                | Remove `<section data-view-id>` if single active view invariant holds           |
+| ID   | Task                                           | Notes                                                                            |
+| ---- | ---------------------------------------------- | -------------------------------------------------------------------------------- |
+| P3-1 | Document `ide-*` → `ui-workbench-*` rename map | Breaking for class-based consumers                                               |
+| P3-2 | Story host wrapper                             | `StoryWorkbenchShellFrame` with standard height/flex; remove inline story layout |
+| P3-3 | Adopt `WorkbenchLayoutBase` in CanvasShell     | Replace inline overflow/minHeight                                                |
+| P3-4 | Sidebar view primitive unification             | Explorer → same frame contract as Search/Commands OR document intentional split  |
+| P3-5 | Shell view host section wrapper                | Remove `<section data-view-id>` if single active view invariant holds            |
 
 **Dependencies:** Phase 2 CSS extraction makes rename safer.
 
@@ -334,7 +334,7 @@ Focused Phase 1 execution slice (scroll ownership, devtools tokens, story host).
 | P1-3  | Settings single scroll owner | **Done** | `ScrollArea` in `WorkbenchNavigationPanel`; settings CSS overflow removed |
 | P1-2  | Sidebar view flex merge      | **Done** | `.workbench-chat-view` merged into shared sidebar view host group         |
 | P1-5  | Panel-header duplication     | **Done** | Cross-link comments in `styles.css` ↔ `primitives/styles.css`             |
-| P3-2  | Story host wrapper           | **Done** | `WorkbenchStoryHost` + Devtools / ProviderShell stories                   |
+| P3-2  | Story host wrapper           | **Done** | `StoryWorkbenchShellFrame` + workbench stories                            |
 | WB-31 | Devtools ScrollArea + tokens | **Done** | `WorkbenchDevtoolsPanel` uses `ScrollArea`; `--ide-*` → token vars        |
 
 **Deferred:** Phase 2 CSS extraction, `ide-*` rename (P3-1), ThemeRegistry (WB-36), full story migration.

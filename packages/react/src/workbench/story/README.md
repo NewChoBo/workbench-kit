@@ -6,7 +6,6 @@ They are excluded from `@workbench-kit/react` npm publishes (`package.json#files
 - `StorySidebarFrame`, `StoryWorkbenchShellFrame` — story layout shells
 - `chatStory` — chat play-test helpers and fixtures
 - `shellStory` — shell layout play-test helpers (primary sidebar collapse)
-- `activityBarStoryCases` — activity bar story descriptors
 
 Do not import from production package entry points or host apps.
 
