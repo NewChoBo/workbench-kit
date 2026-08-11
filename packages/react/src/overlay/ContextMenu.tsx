@@ -1,26 +1,13 @@
 import './context-menu.css';
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Button } from '../primitives/button';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
+import type { ContextMenuItem } from './context-menu-item';
 import { useClampedFixedOverlayPosition } from './useClampedFixedOverlayPosition';
 import { useFixedOverlayDismiss } from './useFixedOverlayDismiss';
 
-export type ContextMenuItem =
-  | {
-      type: 'separator';
-      id?: string | undefined;
-    }
-  | {
-      type?: 'item';
-      id?: string | undefined;
-      label: ReactNode;
-      icon?: string | undefined;
-      shortcut?: ReactNode | undefined;
-      disabled?: boolean | undefined;
-      danger?: boolean | undefined;
-      onSelect: () => void;
-    };
+export type { ContextMenuItem } from './context-menu-item';
 
 export interface ContextMenuProps {
   ariaLabel?: string | undefined;

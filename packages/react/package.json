@@ -6,6 +6,13 @@
     "**/*.css"
   ],
   "type": "module",
+  "typesVersions": {
+    "*": {
+      "overlay/context-menu-item": [
+        "src/overlay/context-menu-item.ts"
+      ]
+    }
+  },
   "scripts": {
     "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -19,6 +26,7 @@
     "./editor-tabs": "./src/workbench/editor-tabs/index.ts",
     "./icons": "./src/icons/index.ts",
     "./overlay": "./src/overlay/index.ts",
+    "./overlay/context-menu-item": "./src/overlay/context-menu-item.ts",
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",
     "./workbench/auth": "./src/workbench/auth/index.ts",

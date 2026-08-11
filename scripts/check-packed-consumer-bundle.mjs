@@ -71,6 +71,24 @@ try {
     cwd: repoRoot,
     stdio: 'inherit',
   });
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'CommonJS',
+      '--moduleResolution',
+      'Node',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2020',
+      path.join(consumerDir, 'src', 'node-context-menu-item.ts'),
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
 
   console.log('[check-packed-consumer] Building external production consumer...');
   runCommand(
@@ -272,6 +290,13 @@ const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
     `import { BUILTIN_WORKBENCH_EXTENSIONS } from '@workbench-kit/shell-react';
 
 export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'node-context-menu-item.ts'),
+    `import type { ContextMenuItem } from '@workbench-kit/react/overlay/context-menu-item';
+
+export type NodeResolvedContextMenuItem = ContextMenuItem;
 `,
   );
   fs.writeFileSync(
