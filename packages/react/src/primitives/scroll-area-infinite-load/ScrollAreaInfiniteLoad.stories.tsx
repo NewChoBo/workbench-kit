@@ -3,10 +3,11 @@ import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, within } from 'storybook/test';
 
 import { StoryWorkbenchShellFrame } from '../../workbench/story/StoryWorkbenchShellFrame';
-import { CatalogBrowseCard } from '../catalog-browse-card';
+import { CatalogBrowseCard } from '../catalog-browse-card/CatalogBrowseCard';
 import { EmptyState } from '../empty-state';
 import { ScrollArea } from '../scroll-area/ScrollArea';
-import { ScrollAreaInfiniteSentinel, useScrollAreaInfiniteLoad } from '.';
+import { ScrollAreaInfiniteSentinel } from './ScrollAreaInfiniteSentinel';
+import { useScrollAreaInfiniteLoad } from './useScrollAreaInfiniteLoad';
 
 const PAGE_SIZE = 12;
 const TOTAL_ITEMS = 36;
