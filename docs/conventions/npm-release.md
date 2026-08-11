@@ -10,9 +10,11 @@ rules reflect issues found while standing up trusted publishing in June 2026.
 | `NPM_PUBLISH_ORDER` in `scripts/npm-publish-config.mjs` | All **public** packages and publish order (19 today)  |
 | `NPM_CI_PUBLISH_PACKAGES`                               | Must stay aligned with `NPM_PUBLISH_ORDER` (same set) |
 
-All `packages/*` workspace packages publish under `@prototype`. Repository-local
-Repository sample `extensions/*` packages stay private and are not published. Default built-ins
-ship inside `@workbench-kit/shell-react` and are covered by the packed-consumer gate.
+All `packages/*` workspace packages publish under `@prototype`. Repository sample
+`extensions/*` packages stay private and are not published. Default built-ins
+ship inside `@workbench-kit/shell-react` and are covered by the packed-consumer gate. That gate
+also packs every `NPM_PUBLISH_ORDER` package and verifies the tarball manifests form one exact
+version cohort with no `workspace:` or unpublished `@workbench-kit/*` dependency references.
 
 Adding a new public package requires:
 

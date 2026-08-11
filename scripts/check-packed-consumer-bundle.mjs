@@ -4,9 +4,10 @@ import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
+import { validatePackedPackageCohort } from './lib/packed-package-cohort.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
-import { packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
+import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixtureBase = path.resolve(os.tmpdir());
@@ -28,7 +29,7 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
 // Runtime closure reached by the public imports in the generated consumer.
 // Monaco is installed as it would be for a real consumer, but must not enter the
 // manifest's transitive static entry closure.
-const packageNames = [
+const consumerPackageNames = [
   '@workbench-kit/base',
   '@workbench-kit/contracts',
   '@workbench-kit/platform',
@@ -46,9 +47,10 @@ const packageNames = [
   '@workbench-kit/react',
   '@workbench-kit/shell-react',
 ];
-const manifests = new Map(
-  packageNames.map((name) => [name, readJson(path.join(packageDir(name), 'package.json'))]),
+const consumerManifests = new Map(
+  consumerPackageNames.map((name) => [name, readJson(path.join(packageDir(name), 'package.json'))]),
 );
+const expectedVersion = readJson(path.join(repoRoot, 'package.json')).version;
 
 fs.mkdirSync(packDir, { recursive: true });
 fs.mkdirSync(nodeModulesDir, { recursive: true });
@@ -59,7 +61,8 @@ try {
     logPrefix: 'check-packed-consumer',
     repoRoot,
   });
-  packageNames.forEach(packPackage);
+  NPM_PUBLISH_ORDER.forEach(packPackage);
+  verifyPackedPackageCohort();
   linkExternalPackages();
   writeConsumer();
 
@@ -128,7 +131,7 @@ function packPackage(packageName) {
 function linkExternalPackages() {
   const requirements = new Map();
 
-  for (const [packageName, manifest] of manifests) {
+  for (const [packageName, manifest] of consumerManifests) {
     const optional = new Set([
       ...Object.keys(manifest.optionalDependencies ?? {}),
       ...Object.entries(manifest.peerDependenciesMeta ?? {})
@@ -159,7 +162,7 @@ function linkExternalPackages() {
   }
 
   for (const [dependencyName, requirement] of requirements) {
-    const source = [repoRoot, ...packageNames.map(packageDir)]
+    const source = [repoRoot, ...consumerPackageNames.map(packageDir)]
       .map((root) => packagePath(path.join(root, 'node_modules'), dependencyName))
       .find((candidate) => fs.existsSync(candidate));
     if (!source) {
@@ -177,6 +180,23 @@ function linkExternalPackages() {
       process.platform === 'win32' ? 'junction' : 'dir',
     );
   }
+}
+
+function verifyPackedPackageCohort() {
+  const manifests = new Map(
+    NPM_PUBLISH_ORDER.map((packageName) => [
+      packageName,
+      readJson(path.join(packagePath(nodeModulesDir, packageName), 'package.json')),
+    ]),
+  );
+  const count = validatePackedPackageCohort({
+    expectedPackageNames: NPM_PUBLISH_ORDER,
+    expectedVersion,
+    manifests,
+  });
+  console.log(
+    `[check-packed-consumer] Packed release cohort OK (${count} packages at ${expectedVersion}).`,
+  );
 }
 
 function writeConsumer() {
