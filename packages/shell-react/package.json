@@ -42,8 +42,7 @@
     "@workbench-kit/workbench-extension-sdk": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "@xyflow/react": "^12.11.2",
-    "jsonata": "^2.2.0",
-    "react-table-mapping": "^1.0.3"
+    "jsonata": "^2.2.0"
   },
   "peerDependencies": {
     "react": "^19.0.0",
