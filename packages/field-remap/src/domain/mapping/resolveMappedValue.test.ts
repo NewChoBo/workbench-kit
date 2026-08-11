@@ -29,7 +29,6 @@ describe('resolveMappedValue', () => {
           id: 'e2',
           sourceFieldId: 'a.x',
           targetSlotId: 'b.y',
-          transformId: null,
         },
         22.5,
         registry,

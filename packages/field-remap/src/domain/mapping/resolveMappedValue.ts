@@ -28,7 +28,7 @@ export function findSourceField(
  * Apply order:
  * 1. Optional `itemSourcePath` projection (array of objects → projected array)
  * 2. Optional `itemTransformIds` per element (when the value is still an array)
- * 3. `transformIds` / legacy `transformId` on the whole value (including array reduces)
+ * 3. `transformIds` on the whole value (including array reduces)
  *
  * Per-step options (`transformOptionSteps` / `itemTransformOptionSteps`) win when
  * present; otherwise shared `transformOptions` / `itemTransformOptions` apply to all steps.

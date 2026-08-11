@@ -22,23 +22,9 @@ function sanitizeTransformIds(ids: readonly string[] | undefined): string[] {
   return cleaned.slice(0, MAX_TRANSFORM_CHAIN);
 }
 
-/**
- * Resolve the effective transform chain for an edge.
- * Prefers `transformIds`; falls back to legacy `transformId`.
- * Identity / empty / null → `[]` (pass-through).
- */
+/** Resolve the effective transform chain for an edge. Identity / empty → pass-through. */
 export function edgeTransformIds(edge: MappingEdge): string[] {
-  const fromList = sanitizeTransformIds(edge.transformIds);
-  if (fromList.length > 0) {
-    return fromList;
-  }
-
-  const legacy = edge.transformId ? canonicalizeTransformId(edge.transformId) : '';
-  if (legacy && legacy !== IDENTITY_TRANSFORM_ID) {
-    return [legacy];
-  }
-
-  return [];
+  return sanitizeTransformIds(edge.transformIds);
 }
 
 /** Per-item transform chain applied after optional `itemSourcePath` projection. */
@@ -47,9 +33,6 @@ export function edgeItemTransformIds(edge: MappingEdge): string[] {
 }
 
 /**
- * Normalize an edge to the `transformIds` model while keeping `transformId`
- * as the first chain step (or `null`) for older hosts.
- *
  * Option bags:
  * - Prefer `transformOptionSteps` when present (aligned to chain length).
  * - Keep `transformOptions` as the first non-empty step (or the legacy shared bag).
@@ -85,7 +68,6 @@ export function normalizeMappingEdge(edge: MappingEdge): MappingEdge {
     sourceFieldId: edge.sourceFieldId,
     targetSlotId: edge.targetSlotId,
     transformIds: ids.length > 0 ? ids : undefined,
-    transformId: ids[0] ?? null,
     ...(transformOptionSteps ? { transformOptionSteps } : {}),
     ...(transformOptions ? { transformOptions } : {}),
     ...(itemSourcePath && !itemEdges ? { itemSourcePath } : {}),
@@ -106,8 +88,6 @@ export function createMappingEdge(input: {
   readonly sourceFieldId: string;
   readonly targetSlotId: string;
   readonly transformIds?: readonly string[];
-  /** Legacy single id; ignored when `transformIds` is provided. */
-  readonly transformId?: string | null;
   readonly transformOptionSteps?: readonly (Readonly<Record<string, unknown>> | undefined)[];
   readonly transformOptions?: Readonly<Record<string, unknown>>;
   /** Optional per-item projection path for array mappings. */
@@ -124,7 +104,6 @@ export function createMappingEdge(input: {
     sourceFieldId: input.sourceFieldId,
     targetSlotId: input.targetSlotId,
     transformIds: input.transformIds,
-    transformId: input.transformId,
     transformOptionSteps: input.transformOptionSteps,
     transformOptions: input.transformOptions,
     itemSourcePath: input.itemSourcePath,

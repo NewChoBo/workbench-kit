@@ -19,7 +19,7 @@ describe('FieldRemapDocument', () => {
         id: 'e1',
         sourceFieldId: 'a',
         targetSlotId: 'b',
-        transformId: 'lookup:code-to-label',
+        transformIds: ['lookup:code-to-label'],
       },
     ]);
 
@@ -30,7 +30,6 @@ describe('FieldRemapDocument', () => {
         sourceFieldId: 'a',
         targetSlotId: 'b',
         transformIds: ['lookup:code-to-label'],
-        transformId: 'lookup:code-to-label',
       },
     ]);
     expect(doc.operators).toBeUndefined();

@@ -7,26 +7,14 @@ import {
   normalizeMappingEdges,
 } from './mappingEdge.js';
 
-describe('mappingEdge migrators', () => {
-  it('reads legacy transformId when transformIds is absent', () => {
+describe('mappingEdge normalization', () => {
+  it('normalizes transformIds', () => {
     expect(
       edgeTransformIds({
         id: 'e1',
         sourceFieldId: 'a',
         targetSlotId: 'b',
-        transformId: 'time:24h',
-      }),
-    ).toEqual(['time:24h']);
-  });
-
-  it('prefers transformIds over legacy transformId', () => {
-    expect(
-      edgeTransformIds({
-        id: 'e1',
-        sourceFieldId: 'a',
-        targetSlotId: 'b',
-        transformId: 'time:24h',
-        transformIds: ['time:12h', 'string:truncate'],
+        transformIds: [' time:12h ', 'string:truncate'],
       }),
     ).toEqual(['time:12h', 'string:truncate']);
   });
@@ -37,33 +25,24 @@ describe('mappingEdge migrators', () => {
         id: 'e1',
         sourceFieldId: 'a',
         targetSlotId: 'b',
-        transformId: null,
-      }),
-    ).toEqual([]);
-    expect(
-      edgeTransformIds({
-        id: 'e1',
-        sourceFieldId: 'a',
-        targetSlotId: 'b',
         transformIds: ['identity'],
       }),
     ).toEqual([]);
   });
 
-  it('normalizes edges for back-compat writers', () => {
+  it('normalizes edges for current writers', () => {
     expect(
       normalizeMappingEdge({
         id: 'e1',
         sourceFieldId: 'a',
         targetSlotId: 'b',
-        transformId: 'time:24h',
+        transformIds: ['time:24h'],
       }),
     ).toEqual({
       id: 'e1',
       sourceFieldId: 'a',
       targetSlotId: 'b',
       transformIds: ['time:24h'],
-      transformId: 'time:24h',
     });
 
     expect(
@@ -81,12 +60,11 @@ describe('mappingEdge migrators', () => {
         sourceFieldId: 'a',
         targetSlotId: 'b',
         transformIds: ['time:24h', 'string:truncate'],
-        transformId: 'time:24h',
       },
     ]);
   });
 
-  it('createMappingEdge writes both fields', () => {
+  it('createMappingEdge writes the transform chain', () => {
     expect(
       createMappingEdge({
         id: 'e3',
@@ -99,7 +77,6 @@ describe('mappingEdge migrators', () => {
       sourceFieldId: 's',
       targetSlotId: 't',
       transformIds: ['string:truncate'],
-      transformId: 'string:truncate',
     });
   });
 
@@ -130,14 +107,12 @@ describe('mappingEdge migrators', () => {
       sourceFieldId: 'a.tags',
       targetSlotId: 'b.labels',
       transformIds: undefined,
-      transformId: null,
       itemEdges: [
         {
           id: 'ie1',
           sourceFieldId: 'a.tags.item.name',
           targetSlotId: 'b.labels.item.title',
           transformIds: undefined,
-          transformId: null,
         },
       ],
     });
@@ -157,7 +132,6 @@ describe('mappingEdge migrators', () => {
       sourceFieldId: 'tags',
       targetSlotId: 'names',
       transformIds: undefined,
-      transformId: null,
       itemSourcePath: 'name',
       itemTransformIds: ['string:truncate'],
     });
@@ -188,7 +162,6 @@ describe('mappingEdge migrators', () => {
       sourceFieldId: 'loc',
       targetSlotId: 'meta',
       transformIds: ['string:template'],
-      transformId: 'string:template',
       transformOptions: { template: '{city}' },
       itemTransformIds: ['string:truncate'],
       itemTransformOptions: { maxLength: 8 },
@@ -219,7 +192,6 @@ describe('mappingEdge migrators', () => {
       sourceFieldId: 'now',
       targetSlotId: 'time',
       transformIds: ['time:24h', 'string:truncate'],
-      transformId: 'time:24h',
       transformOptionSteps: [{ showSeconds: true }, { maxLength: 4 }],
       transformOptions: { showSeconds: true },
     });

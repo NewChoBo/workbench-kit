@@ -81,17 +81,10 @@ export interface MappingEdge {
   readonly targetSlotId: string;
   /**
    * Ordered transform chain (max 3). Empty / omitted means identity.
-   * Prefer this over `transformId` for new writers.
    * For arrays: use reduce builtins (`array:join`, `array:first`, …) here after
    * optional item projection / item transforms.
    */
   readonly transformIds?: readonly string[];
-  /**
-   * Legacy single transform. Prefer `transformIds`.
-   * Readers should use `edgeTransformIds` / `normalizeMappingEdge`.
-   * `null` / omitted (with no `transformIds`) means identity (pass-through).
-   */
-  readonly transformId?: string | null;
   /**
    * Per-step options aligned with `transformIds` (index N applies to step N).
    * Prefer this when steps need different bags (e.g. `showSeconds` then `maxLength`).
