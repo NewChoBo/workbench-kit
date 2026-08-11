@@ -103,21 +103,6 @@ export function parseObjectPath(path: string): ObjectPathSegment[] {
   });
 }
 
-/**
- * Parse dotted path segments as plain property names (no `[index]` / `[*]`).
- * Rejects unsafe segments when any parts exist.
- */
-export function requireObjectPathParts(path: string): string[] {
-  const segments = parseObjectPath(path);
-  if (segments.some((segment) => segment.kind !== 'property')) {
-    throw new InvalidObjectPathError(
-      path,
-      'index/wildcard segments are not allowed in this context',
-    );
-  }
-  return segments.map((segment) => segment.name);
-}
-
 export function isSafeObjectPath(path: string): boolean {
   const trimmed = path.trim();
   if (!SAFE_PATH_RE.test(trimmed)) {

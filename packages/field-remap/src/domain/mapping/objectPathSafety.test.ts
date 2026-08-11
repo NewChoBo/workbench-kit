@@ -1,11 +1,9 @@
 import { describe, expect, it } from 'vitest';
 
 import {
-  InvalidObjectPathError,
   isSafeObjectPath,
   objectPathHasWildcard,
   parseObjectPath,
-  requireObjectPathParts,
   UnsafeObjectPathError,
 } from './objectPathSafety.js';
 
@@ -43,19 +41,14 @@ describe('objectPathSafety', () => {
 
     for (const path of unsafePaths) {
       expect(isSafeObjectPath(path)).toBe(false);
-      expect(() => requireObjectPathParts(path)).toThrow(UnsafeObjectPathError);
+      expect(() => parseObjectPath(path)).toThrow(UnsafeObjectPathError);
     }
-  });
-
-  it('keeps requireObjectPathParts property-only', () => {
-    expect(requireObjectPathParts('meta.label')).toEqual(['meta', 'label']);
-    expect(() => requireObjectPathParts('items[0].name')).toThrow(InvalidObjectPathError);
   });
 
   it('reports the rejected path and segment', () => {
     let thrown: unknown;
     try {
-      requireObjectPathParts('safe.__proto__.polluted');
+      parseObjectPath('safe.__proto__.polluted');
     } catch (error) {
       thrown = error;
     }
