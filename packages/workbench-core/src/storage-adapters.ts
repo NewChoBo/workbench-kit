@@ -1,4 +1,8 @@
-import type { WorkbenchRemovableStorageAdapter } from './storage.js';
+import type {
+  WorkbenchRemovableStorageAdapter,
+  WorkbenchStorageReader,
+  WorkbenchStorageWriter,
+} from './storage.js';
 
 /**
  * Process-memory storage for tests and ephemeral hosts.
@@ -54,6 +58,40 @@ export function createBrowserWorkbenchStorage(
       storage.removeItem(key);
     },
   };
+}
+
+export function readWorkbenchStorageArray<T>(
+  storageKey: string,
+  normalize: (value: unknown) => T | undefined,
+  storage?: WorkbenchStorageReader,
+): T[] {
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
+  if (!resolvedStorage) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(resolvedStorage.getItem(storageKey) ?? 'null') as unknown;
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.flatMap((entry) => {
+      const normalized = normalize(entry);
+      return normalized === undefined ? [] : [normalized];
+    });
+  } catch {
+    return [];
+  }
+}
+
+export function writeWorkbenchStorageJson(
+  storageKey: string,
+  value: unknown,
+  storage?: WorkbenchStorageWriter,
+): void {
+  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
+  resolvedStorage?.setItem(storageKey, JSON.stringify(value, null, 2));
 }
 
 function getBrowserStorage(kind: BrowserWorkbenchStorageKind): Storage | undefined {

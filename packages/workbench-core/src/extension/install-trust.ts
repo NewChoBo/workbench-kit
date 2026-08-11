@@ -1,4 +1,4 @@
-import { createBrowserWorkbenchStorage } from '../storage-adapters.js';
+import { readWorkbenchStorageArray, writeWorkbenchStorageJson } from '../storage-adapters.js';
 import type { WorkbenchStorageReader, WorkbenchStorageWriter } from '../storage.js';
 
 export const DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY =
@@ -70,29 +70,7 @@ export function loadExtensionInstallTrustRecords(
   storageKey: string = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): ExtensionInstallTrustRecord[] {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) {
-    return [];
-  }
-
-  try {
-    const raw = resolvedStorage.getItem(storageKey);
-    if (!raw) {
-      return [];
-    }
-
-    const parsed = JSON.parse(raw) as unknown;
-    if (!Array.isArray(parsed)) {
-      return [];
-    }
-
-    return parsed.flatMap((entry) => {
-      const record = normalizeTrustRecord(entry);
-      return record ? [record] : [];
-    });
-  } catch {
-    return [];
-  }
+  return readWorkbenchStorageArray(storageKey, normalizeTrustRecord, storage);
 }
 
 export function saveExtensionInstallTrustRecords(
@@ -100,12 +78,7 @@ export function saveExtensionInstallTrustRecords(
   storageKey: string = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  const resolvedStorage = storage ?? createBrowserWorkbenchStorage({ kind: 'local' });
-  if (!resolvedStorage) {
-    return;
-  }
-
-  resolvedStorage.setItem(storageKey, JSON.stringify(records, null, 2));
+  writeWorkbenchStorageJson(storageKey, records, storage);
 }
 
 function normalizeTrustRecord(value: unknown): ExtensionInstallTrustRecord | undefined {
