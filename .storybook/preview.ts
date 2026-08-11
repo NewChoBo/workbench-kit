@@ -1,5 +1,6 @@
 import type { Preview } from '@storybook/react-vite';
 import { createElement } from 'react';
+import { themes } from 'storybook/theming';
 // Side-effect first: install workers without importing the monaco barrel (Editor/loader).
 import './preview-monaco-environment';
 import '../packages/react/src/styles.css';
@@ -44,6 +45,9 @@ const preview: Preview = {
   ],
 
   parameters: {
+    docs: {
+      theme: themes.dark,
+    },
     options: {
       storySort: {
         order: ['Workbench Sample', 'React'],

@@ -18,6 +18,7 @@ const meta = {
   argTypes: {
     sampleId: {
       control: 'select',
+      description: 'Selects the deterministic source and target schema fixture.',
       options: [
         'nested-ab',
         't-user-contact',
@@ -27,13 +28,14 @@ const meta = {
         'nm-combine-split',
       ],
     },
-    showMinimap: { control: 'boolean' },
-    showHostChromeDemo: { control: 'boolean' },
+    showMinimap: { control: 'boolean', description: 'Shows the Flow minimap.' },
+    showHostChromeDemo: { control: 'boolean', description: 'Shows host-owned editor actions.' },
     ioChrome: {
       control: 'select',
+      description: 'Switches the schema I/O chrome between browse and edit modes.',
       options: ['browse', 'edit', 'none'],
     },
-    browseSeedShapes: { control: 'boolean' },
+    browseSeedShapes: { control: 'boolean', description: 'Seeds class and hidden-field metadata.' },
   },
 } satisfies Meta<typeof FieldRemapDemo>;
 
@@ -128,7 +130,7 @@ export const ProductCatalog: Story = {
 export const CombineSplit: Story = {
   name: 'n→m combine / split',
   args: { sampleId: 'nm-combine-split' },
-  tags: ['storybook-play-required', 'storybook-play-sample'],
+  tags: ['autodocs', 'storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
