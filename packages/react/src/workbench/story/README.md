@@ -23,7 +23,7 @@ primary node stays in the tree; CSS hides the primary column and expands
 
 Story coverage:
 
-- `React/Workbench/Shell → Sidebar toggle` — isolated shell demo
+- `Workbench UI/Shell → Sidebar toggle` — isolated shell demo
 - `Workbench Sample/Dev App → Sidebar toggle` — full host integration
 
 Use `expectCollapsedPrimarySidebarShowsFullWidthSecondary` from `shellStory.ts`

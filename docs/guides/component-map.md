@@ -26,39 +26,39 @@ do not expect them in the Storybook sidebar until owners register them.
 
 | Surface              | Import                                 | Storybook                            | Sample | Contract |
 | -------------------- | -------------------------------------- | ------------------------------------ | ------ | -------- |
-| WorkbenchShell       | `@workbench-kit/react/workbench/shell` | React/Workbench/Shell                | Yes    | Shell    |
-| Activity bar / views | `@workbench-kit/react/workbench/shell` | React/Workbench/Shell                | Yes    | Shell    |
+| WorkbenchShell       | `@workbench-kit/react/workbench/shell` | Workbench UI/Shell                   | Yes    | Shell    |
+| Activity bar / views | `@workbench-kit/react/workbench/shell` | Workbench UI/Shell                   | Yes    | Shell    |
 | Desktop title bar    | `@workbench-kit/react/workbench`       | _source only_ (Platform Chrome)      | Host   | Shell    |
-| Editor tabs strip    | `@workbench-kit/react/editor-tabs`     | React/Primitives/Editor Chrome       | Yes    | Editor   |
+| Editor tabs strip    | `@workbench-kit/react/editor-tabs`     | Workbench UI/Editor/Chrome           | Yes    | Editor   |
 | Side bar tab strip   | `@workbench-kit/react/layout`          | React/Layout/Side Bar View Tab Strip | Yes    | Layout   |
 
 ## Primitives and forms
 
-| Surface                 | Import                            | Storybook                                  | Sample                                 | Contract   |
-| ----------------------- | --------------------------------- | ------------------------------------------ | -------------------------------------- | ---------- |
-| Controls (Button, …)    | `@workbench-kit/react/primitives` | React/Primitives/Controls                  | —                                      | Primitives |
-| Editor chrome           | `@workbench-kit/react/primitives` | React/Primitives/Editor Chrome             | Yes                                    | Editor     |
-| Scroll infinite load    | `@workbench-kit/react/primitives` | React/Primitives/Scroll Area Infinite Load | —                                      | Primitives |
-| Property override label | `@workbench-kit/react/layout`     | React/Workbench/Property Override Label    | —                                      | Properties |
-| Library detail layout   | `@workbench-kit/react/primitives` | _source only_                              | Story: Workbench Sample/Library Detail | Library    |
-| Catalog browse / facets | `@workbench-kit/react/primitives` | _source only_                              | Showcase                               | Library    |
+| Surface                 | Import                            | Storybook                               | Sample                                 | Contract   |
+| ----------------------- | --------------------------------- | --------------------------------------- | -------------------------------------- | ---------- |
+| Controls (Button, …)    | `@workbench-kit/react/primitives` | Atomic UI/Controls/Form Controls        | —                                      | Primitives |
+| Editor chrome           | `@workbench-kit/react/primitives` | Workbench UI/Editor/Chrome              | Yes                                    | Editor     |
+| Scroll infinite load    | `@workbench-kit/react/primitives` | Atomic UI/Feedback/Infinite Load        | —                                      | Primitives |
+| Property override label | `@workbench-kit/react/layout`     | Workbench UI/Settings/Property Override | —                                      | Properties |
+| Library detail layout   | `@workbench-kit/react/primitives` | _source only_                           | Story: Workbench Sample/Library Detail | Library    |
+| Catalog browse / facets | `@workbench-kit/react/primitives` | _source only_                           | Showcase                               | Library    |
 
 ## Workspace and search
 
-| Surface                 | Import                                     | Storybook                        | Sample | Contract  |
-| ----------------------- | ------------------------------------------ | -------------------------------- | ------ | --------- |
-| Workspace explorer      | `@workbench-kit/react/workbench/workspace` | Integrated via Shell stories     | Yes    | Workspace |
-| Workspace search panel  | `@workbench-kit/react/workbench/workspace` | React/Workbench/Workspace Search | —      | Workspace |
-| Path helpers (headless) | `@workbench-kit/workspace`                 | —                                | —      | Workspace |
+| Surface                 | Import                                     | Storybook                     | Sample | Contract  |
+| ----------------------- | ------------------------------------------ | ----------------------------- | ------ | --------- |
+| Workspace explorer      | `@workbench-kit/react/workbench/workspace` | Integrated via Shell stories  | Yes    | Workspace |
+| Workspace search panel  | `@workbench-kit/react/workbench/workspace` | Workbench UI/Workspace/Search | —      | Workspace |
+| Path helpers (headless) | `@workbench-kit/workspace`                 | —                             | —      | Workspace |
 
 ## Chat, overlay, modal
 
-| Surface                | Import                                      | Storybook                            | Sample   | Contract   |
-| ---------------------- | ------------------------------------------- | ------------------------------------ | -------- | ---------- |
-| Chat panel / messages  | `@workbench-kit/react/workbench/chat`       | React/Workbench/Chat Components      | Yes      | Chat       |
-| Overlay dialogs        | `@workbench-kit/react/modal`                | React/Overlay/Dialog Actions         | —        | Modal      |
-| Anchored overlay panel | `@workbench-kit/react/overlay`              | React/Overlay/Anchored Overlay Panel | —        | Overlay    |
-| Dialog / management    | `@workbench-kit/react/workbench/management` | _source only_ (picker dialogs)       | Showcase | Management |
+| Surface                | Import                                      | Storybook                         | Sample   | Contract   |
+| ---------------------- | ------------------------------------------- | --------------------------------- | -------- | ---------- |
+| Chat panel / messages  | `@workbench-kit/react/workbench/chat`       | Workbench UI/Chat/Components      | Yes      | Chat       |
+| Overlay dialogs        | `@workbench-kit/react/modal`                | Atomic UI/Overlays/Dialog Actions | —        | Modal      |
+| Anchored overlay panel | `@workbench-kit/react/overlay`              | Atomic UI/Overlays/Anchored Panel | —        | Overlay    |
+| Dialog / management    | `@workbench-kit/react/workbench/management` | _source only_ (picker dialogs)    | Showcase | Management |
 
 ## JDW / widget tree
 

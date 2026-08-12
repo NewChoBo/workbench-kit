@@ -10,8 +10,15 @@ import { StoryWorkbenchShellFrame } from '../workbench/story/StoryWorkbenchShell
 import { ConfirmDialog } from './ConfirmDialog';
 
 const meta = {
-  title: 'React/Overlay/Dialog Actions',
+  title: 'Atomic UI/Overlays/Dialog Actions',
+  tags: ['autodocs'],
   parameters: {
+    docs: {
+      description: {
+        component:
+          'Fixed overlay mechanics for confirmation and context actions. Hosts keep decision copy and final side effects.',
+      },
+    },
     layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },

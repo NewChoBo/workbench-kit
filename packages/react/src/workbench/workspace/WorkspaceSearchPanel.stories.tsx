@@ -34,7 +34,7 @@ const searchResults: WorkspaceSearchResult[] = [
 ];
 
 const meta = {
-  title: 'React/Workbench/Workspace Search',
+  title: 'Workbench UI/Workspace/Search',
   parameters: {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },

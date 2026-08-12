@@ -13,8 +13,15 @@ const PAGE_SIZE = 12;
 const TOTAL_ITEMS = 36;
 
 const meta = {
-  title: 'React/Primitives/Scroll Area Infinite Load',
+  title: 'Atomic UI/Feedback/Infinite Load',
+  tags: ['autodocs'],
   parameters: {
+    docs: {
+      description: {
+        component:
+          'Async collection feedback composed from one scroll owner, a load sentinel, visible progress, and an empty state.',
+      },
+    },
     layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },

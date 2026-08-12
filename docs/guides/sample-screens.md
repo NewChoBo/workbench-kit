@@ -31,7 +31,7 @@ Related: [Getting Started](./getting-started.md) · [Component Map](./component-
 | ---------------- | --------------------------------------------------------- |
 | **What you see** | Activity bar, primary sidebar, editor area, status bar    |
 | **Sample**       | After sign-in in workbench-sample                         |
-| **Storybook**    | React/Workbench/Shell · Workbench Sample/Dev App          |
+| **Storybook**    | Workbench UI/Shell · Workbench Sample/Dev App             |
 | **Kit pieces**   | `WorkbenchShell`, activity/sidebar slots, status sections |
 | **Host keeps**   | Routing, IPC, which views exist, theme preference storage |
 
@@ -41,7 +41,7 @@ Related: [Getting Started](./getting-started.md) · [Component Map](./component-
 | ---------------- | ------------------------------------------------------------------ |
 | **What you see** | File tree, open tabs, text/document editor body                    |
 | **Sample**       | Explorer activity in workbench-sample                              |
-| **Storybook**    | React/Primitives/Editor Chrome · Workspace Search                  |
+| **Storybook**    | Workbench UI/Editor/Chrome · Workbench UI/Workspace/Search         |
 | **Kit pieces**   | `WorkspaceExplorer` / panel, editor tabs helpers, workspace editor |
 | **Host keeps**   | File I/O, save ports, language services                            |
 
@@ -51,7 +51,7 @@ Related: [Getting Started](./getting-started.md) · [Component Map](./component-
 | ---------------- | --------------------------------------------- |
 | **What you see** | Conversation list / messages / composer       |
 | **Sample**       | Chat surfaces in the sample host when enabled |
-| **Storybook**    | React/Workbench/Chat Components               |
+| **Storybook**    | Workbench UI/Chat/Components                  |
 | **Kit pieces**   | `@workbench-kit/react/workbench/chat`         |
 | **Host keeps**   | Model transport, tool results, persistence    |
 
@@ -61,7 +61,7 @@ Related: [Getting Started](./getting-started.md) · [Component Map](./component-
 | ---------------- | ----------------------------------------------- |
 | **What you see** | Modal or overlay settings / integrations shell  |
 | **Sample**       | Settings-related slices in the sample showcase  |
-| **Storybook**    | React/Overlay/Dialog Actions                    |
+| **Storybook**    | Atomic UI/Overlays/Dialog Actions               |
 | **Kit pieces**   | Modal frame, management dialog helpers, notices |
 | **Host keeps**   | Preference schema, save/load, account linking   |
 

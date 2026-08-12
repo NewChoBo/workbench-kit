@@ -14,8 +14,15 @@ import { TextArea } from '../text-area';
 import { TextInput } from '../text-input';
 
 const meta = {
-  title: 'React/Primitives/Controls',
+  title: 'Atomic UI/Controls/Form Controls',
+  tags: ['autodocs'],
   parameters: {
+    docs: {
+      description: {
+        component:
+          'Foundational input and action primitives for dense settings and form surfaces. Reuse these controls before introducing host-specific markup.',
+      },
+    },
     layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },

@@ -11,7 +11,7 @@ import { StoryWorkbenchShellFrame } from '../workbench/story/StoryWorkbenchShell
 import { WorkbenchPropertyOverrideLabel } from './WorkbenchPropertyOverrideLabel';
 
 const meta = {
-  title: 'React/Workbench/Property Override Label',
+  title: 'Workbench UI/Settings/Property Override',
   parameters: {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },

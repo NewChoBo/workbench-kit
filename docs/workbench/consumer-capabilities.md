@@ -591,7 +591,7 @@ Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage`
 
 **When not to use:** Full product chat products that own the entire timeline — use slots (`renderMessageList`, `afterMessage`) rather than forking kit BEM.
 
-**Storybook:** `React/Workbench/Chat Components` → host-gaps drop/tone story.
+**Storybook:** `Workbench UI/Chat/Components` → host-gaps drop/tone story.
 
 ---
 
@@ -615,7 +615,7 @@ Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage`
 
 **Purpose:** Generic pointer-state helper for opening a `ContextMenu` (`target`, `x`, `y`). `open(event, target)` prevents default and stops propagation; `openAt` anchors from a button rect or other coordinates; `close` clears state. `target` may be an id string or a small payload object (for example `{ ariaLabel, items }` in sample hosts).
 
-**When to use:** Sidebar lists, catalog cards, overflow icon bars that only need coordinates + target identity. Sample reference: `IntegratedShellDemo` and Storybook `React/Overlay/Dialog Actions` → Context menu pointer state.
+**When to use:** Sidebar lists, catalog cards, overflow icon bars that only need coordinates + target identity. Sample reference: `IntegratedShellDemo` and Storybook `Atomic UI/Overlays/Dialog Actions` → Context menu pointer state.
 
 **When not to use:** Building domain menu items, or deciding whether right-click changes selection — keep those in the host.
 
@@ -631,7 +631,7 @@ portaled SMS listboxes stay inside the dismiss boundary
 (`isSearchableMultiSelectPortalTarget`).
 
 **When to use:** Pair with `CatalogFilterOverlay` (or a similar panel shell) for
-toolbar/filter flyouts. Storybook: `React/Overlay/Anchored Overlay Panel`.
+toolbar/filter flyouts. Storybook: `Atomic UI/Overlays/Anchored Panel`.
 
 **When not to use:** Select/SMS listbox positioning (`measureOverlayPosition`) or
 context menus that should dismiss on scroll/resize (`useFixedOverlayDismiss`).

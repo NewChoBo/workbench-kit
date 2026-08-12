@@ -13,7 +13,7 @@ import {
 import { StoryWorkbenchShellFrame } from '../story/StoryWorkbenchShellFrame';
 
 const meta = {
-  title: 'React/Workbench/Shell',
+  title: 'Workbench UI/Shell',
   parameters: {
     layout: 'fullscreen',
     fullHeightShell: '100vh',

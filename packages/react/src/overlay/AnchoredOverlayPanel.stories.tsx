@@ -91,8 +91,15 @@ function AnchoredCatalogFilterHarness() {
 }
 
 const meta = {
-  title: 'React/Overlay/Anchored Overlay Panel',
+  title: 'Atomic UI/Overlays/Anchored Panel',
+  tags: ['autodocs'],
   parameters: {
+    docs: {
+      description: {
+        component:
+          'Positioned panel behavior for toolbar and filter triggers, including focus, dismissal, and nested interactive content.',
+      },
+    },
     layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },

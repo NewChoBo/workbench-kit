@@ -35,7 +35,7 @@ const initialTabs: EditorTab[] = [
 ];
 
 const meta = {
-  title: 'React/Primitives/Editor Chrome',
+  title: 'Workbench UI/Editor/Chrome',
   parameters: {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },

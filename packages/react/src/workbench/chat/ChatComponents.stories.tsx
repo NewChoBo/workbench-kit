@@ -30,7 +30,7 @@ const initialAssistantMessages: ChatMessage[] = [
 ];
 
 const meta = {
-  title: 'React/Workbench/Chat Components',
+  title: 'Workbench UI/Chat/Components',
   parameters: {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },

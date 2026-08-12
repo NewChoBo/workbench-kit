@@ -50,7 +50,7 @@ const preview: Preview = {
     },
     options: {
       storySort: {
-        order: ['Workbench Sample', 'React'],
+        order: ['Atomic UI', 'Workbench UI', 'JDW', 'Workbench Sample'],
         method: 'alphabetical',
         locales: 'en-US',
       },

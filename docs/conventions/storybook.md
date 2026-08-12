@@ -36,6 +36,19 @@ Storybook vs thin Playwright), see
   (`package.json#files` → `!src/workbench/story`). Do not import them from
   production hosts or public package exports.
 
+### Navigation taxonomy
+
+- `Atomic UI` documents host-independent controls, feedback, and overlay mechanics.
+- `Workbench UI` documents VS Code-like editor, sidebar, settings, chat, workspace, and shell compositions.
+- `JDW` documents declarative widget authoring and inspection surfaces.
+- `Workbench Sample` documents complete integrating-host journeys.
+
+Use the lowest accurate layer. A component does not belong under `Atomic UI`
+merely because it is small; host state, commands, persistence, and workbench
+placement move it to `Workbench UI` or the sample host. Only focused Atomic UI
+stories opt into autodocs so the Docs page stays useful without restoring a
+package-wide component gallery.
+
 ## Screen Size Presets
 
 - Common monitor presets are maintained in
@@ -77,13 +90,13 @@ workflow and can be verified by `test:storybook-play:required`.
 
 First-pass component required set:
 
-1. `React/Primitives/Controls` - Form controls in a settings/form surface
-2. `React/Primitives/Editor Chrome` - Tabs and mode controls in the editor/main area
-3. `React/Overlay/Dialog Actions` - Confirmation and context menu from a main-area trigger
-4. `React/Overlay/Dialog Actions` - Context menu column layouts (`data-has-icons` / `data-has-shortcuts`)
-5. `React/Overlay/Dialog Actions` - Context menu pointer state (`useContextMenuState` right-click open)
-6. `React/Workbench/Chat Components` - Sample peer chat example, peer interaction, and assistant runtime controls
-7. `React/Workbench/Workspace Search` - Search panel flow in a sidebar search panel
+1. `Atomic UI/Controls/Form Controls` - Form controls in a settings/form surface
+2. `Workbench UI/Editor/Chrome` - Tabs and mode controls in the editor/main area
+3. `Atomic UI/Overlays/Dialog Actions` - Confirmation and context menu from a main-area trigger
+4. `Atomic UI/Overlays/Dialog Actions` - Context menu column layouts (`data-has-icons` / `data-has-shortcuts`)
+5. `Atomic UI/Overlays/Dialog Actions` - Context menu pointer state (`useContextMenuState` right-click open)
+6. `Workbench UI/Chat/Components` - Sample peer chat example, peer interaction, and assistant runtime controls
+7. `Workbench UI/Workspace/Search` - Search panel flow in a sidebar search panel
 
 ## Sample host as SUT
 
@@ -124,9 +137,9 @@ Use these root scripts:
 ```json
 {
   "storybook": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open",
-  "storybook:components": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-primitives-controls--form-controls&viewMode=story",
+  "storybook:components": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=atomic-ui-controls-form-controls--form-controls&viewMode=story",
   "storybook:sample": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-sample-dev-app--tester-dev-app-journey&viewMode=story",
-  "storybook:chat": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=react-workbench-chat-components--sample-peer-chat-example&viewMode=story",
+  "storybook:chat": "pnpm exec storybook dev --port 61009 --host 127.0.0.1 --no-open --initial-path=/iframe.html?id=workbench-ui-chat-components--sample-peer-chat-example&viewMode=story",
   "build:storybook": "pnpm exec storybook build",
   "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
   "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",

@@ -145,7 +145,7 @@ integration points. It surfaces editor tabs, workspace initialization, JDW
 Widget Tree design/code entry points, compiled template documents, schema documents, settings
 contributions, package showcase notes, and light/dark theme switching in one
 screen. For integrated workspace/chat/editor flows, use Storybook
-`React/Workbench/Shell` → `Integrated Shell` (`@workbench-kit/react/workbench/demo`).
+`Workbench UI/Shell` → `Integrated Shell` (`@workbench-kit/react/workbench/demo`).
 Primary sidebar chrome uses pixel widths; the sample host still persists layout
 percent and maps to pixels at the shell boundary.
 

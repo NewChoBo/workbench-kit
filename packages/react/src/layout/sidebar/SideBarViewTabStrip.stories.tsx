@@ -67,7 +67,7 @@ function SideBarViewTabStripHarness({
 }
 
 const meta = {
-  title: 'React/Layout/Side Bar View Tab Strip',
+  title: 'Workbench UI/Sidebar/View Tabs',
   parameters: {
     layout: 'fullscreen',
     storybookGrid: { enabled: false },

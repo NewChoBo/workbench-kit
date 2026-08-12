@@ -129,7 +129,7 @@ Integrated shell demo builds context keys via `createIntegratedShellContextKeys`
 
 ## Reference implementations
 
-- **Storybook**: `IntegratedShellDemo` → `React/Workbench/Shell` → `Integrated Shell`
+- **Storybook**: `IntegratedShellDemo` → `Workbench UI/Shell` → `Integrated Shell`
   (baseline play; pixel sidebar width via Workbench settings)
 - **Icon inspector tabs**: `SideBarViewTabStrip` story `Inspector icon tabs` for secondary
   sidebar panes that switch by icon rather than text `TabbedPanels`
