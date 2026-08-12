@@ -16,8 +16,13 @@ import type {
   ValueTransformRegistry,
 } from '../types.js';
 import { applyTransformChain } from '../../registry/createValueTransformRegistry.js';
-import { findSourceField, findTargetSlot } from './resolveMappedValue.js';
-import { isPlainObject, readObjectPath, writeObjectPath } from './pathUtils.js';
+import {
+  findSourceField,
+  findTargetSlot,
+  readSourceFieldValue,
+  resolveTargetSlotOutputPath,
+} from './resolveMappedValue.js';
+import { isPlainObject, writeObjectPath } from './pathUtils.js';
 
 /** Max inputs on a combine operator. */
 export const MAX_MAPPING_FAN_IN = 8;
@@ -66,45 +71,6 @@ function leafKey(field: {
   }
   const idParts = field.id.split('.').filter(Boolean);
   return idParts[idParts.length - 1] ?? field.label;
-}
-
-function outputPathForTarget(slot: TargetSlot): string {
-  const path = slot.path?.trim();
-  if (path) {
-    return path;
-  }
-  const id = slot.id.trim();
-  if (id.includes('.')) {
-    const parts = id.split('.').filter(Boolean);
-    if (parts.length >= 2) {
-      return parts.slice(1).join('.');
-    }
-  }
-  return slot.label.trim() || id;
-}
-
-function readFieldValue(field: SourceField, inputs: Readonly<Record<string, unknown>>): unknown {
-  const shapeId = field.shapeId?.trim();
-  const bag =
-    shapeId && Object.prototype.hasOwnProperty.call(inputs, shapeId)
-      ? inputs[shapeId]
-      : Object.keys(inputs).length === 1
-        ? inputs[Object.keys(inputs)[0]!]
-        : inputs;
-
-  const path = field.path?.trim();
-  if (path) {
-    if (shapeId && Object.prototype.hasOwnProperty.call(inputs, shapeId)) {
-      return readObjectPath(bag, path);
-    }
-    const fromBag = readObjectPath(bag, path);
-    if (fromBag !== undefined) {
-      return fromBag;
-    }
-    return readObjectPath(inputs, path);
-  }
-
-  return field.sampleValue;
 }
 
 function sanitizeOperatorTransformIds(ids: readonly string[] | undefined): string[] | undefined {
@@ -234,7 +200,7 @@ export async function applyMappingOperators(
         if (!field) {
           throw new MappingOperatorError(operator.id, `Unknown source field "${fieldId}".`);
         }
-        bag[leafKey(field)] = readFieldValue(field, input.inputs);
+        bag[leafKey(field)] = readSourceFieldValue(field, input.inputs);
       }
 
       const target = findTargetSlot(input.targets, operator.outputSlotId);
@@ -251,7 +217,7 @@ export async function applyMappingOperators(
         bag,
         context,
       );
-      output = writeObjectPath(output, outputPathForTarget(target), value);
+      output = writeObjectPath(output, resolveTargetSlotOutputPath(target), value);
       continue;
     }
 
@@ -264,7 +230,7 @@ export async function applyMappingOperators(
       );
     }
 
-    let current = readFieldValue(source, input.inputs);
+    let current = readSourceFieldValue(source, input.inputs);
     current = await applyTransformChain(
       input.transforms,
       operator.transformIds ?? [],
@@ -285,7 +251,7 @@ export async function applyMappingOperators(
         throw new MappingOperatorError(operator.id, `Unknown target slot "${slotId}".`);
       }
       const key = leafKey(target);
-      output = writeObjectPath(output, outputPathForTarget(target), current[key]);
+      output = writeObjectPath(output, resolveTargetSlotOutputPath(target), current[key]);
     }
   }
 

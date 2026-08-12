@@ -7,15 +7,15 @@ import {
   type DataShapeRegistry,
 } from './dataShape.js';
 import { convertArrayWithItemEdges } from '../mapping/convertItemEdges.js';
-import { isPlainObject, readObjectPath, writeObjectPath } from '../mapping/pathUtils.js';
-import { findSourceField, resolveMappedValue } from '../mapping/resolveMappedValue.js';
+import { isPlainObject, writeObjectPath } from '../mapping/pathUtils.js';
+import {
+  findSourceField,
+  readSourceFieldValue,
+  resolveMappedValue,
+  resolveTargetSlotOutputPath,
+} from '../mapping/resolveMappedValue.js';
 import { findTargetSlot, flattenTargetSlots } from '../mapping/treeUtils.js';
-import type {
-  SourceField,
-  TargetSlot,
-  TransformContext,
-  ValueTransformRegistry,
-} from '../types.js';
+import type { TransformContext, ValueTransformRegistry } from '../types.js';
 
 export interface ConvertToShapeInput {
   readonly conversion: ConversionDefinition;
@@ -64,54 +64,6 @@ function resolveShape(
     return shapes.get(id);
   }
   return shapes.find((shape) => shape.id === id);
-}
-
-function outputPathForTarget(slot: TargetSlot): string {
-  const path = slot.path?.trim();
-  if (path) {
-    return path;
-  }
-  // Prefer last id segment when hosts use dotted ids (`slot.display.timeText`).
-  const id = slot.id.trim();
-  if (id.includes('.')) {
-    const parts = id.split('.').filter(Boolean);
-    // Drop a leading registry prefix like `slot` when present with 3+ segments.
-    if (parts.length >= 3 && (parts[0] === 'slot' || parts[0] === 'tgt')) {
-      return parts.slice(1).join('.');
-    }
-    if (parts.length >= 2) {
-      return parts.slice(1).join('.');
-    }
-  }
-  return slot.label.trim() || id;
-}
-
-function readFieldValue(field: SourceField, inputs: Readonly<Record<string, unknown>>): unknown {
-  const shapeId = field.shapeId?.trim();
-  const bag =
-    shapeId && Object.prototype.hasOwnProperty.call(inputs, shapeId)
-      ? inputs[shapeId]
-      : // Single-bag fallback: use the only input, or the whole inputs record.
-        Object.keys(inputs).length === 1
-        ? inputs[Object.keys(inputs)[0]!]
-        : inputs;
-
-  const path = field.path?.trim();
-  if (path) {
-    // When bags are per-shape, paths are relative to that bag.
-    // When falling back to the whole inputs record, absolute paths still work.
-    if (shapeId && Object.prototype.hasOwnProperty.call(inputs, shapeId)) {
-      return readObjectPath(bag, path);
-    }
-    const fromBag = readObjectPath(bag, path);
-    if (fromBag !== undefined) {
-      return fromBag;
-    }
-    // Absolute path into combined inputs (e.g. `order.totalCents`).
-    return readObjectPath(inputs, path);
-  }
-
-  return field.sampleValue;
 }
 
 /**
@@ -170,7 +122,7 @@ export async function convertToShape(input: ConvertToShapeInput): Promise<Conver
       continue;
     }
 
-    const sourceValue = readFieldValue(sourceField, input.inputs);
+    const sourceValue = readSourceFieldValue(sourceField, input.inputs);
     const value =
       edge.itemEdges && edge.itemEdges.length > 0
         ? await convertArrayWithItemEdges({
@@ -191,7 +143,7 @@ export async function convertToShape(input: ConvertToShapeInput): Promise<Conver
                 : undefined,
           });
 
-    const path = outputPathForTarget(targetSlot);
+    const path = resolveTargetSlotOutputPath(targetSlot);
     output = writeObjectPath(output, path, value);
     slots.push({
       edgeId: edge.id,

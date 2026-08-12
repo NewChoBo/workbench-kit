@@ -1,11 +1,12 @@
 import type {
   MappingEdge,
   SourceField,
+  TargetSlot,
   TransformContext,
   ValueTransformRegistry,
 } from '../types.js';
 import { edgeItemTransformIds, edgeTransformIds } from '../document/mappingEdge.js';
-import { projectCollectionItems } from './pathUtils.js';
+import { projectCollectionItems, readObjectPath } from './pathUtils.js';
 import { applyTransformChain } from '../../registry/createValueTransformRegistry.js';
 import { BUILTIN_TRANSFORM_IDS } from '../../registry/builtinTransforms.js';
 import { resolveOptionSteps } from './transformOptions.js';
@@ -20,6 +21,44 @@ export function findSourceField(
   fieldId: string,
 ): SourceField | undefined {
   return flattenSourceFields(fields).find((field) => field.id === fieldId);
+}
+
+export function readSourceFieldValue(
+  field: SourceField,
+  inputs: Readonly<Record<string, unknown>>,
+): unknown {
+  const shapeId = field.shapeId?.trim();
+  const bag =
+    shapeId && Object.prototype.hasOwnProperty.call(inputs, shapeId)
+      ? inputs[shapeId]
+      : Object.keys(inputs).length === 1
+        ? inputs[Object.keys(inputs)[0]!]
+        : inputs;
+
+  const path = field.path?.trim();
+  if (!path) {
+    return field.sampleValue;
+  }
+  if (shapeId && Object.prototype.hasOwnProperty.call(inputs, shapeId)) {
+    return readObjectPath(bag, path);
+  }
+  const fromBag = readObjectPath(bag, path);
+  return fromBag === undefined ? readObjectPath(inputs, path) : fromBag;
+}
+
+export function resolveTargetSlotOutputPath(slot: TargetSlot): string {
+  const path = slot.path?.trim();
+  if (path) {
+    return path;
+  }
+  const id = slot.id.trim();
+  if (id.includes('.')) {
+    const parts = id.split('.').filter(Boolean);
+    if (parts.length >= 2) {
+      return parts.slice(1).join('.');
+    }
+  }
+  return slot.label.trim() || id;
 }
 
 /**
