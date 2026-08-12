@@ -391,6 +391,15 @@ export function WorkbenchStandaloneShell<
       }),
     );
   };
+  const togglePrimarySidebar = () => {
+    const nextSidebarVisible = !isPrimarySidebarVisible;
+    setPrimarySidebarLifecycle(
+      activeActivityId,
+      nextSidebarVisible,
+      nextSidebarVisible ? 'sidebar-show' : 'sidebar-hide',
+    );
+    shell.togglePrimarySidebar();
+  };
   const createContext = ({
     activityId,
     shell,
@@ -403,15 +412,7 @@ export function WorkbenchStandaloneShell<
       isPrimarySidebarVisible,
       openSettings: shell.openSettings,
       showActivity,
-      togglePrimarySidebar: () => {
-        const nextSidebarVisible = !isPrimarySidebarVisible;
-        setPrimarySidebarLifecycle(
-          activeActivityId,
-          nextSidebarVisible,
-          nextSidebarVisible ? 'sidebar-show' : 'sidebar-hide',
-        );
-        shell.togglePrimarySidebar();
-      },
+      togglePrimarySidebar,
     },
     isPrimarySidebarVisible,
     isSettingsOpen,
@@ -430,15 +431,7 @@ export function WorkbenchStandaloneShell<
       );
       shell.setPrimarySidebarVisible(isVisible);
     },
-    togglePrimarySidebar: () => {
-      const nextSidebarVisible = !isPrimarySidebarVisible;
-      setPrimarySidebarLifecycle(
-        activeActivityId,
-        nextSidebarVisible,
-        nextSidebarVisible ? 'sidebar-show' : 'sidebar-hide',
-      );
-      shell.togglePrimarySidebar();
-    },
+    togglePrimarySidebar,
     openSettings: shell.openSettings,
     closeSettings: shell.closeSettings,
     setSettingsCategoryId: shell.setSettingsCategoryId,
