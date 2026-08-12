@@ -138,6 +138,20 @@ export function CommandManagementSidebar({
     focusCommandEntry(getNextEntryId(currentEntryId ?? activeEntryId, event.key));
   };
 
+  const renderCommandEntry = (entry: CommandManagementEntry) => (
+    <CommandSidebarListItem
+      key={entry.id}
+      active={entry.id === activeEntryId}
+      disabled={entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'}
+      entry={entry}
+      onActivate={() => setActiveEntryId(entry.id)}
+      onInspect={onInspectCommand}
+      onRun={() => {
+        void onRunCommand?.(entry.id);
+      }}
+    />
+  );
+
   return (
     <SideBarViewFrame
       actions={
@@ -199,21 +213,7 @@ export function CommandManagementSidebar({
           className={commandManagementListClassName}
           onKeyDown={handleListKeyDown}
         >
-          {filteredGroups[0]?.entries.map((entry) => (
-            <CommandSidebarListItem
-              key={entry.id}
-              active={entry.id === activeEntryId}
-              disabled={
-                entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'
-              }
-              entry={entry}
-              onActivate={() => setActiveEntryId(entry.id)}
-              onInspect={onInspectCommand}
-              onRun={() => {
-                void onRunCommand?.(entry.id);
-              }}
-            />
-          ))}
+          {filteredGroups[0]?.entries.map(renderCommandEntry)}
         </SideBarList>
       ) : (
         <WorkbenchSidebarSectionStack
@@ -224,21 +224,7 @@ export function CommandManagementSidebar({
                 className={commandManagementListClassName}
                 onKeyDown={handleListKeyDown}
               >
-                {group.entries.map((entry) => (
-                  <CommandSidebarListItem
-                    key={entry.id}
-                    active={entry.id === activeEntryId}
-                    disabled={
-                      entry.status !== 'available' || !onRunCommand || lastRun?.status === 'running'
-                    }
-                    entry={entry}
-                    onActivate={() => setActiveEntryId(entry.id)}
-                    onInspect={onInspectCommand}
-                    onRun={() => {
-                      void onRunCommand?.(entry.id);
-                    }}
-                  />
-                ))}
+                {group.entries.map(renderCommandEntry)}
               </SideBarList>
             ),
             id: `command-group-${group.id}`,
