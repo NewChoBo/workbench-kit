@@ -15,12 +15,7 @@ export type {
   ValueTransformRegistry,
 } from './domain/types.js';
 
-export {
-  canonicalizeTransformId,
-  IDENTITY_TRANSFORM_ID,
-  MAX_TRANSFORM_CHAIN,
-  TRANSFORM_ID_ALIASES,
-} from './domain/constants.js';
+export { IDENTITY_TRANSFORM_ID, MAX_TRANSFORM_CHAIN } from './domain/constants.js';
 
 export {
   createMappingEdge,

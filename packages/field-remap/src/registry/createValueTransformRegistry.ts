@@ -1,5 +1,5 @@
 import { throwIfAborted } from '../domain/abort.js';
-import { canonicalizeTransformId, MAX_TRANSFORM_CHAIN } from '../domain/constants.js';
+import { MAX_TRANSFORM_CHAIN } from '../domain/constants.js';
 import type {
   FieldDataType,
   TransformContext,
@@ -18,8 +18,7 @@ export function createValueTransformRegistry(
   }
 
   function resolve(id: string): ValueTransformDefinition | undefined {
-    const canonical = canonicalizeTransformId(id);
-    return byId.get(canonical) ?? byId.get(id);
+    return byId.get(id.trim()) ?? byId.get(id);
   }
 
   return {

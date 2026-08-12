@@ -4,11 +4,7 @@
  * {@link applyMappingOperators} explicitly without persisting.
  */
 
-import {
-  canonicalizeTransformId,
-  IDENTITY_TRANSFORM_ID,
-  MAX_TRANSFORM_CHAIN,
-} from '../constants.js';
+import { IDENTITY_TRANSFORM_ID, MAX_TRANSFORM_CHAIN } from '../constants.js';
 import { throwIfAborted } from '../abort.js';
 import type {
   CombineMappingOperator,
@@ -113,7 +109,7 @@ function readFieldValue(field: SourceField, inputs: Readonly<Record<string, unkn
 
 function sanitizeOperatorTransformIds(ids: readonly string[] | undefined): string[] | undefined {
   const cleaned = ids
-    ?.map((id) => canonicalizeTransformId(id))
+    ?.map((id) => id.trim())
     .filter((id) => id.length > 0 && id !== IDENTITY_TRANSFORM_ID);
   if (!cleaned || cleaned.length === 0) {
     return undefined;

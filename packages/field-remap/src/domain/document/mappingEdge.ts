@@ -1,8 +1,4 @@
-import {
-  canonicalizeTransformId,
-  IDENTITY_TRANSFORM_ID,
-  MAX_TRANSFORM_CHAIN,
-} from '../constants.js';
+import { IDENTITY_TRANSFORM_ID, MAX_TRANSFORM_CHAIN } from '../constants.js';
 import { sanitizeOptionSteps } from '../mapping/transformOptions.js';
 import type { MappingEdge } from '../types.js';
 
@@ -10,7 +6,7 @@ export { MAX_TRANSFORM_CHAIN } from '../constants.js';
 
 function sanitizeTransformIds(ids: readonly string[] | undefined): string[] {
   const cleaned = ids
-    ?.map((id) => canonicalizeTransformId(id))
+    ?.map((id) => id.trim())
     .filter((id) => id.length > 0 && id !== IDENTITY_TRANSFORM_ID);
   if (!cleaned || cleaned.length === 0) {
     return [];
