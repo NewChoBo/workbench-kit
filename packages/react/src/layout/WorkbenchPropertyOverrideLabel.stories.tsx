@@ -13,7 +13,6 @@ import { WorkbenchPropertyOverrideLabel } from './WorkbenchPropertyOverrideLabel
 const meta = {
   title: 'Workbench UI/Settings/Property Override',
   parameters: {
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
   render: () => <PropertyOverrideLabelHarness />,

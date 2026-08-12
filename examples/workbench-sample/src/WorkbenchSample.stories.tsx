@@ -38,7 +38,6 @@ const meta = {
   title: 'Workbench Sample/Dev App',
   component: App,
   parameters: {
-    layout: 'fullscreen',
     fullHeightShell: '100vh',
     storybookGrid: { enabled: false },
     test: {

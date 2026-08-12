@@ -183,7 +183,6 @@ const CANVAS_REPARENT_DOCUMENT = formatWidgetDocumentJson({
 const meta = {
   title: 'JDW/WidgetTree/Lab',
   parameters: {
-    layout: 'fullscreen',
     fullHeightShell: '100vh',
     storybookGrid: { enabled: false },
     test: {

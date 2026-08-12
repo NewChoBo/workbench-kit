@@ -100,7 +100,6 @@ const meta = {
           'Positioned panel behavior for toolbar and filter triggers, including focus, dismissal, and nested interactive content.',
       },
     },
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
   render: () => <AnchoredCatalogFilterHarness />,

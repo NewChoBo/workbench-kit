@@ -22,7 +22,6 @@ const meta = {
           'Async collection feedback composed from one scroll owner, a load sentinel, visible progress, and an empty state.',
       },
     },
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
   render: () => <InfiniteCatalogHarness />,

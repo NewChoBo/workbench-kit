@@ -60,7 +60,6 @@ function MonacoDiffEditorDemo() {
 const meta = {
   title: 'Workbench Sample/Monaco Diff Editor',
   parameters: {
-    layout: 'fullscreen',
     fullHeightShell: '100vh',
     storybookGrid: { enabled: false },
     docs: {

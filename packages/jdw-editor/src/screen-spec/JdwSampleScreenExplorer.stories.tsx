@@ -6,9 +6,6 @@ import { JdwSampleScreenExplorer } from './JdwSampleScreenExplorer.js';
 const meta = {
   title: 'JDW/WidgetTree/Template Scaffold',
   component: JdwSampleScreenExplorer,
-  parameters: {
-    layout: 'fullscreen',
-  },
 } satisfies Meta<typeof JdwSampleScreenExplorer>;
 
 export default meta;

@@ -8,7 +8,6 @@ import { StoryWorkbenchShellFrame } from '../story/StoryWorkbenchShellFrame';
 const meta = {
   title: 'Workbench UI/Shell',
   parameters: {
-    layout: 'fullscreen',
     fullHeightShell: '100vh',
     storybookGrid: { enabled: false },
   },

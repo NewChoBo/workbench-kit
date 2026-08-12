@@ -11,7 +11,6 @@ import { StoryWorkbenchShellFrame } from '../story/StoryWorkbenchShellFrame';
 const meta = {
   title: 'React/Workbench/Platform Chrome',
   parameters: {
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
 } satisfies Meta;

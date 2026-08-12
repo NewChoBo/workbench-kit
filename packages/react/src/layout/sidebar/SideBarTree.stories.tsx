@@ -59,7 +59,6 @@ function SideBarTreeHarness({
 const meta = {
   title: 'React/Layout/Side Bar Tree',
   parameters: {
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
 } satisfies Meta;

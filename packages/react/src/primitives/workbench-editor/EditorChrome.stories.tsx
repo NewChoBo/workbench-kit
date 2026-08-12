@@ -37,7 +37,6 @@ const initialTabs: EditorTab[] = [
 const meta = {
   title: 'Workbench UI/Editor/Chrome',
   parameters: {
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
   render: () => <EditorChromeHarness />,

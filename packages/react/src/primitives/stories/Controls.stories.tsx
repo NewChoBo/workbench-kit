@@ -23,7 +23,6 @@ const meta = {
           'Foundational input and action primitives for dense settings and form surfaces. Reuse these controls before introducing host-specific markup.',
       },
     },
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
   render: () => (

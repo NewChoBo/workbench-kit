@@ -36,7 +36,6 @@ const searchResults: WorkspaceSearchResult[] = [
 const meta = {
   title: 'Workbench UI/Workspace/Search',
   parameters: {
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
   render: () => <WorkspaceSearchHarness />,

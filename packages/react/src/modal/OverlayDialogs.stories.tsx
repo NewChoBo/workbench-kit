@@ -19,7 +19,6 @@ const meta = {
           'Fixed overlay mechanics for confirmation and context actions. Hosts keep decision copy and final side effects.',
       },
     },
-    layout: 'fullscreen',
     storybookGrid: { enabled: false },
   },
   render: () => <OverlayDialogHarness />,
