@@ -85,13 +85,3 @@ export function createChatTransportFromRuntime({
       }),
   };
 }
-
-export function emitRuntimeWorkspacePatch({
-  runtime,
-  patch,
-}: {
-  runtime: Pick<MockWorkbenchRuntime, 'emitWorkspacePatch'>;
-  patch: Parameters<MockWorkbenchRuntime['emitWorkspacePatch']>[0];
-}) {
-  runtime.emitWorkspacePatch(patch);
-}

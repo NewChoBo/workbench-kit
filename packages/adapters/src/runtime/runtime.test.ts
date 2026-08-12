@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { createMockWorkbenchRuntime } from '@workbench-kit/runtime';
 import type { ChatStreamEvent } from '@workbench-kit/contracts';
-import { createChatTransportFromRuntime, emitRuntimeWorkspacePatch } from './runtime';
+import { createChatTransportFromRuntime } from './runtime';
 
 describe('runtime adapter', () => {
   it('forwards chat message send and status events as transport events', async () => {
@@ -36,18 +36,12 @@ describe('runtime adapter', () => {
     const events: ChatStreamEvent[] = [];
     const unsubscribe = transport.subscribe((event) => events.push(event));
 
-    emitRuntimeWorkspacePatch({
-      patch: { path: 'docs/runtime-notes.md', type: 'delete-file' },
-      runtime,
-    });
-    emitRuntimeWorkspacePatch({
-      patch: {
-        content: 'runtime content',
-        path: 'docs/runtime-notes.md',
-        type: 'write-file',
-        updatedAt: '2026-06-03T00:00:00.000Z',
-      },
-      runtime,
+    runtime.emitWorkspacePatch({ path: 'docs/runtime-notes.md', type: 'delete-file' });
+    runtime.emitWorkspacePatch({
+      content: 'runtime content',
+      path: 'docs/runtime-notes.md',
+      type: 'write-file',
+      updatedAt: '2026-06-03T00:00:00.000Z',
     });
 
     expect(events).toEqual([
