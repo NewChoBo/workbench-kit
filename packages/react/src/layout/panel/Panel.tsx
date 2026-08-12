@@ -71,9 +71,6 @@ export function FilterBarRow({ className, ...props }: FilterBarRowProps) {
   return <div className={cx('ui-filter-bar__row', className)} {...props} />;
 }
 
-/** @deprecated Use `Chip` / `ChipProps` from `@workbench-kit/react` primitives. */
-export { FilterChip, type FilterChipProps } from '../../primitives/chip';
-
 export interface FilterBarActiveChipsProps extends ComponentPropsWithRef<'div'> {
   clearAllLabel?: string | undefined;
   onClearAll?: (() => void) | undefined;

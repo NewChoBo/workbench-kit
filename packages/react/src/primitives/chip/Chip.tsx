@@ -9,10 +9,7 @@ export interface ChipProps extends Omit<ComponentPropsWithRef<'button'>, 'childr
   onDismiss?: () => void;
 }
 
-/**
- * Compact labeled control, optionally dismissible (close affordance).
- * Preferred over layout-scoped `FilterChip`.
- */
+/** Compact labeled control, optionally dismissible (close affordance). */
 export function Chip({ className, count, label, onDismiss, type = 'button', ...props }: ChipProps) {
   return (
     <Button className={cx('ui-chip', 'ui-filter-chip', className)} type={type} {...props}>
@@ -35,9 +32,3 @@ export function Chip({ className, count, label, onDismiss, type = 'button', ...p
     </Button>
   );
 }
-
-/** @deprecated Use {@link Chip} / {@link ChipProps}. */
-export const FilterChip = Chip;
-
-/** @deprecated Use {@link ChipProps}. */
-export type FilterChipProps = ChipProps;
