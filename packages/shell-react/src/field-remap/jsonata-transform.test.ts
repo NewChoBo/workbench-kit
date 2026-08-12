@@ -40,16 +40,6 @@ describe('jsonataValueTransform', () => {
     ).rejects.toBeTruthy();
   });
 
-  it('can passthrough errors when configured', async () => {
-    const transform = createJsonataValueTransform({
-      maxExpressionLength: 4,
-      onError: 'passthrough',
-    });
-    await expect(transform.apply('keep', { options: { expression: '$string()' } })).resolves.toBe(
-      'keep',
-    );
-  });
-
   it('rejects when the transform context signal is already aborted', async () => {
     const transform = createJsonataValueTransform({ timeoutMs: 5_000 });
     const controller = new AbortController();

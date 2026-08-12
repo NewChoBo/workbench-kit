@@ -179,7 +179,6 @@ export {
   createJsonataValueTransform,
   jsonataValueTransform,
   type CreateJsonataValueTransformOptions,
-  type JsonataTransformErrorPolicy,
 } from './field-remap/jsonata-transform.js';
 export {
   FIELD_REMAP_SAMPLES,

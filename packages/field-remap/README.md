@@ -270,8 +270,8 @@ Pass `signal` on `convertToShape` (or `TransformContext.signal`) to cancel stale
 Aborted runs reject with `AbortError` and stop further edges / chain steps. The shell Field Remap
 panel wires an `AbortController` to effect cleanup.
 
-Host JSONata transforms in `@workbench-kit/shell-react` are bounded by default (`timeoutMs`,
-`maxExpressionLength`, `onError: 'throw'`). Use `createJsonataValueTransform()` to override.
+Host JSONata transforms in `@workbench-kit/shell-react` are fail-closed and bounded by default
+(`timeoutMs`, `maxExpressionLength`). Use `createJsonataValueTransform()` to override the bounds.
 
 ## Layout
 

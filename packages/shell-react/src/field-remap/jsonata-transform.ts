@@ -10,8 +10,6 @@ export const DEFAULT_JSONATA_TIMEOUT_MS = 2_000;
 /** Default maximum expression source length (characters). */
 export const DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH = 4_096;
 
-export type JsonataTransformErrorPolicy = 'passthrough' | 'throw';
-
 export interface CreateJsonataValueTransformOptions {
   /** Wall-clock timeout for `evaluate` (default {@link DEFAULT_JSONATA_TIMEOUT_MS}). */
   readonly timeoutMs?: number;
@@ -20,11 +18,6 @@ export interface CreateJsonataValueTransformOptions {
    * (default {@link DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH}).
    */
   readonly maxExpressionLength?: number;
-  /**
-   * - `throw` (default): surface timeout / compile / evaluate failures to the host
-   * - `passthrough`: return the original value (legacy silent identity)
-   */
-  readonly onError?: JsonataTransformErrorPolicy;
 }
 
 export function createJsonataValueTransform(
@@ -32,7 +25,6 @@ export function createJsonataValueTransform(
 ): ValueTransformDefinition {
   const timeoutMs = options.timeoutMs ?? DEFAULT_JSONATA_TIMEOUT_MS;
   const maxExpressionLength = options.maxExpressionLength ?? DEFAULT_JSONATA_MAX_EXPRESSION_LENGTH;
-  const onError = options.onError ?? 'throw';
 
   return {
     id: JSONATA_TRANSFORM_ID,
@@ -57,30 +49,22 @@ export function createJsonataValueTransform(
       }
 
       if (expression.length > maxExpressionLength) {
-        return handleJsonataError(
-          new Error(
-            `JSONata expression exceeds max length (${expression.length} > ${maxExpressionLength}).`,
-          ),
-          value,
-          onError,
+        throw new Error(
+          `JSONata expression exceeds max length (${expression.length} > ${maxExpressionLength}).`,
         );
       }
 
-      try {
-        const compiled = jsonata(expression);
-        // jsonata@2.x evaluate returns a Promise (1.x was synchronous).
-        return await raceJsonataEvaluation(compiled.evaluate(value), {
-          timeoutMs,
-          signal: context.signal,
-        });
-      } catch (error) {
-        return handleJsonataError(error, value, onError);
-      }
+      const compiled = jsonata(expression);
+      // jsonata@2.x evaluate returns a Promise (1.x was synchronous).
+      return await raceJsonataEvaluation(compiled.evaluate(value), {
+        timeoutMs,
+        signal: context.signal,
+      });
     },
   };
 }
 
-/** Default bounded transform (`onError: 'throw'`, 2s timeout, 4k expression cap). */
+/** Default bounded transform (2s timeout, 4k expression cap). */
 export const jsonataValueTransform: ValueTransformDefinition = createJsonataValueTransform();
 
 export class JsonataTransformTimeoutError extends Error {
@@ -149,18 +133,4 @@ export async function raceJsonataEvaluation<T>(
       },
     );
   });
-}
-
-function handleJsonataError(
-  error: unknown,
-  value: unknown,
-  onError: JsonataTransformErrorPolicy,
-): unknown {
-  if (onError === 'passthrough') {
-    return value;
-  }
-  if (error instanceof Error) {
-    throw error;
-  }
-  throw new Error(String(error));
 }

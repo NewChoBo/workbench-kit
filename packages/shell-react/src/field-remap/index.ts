@@ -47,7 +47,6 @@ export {
   createJsonataValueTransform,
   jsonataValueTransform,
   type CreateJsonataValueTransformOptions,
-  type JsonataTransformErrorPolicy,
 } from './jsonata-transform.js';
 export {
   addTransformStepToEdge,
