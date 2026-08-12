@@ -1,4 +1,5 @@
 import type { JSX } from 'react';
+import { SideBarList, SideBarListItem } from '@workbench-kit/react/layout';
 import { Button } from '@workbench-kit/react/primitives';
 import type { ValueTransformRegistry } from '@workbench-kit/field-remap';
 
@@ -59,7 +60,7 @@ export function FieldRemapConvertPalette({
         </Button>
       </div>
 
-      <ul
+      <SideBarList
         className="workbench-field-remap-convert-palette__list"
         role="listbox"
         aria-label={chromeLabels.convertsListAriaLabel}
@@ -67,27 +68,23 @@ export function FieldRemapConvertPalette({
         {catalog.map((definition) => {
           const selected = definition.id === selectedTransformId;
           return (
-            <li key={definition.id}>
-              <button
-                type="button"
-                role="option"
-                aria-selected={selected}
-                className={
-                  selected
-                    ? 'workbench-field-remap-convert-palette__item is-selected'
-                    : 'workbench-field-remap-convert-palette__item'
-                }
-                data-testid={`field-remap-palette-item-${definition.id}`}
-                onClick={() => onSelectedTransformIdChange(definition.id)}
-                onDoubleClick={() => onPlaceDraft(definition.id)}
-              >
-                <strong>{definition.label}</strong>
-                <code>{definition.id}</code>
-              </button>
-            </li>
+            <SideBarListItem
+              key={definition.id}
+              aria-selected={selected}
+              data-testid={`field-remap-palette-item-${definition.id}`}
+              role="option"
+              selected={selected}
+              variant="stacked"
+              wrapperProps={{ role: 'presentation' }}
+              onClick={() => onSelectedTransformIdChange(definition.id)}
+              onDoubleClick={() => onPlaceDraft(definition.id)}
+            >
+              <strong>{definition.label}</strong>
+              <code title={definition.id}>{definition.id}</code>
+            </SideBarListItem>
           );
         })}
-      </ul>
+      </SideBarList>
 
       {onAddCombine || onAddSplit ? (
         <div

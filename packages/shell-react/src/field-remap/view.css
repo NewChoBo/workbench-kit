@@ -365,41 +365,16 @@
 }
 
 .workbench-field-remap-convert-palette__list {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
   flex: 1 1 auto;
-  flex-direction: column;
-  gap: 0.35rem;
   min-height: 0;
   overflow: auto;
 }
 
-.workbench-field-remap-convert-palette__item {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 0.15rem;
-  width: 100%;
-  margin: 0;
-  padding: 0.45rem 0.5rem;
-  border: 1px solid var(--vscode-panel-border, var(--color-border));
-  border-radius: 0.25rem;
-  background: var(--vscode-editor-background, var(--color-bg));
-  color: inherit;
-  text-align: left;
-  cursor: pointer;
-  font: inherit;
-}
-
-.workbench-field-remap-convert-palette__item.is-selected {
-  border-color: var(--vscode-focusBorder, var(--color-accent, #3794ff));
-}
-
-.workbench-field-remap-convert-palette__item code {
+.workbench-field-remap-convert-palette__list code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-size: 0.7rem;
-  word-break: break-all;
 }
 
 .workbench-field-remap-convert-palette__operators {

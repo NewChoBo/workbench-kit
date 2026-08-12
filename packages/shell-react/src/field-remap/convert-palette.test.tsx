@@ -28,6 +28,7 @@ describe('FieldRemapConvertPalette', () => {
 
   it('places the selected convert from primary palette chrome', () => {
     const onPlaceDraft = vi.fn();
+    const onSelectedTransformIdChange = vi.fn();
     container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
@@ -36,12 +37,31 @@ describe('FieldRemapConvertPalette', () => {
         <FieldRemapConvertPalette
           transforms={transforms}
           selectedTransformId="string:trim"
-          onSelectedTransformIdChange={() => undefined}
+          onSelectedTransformIdChange={onSelectedTransformIdChange}
           onPlaceDraft={onPlaceDraft}
         />,
       );
     });
-    expect(container.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
+    expect(
+      container.querySelector('[data-testid="field-remap-convert-palette"] .ui-sidebar-list'),
+    ).toBeTruthy();
+    expect(
+      container
+        .querySelector(
+          '[data-testid="field-remap-palette-item-string:trim"].ui-sidebar-list-item--stacked',
+        )
+        ?.getAttribute('aria-selected'),
+    ).toBe('true');
+    const paletteItem = container.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-palette-item-string:trim"]',
+    );
+    act(() => {
+      paletteItem?.click();
+      paletteItem?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+    });
+    expect(onSelectedTransformIdChange).toHaveBeenCalledWith('string:trim');
+    expect(onPlaceDraft).toHaveBeenCalledWith('string:trim');
+    onPlaceDraft.mockClear();
     act(() => {
       container!
         .querySelector<HTMLButtonElement>('[data-testid="field-remap-place-draft"]')
