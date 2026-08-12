@@ -1,7 +1,14 @@
 import type { ReactNode } from 'react';
 import { Button } from '../../primitives/button';
 import { WorkbenchPropertyInline } from '../../layout/WorkbenchPropertyPanel';
-import type { IntegrationCommandAction } from './integration-command-action.js';
+
+export interface IntegrationCommandAction<TCommandId extends string = string> {
+  readonly enabled: boolean;
+  readonly execute: () => Promise<void> | void;
+  readonly id: TCommandId;
+  readonly label: string;
+  readonly visible?: boolean | undefined;
+}
 
 type IntegrationActionRowAlign = 'center' | 'start';
 type IntegrationActionRowJustify = 'between' | 'end' | 'start';

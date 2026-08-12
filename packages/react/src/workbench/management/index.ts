@@ -22,10 +22,10 @@ export type {
   ExtensionManagementPendingAction,
 } from './ExtensionManagementSidebar.js';
 export {
-  createIntegrationCommandAction,
+  IntegrationActionRow,
+  IntegrationCommandButton,
   type IntegrationCommandAction,
-} from './integration-command-action.js';
-export { IntegrationActionRow, IntegrationCommandButton } from './IntegrationCommandActions.js';
+} from './IntegrationCommandActions.js';
 export { IntegrationsShell } from './IntegrationsShell.js';
 export type { IntegrationsShellProps } from './IntegrationsShell.js';
 export {

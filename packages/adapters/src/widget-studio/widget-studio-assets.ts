@@ -321,8 +321,3 @@ const customAssetPackages: WidgetStudioAssetPackageDefinition[] = [
 export const widgetStudioBuiltinAssetFiles = flattenWidgetStudioAssetPackages(builtinAssetPackages);
 export const widgetStudioCustomAssetExampleFiles =
   flattenWidgetStudioAssetPackages(customAssetPackages);
-
-export const widgetStudioAssetPackageSlugs = [
-  ...builtinAssetPackages.map((pkg) => pkg.slug),
-  ...customAssetPackages.map((pkg) => `${pkg.baseDir?.split('/').pop()}/${pkg.slug}`),
-];
