@@ -34,11 +34,9 @@ export {
   createFieldRemapDocument,
   deserializeFieldRemapDocument,
   InvalidFieldRemapDocumentError,
-  migrateFieldRemapDocument,
   normalizeFieldRemapDocument,
   parseFieldRemapDocument,
   FIELD_REMAP_DOCUMENT_VERSION,
-  FIELD_REMAP_DOCUMENT_V1_VERSION,
   serializeFieldRemapDocument,
   UnsupportedFieldRemapDocumentVersionError,
 } from './domain/document/fieldRemapDocument.js';

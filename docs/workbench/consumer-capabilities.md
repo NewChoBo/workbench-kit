@@ -741,8 +741,8 @@ sample extension packaging.
   ports (`*.item.*`) stay out of the main columns; edit them via list-context `itemEdges`.
 - Canvas “convert nodes” are `transformIds` steps on an edge, not a separate document type.
   Place-then-wire drafts are ephemeral UI state until both ports finalize an edge.
-- Input/output shapes may be host-owned; `FieldRemapDocument` v1 stores edges only (v2 adds
-  optional `operators[]`). The shell `FieldRemapShapeIoEditor` / panel shape IO path pastes
+- Input/output shapes may be host-owned; `FieldRemapDocument` stores edges plus optional
+  `operators[]`. The shell `FieldRemapShapeIoEditor` / panel shape IO path pastes
   JSON → ingest and edits `FieldDataType`; call `pruneMappingEdgesForShapes` when ids disappear.
   Optional `classRef` / `hidden` on `SourceField` / `TargetSlot` plus `projectShapes` /
   `projectSourceFields` / `projectTargetSlots` (`includeHidden`, default omit hidden) support

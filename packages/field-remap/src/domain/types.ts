@@ -143,16 +143,14 @@ export type MappingOperator = CombineMappingOperator | SplitMappingOperator;
 
 /**
  * Minimal JSON-serializable mapping document for host persistence.
- * Hosts own schema trees; this document stores the binding graph (and optional
- * n→m operators from document v2 onward).
+ * Hosts own schema trees; this document stores the binding graph and optional n→m operators.
  */
 export interface FieldRemapDocument {
-  /** `1` = edges-only; `2` = edges + optional `operators[]`. */
-  readonly version: 1 | 2;
+  readonly version: 2;
   readonly edges: readonly MappingEdge[];
   /**
-   * Optional n→m combine/split operators (document v2).
-   * Omitted / empty on v1 documents and on v2 hosts that only use 1→1 edges.
+   * Optional n→m combine/split operators.
+   * Omitted / empty on hosts that only use 1→1 edges.
    */
   readonly operators?: readonly MappingOperator[];
 }

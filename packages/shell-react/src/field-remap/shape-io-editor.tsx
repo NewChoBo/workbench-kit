@@ -34,7 +34,7 @@ function formatJson(value: unknown): string {
 
 /**
  * Host-owned shape IO surface: paste JSON → ingest fields/slots, edit FieldDataType.
- * Persistence stays host-owned (`FieldRemapDocument` v1 is edges-only).
+ * Persistence stays host-owned (`FieldRemapDocument` stores mappings, not shapes).
  */
 export function FieldRemapShapeIoEditor({
   role,

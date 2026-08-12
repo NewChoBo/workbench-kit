@@ -60,9 +60,10 @@ a lighter mapping detail rail (chain overview, palette, list context).
 
 ### Shape ownership
 
-`FieldRemapDocument` (v1) stores **edges only**. Hosts own input/output shapes
-(`SourceField[]` / `TargetSlot[]`, or `defineDataShape` + ingest helpers) and pass
-them into `convertToShape` / the shell `FieldRemapPanel` / `FieldRemapFlowMapper`.
+`FieldRemapDocument` stores edges plus optional combine/split operators. Hosts own
+input/output shapes (`SourceField[]` / `TargetSlot[]`, or `defineDataShape` + ingest
+helpers) and pass them into `convertToShape` / the shell `FieldRemapPanel` /
+`FieldRemapFlowMapper`.
 Optional `classRef` / `hidden` on fields and slots are additive; use
 `projectShapes` / `projectSourceFields` / `projectTargetSlots` with
 `includeHidden` (default omit hidden) before wiring Flow columns, and
@@ -119,7 +120,7 @@ build `defineConversion` / `defineDataShape` registries yourself.
 Place-then-wire uses **ephemeral draft nodes** in the shell Flow UI: place a
 transform, wire source then target (or the reverse), and the draft finalizes into
 a `MappingEdge` with `transformIds: [id]`. Escape discards unfinished drafts.
-The persisted document stays edges-only — no free graph. You can also add steps
+The persisted document stays mapping-only — no free graph nodes. You can also add steps
 via the detail palette / `+ node` onto an existing binding (max 3). List context
 uses `itemEdges` on array→array bindings.
 
@@ -135,13 +136,13 @@ uses `itemEdges` on array→array bindings.
 
 ### n→m operators (combine / split)
 
-`FieldRemapDocument` **v1** is edges-only (1→1 bindings). **v2** (current) adds an
-optional `operators[]` list for fan-in / fan-out. Call `applyMappingOperators` with
+`FieldRemapDocument` v2 includes an optional `operators[]` list for fan-in / fan-out.
+Call `applyMappingOperators` with
 `combine` / `split` operators (limits: `MAX_MAPPING_FAN_IN` / `MAX_MAPPING_FAN_OUT`
 = 8). Hosts may merge the result with `convertToShape` output.
-`migrateFieldRemapDocument` / `parseFieldRemapDocument` accept v1 and v2 and always
-emit the current version. Shell Flow renders combine/split as multi-port nodes and
-supports authoring (create / wire ports / delete) when hosts pass `operators` +
+`parseFieldRemapDocument` accepts the current version and normalizes edges and operators.
+Shell Flow renders combine/split as multi-port nodes and supports authoring
+(create / wire ports / delete) when hosts pass `operators` +
 `onOperatorsChange` into `FieldRemapFlowMapper` (sample `nm-combine-split`).
 
 ```ts

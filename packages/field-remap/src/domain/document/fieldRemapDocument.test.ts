@@ -3,11 +3,9 @@ import {
   createFieldRemapDocument,
   deserializeFieldRemapDocument,
   InvalidFieldRemapDocumentError,
-  migrateFieldRemapDocument,
   normalizeFieldRemapDocument,
   parseFieldRemapDocument,
   FIELD_REMAP_DOCUMENT_VERSION,
-  FIELD_REMAP_DOCUMENT_V1_VERSION,
   serializeFieldRemapDocument,
   UnsupportedFieldRemapDocumentVersionError,
 } from './fieldRemapDocument.js';
@@ -100,31 +98,16 @@ describe('FieldRemapDocument', () => {
     expect(() => normalizeFieldRemapDocument({ version: 3 as 2, edges: [] })).toThrow(
       UnsupportedFieldRemapDocumentVersionError,
     );
-    expect(() => parseFieldRemapDocument({ version: 1, edges: null })).toThrow(
+    expect(() => parseFieldRemapDocument({ version: 1, edges: [] })).toThrow(
+      UnsupportedFieldRemapDocumentVersionError,
+    );
+    expect(() => parseFieldRemapDocument({ version: 2, edges: null })).toThrow(
       InvalidFieldRemapDocumentError,
     );
     expect(() => parseFieldRemapDocument({ version: 2, edges: [], operators: {} })).toThrow(
       InvalidFieldRemapDocumentError,
     );
     expect(() => deserializeFieldRemapDocument('{')).toThrow(InvalidFieldRemapDocumentError);
-  });
-
-  it('migrates v1 documents to current version', () => {
-    const migrated = migrateFieldRemapDocument({
-      version: FIELD_REMAP_DOCUMENT_V1_VERSION,
-      edges: [
-        {
-          id: 'e1',
-          sourceFieldId: 'a',
-          targetSlotId: 'b',
-          transformIds: ['identity'],
-        },
-      ],
-    });
-    expect(migrated.version).toBe(FIELD_REMAP_DOCUMENT_VERSION);
-    expect(migrated.edges[0]?.sourceFieldId).toBe('a');
-    expect(migrated.edges[0]?.targetSlotId).toBe('b');
-    expect(migrated.operators).toBeUndefined();
   });
 
   it('parses v2 documents with operators', () => {
@@ -142,13 +125,5 @@ describe('FieldRemapDocument', () => {
     });
     expect(parsed.version).toBe(FIELD_REMAP_DOCUMENT_VERSION);
     expect(parsed.operators?.[0]?.kind).toBe('combine');
-  });
-
-  it('migrate rejects unsupported versions and malformed shapes', () => {
-    expect(() => migrateFieldRemapDocument({ version: 3, edges: [] })).toThrow(
-      UnsupportedFieldRemapDocumentVersionError,
-    );
-    expect(() => migrateFieldRemapDocument(null)).toThrow(InvalidFieldRemapDocumentError);
-    expect(() => migrateFieldRemapDocument({ edges: [] })).toThrow(InvalidFieldRemapDocumentError);
   });
 });
