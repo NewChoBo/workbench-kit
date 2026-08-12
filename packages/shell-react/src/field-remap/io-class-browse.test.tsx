@@ -41,7 +41,13 @@ describe('FieldRemapIoClassBrowse', () => {
       dataType: 'object',
       classRef: { id: 'User', version: 1 },
       children: [
-        { id: 'a.user.name', label: 'name', path: 'user.name', dataType: 'string' },
+        {
+          id: 'a.user.name',
+          label: 'name',
+          path: 'user.name',
+          dataType: 'string',
+          classRef: { id: 'DisplayName', version: 1 },
+        },
         {
           id: 'a.user.secret',
           label: 'secret',
@@ -71,5 +77,20 @@ describe('FieldRemapIoClassBrowse', () => {
     mount(<FieldRemapIoClassBrowse includeHidden sources={sources} targets={targets} />);
     expect(container?.textContent).toContain('user.secret');
     expect(container?.textContent).toContain('Hidden');
+    expect(container?.querySelector('[title="classRef"]')).toBeTruthy();
+  });
+
+  it('uses host-provided chrome labels', () => {
+    mount(
+      <FieldRemapIoClassBrowse
+        includeHidden
+        labels={{ classRefTitle: 'Class reference', hiddenBadge: 'Internal' }}
+        sources={sources}
+        targets={targets}
+      />,
+    );
+    expect(container?.textContent).toContain('Internal');
+    expect(container?.textContent).not.toContain('Hidden');
+    expect(container?.querySelector('[title="Class reference"]')).toBeTruthy();
   });
 });

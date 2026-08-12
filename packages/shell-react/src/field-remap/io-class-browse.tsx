@@ -20,6 +20,10 @@ export interface FieldRemapIoClassBrowseProps {
   readonly targetsTitle?: string;
   readonly className?: string;
   readonly emptyLabel?: string;
+  readonly labels?: {
+    readonly hiddenBadge?: string;
+    readonly classRefTitle?: string;
+  };
 }
 
 export function resolveFieldRemapIoChrome(
@@ -39,9 +43,11 @@ function formatClassRef(classRef: { readonly id: string; readonly version: numbe
 function FieldTree({
   nodes,
   emptyLabel,
+  labels,
 }: {
   readonly nodes: readonly (SourceField | TargetSlot)[];
   readonly emptyLabel: string;
+  readonly labels: FieldRemapIoClassBrowseProps['labels'];
 }): JSX.Element {
   if (nodes.length === 0) {
     return <p className="workbench-field-remap-io-browse__empty">{emptyLabel}</p>;
@@ -55,19 +61,22 @@ function FieldTree({
             <span className="workbench-field-remap-io-browse__meta">
               {node.dataType ? <span>{node.dataType}</span> : null}
               {node.classRef ? (
-                <span className="workbench-field-remap-io-browse__badge" title="classRef">
+                <span
+                  className="workbench-field-remap-io-browse__badge"
+                  title={labels?.classRefTitle ?? 'classRef'}
+                >
                   {formatClassRef(node.classRef)}
                 </span>
               ) : null}
               {node.hidden === true ? (
                 <span className="workbench-field-remap-io-browse__badge" title="hidden">
-                  Hidden
+                  {labels?.hiddenBadge ?? 'Hidden'}
                 </span>
               ) : null}
             </span>
           </div>
           {node.children?.length ? (
-            <FieldTree emptyLabel={emptyLabel} nodes={node.children} />
+            <FieldTree emptyLabel={emptyLabel} labels={labels} nodes={node.children} />
           ) : null}
         </li>
       ))}
@@ -79,10 +88,12 @@ function PortSection({
   title,
   nodes,
   emptyLabel,
+  labels,
 }: {
   readonly title: string;
   readonly nodes: readonly (SourceField | TargetSlot)[];
   readonly emptyLabel: string;
+  readonly labels: FieldRemapIoClassBrowseProps['labels'];
 }): JSX.Element {
   return (
     <section aria-label={title} className="workbench-field-remap-io-browse__section">
@@ -96,11 +107,12 @@ function PortSection({
               <span className="workbench-field-remap-io-browse__port-id">{node.label}</span>
               <span className="workbench-field-remap-io-browse__port-meta">
                 {node.classRef ? formatClassRef(node.classRef) : node.id}
-                {node.hidden === true ? ' · Hidden' : ''}
+                {node.hidden === true ? ` · ${labels?.hiddenBadge ?? 'Hidden'}` : ''}
               </span>
             </p>
             <FieldTree
               emptyLabel={emptyLabel}
+              labels={labels}
               nodes={node.children?.length ? node.children : [node]}
             />
           </div>
@@ -123,6 +135,7 @@ export function FieldRemapIoClassBrowse({
   targetsTitle = 'Outputs',
   className,
   emptyLabel = 'No fields',
+  labels,
 }: FieldRemapIoClassBrowseProps): JSX.Element {
   const projectedSources = useMemo(
     () => projectSourceFields(sources, { includeHidden }),
@@ -138,8 +151,18 @@ export function FieldRemapIoClassBrowse({
       className={['workbench-field-remap-io-browse', className].filter(Boolean).join(' ')}
       data-testid="field-remap-io-browse"
     >
-      <PortSection emptyLabel={emptyLabel} nodes={projectedSources} title={sourcesTitle} />
-      <PortSection emptyLabel={emptyLabel} nodes={projectedTargets} title={targetsTitle} />
+      <PortSection
+        emptyLabel={emptyLabel}
+        labels={labels}
+        nodes={projectedSources}
+        title={sourcesTitle}
+      />
+      <PortSection
+        emptyLabel={emptyLabel}
+        labels={labels}
+        nodes={projectedTargets}
+        title={targetsTitle}
+      />
     </div>
   );
 }
