@@ -1,10 +1,5 @@
 import type { ReactNode } from 'react';
 
-/** @deprecated Side panel no longer switches tabs; all panes stay visible. */
-export type WidgetTreeSidePanelTab = 'outline' | 'assets' | 'properties';
-/** @deprecated Side panel no longer switches detail tabs. */
-export type WidgetTreeSidePanelDetailTab = Exclude<WidgetTreeSidePanelTab, 'outline'>;
-
 export interface WidgetTreeSidePanelProps {
   readonly outline: ReactNode;
   readonly properties: ReactNode;

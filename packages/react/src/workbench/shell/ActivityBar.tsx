@@ -8,7 +8,6 @@ import {
   useWorkbenchSidebarViewPlacementDropZone,
 } from './useWorkbenchSidebarViewPlacementDropZone';
 import { useWorkbenchSidebarActionBarDnd } from './useWorkbenchSidebarActionBarDnd';
-import { WORKBENCH_SIDEBAR_VIEW_PLACEMENT_DRAG_DATA_TYPE } from './sidebarViewPlacementDnd';
 
 export interface ActivityBarItem {
   active?: boolean;
@@ -33,9 +32,6 @@ export interface ActivityBarProps extends Omit<ComponentPropsWithoutRef<'nav'>, 
   /** Enables cross-slot placement drag without reordering within the bar. */
   placementDraggable?: boolean;
 }
-
-/** @deprecated Use WORKBENCH_SIDEBAR_VIEW_PLACEMENT_DRAG_DATA_TYPE */
-export const ACTIVITY_BAR_DRAG_DATA_TYPE = WORKBENCH_SIDEBAR_VIEW_PLACEMENT_DRAG_DATA_TYPE;
 
 export function ActivityBar({
   'aria-label': ariaLabel = 'Activity bar',

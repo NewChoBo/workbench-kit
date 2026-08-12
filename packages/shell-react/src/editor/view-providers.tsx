@@ -38,13 +38,6 @@ export interface ResolvedEditorDocumentViews {
 }
 
 export const JSON_FORM_PROVIDER_ID = 'workbench-kit.editor.form.json' as const;
-/** @deprecated Prefer `workbench-kit.samples.jdw.widget-form` from samples.jdw. */
-export const JDW_WIDGET_FORM_PROVIDER_ID = 'workbench-kit.samples.jdw.widget-form' as const;
-/** @deprecated Prefer `workbench-kit.samples.jdw.widget-preview` from samples.jdw. */
-export const JDW_PREVIEW_PROVIDER_ID = 'workbench-kit.samples.jdw.widget-preview' as const;
-/** @deprecated Prefer `workbench-kit.builtin.editor.markdown-preview` from builtin.editor. */
-export const MARKDOWN_PREVIEW_PROVIDER_ID =
-  'workbench-kit.builtin.editor.markdown-preview' as const;
 
 /**
  * Opt-in shallow top-level JSON object form.

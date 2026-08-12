@@ -63,11 +63,8 @@ export { EditorArea, type EditorAreaProps, type EditorViewMode } from './editor/
 export {
   DEFAULT_EDITOR_DOCUMENT_VIEW_PROVIDERS,
   EditorDocumentViewProviderRegistry,
-  JDW_PREVIEW_PROVIDER_ID,
-  JDW_WIDGET_FORM_PROVIDER_ID,
   JSON_FORM_PROVIDER,
   JSON_FORM_PROVIDER_ID,
-  MARKDOWN_PREVIEW_PROVIDER_ID,
   createEditorDocumentViewProviderRegistry,
   resolveEditorDocumentViewProvider,
   resolveEditorDocumentViews,

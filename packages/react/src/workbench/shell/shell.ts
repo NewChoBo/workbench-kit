@@ -1,4 +1,4 @@
-export { ActivityBar, ACTIVITY_BAR_DRAG_DATA_TYPE } from './ActivityBar';
+export { ActivityBar } from './ActivityBar';
 export {
   hasWorkbenchSidebarViewPlacementDrag,
   readWorkbenchSidebarViewPlacementDrag,
