@@ -462,28 +462,21 @@ function resolveConnectionPortIds(connection: {
     return {};
   }
 
-  let sourceFieldId: string | undefined;
-  let targetSlotId: string | undefined;
-
-  if (source === SOURCE_OBJECT_NODE_ID && connection.sourceHandle) {
-    sourceFieldId = connection.sourceHandle;
-  } else if (source.startsWith('src:')) {
-    sourceFieldId = source.slice('src:'.length);
-  }
-
-  if (target === TARGET_OBJECT_NODE_ID && connection.targetHandle) {
-    targetSlotId = connection.targetHandle;
-  } else if (target.startsWith('tgt:')) {
-    targetSlotId = target.slice('tgt:'.length);
-  }
-
-  return { sourceFieldId, targetSlotId };
+  return {
+    sourceFieldId:
+      source === SOURCE_OBJECT_NODE_ID && connection.sourceHandle
+        ? connection.sourceHandle
+        : undefined,
+    targetSlotId:
+      target === TARGET_OBJECT_NODE_ID && connection.targetHandle
+        ? connection.targetHandle
+        : undefined,
+  };
 }
 
 /**
  * Supported connect matrix for state-changing canvas drags:
  * - source-object port → target-object port (creates / replaces a `MappingEdge`)
- * - legacy `src:*` → `tgt:*` single-field node ids (tests / older graphs)
  * - source-object port → `draft:*` (bind draft input)
  * - `draft:*` → target-object port (bind draft output; finalize when both ends set)
  * - source-object port → `xf:*` `in` (rebind source; splice off earlier steps)
@@ -640,13 +633,10 @@ export function isValidFieldRemapFlowConnection(
     });
   }
 
-  let topologyOk = false;
-  if (source === SOURCE_OBJECT_NODE_ID && target === TARGET_OBJECT_NODE_ID) {
-    topologyOk = Boolean(connection.sourceHandle && connection.targetHandle);
-  } else if (source.startsWith('src:') && target.startsWith('tgt:')) {
-    // Legacy single-field node ids (older graphs / tests).
-    topologyOk = true;
-  }
+  const topologyOk =
+    source === SOURCE_OBJECT_NODE_ID &&
+    target === TARGET_OBJECT_NODE_ID &&
+    Boolean(connection.sourceHandle && connection.targetHandle);
 
   if (!topologyOk) {
     return false;
@@ -680,7 +670,7 @@ export type FieldRemapFlowConnectResult = {
   readonly removeEdgeIds?: readonly string[];
 };
 
-/** Parse React Flow connection (object ports or legacy) into a kit MappingEdge. */
+/** Parse a React Flow object-port connection into a kit MappingEdge. */
 export function connectionToMappingEdge(input: {
   readonly sourceNodeId: string;
   readonly targetNodeId: string;
@@ -688,21 +678,12 @@ export function connectionToMappingEdge(input: {
   readonly targetHandle?: string | null;
   readonly existing: readonly MappingEdge[];
 }): MappingEdge | null {
-  let sourceFieldId: string | undefined;
-  let targetSlotId: string | undefined;
-
-  if (input.sourceNodeId === SOURCE_OBJECT_NODE_ID && input.sourceHandle) {
-    sourceFieldId = input.sourceHandle;
-  } else if (input.sourceNodeId.startsWith('src:')) {
-    // Legacy single-field node ids (older graphs / tests).
-    sourceFieldId = input.sourceNodeId.slice('src:'.length);
-  }
-
-  if (input.targetNodeId === TARGET_OBJECT_NODE_ID && input.targetHandle) {
-    targetSlotId = input.targetHandle;
-  } else if (input.targetNodeId.startsWith('tgt:')) {
-    targetSlotId = input.targetNodeId.slice('tgt:'.length);
-  }
+  const { sourceFieldId, targetSlotId } = resolveConnectionPortIds({
+    source: input.sourceNodeId,
+    target: input.targetNodeId,
+    sourceHandle: input.sourceHandle,
+    targetHandle: input.targetHandle,
+  });
 
   if (!sourceFieldId || !targetSlotId) {
     return null;
