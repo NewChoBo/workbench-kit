@@ -219,16 +219,16 @@ function renderResizeHandle(
   );
 }
 
-const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactNode> = {
-  frame: ({
-    node,
-    style,
-    children,
-    onClick,
-    onPointerDown,
-    onResizeHandlePointerDown,
-    resizeHandleLabel,
-  }) => (
+function renderContainerNode({
+  node,
+  style,
+  children,
+  onClick,
+  onPointerDown,
+  onResizeHandlePointerDown,
+  resizeHandleLabel,
+}: NodeRendererProps) {
+  return (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -239,75 +239,18 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       <div style={{ position: 'relative', width: '100%', height: '100%' }}>{children}</div>
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
-  ),
-  group: ({
-    node,
-    style,
-    children,
-    onClick,
-    onPointerDown,
-    onResizeHandlePointerDown,
-    resizeHandleLabel,
-  }) => (
-    <div
-      key={node.id}
-      data-node-id={node.id}
-      style={style}
-      onClick={onClick}
-      onPointerDown={onPointerDown}
-    >
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>{children}</div>
-      {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
-    </div>
-  ),
-  component: ({
-    node,
-    style,
-    children,
-    onClick,
-    onPointerDown,
-    onResizeHandlePointerDown,
-    resizeHandleLabel,
-  }) => (
-    <div
-      key={node.id}
-      data-node-id={node.id}
-      style={style}
-      onClick={onClick}
-      onPointerDown={onPointerDown}
-    >
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>{children}</div>
-      {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
-    </div>
-  ),
-  instance: ({
-    node,
-    style,
-    children,
-    onClick,
-    onPointerDown,
-    onResizeHandlePointerDown,
-    resizeHandleLabel,
-  }) => (
-    <div
-      key={node.id}
-      data-node-id={node.id}
-      style={style}
-      onClick={onClick}
-      onPointerDown={onPointerDown}
-    >
-      <div style={{ position: 'relative', width: '100%', height: '100%' }}>{children}</div>
-      {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
-    </div>
-  ),
-  rectangle: ({
-    node,
-    style,
-    onClick,
-    onPointerDown,
-    onResizeHandlePointerDown,
-    resizeHandleLabel,
-  }) => (
+  );
+}
+
+function renderEmptyNode({
+  node,
+  style,
+  onClick,
+  onPointerDown,
+  onResizeHandlePointerDown,
+  resizeHandleLabel,
+}: NodeRendererProps) {
+  return (
     <div
       key={node.id}
       data-node-id={node.id}
@@ -317,7 +260,37 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
     >
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
-  ),
+  );
+}
+
+function renderContentNode({
+  node,
+  style,
+  onClick,
+  onPointerDown,
+  onResizeHandlePointerDown,
+  resizeHandleLabel,
+}: NodeRendererProps) {
+  return (
+    <div
+      key={node.id}
+      data-node-id={node.id}
+      style={style}
+      onClick={wrapNodeClick(onClick)}
+      onPointerDown={onPointerDown}
+    >
+      {(node as { content?: string }).content ?? ''}
+      {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
+    </div>
+  );
+}
+
+const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactNode> = {
+  frame: renderContainerNode,
+  group: renderContainerNode,
+  component: renderContainerNode,
+  instance: renderContainerNode,
+  rectangle: renderEmptyNode,
   circle: ({
     node,
     style,
@@ -336,18 +309,7 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
     </div>
   ),
-  text: ({ node, style, onClick, onPointerDown, onResizeHandlePointerDown, resizeHandleLabel }) => (
-    <div
-      key={node.id}
-      data-node-id={node.id}
-      style={style}
-      onClick={wrapNodeClick(onClick)}
-      onPointerDown={onPointerDown}
-    >
-      {(node as { content?: string }).content ?? ''}
-      {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
-    </div>
-  ),
+  text: renderContentNode,
   image: ({
     node,
     style,
@@ -394,43 +356,8 @@ const nodeRendererRegistry: Record<string, (params: NodeRendererProps) => ReactN
       </div>
     );
   },
-  vector: ({
-    node,
-    style,
-    onClick,
-    onPointerDown,
-    onResizeHandlePointerDown,
-    resizeHandleLabel,
-  }) => (
-    <div
-      key={node.id}
-      data-node-id={node.id}
-      style={style}
-      onClick={wrapNodeClick(onClick)}
-      onPointerDown={onPointerDown}
-    >
-      {(node as { content?: string }).content ?? ''}
-      {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
-    </div>
-  ),
-  unknown: ({
-    node,
-    style,
-    onClick,
-    onPointerDown,
-    onResizeHandlePointerDown,
-    resizeHandleLabel,
-  }) => (
-    <div
-      key={node.id}
-      data-node-id={node.id}
-      style={style}
-      onClick={wrapNodeClick(onClick)}
-      onPointerDown={onPointerDown}
-    >
-      {renderResizeHandle(resizeHandleLabel, onResizeHandlePointerDown)}
-    </div>
-  ),
+  vector: renderContentNode,
+  unknown: renderEmptyNode,
 };
 
 function renderNode(
