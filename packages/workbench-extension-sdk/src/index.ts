@@ -1,7 +1,5 @@
 import type { ExtensionContributes } from './contributions.js';
 
-export const WORKBENCH_KIT_EXTENSION_SDK_VERSION = '0.0.0' as const;
-
 export type ExtensionManifestSchemaVersion = 1;
 
 export type WorkbenchExtensionManifest = {

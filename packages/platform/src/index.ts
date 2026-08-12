@@ -1,5 +1,3 @@
-export const WORKBENCH_KIT_PLATFORM_VERSION = '0.0.0' as const;
-
 export type ServiceIdentifier<T> = symbol & { __serviceBrand: T };
 
 export {

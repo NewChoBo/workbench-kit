@@ -1,8 +1,6 @@
 import { assertKnownKeys, assertRecord, parseConfigJson } from './parse-helpers.js';
 import { WorkbenchConfigValidationError } from './validation-error.js';
 
-export const WORKBENCH_KIT_WORKBENCH_CONFIG_VERSION = '0.0.0' as const;
-
 export const WORKBENCH_CONFIG_DIR = '.workbench' as const;
 
 export type WorkbenchConfigFileName =
