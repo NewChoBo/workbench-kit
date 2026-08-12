@@ -18,18 +18,15 @@ Screen recipes: [Sample Screens](./sample-screens.md).
 | **Sample**    | Visible in `examples/workbench-sample` when noted                        |
 | **Contract**  | Section in Consumer Capabilities                                         |
 
-Stories that exist on disk but are **not** listed in `.storybook/main.ts` are
-marked _source only_ — open the file under `packages/react/src/` for reference;
-do not expect them in the Storybook sidebar until owners register them.
-
 ## Shell and chrome
 
 | Surface              | Import                                 | Storybook                            | Sample | Contract |
 | -------------------- | -------------------------------------- | ------------------------------------ | ------ | -------- |
 | WorkbenchShell       | `@workbench-kit/react/workbench/shell` | Workbench UI/Shell                   | Yes    | Shell    |
 | Activity bar / views | `@workbench-kit/react/workbench/shell` | Workbench UI/Shell                   | Yes    | Shell    |
-| Desktop title bar    | `@workbench-kit/react/workbench`       | _source only_ (Platform Chrome)      | Host   | Shell    |
+| Desktop title bar    | `@workbench-kit/react/workbench`       | Workbench UI/Shell/Platform Chrome   | Host   | Shell    |
 | Editor tabs strip    | `@workbench-kit/react/editor-tabs`     | Workbench UI/Editor/Chrome           | Yes    | Editor   |
+| Side bar tree        | `@workbench-kit/react/layout`          | Workbench UI/Sidebar/Tree            | —      | Layout   |
 | Side bar tab strip   | `@workbench-kit/react/layout`          | React/Layout/Side Bar View Tab Strip | Yes    | Layout   |
 
 ## Primitives and forms
@@ -40,8 +37,8 @@ do not expect them in the Storybook sidebar until owners register them.
 | Editor chrome           | `@workbench-kit/react/primitives` | Workbench UI/Editor/Chrome              | Yes                                    | Editor     |
 | Scroll infinite load    | `@workbench-kit/react/primitives` | Atomic UI/Feedback/Infinite Load        | —                                      | Primitives |
 | Property override label | `@workbench-kit/react/layout`     | Workbench UI/Settings/Property Override | —                                      | Properties |
-| Library detail layout   | `@workbench-kit/react/primitives` | _source only_                           | Story: Workbench Sample/Library Detail | Library    |
-| Catalog browse / facets | `@workbench-kit/react/primitives` | _source only_                           | Showcase                               | Library    |
+| Library detail layout   | `@workbench-kit/react/primitives` | Workbench Sample/Library Detail         | Story: Workbench Sample/Library Detail | Library    |
+| Catalog browse / facets | `@workbench-kit/react/primitives` | —                                       | Showcase                               | Library    |
 
 ## Workspace and search
 
@@ -58,7 +55,7 @@ do not expect them in the Storybook sidebar until owners register them.
 | Chat panel / messages  | `@workbench-kit/react/workbench/chat`       | Workbench UI/Chat/Components      | Yes      | Chat       |
 | Overlay dialogs        | `@workbench-kit/react/modal`                | Atomic UI/Overlays/Dialog Actions | —        | Modal      |
 | Anchored overlay panel | `@workbench-kit/react/overlay`              | Atomic UI/Overlays/Anchored Panel | —        | Overlay    |
-| Dialog / management    | `@workbench-kit/react/workbench/management` | _source only_ (picker dialogs)    | Showcase | Management |
+| Dialog / management    | `@workbench-kit/react/workbench/management` | —                                 | Showcase | Management |
 
 ## JDW / widget tree
 

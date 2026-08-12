@@ -57,7 +57,7 @@ function SideBarTreeHarness({
 }
 
 const meta = {
-  title: 'React/Layout/Side Bar Tree',
+  title: 'Workbench UI/Sidebar/Tree',
   parameters: {
     storybookGrid: { enabled: false },
   },
@@ -76,10 +76,11 @@ export const ExpandAndSelect: Story = {
     const tree = canvas.getByRole('tree', { name: 'Catalog tree' });
     expect(tree).toBeTruthy();
 
-    await userEvent.click(canvas.getByRole('treeitem', { name: /Providers/i }));
+    await userEvent.click(canvas.getByRole('button', { name: /Providers/i }));
+    await canvas.findByRole('treeitem', { name: /Steam/i });
     expect(canvas.getByLabelText('Sidebar tree state').textContent).toMatch(/providers/);
 
-    await userEvent.click(canvas.getByRole('treeitem', { name: /Steam/i }));
+    await userEvent.click(canvas.getByRole('button', { name: /Steam/i }));
     expect(canvas.getByLabelText('Sidebar tree state').textContent).toMatch(/steam/);
   },
 };

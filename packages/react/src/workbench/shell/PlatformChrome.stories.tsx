@@ -9,7 +9,7 @@ import type { WorkbenchHostPlatform } from '../chrome/workbenchPlatformChrome';
 import { StoryWorkbenchShellFrame } from '../story/StoryWorkbenchShellFrame';
 
 const meta = {
-  title: 'React/Workbench/Platform Chrome',
+  title: 'Workbench UI/Shell/Platform Chrome',
   parameters: {
     storybookGrid: { enabled: false },
   },

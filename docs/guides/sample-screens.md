@@ -76,13 +76,13 @@ Related: [Getting Started](./getting-started.md) · [Component Map](./component-
 
 ## Catalog browse / facets
 
-| Field            | Detail                                                                |
-| ---------------- | --------------------------------------------------------------------- |
-| **What you see** | Browse pane with facet filters / overlays                             |
-| **Sample**       | Library showcase in workbench-sample                                  |
-| **Storybook**    | _source only_ until registered — see `packages/react/src/primitives/` |
-| **Kit pieces**   | `CatalogBrowsePane`, facet strip/panel/dialog                         |
-| **Host keeps**   | Query model, persisted filter presets                                 |
+| Field            | Detail                                        |
+| ---------------- | --------------------------------------------- |
+| **What you see** | Browse pane with facet filters / overlays     |
+| **Sample**       | Library showcase in workbench-sample          |
+| **Storybook**    | —                                             |
+| **Kit pieces**   | `CatalogBrowsePane`, facet strip/panel/dialog |
+| **Host keeps**   | Query model, persisted filter presets         |
 
 ## Field Remap editor
 

@@ -2,8 +2,6 @@ import { forwardRef, type ReactNode } from 'react';
 
 import './story-layout.css';
 
-export const WORKBENCH_STORY_SHELL_CLASS = 'workbench-story-shell';
-
 export type StoryWorkbenchShellFrameVariant = 'settings' | 'sidebar' | 'editor';
 
 const VARIANT_CLASS: Record<StoryWorkbenchShellFrameVariant, string> = {
@@ -26,7 +24,6 @@ export const StoryWorkbenchShellFrame = forwardRef<HTMLDivElement, StoryWorkbenc
     ref,
   ) {
     const classes = [
-      WORKBENCH_STORY_SHELL_CLASS,
       'ui-story-workbench-shell',
       VARIANT_CLASS[variant],
       fill ? 'ui-story-workbench-shell--fill' : null,
