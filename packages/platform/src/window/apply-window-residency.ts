@@ -9,13 +9,7 @@
  * `zOrder: 'back'` is an approximation via `setFocusable(false)` + `blur()` —
  * kit does not claim a native always-on-bottom window API.
  *
- * Coarse `applyWindowResidency` modes remain for back-compat. Prefer
- * {@link applyWindowResidencyPolicy} for orthogonal z-order + pointer control.
- * Documented approximate mapping: `click-through` ≈ always-on-top + ignore-all
- * with focusable=false (not identical to `zOrder:'top' + pointerPassthrough:'all'`).
  */
-
-export type WindowResidencyMode = 'normal' | 'always-on-top' | 'click-through';
 
 export type WindowZOrder = 'top' | 'default' | 'back';
 
@@ -33,17 +27,6 @@ export interface ResidencyWindowSurface {
   setFocusable(value: boolean): void;
   setIgnoreMouseEvents(ignore: boolean, options?: { forward?: boolean }): void;
   blur?: () => void;
-}
-
-export interface ApplyWindowResidencyOptions {
-  /**
-   * When ignoring mouse events (click-through), forward move events to the window
-   * so the renderer can still hit-test interactive regions. win32 hosts typically
-   * want `forward: true`; other platforms may ignore the option.
-   */
-  readonly forwardPointerWhenIgnoring?: boolean;
-  /** Optional always-on-top level string forwarded to the host surface. */
-  readonly alwaysOnTopLevel?: string;
 }
 
 export interface ApplyWindowResidencyPolicyInput {
@@ -109,51 +92,4 @@ export function applyWindowResidencyPolicy(
   }
 
   windowSurface.setIgnoreMouseEvents(true);
-}
-
-/**
- * Applies a residency mode sequence to an injected window surface.
- * Hosts own which mode is active and BrowserWindow construction; kit owns the apply order.
- *
- * Prefer {@link applyWindowResidencyPolicy} for new hosts that need independent
- * z-order and pointer axes.
- */
-export function applyWindowResidency(
-  windowSurface: ResidencyWindowSurface,
-  mode: WindowResidencyMode,
-  options: ApplyWindowResidencyOptions = {},
-): void {
-  const forward = options.forwardPointerWhenIgnoring ?? true;
-  const level = options.alwaysOnTopLevel;
-
-  switch (mode) {
-    case 'normal':
-      windowSurface.setAlwaysOnTop(false);
-      windowSurface.setFocusable(true);
-      windowSurface.setIgnoreMouseEvents(false);
-      return;
-    case 'always-on-top':
-      if (level === undefined) {
-        windowSurface.setAlwaysOnTop(true);
-      } else {
-        windowSurface.setAlwaysOnTop(true, level);
-      }
-      windowSurface.setFocusable(true);
-      windowSurface.setIgnoreMouseEvents(false);
-      return;
-    case 'click-through':
-      if (level === undefined) {
-        windowSurface.setAlwaysOnTop(true);
-      } else {
-        windowSurface.setAlwaysOnTop(true, level);
-      }
-      windowSurface.setFocusable(false);
-      windowSurface.setIgnoreMouseEvents(true, { forward });
-      windowSurface.blur?.();
-      return;
-    default: {
-      const _exhaustive: never = mode;
-      throw new Error(`Unsupported residency mode: ${String(_exhaustive)}`);
-    }
-  }
 }

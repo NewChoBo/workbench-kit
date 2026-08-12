@@ -51,7 +51,7 @@ export interface PointerPassthroughController {
 /**
  * Pure controller for overlay click-through: when the pointer is outside
  * host-provided selectors, ask the port to enable passthrough.
- * Pair with platform `applyWindowResidency(..., 'click-through')` on the main side.
+ * Pair with platform `applyWindowResidencyPolicy` on the main side.
  */
 export function createPointerPassthroughController(
   options: PointerPassthroughControllerOptions,

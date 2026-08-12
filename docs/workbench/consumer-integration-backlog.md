@@ -272,16 +272,14 @@ narrow injected surface (`setAlwaysOnTop` / `setFocusable` / `setIgnoreMouseEven
 `blur`) via `applyWindowResidencyPolicy` with orthogonal `zOrder`
 (`top` | `default` | `back`) and `pointerPassthrough`
 (`off` | `all` | `transparent` | `controls`), plus `positionMode` /
-`dynamicPointerPassthrough`. Coarse `applyWindowResidency` modes
-`normal` | `always-on-top` | `click-through` remain for back-compat
-(`forwardPointerWhenIgnoring` defaults to `true` for click-through). Pair dynamic
-pointer policies with renderer hit-region passthrough in `@workbench-kit/react`.
+`dynamicPointerPassthrough`. Pair dynamic pointer policies with renderer hit-region
+passthrough in `@workbench-kit/react`.
 
 **Hit-region pointer passthrough (implemented API):** Hosts inject selector lists and a
 `PointerPassthroughPort` (usually IPC → ignore-mouse-events). `@workbench-kit/react`
 exposes `usePointerPassthroughRegion` / `createPointerPassthroughController` with
 rAF-coalesced pointermove hit-testing. No product selectors ship in the kit. Pair with
-platform `applyWindowResidency(..., 'click-through')` on the main-process side.
+platform `applyWindowResidencyPolicy` on the main-process side.
 
 ### 16. Collection / dynamic collection save UI
 

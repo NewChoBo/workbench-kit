@@ -40,9 +40,7 @@ applyWindowResidencyPolicy(windowSurface, {
 ```
 
 Pair dynamic `transparent` / `controls` with renderer hit-region passthrough
-(`usePointerPassthroughRegion` in `@workbench-kit/react`). Coarse
-`applyWindowResidency(..., 'normal' | 'always-on-top' | 'click-through')` remains
-for back-compat.
+(`usePointerPassthroughRegion` in `@workbench-kit/react`).
 
 ## Node helpers
 

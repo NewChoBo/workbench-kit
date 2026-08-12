@@ -226,13 +226,10 @@ export type {
   VersionedEnvelope,
 } from './storage/types.js';
 export {
-  applyWindowResidency,
   applyWindowResidencyPolicy,
-  type ApplyWindowResidencyOptions,
   type ApplyWindowResidencyPolicyInput,
   type ResidencyWindowSurface,
   type WindowPointerPassthroughPolicy,
-  type WindowResidencyMode,
   type WindowZOrder,
 } from './window/apply-window-residency.js';
 export {
