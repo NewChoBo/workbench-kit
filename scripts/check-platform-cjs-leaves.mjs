@@ -69,12 +69,18 @@ function verifyPlatformLeaves() {
       fixture.consumerDir,
       [
         "import { createAllowlistedHttpsFetch } from '@workbench-kit/platform/allowlisted-https-fetch';",
+        "import { atomicWriteBytes, atomicWriteText } from '@workbench-kit/platform/atomic-write';",
+        "import { shouldHideOnClose, shouldQuitWhenAllWindowsClosed } from '@workbench-kit/platform/tray-close-policy';",
         "import { bindSecondaryWindowBoundsPersistence, bindWindowBoundsPersistence } from '@workbench-kit/platform/window-bounds-persistence';",
       ],
       [
+        'atomicWriteBytes',
+        'atomicWriteText',
         'bindSecondaryWindowBoundsPersistence',
         'bindWindowBoundsPersistence',
         'createAllowlistedHttpsFetch',
+        'shouldHideOnClose',
+        'shouldQuitWhenAllWindowsClosed',
       ],
     );
     const consumerEntry = path.join(fixture.consumerDir, 'smoke.cjs');
@@ -149,13 +155,15 @@ function verifyLegacyTypeScriptSubpaths(consumerDir, imports, referencedNames) {
     JSON.stringify(
       {
         compilerOptions: {
+          esModuleInterop: true,
           module: 'CommonJS',
           moduleResolution: 'Node',
           noEmit: true,
           skipLibCheck: true,
           strict: true,
           target: 'ES2022',
-          types: [],
+          typeRoots: [path.join(repoRoot, 'packages', 'platform', 'node_modules', '@types')],
+          types: ['node'],
         },
         include: ['smoke.ts'],
       },
