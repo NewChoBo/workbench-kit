@@ -1,15 +1,10 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { formatWidgetAssetContent, formatWidgetAssetManifest } from '@workbench-kit/jdw';
 
 import { WidgetAssetEditor } from './WidgetAssetEditor.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from '../widget-tree/demo-registry.js';
-
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule();
-});
 
 const packagePath = 'src/widgets/assets/heading';
 const manifest = formatWidgetAssetManifest({

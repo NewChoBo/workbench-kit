@@ -100,22 +100,3 @@ export const monaco = {
 export const Editor = WorkbenchMonacoEditor;
 export const DiffEditor = WorkbenchMonacoDiffEditor;
 export const loader = { config: () => undefined };
-
-export function createWorkbenchMonacoMockModule(
-  renderEditor?: (props: MockWorkbenchMonacoEditorProps) => ReturnType<typeof createElement>,
-) {
-  const defaultRender = ({ value }: MockWorkbenchMonacoEditorProps) =>
-    createElement('div', { 'data-testid': 'monaco-editor' }, value ?? 'Mocked Monaco Editor');
-
-  return {
-    WorkbenchMonacoEditor: renderEditor ?? defaultRender,
-    WorkbenchMonacoDiffEditor,
-    DiffEditor: WorkbenchMonacoDiffEditor,
-    useMonacoWorkbenchThemeSync: () => undefined,
-    prepareMonacoWorkbenchEditor: () => undefined,
-    monacoThemeForWorkspaceTheme: (theme: string) => theme,
-    MONACO_DARK_THEME_ID: 'workbench-kit-dark',
-    MONACO_LIGHT_THEME_ID: 'workbench-kit-light',
-    monaco,
-  };
-}

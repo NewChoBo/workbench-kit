@@ -1,11 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
 
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule();
-});
-
 import { WidgetTreeWorkbench } from './WidgetTreeWorkbench.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 import { isWidgetTreeDocument } from './widget-tree-document.js';

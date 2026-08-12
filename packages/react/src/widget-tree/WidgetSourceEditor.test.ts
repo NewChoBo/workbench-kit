@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   createWidgetDocument,
   formatWidgetDocumentJson,
@@ -10,11 +10,6 @@ import {
   resolveWidgetSourceActiveRange,
   resolveWidgetPathForEditorPosition,
 } from './WidgetSourceEditor.js';
-
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule();
-});
 
 const sourceRoot: GenericWidget = {
   type: 'column',

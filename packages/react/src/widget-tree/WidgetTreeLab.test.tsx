@@ -1,5 +1,5 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import {
   formatJsonWidgetData,
   parseJsonWidgetData,
@@ -14,11 +14,6 @@ import {
 } from './WidgetTreeLab.js';
 import { WIDGET_TREE_DEMO_REGISTRY, WIDGET_TREE_WELCOME_DOCUMENT } from './demo-registry.js';
 import { WIDGET_TREE_DEMO_ASSET_CATALOG } from './demo-widget-assets.js';
-
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule();
-});
 
 describe('WidgetTreeLab', () => {
   it('renders source, tree, and preview surfaces', () => {

@@ -1,9 +1,4 @@
-import { describe, expect, it, vi } from 'vitest';
-
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule();
-});
+import { describe, expect, it } from 'vitest';
 
 import {
   createJsonEditorActiveSourceRangeDecorations,

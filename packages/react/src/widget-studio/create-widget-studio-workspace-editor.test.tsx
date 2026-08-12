@@ -1,14 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import { createWidgetStudioWorkspaceEditorRenderer } from './create-widget-studio-workspace-editor.js';
 import { WIDGET_TREE_DEMO_REGISTRY } from '../widget-tree/demo-registry.js';
 import { WIDGET_TREE_WELCOME_DOCUMENT } from '../widget-tree/demo-registry.js';
-
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule();
-});
 
 describe('createWidgetStudioWorkspaceEditorRenderer', () => {
   const renderer = createWidgetStudioWorkspaceEditorRenderer({

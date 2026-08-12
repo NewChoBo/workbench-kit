@@ -1,15 +1,9 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 import { StructuredArtifactEditor } from './StructuredArtifactEditor';
 import { WorkspaceDraftsProvider } from '../workspace/WorkspaceDraftsContext';
 import { type WorkspaceFile } from '../workspace/types';
 import { type WorkbenchStructuredDataSchemaDocument } from '../settings/StructuredDataForm';
-
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } =
-    await import('../../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule();
-});
 
 const mockSchema: WorkbenchStructuredDataSchemaDocument = {
   activePattern: 'DBtoDB',

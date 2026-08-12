@@ -1,18 +1,11 @@
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { describe, expect, it } from 'vitest';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
 import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
 
 import { JsonConfigWorkbench, resolveJsonConfigPreviewKind } from './JsonConfigWorkbench.js';
 import { type WorkbenchStructuredDataSchemaDocument } from '../workbench/settings/StructuredDataForm';
-
-vi.mock('@workbench-kit/monaco', async () => {
-  const { createWorkbenchMonacoMockModule } = await import('../test-utils/workbenchMonacoMock.js');
-  return createWorkbenchMonacoMockModule(({ value }) => (
-    <pre data-testid="monaco-editor">{value ?? 'Mocked Monaco Editor'}</pre>
-  ));
-});
 
 const settingsSchema: WorkbenchStructuredDataSchemaDocument = {
   activePattern: 'AppSettings',
