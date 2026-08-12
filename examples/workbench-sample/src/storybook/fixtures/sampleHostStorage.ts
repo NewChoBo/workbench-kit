@@ -5,7 +5,6 @@ import {
 
 import {
   SAMPLE_AUTH_BASIC_USERNAME,
-  SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY,
   SAMPLE_AUTH_USERNAME,
   clearSampleAuthSession,
   resetSampleAuthSecretStorage,
@@ -42,8 +41,6 @@ export function resetSampleHostStorage(account: SampleStoryAccount): void {
   for (const storageAccount of ['anonymous', 'tester', 'basic']) {
     window.localStorage.removeItem(createSampleInstalledExtensionsStorageKey(storageAccount));
   }
-  window.sessionStorage.removeItem(SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY);
-
   resetSampleAuthSecretStorage();
 
   if (account === 'none') {

@@ -21,8 +21,6 @@ export const SAMPLE_AUTH_BASIC_USERNAME = 'basic' as const;
 export const SAMPLE_AUTH_EXTENSION_ID = 'workbench-kit.sample-host' as const;
 /** Secret key for the demo session account id (not a browser storage key). */
 export const SAMPLE_AUTH_SESSION_KEY = 'auth.sessionAccountId' as const;
-/** @deprecated Legacy sessionStorage key; cleared on migrate/read. */
-export const SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY = 'workbench-sample.auth.session' as const;
 
 const SAMPLE_HOST_BACKEND_SESSION_LATENCY_MS = 350;
 const SAMPLE_HOST_BACKEND_SIGN_IN_LATENCY_MS = 450;
@@ -138,8 +136,6 @@ export function validateSampleLogin(identifier: string, password: string): boole
 }
 
 export function readSampleAuthSession(): string | undefined {
-  migrateLegacySampleAuthSession();
-
   const value = sampleAuthSecrets
     .forExtension(SAMPLE_AUTH_EXTENSION_ID)
     .get(SAMPLE_AUTH_SESSION_KEY);
@@ -152,38 +148,10 @@ export function readSampleAuthSession(): string | undefined {
 
 export function writeSampleAuthSession(accountId: string): void {
   sampleAuthSecrets.forExtension(SAMPLE_AUTH_EXTENSION_ID).set(SAMPLE_AUTH_SESSION_KEY, accountId);
-  clearLegacySampleAuthSessionStorage();
 }
 
 export function clearSampleAuthSession(): void {
   sampleAuthSecrets.forExtension(SAMPLE_AUTH_EXTENSION_ID).delete(SAMPLE_AUTH_SESSION_KEY);
-  clearLegacySampleAuthSessionStorage();
-}
-
-function migrateLegacySampleAuthSession(): void {
-  if (typeof sessionStorage === 'undefined') {
-    return;
-  }
-
-  const legacy = sessionStorage.getItem(SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY);
-  if (legacy !== SAMPLE_AUTH_USERNAME && legacy !== SAMPLE_AUTH_BASIC_USERNAME) {
-    return;
-  }
-
-  const current = sampleAuthSecrets
-    .forExtension(SAMPLE_AUTH_EXTENSION_ID)
-    .get(SAMPLE_AUTH_SESSION_KEY);
-  if (!current) {
-    sampleAuthSecrets.forExtension(SAMPLE_AUTH_EXTENSION_ID).set(SAMPLE_AUTH_SESSION_KEY, legacy);
-  }
-  clearLegacySampleAuthSessionStorage();
-}
-
-function clearLegacySampleAuthSessionStorage(): void {
-  if (typeof sessionStorage === 'undefined') {
-    return;
-  }
-  sessionStorage.removeItem(SAMPLE_AUTH_LEGACY_SESSION_STORAGE_KEY);
 }
 
 function createSampleAuthenticatedSession(
