@@ -3,11 +3,6 @@ import type { WorkbenchSettingsConfig } from './settings-config.js';
 /** Runtime preference scopes supported in v1. */
 export type PreferenceScope = 'default' | 'workspace' | 'local';
 
-/** Documented future scopes — not merged or persisted yet. */
-export const FUTURE_PREFERENCE_SCOPES = ['user', 'resource', 'secret'] as const;
-
-export type FuturePreferenceScope = (typeof FUTURE_PREFERENCE_SCOPES)[number];
-
 /** Lower index = lower precedence when merging effective values. */
 export const PREFERENCE_SCOPE_MERGE_ORDER: readonly PreferenceScope[] = [
   'default',

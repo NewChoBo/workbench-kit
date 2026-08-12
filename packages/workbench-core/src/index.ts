@@ -167,7 +167,6 @@ export {
   type ExtensionInstallTrustRecord,
 } from './extension/install-trust.js';
 export type {
-  WorkbenchAsyncStorageAdapter,
   WorkbenchRemovableStorageAdapter,
   WorkbenchStorageAdapter,
   WorkbenchStorageReader,

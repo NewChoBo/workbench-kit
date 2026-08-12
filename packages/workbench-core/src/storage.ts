@@ -42,13 +42,3 @@ export type WorkbenchStorageAdapter = WorkbenchStorageReader & WorkbenchStorageW
 
 /** Sync get/set/remove port for hosts that support deletion. */
 export type WorkbenchRemovableStorageAdapter = WorkbenchStorageAdapter & WorkbenchStorageRemover;
-
-/**
- * Future / host-owned async shape. Kit call sites today require sync adapters;
- * do not pass async-only stores into current APIs.
- */
-export interface WorkbenchAsyncStorageAdapter {
-  getItem(key: string): string | null | Promise<string | null>;
-  setItem(key: string, value: string): void | Promise<void>;
-  removeItem?(key: string): void | Promise<void>;
-}

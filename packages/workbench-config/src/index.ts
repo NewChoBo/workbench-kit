@@ -201,12 +201,10 @@ export {
 } from './settings-config.js';
 export {
   createEmptyPreferenceValuesByScope,
-  FUTURE_PREFERENCE_SCOPES,
   isPreferenceScope,
   mergePreferenceValuesByScope,
   mergeScopedPreferences,
   PREFERENCE_SCOPE_MERGE_ORDER,
-  type FuturePreferenceScope,
   type PreferenceScope,
   type PreferenceValuesByScope,
   type ScopedPreferenceLayer,
