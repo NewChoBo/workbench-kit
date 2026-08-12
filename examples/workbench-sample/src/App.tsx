@@ -6,6 +6,7 @@ import {
   type WorkbenchAppearanceSettings,
   type WorkbenchColorSchemePreference,
 } from '@workbench-kit/react/workbench';
+import { getWorkbenchCommandPaletteShortcutLabel } from '@workbench-kit/react/workbench/command-ui';
 import type { StatusBarSectionModel } from '@workbench-kit/react/workbench/shell';
 import type { WorkspaceEditorTheme } from '@workbench-kit/react/workbench/workspace/editor';
 import { createWorkbenchWorkspaceHostPort } from '@workbench-kit/workspace';
@@ -15,7 +16,6 @@ import {
   DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   EditorArea,
-  getWorkbenchCommandPaletteShortcutLabel,
   isWorkspaceResourceService,
   mergeWorkbenchStatusSections,
   SAMPLE_FIELD_REMAP_VIEW_HOST_FACTORY,

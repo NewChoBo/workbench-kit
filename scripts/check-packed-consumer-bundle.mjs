@@ -242,6 +242,10 @@ import {
   WorkbenchQuickOpen,
   WorkbenchShortcutCommandBridge,
   createWorkspaceFilesQuickOpenProvider,
+  getWorkbenchCommandPaletteShortcutLabel,
+  getWorkbenchQuickAccessShortcutLabel,
+  matchesWorkbenchCommandPaletteShortcut,
+  matchesWorkbenchQuickAccessShortcut,
   matchesWorkbenchShortcut,
   resolveQuickOpenItemPath,
 } from '@workbench-kit/react/workbench/command-ui';
@@ -278,6 +282,14 @@ const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),
   resolvedTheme: resolveWorkbenchTheme('dark'),
+  commandPaletteShortcut: getWorkbenchCommandPaletteShortcutLabel(),
+  commandPaletteShortcutMatches: matchesWorkbenchCommandPaletteShortcut({
+    ctrlKey: true,
+    key: 'p',
+    shiftKey: true,
+  }),
+  quickAccessShortcut: getWorkbenchQuickAccessShortcutLabel(),
+  quickAccessShortcutMatches: matchesWorkbenchQuickAccessShortcut({ ctrlKey: true, key: 'p' }),
   shortcutMatches: matchesWorkbenchShortcut({
     event: { ctrlKey: true, key: 'p' },
     shortcut: 'Ctrl+P',

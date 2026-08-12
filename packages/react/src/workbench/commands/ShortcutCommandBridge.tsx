@@ -213,6 +213,22 @@ export function matchesWorkbenchShortcut({
     );
 }
 
+export function matchesWorkbenchCommandPaletteShortcut(event: WorkbenchShortcutEventLike) {
+  return matchesWorkbenchShortcut({ event, shortcut: 'Ctrl/Cmd+Shift+P' });
+}
+
+export function matchesWorkbenchQuickAccessShortcut(event: WorkbenchShortcutEventLike) {
+  return matchesWorkbenchShortcut({ event, shortcut: 'Ctrl/Cmd+P' });
+}
+
+export function getWorkbenchCommandPaletteShortcutLabel() {
+  return 'Ctrl+Shift+P';
+}
+
+export function getWorkbenchQuickAccessShortcutLabel() {
+  return 'Ctrl+P';
+}
+
 export function getWorkbenchShortcutCommandBindings<TContext>({
   commandIds,
   context,

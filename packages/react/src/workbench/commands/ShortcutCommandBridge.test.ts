@@ -1,8 +1,12 @@
 import { createCommandRegistry, type CommandDefinition } from '@workbench-kit/platform';
 import { describe, expect, it, vi } from 'vitest';
 import {
+  getWorkbenchCommandPaletteShortcutLabel,
+  getWorkbenchQuickAccessShortcutLabel,
   getWorkbenchShortcutCommandBindings,
   getWorkbenchShortcutFromEvent,
+  matchesWorkbenchCommandPaletteShortcut,
+  matchesWorkbenchQuickAccessShortcut,
   matchesWorkbenchShortcut,
   runWorkbenchShortcutCommand,
   type WorkbenchShortcutEventLike,
@@ -82,6 +86,19 @@ describe('ShortcutCommandBridge helpers', () => {
         shortcut: 'Mod+S',
       }),
     ).toBe(true);
+  });
+
+  it('shares the default palette and quick access shortcuts', () => {
+    expect(
+      matchesWorkbenchCommandPaletteShortcut(createEvent('P', { ctrlKey: true, shiftKey: true })),
+    ).toBe(true);
+    expect(matchesWorkbenchCommandPaletteShortcut(createEvent('P', { ctrlKey: true }))).toBe(false);
+    expect(matchesWorkbenchQuickAccessShortcut(createEvent('P', { metaKey: true }))).toBe(true);
+    expect(
+      matchesWorkbenchQuickAccessShortcut(createEvent('P', { metaKey: true, shiftKey: true })),
+    ).toBe(false);
+    expect(getWorkbenchCommandPaletteShortcutLabel()).toBe('Ctrl+Shift+P');
+    expect(getWorkbenchQuickAccessShortcutLabel()).toBe('Ctrl+P');
   });
 
   it('formats keyboard events for logging', () => {

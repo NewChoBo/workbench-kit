@@ -10,9 +10,6 @@ import {
   type ExtensionRegistry,
 } from '@workbench-kit/workbench-core';
 
-export const WORKBENCH_COMMAND_PALETTE_SHORTCUT = 'Ctrl+Shift+P';
-export const WORKBENCH_QUICK_ACCESS_SHORTCUT = 'Ctrl+P';
-
 type ExtensionCommand = ReturnType<ExtensionRegistry['commands']['getCommands']>[number];
 
 function resolveCommandValue<TContext, TValue>(
@@ -175,44 +172,4 @@ export function buildWorkbenchPaletteCommands({
   return mergeWorkbenchCommandDescriptors(shellDescriptors, contributedDescriptors, [
     ...additionalCommands,
   ]);
-}
-
-export function matchesWorkbenchCommandPaletteShortcut(
-  event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
-) {
-  const key = event.key.toLowerCase();
-
-  if (key !== 'p') {
-    return false;
-  }
-
-  if (!(event.ctrlKey || event.metaKey) || !event.shiftKey || event.altKey) {
-    return false;
-  }
-
-  return true;
-}
-
-export function matchesWorkbenchQuickAccessShortcut(
-  event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
-) {
-  const key = event.key.toLowerCase();
-
-  if (key !== 'p') {
-    return false;
-  }
-
-  if (!(event.ctrlKey || event.metaKey) || event.shiftKey || event.altKey) {
-    return false;
-  }
-
-  return true;
-}
-
-export function getWorkbenchCommandPaletteShortcutLabel() {
-  return WORKBENCH_COMMAND_PALETTE_SHORTCUT;
-}
-
-export function getWorkbenchQuickAccessShortcutLabel() {
-  return WORKBENCH_QUICK_ACCESS_SHORTCUT;
 }

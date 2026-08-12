@@ -16,6 +16,10 @@ import {
   type WorkbenchCommandRunContext,
   type WorkbenchShellCommandContext,
 } from '@workbench-kit/react/workbench';
+import {
+  matchesWorkbenchCommandPaletteShortcut,
+  matchesWorkbenchQuickAccessShortcut,
+} from '@workbench-kit/react/workbench/command-ui';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
@@ -24,8 +28,6 @@ import { registerWorkbenchShellCommandHandlers } from './shell-command-registrat
 import {
   buildWorkbenchPaletteCommands,
   collectExtensionCommandFeaturesById,
-  matchesWorkbenchCommandPaletteShortcut,
-  matchesWorkbenchQuickAccessShortcut,
   resolveShellCommandActivities,
 } from './command-palette.js';
 import { resolveExtensionKeybindingCommand } from './keybinding-bridge.js';

@@ -212,13 +212,7 @@ export {
   type WorkbenchThemeOption,
 } from './shell/shell.js';
 export {
-  getWorkbenchCommandPaletteShortcutLabel,
-  getWorkbenchQuickAccessShortcutLabel,
-  WORKBENCH_COMMAND_PALETTE_SHORTCUT,
-  WORKBENCH_QUICK_ACCESS_SHORTCUT,
   buildWorkbenchPaletteCommands,
-  matchesWorkbenchCommandPaletteShortcut,
-  matchesWorkbenchQuickAccessShortcut,
   mergeWorkbenchCommandDescriptors,
   resolveShellCommandActivities,
 } from './workbench/command-palette.js';

@@ -8,8 +8,6 @@ import { describe, expect, it } from 'vitest';
 import {
   buildWorkbenchPaletteCommands,
   extensionCommandToDescriptor,
-  matchesWorkbenchCommandPaletteShortcut,
-  matchesWorkbenchQuickAccessShortcut,
   mergeWorkbenchCommandDescriptors,
 } from './command-palette.js';
 
@@ -171,50 +169,6 @@ describe('workbench-command-palette helpers', () => {
         id: 'workbench-kit.feature.run',
       }),
     );
-  });
-
-  it('matches the default command palette shortcut', () => {
-    expect(
-      matchesWorkbenchCommandPaletteShortcut({
-        altKey: false,
-        ctrlKey: true,
-        key: 'P',
-        metaKey: false,
-        shiftKey: true,
-      }),
-    ).toBe(true);
-
-    expect(
-      matchesWorkbenchCommandPaletteShortcut({
-        altKey: false,
-        ctrlKey: true,
-        key: 'K',
-        metaKey: false,
-        shiftKey: true,
-      }),
-    ).toBe(false);
-  });
-
-  it('matches the quick access shortcut without shadowing the command palette shortcut', () => {
-    expect(
-      matchesWorkbenchQuickAccessShortcut({
-        altKey: false,
-        ctrlKey: true,
-        key: 'P',
-        metaKey: false,
-        shiftKey: false,
-      }),
-    ).toBe(true);
-
-    expect(
-      matchesWorkbenchQuickAccessShortcut({
-        altKey: false,
-        ctrlKey: true,
-        key: 'P',
-        metaKey: false,
-        shiftKey: true,
-      }),
-    ).toBe(false);
   });
 
   it('executes shell palette commands through the shell registry', () => {
