@@ -32,6 +32,7 @@ host-owned.
 ```ts
 import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';
 import { createApplicationQuitGuard } from '@workbench-kit/electron-shell/application-quit-guard';
+import { registerPrivilegedAssetProtocolScheme } from '@workbench-kit/electron-shell/asset-protocol';
 import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';
 import {
   createWindowControlsBridge,
@@ -42,6 +43,10 @@ import {
 `registerWindowControlIpc` validates the sender through the host-injected window
 resolver. `createWindowControlsBridge().toggleMaximized()` resolves to the final
 maximized state returned by the main handler.
+
+`registerPrivilegedAssetProtocolScheme` owns only Electron's repeated secure
+asset privileges. Call it before app readiness; the host retains its scheme,
+URL parsing, cache policy, responses, and post-ready `protocol.handle` wiring.
 
 ## Application quit guard (`./application-quit-guard`)
 

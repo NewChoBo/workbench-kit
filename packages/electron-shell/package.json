@@ -9,6 +9,9 @@
       "application-quit-guard": [
         "src/lifecycle/application-quit-guard.ts"
       ],
+      "asset-protocol": [
+        "src/assets/privileged-asset-protocol.ts"
+      ],
       "external-links": [
         "src/security/open-allowlisted-external-link.ts"
       ],
@@ -31,6 +34,12 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./asset-protocol": {
+      "types": "./src/assets/privileged-asset-protocol.ts",
+      "require": "./dist/assets/privileged-asset-protocol.js",
+      "import": "./src/assets/privileged-asset-protocol.ts",
+      "default": "./src/assets/privileged-asset-protocol.ts"
+    },
     "./application-quit-guard": {
       "types": "./src/lifecycle/application-quit-guard.ts",
       "require": "./dist/lifecycle/application-quit-guard.js",

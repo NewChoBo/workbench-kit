@@ -27,16 +27,11 @@ export {
   type IpcSenderLike,
 } from './security/require-owned-window-for-sender.js';
 export {
-  cacheAllowlistedHttpsAsset,
-  registerRootConfinedAssetProtocol,
-  type AssetCachePolicy,
-  type AssetCacheStore,
-  type CachedAssetMeta,
-  type FetchAllowlistedHttps,
-  type PathRootHelpers,
-  type PrivilegedProtocolApi,
-  type RegisterRootConfinedAssetProtocolOptions,
-} from './assets/root-confined-asset-protocol.js';
+  registerPrivilegedAssetProtocolScheme,
+  type PrivilegedAssetProtocolRegistrar,
+  type PrivilegedAssetProtocolScheme,
+  type RegisterPrivilegedAssetProtocolSchemeOptions,
+} from './assets/privileged-asset-protocol.js';
 export {
   createWin32WallpaperPathResolver,
   resolveWallpaperCropRect,

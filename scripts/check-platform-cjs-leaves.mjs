@@ -196,6 +196,7 @@ function verifyElectronShellLeaves() {
   );
   try {
     for (const leaf of [
+      'assets/privileged-asset-protocol.js',
       'lifecycle/application-quit-guard.js',
       'security/open-allowlisted-external-link.js',
       'security/require-owned-window-for-sender.js',
@@ -211,6 +212,7 @@ function verifyElectronShellLeaves() {
       fixture.consumerDir,
       [
         "import { createApplicationQuitGuard } from '@workbench-kit/electron-shell/application-quit-guard';",
+        "import { registerPrivilegedAssetProtocolScheme } from '@workbench-kit/electron-shell/asset-protocol';",
         "import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/external-links';",
         "import { createAllowlistedInvoke } from '@workbench-kit/electron-shell/preload';",
         "import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';",
@@ -218,6 +220,7 @@ function verifyElectronShellLeaves() {
       ],
       [
         'createApplicationQuitGuard',
+        'registerPrivilegedAssetProtocolScheme',
         'openAllowlistedExternalLink',
         'createAllowlistedInvoke',
         'requireOwnedWindowForSender',
@@ -232,10 +235,12 @@ function verifyElectronShellLeaves() {
         "'use strict';",
         "const assert = require('node:assert/strict');",
         "const { createApplicationQuitGuard } = require('@workbench-kit/electron-shell/application-quit-guard');",
+        "const { registerPrivilegedAssetProtocolScheme } = require('@workbench-kit/electron-shell/asset-protocol');",
         "const { openAllowlistedExternalLink } = require('@workbench-kit/electron-shell/external-links');",
         "const { requireOwnedWindowForSender } = require('@workbench-kit/electron-shell/sender-security');",
         "const { registerWindowControlIpc } = require('@workbench-kit/electron-shell/window-controls');",
         'assert.equal(typeof createApplicationQuitGuard, "function");',
+        'assert.equal(typeof registerPrivilegedAssetProtocolScheme, "function");',
         'assert.equal(typeof openAllowlistedExternalLink, "function");',
         'assert.equal(typeof requireOwnedWindowForSender, "function");',
         'assert.equal(typeof registerWindowControlIpc, "function");',

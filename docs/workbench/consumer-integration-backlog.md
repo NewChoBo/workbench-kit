@@ -205,11 +205,9 @@ sentinel options before passing. Full multi-section dialog landed as §2
   when encryption is unavailable and serializes mutations within one vault instance
   (compose persistence with platform/node atomic write; hosts coordinate shared files
   across instances or processes).
-- `registerRootConfinedAssetProtocol` / `cacheAllowlistedHttpsAsset` — privileged scheme
-  serving only root-confined cache bytes; hosts inject scheme, hash/TTL/size policy, HTTPS fetch,
-  and `resolveInsideRoot` (typically `@workbench-kit/platform/node`). Migration:
-  `registerRootConfinedAssetProtocol` now disables privileged protocol CORS by default; hosts
-  relying on the previous default must pass `corsEnabled: true` after reviewing origin policy.
+- `registerPrivilegedAssetProtocolScheme` — repeated secure/fetch/stream scheme
+  privileges only. Hosts register it before app readiness and retain scheme names,
+  URL parsing, cache policy, response headers, and post-ready `protocol.handle` wiring.
 - `resolveWallpaperCropRect` + `createWin32WallpaperPathResolver` — spanned wallpaper crop
   math and injectable win32 path resolution (other platforms return null until host provides one).
 
