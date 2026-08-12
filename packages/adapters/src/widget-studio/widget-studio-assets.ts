@@ -1,5 +1,3 @@
-import type { WorkspaceFile } from '@workbench-kit/workspace';
-
 import {
   flattenWidgetStudioAssetPackages,
   WIDGET_STUDIO_ASSETS_DIR,
@@ -8,8 +6,6 @@ import {
 } from './widget-studio-asset-package.js';
 
 export { WIDGET_STUDIO_ASSETS_DIR, WIDGET_STUDIO_CUSTOM_ASSETS_DIR };
-
-export type WidgetStudioWorkspaceAssetFile = WorkspaceFile;
 
 const TEXT_INPUTS_SCHEMA = {
   $schema: 'http://json-schema.org/draft-07/schema#',

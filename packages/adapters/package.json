@@ -13,8 +13,7 @@
     "./runtime": "./src/runtime/runtime.ts",
     "./workspace": "./src/workspace/workspace.ts",
     "./workbench-demo": "./src/demo/workbench-demo.ts",
-    "./workbench-demo-config": "./src/demo/workbench-demo-config.ts",
-    "./persistence": "./src/persistence/persistence.ts"
+    "./workbench-demo-config": "./src/demo/workbench-demo-config.ts"
   },
   "files": [
     "src",

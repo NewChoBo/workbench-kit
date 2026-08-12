@@ -12,11 +12,6 @@ export interface WorkspaceFileRepositoryCallbacks {
   saveFile: (path: string, file: WriteWorkspaceFileInput) => void;
 }
 
-export interface WorkspaceFileAdapterState {
-  getFiles: () => WorkspaceFile[];
-  files: WorkspaceFile[];
-}
-
 const cloneFile = (file: WorkspaceFile): WorkspaceFile => ({ ...file });
 
 function normalizeInputPath(path: string) {
