@@ -256,8 +256,9 @@ Prefer memory or Node document stores for structured persistence. `localStorage`
 adapters remain appropriate only for small JSON documents in browser hosts.
 
 **Allowlisted HTTPS fetch (implemented API):** Hosts inject hostname allowlists.
-`createAllowlistedHttpsFetch({ allowedHosts, fetch? })` rejects non-`https:` URLs and
-non-allowlisted hostnames; kit does not ship concrete API host catalogs.
+`createAllowlistedHttpsFetch({ allowedHosts, fetch?, createPolicyError? })` rejects non-`https:`
+URLs and non-allowlisted hostnames. The optional callback maps those policy errors without
+changing validation; kit does not ship concrete API host catalogs or product copy.
 
 **Tray-aware close / quit policy (implemented API):** Hosts own tray icons, menus, and
 preference UI. `@workbench-kit/platform` exposes pure decision helpers (no Electron imports):

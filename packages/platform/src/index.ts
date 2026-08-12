@@ -25,6 +25,7 @@ export {
 } from './storage/browser-storage.js';
 export {
   createAllowlistedHttpsFetch,
+  type AllowlistedHttpsFetchPolicyViolation,
   type CreateAllowlistedHttpsFetchOptions,
 } from './network/create-allowlisted-https-fetch.js';
 export {

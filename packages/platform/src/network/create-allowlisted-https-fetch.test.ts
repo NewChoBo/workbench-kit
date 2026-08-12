@@ -38,6 +38,27 @@ describe('createAllowlistedHttpsFetch', () => {
     expect(fetchImpl).not.toHaveBeenCalled();
   });
 
+  it('lets hosts map policy violations without changing request validation', async () => {
+    const fetchImpl = vi.fn(async () => new Response('ok'));
+    const createPolicyError = vi.fn((violation: string, url: URL) => {
+      return new Error(`${violation}: ${url.hostname}`);
+    });
+    const fetch = createAllowlistedHttpsFetch({
+      allowedHosts: ['api.example.com'],
+      createPolicyError,
+      fetch: fetchImpl as unknown as typeof globalThis.fetch,
+    });
+
+    await expect(fetch('http://api.example.com/v1')).rejects.toThrow(
+      'https-required: api.example.com',
+    );
+    await expect(fetch('https://evil.example.com/v1')).rejects.toThrow(
+      'hostname-not-allowlisted: evil.example.com',
+    );
+    expect(createPolicyError).toHaveBeenCalledTimes(2);
+    expect(fetchImpl).not.toHaveBeenCalled();
+  });
+
   it('accepts URL and Request inputs after hostname checks', async () => {
     const fetchImpl = vi.fn(async () => new Response('ok'));
     const fetch = createAllowlistedHttpsFetch({
