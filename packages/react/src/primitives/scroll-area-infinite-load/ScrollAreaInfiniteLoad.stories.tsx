@@ -4,7 +4,7 @@ import { expect, within } from 'storybook/test';
 
 import { StoryWorkbenchShellFrame } from '../../workbench/story/StoryWorkbenchShellFrame';
 import { CatalogBrowseCard } from '../catalog-browse-card/CatalogBrowseCard';
-import { EmptyState } from '../empty-state';
+import { PanelLoading } from '../panel-loading/PanelLoading';
 import { ScrollArea } from '../scroll-area/ScrollArea';
 import { ScrollAreaInfiniteSentinel } from './ScrollAreaInfiniteSentinel';
 import { useScrollAreaInfiniteLoad } from './useScrollAreaInfiniteLoad';
@@ -42,6 +42,15 @@ export const CatalogGrid: Story = {
     await expect(canvas.getByText(`Showing ${PAGE_SIZE} of ${TOTAL_ITEMS}`)).toBeInTheDocument();
   },
   tags: ['storybook-play-baseline'],
+};
+
+export const LoadingFeedback: Story = {
+  name: 'Loading feedback',
+  render: () => (
+    <StoryWorkbenchShellFrame variant="editor">
+      <PanelLoading label="Loading more items" />
+    </StoryWorkbenchShellFrame>
+  ),
 };
 
 function InfiniteCatalogHarness() {
@@ -102,11 +111,7 @@ function InfiniteCatalogHarness() {
             />
           ))}
           {hasMore ? <ScrollAreaInfiniteSentinel ref={sentinelRef} /> : null}
-          {isLoadingMore ? (
-            <EmptyState compact icon="loading">
-              Loading more items
-            </EmptyState>
-          ) : null}
+          {isLoadingMore ? <PanelLoading label="Loading more items" /> : null}
         </ScrollArea>
       </div>
     </StoryWorkbenchShellFrame>
