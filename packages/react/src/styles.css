@@ -1,15 +1,3 @@
-@import '@workbench-kit/tokens/styles.css';
-@import '@vscode/codicons/dist/codicon.css';
-@import './scrollbars.css';
-@import './workbench/settings/settings.css';
-@import './layout/layout.css';
-@import './overlay/overlay.css';
-@import './workbench/chrome/workbench-chrome.css';
+@import './styles/core.css';
 @import './workbench/auth/auth.css';
-@import './workbench/management/management.css';
-@import './workbench/views/views.css';
-@import './workbench/workspace/workspace.css';
 @import './workbench/chat/chat.css';
-@import './primitives/primitives.css';
-@import './workbench/widgets/widgets.css';
-@import './modal/modal.css';
