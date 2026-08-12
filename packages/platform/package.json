@@ -12,6 +12,9 @@
       "atomic-write": [
         "src/node/atomic-write.ts"
       ],
+      "node": [
+        "src/node/index.ts"
+      ],
       "tray-close-policy": [
         "src/window/tray-close-policy.ts"
       ],
@@ -33,7 +36,12 @@
       "import": "./src/network/create-allowlisted-https-fetch.ts",
       "default": "./src/network/create-allowlisted-https-fetch.ts"
     },
-    "./node": "./src/node/index.ts",
+    "./node": {
+      "types": "./src/node/index.ts",
+      "require": "./dist/node.cjs",
+      "import": "./src/node/index.ts",
+      "default": "./src/node/index.ts"
+    },
     "./atomic-write": {
       "types": "./src/node/atomic-write.ts",
       "require": "./dist/atomic-write.cjs",

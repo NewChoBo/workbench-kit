@@ -8,6 +8,7 @@ export default defineConfig({
   entry: {
     'allowlisted-https-fetch': 'src/network/create-allowlisted-https-fetch.ts',
     'atomic-write': 'src/node/atomic-write.ts',
+    node: 'src/node/index.ts',
     'tray-close-policy': 'src/window/tray-close-policy.ts',
     'window-bounds-persistence': 'src/window/window-bounds-persistence.ts',
   },

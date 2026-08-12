@@ -68,6 +68,7 @@ Pure leaf helpers ship dual `exports` so a CommonJS Electron `main` process can
 ```js
 const { createAllowlistedHttpsFetch } = require('@workbench-kit/platform/allowlisted-https-fetch');
 const { atomicWriteBytes, atomicWriteText } = require('@workbench-kit/platform/atomic-write');
+const { resolvePathUnderRoot } = require('@workbench-kit/platform/node');
 const {
   shouldHideOnClose,
   shouldQuitWhenAllWindowsClosed,
