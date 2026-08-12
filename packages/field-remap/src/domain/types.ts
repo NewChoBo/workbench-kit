@@ -87,15 +87,9 @@ export interface MappingEdge {
   readonly transformIds?: readonly string[];
   /**
    * Per-step options aligned with `transformIds` (index N applies to step N).
-   * Prefer this when steps need different bags (e.g. `showSeconds` then `maxLength`).
+   * Steps may use different bags (e.g. `showSeconds` then `maxLength`).
    */
   readonly transformOptionSteps?: readonly (Readonly<Record<string, unknown>> | undefined)[];
-  /**
-   * Shared options for all `transformIds` steps (legacy / apply-to-all).
-   * Used when `transformOptionSteps` is omitted. Still written as a back-compat
-   * summary of step 0 (or the first non-empty step) by `normalizeMappingEdge`.
-   */
-  readonly transformOptions?: Readonly<Record<string, unknown>>;
   /**
    * When the source is an array of objects, optional dotted path into each item
    * (e.g. `name` or `meta.label`) before the value is written to the target.
@@ -113,11 +107,6 @@ export interface MappingEdge {
    * Per-step options aligned with `itemTransformIds`.
    */
   readonly itemTransformOptionSteps?: readonly (Readonly<Record<string, unknown>> | undefined)[];
-  /**
-   * Shared options for all `itemTransformIds` steps (legacy / apply-to-all).
-   * Independent of `transformOptions` / `transformOptionSteps`.
-   */
-  readonly itemTransformOptions?: Readonly<Record<string, unknown>>;
   /**
    * List-context child bindings (Stedi-style): when source is an array of objects,
    * each element is converted through these edges into a target item object.
@@ -216,8 +205,7 @@ export interface ValueTransformDefinition {
   /**
    * Data-driven option editors (mapped rows / convert panel).
    * Values are stored per step (`transformOptionSteps` / `itemTransformOptionSteps`)
-   * or as a shared bag (`transformOptions` / `itemTransformOptions`), or on host
-   * `TransformContext.options`.
+   * or on host `TransformContext.options`.
    */
   readonly optionFields?: readonly TransformOptionField[];
 }

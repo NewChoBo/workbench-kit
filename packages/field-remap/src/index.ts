@@ -93,17 +93,11 @@ export type {
 } from './domain/mapping/mappingOperators.js';
 
 export {
-  collectOptionFields,
-  contextWithEdgeOptions,
-  mergeOptionSteps,
   optionFieldsForStep,
-  patchOptionRecord,
-  patchOptionStep,
   resolveOptionSteps,
   resizeOptionSteps,
   sanitizeOptionRecord,
   sanitizeOptionSteps,
-  sharedOptionsFromSteps,
 } from './domain/mapping/transformOptions.js';
 
 export {

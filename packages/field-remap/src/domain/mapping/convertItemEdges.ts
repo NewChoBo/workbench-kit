@@ -75,7 +75,7 @@ export async function convertArrayWithItemEdges(input: {
             ? await identity.apply(sourceValue, { ...input.context, sampleValue: sourceValue })
             : sourceValue;
         } else {
-          const steps = resolveOptionSteps(chain, edge.transformOptionSteps, edge.transformOptions);
+          const steps = resolveOptionSteps(chain, edge.transformOptionSteps);
           value = await applyTransformChain(
             input.transforms,
             chain,

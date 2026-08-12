@@ -3,11 +3,7 @@ import {
   IDENTITY_TRANSFORM_ID,
   MAX_TRANSFORM_CHAIN,
 } from '../constants.js';
-import {
-  sanitizeOptionRecord,
-  sanitizeOptionSteps,
-  sharedOptionsFromSteps,
-} from '../mapping/transformOptions.js';
+import { sanitizeOptionSteps } from '../mapping/transformOptions.js';
 import type { MappingEdge } from '../types.js';
 
 export { MAX_TRANSFORM_CHAIN } from '../constants.js';
@@ -32,12 +28,7 @@ export function edgeItemTransformIds(edge: MappingEdge): string[] {
   return sanitizeTransformIds(edge.itemTransformIds);
 }
 
-/**
- * Option bags:
- * - Prefer `transformOptionSteps` when present (aligned to chain length).
- * - Keep `transformOptions` as the first non-empty step (or the legacy shared bag).
- * - Same rules for `itemTransformOptionSteps` / `itemTransformOptions`.
- */
+/** Normalize transform chains and their aligned per-step option bags. */
 export function normalizeMappingEdge(edge: MappingEdge): MappingEdge {
   const ids = edgeTransformIds(edge);
   const itemIds = edgeItemTransformIds(edge);
@@ -52,16 +43,10 @@ export function normalizeMappingEdge(edge: MappingEdge): MappingEdge {
       : undefined;
 
   const transformOptionSteps = sanitizeOptionSteps(edge.transformOptionSteps, ids.length);
-  const transformOptions =
-    sharedOptionsFromSteps(transformOptionSteps) ?? sanitizeOptionRecord(edge.transformOptions);
-
   const itemTransformOptionSteps = sanitizeOptionSteps(
     edge.itemTransformOptionSteps,
     itemIds.length,
   );
-  const itemTransformOptions =
-    sharedOptionsFromSteps(itemTransformOptionSteps) ??
-    sanitizeOptionRecord(edge.itemTransformOptions);
 
   return {
     id: edge.id,
@@ -69,11 +54,9 @@ export function normalizeMappingEdge(edge: MappingEdge): MappingEdge {
     targetSlotId: edge.targetSlotId,
     transformIds: ids.length > 0 ? ids : undefined,
     ...(transformOptionSteps ? { transformOptionSteps } : {}),
-    ...(transformOptions ? { transformOptions } : {}),
     ...(itemSourcePath && !itemEdges ? { itemSourcePath } : {}),
     ...(itemIds.length > 0 && !itemEdges ? { itemTransformIds: itemIds } : {}),
     ...(itemTransformOptionSteps && !itemEdges ? { itemTransformOptionSteps } : {}),
-    ...(itemTransformOptions && !itemEdges ? { itemTransformOptions } : {}),
     ...(itemEdges ? { itemEdges } : {}),
   };
 }
@@ -89,13 +72,11 @@ export function createMappingEdge(input: {
   readonly targetSlotId: string;
   readonly transformIds?: readonly string[];
   readonly transformOptionSteps?: readonly (Readonly<Record<string, unknown>> | undefined)[];
-  readonly transformOptions?: Readonly<Record<string, unknown>>;
   /** Optional per-item projection path for array mappings. */
   readonly itemSourcePath?: string;
   /** Optional per-item transform chain after projection. */
   readonly itemTransformIds?: readonly string[];
   readonly itemTransformOptionSteps?: readonly (Readonly<Record<string, unknown>> | undefined)[];
-  readonly itemTransformOptions?: Readonly<Record<string, unknown>>;
   /** List-context child edges for array-of-object → array-of-object. */
   readonly itemEdges?: readonly MappingEdge[];
 }): MappingEdge {
@@ -105,11 +86,9 @@ export function createMappingEdge(input: {
     targetSlotId: input.targetSlotId,
     transformIds: input.transformIds,
     transformOptionSteps: input.transformOptionSteps,
-    transformOptions: input.transformOptions,
     itemSourcePath: input.itemSourcePath,
     itemTransformIds: input.itemTransformIds,
     itemTransformOptionSteps: input.itemTransformOptionSteps,
-    itemTransformOptions: input.itemTransformOptions,
     itemEdges: input.itemEdges,
   });
 }

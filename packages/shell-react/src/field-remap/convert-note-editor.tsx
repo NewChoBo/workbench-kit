@@ -57,10 +57,8 @@ export function ConvertNoteEditor({
     if (!transformId) {
       return {};
     }
-    return (
-      resolveOptionSteps(chain, edge.transformOptionSteps, edge.transformOptions)[stepIndex] ?? {}
-    );
-  }, [chain, edge.transformOptionSteps, edge.transformOptions, stepIndex, transformId]);
+    return resolveOptionSteps(chain, edge.transformOptionSteps)[stepIndex] ?? {};
+  }, [chain, edge.transformOptionSteps, stepIndex, transformId]);
 
   const replaceCatalog = listCompatibleTransforms({
     registry: transforms,

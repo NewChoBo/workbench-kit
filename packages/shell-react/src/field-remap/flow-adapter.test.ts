@@ -248,7 +248,6 @@ describe('field-remap-flow-adapter', () => {
         itemEdges: undefined,
         itemTransformIds: undefined,
         itemTransformOptionSteps: undefined,
-        itemTransformOptions: undefined,
       },
       removeEdgeIds: ['e-title'],
     });

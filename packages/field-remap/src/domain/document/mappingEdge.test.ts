@@ -146,39 +146,7 @@ describe('mappingEdge normalization', () => {
     ).toEqual(['string:truncate']);
   });
 
-  it('preserves per-edge transform options on normalize / create', () => {
-    expect(
-      normalizeMappingEdge({
-        id: 'e6',
-        sourceFieldId: 'loc',
-        targetSlotId: 'meta',
-        transformIds: ['string:template'],
-        transformOptions: { template: '{city}' },
-        itemTransformIds: ['string:truncate'],
-        itemTransformOptions: { maxLength: 8 },
-      }),
-    ).toEqual({
-      id: 'e6',
-      sourceFieldId: 'loc',
-      targetSlotId: 'meta',
-      transformIds: ['string:template'],
-      transformOptions: { template: '{city}' },
-      itemTransformIds: ['string:truncate'],
-      itemTransformOptions: { maxLength: 8 },
-    });
-
-    expect(
-      createMappingEdge({
-        id: 'e7',
-        sourceFieldId: 'a',
-        targetSlotId: 'b',
-        transformIds: ['array:join'],
-        transformOptions: { separator: ' | ' },
-      }).transformOptions,
-    ).toEqual({ separator: ' | ' });
-  });
-
-  it('normalizes per-step option bags and keeps a shared summary', () => {
+  it('normalizes per-step option bags', () => {
     expect(
       normalizeMappingEdge({
         id: 'e8',
@@ -186,6 +154,8 @@ describe('mappingEdge normalization', () => {
         targetSlotId: 'time',
         transformIds: ['time:24h', 'string:truncate'],
         transformOptionSteps: [{ showSeconds: true }, { maxLength: 4 }],
+        itemTransformIds: ['string:truncate'],
+        itemTransformOptionSteps: [{ maxLength: 8 }],
       }),
     ).toEqual({
       id: 'e8',
@@ -193,7 +163,8 @@ describe('mappingEdge normalization', () => {
       targetSlotId: 'time',
       transformIds: ['time:24h', 'string:truncate'],
       transformOptionSteps: [{ showSeconds: true }, { maxLength: 4 }],
-      transformOptions: { showSeconds: true },
+      itemTransformIds: ['string:truncate'],
+      itemTransformOptionSteps: [{ maxLength: 8 }],
     });
   });
 });

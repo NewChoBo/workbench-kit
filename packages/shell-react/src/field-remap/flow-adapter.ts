@@ -811,7 +811,6 @@ export function applyFieldRemapFlowConnection(input: {
         itemEdges: undefined,
         itemTransformIds: undefined,
         itemTransformOptionSteps: undefined,
-        itemTransformOptions: undefined,
       },
       removeEdgeIds: [edgeA.id],
     };

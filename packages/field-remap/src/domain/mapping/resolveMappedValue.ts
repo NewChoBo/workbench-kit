@@ -30,8 +30,7 @@ export function findSourceField(
  * 2. Optional `itemTransformIds` per element (when the value is still an array)
  * 3. `transformIds` on the whole value (including array reduces)
  *
- * Per-step options (`transformOptionSteps` / `itemTransformOptionSteps`) win when
- * present; otherwise shared `transformOptions` / `itemTransformOptions` apply to all steps.
+ * Per-step options are aligned through `transformOptionSteps` / `itemTransformOptionSteps`.
  */
 export async function resolveMappedValue(
   edge: MappingEdge,
@@ -44,11 +43,7 @@ export async function resolveMappedValue(
     : sourceValue;
 
   const itemChain = edgeItemTransformIds(edge);
-  const itemSteps = resolveOptionSteps(
-    itemChain,
-    edge.itemTransformOptionSteps,
-    edge.itemTransformOptions,
-  );
+  const itemSteps = resolveOptionSteps(itemChain, edge.itemTransformOptionSteps);
 
   if (itemChain.length > 0 && Array.isArray(current)) {
     current = await Promise.all(
@@ -62,7 +57,7 @@ export async function resolveMappedValue(
     return identity ? await identity.apply(current, context) : current;
   }
 
-  const valueSteps = resolveOptionSteps(chain, edge.transformOptionSteps, edge.transformOptions);
+  const valueSteps = resolveOptionSteps(chain, edge.transformOptionSteps);
   return applyTransformChain(registry, chain, current, context, valueSteps);
 }
 

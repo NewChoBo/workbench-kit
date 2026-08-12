@@ -87,7 +87,7 @@ describe('convertToShape nested + list context', () => {
           targetSlotId: 'b.tagNames',
           itemSourcePath: 'name',
           transformIds: ['array:join'],
-          transformOptions: { separator: ' | ' },
+          transformOptionSteps: [{ separator: ' | ' }],
         },
       ],
     });

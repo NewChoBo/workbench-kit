@@ -195,8 +195,7 @@ function JsonOptionEditor({
 
 /**
  * Presentational editor for `TransformOptionField` kinds (string / number / boolean /
- * stringMap / json). Emits a full options record; callers typically pass through
- * `patchOptionStep` / `sanitizeOptionRecord`.
+ * stringMap / json). Emits the full options record for one transform step.
  */
 export function TransformOptionsEditor({
   fields,
