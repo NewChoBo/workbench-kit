@@ -775,7 +775,12 @@ sample extension packaging.
 callbacks with selection payload (host owns menu UI), and `flowActionsRef.fitView` so hosts
 do not query Controls DOM. `chrome="embed"` omits the demo hint and bottom binding list;
 `showFlowHint`, `showBindingsList`, and `showConvertPalette` override those defaults. A hidden
-palette is unmounted and the workspace expands rather than retaining an empty grid track.
+palette is unmounted and the workspace expands rather than retaining an empty rail. `emptyDetail`
+is `hint` by default for card chrome and `collapse` for embed chrome; collapse unmounts the empty
+detail rail until an edge, draft, transform, or operator is selected. Both palette and visible
+detail rails use nested kit `SplitView` splitters (pointer and keyboard accessible), so hosts no
+longer need CSS grid overrides for their widths. Empty-detail title/body also accept
+`labels.emptyDetailTitle` / `labels.emptyDetailDescription`.
 Panel forwards the same props. Chrome nouns (`Bindings`, Convert palette copy) accept `labels`
 / optional `t(key, fallback)` on Flow and Panel — hosts can override to “Field maps” /
 “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
@@ -794,6 +799,7 @@ backward-compatible card presentation.
 <div style={{ minInlineSize: '22.5rem', minBlockSize: '26rem' }}>
   <FieldRemapFlowMapper
     chrome="embed"
+    emptyDetail="collapse"
     showConvertPalette={false}
     // sources, targets, edges, transforms, and onEdgesChange as usual
   />

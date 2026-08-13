@@ -246,6 +246,9 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(container!.querySelector('[data-testid="field-remap-hint"]')).toBeTruthy();
     expect(container!.querySelector('[data-testid="field-remap-edges"]')).toBeTruthy();
     expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
+    expect(mapper?.getAttribute('data-empty-detail')).toBe('hint');
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expect(container!.querySelectorAll('[role="separator"]')).toHaveLength(2);
   });
 
   it('uses embed defaults that omit the demo hint and binding list', async () => {
@@ -255,9 +258,37 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(mapper?.getAttribute('data-chrome')).toBe('embed');
     expect(mapper?.getAttribute('data-flow-hint')).toBe('off');
     expect(mapper?.getAttribute('data-bindings-list')).toBe('off');
+    expect(mapper?.getAttribute('data-empty-detail')).toBe('collapse');
     expect(container!.querySelector('[data-testid="field-remap-hint"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-edges"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
+    expect(container!.querySelectorAll('[role="separator"]')).toHaveLength(1);
+  });
+
+  it('restores an embed detail rail for a selection and honors the empty hint override', async () => {
+    await renderMapper({
+      chrome: 'embed',
+      emptyDetail: 'hint',
+      labels: { emptyDetailTitle: 'Choose a mapping' },
+    });
+
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')?.textContent).toContain(
+      'Choose a mapping',
+    );
+
+    await rerenderMapper({
+      chrome: 'embed',
+      selection: { kind: 'edge', edgeId: 'e-name' },
+    });
+
+    const mapper = container!.querySelector('[data-testid="field-remap-mapper"]');
+    expect(mapper?.getAttribute('data-empty-detail')).toBe('collapse');
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expect(container!.querySelectorAll('[role="separator"]')).toHaveLength(2);
+    expect(container!.querySelector('[role="separator"]')?.getAttribute('aria-orientation')).toBe(
+      'vertical',
+    );
   });
 
   it('honors explicit chrome visibility overrides and expands when palette is unmounted', async () => {

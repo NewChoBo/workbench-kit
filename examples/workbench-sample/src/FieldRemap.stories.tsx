@@ -43,6 +43,11 @@ const meta = {
       control: 'boolean',
       description: 'Mounts the Convert palette; when false, the workspace expands.',
     },
+    emptyDetail: {
+      control: 'inline-radio',
+      description: 'Keeps the empty detail hint or collapses its rail until selection.',
+      options: ['hint', 'collapse'],
+    },
     showHostChromeDemo: { control: 'boolean', description: 'Shows host-owned editor actions.' },
     ioChrome: {
       control: 'select',
@@ -152,6 +157,7 @@ export const EmbedEdgeFill: Story = {
   args: {
     sampleId: 'nested-ab',
     chrome: 'embed',
+    emptyDetail: 'hint',
     showFlowHint: true,
     showBindingsList: true,
     showMinimap: false,
@@ -163,6 +169,7 @@ export const EmbedEdgeFill: Story = {
     const palette = canvas.getByTestId('field-remap-convert-palette');
     const flow = canvas.getByTestId('field-remap-flow');
     const detail = canvas.getByTestId('field-remap-detail');
+    const separators = canvasElement.querySelectorAll('[role="separator"]');
 
     const mapper = canvas.getByTestId('field-remap-mapper');
     await expect(mapper).toHaveAttribute('data-chrome', 'embed');
@@ -172,8 +179,37 @@ export const EmbedEdgeFill: Story = {
     expect(getComputedStyle(palette).borderTopLeftRadius).toBe('0px');
     expect(getComputedStyle(flow).borderTopLeftRadius).toBe('0px');
     expect(getComputedStyle(detail).borderTopLeftRadius).toBe('0px');
-    expect(getComputedStyle(palette).borderRightWidth).toBe('1px');
-    expect(getComputedStyle(detail).borderLeftWidth).toBe('1px');
+    expect(getComputedStyle(palette).borderRightWidth).toBe('0px');
+    expect(getComputedStyle(detail).borderLeftWidth).toBe('0px');
+    expect(separators).toHaveLength(2);
+    expect(separators[0]?.getAttribute('aria-orientation')).toBe('vertical');
+  },
+};
+
+export const EmbedCollapsedDetail: Story = {
+  name: 'Embed collapsed detail (resizable rails)',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    emptyDetail: 'collapse',
+    showBindingsList: true,
+    showMinimap: false,
+  },
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByTestId('field-remap-detail')).toBeNull();
+    await expect(canvasElement.querySelectorAll('[role="separator"]')).toHaveLength(1);
+
+    await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
+    await expect(canvas.getByTestId('field-remap-detail')).toBeVisible();
+
+    const separator = canvasElement.querySelectorAll<HTMLElement>('[role="separator"]')[1];
+    await expect(separator).toBeTruthy();
+    const before = separator!.getAttribute('aria-valuenow');
+    separator!.focus();
+    await userEvent.keyboard('{ArrowRight}');
+    await expect(separator).not.toHaveAttribute('aria-valuenow', before ?? '');
   },
 };
 
