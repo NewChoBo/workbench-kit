@@ -30,6 +30,8 @@ export interface FieldRemapChromeLabels {
   readonly hideMinimap: string;
   readonly showHiddenFields: string;
   readonly hideHiddenFields: string;
+  readonly emptyDetailTitle: string;
+  readonly emptyDetailDescription: string;
 }
 
 export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
@@ -52,6 +54,9 @@ export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
   hideMinimap: 'Hide minimap',
   showHiddenFields: 'Show hidden fields',
   hideHiddenFields: 'Hide hidden fields',
+  emptyDetailTitle: 'Start with a convert',
+  emptyDetailDescription:
+    'Use the Convert palette to place a convert, then wire source → draft → target. Or select an existing binding / convert note on the canvas.',
 };
 
 /** Stable capability ids for optional `t()` injection (not free prose). */
@@ -73,6 +78,8 @@ export const fieldRemapChromeLabelKeys = {
   hideMinimap: 'fieldRemap.hideMinimap',
   showHiddenFields: 'fieldRemap.showHiddenFields',
   hideHiddenFields: 'fieldRemap.hideHiddenFields',
+  emptyDetailTitle: 'fieldRemap.emptyDetailTitle',
+  emptyDetailDescription: 'fieldRemap.emptyDetailDescription',
 } as const satisfies Record<keyof FieldRemapChromeLabels, string>;
 
 export function resolveFieldRemapChromeLabels(
@@ -106,5 +113,7 @@ export function resolveFieldRemapChromeLabels(
     hideMinimap: resolve('hideMinimap'),
     showHiddenFields: resolve('showHiddenFields'),
     hideHiddenFields: resolve('hideHiddenFields'),
+    emptyDetailTitle: resolve('emptyDetailTitle'),
+    emptyDetailDescription: resolve('emptyDetailDescription'),
   };
 }

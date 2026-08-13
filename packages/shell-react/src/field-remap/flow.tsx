@@ -1,4 +1,5 @@
 import {
+  Children,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -9,6 +10,7 @@ import {
   type KeyboardEvent,
   type MouseEvent,
   type Ref,
+  type ReactNode,
 } from 'react';
 import {
   Background,
@@ -29,6 +31,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
+import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
   MAX_TRANSFORM_CHAIN,
   type MappingEdge,
@@ -328,6 +331,8 @@ export interface FieldRemapFlowMapperProps {
    * explicit `show*` props below take precedence.
    */
   readonly chrome?: 'card' | 'embed' | undefined;
+  /** Show the empty-selection detail hint, or collapse that rail until a selection exists. */
+  readonly emptyDetail?: 'hint' | 'collapse' | undefined;
   /** Show the convert-first hint. Defaults to true for `card`, false for `embed`. */
   readonly showFlowHint?: boolean | undefined;
   /** Show the bottom binding list. Defaults to true for `card`, false for `embed`. */
@@ -394,6 +399,76 @@ export interface FieldRemapFlowMapperProps {
   readonly t?: FieldRemapTranslate | undefined;
 }
 
+interface FieldRemapSplitWorkspaceProps {
+  readonly children: ReactNode;
+  readonly layout: 'wide' | 'medium' | 'narrow';
+  readonly showConvertPalette: boolean;
+  readonly showDetail: boolean;
+  readonly surface: 'binding' | 'convert-note' | 'draft-convert' | 'operator';
+}
+
+/**
+ * The Flow rails are deliberately composed from the shared SplitView primitive so keyboard and
+ * pointer resizing stay consistent with the rest of the workbench. At narrower host widths the
+ * palette and/or detail move above or below the canvas rather than squeezing its usable width.
+ */
+function FieldRemapSplitWorkspace({
+  children,
+  layout,
+  showConvertPalette,
+  showDetail,
+  surface,
+}: FieldRemapSplitWorkspaceProps): JSX.Element {
+  const [palette, canvas, detail] = Children.toArray(children);
+  const isNarrow = layout === 'narrow';
+  const canvasWithDetail = showDetail ? (
+    <SplitView
+      className="workbench-field-remap-flow__canvas-detail-split"
+      defaultSecondarySizePx={isNarrow ? 220 : 320}
+      layoutMode="secondary-fixed"
+      maxSecondarySizePx={isNarrow ? 320 : 480}
+      minPrimarySizePx={isNarrow ? 200 : 280}
+      minSecondarySizePx={isNarrow ? 160 : 256}
+      orientation={isNarrow ? 'vertical' : 'horizontal'}
+      primary={canvas}
+      secondary={detail}
+    />
+  ) : (
+    canvas
+  );
+
+  const content = showConvertPalette ? (
+    <SplitView
+      className="workbench-field-remap-flow__palette-split"
+      defaultPrimarySizePx={isNarrow ? 192 : 240}
+      maxPrimarySizePx={isNarrow ? 288 : 320}
+      minPrimarySizePx={isNarrow ? 160 : 192}
+      minSecondarySizePx={isNarrow ? 200 : 280}
+      orientation={layout === 'wide' ? 'horizontal' : 'vertical'}
+      primary={palette}
+      primarySizeUnit="pixels"
+      secondary={canvasWithDetail}
+    />
+  ) : (
+    canvasWithDetail
+  );
+
+  return (
+    <div
+      className={
+        showConvertPalette
+          ? 'workbench-field-remap-flow__workspace workbench-field-remap-flow__workspace--split'
+          : 'workbench-field-remap-flow__workspace workbench-field-remap-flow__workspace--split workbench-field-remap-flow__workspace--without-palette'
+      }
+      data-layout={layout}
+      data-surface={surface}
+      data-testid="field-remap-workspace"
+    >
+      {content}
+    </div>
+  );
+}
+
 function FieldRemapFlowCanvas({
   sources,
   targets,
@@ -401,6 +476,7 @@ function FieldRemapFlowCanvas({
   transforms,
   onEdgesChange,
   chrome = 'card',
+  emptyDetail: emptyDetailProp,
   showFlowHint: showFlowHintProp,
   showBindingsList: showBindingsListProp,
   showConvertPalette = true,
@@ -427,6 +503,9 @@ function FieldRemapFlowCanvas({
   );
   const showFlowHint = showFlowHintProp ?? chrome !== 'embed';
   const showBindingsList = showBindingsListProp ?? chrome !== 'embed';
+  const emptyDetail = emptyDetailProp ?? (chrome === 'embed' ? 'collapse' : 'hint');
+  const mapperRef = useRef<HTMLDivElement>(null);
+  const [workspaceLayout, setWorkspaceLayout] = useState<'wide' | 'medium' | 'narrow'>('wide');
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
@@ -436,6 +515,29 @@ function FieldRemapFlowCanvas({
     return first?.id ?? '';
   });
   const transformRegistrySignature = createTransformRegistrySignature(transforms);
+
+  useEffect(() => {
+    const element = mapperRef.current;
+    if (!element || typeof ResizeObserver === 'undefined') {
+      return;
+    }
+
+    const updateLayout = () => {
+      const remSize = Number.parseFloat(getComputedStyle(element).fontSize) || 16;
+      const width = element.getBoundingClientRect().width;
+      if (width <= 0) {
+        return;
+      }
+      const nextLayout =
+        width <= 60 * remSize ? 'narrow' : width <= 68.75 * remSize ? 'medium' : 'wide';
+      setWorkspaceLayout((current) => (current === nextLayout ? current : nextLayout));
+    };
+
+    updateLayout();
+    const observer = new ResizeObserver(updateLayout);
+    observer.observe(element);
+    return () => observer.disconnect();
+  }, []);
 
   const graph = useMemo(
     () =>
@@ -766,12 +868,14 @@ function FieldRemapFlowCanvas({
 
   return (
     <div
+      ref={mapperRef}
       className="workbench-field-remap-flow"
       data-testid="field-remap-mapper"
       data-chrome={chrome}
       data-flow-hint={showFlowHint ? 'on' : 'off'}
       data-bindings-list={showBindingsList ? 'on' : 'off'}
       data-convert-palette={showConvertPalette ? 'on' : 'off'}
+      data-empty-detail={emptyDetail}
       data-minimap={showMinimap ? 'on' : 'off'}
       data-hidden-fields={includeHidden ? 'on' : 'off'}
       onKeyDown={onKeyDown}
@@ -785,24 +889,11 @@ function FieldRemapFlowCanvas({
         </p>
       ) : null}
 
-      <div
-        className={
-          selection?.kind === 'transformStep'
-            ? [
-                'workbench-field-remap-flow__workspace',
-                'workbench-field-remap-flow__workspace--convert',
-                !showConvertPalette && 'workbench-field-remap-flow__workspace--without-palette',
-              ]
-                .filter(Boolean)
-                .join(' ')
-            : [
-                'workbench-field-remap-flow__workspace',
-                !showConvertPalette && 'workbench-field-remap-flow__workspace--without-palette',
-              ]
-                .filter(Boolean)
-                .join(' ')
-        }
-        data-surface={
+      <FieldRemapSplitWorkspace
+        layout={workspaceLayout}
+        showConvertPalette={showConvertPalette}
+        showDetail={emptyDetail === 'hint' || selection !== null}
+        surface={
           selection?.kind === 'transformStep'
             ? 'convert-note'
             : selection?.kind === 'draft'
@@ -812,33 +903,35 @@ function FieldRemapFlowCanvas({
                 : 'binding'
         }
       >
-        {showConvertPalette ? (
-          <FieldRemapConvertPalette
-            transforms={transforms}
-            selectedTransformId={placeTransformId}
-            onSelectedTransformIdChange={setPlaceTransformId}
-            onPlaceDraft={placeDraft}
-            chromeLabels={chromeLabels}
-            onAddCombine={
-              onOperatorsChange
-                ? () => {
-                    const next = createCombineOperator();
-                    onOperatorsChange([...operators, next]);
-                    setSelection({ kind: 'operator', operatorId: next.id });
-                  }
-                : undefined
-            }
-            onAddSplit={
-              onOperatorsChange
-                ? () => {
-                    const next = createSplitOperator();
-                    onOperatorsChange([...operators, next]);
-                    setSelection({ kind: 'operator', operatorId: next.id });
-                  }
-                : undefined
-            }
-          />
-        ) : null}
+        <>
+          {showConvertPalette ? (
+            <FieldRemapConvertPalette
+              transforms={transforms}
+              selectedTransformId={placeTransformId}
+              onSelectedTransformIdChange={setPlaceTransformId}
+              onPlaceDraft={placeDraft}
+              chromeLabels={chromeLabels}
+              onAddCombine={
+                onOperatorsChange
+                  ? () => {
+                      const next = createCombineOperator();
+                      onOperatorsChange([...operators, next]);
+                      setSelection({ kind: 'operator', operatorId: next.id });
+                    }
+                  : undefined
+              }
+              onAddSplit={
+                onOperatorsChange
+                  ? () => {
+                      const next = createSplitOperator();
+                      onOperatorsChange([...operators, next]);
+                      setSelection({ kind: 'operator', operatorId: next.id });
+                    }
+                  : undefined
+              }
+            />
+          ) : null}
+        </>
 
         <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">
           <ReactFlow
@@ -969,22 +1062,28 @@ function FieldRemapFlowCanvas({
           </ReactFlow>
         </div>
 
-        <FieldRemapDetailPanel
-          selection={selection}
-          edges={edges}
-          sources={sources}
-          targets={targets}
-          transforms={transforms}
-          onEdgesChange={onEdgesChange}
-          onSelectionChange={setSelection}
-          drafts={drafts}
-          onDiscardDraft={(localId) => {
-            setDrafts((current) => current.filter((item) => item.localId !== localId));
-          }}
-          operators={operators}
-          onOperatorsChange={onOperatorsChange}
-        />
-      </div>
+        <>
+          {emptyDetail === 'hint' || selection !== null ? (
+            <FieldRemapDetailPanel
+              selection={selection}
+              edges={edges}
+              sources={sources}
+              targets={targets}
+              transforms={transforms}
+              onEdgesChange={onEdgesChange}
+              onSelectionChange={setSelection}
+              drafts={drafts}
+              onDiscardDraft={(localId) => {
+                setDrafts((current) => current.filter((item) => item.localId !== localId));
+              }}
+              operators={operators}
+              onOperatorsChange={onOperatorsChange}
+              emptyDetailTitle={chromeLabels.emptyDetailTitle}
+              emptyDetailDescription={chromeLabels.emptyDetailDescription}
+            />
+          ) : null}
+        </>
+      </FieldRemapSplitWorkspace>
 
       {showBindingsList ? (
         <div className="workbench-field-remap-flow__bindings" data-testid="field-remap-edges">

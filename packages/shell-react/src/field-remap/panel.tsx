@@ -89,6 +89,7 @@ export interface FieldRemapPanelProps {
   readonly showFlowHint?: FieldRemapFlowMapperProps['showFlowHint'];
   readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
   readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
+  readonly emptyDetail?: FieldRemapFlowMapperProps['emptyDetail'];
   /** Forwarded to {@link FieldRemapFlowMapper} Controls MiniMap toggle. */
   readonly onShowMinimapChange?: FieldRemapFlowMapperProps['onShowMinimapChange'];
   readonly onPaneContextMenu?: FieldRemapFlowMapperProps['onPaneContextMenu'];
@@ -148,6 +149,7 @@ export function FieldRemapPanel({
   showFlowHint,
   showBindingsList,
   showConvertPalette,
+  emptyDetail,
   onShowMinimapChange,
   onPaneContextMenu,
   onNodeContextMenu,
@@ -434,6 +436,7 @@ export function FieldRemapPanel({
         showFlowHint={showFlowHint}
         showBindingsList={showBindingsList}
         showConvertPalette={showConvertPalette}
+        emptyDetail={emptyDetail}
         onShowMinimapChange={onShowMinimapChange}
         includeHidden={includeHidden}
         onIncludeHiddenChange={setIncludeHidden}

@@ -317,6 +317,26 @@
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
 }
 
+.workbench-field-remap-flow__workspace--split {
+  display: flex;
+  height: min(40rem, 70vh);
+  min-height: 26rem;
+  gap: 0;
+}
+
+.workbench-field-remap-flow__workspace--split > .ui-workbench-split-view,
+.workbench-field-remap-flow__workspace--split
+  .ui-workbench-split-view__secondary
+  > .ui-workbench-split-view {
+  width: 100%;
+  height: 100%;
+}
+
+.workbench-field-remap-flow__workspace--split .workbench-field-remap-flow__canvas {
+  height: auto;
+  min-height: 0;
+}
+
 /* Embed hosts own the outer pane. Keep Flow rails flat and separate them with dividers only. */
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-flow__workspace {
   gap: 0;
@@ -342,6 +362,22 @@
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-note {
   border: 0;
   border-inline-start: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+/* SplitView supplies the shared rail divider in embed mode, avoiding a doubled border. */
+.workbench-field-remap-flow[data-chrome='embed']
+  .workbench-field-remap-flow__workspace--split
+  .workbench-field-remap-convert-palette,
+.workbench-field-remap-flow[data-chrome='embed']
+  .workbench-field-remap-flow__workspace--split
+  .workbench-field-remap-flow__canvas,
+.workbench-field-remap-flow[data-chrome='embed']
+  .workbench-field-remap-flow__workspace--split
+  .workbench-field-remap-detail,
+.workbench-field-remap-flow[data-chrome='embed']
+  .workbench-field-remap-flow__workspace--split
+  .workbench-field-remap-convert-note {
+  border: 0;
 }
 
 @container field-remap-flow (max-width: 68.75rem) {

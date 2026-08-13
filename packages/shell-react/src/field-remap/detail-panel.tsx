@@ -45,6 +45,8 @@ export interface FieldRemapDetailPanelProps {
   readonly onDiscardDraft?: ((localId: string) => void) | undefined;
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
+  readonly emptyDetailTitle?: string | undefined;
+  readonly emptyDetailDescription?: string | undefined;
 }
 
 function fieldLabel(
@@ -77,6 +79,8 @@ export function FieldRemapDetailPanel({
   onDiscardDraft,
   operators = [],
   onOperatorsChange,
+  emptyDetailTitle = 'Start with a convert',
+  emptyDetailDescription = 'Use the Convert palette to place a convert, then wire source → draft → target. Or select an existing binding / convert note on the canvas.',
 }: FieldRemapDetailPanelProps): JSX.Element | null {
   const edge = useMemo(() => {
     if (!selection || (selection.kind !== 'edge' && selection.kind !== 'transformStep')) {
@@ -113,11 +117,8 @@ export function FieldRemapDetailPanel({
         data-testid="field-remap-detail"
         aria-label="Binding details"
       >
-        <h4>Start with a convert</h4>
-        <p data-testid="field-remap-detail-empty-hint">
-          Use the Convert palette to place a convert, then wire source → draft → target. Or select
-          an existing binding / convert note on the canvas.
-        </p>
+        <h4>{emptyDetailTitle}</h4>
+        <p data-testid="field-remap-detail-empty-hint">{emptyDetailDescription}</p>
       </aside>
     );
   }
