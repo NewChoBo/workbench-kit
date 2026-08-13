@@ -188,14 +188,21 @@ export function deactivate(): void {
 ```
 1. Host reads .workbench/extensions.json (+ optional lockfile)
 2. Build-time bundle includes enabled extension manifests and entry modules
-3. ExtensionRegistry validates hard dependency graph
-4. Activation event fires → activate(context) runs
-5. Handlers and providers register through SDK
-6. Contributions merge into CommandRegistry, ViewRegistry, menus, keybindings
-7. On shutdown/disable → deactivate() + subscription disposal
+3. ExtensionRegistry registers manifest contributions in platform registries
+4. ExtensionRegistry validates the hard dependency graph
+5. Activation event fires → activate(context) runs
+6. Handlers and providers register through SDK
+7. On executable deactivation → deactivate() + subscription disposal
 ```
 
 Commands contributed in the manifest appear in the palette and menus; the handler runs only after activation registers it.
+
+Deactivation removes executable registrations from `ExtensionContext.subscriptions`;
+it does not unregister manifest contributions. Disable/remove flows must also
+dispose the extension registration or rebuild the registry from the enabled set.
+Missing required-capability providers are reported as dependency diagnostics,
+while sensitive capability declarations and permissions are enforced when
+`getCapability()` is called.
 
 End-to-end scenario: [Use Case Scenarios — command structure](./use-cases.md#scenario-3--understand-command-and-extension-structure).
 

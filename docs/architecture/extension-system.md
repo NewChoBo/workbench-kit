@@ -36,9 +36,14 @@ Required manifest concepts:
 1. Host reads `.workbench/extensions.json` and lockfile.
 2. Built-in and bundled extensions are resolved and manifest-checked at build
    time.
-3. `ExtensionRegistry` validates the hard dependency graph.
-4. On activation events, extension `activate` runs and registers disposables with `ExtensionContext`.
-5. Contributions merge into platform registries (`CommandRegistry`, `ViewRegistry`, etc.).
+3. `ExtensionRegistry` registers enabled extensions and immediately merges their
+   manifest contributions into platform registries (`CommandRegistry`,
+   `ViewRegistry`, etc.).
+4. After batch registration, `ExtensionRegistry` validates the hard dependency
+   graph. Missing required-capability providers remain dependency diagnostics;
+   they are not a hard activation gate.
+5. On activation events, extension `activate` runs and registers disposables with
+   `ExtensionContext`.
 6. Runtime handlers, sidebar view providers, and editor document view providers
    registered from `activate()` are scoped to the extension lifecycle and
    disposed on deactivate.
@@ -56,6 +61,12 @@ future store review flows.
 `ExtensionFeatureSpec` is additive: it does not replace activation or runtime
 handler registration. Manifest contributions remain the source of declarative
 features, while `activate()` still registers executable handlers and providers.
+
+Manifest declarations do not grant host authority. Access to sensitive
+capabilities is checked when an activated extension calls
+`ExtensionContext.getCapability()`: the extension must declare the capability
+requirement and its matching permission. Capability ids outside the v1 sensitive
+allowlist remain unrestricted.
 
 `pnpm check:extension-manifests` validates repository-local extension manifests
 before `pnpm validate` completes, and `scripts/bundle-workbench-extensions.mjs`
@@ -109,12 +120,12 @@ above for the sample host and keeps the most visible workbench features in
 
 `packages/shell-react/src/extensions/builtin/editor` contributes the text editor host **and** Markdown
 preview document view for `*.md` / `*.mdx`. That preview used to live as a shell
-default; it is extension-owned so disabling the built-in removes the surface.
+default; it is extension-owned so unregistering the built-in removes the surface.
 Shell maps the extension render marker to `WorkbenchMarkdownPreview`.
 
 `extensions/samples.jdw` contributes JDW Lab sidebar **and** editor document
 form/preview providers for `*.jdw.json`. Those document views used to live as
-shell defaults; they are extension-owned so disabling the sample removes the
+shell defaults; they are extension-owned so unregistering the sample removes the
 surfaces. Shell maps the extension render markers to `JdwWidgetFormView` /
 `JdwWidgetPreviewView`.
 
@@ -123,7 +134,16 @@ sample host. Generic shell modules only map canonical built-ins and ordinary Rea
 
 ## Deactivation
 
-On workbench shutdown or extension disable, `deactivate` runs and all `ExtensionContext.subscriptions` disposables are disposed.
+On workbench shutdown or executable deactivation, `deactivate` runs and all
+`ExtensionContext.subscriptions` disposables are disposed. This removes runtime
+handlers and providers registered during activation, but it does not remove
+manifest contributions registered for the enabled extension.
+
+Disabling or removing an extension must also dispose its registration (or rebuild
+the registry from the new enabled set). The current management path uses that
+reconstruction boundary. A future no-reload lifecycle must make declarative
+contribution removal and re-registration observable to shell consumers; that work
+is tracked by [#232](https://github.com/NewChoBo/workbench-kit/issues/232).
 
 ## Future External Extensions
 
