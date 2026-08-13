@@ -83,6 +83,12 @@ export interface FieldRemapPanelProps {
   readonly targetShape?: unknown;
   /** Forwarded to {@link FieldRemapFlowMapper} (default true). */
   readonly showMinimap?: boolean | undefined;
+  /** Forwarded Flow chrome preset. `embed` hides the hint and binding list by default. */
+  readonly chrome?: FieldRemapFlowMapperProps['chrome'];
+  /** Explicit Flow chrome overrides take precedence over {@link FieldRemapPanelProps.chrome}. */
+  readonly showFlowHint?: FieldRemapFlowMapperProps['showFlowHint'];
+  readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
+  readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   /** Forwarded to {@link FieldRemapFlowMapper} Controls MiniMap toggle. */
   readonly onShowMinimapChange?: FieldRemapFlowMapperProps['onShowMinimapChange'];
   readonly onPaneContextMenu?: FieldRemapFlowMapperProps['onPaneContextMenu'];
@@ -138,6 +144,10 @@ export function FieldRemapPanel({
   sourceSample: sourceSampleProp,
   targetShape: targetShapeProp,
   showMinimap,
+  chrome,
+  showFlowHint,
+  showBindingsList,
+  showConvertPalette,
   onShowMinimapChange,
   onPaneContextMenu,
   onNodeContextMenu,
@@ -420,6 +430,10 @@ export function FieldRemapPanel({
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
         showMinimap={showMinimap}
+        chrome={chrome}
+        showFlowHint={showFlowHint}
+        showBindingsList={showBindingsList}
+        showConvertPalette={showConvertPalette}
         onShowMinimapChange={onShowMinimapChange}
         includeHidden={includeHidden}
         onIncludeHiddenChange={setIncludeHidden}

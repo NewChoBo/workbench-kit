@@ -29,6 +29,20 @@ const meta = {
       ],
     },
     showMinimap: { control: 'boolean', description: 'Shows the Flow minimap.' },
+    chrome: {
+      control: 'inline-radio',
+      description: 'Uses card defaults or the embed chrome preset for the Flow mapper.',
+      options: ['card', 'embed'],
+    },
+    showFlowHint: { control: 'boolean', description: 'Explicitly shows or hides the Flow hint.' },
+    showBindingsList: {
+      control: 'boolean',
+      description: 'Explicitly shows or hides the bottom binding list.',
+    },
+    showConvertPalette: {
+      control: 'boolean',
+      description: 'Mounts the Convert palette; when false, the workspace expands.',
+    },
     showHostChromeDemo: { control: 'boolean', description: 'Shows host-owned editor actions.' },
     ioChrome: {
       control: 'select',
@@ -110,6 +124,26 @@ export const IoBrowseChrome: Story = {
       '.workbench-field-remap-flow__bindings > h4',
     );
     await expect(bindingsHeading).toHaveTextContent('Field maps');
+  },
+};
+
+export const EmbedChrome: Story = {
+  name: 'Embed chrome',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    showConvertPalette: false,
+  },
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
+    await expect(canvas.queryByTestId('field-remap-hint')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-edges')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-convert-palette')).toBeNull();
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__workspace--without-palette'),
+    ).not.toBeNull();
   },
 };
 
