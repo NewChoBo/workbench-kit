@@ -238,6 +238,46 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(container!.querySelector('.react-flow__minimap')).toBeTruthy();
   });
 
+  it('keeps all demo chrome mounted by default', async () => {
+    await renderMapper();
+
+    const mapper = container!.querySelector('[data-testid="field-remap-mapper"]');
+    expect(mapper?.getAttribute('data-chrome')).toBe('card');
+    expect(container!.querySelector('[data-testid="field-remap-hint"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-edges"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
+  });
+
+  it('uses embed defaults that omit the demo hint and binding list', async () => {
+    await renderMapper({ chrome: 'embed' });
+
+    const mapper = container!.querySelector('[data-testid="field-remap-mapper"]');
+    expect(mapper?.getAttribute('data-chrome')).toBe('embed');
+    expect(mapper?.getAttribute('data-flow-hint')).toBe('off');
+    expect(mapper?.getAttribute('data-bindings-list')).toBe('off');
+    expect(container!.querySelector('[data-testid="field-remap-hint"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-edges"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
+  });
+
+  it('honors explicit chrome visibility overrides and expands when palette is unmounted', async () => {
+    await renderMapper({
+      chrome: 'embed',
+      showFlowHint: true,
+      showBindingsList: true,
+      showConvertPalette: false,
+    });
+
+    const mapper = container!.querySelector('[data-testid="field-remap-mapper"]');
+    expect(mapper?.getAttribute('data-convert-palette')).toBe('off');
+    expect(container!.querySelector('[data-testid="field-remap-hint"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-edges"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeNull();
+    expect(
+      container!.querySelector('.workbench-field-remap-flow__workspace--without-palette'),
+    ).toBeTruthy();
+  });
+
   it('fires pane context-menu callback with selection payload', async () => {
     const onPaneContextMenu = vi.fn();
     await renderMapper({ onPaneContextMenu });

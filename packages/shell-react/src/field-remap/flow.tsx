@@ -323,6 +323,20 @@ export interface FieldRemapFlowMapperProps {
   readonly edges: readonly MappingEdge[];
   readonly transforms: ValueTransformRegistry;
   readonly onEdgesChange: (edges: readonly MappingEdge[]) => void;
+  /**
+   * `card` preserves the demo chrome. `embed` omits the flow hint and binding list;
+   * explicit `show*` props below take precedence.
+   */
+  readonly chrome?: 'card' | 'embed' | undefined;
+  /** Show the convert-first hint. Defaults to true for `card`, false for `embed`. */
+  readonly showFlowHint?: boolean | undefined;
+  /** Show the bottom binding list. Defaults to true for `card`, false for `embed`. */
+  readonly showBindingsList?: boolean | undefined;
+  /**
+   * Mount the primary Convert palette. Defaults to true for both chrome modes; when false,
+   * the workspace expands without leaving an empty grid track.
+   */
+  readonly showConvertPalette?: boolean | undefined;
   /** Document v2 n→m operators (display + authoring when onOperatorsChange is set). */
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
@@ -386,6 +400,10 @@ function FieldRemapFlowCanvas({
   edges,
   transforms,
   onEdgesChange,
+  chrome = 'card',
+  showFlowHint: showFlowHintProp,
+  showBindingsList: showBindingsListProp,
+  showConvertPalette = true,
   operators = [],
   onOperatorsChange,
   sourceTitle,
@@ -407,6 +425,8 @@ function FieldRemapFlowCanvas({
     () => resolveFieldRemapChromeLabels(labelOverrides, t),
     [labelOverrides, t],
   );
+  const showFlowHint = showFlowHintProp ?? chrome !== 'embed';
+  const showBindingsList = showBindingsListProp ?? chrome !== 'embed';
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
@@ -748,22 +768,39 @@ function FieldRemapFlowCanvas({
     <div
       className="workbench-field-remap-flow"
       data-testid="field-remap-mapper"
+      data-chrome={chrome}
+      data-flow-hint={showFlowHint ? 'on' : 'off'}
+      data-bindings-list={showBindingsList ? 'on' : 'off'}
+      data-convert-palette={showConvertPalette ? 'on' : 'off'}
       data-minimap={showMinimap ? 'on' : 'off'}
       data-hidden-fields={includeHidden ? 'on' : 'off'}
       onKeyDown={onKeyDown}
     >
-      <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
-        Convert-first: pick a convert in the palette, place it, then wire source → draft → target.
-        Select a convert note for the Convert editor; select a binding for lighter mapping detail.
-        Use n→m actions to author combine/split. Alt-click removes a convert step or operator.
-        Escape clears selection and unfinished drafts.
-      </p>
+      {showFlowHint ? (
+        <p className="workbench-field-remap-mapper__hint" data-testid="field-remap-hint">
+          Convert-first: pick a convert in the palette, place it, then wire source → draft → target.
+          Select a convert note for the Convert editor; select a binding for lighter mapping detail.
+          Use n→m actions to author combine/split. Alt-click removes a convert step or operator.
+          Escape clears selection and unfinished drafts.
+        </p>
+      ) : null}
 
       <div
         className={
           selection?.kind === 'transformStep'
-            ? 'workbench-field-remap-flow__workspace workbench-field-remap-flow__workspace--convert'
-            : 'workbench-field-remap-flow__workspace'
+            ? [
+                'workbench-field-remap-flow__workspace',
+                'workbench-field-remap-flow__workspace--convert',
+                !showConvertPalette && 'workbench-field-remap-flow__workspace--without-palette',
+              ]
+                .filter(Boolean)
+                .join(' ')
+            : [
+                'workbench-field-remap-flow__workspace',
+                !showConvertPalette && 'workbench-field-remap-flow__workspace--without-palette',
+              ]
+                .filter(Boolean)
+                .join(' ')
         }
         data-surface={
           selection?.kind === 'transformStep'
@@ -775,31 +812,33 @@ function FieldRemapFlowCanvas({
                 : 'binding'
         }
       >
-        <FieldRemapConvertPalette
-          transforms={transforms}
-          selectedTransformId={placeTransformId}
-          onSelectedTransformIdChange={setPlaceTransformId}
-          onPlaceDraft={placeDraft}
-          chromeLabels={chromeLabels}
-          onAddCombine={
-            onOperatorsChange
-              ? () => {
-                  const next = createCombineOperator();
-                  onOperatorsChange([...operators, next]);
-                  setSelection({ kind: 'operator', operatorId: next.id });
-                }
-              : undefined
-          }
-          onAddSplit={
-            onOperatorsChange
-              ? () => {
-                  const next = createSplitOperator();
-                  onOperatorsChange([...operators, next]);
-                  setSelection({ kind: 'operator', operatorId: next.id });
-                }
-              : undefined
-          }
-        />
+        {showConvertPalette ? (
+          <FieldRemapConvertPalette
+            transforms={transforms}
+            selectedTransformId={placeTransformId}
+            onSelectedTransformIdChange={setPlaceTransformId}
+            onPlaceDraft={placeDraft}
+            chromeLabels={chromeLabels}
+            onAddCombine={
+              onOperatorsChange
+                ? () => {
+                    const next = createCombineOperator();
+                    onOperatorsChange([...operators, next]);
+                    setSelection({ kind: 'operator', operatorId: next.id });
+                  }
+                : undefined
+            }
+            onAddSplit={
+              onOperatorsChange
+                ? () => {
+                    const next = createSplitOperator();
+                    onOperatorsChange([...operators, next]);
+                    setSelection({ kind: 'operator', operatorId: next.id });
+                  }
+                : undefined
+            }
+          />
+        ) : null}
 
         <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">
           <ReactFlow
@@ -947,115 +986,117 @@ function FieldRemapFlowCanvas({
         />
       </div>
 
-      <div className="workbench-field-remap-flow__bindings" data-testid="field-remap-edges">
-        <h4>{chromeLabels.bindingsTitle}</h4>
-        <ul>
-          {edges.map((edge) => {
-            const portTypes = edgePortTypes(edge, sources, targets);
-            const appendCatalog = listCompatibleTransforms({
-              registry: transforms,
-              edge,
-              stepIndex: edge.transformIds?.length ?? 0,
-              sourceType: portTypes.sourceType,
-              targetType: portTypes.targetType,
-              mode: 'append',
-            });
-            const defaultAddId = appendCatalog[0]?.id;
-            const listContext = canEditListContext(edge, sources, targets);
-            const selected =
-              (selection?.kind === 'edge' || selection?.kind === 'transformStep') &&
-              selection.edgeId === edge.id;
+      {showBindingsList ? (
+        <div className="workbench-field-remap-flow__bindings" data-testid="field-remap-edges">
+          <h4>{chromeLabels.bindingsTitle}</h4>
+          <ul>
+            {edges.map((edge) => {
+              const portTypes = edgePortTypes(edge, sources, targets);
+              const appendCatalog = listCompatibleTransforms({
+                registry: transforms,
+                edge,
+                stepIndex: edge.transformIds?.length ?? 0,
+                sourceType: portTypes.sourceType,
+                targetType: portTypes.targetType,
+                mode: 'append',
+              });
+              const defaultAddId = appendCatalog[0]?.id;
+              const listContext = canEditListContext(edge, sources, targets);
+              const selected =
+                (selection?.kind === 'edge' || selection?.kind === 'transformStep') &&
+                selection.edgeId === edge.id;
 
-            return (
-              <li
-                key={edge.id}
-                className={selected ? 'is-selected' : undefined}
-                data-testid={`field-remap-lane-${edge.id}`}
-              >
-                <button
-                  type="button"
-                  className="workbench-field-remap-flow__binding-select"
-                  data-testid={`field-remap-select-edge-${edge.id}`}
-                  onClick={() => setSelection({ kind: 'edge', edgeId: edge.id })}
+              return (
+                <li
+                  key={edge.id}
+                  className={selected ? 'is-selected' : undefined}
+                  data-testid={`field-remap-lane-${edge.id}`}
                 >
-                  <code>
-                    {edge.sourceFieldId} →{' '}
-                    {(edge.transformIds ?? []).length > 0
-                      ? `${(edge.transformIds ?? []).join(' → ')} → `
-                      : ''}
-                    {edge.targetSlotId}
-                    {edge.itemEdges ? ` · ${edge.itemEdges.length} item fields` : ''}
-                  </code>
-                </button>
-                <span className="workbench-field-remap-mapper__edge-actions">
-                  {(edge.transformIds?.length ?? 0) < MAX_TRANSFORM_CHAIN && defaultAddId ? (
-                    <IconButton
-                      compact
-                      type="button"
-                      data-testid={`field-remap-add-node-${edge.id}`}
-                      icon="codicon-add"
-                      label={chromeLabels.addTransform}
-                      onClick={() => {
-                        const next = addTransformStepToEdge(edge, defaultAddId, {
-                          registry: transforms,
-                          sourceType: portTypes.sourceType,
-                          targetType: portTypes.targetType,
-                        });
-                        if (!next) {
-                          return;
-                        }
-                        onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
-                        setSelection({
-                          kind: 'transformStep',
-                          edgeId: edge.id,
-                          stepIndex: (next.transformIds?.length ?? 1) - 1,
-                        });
-                      }}
-                    />
-                  ) : null}
-                  {listContext ? (
-                    <IconButton
-                      compact
-                      type="button"
-                      data-testid={`field-remap-edit-items-${edge.id}`}
-                      icon="codicon-edit"
-                      label={chromeLabels.editItems}
-                      onClick={() => {
-                        if (!edge.itemEdges) {
-                          onEdgesChange(
-                            edges.map((item) =>
-                              item.id === edge.id ? enableListContextOnEdge(item) : item,
-                            ),
-                          );
-                        }
-                        setSelection({ kind: 'edge', edgeId: edge.id });
-                      }}
-                    />
-                  ) : null}
-                  <IconButton
-                    compact
+                  <button
                     type="button"
-                    data-testid={`field-remap-remove-edge-${edge.id}`}
-                    icon="codicon-trash"
-                    label={chromeLabels.removeBinding}
-                    variant="danger"
-                    onClick={() => {
-                      onEdgesChange(edges.filter((item) => item.id !== edge.id));
-                      if (
-                        selection &&
-                        (selection.kind === 'edge' || selection.kind === 'transformStep') &&
-                        selection.edgeId === edge.id
-                      ) {
-                        setSelection(null);
-                      }
-                    }}
-                  />
-                </span>
-              </li>
-            );
-          })}
-        </ul>
-      </div>
+                    className="workbench-field-remap-flow__binding-select"
+                    data-testid={`field-remap-select-edge-${edge.id}`}
+                    onClick={() => setSelection({ kind: 'edge', edgeId: edge.id })}
+                  >
+                    <code>
+                      {edge.sourceFieldId} →{' '}
+                      {(edge.transformIds ?? []).length > 0
+                        ? `${(edge.transformIds ?? []).join(' → ')} → `
+                        : ''}
+                      {edge.targetSlotId}
+                      {edge.itemEdges ? ` · ${edge.itemEdges.length} item fields` : ''}
+                    </code>
+                  </button>
+                  <span className="workbench-field-remap-mapper__edge-actions">
+                    {(edge.transformIds?.length ?? 0) < MAX_TRANSFORM_CHAIN && defaultAddId ? (
+                      <IconButton
+                        compact
+                        type="button"
+                        data-testid={`field-remap-add-node-${edge.id}`}
+                        icon="codicon-add"
+                        label={chromeLabels.addTransform}
+                        onClick={() => {
+                          const next = addTransformStepToEdge(edge, defaultAddId, {
+                            registry: transforms,
+                            sourceType: portTypes.sourceType,
+                            targetType: portTypes.targetType,
+                          });
+                          if (!next) {
+                            return;
+                          }
+                          onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
+                          setSelection({
+                            kind: 'transformStep',
+                            edgeId: edge.id,
+                            stepIndex: (next.transformIds?.length ?? 1) - 1,
+                          });
+                        }}
+                      />
+                    ) : null}
+                    {listContext ? (
+                      <IconButton
+                        compact
+                        type="button"
+                        data-testid={`field-remap-edit-items-${edge.id}`}
+                        icon="codicon-edit"
+                        label={chromeLabels.editItems}
+                        onClick={() => {
+                          if (!edge.itemEdges) {
+                            onEdgesChange(
+                              edges.map((item) =>
+                                item.id === edge.id ? enableListContextOnEdge(item) : item,
+                              ),
+                            );
+                          }
+                          setSelection({ kind: 'edge', edgeId: edge.id });
+                        }}
+                      />
+                    ) : null}
+                    <IconButton
+                      compact
+                      type="button"
+                      data-testid={`field-remap-remove-edge-${edge.id}`}
+                      icon="codicon-trash"
+                      label={chromeLabels.removeBinding}
+                      variant="danger"
+                      onClick={() => {
+                        onEdgesChange(edges.filter((item) => item.id !== edge.id));
+                        if (
+                          selection &&
+                          (selection.kind === 'edge' || selection.kind === 'transformStep') &&
+                          selection.edgeId === edge.id
+                        ) {
+                          setSelection(null);
+                        }
+                      }}
+                    />
+                  </span>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      ) : null}
     </div>
   );
 }

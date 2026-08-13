@@ -133,4 +133,28 @@ describe('FieldRemapPanel', () => {
     expect(container.querySelector('[data-testid="field-remap-io-browse"]')).toBeTruthy();
     expect(container.querySelector('[data-testid="field-remap-shapes"]')).toBeNull();
   });
+
+  it('forwards embed chrome and explicit Flow visibility overrides', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample="nested-ab"
+          chrome="embed"
+          showFlowHint
+          showBindingsList
+          showConvertPalette={false}
+        />,
+      );
+    });
+
+    const mapper = container.querySelector('[data-testid="field-remap-mapper"]');
+    expect(mapper?.getAttribute('data-chrome')).toBe('embed');
+    expect(container.querySelector('[data-testid="field-remap-hint"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="field-remap-edges"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="field-remap-convert-palette"]')).toBeNull();
+  });
 });

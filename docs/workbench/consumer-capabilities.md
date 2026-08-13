@@ -773,9 +773,20 @@ sample extension packaging.
 
 **Flow host chrome:** `showMinimap` (omit MiniMap when false), pane/node/edge context-menu
 callbacks with selection payload (host owns menu UI), and `flowActionsRef.fitView` so hosts
-do not query Controls DOM. Panel forwards the same props. Chrome nouns (`Bindings`, Convert
-palette copy) accept `labels` / optional `t(key, fallback)` on Flow and Panel — hosts can
-override to “Field maps” / “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
+do not query Controls DOM. `chrome="embed"` omits the demo hint and bottom binding list;
+`showFlowHint`, `showBindingsList`, and `showConvertPalette` override those defaults. A hidden
+palette is unmounted and the workspace expands rather than retaining an empty grid track.
+Panel forwards the same props. Chrome nouns (`Bindings`, Convert palette copy) accept `labels`
+/ optional `t(key, fallback)` on Flow and Panel — hosts can override to “Field maps” /
+“Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
+
+```tsx
+<FieldRemapFlowMapper
+  chrome="embed"
+  showConvertPalette={false}
+  // sources, targets, edges, transforms, and onEdgesChange as usual
+/>
+```
 
 **Browse badge labels:** Direct `FieldRemapIoClassBrowse` consumers can override its hidden
 badge copy and `classRef` tooltip without forking the tree. Omit either value to retain the English defaults

@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type JSX } from 'react';
 import { Button } from '@workbench-kit/react/primitives';
 
 import type { FieldRemapChromeLabels, FieldRemapTranslate } from './chrome-labels.js';
-import type { FieldRemapFlowActions } from './flow.js';
+import type { FieldRemapFlowActions, FieldRemapFlowMapperProps } from './flow.js';
 import type { FieldRemapIoChrome } from './io-class-browse.js';
 import { FieldRemapPanel } from './panel.js';
 import {
@@ -15,6 +15,11 @@ export interface SampleFieldRemapDemoProps {
   readonly sampleId?: FieldRemapSampleId | string | undefined;
   /** Forwarded to Flow mapper (default true). */
   readonly showMinimap?: boolean | undefined;
+  /** Forwarded Flow chrome preset. */
+  readonly chrome?: FieldRemapFlowMapperProps['chrome'];
+  readonly showFlowHint?: FieldRemapFlowMapperProps['showFlowHint'];
+  readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
+  readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   /** When true, show host-chrome demo controls (minimap toggle + fit view). */
   readonly showHostChromeDemo?: boolean | undefined;
   /** Prefer `browse` for I/O class/field inspection demos. */
@@ -31,6 +36,10 @@ export interface SampleFieldRemapDemoProps {
 export function SampleFieldRemapDemo({
   sampleId = 'nested-ab',
   showMinimap: showMinimapProp,
+  chrome,
+  showFlowHint,
+  showBindingsList,
+  showConvertPalette,
   showHostChromeDemo = false,
   ioChrome,
   browseSeedShapes = false,
@@ -76,6 +85,10 @@ export function SampleFieldRemapDemo({
         key={`${sample.id}:${ioChrome ?? 'default'}:${browseSeedShapes ? 'seed' : 'plain'}`}
         sample={sample}
         showMinimap={showMinimap}
+        chrome={chrome}
+        showFlowHint={showFlowHint}
+        showBindingsList={showBindingsList}
+        showConvertPalette={showConvertPalette}
         onShowMinimapChange={setShowMinimap}
         ioChrome={ioChrome}
         editableShapes={ioChrome === 'browse' ? false : undefined}
