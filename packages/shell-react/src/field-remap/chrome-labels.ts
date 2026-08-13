@@ -19,8 +19,13 @@ export interface FieldRemapChromeLabels {
   readonly convertPaletteAriaLabel: string;
   readonly convertsListAriaLabel: string;
   readonly placeConvert: string;
+  readonly addCombine: string;
+  readonly addSplit: string;
   readonly operatorsTitle: string;
   readonly operatorsDescription: string;
+  readonly addTransform: string;
+  readonly editItems: string;
+  readonly removeBinding: string;
   readonly showMinimap: string;
   readonly hideMinimap: string;
   readonly showHiddenFields: string;
@@ -35,9 +40,14 @@ export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
   convertPaletteAriaLabel: 'Convert palette',
   convertsListAriaLabel: 'Converts',
   placeConvert: 'Place convert',
+  addCombine: 'Add combine',
+  addSplit: 'Add split',
   operatorsTitle: 'n→m operators',
   operatorsDescription:
     'Create combine (n→1) or split (1→n), then wire ports or edit in the side rail.',
+  addTransform: 'Add convert',
+  editItems: 'Edit items',
+  removeBinding: 'Remove binding',
   showMinimap: 'Show minimap',
   hideMinimap: 'Hide minimap',
   showHiddenFields: 'Show hidden fields',
@@ -52,8 +62,13 @@ export const fieldRemapChromeLabelKeys = {
   convertPaletteAriaLabel: 'fieldRemap.convertPaletteAriaLabel',
   convertsListAriaLabel: 'fieldRemap.convertsListAriaLabel',
   placeConvert: 'fieldRemap.placeConvert',
+  addCombine: 'fieldRemap.addCombine',
+  addSplit: 'fieldRemap.addSplit',
   operatorsTitle: 'fieldRemap.operatorsTitle',
   operatorsDescription: 'fieldRemap.operatorsDescription',
+  addTransform: 'fieldRemap.addTransform',
+  editItems: 'fieldRemap.editItems',
+  removeBinding: 'fieldRemap.removeBinding',
   showMinimap: 'fieldRemap.showMinimap',
   hideMinimap: 'fieldRemap.hideMinimap',
   showHiddenFields: 'fieldRemap.showHiddenFields',
@@ -80,8 +95,13 @@ export function resolveFieldRemapChromeLabels(
     convertPaletteAriaLabel: resolve('convertPaletteAriaLabel'),
     convertsListAriaLabel: resolve('convertsListAriaLabel'),
     placeConvert: resolve('placeConvert'),
+    addCombine: resolve('addCombine'),
+    addSplit: resolve('addSplit'),
     operatorsTitle: resolve('operatorsTitle'),
     operatorsDescription: resolve('operatorsDescription'),
+    addTransform: resolve('addTransform'),
+    editItems: resolve('editItems'),
+    removeBinding: resolve('removeBinding'),
     showMinimap: resolve('showMinimap'),
     hideMinimap: resolve('hideMinimap'),
     showHiddenFields: resolve('showHiddenFields'),

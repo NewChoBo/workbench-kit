@@ -8,8 +8,12 @@ describe('resolveFieldRemapChromeLabels', () => {
   });
 
   it('applies partial label overrides without forking other strings', () => {
-    const labels = resolveFieldRemapChromeLabels({ bindingsTitle: 'Field maps' });
+    const labels = resolveFieldRemapChromeLabels({
+      bindingsTitle: 'Field maps',
+      addCombine: 'Create join',
+    });
     expect(labels.bindingsTitle).toBe('Field maps');
+    expect(labels.addCombine).toBe('Create join');
     expect(labels.convertPaletteTitle).toBe(defaultFieldRemapChromeLabels.convertPaletteTitle);
   });
 

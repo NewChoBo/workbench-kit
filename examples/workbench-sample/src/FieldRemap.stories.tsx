@@ -51,6 +51,12 @@ export const NestedAB: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
     await expect(canvas.getByTestId('field-remap-place-draft')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-place-draft')).toHaveAccessibleName(
+      'Place convert',
+    );
+    await expect(canvas.getByTestId('field-remap-add-node-e-name')).toHaveAccessibleName(
+      'Add convert',
+    );
     await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
     const step = await canvas.findByTestId('field-remap-detail-step-0');
     await userEvent.click(step);
@@ -135,6 +141,8 @@ export const CombineSplit: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
     await expect(canvas.getByTestId('field-remap-add-combine')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-add-combine')).toHaveAccessibleName('Add combine');
+    await expect(canvas.getByTestId('field-remap-add-split')).toHaveAccessibleName('Add split');
     await waitFor(() => expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible());
     await expect(await canvas.findByTestId('field-remap-result')).toHaveTextContent('Ada');
   },
