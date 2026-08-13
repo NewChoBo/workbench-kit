@@ -213,15 +213,20 @@ export type {
 export {
   createPointerPassthroughController,
   isPointerOverHitRegion,
+  resolvePointerHitTarget,
 } from './overlay/pointerPassthroughRegion';
 export type {
+  PointerHitTestDocument,
   PointerOverHitRegionOptions,
   PointerPassthroughController,
   PointerPassthroughControllerOptions,
   PointerPassthroughPort,
 } from './overlay/pointerPassthroughRegion';
 export { usePointerPassthroughRegion } from './overlay/usePointerPassthroughRegion';
-export type { UsePointerPassthroughRegionOptions } from './overlay/usePointerPassthroughRegion';
+export type {
+  PointerHitTargetResolver,
+  UsePointerPassthroughRegionOptions,
+} from './overlay/usePointerPassthroughRegion';
 export {
   getWorkbenchStatusDescriptor,
   getWorkbenchStatusLabel,

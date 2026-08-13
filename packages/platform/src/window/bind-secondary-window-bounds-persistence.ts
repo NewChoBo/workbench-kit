@@ -2,6 +2,12 @@ import type { RectLike } from './types.js';
 
 export interface SecondaryWindowBoundsHandlers {
   readonly onBoundsLikelyChanged: () => void;
+  /** Dispatch while the surface is still readable, before native destruction. */
+  readonly onCloseRequested: () => void;
+  /**
+   * Backward-compatible close callback. Dispatch before native destruction when
+   * `onCloseRequested` is not available in an existing adapter.
+   */
   readonly onClosed: () => void;
 }
 
@@ -43,11 +49,18 @@ export function bindSecondaryWindowBoundsPersistence(
     }
   };
 
+  const persistBounds = async (bounds: RectLike): Promise<void> => {
+    if (disposed) {
+      return;
+    }
+    await options.persist(bounds);
+  };
+
   const persistNow = async (): Promise<void> => {
     if (disposed) {
       return;
     }
-    await options.persist(options.readBounds());
+    await persistBounds(options.readBounds());
   };
 
   const schedule = (): void => {
@@ -65,17 +78,30 @@ export function bindSecondaryWindowBoundsPersistence(
 
   const flush = async (): Promise<void> => {
     clearTimer();
+    if (disposed) {
+      return;
+    }
+    const bounds = options.readBounds();
     if (pendingFlush) {
       await pendingFlush;
     }
-    await persistNow();
+    // A snapshot captured before dispose still belongs to this flush request.
+    await options.persist(bounds);
+  };
+
+  let closeSnapshotCaptured = false;
+  const captureCloseSnapshot = (): void => {
+    if (closeSnapshotCaptured) {
+      return;
+    }
+    closeSnapshotCaptured = true;
+    void flush();
   };
 
   const unsubscribe = options.subscribe({
     onBoundsLikelyChanged: schedule,
-    onClosed: () => {
-      void flush();
-    },
+    onCloseRequested: captureCloseSnapshot,
+    onClosed: captureCloseSnapshot,
   });
 
   return {

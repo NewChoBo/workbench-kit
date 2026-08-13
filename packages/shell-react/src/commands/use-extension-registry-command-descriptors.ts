@@ -25,6 +25,10 @@ export function useExtensionRegistryCommandDescriptors(
     const disposable = extensionRegistry.commands.onDidChangeCommands(() => {
       refreshCommands();
     });
+    // A host may register commands in a layout effect after this hook rendered
+    // but before its passive subscription was installed. Re-read once after
+    // subscribing so that transition cannot leave the memoized snapshot stale.
+    refreshCommands();
 
     return () => {
       disposable.dispose();

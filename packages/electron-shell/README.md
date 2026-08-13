@@ -34,6 +34,11 @@ import { openAllowlistedExternalLink } from '@workbench-kit/electron-shell/exter
 import { createApplicationQuitGuard } from '@workbench-kit/electron-shell/application-quit-guard';
 import { registerPrivilegedAssetProtocolScheme } from '@workbench-kit/electron-shell/asset-protocol';
 import { requireOwnedWindowForSender } from '@workbench-kit/electron-shell/sender-security';
+import { createEncryptedSecretVault } from '@workbench-kit/electron-shell/secret-vault';
+import {
+  createWin32RegistryStringReader,
+  resolveWallpaperCropRect,
+} from '@workbench-kit/electron-shell/wallpaper';
 import {
   createWindowControlsBridge,
   registerWindowControlIpc,
@@ -47,6 +52,19 @@ maximized state returned by the main handler.
 `registerPrivilegedAssetProtocolScheme` owns only Electron's repeated secure
 asset privileges. Call it before app readiness; the host retains its scheme,
 URL parsing, cache policy, responses, and post-ready `protocol.handle` wiring.
+
+`createEncryptedSecretVault` encrypts the whole document so persisted bytes do
+not reveal secret ids. Bulk reads/writes and single-key operations share one FIFO
+queue. `documentCodec` lets the host retain its existing plaintext envelope, and
+`writeVault` receives sorted secret-id metadata for an opaque reference or empty-
+vault deletion policy. Hosts retain atomic storage, namespace/path selection,
+references, and backup/restore policy. Legacy version 1 entry-encrypted documents
+are migrated on the next mutation.
+
+`resolveWallpaperCropRect` uses one aspect-ratio-preserving cover rule for a
+spanned virtual desktop. The same focused entry provides a bounded, shell-free
+Win32 registry reader and a path resolver with host-injected existence checks and
+fallback path.
 
 ## Application quit guard (`./application-quit-guard`)
 

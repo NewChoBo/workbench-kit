@@ -57,6 +57,8 @@ Other Node/window helpers:
 | `@workbench-kit/platform/atomic-write`              | Atomic file write                   |
 | `@workbench-kit/platform/resize-rect`               | Window resize math                  |
 | `@workbench-kit/platform/tray-close-policy`         | Tray close policy helpers           |
+| `@workbench-kit/platform/window-residency`          | Secondary Window residency policy   |
+| `@workbench-kit/platform/window-geometry`           | Window bounds and placement math    |
 | `@workbench-kit/platform/versioned-browser-state`   | Versioned browser state adapter     |
 | `@workbench-kit/platform/window-bounds-persistence` | Debounced Window bounds persistence |
 
@@ -77,6 +79,14 @@ const {
   bindSecondaryWindowBoundsPersistence,
   bindWindowBoundsPersistence,
 } = require('@workbench-kit/platform/window-bounds-persistence');
+const {
+  resolveWindowOpenLayout,
+  selectWindowDisplayForBounds,
+} = require('@workbench-kit/platform/window-geometry');
+const {
+  applyWindowFocusablePolicy,
+  applyWindowResidencyPolicy,
+} = require('@workbench-kit/platform/window-residency');
 ```
 
 - ESM / TypeScript hosts keep using the same subpaths via `import` (source leaves).

@@ -22,9 +22,34 @@ export type WindowZOrder = 'top' | 'default' | 'back';
  */
 export type WindowPointerPassthroughPolicy = 'off' | 'all' | 'transparent' | 'controls';
 
-export interface ResidencyWindowSurface {
-  setAlwaysOnTop(value: boolean, level?: string): void;
+export interface FocusableWindowSurface {
   setFocusable(value: boolean): void;
+  setSkipTaskbar?: (skip: boolean) => void;
+}
+
+export interface ApplyWindowFocusablePolicyInput {
+  readonly focusable: boolean;
+  readonly skipTaskbar?: boolean;
+}
+
+/** Apply focusability before re-asserting optional taskbar visibility. */
+export function applyWindowFocusablePolicy(
+  windowSurface: FocusableWindowSurface,
+  input: ApplyWindowFocusablePolicyInput,
+): void {
+  const setSkipTaskbar = windowSurface.setSkipTaskbar;
+  if (input.skipTaskbar !== undefined && !setSkipTaskbar) {
+    throw new Error('Window surface does not support taskbar visibility changes.');
+  }
+
+  windowSurface.setFocusable(input.focusable);
+  if (input.skipTaskbar !== undefined) {
+    setSkipTaskbar!(input.skipTaskbar);
+  }
+}
+
+export interface ResidencyWindowSurface extends FocusableWindowSurface {
+  setAlwaysOnTop(value: boolean, level?: string): void;
   setIgnoreMouseEvents(ignore: boolean, options?: { forward?: boolean }): void;
   blur?: () => void;
 }
@@ -41,6 +66,11 @@ export interface ApplyWindowResidencyPolicyInput {
   readonly forwardPointerWhenIgnoring?: boolean;
   /** Optional always-on-top level string when effective z-order is `top`. */
   readonly alwaysOnTopLevel?: string;
+  /**
+   * Optional taskbar visibility policy, applied after `setFocusable` because some
+   * native window implementations reset taskbar visibility when focusability changes.
+   */
+  readonly skipTaskbar?: boolean;
 }
 
 /**
@@ -55,6 +85,10 @@ export function applyWindowResidencyPolicy(
   const dynamicPointerPassthrough = input.dynamicPointerPassthrough ?? false;
   const forward = input.forwardPointerWhenIgnoring ?? true;
   const level = input.alwaysOnTopLevel;
+  const setSkipTaskbar = windowSurface.setSkipTaskbar;
+  if (input.skipTaskbar !== undefined && !setSkipTaskbar) {
+    throw new Error('Window surface does not support taskbar visibility changes.');
+  }
 
   const effectiveZOrder: WindowZOrder =
     positionMode && input.zOrder === 'back' ? 'default' : input.zOrder;
@@ -69,7 +103,12 @@ export function applyWindowResidencyPolicy(
     windowSurface.setAlwaysOnTop(false);
   }
 
-  windowSurface.setFocusable(effectiveZOrder !== 'back');
+  applyWindowFocusablePolicy(
+    windowSurface,
+    input.skipTaskbar === undefined
+      ? { focusable: effectiveZOrder !== 'back' }
+      : { focusable: effectiveZOrder !== 'back', skipTaskbar: input.skipTaskbar },
+  );
 
   if (effectiveZOrder === 'back') {
     windowSurface.blur?.();

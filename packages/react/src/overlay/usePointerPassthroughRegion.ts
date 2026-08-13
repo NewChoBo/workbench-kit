@@ -2,8 +2,11 @@ import { useEffect, useRef, type RefObject } from 'react';
 
 import {
   createPointerPassthroughController,
+  resolvePointerHitTarget,
   type PointerPassthroughPort,
 } from './pointerPassthroughRegion';
+
+export type PointerHitTargetResolver = (clientX: number, clientY: number) => EventTarget | null;
 
 export interface UsePointerPassthroughRegionOptions {
   readonly enabled: boolean;
@@ -14,11 +17,15 @@ export interface UsePointerPassthroughRegionOptions {
   readonly controlSelectors?: readonly string[];
   /** Limit hit-testing to a subtree; defaults to the document. */
   readonly rootRef?: RefObject<HTMLElement | null>;
+  /** Override painted-element resolution; defaults to `document.elementFromPoint`. */
+  readonly resolveHitTarget?: PointerHitTargetResolver;
 }
 
 /**
  * Toggles host pointer passthrough from renderer hit-testing.
- * Uses `requestAnimationFrame` coalescing for pointermove; no product selectors in kit.
+ * Uses `requestAnimationFrame` coalescing and painted-element hit-testing; no
+ * product selectors in kit. Electron can forward move events while ignoring
+ * mouse input, in which case `event.target` is not necessarily under the cursor.
  *
  * Host responsibilities:
  * - Provide selector lists
@@ -26,7 +33,7 @@ export interface UsePointerPassthroughRegionOptions {
  * - Pair with platform residency applicator for the main-process half
  */
 export function usePointerPassthroughRegion(options: UsePointerPassthroughRegionOptions): void {
-  const { enabled, port, hitSelectors, controlSelectors, rootRef } = options;
+  const { enabled, port, hitSelectors, controlSelectors, rootRef, resolveHitTarget } = options;
 
   const portRef = useRef(port);
   portRef.current = port;
@@ -34,6 +41,8 @@ export function usePointerPassthroughRegion(options: UsePointerPassthroughRegion
   hitSelectorsRef.current = hitSelectors;
   const controlSelectorsRef = useRef(controlSelectors);
   controlSelectorsRef.current = controlSelectors;
+  const resolveHitTargetRef = useRef(resolveHitTarget ?? resolvePointerHitTarget);
+  resolveHitTargetRef.current = resolveHitTarget ?? resolvePointerHitTarget;
 
   useEffect(() => {
     const controller = createPointerPassthroughController({
@@ -58,25 +67,45 @@ export function usePointerPassthroughRegion(options: UsePointerPassthroughRegion
     }
 
     let frame = 0;
-    let pendingTarget: EventTarget | null = null;
+    let pendingX = 0;
+    let pendingY = 0;
 
     const flush = () => {
       frame = 0;
-      controller.handlePointerTarget(pendingTarget);
+      // Re-assert on every frame. Host state may also change outside this hook;
+      // the main-process port should make same-value updates a no-op.
+      controller.reset();
+      controller.handlePointerTarget(resolveHitTargetRef.current(pendingX, pendingY));
     };
 
-    const onPointerMove = (event: PointerEvent) => {
-      pendingTarget = event.target;
+    const onPointerMove = (event: PointerEvent | MouseEvent) => {
+      pendingX = event.clientX;
+      pendingY = event.clientY;
       if (frame !== 0) {
         return;
       }
       frame = window.requestAnimationFrame(flush);
     };
 
+    const onMouseLeave = () => {
+      if (frame !== 0) {
+        window.cancelAnimationFrame(frame);
+        frame = 0;
+      }
+      controller.reset();
+      controller.handlePointerTarget(null);
+    };
+
     window.addEventListener('pointermove', onPointerMove, { passive: true });
+    // Some Electron builds forward mousemove rather than pointermove while the
+    // native window ignores input.
+    window.addEventListener('mousemove', onPointerMove, { passive: true });
+    document.documentElement.addEventListener('mouseleave', onMouseLeave);
 
     return () => {
       window.removeEventListener('pointermove', onPointerMove);
+      window.removeEventListener('mousemove', onPointerMove);
+      document.documentElement.removeEventListener('mouseleave', onMouseLeave);
       if (frame !== 0) {
         window.cancelAnimationFrame(frame);
       }

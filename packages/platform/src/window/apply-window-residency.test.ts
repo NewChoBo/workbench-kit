@@ -1,6 +1,7 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import {
+  applyWindowFocusablePolicy,
   applyWindowResidencyPolicy,
   type ResidencyWindowSurface,
 } from './apply-window-residency.js';
@@ -10,6 +11,7 @@ function createFakeWindow(): ResidencyWindowSurface & {
     setAlwaysOnTop: unknown[][];
     setFocusable: unknown[][];
     setIgnoreMouseEvents: unknown[][];
+    setSkipTaskbar: unknown[][];
     blur: number;
   };
 } {
@@ -17,6 +19,7 @@ function createFakeWindow(): ResidencyWindowSurface & {
     setAlwaysOnTop: [] as unknown[][],
     setFocusable: [] as unknown[][],
     setIgnoreMouseEvents: [] as unknown[][],
+    setSkipTaskbar: [] as unknown[][],
     blur: 0,
   };
 
@@ -30,6 +33,9 @@ function createFakeWindow(): ResidencyWindowSurface & {
     },
     setIgnoreMouseEvents: (...args: unknown[]) => {
       calls.setIgnoreMouseEvents.push(args);
+    },
+    setSkipTaskbar: (...args: unknown[]) => {
+      calls.setSkipTaskbar.push(args);
     },
     blur: () => {
       calls.blur += 1;
@@ -118,5 +124,64 @@ describe('applyWindowResidencyPolicy', () => {
     });
 
     expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([[true]]);
+  });
+
+  it('re-applies taskbar visibility after focusability', () => {
+    const calls: string[] = [];
+    const windowSurface: ResidencyWindowSurface = {
+      setAlwaysOnTop: () => calls.push('always-on-top'),
+      setFocusable: () => calls.push('focusable'),
+      setSkipTaskbar: () => calls.push('skip-taskbar'),
+      setIgnoreMouseEvents: () => calls.push('ignore-mouse'),
+    };
+
+    applyWindowResidencyPolicy(windowSurface, {
+      pointerPassthrough: 'off',
+      skipTaskbar: true,
+      zOrder: 'default',
+    });
+
+    expect(calls).toEqual(['always-on-top', 'focusable', 'skip-taskbar', 'ignore-mouse']);
+  });
+
+  it('rejects taskbar policy when the injected surface lacks the capability', () => {
+    const windowSurface = createFakeWindow();
+    delete windowSurface.setSkipTaskbar;
+
+    expect(() =>
+      applyWindowResidencyPolicy(windowSurface, {
+        pointerPassthrough: 'off',
+        skipTaskbar: true,
+        zOrder: 'default',
+      }),
+    ).toThrow(/does not support taskbar visibility/u);
+    expect(windowSurface.calls.setAlwaysOnTop).toEqual([]);
+    expect(windowSurface.calls.setFocusable).toEqual([]);
+    expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([]);
+  });
+});
+
+describe('applyWindowFocusablePolicy', () => {
+  it('applies focusability before taskbar visibility', () => {
+    const calls: string[] = [];
+
+    applyWindowFocusablePolicy(
+      {
+        setFocusable: () => calls.push('focusable'),
+        setSkipTaskbar: () => calls.push('skip-taskbar'),
+      },
+      { focusable: true, skipTaskbar: true },
+    );
+
+    expect(calls).toEqual(['focusable', 'skip-taskbar']);
+  });
+
+  it('fails before changing focusability when taskbar capability is absent', () => {
+    const setFocusable = vi.fn();
+
+    expect(() =>
+      applyWindowFocusablePolicy({ setFocusable }, { focusable: true, skipTaskbar: true }),
+    ).toThrow(/does not support taskbar visibility/u);
+    expect(setFocusable).not.toHaveBeenCalled();
   });
 });

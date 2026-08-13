@@ -66,6 +66,24 @@ describe('resolveWindowOpenLayout', () => {
     });
   });
 
+  it('centers host defaults within an injected fallback work area', () => {
+    expect(
+      resolveWindowOpenLayout({
+        defaultBoundsOptions: {
+          fallbackWorkArea: { x: 0, y: 0, width: 1280, height: 800 },
+          height: 800,
+          width: 1200,
+        },
+        displays: [],
+        remember: false,
+        saved: null,
+      }),
+    ).toEqual({
+      bounds: { x: 40, y: 0, width: 1200, height: 800 },
+      isMaximized: false,
+    });
+  });
+
   it('clamps saved bounds and preserves isMaximized when remember is on', () => {
     expect(
       resolveWindowOpenLayout({
@@ -82,6 +100,30 @@ describe('resolveWindowOpenLayout', () => {
         height: 700,
       },
       isMaximized: true,
+    });
+  });
+
+  it('forwards host-owned clamp policy for remembered bounds', () => {
+    const secondary: DisplayWorkArea = {
+      workArea: { x: 1700, y: 50, width: 1200, height: 800 },
+    };
+
+    expect(
+      resolveWindowOpenLayout({
+        clampOptions: {
+          minHeight: 0,
+          minWidth: 0,
+        },
+        displays: [primary, secondary],
+        remember: true,
+        saved: {
+          bounds: { x: 4000, y: 100, width: 80, height: 60 },
+          isMaximized: false,
+        },
+      }),
+    ).toEqual({
+      bounds: { x: 2820, y: 100, width: 80, height: 60 },
+      isMaximized: false,
     });
   });
 });

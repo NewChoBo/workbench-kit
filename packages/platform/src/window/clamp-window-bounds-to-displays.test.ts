@@ -4,6 +4,7 @@ import {
   WINDOW_BOUNDS_MIN_HEIGHT,
   WINDOW_BOUNDS_MIN_WIDTH,
   clampWindowBoundsToDisplays,
+  selectWindowDisplayForBounds,
 } from './clamp-window-bounds-to-displays.js';
 import type { DisplayWorkArea } from './types.js';
 
@@ -65,5 +66,59 @@ describe('clampWindowBoundsToDisplays', () => {
       width: 800,
       height: 600,
     });
+  });
+
+  it('supports host-owned minimum size', () => {
+    expect(
+      clampWindowBoundsToDisplays(
+        { x: 4000, y: 100, width: 40, height: 20 },
+        [primary, secondary],
+        {
+          minHeight: 0,
+          minWidth: 0,
+        },
+      ),
+    ).toEqual({ x: 3480, y: 100, width: 40, height: 20 });
+  });
+
+  it('selects the largest intersection with center-distance tie breaking', () => {
+    const overlappingPrimary = {
+      id: 'primary',
+      isPrimary: true,
+      workArea: { x: 0, y: 0, width: 2000, height: 1000 },
+    };
+    const overlappingSecondary = {
+      id: 'secondary',
+      workArea: { x: 1000, y: 0, width: 2000, height: 1000 },
+    };
+
+    expect(
+      selectWindowDisplayForBounds({ x: 1200, y: 100, width: 1300, height: 600 }, [
+        overlappingPrimary,
+        overlappingSecondary,
+      ])?.id,
+    ).toBe('secondary');
+  });
+
+  it('selects the nearest target before fitting oversized off-screen bounds', () => {
+    const displays: DisplayWorkArea[] = [
+      { isPrimary: true, workArea: { x: 1163, y: -39, width: 485, height: 1137 } },
+      { workArea: { x: 1669, y: 1733, width: 1609, height: 1025 } },
+    ];
+
+    expect(
+      clampWindowBoundsToDisplays({ x: 4196, y: -1365, width: 1951, height: 1689 }, displays, {
+        minHeight: 0,
+        minWidth: 0,
+      }),
+    ).toEqual({ x: 1669, y: 1733, width: 1609, height: 1025 });
+  });
+
+  it('rejects invalid host minimum sizes before clamping', () => {
+    expect(() =>
+      clampWindowBoundsToDisplays({ x: 0, y: 0, width: 100, height: 100 }, [primary], {
+        minWidth: -1,
+      }),
+    ).toThrow(/minWidth must be a finite non-negative number/u);
   });
 });

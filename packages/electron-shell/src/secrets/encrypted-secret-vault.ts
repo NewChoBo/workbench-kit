@@ -6,14 +6,27 @@ export interface SafeStorageCipher {
 
 export interface EncryptedSecretVault {
   getSecret(id: string): Promise<string | null>;
+  getSecrets(ids: readonly string[]): Promise<ReadonlyMap<string, string>>;
+  hasSecret(id: string): Promise<boolean>;
   setSecret(id: string, value: string): Promise<void>;
+  setSecrets(values: ReadonlyMap<string, string>): Promise<void>;
   deleteSecret(id: string): Promise<void>;
 }
 
 export interface CreateEncryptedSecretVaultOptions {
   readonly cipher: SafeStorageCipher;
+  readonly documentCodec?: SecretVaultDocumentCodec;
   readonly readVault: () => Promise<Uint8Array | null>;
-  readonly writeVault: (bytes: Uint8Array) => Promise<void>;
+  readonly writeVault: (bytes: Uint8Array, metadata: SecretVaultCommitMetadata) => Promise<void>;
+}
+
+export interface SecretVaultDocumentCodec {
+  parse(plaintext: string): Readonly<Record<string, string>>;
+  serialize(secrets: Readonly<Record<string, string>>): string;
+}
+
+export interface SecretVaultCommitMetadata {
+  readonly secretIds: readonly string[];
 }
 
 export class EncryptionUnavailableError extends Error {
@@ -26,22 +39,18 @@ export class EncryptionUnavailableError extends Error {
 }
 
 interface VaultDocument {
+  readonly version: 2;
+  readonly secrets: Record<string, string>;
+}
+
+interface LegacyVaultDocument {
   readonly version: 1;
   readonly secrets: Record<string, string>;
 }
 
 type VaultMutation = (document: VaultDocument) => VaultDocument | null;
 
-const textEncoder = new TextEncoder();
 const textDecoder = new TextDecoder();
-
-function toBase64(bytes: Uint8Array): string {
-  let binary = '';
-  for (const byte of bytes) {
-    binary += String.fromCharCode(byte);
-  }
-  return btoa(binary);
-}
 
 function fromBase64(value: string): Uint8Array {
   const binary = atob(value);
@@ -52,19 +61,59 @@ function fromBase64(value: string): Uint8Array {
   return bytes;
 }
 
-function parseVault(bytes: Uint8Array | null): VaultDocument {
-  if (bytes === null || bytes.byteLength === 0) {
-    return { version: 1, secrets: {} };
-  }
-  const parsed = JSON.parse(textDecoder.decode(bytes)) as Partial<VaultDocument>;
-  if (parsed.version !== 1 || typeof parsed.secrets !== 'object' || parsed.secrets === null) {
+function parseSecretRecord(value: unknown): Record<string, string> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) {
     throw new Error('Secret vault document is malformed.');
   }
-  return { version: 1, secrets: { ...parsed.secrets } };
+  const secrets = createSecretRecord();
+  for (const [id, secret] of Object.entries(value)) {
+    if (typeof secret !== 'string') {
+      throw new Error('Secret vault document is malformed.');
+    }
+    secrets[id] = secret;
+  }
+  return secrets;
 }
 
-function serializeVault(document: VaultDocument): Uint8Array {
-  return textEncoder.encode(`${JSON.stringify(document)}\n`);
+function createSecretRecord(
+  entries: Iterable<readonly [string, string]> = [],
+): Record<string, string> {
+  const secrets = Object.create(null) as Record<string, string>;
+  for (const [id, secret] of entries) {
+    secrets[id] = secret;
+  }
+  return secrets;
+}
+
+function hasOwnSecret(secrets: Readonly<Record<string, string>>, id: string): boolean {
+  return Object.prototype.hasOwnProperty.call(secrets, id);
+}
+
+function parseDefaultVaultPlaintext(plaintext: string): Record<string, string> {
+  const parsed = JSON.parse(plaintext) as {
+    readonly version?: unknown;
+    readonly secrets?: unknown;
+  };
+  if (parsed.version !== 2) {
+    throw new Error('Secret vault document is malformed.');
+  }
+  return parseSecretRecord(parsed.secrets);
+}
+
+const defaultDocumentCodec: SecretVaultDocumentCodec = {
+  parse: parseDefaultVaultPlaintext,
+  serialize: (secrets) => JSON.stringify({ version: 2, secrets }),
+};
+
+function parseLegacyVault(bytes: Uint8Array): LegacyVaultDocument {
+  const parsed = JSON.parse(textDecoder.decode(bytes)) as {
+    readonly version?: unknown;
+    readonly secrets?: unknown;
+  };
+  if (parsed.version !== 1) {
+    throw new Error('Secret vault document is malformed.');
+  }
+  return { version: 1, secrets: parseSecretRecord(parsed.secrets) };
 }
 
 function assertEncryptionAvailable(cipher: SafeStorageCipher): void {
@@ -73,67 +122,136 @@ function assertEncryptionAvailable(cipher: SafeStorageCipher): void {
   }
 }
 
+function decryptVault(
+  cipher: SafeStorageCipher,
+  bytes: Uint8Array,
+  documentCodec: SecretVaultDocumentCodec,
+): VaultDocument {
+  try {
+    return {
+      version: 2,
+      secrets: parseSecretRecord(documentCodec.parse(cipher.decryptString(bytes))),
+    };
+  } catch (encryptedDocumentError) {
+    try {
+      const legacy = parseLegacyVault(bytes);
+      const secrets: Record<string, string> = {};
+      for (const [id, encoded] of Object.entries(legacy.secrets)) {
+        secrets[id] = cipher.decryptString(fromBase64(encoded));
+      }
+      return { version: 2, secrets };
+    } catch {
+      throw encryptedDocumentError;
+    }
+  }
+}
+
 /**
- * Opaque secret vault using an injected OS-backed cipher.
- * Fails closed when encryption is unavailable; serializes mutations per vault instance.
- * Hosts own persistence (and multi-instance coordination) via readVault/writeVault.
+ * Opaque whole-document secret vault using an injected OS-backed cipher.
+ *
+ * The encrypted payload hides secret identifiers as well as values. Operations are
+ * processed in invocation order so reads observe earlier pending writes. Version 1
+ * entry-encrypted documents remain readable and are rewritten by the next mutation.
+ * Hosts own the plaintext envelope through an optional codec, atomic persistence,
+ * references derived from commit metadata, and multi-instance coordination.
  */
 export function createEncryptedSecretVault(
   options: CreateEncryptedSecretVaultOptions,
 ): EncryptedSecretVault {
   const { cipher, readVault, writeVault } = options;
-  let mutationQueue: Promise<void> = Promise.resolve();
+  const documentCodec = options.documentCodec ?? defaultDocumentCodec;
+  let operationQueue: Promise<void> = Promise.resolve();
 
   const load = async (): Promise<VaultDocument> => {
     assertEncryptionAvailable(cipher);
-    return parseVault(await readVault());
+    const bytes = await readVault();
+    if (bytes === null || bytes.byteLength === 0) {
+      return { version: 2, secrets: createSecretRecord() };
+    }
+    return decryptVault(cipher, bytes, documentCodec);
   };
 
   const save = async (document: VaultDocument): Promise<void> => {
     assertEncryptionAvailable(cipher);
-    await writeVault(serializeVault(document));
+    const secretIds = Object.keys(document.secrets).sort((left, right) =>
+      left.localeCompare(right),
+    );
+    await writeVault(cipher.encryptString(documentCodec.serialize(document.secrets)), {
+      secretIds,
+    });
   };
 
-  const mutateVault = (mutation: VaultMutation): Promise<void> => {
-    const result = mutationQueue.then(async () => {
+  const runOperation = <TResult>(operation: () => Promise<TResult>): Promise<TResult> => {
+    const result = operationQueue.then(operation);
+    operationQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
+  };
+
+  const mutateVault = (mutation: VaultMutation): Promise<void> =>
+    runOperation(async () => {
       const document = await load();
       const nextDocument = mutation(document);
       if (nextDocument !== null) {
         await save(nextDocument);
       }
     });
-    mutationQueue = result.catch(() => undefined);
-    return result;
-  };
 
   return {
-    async getSecret(id: string): Promise<string | null> {
-      const document = await load();
-      const encoded = document.secrets[id];
-      if (typeof encoded !== 'string') {
-        return null;
-      }
-      return cipher.decryptString(fromBase64(encoded));
+    getSecret(id: string): Promise<string | null> {
+      return runOperation(async () => {
+        const document = await load();
+        return hasOwnSecret(document.secrets, id) ? document.secrets[id]! : null;
+      });
     },
 
-    async setSecret(id: string, value: string): Promise<void> {
-      await mutateVault((document) => ({
-        version: 1,
-        secrets: {
-          ...document.secrets,
-          [id]: toBase64(cipher.encryptString(value)),
-        },
+    getSecrets(ids: readonly string[]): Promise<ReadonlyMap<string, string>> {
+      const requestedIds = [...ids];
+      return runOperation(async () => {
+        const document = await load();
+        const result = new Map<string, string>();
+        for (const id of requestedIds) {
+          if (hasOwnSecret(document.secrets, id)) {
+            result.set(id, document.secrets[id]!);
+          }
+        }
+        return result;
+      });
+    },
+
+    hasSecret(id: string): Promise<boolean> {
+      return runOperation(async () => {
+        const document = await load();
+        return hasOwnSecret(document.secrets, id);
+      });
+    },
+
+    setSecret(id: string, value: string): Promise<void> {
+      return mutateVault((document) => {
+        const secrets = createSecretRecord(Object.entries(document.secrets));
+        secrets[id] = value;
+        return { version: 2, secrets };
+      });
+    },
+
+    setSecrets(values: ReadonlyMap<string, string>): Promise<void> {
+      const snapshot = [...values];
+      return mutateVault((document) => ({
+        version: 2,
+        secrets: createSecretRecord([...Object.entries(document.secrets), ...snapshot]),
       }));
     },
 
-    async deleteSecret(id: string): Promise<void> {
-      await mutateVault((document) => {
-        if (!(id in document.secrets)) {
+    deleteSecret(id: string): Promise<void> {
+      return mutateVault((document) => {
+        if (!hasOwnSecret(document.secrets, id)) {
           return null;
         }
-        const nextSecrets = { ...document.secrets };
+        const nextSecrets = createSecretRecord(Object.entries(document.secrets));
         delete nextSecrets[id];
-        return { version: 1, secrets: nextSecrets };
+        return { version: 2, secrets: nextSecrets };
       });
     },
   };

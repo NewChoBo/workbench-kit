@@ -1,6 +1,9 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { bindSecondaryWindowBoundsPersistence } from './bind-secondary-window-bounds-persistence.js';
+import {
+  bindSecondaryWindowBoundsPersistence,
+  type SecondaryWindowBoundsHandlers,
+} from './bind-secondary-window-bounds-persistence.js';
 import type { RectLike } from './types.js';
 
 describe('bindSecondaryWindowBoundsPersistence', () => {
@@ -16,6 +19,7 @@ describe('bindSecondaryWindowBoundsPersistence', () => {
     });
     let handlers: {
       onBoundsLikelyChanged: () => void;
+      onCloseRequested: () => void;
       onClosed: () => void;
     } | null = null;
 
@@ -53,6 +57,7 @@ describe('bindSecondaryWindowBoundsPersistence', () => {
     const persist = vi.fn(async () => undefined);
     let handlers: {
       onBoundsLikelyChanged: () => void;
+      onCloseRequested: () => void;
       onClosed: () => void;
     } | null = null;
 
@@ -80,11 +85,64 @@ describe('bindSecondaryWindowBoundsPersistence', () => {
     expect(persist).toHaveBeenCalledWith({ x: 11, y: 21, width: 301, height: 201 });
   });
 
+  it('captures close bounds before an earlier persist settles', async () => {
+    vi.useFakeTimers();
+    let bounds: RectLike = { x: 10, y: 20, width: 300, height: 200 };
+    let destroyed = false;
+    let releaseFirstPersist!: () => void;
+    const firstPersist = new Promise<void>((resolve) => {
+      releaseFirstPersist = resolve;
+    });
+    let resolveSecondPersist!: () => void;
+    const secondPersist = new Promise<void>((resolve) => {
+      resolveSecondPersist = resolve;
+    });
+    const persist = vi
+      .fn<(next: RectLike) => Promise<void>>()
+      .mockImplementationOnce(async () => firstPersist)
+      .mockImplementationOnce(async () => {
+        resolveSecondPersist();
+      });
+    let handlers: SecondaryWindowBoundsHandlers | null = null;
+
+    const handle = bindSecondaryWindowBoundsPersistence({
+      debounceMs: 100,
+      readBounds: () => {
+        if (destroyed) {
+          throw new Error('window already destroyed');
+        }
+        return bounds;
+      },
+      persist,
+      subscribe: (next) => {
+        handlers = next;
+        return () => {
+          handlers = null;
+        };
+      },
+    });
+
+    handlers!.onBoundsLikelyChanged();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(persist).toHaveBeenCalledWith({ x: 10, y: 20, width: 300, height: 200 });
+
+    bounds = { x: 11, y: 21, width: 301, height: 201 };
+    handlers!.onCloseRequested();
+    destroyed = true;
+    handle.dispose();
+    releaseFirstPersist();
+    await secondPersist;
+
+    expect(persist).toHaveBeenCalledTimes(2);
+    expect(persist).toHaveBeenLastCalledWith({ x: 11, y: 21, width: 301, height: 201 });
+  });
+
   it('supports explicit flush and dispose unsubscribe', async () => {
     const persist = vi.fn(async () => undefined);
     const unsubscribe = vi.fn();
     let handlers: {
       onBoundsLikelyChanged: () => void;
+      onCloseRequested: () => void;
       onClosed: () => void;
     } | null = null;
 

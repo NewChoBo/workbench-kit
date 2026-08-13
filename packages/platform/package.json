@@ -18,6 +18,12 @@
       "tray-close-policy": [
         "src/window/tray-close-policy.ts"
       ],
+      "window-residency": [
+        "src/window/window-residency.ts"
+      ],
+      "window-geometry": [
+        "src/window/window-geometry.ts"
+      ],
       "window-bounds-persistence": [
         "src/window/window-bounds-persistence.ts"
       ]
@@ -61,6 +67,18 @@
       "require": "./dist/window-bounds-persistence.cjs",
       "import": "./src/window/window-bounds-persistence.ts",
       "default": "./src/window/window-bounds-persistence.ts"
+    },
+    "./window-residency": {
+      "types": "./src/window/window-residency.ts",
+      "require": "./dist/window-residency.cjs",
+      "import": "./src/window/window-residency.ts",
+      "default": "./src/window/window-residency.ts"
+    },
+    "./window-geometry": {
+      "types": "./src/window/window-geometry.ts",
+      "require": "./dist/window-geometry.cjs",
+      "import": "./src/window/window-geometry.ts",
+      "default": "./src/window/window-geometry.ts"
     }
   },
   "dependencies": {
