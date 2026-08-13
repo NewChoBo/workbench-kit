@@ -9,7 +9,8 @@ Workbench Kit uses a **custom extension system** for repository-local and bundle
 - Stable contribution model via `@workbench-kit/workbench-extension-sdk`
 - Built-in extensions shipped inside `@workbench-kit/shell-react`
 - Build-time bundled extension artifacts consumed by the workbench host
-- Contribution points: commands, keybindings, menus, views, settings, activities, layout metadata
+- Contribution points: commands, keybindings, menus, views, panels, status-bar items,
+  settings, activities, editor/document views, themes, and localizations
 
 ### Explicitly out of scope (Phase 0 and near term)
 
@@ -70,7 +71,14 @@ refuses to generate a bundle from invalid manifests.
 | `views`         | Sidebar/panel views and containers                    |
 | `configuration` | Settings schema defaults and descriptions             |
 | `activities`    | Activity bar entries linking to view containers       |
-| `layout`        | Default layout hints (optional metadata)              |
+| `panels`        | Bottom-panel container plus view convenience alias    |
+| `statusBar`     | Ordered left/right status-bar items                   |
+| `documentViews` | Text-editor form and preview mode metadata            |
+| `themes`        | Light/dark token override contributions               |
+| `localizations` | Locale label and translation maps                     |
+
+For the supported / partial / deferred boundary and linked work, see
+[Extension Contribution Point Audit](./extension-contribution-audit.md).
 
 ## Built-in Extensions
 
@@ -124,4 +132,5 @@ External packages may be supported later as **pre-built, integrity-checked artif
 ## Related Documents
 
 - [Extension Dependencies](./extension-dependencies.md)
+- [Extension Contribution Point Audit](./extension-contribution-audit.md)
 - [Workbench Core](./workbench-core.md)

@@ -110,6 +110,8 @@ Every contributed command should have a matching `onCommand:` or `onStartup` act
 | `activities`               | Activity bar entries                                                  | Host layout                                                                           |
 
 Type shapes: [Contribution Contracts](../architecture/contribution-contracts.md).
+For the supported / partial / deferred contribution boundary and linked follow-up work,
+see [Extension Contribution Point Audit](../architecture/extension-contribution-audit.md).
 
 ### Minimal manifest
 
