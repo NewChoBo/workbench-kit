@@ -62,6 +62,12 @@ jobs:
       - name: Build workspace packages
         run: node scripts/build-workspace-packages.mjs
 
+      - name: Install Electron binary
+        run: pnpm rebuild electron
+
+      - name: Electron quit guard smoke
+        run: xvfb-run -a pnpm test:electron-quit-guard
+
       - name: Verify release tag
         run: node scripts/check-release-version.mjs
 

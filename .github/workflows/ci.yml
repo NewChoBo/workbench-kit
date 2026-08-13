@@ -38,6 +38,12 @@ jobs:
       - name: Build workspace packages
         run: node scripts/build-workspace-packages.mjs
 
+      - name: Install Electron binary
+        run: pnpm rebuild electron
+
+      - name: Electron quit guard smoke
+        run: xvfb-run -a pnpm test:electron-quit-guard
+
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
 

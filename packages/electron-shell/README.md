@@ -82,6 +82,11 @@ an asynchronous wrapper is treated as a fresh request. OS shutdown paths that do
 not emit `before-quit`, and updater flows that emit it after windows close, remain
 host-owned lifecycle concerns outside this guard.
 
+The repository also runs `pnpm test:electron-quit-guard` against Electron 41.5
+with a live `BrowserWindow`. It verifies the deferred save path, a coalesced quit
+attempt before the scheduled resume, and the normal window-close / application-quit
+lifecycle after the permitted re-entry.
+
 For external links, keep the product allowlist outside the Kit and pass only an
 opaque link id into the generic helper:
 
