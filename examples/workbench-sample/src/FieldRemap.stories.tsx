@@ -152,6 +152,8 @@ export const EmbedEdgeFill: Story = {
   args: {
     sampleId: 'nested-ab',
     chrome: 'embed',
+    showFlowHint: true,
+    showBindingsList: true,
     showMinimap: false,
   },
   tags: ['storybook-play-baseline'],
@@ -162,8 +164,10 @@ export const EmbedEdgeFill: Story = {
     const flow = canvas.getByTestId('field-remap-flow');
     const detail = canvas.getByTestId('field-remap-detail');
 
-    await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
+    const mapper = canvas.getByTestId('field-remap-mapper');
+    await expect(mapper).toHaveAttribute('data-chrome', 'embed');
     await expect(workspace).not.toBeNull();
+    expect(Number.parseFloat(getComputedStyle(mapper).rowGap)).toBeGreaterThan(0);
     expect(getComputedStyle(workspace!).columnGap).toBe('0px');
     expect(getComputedStyle(palette).borderTopLeftRadius).toBe('0px');
     expect(getComputedStyle(flow).borderTopLeftRadius).toBe('0px');

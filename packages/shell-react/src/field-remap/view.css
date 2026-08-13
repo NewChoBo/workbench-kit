@@ -318,10 +318,6 @@
 }
 
 /* Embed hosts own the outer pane. Keep Flow rails flat and separate them with dividers only. */
-.workbench-field-remap-flow[data-chrome='embed'] {
-  gap: 0;
-}
-
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-flow__workspace {
   gap: 0;
 }
