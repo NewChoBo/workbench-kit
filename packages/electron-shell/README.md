@@ -71,11 +71,12 @@ electronApp.on('before-quit', (event) => {
 ```
 
 Repeated quit events are coalesced into the active request. After save or discard,
-the guard rechecks dirty state and resumes only when clean. Errors, timeout, and a
-still-dirty recheck fail closed. `cancelPending()` aborts an obsolete request and
-invalidates any late guard completion; call it when the owning lifecycle is
-replaced. A callback that has already started must honor its `AbortSignal` to stop
-its own side effects.
+the guard rechecks dirty state and resumes only when clean. It invokes `resumeQuit`
+on the next event-loop task so Electron can finish dispatching the original
+`before-quit` event first. Errors, timeout, and a still-dirty recheck fail closed.
+`cancelPending()` aborts an obsolete request and invalidates any late guard
+completion; call it when the owning lifecycle is replaced. A callback that has
+already started must honor its `AbortSignal` to stop its own side effects.
 The injected `resumeQuit` port must re-enter the registered guard synchronously;
 an asynchronous wrapper is treated as a fresh request. OS shutdown paths that do
 not emit `before-quit`, and updater flows that emit it after windows close, remain

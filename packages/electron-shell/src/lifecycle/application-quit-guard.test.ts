@@ -46,24 +46,33 @@ async function settleMicrotasks(): Promise<void> {
 }
 
 describe('createApplicationQuitGuard', () => {
-  it('vetoes immediately, then resumes a clean quit through one re-entry permit', async () => {
-    const resumedEvent = createEvent();
-    const guardReference: { current?: ApplicationQuitGuard } = {};
-    let resumedResult: ReturnType<ApplicationQuitGuard['handleBeforeQuit']>;
-    const resumeQuit = vi.fn(() => {
-      resumedResult = guardReference.current?.handleBeforeQuit(resumedEvent);
-    });
-    const guard = createApplicationQuitGuard(createOptions({ resumeQuit }));
-    guardReference.current = guard;
-    const event = createEvent();
+  it('vetoes immediately and resumes a clean quit through one re-entry permit on the next task', async () => {
+    vi.useFakeTimers();
+    try {
+      const resumedEvent = createEvent();
+      const guardReference: { current?: ApplicationQuitGuard } = {};
+      let resumedResult: ReturnType<ApplicationQuitGuard['handleBeforeQuit']>;
+      const resumeQuit = vi.fn(() => {
+        resumedResult = guardReference.current?.handleBeforeQuit(resumedEvent);
+      });
+      const guard = createApplicationQuitGuard(createOptions({ resumeQuit }));
+      guardReference.current = guard;
+      const event = createEvent();
 
-    const result = guard.handleBeforeQuit(event);
+      const result = guard.handleBeforeQuit(event);
 
-    expect(event.preventDefault).toHaveBeenCalledTimes(1);
-    await expect(result).resolves.toEqual({ status: 'proceed', reason: 'clean' });
-    expect(resumeQuit).toHaveBeenCalledTimes(1);
-    expect(resumedResult).toBeUndefined();
-    expect(resumedEvent.preventDefault).not.toHaveBeenCalled();
+      expect(event.preventDefault).toHaveBeenCalledTimes(1);
+      await settleMicrotasks();
+      expect(resumeQuit).not.toHaveBeenCalled();
+
+      await vi.advanceTimersByTimeAsync(0);
+      await expect(result).resolves.toEqual({ status: 'proceed', reason: 'clean' });
+      expect(resumeQuit).toHaveBeenCalledTimes(1);
+      expect(resumedResult).toBeUndefined();
+      expect(resumedEvent.preventDefault).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('keeps a dirty application open when the decision is cancel', async () => {
@@ -240,7 +249,9 @@ describe('createApplicationQuitGuard', () => {
       await settleMicrotasks();
       expect(resumeQuit).not.toHaveBeenCalled();
 
-      await expect(guard.handleBeforeQuit(createEvent())).resolves.toEqual({
+      const nextResult = guard.handleBeforeQuit(createEvent());
+      await vi.advanceTimersByTimeAsync(0);
+      await expect(nextResult).resolves.toEqual({
         status: 'proceed',
         reason: 'clean',
       });
@@ -288,6 +299,31 @@ describe('createApplicationQuitGuard', () => {
 
     await expect(result).resolves.toEqual({ status: 'cancelled' });
     expect(isDirty).not.toHaveBeenCalled();
+  });
+
+  it('coalesces events and allows cancellation before the scheduled resume', async () => {
+    vi.useFakeTimers();
+    try {
+      const resumeQuit = vi.fn();
+      const guard = createApplicationQuitGuard(createOptions({ resumeQuit }));
+      const firstEvent = createEvent();
+      const secondEvent = createEvent();
+
+      const first = guard.handleBeforeQuit(firstEvent);
+      await settleMicrotasks();
+      const second = guard.handleBeforeQuit(secondEvent);
+
+      expect(second).toBe(first);
+      expect(firstEvent.preventDefault).toHaveBeenCalledTimes(1);
+      expect(secondEvent.preventDefault).toHaveBeenCalledTimes(1);
+      expect(guard.cancelPending()).toBe(true);
+
+      await vi.advanceTimersByTimeAsync(0);
+      await expect(first).resolves.toEqual({ status: 'cancelled' });
+      expect(resumeQuit).not.toHaveBeenCalled();
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   it('allows only one synchronous event during resumeQuit', async () => {
@@ -363,7 +399,9 @@ describe('createApplicationQuitGuard', () => {
     try {
       const guard = createApplicationQuitGuard(createOptions({ timeoutMs: 25 }));
 
-      await expect(guard.handleBeforeQuit(createEvent())).resolves.toEqual({
+      const result = guard.handleBeforeQuit(createEvent());
+      await vi.advanceTimersByTimeAsync(0);
+      await expect(result).resolves.toEqual({
         status: 'proceed',
         reason: 'clean',
       });
@@ -386,7 +424,9 @@ describe('createApplicationQuitGuard', () => {
       });
 
       const guard = createApplicationQuitGuard(options);
-      await expect(guard.handleBeforeQuit(createEvent())).resolves.toEqual({
+      const result = guard.handleBeforeQuit(createEvent());
+      await vi.advanceTimersByTimeAsync(0);
+      await expect(result).resolves.toEqual({
         status: 'proceed',
         reason: 'clean',
       });
