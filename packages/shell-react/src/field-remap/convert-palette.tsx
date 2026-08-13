@@ -1,6 +1,6 @@
 import type { JSX } from 'react';
 import { SideBarList, SideBarListItem } from '@workbench-kit/react/layout';
-import { Button } from '@workbench-kit/react/primitives';
+import { IconButton } from '@workbench-kit/react/primitives';
 import type { ValueTransformRegistry } from '@workbench-kit/field-remap';
 
 import { defaultFieldRemapChromeLabels, type FieldRemapChromeLabels } from './chrome-labels.js';
@@ -45,19 +45,20 @@ export function FieldRemapConvertPalette({
       </header>
 
       <div className="workbench-field-remap-convert-palette__place">
-        <Button
+        <IconButton
+          compact
           type="button"
           data-testid="field-remap-place-draft"
           disabled={!selectedTransformId}
+          icon="codicon-add"
+          label={chromeLabels.placeConvert}
           onClick={() => {
             if (!selectedTransformId) {
               return;
             }
             onPlaceDraft(selectedTransformId);
           }}
-        >
-          {chromeLabels.placeConvert}
-        </Button>
+        />
       </div>
 
       <SideBarList
@@ -95,24 +96,24 @@ export function FieldRemapConvertPalette({
           <p>{chromeLabels.operatorsDescription}</p>
           <div className="workbench-field-remap-convert-palette__operator-actions">
             {onAddCombine ? (
-              <Button
+              <IconButton
                 compact
                 type="button"
                 data-testid="field-remap-add-combine"
+                icon="codicon-git-merge"
+                label={chromeLabels.addCombine}
                 onClick={onAddCombine}
-              >
-                Add combine
-              </Button>
+              />
             ) : null}
             {onAddSplit ? (
-              <Button
+              <IconButton
                 compact
                 type="button"
                 data-testid="field-remap-add-split"
+                icon="codicon-split-horizontal"
+                label={chromeLabels.addSplit}
                 onClick={onAddSplit}
-              >
-                Add split
-              </Button>
+              />
             ) : null}
           </div>
         </div>

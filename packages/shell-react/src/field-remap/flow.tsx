@@ -28,7 +28,7 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Badge, Button } from '@workbench-kit/react/primitives';
+import { Badge, IconButton } from '@workbench-kit/react/primitives';
 import {
   MAX_TRANSFORM_CHAIN,
   type MappingEdge,
@@ -989,10 +989,12 @@ function FieldRemapFlowCanvas({
                 </button>
                 <span className="workbench-field-remap-mapper__edge-actions">
                   {(edge.transformIds?.length ?? 0) < MAX_TRANSFORM_CHAIN && defaultAddId ? (
-                    <Button
+                    <IconButton
                       compact
                       type="button"
                       data-testid={`field-remap-add-node-${edge.id}`}
+                      icon="codicon-add"
+                      label={chromeLabels.addTransform}
                       onClick={() => {
                         const next = addTransformStepToEdge(edge, defaultAddId, {
                           registry: transforms,
@@ -1009,15 +1011,15 @@ function FieldRemapFlowCanvas({
                           stepIndex: (next.transformIds?.length ?? 1) - 1,
                         });
                       }}
-                    >
-                      + node
-                    </Button>
+                    />
                   ) : null}
                   {listContext ? (
-                    <Button
+                    <IconButton
                       compact
                       type="button"
                       data-testid={`field-remap-edit-items-${edge.id}`}
+                      icon="codicon-edit"
+                      label={chromeLabels.editItems}
                       onClick={() => {
                         if (!edge.itemEdges) {
                           onEdgesChange(
@@ -1028,13 +1030,15 @@ function FieldRemapFlowCanvas({
                         }
                         setSelection({ kind: 'edge', edgeId: edge.id });
                       }}
-                    >
-                      Edit items
-                    </Button>
+                    />
                   ) : null}
-                  <Button
+                  <IconButton
                     compact
                     type="button"
+                    data-testid={`field-remap-remove-edge-${edge.id}`}
+                    icon="codicon-trash"
+                    label={chromeLabels.removeBinding}
+                    variant="danger"
                     onClick={() => {
                       onEdgesChange(edges.filter((item) => item.id !== edge.id));
                       if (
@@ -1045,9 +1049,7 @@ function FieldRemapFlowCanvas({
                         setSelection(null);
                       }
                     }}
-                  >
-                    Remove
-                  </Button>
+                  />
                 </span>
               </li>
             );

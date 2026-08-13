@@ -277,6 +277,35 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(heading?.textContent).toBe('Field maps');
   });
 
+  it('uses labelled IconButtons for binding-row chrome actions', async () => {
+    await renderMapper({
+      labels: {
+        addTransform: 'Append convert',
+        editItems: 'Configure item bindings',
+        removeBinding: 'Delete binding',
+      },
+    });
+
+    const addTransform = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-add-node-e-name"]',
+    );
+    expect(addTransform?.classList.contains('ui-icon-button')).toBe(true);
+    expect(addTransform?.getAttribute('aria-label')).toBe('Append convert');
+
+    const editItems = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-edit-items-e-tags"]',
+    );
+    expect(editItems?.classList.contains('ui-icon-button')).toBe(true);
+    expect(editItems?.getAttribute('aria-label')).toBe('Configure item bindings');
+
+    const removeBinding = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-remove-edge-e-name"]',
+    );
+    expect(removeBinding?.classList.contains('ui-icon-button')).toBe(true);
+    expect(removeBinding?.getAttribute('aria-label')).toBe('Delete binding');
+    expect(removeBinding?.getAttribute('data-variant')).toBe('danger');
+  });
+
   it('includes a Controls MiniMap toggle when onShowMinimapChange is set', async () => {
     const onShowMinimapChange = vi.fn();
     await renderMapper({ showMinimap: false, onShowMinimapChange });

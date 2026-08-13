@@ -26,9 +26,11 @@ describe('FieldRemapConvertPalette', () => {
     container = undefined;
   });
 
-  it('places the selected convert from primary palette chrome', () => {
+  it('uses labelled IconButtons for primary palette chrome', () => {
     const onPlaceDraft = vi.fn();
     const onSelectedTransformIdChange = vi.fn();
+    const onAddCombine = vi.fn();
+    const onAddSplit = vi.fn();
     container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
@@ -39,6 +41,8 @@ describe('FieldRemapConvertPalette', () => {
           selectedTransformId="string:trim"
           onSelectedTransformIdChange={onSelectedTransformIdChange}
           onPlaceDraft={onPlaceDraft}
+          onAddCombine={onAddCombine}
+          onAddSplit={onAddSplit}
         />,
       );
     });
@@ -62,11 +66,31 @@ describe('FieldRemapConvertPalette', () => {
     expect(onSelectedTransformIdChange).toHaveBeenCalledWith('string:trim');
     expect(onPlaceDraft).toHaveBeenCalledWith('string:trim');
     onPlaceDraft.mockClear();
+    const placeButton = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-place-draft"]',
+    );
+    expect(placeButton?.classList.contains('ui-icon-button')).toBe(true);
+    expect(placeButton?.getAttribute('aria-label')).toBe('Place convert');
     act(() => {
-      container!
-        .querySelector<HTMLButtonElement>('[data-testid="field-remap-place-draft"]')
-        ?.click();
+      placeButton?.click();
     });
     expect(onPlaceDraft).toHaveBeenCalledWith('string:trim');
+
+    const combineButton = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-add-combine"]',
+    );
+    expect(combineButton?.classList.contains('ui-icon-button')).toBe(true);
+    expect(combineButton?.getAttribute('aria-label')).toBe('Add combine');
+    const splitButton = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-add-split"]',
+    );
+    expect(splitButton?.classList.contains('ui-icon-button')).toBe(true);
+    expect(splitButton?.getAttribute('aria-label')).toBe('Add split');
+    act(() => {
+      combineButton?.click();
+      splitButton?.click();
+    });
+    expect(onAddCombine).toHaveBeenCalledTimes(1);
+    expect(onAddSplit).toHaveBeenCalledTimes(1);
   });
 });
