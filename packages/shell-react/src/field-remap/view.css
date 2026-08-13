@@ -301,6 +301,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  container-name: field-remap-flow;
+  container-type: inline-size;
 }
 
 .workbench-field-remap-flow__workspace {
@@ -315,7 +317,7 @@
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
 }
 
-@media (max-width: 1100px) {
+@container field-remap-flow (max-width: 68.75rem) {
   .workbench-field-remap-flow__workspace {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
   }
@@ -325,7 +327,7 @@
   }
 }
 
-@media (max-width: 960px) {
+@container field-remap-flow (max-width: 60rem) {
   .workbench-field-remap-flow__workspace {
     grid-template-columns: 1fr;
   }

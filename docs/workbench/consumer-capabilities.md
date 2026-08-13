@@ -780,12 +780,19 @@ Panel forwards the same props. Chrome nouns (`Bindings`, Convert palette copy) a
 / optional `t(key, fallback)` on Flow and Panel — hosts can override to “Field maps” /
 “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
 
+**Narrow embeds:** Flow workspace breakpoints use the width of `.workbench-field-remap-flow`,
+not the browser viewport, so a narrow secondary pane stacks palette, canvas, and detail instead
+of collapsing the canvas. Hosts can use a simple block wrapper; for the supported narrow layout,
+give it at least `22.5rem` inline size and let it provide the vertical space for Flow.
+
 ```tsx
-<FieldRemapFlowMapper
-  chrome="embed"
-  showConvertPalette={false}
-  // sources, targets, edges, transforms, and onEdgesChange as usual
-/>
+<div style={{ minInlineSize: '22.5rem', minBlockSize: '26rem' }}>
+  <FieldRemapFlowMapper
+    chrome="embed"
+    showConvertPalette={false}
+    // sources, targets, edges, transforms, and onEdgesChange as usual
+  />
+</div>
 ```
 
 **Browse badge labels:** Direct `FieldRemapIoClassBrowse` consumers can override its hidden
