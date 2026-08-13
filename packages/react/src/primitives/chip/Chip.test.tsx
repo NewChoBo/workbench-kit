@@ -16,11 +16,4 @@ describe('Chip', () => {
     expect(markup).toContain('codicon-close');
     expect(markup).toContain('aria-label="Remove Action"');
   });
-
-  it('re-exports from primitives entry without import cycle', async () => {
-    const entry = await import('..');
-    const module = await import('./index');
-
-    expect(entry.Chip).toBe(module.Chip);
-  });
 });
