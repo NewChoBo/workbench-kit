@@ -785,6 +785,11 @@ not the browser viewport, so a narrow secondary pane stacks palette, canvas, and
 of collapsing the canvas. Hosts can use a simple block wrapper; for the supported narrow layout,
 give it at least `22.5rem` inline size and let it provide the vertical space for Flow.
 
+**Edge-fill embeds:** `chrome="embed"` also removes the nested card borders and radii from
+the palette, canvas, and detail rail. The Flow rails meet with hairline dividers, so the host
+wrapper owns the outer border and radius. Omit `chrome` (or use `chrome="card"`) for the
+backward-compatible card presentation.
+
 ```tsx
 <div style={{ minInlineSize: '22.5rem', minBlockSize: '26rem' }}>
   <FieldRemapFlowMapper

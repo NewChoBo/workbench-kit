@@ -147,6 +147,32 @@ export const EmbedChrome: Story = {
   },
 };
 
+export const EmbedEdgeFill: Story = {
+  name: 'Embed edge-fill',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    showMinimap: false,
+  },
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const workspace = canvasElement.querySelector('.workbench-field-remap-flow__workspace');
+    const palette = canvas.getByTestId('field-remap-convert-palette');
+    const flow = canvas.getByTestId('field-remap-flow');
+    const detail = canvas.getByTestId('field-remap-detail');
+
+    await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
+    await expect(workspace).not.toBeNull();
+    expect(getComputedStyle(workspace!).columnGap).toBe('0px');
+    expect(getComputedStyle(palette).borderTopLeftRadius).toBe('0px');
+    expect(getComputedStyle(flow).borderTopLeftRadius).toBe('0px');
+    expect(getComputedStyle(detail).borderTopLeftRadius).toBe('0px');
+    expect(getComputedStyle(palette).borderRightWidth).toBe('1px');
+    expect(getComputedStyle(detail).borderLeftWidth).toBe('1px');
+  },
+};
+
 export const NarrowEmbedLayout: Story = {
   name: 'Embed layout (360px host)',
   args: {
