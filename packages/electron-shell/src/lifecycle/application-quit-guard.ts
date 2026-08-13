@@ -109,6 +109,12 @@ function raceWithAbort<Value>(
   });
 }
 
+function waitForNextTask(): Promise<void> {
+  return new Promise((resolve) => {
+    setTimeout(resolve, 0);
+  });
+}
+
 /**
  * Coordinate an Electron-style before-quit boundary without importing Electron.
  * The host owns event registration, dirty state, prompts, persistence, and quit invocation.
@@ -158,7 +164,13 @@ export function createApplicationQuitGuard(
       return resume(reason);
     };
 
-    const resume = (reason: ApplicationQuitProceedReason): ApplicationQuitGuardResult => {
+    const resume = async (
+      reason: ApplicationQuitProceedReason,
+    ): Promise<ApplicationQuitGuardResult> => {
+      // A Promise continuation can still run before Electron finishes dispatching the original
+      // before-quit event. Cross a task boundary before re-entering app.quit().
+      await run(waitForNextTask);
+
       // The decision is now irreversible. `cancelPending` must not report a cancellable request
       // while the host is synchronously re-entering before-quit.
       if (isCurrent()) {
@@ -181,7 +193,7 @@ export function createApplicationQuitGuard(
           throw new TypeError('Application quit guard isDirty must return a boolean.');
         }
         if (!dirty) {
-          return resume('clean');
+          return await resume('clean');
         }
 
         const decision = await run(() => options.requestDecision(controller.signal));
