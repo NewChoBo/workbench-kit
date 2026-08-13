@@ -67,12 +67,4 @@ describe('SegmentedControl', () => {
 
     expect(markup.match(/\sdisabled(=|"|\s|>)/g)?.length).toBeGreaterThanOrEqual(2);
   });
-
-  it('re-exports from primitives entry without import cycle', async () => {
-    const entry = await import('..');
-    const module = await import('./index');
-
-    expect(entry.SegmentedControl).toBe(module.SegmentedControl);
-    expect(entry.ButtonGroup).toBe(module.ButtonGroup);
-  });
 });

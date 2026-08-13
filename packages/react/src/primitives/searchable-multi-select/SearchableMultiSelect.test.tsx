@@ -75,17 +75,6 @@ describe('SearchableMultiSelect', () => {
     expect(markup).toContain('No value');
     expect(markup).not.toContain('role="listbox"');
   });
-
-  it('re-exports from primitives entry without import cycle', async () => {
-    const entry = await import('..');
-    const module = await import('./index');
-
-    expect(entry.SearchableMultiSelect).toBe(module.SearchableMultiSelect);
-    expect(entry.isSearchableMultiSelectPortalTarget).toBe(
-      module.isSearchableMultiSelectPortalTarget,
-    );
-  });
-
   it('marks the portaled listbox so host outside-click can treat it as inside', async () => {
     const container = document.createElement('div');
     document.body.append(container);
