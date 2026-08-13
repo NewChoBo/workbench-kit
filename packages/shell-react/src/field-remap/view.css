@@ -317,6 +317,33 @@
   grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
 }
 
+/* Embed hosts own the outer pane. Keep Flow rails flat and separate them with dividers only. */
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-flow__workspace {
+  gap: 0;
+}
+
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-palette,
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-flow__canvas,
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-detail,
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-note {
+  border-radius: 0;
+}
+
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-palette {
+  border: 0;
+  border-inline-end: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-flow__canvas {
+  border: 0;
+}
+
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-detail,
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-note {
+  border: 0;
+  border-inline-start: 1px solid var(--vscode-panel-border, var(--color-border));
+}
+
 @container field-remap-flow (max-width: 68.75rem) {
   .workbench-field-remap-flow__workspace {
     grid-template-columns: minmax(0, 1fr) minmax(16rem, 20rem);
@@ -325,11 +352,22 @@
   .workbench-field-remap-convert-palette {
     grid-column: 1 / -1;
   }
+
+  .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-palette {
+    border-inline-end: 0;
+    border-block-end: 1px solid var(--vscode-panel-border, var(--color-border));
+  }
 }
 
 @container field-remap-flow (max-width: 60rem) {
   .workbench-field-remap-flow__workspace {
     grid-template-columns: 1fr;
+  }
+
+  .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-detail,
+  .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-note {
+    border-inline-start: 0;
+    border-block-start: 1px solid var(--vscode-panel-border, var(--color-border));
   }
 }
 
