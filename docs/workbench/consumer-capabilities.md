@@ -777,6 +777,19 @@ do not query Controls DOM. Panel forwards the same props. Chrome nouns (`Binding
 palette copy) accept `labels` / optional `t(key, fallback)` on Flow and Panel — hosts can
 override to “Field maps” / “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
 
+**Browse badge labels:** Direct `FieldRemapIoClassBrowse` consumers can override its hidden
+badge copy and `classRef` tooltip without forking the tree. Omit either value to retain the English defaults
+(`Hidden` and `classRef`).
+
+```tsx
+<FieldRemapIoClassBrowse
+  includeHidden
+  labels={{ hiddenBadge: 'Internal', classRefTitle: 'Class reference' }}
+  sources={sources}
+  targets={targets}
+/>
+```
+
 ---
 
 ## Shell chrome label / `t()` injection (#126)
