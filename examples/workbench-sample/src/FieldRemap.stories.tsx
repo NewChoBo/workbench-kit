@@ -147,6 +147,30 @@ export const EmbedChrome: Story = {
   },
 };
 
+export const NarrowEmbedLayout: Story = {
+  name: 'Embed layout (360px host)',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    showMinimap: false,
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ inlineSize: '22.5rem', maxInlineSize: '100%', minInlineSize: '22.5rem' }}>
+        <Story />
+      </div>
+    ),
+  ],
+  tags: ['storybook-play-baseline'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const flow = canvas.getByTestId('field-remap-flow');
+
+    await waitFor(() => expect(flow.getBoundingClientRect().width).toBeGreaterThan(280));
+    await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
+  },
+};
+
 export const UserContact: Story = {
   name: 'T_USER → T_CONTACT',
   args: { sampleId: 't-user-contact' },
