@@ -783,6 +783,7 @@ badge copy and `classRef` tooltip without forking the tree. Omit either value to
 
 ```tsx
 <FieldRemapIoClassBrowse
+  includeHidden
   labels={{ hiddenBadge: 'Internal', classRefTitle: 'Class reference' }}
   sources={sources}
   targets={targets}
