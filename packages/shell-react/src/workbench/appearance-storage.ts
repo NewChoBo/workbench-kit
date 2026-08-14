@@ -7,14 +7,19 @@ import {
   type WorkbenchColorSchemePreference,
 } from '@workbench-kit/react/workbench';
 import {
+  type WorkbenchPersistenceDiagnosticOptions,
+  type WorkbenchPersistenceReadResult,
+  type WorkbenchPersistenceWriteResult,
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
 
 import {
   readLocalJsonStorage,
+  readLocalJsonStorageResult,
   resolveLocalWorkbenchStorage,
   writeLocalJsonStorage,
+  writeLocalJsonStorageResult,
 } from '../storage/local-json-storage.js';
 
 export type { WorkbenchAppearanceSettings } from '@workbench-kit/react/workbench/themePresets';
@@ -44,12 +49,35 @@ export function readPersistedWorkbenchAppearance(
   );
 }
 
+export function readPersistedWorkbenchAppearanceResult(
+  storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+  storage?: WorkbenchStorageReader,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceReadResult<WorkbenchAppearanceSettings> {
+  return readLocalJsonStorageResult(
+    storageKey,
+    normalizeWorkbenchAppearance,
+    () => DEFAULT_WORKBENCH_APPEARANCE,
+    storage,
+    options,
+  );
+}
+
 export function writePersistedWorkbenchAppearance(
   settings: WorkbenchAppearanceSettings,
   storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
   writeLocalJsonStorage(storageKey, settings, storage);
+}
+
+export function writePersistedWorkbenchAppearanceResult(
+  settings: WorkbenchAppearanceSettings,
+  storageKey = DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+  storage?: WorkbenchStorageWriter,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceWriteResult {
+  return writeLocalJsonStorageResult(storageKey, settings, storage, options);
 }
 
 function normalizeWorkbenchAppearance(value: unknown): WorkbenchAppearanceSettings {

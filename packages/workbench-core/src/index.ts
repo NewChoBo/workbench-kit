@@ -149,7 +149,9 @@ export {
   installExtensionRecord,
   isInstalledExtensionPersistenceAvailable,
   loadInstalledExtensions,
+  loadInstalledExtensionsResult,
   saveInstalledExtensions,
+  saveInstalledExtensionsResult,
   toggleInstalledExtensionEnabled,
   type ApplyExtensionInstallPlanToRecordsInput,
   type ExtensionInstallPlanRecordSource,
@@ -167,6 +169,12 @@ export {
   type ExtensionInstallTrustRecord,
 } from './extension/install-trust.js';
 export type {
+  WorkbenchPersistenceDiagnostic,
+  WorkbenchPersistenceDiagnosticCode,
+  WorkbenchPersistenceDiagnosticHandler,
+  WorkbenchPersistenceOperation,
+  WorkbenchPersistenceReadResult,
+  WorkbenchPersistenceWriteResult,
   WorkbenchRemovableStorageAdapter,
   WorkbenchStorageAdapter,
   WorkbenchStorageReader,
@@ -177,8 +185,12 @@ export type {
 export {
   createBrowserWorkbenchStorage,
   createMemoryWorkbenchStorage,
+  readWorkbenchStorageJsonResult,
+  writeWorkbenchStorageJsonResult,
   type BrowserWorkbenchStorageKind,
   type CreateBrowserWorkbenchStorageOptions,
+  type WorkbenchPersistenceDiagnosticOptions,
+  type WriteWorkbenchStorageJsonResultOptions,
 } from './storage-adapters.js';
 export {
   mergeExtensionsConfigWithInstallState,

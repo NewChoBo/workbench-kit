@@ -1,9 +1,19 @@
 import {
   createBrowserWorkbenchStorage,
+  readWorkbenchStorageJsonResult,
+  writeWorkbenchStorageJsonResult,
+  type WorkbenchPersistenceDiagnosticOptions,
+  type WorkbenchPersistenceReadResult,
+  type WorkbenchPersistenceWriteResult,
   type WorkbenchStorageAdapter,
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
+
+export interface WriteLocalJsonStorageOptions<T> extends WorkbenchPersistenceDiagnosticOptions {
+  readonly errorMode?: 'ignore' | 'throw';
+  readonly toStorageValue?: (value: T) => unknown;
+}
 
 export function resolveLocalWorkbenchStorage<
   TStorage extends WorkbenchStorageReader | WorkbenchStorageWriter = WorkbenchStorageAdapter,
@@ -16,49 +26,53 @@ export function readLocalJsonStorage<T>(
   parse: (value: unknown) => T,
   fallback: () => T,
   storage?: WorkbenchStorageReader,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
 ): T {
-  const resolvedStorage = resolveLocalWorkbenchStorage(storage);
-  if (!resolvedStorage) {
-    return fallback();
-  }
+  return readLocalJsonStorageResult(storageKey, parse, fallback, storage, options).value;
+}
 
-  try {
-    const raw = resolvedStorage.getItem(storageKey);
-    if (!raw) {
-      return fallback();
-    }
-
-    return parse(JSON.parse(raw) as unknown);
-  } catch {
-    return fallback();
-  }
+export function readLocalJsonStorageResult<T>(
+  storageKey: string,
+  parse: (value: unknown) => T,
+  fallback: () => T,
+  storage?: WorkbenchStorageReader,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceReadResult<T> {
+  return readWorkbenchStorageJsonResult(storageKey, parse, fallback, storage, options);
 }
 
 export function writeLocalJsonStorage<T>(
   storageKey: string,
   value: T,
   storage?: WorkbenchStorageWriter,
-  options: {
-    readonly errorMode?: 'ignore' | 'throw';
-    readonly toStorageValue?: (value: T) => unknown;
-  } = {},
+  options: WriteLocalJsonStorageOptions<T> = {},
 ): void {
+  if (options.errorMode !== 'throw') {
+    writeLocalJsonStorageResult(storageKey, value, storage, options);
+    return;
+  }
+
   const resolvedStorage = resolveLocalWorkbenchStorage(storage);
   if (!resolvedStorage) {
     return;
   }
 
-  try {
-    resolvedStorage.setItem(
-      storageKey,
-      JSON.stringify((options.toStorageValue ?? identity)(value), null, 2),
-    );
-  } catch (error) {
-    if (options.errorMode === 'throw') {
-      throw error;
-    }
-    // Local storage is best-effort; quota, security, and serialization errors stay non-fatal.
-  }
+  resolvedStorage.setItem(
+    storageKey,
+    JSON.stringify((options.toStorageValue ?? identity)(value), null, 2),
+  );
+}
+
+export function writeLocalJsonStorageResult<T>(
+  storageKey: string,
+  value: T,
+  storage?: WorkbenchStorageWriter,
+  options: WriteLocalJsonStorageOptions<T> = {},
+): WorkbenchPersistenceWriteResult {
+  return writeWorkbenchStorageJsonResult(storageKey, value, storage, {
+    onDiagnostic: options.onDiagnostic,
+    toStorageValue: options.toStorageValue,
+  });
 }
 
 function identity<T>(value: T): T {

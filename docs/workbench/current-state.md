@@ -66,6 +66,22 @@ Required adapter semantics:
 | Write failure  | Keep runtime state in memory, report a non-fatal persistence error, and avoid partially acknowledged saves                     |
 | Host ownership | Browser storage, user-data files, workspace files, cloud sync, and encryption are host responsibilities                        |
 
+`WorkbenchPersistenceDiagnostic` is the portable failure envelope for these
+operations. Its stable codes are `read_failed`, `decode_failed`, and
+`write_failed`; its renderer-safe fields are `code`, `operation`, the logical
+Kit `storageKey`, and a bounded `message`. It never carries raw backend errors,
+storage contents, filesystem paths, credentials, or Host identity. Result-aware
+helpers return `WorkbenchPersistenceReadResult<T>` or a
+`WorkbenchPersistenceWriteResult` whose `committed` discriminator prevents a
+failed write from being acknowledged as durable. The storage adapter signatures
+remain unchanged, and existing strict public writers retain their throwing
+behavior.
+
+`WorkbenchProvider.onPersistenceDiagnostic` is the single optional Host sink
+for provider-owned persistence flows. Standalone persistence hooks accept the
+same optional handler locally; read diagnostics discovered during React
+initialization are delivered after commit rather than during render.
+
 The first storage-backed domains are:
 
 - editor/session state that is not part of resource content
@@ -133,7 +149,5 @@ visible shell behavior changes.
 
 ## Open Decisions
 
-- Diagnostic callback naming for read/write persistence failures (adapter shape
-  and scope table are documented; callbacks remain host-owned).
 - Whether installed-extension state lives in workbench config, a dedicated
   extension-state module, or a host-provided capability.
