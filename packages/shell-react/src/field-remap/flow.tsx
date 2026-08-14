@@ -421,9 +421,13 @@ function FieldRemapSplitWorkspace({
 }: FieldRemapSplitWorkspaceProps): JSX.Element {
   const [palette, canvas, detail] = Children.toArray(children);
   const isNarrow = layout === 'narrow';
-  const canvasWithDetail = showDetail ? (
+  const canvasWithDetail = (
     <SplitView
-      className="workbench-field-remap-flow__canvas-detail-split"
+      className={
+        showDetail
+          ? 'workbench-field-remap-flow__canvas-detail-split'
+          : 'workbench-field-remap-flow__canvas-detail-split ui-workbench-split-view--secondary-collapsed'
+      }
       defaultSecondarySizePx={isNarrow ? 220 : 320}
       layoutMode="secondary-fixed"
       maxSecondarySizePx={isNarrow ? 320 : 480}
@@ -433,13 +437,15 @@ function FieldRemapSplitWorkspace({
       primary={canvas}
       secondary={detail}
     />
-  ) : (
-    canvas
   );
 
-  const content = showConvertPalette ? (
+  const content = (
     <SplitView
-      className="workbench-field-remap-flow__palette-split"
+      className={
+        showConvertPalette
+          ? 'workbench-field-remap-flow__palette-split'
+          : 'workbench-field-remap-flow__palette-split ui-workbench-split-view--primary-collapsed'
+      }
       defaultPrimarySizePx={isNarrow ? 192 : 240}
       maxPrimarySizePx={isNarrow ? 288 : 320}
       minPrimarySizePx={isNarrow ? 160 : 192}
@@ -449,8 +455,6 @@ function FieldRemapSplitWorkspace({
       primarySizeUnit="pixels"
       secondary={canvasWithDetail}
     />
-  ) : (
-    canvasWithDetail
   );
 
   return (

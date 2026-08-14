@@ -137,11 +137,15 @@ export const EmbedChrome: Story = {
   args: {
     sampleId: 'nested-ab',
     chrome: 'embed',
+    emptyDetail: 'collapse',
     showConvertPalette: false,
+    showMinimap: false,
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const workspace = canvas.getByTestId('field-remap-workspace');
+    const flow = canvas.getByTestId('field-remap-flow');
     await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
     await expect(canvas.queryByTestId('field-remap-hint')).toBeNull();
     await expect(canvas.queryByTestId('field-remap-edges')).toBeNull();
@@ -149,6 +153,24 @@ export const EmbedChrome: Story = {
     await expect(
       canvasElement.querySelector('.workbench-field-remap-flow__workspace--without-palette'),
     ).not.toBeNull();
+    await waitFor(() => {
+      const workspaceRect = workspace.getBoundingClientRect();
+      const flowRect = flow.getBoundingClientRect();
+      expect(flowRect.width).toBeGreaterThan(0);
+      expect(flowRect.height).toBeGreaterThan(0);
+      expect(Math.abs(flowRect.width - workspaceRect.width)).toBeLessThanOrEqual(1);
+      expect(Math.abs(flowRect.height - workspaceRect.height)).toBeLessThanOrEqual(1);
+    });
+    expect(
+      canvasElement
+        .querySelector('.workbench-field-remap-flow__palette-split')
+        ?.classList.contains('ui-workbench-split-view--primary-collapsed'),
+    ).toBe(true);
+    expect(
+      canvasElement
+        .querySelector('.workbench-field-remap-flow__canvas-detail-split')
+        ?.classList.contains('ui-workbench-split-view--secondary-collapsed'),
+    ).toBe(true);
   },
 };
 
@@ -195,21 +217,45 @@ export const EmbedCollapsedDetail: Story = {
     showBindingsList: true,
     showMinimap: false,
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const viewport = canvasElement.querySelector<HTMLElement>('.react-flow__viewport');
+    const zoomIn = canvasElement.querySelector<HTMLButtonElement>('.react-flow__controls-zoomin');
+    await expect(viewport).toBeTruthy();
+    await expect(zoomIn).toBeTruthy();
+    await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
+    const initialTransform = viewport!.style.transform;
+    await userEvent.click(zoomIn!);
+    await waitFor(() => expect(viewport!.style.transform).not.toBe(initialTransform));
+    const zoomedTransform = viewport!.style.transform;
+
     await expect(canvas.queryByTestId('field-remap-detail')).toBeNull();
-    await expect(canvasElement.querySelectorAll('[role="separator"]')).toHaveLength(1);
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
+    ).toHaveClass('ui-workbench-split-view--secondary-collapsed');
 
     await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
     await expect(canvas.getByTestId('field-remap-detail')).toBeVisible();
+    await expect(canvasElement.querySelector('.react-flow__viewport')).toBe(viewport);
+    expect(viewport!.style.transform).toBe(zoomedTransform);
 
-    const separator = canvasElement.querySelectorAll<HTMLElement>('[role="separator"]')[1];
+    const separator = canvasElement.querySelector<HTMLElement>(
+      '.workbench-field-remap-flow__canvas-detail-split > [role="separator"]',
+    );
     await expect(separator).toBeTruthy();
     const before = separator!.getAttribute('aria-valuenow');
     separator!.focus();
     await userEvent.keyboard('{ArrowRight}');
     await expect(separator).not.toHaveAttribute('aria-valuenow', before ?? '');
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(canvas.queryByTestId('field-remap-detail')).toBeNull());
+    await expect(canvasElement.querySelector('.react-flow__viewport')).toBe(viewport);
+    expect(viewport!.style.transform).toBe(zoomedTransform);
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
+    ).toHaveClass('ui-workbench-split-view--secondary-collapsed');
   },
 };
 
