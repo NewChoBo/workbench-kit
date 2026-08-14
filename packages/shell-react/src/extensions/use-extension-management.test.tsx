@@ -3,10 +3,17 @@
 import { act, StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { WorkbenchStorageAdapter } from '@workbench-kit/workbench-core';
+import {
+  isExtensionInstallTrusted,
+  type WorkbenchStorageAdapter,
+} from '@workbench-kit/workbench-core';
+import { resolveExtensionInstallOptions } from '@workbench-kit/react/workbench/management';
 
 import { WorkbenchProvider } from '../shell/provider.js';
-import { useExtensionManagementModel } from './use-extension-management.js';
+import {
+  useExtensionManagementModel,
+  type UseExtensionManagementModelOptions,
+} from './use-extension-management.js';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from './builtin-extensions.js';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
@@ -52,11 +59,13 @@ function createMemoryStorage(): WorkbenchStorageAdapter {
 function ExtensionManagementProbe({
   catalogUrl,
   onChange,
+  options,
 }: {
   catalogUrl?: string | undefined;
   onChange: (model: ExtensionManagementModel) => void;
+  options?: Omit<UseExtensionManagementModelOptions, 'catalogUrl'> | undefined;
 }) {
-  const model = useExtensionManagementModel({ catalogUrl });
+  const model = useExtensionManagementModel({ ...options, catalogUrl });
 
   useEffect(() => {
     onChange(model);
@@ -276,6 +285,116 @@ describe('useExtensionManagementModel', () => {
         (entry) => entry.id === 'workbench-kit.samples.json-preview',
       )?.enabled,
     ).toBe(true);
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('continues an approved install when remembered trust cannot be persisted', async () => {
+    const permissionedExtensions = SAMPLE_WORKBENCH_EXTENSIONS.map((extension) =>
+      extension.manifest.id === 'workbench-kit.samples.json-preview'
+        ? {
+            ...extension,
+            manifest: {
+              ...extension.manifest,
+              permissions: ['workspace.write'],
+            },
+          }
+        : extension,
+    );
+    const installedValues = new Map<string, string>();
+    const installedStorageKey = 'workbench-kit/.workbench/installed-extensions/trust-recovery';
+    const trustStorageKey = 'workbench-kit/.workbench/extension-install-trust/recovery';
+    const installedWriter = vi.fn((key: string, value: string) => {
+      installedValues.set(key, value);
+    });
+    const trustWriter = vi.fn(() => {
+      throw new Error('BACKEND_SENSITIVE_DETAIL');
+    });
+    const installedStorage: WorkbenchStorageAdapter = {
+      getItem: (key) => installedValues.get(key) ?? null,
+      setItem: installedWriter,
+    };
+    const trustStorage: WorkbenchStorageAdapter = {
+      getItem: () => null,
+      setItem: trustWriter,
+    };
+    const diagnostics = vi.fn();
+    const requestAnimationFrame = vi.mocked(window.requestAnimationFrame);
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...permissionedExtensions]}
+            extensionsConfig={{ enabled: [], recommendations: [] }}
+            installedExtensionsStorage={installedStorage}
+            installedExtensionsStorageKey={installedStorageKey}
+            onPersistenceDiagnostic={diagnostics}
+            workspaceHostPort={authCapabilityHostPort}
+          >
+            <ExtensionManagementProbe
+              catalogUrl="/extension-catalog.json"
+              options={{
+                installTrustStorage: trustStorage,
+                installTrustStorageKey: trustStorageKey,
+              }}
+              onChange={(model) => {
+                currentModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(() => currentModel?.catalogLoading === false);
+    const jsonPreview = currentModel?.browseEntries.find(
+      (entry) => entry.id === 'workbench-kit.samples.json-preview',
+    );
+    expect(jsonPreview).toBeDefined();
+    const onInstall = vi.fn(currentModel!.installCatalogEntry);
+
+    await act(async () => {
+      const options = resolveExtensionInstallOptions(jsonPreview!, {
+        confirm: () => true,
+        rememberTrust: currentModel!.rememberInstallTrust,
+      });
+      expect(options).toEqual({ approved: true });
+      onInstall(jsonPreview!, options);
+    });
+
+    await waitForModel(
+      () =>
+        currentModel?.installedEntries.find(
+          (entry) => entry.id === 'workbench-kit.samples.json-preview',
+        )?.enabled === true,
+    );
+    expect(onInstall).toHaveBeenCalledTimes(1);
+    expect(onInstall).toHaveBeenCalledWith(jsonPreview, { approved: true });
+    expect(trustWriter).toHaveBeenCalledTimes(1);
+    expect(installedWriter).toHaveBeenCalledTimes(1);
+    expect(trustStorage.getItem(trustStorageKey)).toBeNull();
+    expect(
+      isExtensionInstallTrusted(
+        jsonPreview!.id,
+        jsonPreview!.installPlan?.permissions ?? [],
+        currentModel!.installTrustRecords,
+      ),
+    ).toBe(true);
+    expect(diagnostics).toHaveBeenCalledTimes(1);
+    expect(diagnostics).toHaveBeenCalledWith({
+      code: 'write_failed',
+      message: 'Workbench storage value could not be written.',
+      operation: 'write',
+      storageKey: trustStorageKey,
+    });
+    expect(JSON.stringify(diagnostics.mock.calls)).not.toContain('BACKEND_SENSITIVE_DETAIL');
     expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
 
     await act(async () => {
