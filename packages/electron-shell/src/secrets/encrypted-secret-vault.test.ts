@@ -141,6 +141,44 @@ describe('createEncryptedSecretVault', () => {
     );
   });
 
+  it('preserves prototype-like legacy ids when rewriting as an encrypted document', async () => {
+    const encoder = new TextEncoder();
+    const decoder = new TextDecoder();
+    const legacySecrets = Object.create(null) as Record<string, string>;
+    legacySecrets['__proto__'] = btoa('enc:legacy-prototype-secret');
+    legacySecrets['constructor'] = btoa('enc:legacy-constructor-secret');
+    let stored: Uint8Array | null = encoder.encode(
+      JSON.stringify({ version: 1, secrets: legacySecrets }),
+    );
+    const vault = createEncryptedSecretVault({
+      cipher: createFakeCipher(true),
+      readVault: async () => stored,
+      writeVault: async (bytes) => {
+        stored = bytes;
+      },
+    });
+
+    await expect(vault.getSecret('__proto__')).resolves.toBe('legacy-prototype-secret');
+    await expect(vault.getSecret('constructor')).resolves.toBe('legacy-constructor-secret');
+
+    await vault.setSecret('next', 'new-secret');
+
+    const rewritten = JSON.parse(decoder.decode(stored).slice('enc:'.length)) as {
+      readonly version: number;
+      readonly secrets: Record<string, string>;
+    };
+    expect(rewritten.version).toBe(2);
+    expect(Object.prototype.hasOwnProperty.call(rewritten.secrets, '__proto__')).toBe(true);
+    expect(rewritten.secrets['__proto__']).toBe('legacy-prototype-secret');
+    await expect(vault.getSecrets(['__proto__', 'constructor', 'next'])).resolves.toEqual(
+      new Map([
+        ['__proto__', 'legacy-prototype-secret'],
+        ['constructor', 'legacy-constructor-secret'],
+        ['next', 'new-secret'],
+      ]),
+    );
+  });
+
   it('preserves a host-owned encrypted envelope and exposes sorted commit ids', async () => {
     const encoder = new TextEncoder();
     let stored: Uint8Array | null = encoder.encode(

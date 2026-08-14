@@ -24,6 +24,10 @@ export interface BindSecondaryWindowBoundsPersistenceOptions {
 
 export interface SecondaryWindowBoundsPersistenceHandle {
   dispose(): void;
+  /**
+   * Queue the current snapshot after already-admitted writes. The promise rejects
+   * when this snapshot cannot be persisted so explicit callers can report it.
+   */
   flush(): Promise<void>;
 }
 
@@ -40,7 +44,7 @@ export function bindSecondaryWindowBoundsPersistence(
   const debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
-  let pendingFlush: Promise<void> | undefined;
+  let persistenceQueue: Promise<void> = Promise.resolve();
 
   const clearTimer = (): void => {
     if (timer !== undefined) {
@@ -49,18 +53,13 @@ export function bindSecondaryWindowBoundsPersistence(
     }
   };
 
-  const persistBounds = async (bounds: RectLike): Promise<void> => {
-    if (disposed) {
-      return;
-    }
-    await options.persist(bounds);
-  };
-
-  const persistNow = async (): Promise<void> => {
-    if (disposed) {
-      return;
-    }
-    await persistBounds(options.readBounds());
+  const enqueuePersist = (bounds: RectLike): Promise<void> => {
+    const result = persistenceQueue.then(() => options.persist(bounds));
+    persistenceQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
   };
 
   const schedule = (): void => {
@@ -70,9 +69,13 @@ export function bindSecondaryWindowBoundsPersistence(
     clearTimer();
     timer = setTimeout(() => {
       timer = undefined;
-      pendingFlush = persistNow().finally(() => {
-        pendingFlush = undefined;
-      });
+      let bounds: RectLike;
+      try {
+        bounds = options.readBounds();
+      } catch {
+        return;
+      }
+      void enqueuePersist(bounds).catch(() => undefined);
     }, debounceMs);
   };
 
@@ -82,11 +85,8 @@ export function bindSecondaryWindowBoundsPersistence(
       return;
     }
     const bounds = options.readBounds();
-    if (pendingFlush) {
-      await pendingFlush;
-    }
     // A snapshot captured before dispose still belongs to this flush request.
-    await options.persist(bounds);
+    await enqueuePersist(bounds);
   };
 
   let closeSnapshotCaptured = false;
@@ -95,7 +95,7 @@ export function bindSecondaryWindowBoundsPersistence(
       return;
     }
     closeSnapshotCaptured = true;
-    void flush();
+    void flush().catch(() => undefined);
   };
 
   const unsubscribe = options.subscribe({

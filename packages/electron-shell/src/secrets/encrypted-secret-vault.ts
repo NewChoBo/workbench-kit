@@ -135,7 +135,7 @@ function decryptVault(
   } catch (encryptedDocumentError) {
     try {
       const legacy = parseLegacyVault(bytes);
-      const secrets: Record<string, string> = {};
+      const secrets = createSecretRecord();
       for (const [id, encoded] of Object.entries(legacy.secrets)) {
         secrets[id] = cipher.decryptString(fromBase64(encoded));
       }

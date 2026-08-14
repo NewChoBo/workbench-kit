@@ -137,6 +137,109 @@ describe('bindSecondaryWindowBoundsPersistence', () => {
     expect(persist).toHaveBeenLastCalledWith({ x: 11, y: 21, width: 301, height: 201 });
   });
 
+  it('serializes admitted debounced writes before the close snapshot', async () => {
+    vi.useFakeTimers();
+    const firstPersist = createDeferred();
+    const secondPersist = createDeferred();
+    const firstBounds: RectLike = { x: 10, y: 20, width: 300, height: 200 };
+    const secondBounds: RectLike = { x: 11, y: 21, width: 301, height: 201 };
+    const closeBounds: RectLike = { x: 12, y: 22, width: 302, height: 202 };
+    let bounds = firstBounds;
+    const persist = vi
+      .fn<(next: RectLike) => Promise<void>>()
+      .mockImplementationOnce(async () => firstPersist.promise)
+      .mockImplementationOnce(async () => secondPersist.promise)
+      .mockResolvedValueOnce(undefined);
+    let handlers: SecondaryWindowBoundsHandlers | null = null;
+
+    const handle = bindSecondaryWindowBoundsPersistence({
+      debounceMs: 100,
+      readBounds: () => bounds,
+      persist,
+      subscribe: (next) => {
+        handlers = next;
+        return () => {
+          handlers = null;
+        };
+      },
+    });
+
+    handlers!.onBoundsLikelyChanged();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(persist).toHaveBeenLastCalledWith(firstBounds);
+
+    bounds = secondBounds;
+    handlers!.onBoundsLikelyChanged();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(persist).toHaveBeenCalledTimes(1);
+
+    bounds = closeBounds;
+    handlers!.onCloseRequested();
+    handle.dispose();
+    firstPersist.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(persist).toHaveBeenLastCalledWith(secondBounds);
+
+    secondPersist.resolve();
+    await vi.advanceTimersByTimeAsync(0);
+    expect(persist).toHaveBeenCalledTimes(3);
+    expect(persist).toHaveBeenLastCalledWith(closeBounds);
+  });
+
+  it('continues with a close snapshot after an earlier persistence failure', async () => {
+    vi.useFakeTimers();
+    const failedPersist = createDeferred();
+    const initialBounds: RectLike = { x: 10, y: 20, width: 300, height: 200 };
+    const closeBounds: RectLike = { x: 11, y: 21, width: 301, height: 201 };
+    let bounds = initialBounds;
+    const persist = vi
+      .fn<(next: RectLike) => Promise<void>>()
+      .mockImplementationOnce(async () => failedPersist.promise)
+      .mockResolvedValueOnce(undefined);
+    let handlers: SecondaryWindowBoundsHandlers | null = null;
+
+    const handle = bindSecondaryWindowBoundsPersistence({
+      debounceMs: 100,
+      readBounds: () => bounds,
+      persist,
+      subscribe: (next) => {
+        handlers = next;
+        return () => {
+          handlers = null;
+        };
+      },
+    });
+
+    handlers!.onBoundsLikelyChanged();
+    await vi.advanceTimersByTimeAsync(100);
+    expect(persist).toHaveBeenLastCalledWith(initialBounds);
+
+    bounds = closeBounds;
+    handlers!.onCloseRequested();
+    handle.dispose();
+    failedPersist.reject(new Error('persistence failed'));
+    await vi.advanceTimersByTimeAsync(0);
+
+    expect(persist).toHaveBeenCalledTimes(2);
+    expect(persist).toHaveBeenLastCalledWith(closeBounds);
+  });
+
+  it('keeps explicit flush failures observable without poisoning later writes', async () => {
+    const persist = vi
+      .fn<() => Promise<void>>()
+      .mockRejectedValueOnce(new Error('persistence failed'))
+      .mockResolvedValueOnce(undefined);
+    const handle = bindSecondaryWindowBoundsPersistence({
+      readBounds: () => ({ x: 10, y: 20, width: 300, height: 200 }),
+      persist,
+      subscribe: () => () => undefined,
+    });
+
+    await expect(handle.flush()).rejects.toThrow('persistence failed');
+    await expect(handle.flush()).resolves.toBeUndefined();
+    expect(persist).toHaveBeenCalledTimes(2);
+  });
+
   it('supports explicit flush and dispose unsubscribe', async () => {
     const persist = vi.fn(async () => undefined);
     const unsubscribe = vi.fn();
@@ -167,3 +270,13 @@ describe('bindSecondaryWindowBoundsPersistence', () => {
     expect(persist).toHaveBeenCalledTimes(1);
   });
 });
+
+function createDeferred() {
+  let resolve!: () => void;
+  let reject!: (error: unknown) => void;
+  const promise = new Promise<void>((resolvePromise, rejectPromise) => {
+    resolve = resolvePromise;
+    reject = rejectPromise;
+  });
+  return { promise, resolve, reject };
+}
