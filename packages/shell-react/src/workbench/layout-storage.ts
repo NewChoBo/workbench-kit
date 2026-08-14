@@ -8,14 +8,21 @@ import {
   type WorkbenchLayoutStateInput,
 } from '@workbench-kit/workbench-core/layout';
 import type {
+  WorkbenchPersistenceDiagnosticOptions,
+  WorkbenchPersistenceReadResult,
+  WorkbenchPersistenceWriteResult,
+} from '@workbench-kit/workbench-core';
+import type {
   WorkbenchStorageReader,
   WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core/storage';
 
 import {
   readLocalJsonStorage,
+  readLocalJsonStorageResult,
   resolveLocalWorkbenchStorage,
   writeLocalJsonStorage,
+  writeLocalJsonStorageResult,
 } from '../storage/local-json-storage.js';
 
 export const DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY = 'workbench-kit/.workbench/layout';
@@ -96,12 +103,38 @@ export function readPersistedWorkbenchLayout(
   );
 }
 
+export function readPersistedWorkbenchLayoutResult(
+  storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  storage?: WorkbenchStorageReader,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceReadResult<WorkbenchLayoutStateInput | undefined> {
+  return readLocalJsonStorageResult(
+    storageKey,
+    (value) => workbenchLayoutConfigToInput(parseWorkbenchLayoutConfig(value)),
+    () => undefined,
+    storage,
+    options,
+  );
+}
+
 export function writePersistedWorkbenchLayout(
   state: WorkbenchLayoutState,
   storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
   writeLocalJsonStorage(storageKey, state, storage, {
+    toStorageValue: workbenchLayoutStateToStorageValue,
+  });
+}
+
+export function writePersistedWorkbenchLayoutResult(
+  state: WorkbenchLayoutState,
+  storageKey = DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  storage?: WorkbenchStorageWriter,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceWriteResult {
+  return writeLocalJsonStorageResult(storageKey, state, storage, {
+    ...options,
     toStorageValue: workbenchLayoutStateToStorageValue,
   });
 }
@@ -114,6 +147,17 @@ export function resolvePersistedWorkbenchLayout(
     storageKey?: string | undefined;
   } = {},
 ): WorkbenchLayoutStateInput | undefined {
+  return resolvePersistedWorkbenchLayoutResult(initialLayout, options).value;
+}
+
+export function resolvePersistedWorkbenchLayoutResult(
+  initialLayout: WorkbenchLayoutStateInput | undefined,
+  options: {
+    persistLayout?: boolean | undefined;
+    storage?: WorkbenchStorageReader | undefined;
+    storageKey?: string | undefined;
+  } = {},
+): WorkbenchPersistenceReadResult<WorkbenchLayoutStateInput | undefined> {
   const {
     initialLayout: baseLayout,
     persistLayout = options.storage !== undefined || isWorkbenchLayoutPersistenceAvailable(),
@@ -122,13 +166,16 @@ export function resolvePersistedWorkbenchLayout(
   } = { initialLayout, ...options };
 
   if (!persistLayout) {
-    return baseLayout;
+    return { value: baseLayout };
   }
 
-  const persisted = readPersistedWorkbenchLayout(storageKey, storage);
-  if (!persisted) {
-    return baseLayout;
+  const result = readPersistedWorkbenchLayoutResult(storageKey, storage);
+  if (!result.value) {
+    return { ...result, value: baseLayout };
   }
 
-  return createWorkbenchLayoutState(persisted, createWorkbenchLayoutState(baseLayout ?? {}));
+  return {
+    ...result,
+    value: createWorkbenchLayoutState(result.value, createWorkbenchLayoutState(baseLayout ?? {})),
+  };
 }

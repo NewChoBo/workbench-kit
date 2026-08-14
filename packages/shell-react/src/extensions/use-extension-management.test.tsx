@@ -165,6 +165,124 @@ describe('useExtensionManagementModel', () => {
     });
   });
 
+  it('keeps failed install state in memory and reloads only after a later committed snapshot', async () => {
+    const values = new Map<string, string>();
+    const storageKey = 'workbench-kit/.workbench/installed-extensions/recoverable-test';
+    let failWrites = true;
+    const storage: WorkbenchStorageAdapter = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: (key, value) => {
+        if (failWrites) {
+          throw new Error('backend quota detail');
+        }
+        values.set(key, value);
+      },
+    };
+    const diagnostics = vi.fn();
+    const requestAnimationFrame = vi.mocked(window.requestAnimationFrame);
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]}
+            extensionsConfig={{ enabled: [], recommendations: [] }}
+            installedExtensionsStorage={storage}
+            installedExtensionsStorageKey={storageKey}
+            onPersistenceDiagnostic={diagnostics}
+            workspaceHostPort={authCapabilityHostPort}
+          >
+            <ExtensionManagementProbe
+              catalogUrl="/extension-catalog.json"
+              onChange={(model) => {
+                currentModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(() => currentModel?.catalogLoading === false);
+    const jsonPreview = currentModel?.browseEntries.find(
+      (entry) => entry.id === 'workbench-kit.samples.json-preview',
+    );
+    expect(jsonPreview).toBeDefined();
+
+    await act(async () => {
+      currentModel?.installCatalogEntry(jsonPreview!, { approved: true });
+    });
+
+    await waitForModel(
+      () =>
+        currentModel?.installedEntries.find(
+          (entry) => entry.id === 'workbench-kit.samples.json-preview',
+        )?.enabled === true,
+    );
+    expect(currentModel?.pendingAction).toBeUndefined();
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+    expect(diagnostics).toHaveBeenCalledTimes(1);
+    expect(diagnostics).toHaveBeenLastCalledWith({
+      code: 'write_failed',
+      message: 'Workbench storage value could not be written.',
+      operation: 'write',
+      storageKey,
+    });
+    expect(JSON.stringify(diagnostics.mock.calls)).not.toContain('backend quota detail');
+
+    const installedEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === 'workbench-kit.samples.json-preview',
+    );
+    expect(installedEntry).toBeDefined();
+    await act(async () => {
+      currentModel?.toggleInstalledEntry(installedEntry!, false);
+    });
+
+    expect(
+      currentModel?.installedEntries.find(
+        (entry) => entry.id === 'workbench-kit.samples.json-preview',
+      )?.enabled,
+    ).toBe(false);
+    expect(currentModel?.pendingAction).toBeUndefined();
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+    expect(diagnostics).toHaveBeenCalledTimes(2);
+    expect(diagnostics).toHaveBeenLastCalledWith({
+      code: 'write_failed',
+      message: 'Workbench storage value could not be written.',
+      operation: 'write',
+      storageKey,
+    });
+
+    failWrites = false;
+    const recoveredEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === 'workbench-kit.samples.json-preview',
+    );
+    expect(recoveredEntry).toBeDefined();
+    await act(async () => {
+      currentModel?.toggleInstalledEntry(recoveredEntry!, true);
+    });
+
+    expect(JSON.parse(values.get(storageKey) ?? '[]')).toMatchObject([
+      {
+        enabled: true,
+        id: 'workbench-kit.samples.json-preview',
+      },
+    ]);
+    expect(
+      currentModel?.installedEntries.find(
+        (entry) => entry.id === 'workbench-kit.samples.json-preview',
+      )?.enabled,
+    ).toBe(true);
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('refuses absolute catalog URLs that are not allowlisted before fetch', async () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);

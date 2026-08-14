@@ -37,6 +37,37 @@ export interface WorkbenchStorageRemover {
   removeItem(key: string): void;
 }
 
+export type WorkbenchPersistenceOperation = 'read' | 'write';
+
+export type WorkbenchPersistenceDiagnosticCode = 'read_failed' | 'decode_failed' | 'write_failed';
+
+/** Renderer-safe persistence failure details for one logical Kit storage key. */
+export interface WorkbenchPersistenceDiagnostic {
+  readonly code: WorkbenchPersistenceDiagnosticCode;
+  readonly message: string;
+  readonly operation: WorkbenchPersistenceOperation;
+  readonly storageKey: string;
+}
+
+export type WorkbenchPersistenceDiagnosticHandler = (
+  diagnostic: WorkbenchPersistenceDiagnostic,
+) => void;
+
+export interface WorkbenchPersistenceReadResult<T> {
+  readonly diagnostic?: WorkbenchPersistenceDiagnostic | undefined;
+  readonly value: T;
+}
+
+export type WorkbenchPersistenceWriteResult =
+  | {
+      readonly committed: true;
+      readonly diagnostic?: never;
+    }
+  | {
+      readonly committed: false;
+      readonly diagnostic: WorkbenchPersistenceDiagnostic;
+    };
+
 /** Sync get/set port. DOM `Storage` is structurally compatible. */
 export type WorkbenchStorageAdapter = WorkbenchStorageReader & WorkbenchStorageWriter;
 

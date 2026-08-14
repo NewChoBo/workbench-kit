@@ -1,5 +1,12 @@
-import { readWorkbenchStorageArray, writeWorkbenchStorageJson } from '../storage-adapters.js';
+import {
+  readWorkbenchStorageArrayResult,
+  writeWorkbenchStorageJson,
+  writeWorkbenchStorageJsonResult,
+  type WorkbenchPersistenceDiagnosticOptions,
+} from '../storage-adapters.js';
 import type {
+  WorkbenchPersistenceReadResult,
+  WorkbenchPersistenceWriteResult,
   WorkbenchStorageAdapter,
   WorkbenchStorageReader,
   WorkbenchStorageWriter,
@@ -73,7 +80,20 @@ export function loadInstalledExtensions(
   storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
 ): InstalledExtensionRecord[] {
-  return readWorkbenchStorageArray(storageKey, normalizeInstalledExtensionRecord, storage);
+  return loadInstalledExtensionsResult(storageKey, storage).value;
+}
+
+export function loadInstalledExtensionsResult(
+  storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  storage?: WorkbenchStorageReader,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceReadResult<InstalledExtensionRecord[]> {
+  return readWorkbenchStorageArrayResult(
+    storageKey,
+    normalizeInstalledExtensionRecord,
+    storage,
+    options,
+  );
 }
 
 export function saveInstalledExtensions(
@@ -82,6 +102,15 @@ export function saveInstalledExtensions(
   storage?: WorkbenchStorageWriter,
 ): void {
   writeWorkbenchStorageJson(storageKey, records, storage);
+}
+
+export function saveInstalledExtensionsResult(
+  records: readonly InstalledExtensionRecord[],
+  storageKey: string = DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
+  storage?: WorkbenchStorageWriter,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceWriteResult {
+  return writeWorkbenchStorageJsonResult(storageKey, records, storage, options);
 }
 
 /**

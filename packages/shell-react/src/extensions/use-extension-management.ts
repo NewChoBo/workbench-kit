@@ -7,16 +7,16 @@ import {
   applyExtensionInstallPlanToRecords,
   assertExtensionCatalogUrlAllowed,
   loadExtensionInstallTrustRecords,
-  loadInstalledExtensions,
+  loadInstalledExtensionsResult,
   parseExtensionCatalog,
   recordExtensionInstallTrust,
   saveExtensionInstallTrustRecords,
-  saveInstalledExtensions,
-  toggleInstalledExtensionEnabled,
+  saveInstalledExtensionsResult,
   type ExtensionCatalogEntry,
   type ExtensionCatalogTrustPolicy,
   type ExtensionInstallTrustRecord,
   type InstalledExtensionRecord,
+  type WorkbenchPersistenceDiagnosticHandler,
 } from '@workbench-kit/workbench-core';
 import type {
   ExtensionCatalogBrowseEntry,
@@ -32,6 +32,12 @@ import {
   createExtensionManagementEntries,
 } from './management-model.js';
 import { useWorkbench, type WorkbenchStorageAdapter } from '../shell/provider.js';
+import { useWorkbenchPersistenceDiagnosticHandler } from '../shell/persistence-diagnostic-context.js';
+import {
+  reportPersistenceWriteResult,
+  usePersistenceDiagnosticHandlerRef,
+  useReportPersistenceReadDiagnostic,
+} from '../storage/persistence-diagnostics.js';
 
 export interface UseExtensionManagementModelOptions {
   catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
@@ -40,6 +46,7 @@ export interface UseExtensionManagementModelOptions {
   installedExtensionsStorageKey?: string | undefined;
   installTrustStorage?: WorkbenchStorageAdapter | undefined;
   installTrustStorageKey?: string | undefined;
+  onPersistenceDiagnostic?: WorkbenchPersistenceDiagnosticHandler | undefined;
 }
 
 export function useExtensionManagementModel({
@@ -49,8 +56,13 @@ export function useExtensionManagementModel({
   installedExtensionsStorageKey,
   installTrustStorage,
   installTrustStorageKey = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
+  onPersistenceDiagnostic,
 }: UseExtensionManagementModelOptions = {}) {
   const workbench = useWorkbench();
+  const providerPersistenceDiagnostic = useWorkbenchPersistenceDiagnosticHandler();
+  const diagnosticHandlerRef = usePersistenceDiagnosticHandlerRef(
+    onPersistenceDiagnostic ?? providerPersistenceDiagnostic,
+  );
   const { availableExtensions, extensionRegistry } = workbench;
   const resolvedInstalledExtensionsStorage =
     installedExtensionsStorage ?? workbench.installedExtensionsStorage;
@@ -59,6 +71,15 @@ export function useExtensionManagementModel({
     workbench.installedExtensionsStorageKey ??
     DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY;
   const resolvedInstallTrustStorage = installTrustStorage ?? resolvedInstalledExtensionsStorage;
+  const installedExtensionsReadResult = useMemo(
+    () =>
+      loadInstalledExtensionsResult(
+        resolvedInstalledExtensionsStorageKey,
+        resolvedInstalledExtensionsStorage,
+      ),
+    [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
+  );
+  const initiallyLoadedInstalledRecords = installedExtensionsReadResult.value;
   const [catalogEntries, setCatalogEntries] = useState<readonly ExtensionCatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(Boolean(catalogUrl));
   const [catalogError, setCatalogError] = useState<string | undefined>();
@@ -66,24 +87,21 @@ export function useExtensionManagementModel({
     ExtensionManagementPendingAction | undefined
   >();
   const [installedRecords, setInstalledRecords] = useState<readonly InstalledExtensionRecord[]>(
-    () =>
-      loadInstalledExtensions(
-        resolvedInstalledExtensionsStorageKey,
-        resolvedInstalledExtensionsStorage,
-      ),
+    initiallyLoadedInstalledRecords,
   );
   const [installTrustRecords, setInstallTrustRecords] = useState<
     readonly ExtensionInstallTrustRecord[]
   >(() => loadExtensionInstallTrustRecords(installTrustStorageKey, resolvedInstallTrustStorage));
 
+  useReportPersistenceReadDiagnostic(
+    installedExtensionsReadResult.diagnostic,
+    [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
+    diagnosticHandlerRef,
+  );
+
   useEffect(() => {
-    setInstalledRecords(
-      loadInstalledExtensions(
-        resolvedInstalledExtensionsStorageKey,
-        resolvedInstalledExtensionsStorage,
-      ),
-    );
-  }, [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey]);
+    setInstalledRecords(initiallyLoadedInstalledRecords);
+  }, [initiallyLoadedInstalledRecords]);
 
   useEffect(() => {
     setInstallTrustRecords(
@@ -178,14 +196,15 @@ export function useExtensionManagementModel({
         installSources: installContext.installSources,
         plan,
       });
-      saveInstalledExtensions(
+      const persistence = saveInstalledExtensionsResult(
         next,
         resolvedInstalledExtensionsStorageKey,
         resolvedInstalledExtensionsStorage,
       );
       setInstalledRecords(next);
-      setPendingAction({ entryId: entry.id, kind: 'install' });
-      if (typeof window !== 'undefined') {
+      reportPersistenceWriteResult(persistence, diagnosticHandlerRef);
+      setPendingAction(persistence.committed ? { entryId: entry.id, kind: 'install' } : undefined);
+      if (persistence.committed && typeof window !== 'undefined') {
         window.requestAnimationFrame(() => {
           window.location.reload();
         });
@@ -196,6 +215,7 @@ export function useExtensionManagementModel({
       catalogEntries,
       extensionRegistry,
       installedRecords,
+      diagnosticHandlerRef,
       resolvedInstalledExtensionsStorage,
       resolvedInstalledExtensionsStorageKey,
     ],
@@ -207,21 +227,27 @@ export function useExtensionManagementModel({
         return;
       }
 
-      const next = toggleInstalledExtensionEnabled(
-        entry.id,
-        enabled,
+      const next = setInstalledExtensionEnabled(installedRecords, entry.id, enabled);
+      const persistence = saveInstalledExtensionsResult(
+        next,
         resolvedInstalledExtensionsStorageKey,
         resolvedInstalledExtensionsStorage,
       );
       setInstalledRecords(next);
-      setPendingAction({ entryId: entry.id, kind: 'toggle' });
-      if (typeof window !== 'undefined') {
+      reportPersistenceWriteResult(persistence, diagnosticHandlerRef);
+      setPendingAction(persistence.committed ? { entryId: entry.id, kind: 'toggle' } : undefined);
+      if (persistence.committed && typeof window !== 'undefined') {
         window.requestAnimationFrame(() => {
           window.location.reload();
         });
       }
     },
-    [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
+    [
+      diagnosticHandlerRef,
+      installedRecords,
+      resolvedInstalledExtensionsStorage,
+      resolvedInstalledExtensionsStorageKey,
+    ],
   );
 
   const rememberInstallTrust = useCallback(
@@ -245,4 +271,24 @@ export function useExtensionManagementModel({
     rememberInstallTrust,
     toggleInstalledEntry,
   };
+}
+
+function setInstalledExtensionEnabled(
+  current: readonly InstalledExtensionRecord[],
+  extensionId: string,
+  enabled: boolean,
+): InstalledExtensionRecord[] {
+  const index = current.findIndex((entry) => entry.id === extensionId);
+  if (index < 0) {
+    return [...current];
+  }
+
+  const target = current[index];
+  if (!target) {
+    return [...current];
+  }
+
+  const next = [...current];
+  next[index] = { ...target, enabled };
+  return next;
 }
