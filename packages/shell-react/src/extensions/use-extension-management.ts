@@ -10,7 +10,7 @@ import {
   loadInstalledExtensionsResult,
   parseExtensionCatalog,
   recordExtensionInstallTrust,
-  saveExtensionInstallTrustRecords,
+  saveExtensionInstallTrustRecordsResult,
   saveInstalledExtensionsResult,
   type ExtensionCatalogEntry,
   type ExtensionCatalogTrustPolicy,
@@ -254,10 +254,20 @@ export function useExtensionManagementModel({
     (entry: ExtensionCatalogBrowseEntry) => {
       const permissions = entry.installPlan?.permissions ?? [];
       const next = recordExtensionInstallTrust(entry.id, permissions, installTrustRecords);
-      saveExtensionInstallTrustRecords(next, installTrustStorageKey, resolvedInstallTrustStorage);
       setInstallTrustRecords(next);
+      const persistence = saveExtensionInstallTrustRecordsResult(
+        next,
+        installTrustStorageKey,
+        resolvedInstallTrustStorage,
+      );
+      reportPersistenceWriteResult(persistence, diagnosticHandlerRef);
     },
-    [installTrustRecords, installTrustStorageKey, resolvedInstallTrustStorage],
+    [
+      diagnosticHandlerRef,
+      installTrustRecords,
+      installTrustStorageKey,
+      resolvedInstallTrustStorage,
+    ],
   );
 
   return {

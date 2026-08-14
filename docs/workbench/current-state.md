@@ -82,6 +82,15 @@ for provider-owned persistence flows. Standalone persistence hooks accept the
 same optional handler locally; read diagnostics discovered during React
 initialization are delivered after commit rather than during render.
 
+Extension management records confirmed install trust in runtime state before
+attempting result-aware persistence. A failed trust write emits `write_failed`
+but does not cancel the current explicitly approved install; only a committed
+write can suppress the approval prompt after a later initialization. The
+existing strict trust writer remains available for opt-in throwing behavior.
+Install-trust read observability is deferred: the legacy loader conservatively
+treats a missing or failed read as untrusted, so a later approval prompt may
+repeat instead of trusting an uncommitted or unreadable record.
+
 The first storage-backed domains are:
 
 - editor/session state that is not part of resource content

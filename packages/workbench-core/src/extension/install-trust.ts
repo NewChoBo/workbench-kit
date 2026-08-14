@@ -1,5 +1,14 @@
-import { readWorkbenchStorageArray, writeWorkbenchStorageJson } from '../storage-adapters.js';
-import type { WorkbenchStorageReader, WorkbenchStorageWriter } from '../storage.js';
+import {
+  readWorkbenchStorageArray,
+  writeWorkbenchStorageJson,
+  writeWorkbenchStorageJsonResult,
+  type WorkbenchPersistenceDiagnosticOptions,
+} from '../storage-adapters.js';
+import type {
+  WorkbenchPersistenceWriteResult,
+  WorkbenchStorageReader,
+  WorkbenchStorageWriter,
+} from '../storage.js';
 
 export const DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY =
   'workbench-kit/.workbench/extension-install-trust' as const;
@@ -79,6 +88,15 @@ export function saveExtensionInstallTrustRecords(
   storage?: WorkbenchStorageWriter,
 ): void {
   writeWorkbenchStorageJson(storageKey, records, storage);
+}
+
+export function saveExtensionInstallTrustRecordsResult(
+  records: readonly ExtensionInstallTrustRecord[],
+  storageKey: string = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
+  storage?: WorkbenchStorageWriter,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceWriteResult {
+  return writeWorkbenchStorageJsonResult(storageKey, records, storage, options);
 }
 
 function normalizeTrustRecord(value: unknown): ExtensionInstallTrustRecord | undefined {

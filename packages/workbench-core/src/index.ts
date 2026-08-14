@@ -166,6 +166,7 @@ export {
   recordExtensionInstallTrust,
   revokeExtensionInstallTrust,
   saveExtensionInstallTrustRecords,
+  saveExtensionInstallTrustRecordsResult,
   type ExtensionInstallTrustRecord,
 } from './extension/install-trust.js';
 export type {
