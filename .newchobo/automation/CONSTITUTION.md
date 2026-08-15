@@ -1,8 +1,9 @@
 # Hourly Project Stewardship Constitution
 
-This directory is the versioned control plane for unattended project research
-and bounded implementation. Scheduled runs must read `AGENTS.md` first, then
-load every file declared by `registry.json` from one frozen Git commit.
+This directory is the versioned control plane for recurring Chat research and
+bounded implementation. The scheduled heartbeat returns to its registered
+conversation, reads `AGENTS.md` first, then loads every file declared by
+`registry.json` from one frozen Git commit.
 
 The scheduler is runtime truth for task status and cadence. The files here are
 desired state and protocol; they must not claim that a task is active merely
@@ -14,7 +15,8 @@ because it is declared here.
 - Select at most one material work item per run.
 - Recheck the branch head and selected evidence immediately before writing.
 - Treat an active maintainer registration as standing authority only for the
-  bounded local-worktree actions declared in `scheduled-task.json`.
+  bounded Chat actions declared in `scheduled-task.json`. Create an isolated
+  worktree before any file write.
 - Use a separate read-only reviewer for any material candidate. A producer must
   not issue its own PASS.
 - A source or candidate SHA change invalidates earlier review evidence.

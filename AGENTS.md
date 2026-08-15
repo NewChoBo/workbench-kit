@@ -207,8 +207,8 @@ When conventions and code disagree, update code **and** docs/rules together.
 Do not duplicate long policy into `CLAUDE.md` or Cursor rules—edit this file or
 `docs/conventions/` instead.
 
-Scheduled project runs must read
+Scheduled Chat runs must read
 `.newchobo/automation/CONSTITUTION.md` after this file and validate the declared
 control plane before acting. An active maintainer registration authorizes only
-the bounded local-worktree actions in `scheduled-task.json`; it never authorizes
-push, PR, merge, tag, release, or publish.
+the bounded Chat and isolated-worktree actions in `scheduled-task.json`; it
+never authorizes push, PR, merge, tag, release, or publish.

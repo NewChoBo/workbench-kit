@@ -2,9 +2,10 @@
 
 ## 1. Bootstrap
 
-1. Confirm the run is inside an isolated Git worktree and the original checkout
-   is untouched.
-2. Freeze the current branch HEAD as `controlSha` and `baseSha`.
+1. Confirm the heartbeat returned to the registered Chat conversation. Inspect
+   the original checkout read-only and create an isolated Git worktree before
+   any file write.
+2. Freeze the integration branch HEAD as `controlSha` and `baseSha`.
 3. Load every path declared by `.newchobo/automation/registry.json` from that
    exact commit. Missing files or mismatched versions return `BLOCKED`.
 4. Check for an unfinished run or existing candidate for the same work-item key.

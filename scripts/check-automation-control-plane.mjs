@@ -28,8 +28,14 @@ if (registry.activeTask?.taskKey !== desired.taskKey) {
 if (desired.schedule?.frequency !== 'hourly' || !Number.isInteger(desired.schedule?.minuteOffset)) {
   throw new Error('Desired task must declare an hourly minute offset');
 }
-if (desired.execution?.environment !== 'worktree') {
-  throw new Error('Scheduled implementation must use an isolated worktree');
+if (
+  desired.execution?.channel !== 'chat' ||
+  desired.execution?.target !== 'existing_control_thread'
+) {
+  throw new Error('Scheduled stewardship must return to the registered Chat');
+}
+if (desired.execution?.writeIsolation !== 'worktree') {
+  throw new Error('Scheduled writes must use an isolated worktree');
 }
 if (desired.execution?.maxMaterialItemsPerRun !== 1) {
   throw new Error('Scheduled runs must select one material item');

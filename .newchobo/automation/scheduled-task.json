@@ -1,15 +1,17 @@
 {
   "schemaVersion": 1,
   "taskKey": "hourly_project_steward",
-  "name": "Workbench Kit hourly project stewardship",
+  "name": "Cross-repository hourly project stewardship",
   "desiredState": "active",
   "schedule": {
     "frequency": "hourly",
-    "minuteOffset": 25,
+    "minuteOffset": 35,
     "timeZone": "Asia/Seoul"
   },
   "execution": {
-    "environment": "worktree",
+    "channel": "chat",
+    "target": "existing_control_thread",
+    "writeIsolation": "worktree",
     "maxMaterialItemsPerRun": 1,
     "maxConsecutiveFailuresPerItem": 3,
     "interactiveApplications": "forbidden",
@@ -38,8 +40,8 @@
     ]
   },
   "observed": {
-    "automationId": "workbench-kit-hourly-project-stewardship",
-    "status": "paused",
+    "automationId": "cross-repository-hourly-project-stewardship",
+    "status": "active",
     "auditedAt": "2026-08-15"
   }
 }
