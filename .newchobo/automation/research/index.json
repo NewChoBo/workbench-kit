@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "dedicatedBranch": "codex/automation-control-plane",
+  "lastCompletedRun": null,
+  "topics": [],
+  "nextQuestions": [
+    {
+      "key": "architecture-boundary-goal-alignment",
+      "lane": "architecture_boundaries",
+      "question": "Which current package and host boundaries best support the declared product and public-library goals, and which boundaries are drifting?",
+      "priority": 1,
+      "status": "queued",
+      "attempts": 0,
+      "dependsOn": []
+    },
+    {
+      "key": "project-structure-patterns",
+      "lane": "project_structure_patterns",
+      "question": "Which established repository and modular architecture patterns fit the current scale, and what should remain intentionally different?",
+      "priority": 2,
+      "status": "queued",
+      "attempts": 0,
+      "dependsOn": ["architecture-boundary-goal-alignment"]
+    },
+    {
+      "key": "technology-and-paper-radar",
+      "lane": "technology_and_research",
+      "question": "Which current standards, platform changes, and original research materially affect the architecture roadmap?",
+      "priority": 3,
+      "status": "queued",
+      "attempts": 0,
+      "dependsOn": ["architecture-boundary-goal-alignment"]
+    },
+    {
+      "key": "comparable-product-lessons",
+      "lane": "product_comparison",
+      "question": "Which established products provide applicable lessons, and which copied patterns would weaken the project's distinct advantages?",
+      "priority": 4,
+      "status": "queued",
+      "attempts": 0,
+      "dependsOn": ["architecture-boundary-goal-alignment"]
+    }
+  ]
+}

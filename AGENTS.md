@@ -207,8 +207,10 @@ When conventions and code disagree, update code **and** docs/rules together.
 Do not duplicate long policy into `CLAUDE.md` or Cursor rules—edit this file or
 `docs/conventions/` instead.
 
-Scheduled Chat runs must read
+Scheduled recursive-architecture research Chat runs must read
 `.newchobo/automation/CONSTITUTION.md` after this file and validate the declared
 control plane before acting. An active maintainer registration authorizes only
-the bounded Chat and isolated-worktree actions in `scheduled-task.json`; it
-never authorizes push, PR, merge, tag, release, or publish.
+the docs, planning, analysis, and isolated-worktree actions in
+`scheduled-task.json`. Scheduled writes stay under `docs/**` and
+`.newchobo/automation/research/**`; they never include product source,
+dependencies, workflows, CI/CD, push, PR, merge, tag, release, or publish.

@@ -15,6 +15,8 @@ function readJson(relativePath) {
 const registry = readJson('registry.json');
 const desired = readJson('scheduled-task.json');
 const resultSchema = readJson('result.schema.json');
+const researchIndex = readJson('research/index.json');
+const researchRecordSchema = readJson('research/record.schema.json');
 
 if (registry.schemaVersion !== 1 || desired.schemaVersion !== 1) {
   throw new Error('Automation control schemaVersion must be 1');
@@ -37,12 +39,25 @@ if (
 if (desired.execution?.writeIsolation !== 'worktree') {
   throw new Error('Scheduled writes must use an isolated worktree');
 }
+if (
+  desired.execution?.mode !== 'docs_planning_analysis' ||
+  desired.execution?.dedicatedBranch !== registry.research?.dedicatedBranch
+) {
+  throw new Error('Scheduled research must use the dedicated docs branch');
+}
 if (desired.execution?.maxMaterialItemsPerRun !== 1) {
   throw new Error('Scheduled runs must select one material item');
 }
 
 const forbidden = new Set(desired.authority?.forbiddenActions ?? []);
-for (const action of ['push', 'merge', 'release', 'publish']) {
+for (const action of [
+  'push',
+  'merge',
+  'release',
+  'publish',
+  'production_code_write',
+  'workflow_or_ci_cd_write',
+]) {
   if (!forbidden.has(action)) {
     throw new Error(`Missing forbidden scheduled action: ${action}`);
   }
@@ -53,6 +68,9 @@ for (const relativePath of [
   '.newchobo/automation/REGISTRATION_PROMPT.md',
   registry.activeTask.rolePath,
   ...registry.activeTask.protocolPaths,
+  registry.research.indexPath,
+  registry.research.recordSchemaPath,
+  registry.research.reportTemplatePath,
 ]) {
   const path = resolve(root, relativePath);
   if (!existsSync(path)) {
@@ -60,8 +78,26 @@ for (const relativePath of [
   }
 }
 
-if (resultSchema.properties?.status?.enum?.includes('CANDIDATE_COMMITTED') !== true) {
-  throw new Error('Result schema must represent a validated local candidate');
+if (resultSchema.properties?.status?.enum?.includes('RESEARCH_COMMITTED') !== true) {
+  throw new Error('Result schema must represent a validated research commit');
+}
+if (researchIndex.schemaVersion !== 1 || researchRecordSchema.properties?.verdict === undefined) {
+  throw new Error('Research index and record schema must be versioned');
+}
+const questionKeys = researchIndex.nextQuestions?.map((entry) => entry.key) ?? [];
+if (questionKeys.length === 0 || new Set(questionKeys).size !== questionKeys.length) {
+  throw new Error('Research queue must contain unique questions');
+}
+const researchLanes = new Set(registry.research?.lanes ?? []);
+for (const question of researchIndex.nextQuestions ?? []) {
+  if (!researchLanes.has(question.lane)) {
+    throw new Error(`Unknown research lane: ${question.lane}`);
+  }
+}
+for (const requiredPath of ['docs/**', '.newchobo/automation/research/**']) {
+  if (!registry.writePolicy?.allow?.includes(requiredPath)) {
+    throw new Error(`Missing scheduled write allowlist: ${requiredPath}`);
+  }
 }
 
 console.log('Automation control plane is structurally valid.');

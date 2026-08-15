@@ -7,10 +7,11 @@
   },
   "activeTask": {
     "taskKey": "hourly_project_steward",
-    "agentId": "workflow/project-steward",
+    "agentId": "research/recursive-architecture-steward",
     "rolePath": ".newchobo/automation/roles/project-steward.md",
     "protocolPaths": [
       ".newchobo/automation/protocols/hourly-run.md",
+      ".newchobo/automation/protocols/deep-research-cycle.md",
       "docs/architecture/consumer-driven-development.md",
       "docs/conventions/github-issues.md"
     ],
@@ -24,23 +25,44 @@
     "docs/architecture/package-map.md"
   ],
   "selectionOrder": [
-    "confirmed_p0_or_p1_regression",
-    "queued_issue_with_complete_acceptance",
-    "public_contract_or_package_boundary_drift",
-    "proven_duplicate_with_clear_owner_package",
-    "focused_test_or_factual_documentation_gap"
+    "stale_or_contradicted_research",
+    "goal_or_ownership_boundary_drift",
+    "architecture_or_project_structure_pattern",
+    "current_technology_standard_or_original_paper",
+    "comparable_product_or_distinctive_strength",
+    "evolve_improve_or_retire_candidate",
+    "verification_or_long_term_evolution_gap"
   ],
   "ownership": {
     "genericMechanics": "workbench-kit",
     "integratingHostPolicy": "external",
     "speculativeAbstraction": "defer"
   },
+  "research": {
+    "indexPath": ".newchobo/automation/research/index.json",
+    "recordSchemaPath": ".newchobo/automation/research/record.schema.json",
+    "reportTemplatePath": ".newchobo/automation/research/report-template.md",
+    "reportDirectory": ".newchobo/automation/research/reports",
+    "dedicatedBranch": "codex/automation-control-plane",
+    "lanes": [
+      "development_direction",
+      "architecture_boundaries",
+      "project_structure_patterns",
+      "technology_and_research",
+      "product_comparison",
+      "distinctive_strengths",
+      "evolution_and_retirement",
+      "verification_evolution"
+    ]
+  },
+  "writePolicy": {
+    "allow": ["docs/**", ".newchobo/automation/research/**"],
+    "deny": ["packages/**", "src/**", ".github/**", "package.json", "pnpm-lock.yaml"]
+  },
   "validation": {
-    "docsOnly": ["pnpm format:check", "pnpm check:commit-safety"],
-    "code": ["pnpm validate:fast", "pnpm check:commit-safety"],
-    "publicSurface": [
-      "pnpm check:public-exports",
-      "pnpm check:packed-consumer",
+    "research": [
+      "pnpm check:automation-control-plane",
+      "pnpm exec prettier <changed-docs> --check",
       "pnpm check:commit-safety"
     ]
   }

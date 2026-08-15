@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://workbench-kit.dev/schemas/hourly-project-steward-result.schema.json",
-  "title": "Hourly project steward result",
+  "$id": "https://workbench-kit.dev/schemas/recursive-architecture-research-result.schema.json",
+  "title": "Recursive architecture research result",
   "type": "object",
   "additionalProperties": false,
   "required": [
@@ -10,6 +10,11 @@
     "controlSha",
     "baseSha",
     "status",
+    "lane",
+    "question",
+    "verdict",
+    "evidence",
+    "nextQuestions",
     "validation",
     "nextAction"
   ],
@@ -21,8 +26,9 @@
     "status": {
       "enum": [
         "NO_ACTION",
-        "RESEARCH_UPDATED",
-        "CANDIDATE_COMMITTED",
+        "RESEARCH_COMMITTED",
+        "PLAN_UPDATED",
+        "DOCS_UPDATED",
         "HANDOFF_REQUIRED",
         "INTERACTIVE_VALIDATION_REQUIRED",
         "VALIDATION_FAILED",
@@ -30,6 +36,13 @@
         "BLOCKED"
       ]
     },
+    "lane": { "type": ["string", "null"] },
+    "question": { "type": ["string", "null"] },
+    "verdict": {
+      "enum": ["maintain", "learn", "evolve", "improve", "retire", "not_applicable", null]
+    },
+    "evidence": { "type": "array", "items": { "type": "string" } },
+    "nextQuestions": { "type": "array", "items": { "type": "string" } },
     "workItemKey": { "type": ["string", "null"] },
     "ownership": {
       "enum": ["generic", "host_policy", "composition", "not_applicable"]

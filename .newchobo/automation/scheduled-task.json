@@ -1,7 +1,7 @@
 {
   "schemaVersion": 1,
   "taskKey": "hourly_project_steward",
-  "name": "Cross-repository hourly project stewardship",
+  "name": "Cross-repository recursive architecture research",
   "desiredState": "active",
   "schedule": {
     "frequency": "hourly",
@@ -12,6 +12,8 @@
     "channel": "chat",
     "target": "existing_control_thread",
     "writeIsolation": "worktree",
+    "mode": "docs_planning_analysis",
+    "dedicatedBranch": "codex/automation-control-plane",
     "maxMaterialItemsPerRun": 1,
     "maxConsecutiveFailuresPerItem": 3,
     "interactiveApplications": "forbidden",
@@ -22,9 +24,10 @@
     "allowedActions": [
       "read_repository_and_remote_metadata",
       "research_primary_sources",
-      "edit_one_bounded_concern",
-      "run_non_interactive_validation",
-      "create_one_local_commit_after_green_validation"
+      "compare_architecture_and_project_structure_patterns",
+      "update_docs_and_research_ledger",
+      "run_document_validation",
+      "create_one_local_document_commit_after_green_validation"
     ],
     "forbiddenActions": [
       "push",
@@ -36,7 +39,10 @@
       "publish",
       "main_or_develop_write",
       "force_push",
-      "interactive_application_launch"
+      "interactive_application_launch",
+      "production_code_write",
+      "dependency_or_lockfile_write",
+      "workflow_or_ci_cd_write"
     ]
   },
   "observed": {
