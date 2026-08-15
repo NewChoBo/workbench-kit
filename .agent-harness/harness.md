@@ -36,8 +36,10 @@ Shared Harness methodology must not absorb Workbench-specific package/release/Is
 exact externally supplied Harness base
 < optional shared profile
 < Workbench Kit project overlay
-< task/lane-specific overlay
+< task/lane-specific overlay within delegated task-owned scope
 ```
+
+The final task/lane layer may **narrow** behavior inside its delegated scope, but it cannot widen authority or override repository-reserved constraints such as release/main/publish authority, IssueOps ownership, public-reference/secret-safety policy, required validation, or other explicit project-level guardrails. A task overlay that attempts to cross those boundaries is a `POLICY_CONTRADICTION` / authority escalation, not a valid precedence win.
 
 Explicit repository policy may extend or replace an upstream default only inside Workbench Kit's owned scope. An implicit contradiction is not an override; route it as `POLICY_CONTRADICTION`.
 
