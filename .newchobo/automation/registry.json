@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "repository": {
+    "kind": "public-library",
+    "integrationBranch": "develop",
+    "publicTextPolicy": "consumer-neutral"
+  },
+  "activeTask": {
+    "taskKey": "hourly_project_steward",
+    "agentId": "workflow/project-steward",
+    "rolePath": ".newchobo/automation/roles/project-steward.md",
+    "protocolPaths": [
+      ".newchobo/automation/protocols/hourly-run.md",
+      "docs/architecture/consumer-driven-development.md",
+      "docs/conventions/github-issues.md"
+    ],
+    "desiredStatePath": ".newchobo/automation/scheduled-task.json",
+    "resultSchemaPath": ".newchobo/automation/result.schema.json"
+  },
+  "goalSources": [
+    "AGENTS.md",
+    "docs/architecture/phase-roadmap.md",
+    "docs/workbench/current-state.md",
+    "docs/architecture/package-map.md"
+  ],
+  "selectionOrder": [
+    "confirmed_p0_or_p1_regression",
+    "queued_issue_with_complete_acceptance",
+    "public_contract_or_package_boundary_drift",
+    "proven_duplicate_with_clear_owner_package",
+    "focused_test_or_factual_documentation_gap"
+  ],
+  "ownership": {
+    "genericMechanics": "workbench-kit",
+    "integratingHostPolicy": "external",
+    "speculativeAbstraction": "defer"
+  },
+  "validation": {
+    "docsOnly": ["pnpm format:check", "pnpm check:commit-safety"],
+    "code": ["pnpm validate:fast", "pnpm check:commit-safety"],
+    "publicSurface": [
+      "pnpm check:public-exports",
+      "pnpm check:packed-consumer",
+      "pnpm check:commit-safety"
+    ]
+  }
+}

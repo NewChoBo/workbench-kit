@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://workbench-kit.dev/schemas/hourly-project-steward-result.schema.json",
+  "title": "Hourly project steward result",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "taskKey",
+    "controlSha",
+    "baseSha",
+    "status",
+    "validation",
+    "nextAction"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "taskKey": { "const": "hourly_project_steward" },
+    "controlSha": { "type": "string", "minLength": 7 },
+    "baseSha": { "type": "string", "minLength": 7 },
+    "status": {
+      "enum": [
+        "NO_ACTION",
+        "RESEARCH_UPDATED",
+        "CANDIDATE_COMMITTED",
+        "HANDOFF_REQUIRED",
+        "INTERACTIVE_VALIDATION_REQUIRED",
+        "VALIDATION_FAILED",
+        "COOLDOWN_REQUIRED",
+        "BLOCKED"
+      ]
+    },
+    "workItemKey": { "type": ["string", "null"] },
+    "ownership": {
+      "enum": ["generic", "host_policy", "composition", "not_applicable"]
+    },
+    "commit": { "type": ["string", "null"] },
+    "validation": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["command", "status"],
+        "properties": {
+          "command": { "type": "string" },
+          "status": { "enum": ["passed", "failed", "not_run"] },
+          "reason": { "type": ["string", "null"] }
+        }
+      }
+    },
+    "nextAction": { "type": "string" }
+  }
+}

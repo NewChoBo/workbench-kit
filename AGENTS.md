@@ -194,14 +194,21 @@ cards / nested frames. Full rules:
 
 Layout and ownership: [`docs/conventions/agent-guidance.md`](docs/conventions/agent-guidance.md).
 
-| Path                                   | Scope                                                 |
-| -------------------------------------- | ----------------------------------------------------- |
-| `AGENTS.md` (this file)                | Cross-tool source of truth for agent defaults         |
-| `CLAUDE.md`                            | Claude Code entry; imports this file via `@AGENTS.md` |
-| `.cursor/rules/workbench-kit-core.mdc` | Cursor always-applied mirror of critical defaults     |
-| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata  |
-| `.cursor/hooks.json`                   | Cursor-only shell gate for commit/push safety checks  |
+| Path                                   | Scope                                                    |
+| -------------------------------------- | -------------------------------------------------------- |
+| `AGENTS.md` (this file)                | Cross-tool source of truth for agent defaults            |
+| `CLAUDE.md`                            | Claude Code entry; imports this file via `@AGENTS.md`    |
+| `.cursor/rules/workbench-kit-core.mdc` | Cursor always-applied mirror of critical defaults        |
+| `.cursor/rules/npm-release.mdc`        | Publish scripts, workflows, package publish metadata     |
+| `.cursor/hooks.json`                   | Cursor-only shell gate for commit/push safety checks     |
+| `.newchobo/automation/`                | Scheduled project stewardship desired state and protocol |
 
 When conventions and code disagree, update code **and** docs/rules together.
 Do not duplicate long policy into `CLAUDE.md` or Cursor rules—edit this file or
 `docs/conventions/` instead.
+
+Scheduled project runs must read
+`.newchobo/automation/CONSTITUTION.md` after this file and validate the declared
+control plane before acting. An active maintainer registration authorizes only
+the bounded local-worktree actions in `scheduled-task.json`; it never authorizes
+push, PR, merge, tag, release, or publish.

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "taskKey": "hourly_project_steward",
+  "name": "Workbench Kit hourly project stewardship",
+  "desiredState": "active",
+  "schedule": {
+    "frequency": "hourly",
+    "minuteOffset": 25,
+    "timeZone": "Asia/Seoul"
+  },
+  "execution": {
+    "environment": "worktree",
+    "maxMaterialItemsPerRun": 1,
+    "maxConsecutiveFailuresPerItem": 3,
+    "interactiveApplications": "forbidden",
+    "noEligibleWork": "NO_ACTION"
+  },
+  "authority": {
+    "standingDelegation": "active_maintainer_registration_only",
+    "allowedActions": [
+      "read_repository_and_remote_metadata",
+      "research_primary_sources",
+      "edit_one_bounded_concern",
+      "run_non_interactive_validation",
+      "create_one_local_commit_after_green_validation"
+    ],
+    "forbiddenActions": [
+      "push",
+      "pull_request",
+      "merge",
+      "issue_or_comment_write",
+      "tag",
+      "release",
+      "publish",
+      "main_or_develop_write",
+      "force_push",
+      "interactive_application_launch"
+    ]
+  },
+  "observed": {
+    "automationId": "workbench-kit-hourly-project-stewardship",
+    "status": "paused",
+    "auditedAt": "2026-08-15"
+  }
+}
