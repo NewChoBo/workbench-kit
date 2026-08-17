@@ -421,6 +421,18 @@ function FieldRemapSplitWorkspace({
 }: FieldRemapSplitWorkspaceProps): JSX.Element {
   const [palette, canvas, detail] = Children.toArray(children);
   const isNarrow = layout === 'narrow';
+  const [paletteSizeByLayout, setPaletteSizeByLayout] = useState({
+    wide: 240,
+    medium: 240,
+    narrow: 192,
+  });
+  const [detailSizeByLayout, setDetailSizeByLayout] = useState({
+    wide: 320,
+    medium: 320,
+    narrow: 220,
+  });
+  const paletteSizePx = paletteSizeByLayout[layout];
+  const detailSizePx = detailSizeByLayout[layout];
   const canvasWithDetail = (
     <SplitView
       className={
@@ -428,14 +440,17 @@ function FieldRemapSplitWorkspace({
           ? 'workbench-field-remap-flow__canvas-detail-split'
           : 'workbench-field-remap-flow__canvas-detail-split ui-workbench-split-view--secondary-collapsed'
       }
-      defaultSecondarySizePx={isNarrow ? 220 : 320}
       layoutMode="secondary-fixed"
       maxSecondarySizePx={isNarrow ? 320 : 480}
       minPrimarySizePx={isNarrow ? 200 : 280}
       minSecondarySizePx={isNarrow ? 160 : 256}
+      onSecondarySizePxChange={(nextSize) => {
+        setDetailSizeByLayout((current) => ({ ...current, [layout]: nextSize }));
+      }}
       orientation={isNarrow ? 'vertical' : 'horizontal'}
       primary={canvas}
       secondary={detail}
+      secondarySizePx={detailSizePx}
     />
   );
 
@@ -446,12 +461,15 @@ function FieldRemapSplitWorkspace({
           ? 'workbench-field-remap-flow__palette-split'
           : 'workbench-field-remap-flow__palette-split ui-workbench-split-view--primary-collapsed'
       }
-      defaultPrimarySizePx={isNarrow ? 192 : 240}
       maxPrimarySizePx={isNarrow ? 288 : 320}
       minPrimarySizePx={isNarrow ? 160 : 192}
       minSecondarySizePx={isNarrow ? 200 : 280}
+      onPrimarySizePxChange={(nextSize) => {
+        setPaletteSizeByLayout((current) => ({ ...current, [layout]: nextSize }));
+      }}
       orientation={layout === 'wide' ? 'horizontal' : 'vertical'}
       primary={palette}
+      primarySizePx={paletteSizePx}
       primarySizeUnit="pixels"
       secondary={canvasWithDetail}
     />
