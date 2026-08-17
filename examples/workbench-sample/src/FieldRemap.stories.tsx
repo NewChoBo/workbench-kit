@@ -62,6 +62,17 @@ export default meta;
 
 type Story = StoryObj<typeof meta>;
 
+async function expectCanvasFillsPane(flow: HTMLElement, pane: HTMLElement): Promise<void> {
+  await waitFor(() => {
+    const flowRect = flow.getBoundingClientRect();
+    const paneRect = pane.getBoundingClientRect();
+    expect(flowRect.width).toBeGreaterThan(0);
+    expect(flowRect.height).toBeGreaterThan(0);
+    expect(Math.abs(flowRect.width - paneRect.width)).toBeLessThanOrEqual(1);
+    expect(Math.abs(flowRect.height - paneRect.height)).toBeLessThanOrEqual(1);
+  });
+}
+
 export const NestedAB: Story = {
   name: 'A → B',
   args: { sampleId: 'nested-ab' },
@@ -137,18 +148,70 @@ export const EmbedChrome: Story = {
   args: {
     sampleId: 'nested-ab',
     chrome: 'embed',
+    emptyDetail: 'collapse',
+    showBindingsList: true,
     showConvertPalette: false,
+    showMinimap: false,
   },
-  tags: ['storybook-play-baseline'],
+  decorators: [
+    (Story) => (
+      <div style={{ inlineSize: '72rem', maxInlineSize: '100%', minInlineSize: '72rem' }}>
+        <Story />
+      </div>
+    ),
+  ],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const workspace = canvas.getByTestId('field-remap-workspace');
+    const flow = canvas.getByTestId('field-remap-flow');
+    const canvasPane = canvasElement.querySelector<HTMLElement>(
+      '.workbench-field-remap-flow__canvas-detail-split > .ui-workbench-split-view__primary',
+    );
+    const viewport = canvasElement.querySelector<HTMLElement>('.react-flow__viewport');
+    await expect(canvasPane).toBeTruthy();
+    await expect(viewport).toBeTruthy();
+    await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
+    const viewportTransform = viewport!.style.transform;
+
     await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
+    await expect(workspace).toHaveAttribute('data-layout', 'wide');
     await expect(canvas.queryByTestId('field-remap-hint')).toBeNull();
-    await expect(canvas.queryByTestId('field-remap-edges')).toBeNull();
+    await expect(canvas.getByTestId('field-remap-edges')).toBeVisible();
     await expect(canvas.queryByTestId('field-remap-convert-palette')).toBeNull();
     await expect(
       canvasElement.querySelector('.workbench-field-remap-flow__workspace--without-palette'),
     ).not.toBeNull();
+    await waitFor(() => {
+      const workspaceRect = workspace.getBoundingClientRect();
+      const flowRect = flow.getBoundingClientRect();
+      expect(flowRect.width).toBeGreaterThan(0);
+      expect(flowRect.height).toBeGreaterThan(0);
+      expect(Math.abs(flowRect.width - workspaceRect.width)).toBeLessThanOrEqual(1);
+      expect(Math.abs(flowRect.height - workspaceRect.height)).toBeLessThanOrEqual(1);
+    });
+    await expectCanvasFillsPane(flow, canvasPane!);
+    expect(
+      canvasElement
+        .querySelector('.workbench-field-remap-flow__palette-split')
+        ?.classList.contains('ui-workbench-split-view--primary-collapsed'),
+    ).toBe(true);
+    expect(
+      canvasElement
+        .querySelector('.workbench-field-remap-flow__canvas-detail-split')
+        ?.classList.contains('ui-workbench-split-view--secondary-collapsed'),
+    ).toBe(true);
+
+    await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
+    await expect(canvas.getByTestId('field-remap-detail')).toBeVisible();
+    await expect(canvas.queryByTestId('field-remap-convert-palette')).toBeNull();
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
+    ).not.toHaveClass('ui-workbench-split-view--secondary-collapsed');
+    await expect(canvasElement.querySelector('[data-testid="field-remap-flow"]')).toBe(flow);
+    await expect(canvasElement.querySelector('.react-flow__viewport')).toBe(viewport);
+    expect(viewport!.style.transform).toBe(viewportTransform);
+    await expectCanvasFillsPane(flow, canvasPane!);
   },
 };
 
@@ -195,21 +258,82 @@ export const EmbedCollapsedDetail: Story = {
     showBindingsList: true,
     showMinimap: false,
   },
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const flow = canvas.getByTestId('field-remap-flow');
+    const canvasPane = canvasElement.querySelector<HTMLElement>(
+      '.workbench-field-remap-flow__canvas-detail-split > .ui-workbench-split-view__primary',
+    );
+    const viewport = canvasElement.querySelector<HTMLElement>('.react-flow__viewport');
+    const zoomIn = canvasElement.querySelector<HTMLButtonElement>('.react-flow__controls-zoomin');
+    await expect(canvasPane).toBeTruthy();
+    await expect(viewport).toBeTruthy();
+    await expect(zoomIn).toBeTruthy();
+    await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
+    const initialTransform = viewport!.style.transform;
+    await userEvent.click(zoomIn!);
+    await waitFor(() => expect(viewport!.style.transform).not.toBe(initialTransform));
+    const zoomedTransform = viewport!.style.transform;
+
     await expect(canvas.queryByTestId('field-remap-detail')).toBeNull();
-    await expect(canvasElement.querySelectorAll('[role="separator"]')).toHaveLength(1);
+    await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
+    ).toHaveClass('ui-workbench-split-view--secondary-collapsed');
+    await expectCanvasFillsPane(flow, canvasPane!);
 
     await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
     await expect(canvas.getByTestId('field-remap-detail')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
+    await expect(canvasElement.querySelector('.react-flow__viewport')).toBe(viewport);
+    expect(viewport!.style.transform).toBe(zoomedTransform);
+    await expectCanvasFillsPane(flow, canvasPane!);
 
-    const separator = canvasElement.querySelectorAll<HTMLElement>('[role="separator"]')[1];
+    const separator = canvasElement.querySelector<HTMLElement>(
+      '.workbench-field-remap-flow__canvas-detail-split > [role="separator"]',
+    );
     await expect(separator).toBeTruthy();
     const before = separator!.getAttribute('aria-valuenow');
     separator!.focus();
     await userEvent.keyboard('{ArrowRight}');
     await expect(separator).not.toHaveAttribute('aria-valuenow', before ?? '');
+
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(canvas.queryByTestId('field-remap-detail')).toBeNull());
+    await expect(canvasElement.querySelector('.react-flow__viewport')).toBe(viewport);
+    expect(viewport!.style.transform).toBe(zoomedTransform);
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
+    ).toHaveClass('ui-workbench-split-view--secondary-collapsed');
+  },
+};
+
+export const MediumEmbedLayout: Story = {
+  name: 'Embed layout (1024px host)',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    showMinimap: false,
+  },
+  decorators: [
+    (Story) => (
+      <div style={{ inlineSize: '64rem', maxInlineSize: '100%', minInlineSize: '64rem' }}>
+        <Story />
+      </div>
+    ),
+  ],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const workspace = canvas.getByTestId('field-remap-workspace');
+    const flow = canvas.getByTestId('field-remap-flow');
+
+    await waitFor(() => expect(workspace).toHaveAttribute('data-layout', 'medium'));
+    await waitFor(() => {
+      expect(flow.getBoundingClientRect().width).toBeGreaterThan(280);
+      expect(flow.getBoundingClientRect().height).toBeGreaterThan(200);
+    });
   },
 };
 
@@ -227,12 +351,15 @@ export const NarrowEmbedLayout: Story = {
       </div>
     ),
   ],
-  tags: ['storybook-play-baseline'],
+  tags: ['storybook-play-baseline', 'storybook-play-required'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const workspace = canvas.getByTestId('field-remap-workspace');
     const flow = canvas.getByTestId('field-remap-flow');
 
+    await waitFor(() => expect(workspace).toHaveAttribute('data-layout', 'narrow'));
     await waitFor(() => expect(flow.getBoundingClientRect().width).toBeGreaterThan(280));
+    await expect(flow.getBoundingClientRect().height).toBeGreaterThan(200);
     await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
   },
 };
