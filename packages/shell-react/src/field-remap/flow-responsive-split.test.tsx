@@ -138,9 +138,9 @@ describe('FieldRemapFlowMapper retained responsive splits', () => {
     expect(detailSplit).toBeTruthy();
     expect(workspace!.getAttribute('data-layout')).toBe('wide');
     expect(paletteSplit!.style.getPropertyValue('--ui-workbench-split-primary-size')).toBe('240px');
-    expect(
-      detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size'),
-    ).toBe('320px');
+    expect(detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size')).toBe(
+      '320px',
+    );
 
     vi.spyOn(mapper!, 'getBoundingClientRect').mockReturnValue(createRect(900));
     const mapperResize = resizeCallbacks.get(mapper!);
@@ -153,12 +153,12 @@ describe('FieldRemapFlowMapper retained responsive splits', () => {
 
     expect(workspace!.getAttribute('data-layout')).toBe('narrow');
     expect(paletteSplit!.style.getPropertyValue('--ui-workbench-split-primary-size')).toBe('192px');
-    expect(
-      detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size'),
-    ).toBe('220px');
-    expect(
-      detailSplit!.classList.contains('ui-workbench-split-view--secondary-collapsed'),
-    ).toBe(true);
+    expect(detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size')).toBe(
+      '220px',
+    );
+    expect(detailSplit!.classList.contains('ui-workbench-split-view--secondary-collapsed')).toBe(
+      true,
+    );
 
     await renderMapper({ kind: 'edge', edgeId: 'e-name' });
 
@@ -166,11 +166,11 @@ describe('FieldRemapFlowMapper retained responsive splits', () => {
     expect(container.querySelector('.react-flow')).toBe(reactFlow);
     expect(container.querySelector('.react-flow__viewport')).toBe(viewport);
     expect(container.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
-    expect(
-      detailSplit!.classList.contains('ui-workbench-split-view--secondary-collapsed'),
-    ).toBe(false);
-    expect(
-      detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size'),
-    ).toBe('220px');
+    expect(detailSplit!.classList.contains('ui-workbench-split-view--secondary-collapsed')).toBe(
+      false,
+    );
+    expect(detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size')).toBe(
+      '220px',
+    );
   });
 });
