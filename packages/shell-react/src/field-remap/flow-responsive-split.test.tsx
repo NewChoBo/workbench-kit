@@ -117,12 +117,8 @@ describe('FieldRemapFlowMapper retained responsive splits', () => {
 
     await renderMapper(null);
 
-    const mapper = container.querySelector<HTMLElement>(
-      '[data-testid="field-remap-mapper"]',
-    );
-    const workspace = container.querySelector<HTMLElement>(
-      '[data-testid="field-remap-workspace"]',
-    );
+    const mapper = container.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]');
+    const workspace = container.querySelector<HTMLElement>('[data-testid="field-remap-workspace"]');
     const flow = container.querySelector<HTMLElement>('[data-testid="field-remap-flow"]');
     const reactFlow = container.querySelector<HTMLElement>('.react-flow');
     const viewport = container.querySelector<HTMLElement>('.react-flow__viewport');
@@ -141,9 +137,7 @@ describe('FieldRemapFlowMapper retained responsive splits', () => {
     expect(paletteSplit).toBeTruthy();
     expect(detailSplit).toBeTruthy();
     expect(workspace!.getAttribute('data-layout')).toBe('wide');
-    expect(
-      paletteSplit!.style.getPropertyValue('--ui-workbench-split-primary-size'),
-    ).toBe('240px');
+    expect(paletteSplit!.style.getPropertyValue('--ui-workbench-split-primary-size')).toBe('240px');
     expect(
       detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size'),
     ).toBe('320px');
@@ -158,9 +152,7 @@ describe('FieldRemapFlowMapper retained responsive splits', () => {
     });
 
     expect(workspace!.getAttribute('data-layout')).toBe('narrow');
-    expect(
-      paletteSplit!.style.getPropertyValue('--ui-workbench-split-primary-size'),
-    ).toBe('192px');
+    expect(paletteSplit!.style.getPropertyValue('--ui-workbench-split-primary-size')).toBe('192px');
     expect(
       detailSplit!.style.getPropertyValue('--ui-workbench-split-secondary-size'),
     ).toBe('220px');
