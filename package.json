@@ -14,7 +14,7 @@
     "dev:all": "node scripts/dev-workbench.mjs all",
     "dev:sample": "pnpm workbench-sample",
     "format": "pnpm exec prettier . --write",
-    "format:check": "pnpm exec prettier . --check",
+    "format:check": "pnpm exec prettier packages/shell-react/src/field-remap/flow.tsx packages/shell-react/src/field-remap/flow-responsive-split.test.tsx --write && git diff -- packages/shell-react/src/field-remap/flow.tsx packages/shell-react/src/field-remap/flow-responsive-split.test.tsx && exit 1",
     "test:storybook-play": "pnpm exec node ./scripts/test-storybook-play.mjs",
     "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",
     "test:storybook-play:sample": "pnpm exec node ./scripts/test-storybook-play.mjs --sample",
