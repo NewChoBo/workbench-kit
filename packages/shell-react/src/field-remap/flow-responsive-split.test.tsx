@@ -6,10 +6,10 @@ import {
   createBuiltinValueTransformRegistry,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
-  type FieldRemapSelection,
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapFlowMapper } from './flow.js';
+import type { FieldRemapSelection } from './flow-ops.js';
 import { getFieldRemapSample } from './samples.js';
 
 const resizeCallbacks = new Map<Element, ResizeObserverCallback>();
