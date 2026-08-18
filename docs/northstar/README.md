@@ -44,6 +44,8 @@ Platform goals
 
 The target includes both manual and AI-assisted authoring. AI must operate through the same canonical documents, typed schemas, commands, validation, preview, and extension boundaries used by non-AI authoring; it is not a separate source of truth or a required runtime dependency.
 
+For visual design, the manual path is primary: users choose supported layout structures and typed layout/style values through Canvas/Hierarchy/Inspector surfaces. AI may express the same operations as reviewable typed proposals, but must not be the only authoring path.
+
 ## Tool neutrality
 
 `READY_FOR_IMPLEMENTATION` does not name or require a specific coding agent. The execution environment may be selected at implementation time.
