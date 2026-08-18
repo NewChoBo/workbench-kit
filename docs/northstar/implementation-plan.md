@@ -174,30 +174,54 @@ ContributionRouter
 - lockfile/dependency relation;
 - public SDK vs internal service surfaces.
 
-## WB-NS-050 — Host capability adapter model
+## WB-NS-050 — Focused host capability boundary foundation
 
-- **Status:** `DESIGNING`
-- **Target:** `target-architecture.md` § Host/platform architecture
+- **Status:** `DONE`
+- **Target:** `target-architecture.md` § Host/platform architecture + [`host-capability-boundary.md`](./host-capability-boundary.md)
 - **Ownership:** `GENERIC_KIT`
+- **Source-review result:** `NARROWED`
+- **Reviewed source baseline:** `develop@b11e21a91634830626fdcde7758b32dff0dd26ef`
 
-### Goal
+### Resolved target
 
-Represent browser/Electron/native host functions through focused typed capability ports without requiring a central application object.
+Workbench Kit owns focused, typed, product-neutral ports and host-adapter leaves. It does **not** require or expose one application-wide public host/service registry.
 
-### Candidate capabilities
+The current `CapabilityRegistry<TCapability>` target role remains a scoped composition concept unless independent consumers prove a stable public registry contract.
 
-```text
-FileSystemPort
-ProcessPort
-ShellPort
-WindowPort
-ClipboardPort
-SecretStoragePort
-NotificationPort
-ExternalLinkPort
-```
+### Current implementation evidence
 
-Exact names/packages remain provisional until current `platform`/Electron source and public subpaths are reviewed.
+The current source already provides the boundary foundation:
+
+- `@workbench-kit/platform` exposes focused framework-neutral leaves;
+- `@workbench-kit/electron-shell` exposes focused Electron security/lifecycle/window/preload leaves;
+- preload helpers wrap allowlisted invoke/subscribe operations rather than exposing renderer transport primitives;
+- product IPC names, paths and policy remain integrating-host concerns.
+
+### Why this packet is DONE
+
+The original packet implicitly treated the candidate capability list as a future generic API inventory. Source review and external platform guidance support a narrower target: the reusable architectural rule is the **focused boundary**, while future capability leaves are demand-driven.
+
+No broad capability registry/provider implementation is justified by current evidence, so creating one would add speculative API surface rather than close a proven gap.
+
+### Deferred candidate
+
+A public generic capability registry/provider remains `DEFER`.
+
+Falsifier: two or more independent public consumers demonstrate the same registration, lookup, availability and lifecycle semantics and cannot be served cleanly through focused ports and host composition.
+
+### Future packet rule
+
+Create a new host-capability packet only for a concrete missing generic capability. Such a packet must define:
+
+- neutral behavior contract;
+- `platform` vs `electron-shell` ownership;
+- exact focused public package/subpath;
+- host-injected policy and transport boundary;
+- browser/desktop availability semantics;
+- packed external-consumer validation;
+- compatibility and release dependency.
+
+Candidate families such as FileSystem, Process, Clipboard and Notification remain discovery candidates, not a required implementation checklist.
 
 ## WB-NS-060 — Backendless scenario + performance harness
 
