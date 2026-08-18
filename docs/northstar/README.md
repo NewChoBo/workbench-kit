@@ -9,6 +9,7 @@ Existing `docs/architecture`, `docs/workbench`, source code, tests, pull request
 - [`target-architecture.md`](./target-architecture.md) — target capabilities, package/module/class/API structure, state/data flows, runtime boundaries, extensibility, persistence, testing and performance model
 - [`implementation-plan.md`](./implementation-plan.md) — CURRENT → TARGET gaps, dependency order, tool-neutral `READY_FOR_IMPLEMENTATION` packets, and implementation source-review results
 - [`host-capability-boundary.md`](./host-capability-boundary.md) — confirmed focused host/renderer capability boundary and the evidence gate for future generic capability APIs
+- [`extension-composition-boundary.md`](./extension-composition-boundary.md) — confirmed host-composition vs runtime-extension plane separation, compatibility-facade migration, and isolation discovery decision
 
 ## Current vs Target
 
@@ -17,6 +18,7 @@ Every design iteration distinguishes:
 - **CURRENT SOURCE FACT** — verified behavior or structure in source/tests/packages
 - **TARGET DESIGN** — the desired architecture independent of accidental current structure
 - **GAP** — the changes required to move CURRENT toward TARGET
+- **DISCOVERY CANDIDATE** — a new technology, capability, interaction or UX opportunity that must pass fit/risk evaluation before becoming target
 - **IMPLEMENTATION PACKET** — a sufficiently decided unit that an implementation agent can execute with limited architectural discretion
 
 Current limitations are not target constraints unless compatibility, migration cost, public contract stability, or a deliberate product/platform decision requires preserving them.
@@ -28,6 +30,7 @@ Platform goals
   → TARGET architecture
   → current source review
   → CURRENT → TARGET gap analysis
+  → bounded discovery / fit evaluation
   → target capabilities/modules/classes/APIs/flows refinement
   → implementation packet decomposition
   → READY_FOR_IMPLEMENTATION
