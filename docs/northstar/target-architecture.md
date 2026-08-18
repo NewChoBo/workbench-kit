@@ -19,7 +19,7 @@ A host should be able to assemble IDE/workbench experiences, workflow/graph edit
 | Documents / editors              | document identity, models, editor inputs, dirty/save lifecycle                         |
 | Graph composition                | graph document model and structural editing                                            |
 | Workflow runtime                 | execution semantics independent from graph renderer                                    |
-| GUI builder                      | component tree/artboard/layout/property/event/binding design                           |
+| GUI builder                      | atomic-to-composite component tree, selectable layout/style/property authoring          |
 | Schema/forms/inspectors          | field schemas, editor selection, validation and property surfaces                      |
 | Projection system                | full graph, GUI builder, form/inspector, code/schema, preview and end-user projections |
 | Extension/plugin platform        | manifests, contributions, capabilities, compatibility, trust/permissions               |
@@ -191,6 +191,11 @@ Rules:
 
 ## 9. Target GUI-builder architecture
 
+Detailed target decisions:
+
+- [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
+- [`layout-and-style-authoring.md`](./layout-and-style-authoring.md)
+
 Provisional roles:
 
 ```text
@@ -203,23 +208,37 @@ BindingModel
 EventBindingModel
 ResourceModel
 PreviewSession
+LayoutStrategyRegistry
+DesignTokenRegistry
+ValueEditorRegistry
 ```
 
 Target capabilities:
 
+- typed value/design-token/resource foundation;
+- atomic primitive → composite component → template/surface → application/workbench composition;
 - palette/component catalog;
 - artboard/canvas;
 - hierarchy tree;
 - property inspector;
-- layout/constraint editing;
-- responsive variants;
+- user-selectable layout strategies such as Stack/Flex/Grid/Split/Overlay/Canvas where supported;
+- typed CSS-compatible layout/style properties rather than opaque CSS as the default canonical model;
+- layout/constraint editing and direct-manipulation parity;
+- responsive/host-width variants;
+- typography, color, spacing, border/radius/shadow and resource/token authoring;
 - actions/events/bindings;
 - design-time metadata;
 - custom component registration;
 - preview;
 - undo/redo;
 - accessibility metadata;
-- explicit code/schema ownership mode.
+- explicit code/schema ownership mode;
+- optional generative/AI authoring through the same command/transaction/validation model;
+- escalation to component/node development requirements when existing catalog/composition cannot express a requested capability.
+
+AI is optional. Palette/Canvas/Hierarchy/Inspector/manual graph authoring must remain complete without a model provider.
+
+A renderer may project typed layout/style semantics to CSS, native layout properties, or another renderer representation. Raw renderer-specific CSS is an advanced portability-reducing escape hatch, not the normal persisted authoring model.
 
 The GUI builder shares generic schema/editor/command/layout primitives where semantics match but does not collapse all tools into one registry.
 
@@ -348,6 +367,7 @@ Candidate artifact classes:
 - document models;
 - graph/workflow documents;
 - GUI-builder documents;
+- design tokens/resources/style presets;
 - extension manifests/lock state.
 
 Target rules:
@@ -398,13 +418,16 @@ Minimal real-host canaries
 
 Representative states include empty/loading/ready/large-data/missing-capability/disconnected/recoverable-error/permission-denied/stale/degraded.
 
+Manual and AI-generated authoring should be able to produce equivalent canonical document results for the same accepted operation set.
+
 ## 17. Target performance architecture
 
 Representative workload families:
 
 - shell mount and update;
 - view/panel switching;
-- layout/resize;
+- layout/resize/direct manipulation;
+- responsive variant recomputation;
 - editor/document switching;
 - graph node/edge scaling and interactions;
 - inspector/form update fan-out;
@@ -424,6 +447,8 @@ extension activation failure
 persistence read/write/migration outcome
 document/runtime validation errors
 workflow execution failure/progress
+invalid layout/property combination
+proposal/generation validation rejection
 ```
 
 Diagnostics avoid secrets, host identity and private paths unless a host-local diagnostic adapter explicitly owns them.
@@ -436,6 +461,9 @@ Diagnostics avoid secrets, host identity and private paths unless a host-local d
 - one universal schema/UI registry that owns unrelated semantics;
 - parallel editable sources of truth without round-trip rules;
 - requiring desktop/native infrastructure to test browser-safe workbench behavior;
+- requiring AI for UI/graph authoring;
+- opaque generated JSX/HTML/CSS as canonical UI state;
+- one flat Inspector containing every possible CSS property regardless of layout/component context;
 - executor-specific architecture or implementation handoff contracts.
 
 ## 20. Target maturity
