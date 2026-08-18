@@ -8,6 +8,7 @@ Existing `docs/architecture`, `docs/workbench`, source code, tests, pull request
 
 - [`target-architecture.md`](./target-architecture.md) — target capabilities, package/module/class/API structure, state/data flows, runtime boundaries, extensibility, persistence, testing and performance model
 - [`implementation-plan.md`](./implementation-plan.md) — CURRENT → TARGET gaps, dependency order, tool-neutral `READY_FOR_IMPLEMENTATION` packets, and implementation source-review results
+- [`host-capability-boundary.md`](./host-capability-boundary.md) — confirmed focused host/renderer capability boundary and the evidence gate for future generic capability APIs
 
 ## Current vs Target
 
