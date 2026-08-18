@@ -1,6 +1,6 @@
 # Workbench Kit Northstar Implementation Plan
 
-This document decomposes [`target-architecture.md`](./target-architecture.md) into ordered, tool-neutral implementation packets.
+This document decomposes [`target-architecture.md`](./target-architecture.md) and its detailed Northstar decisions into ordered, tool-neutral implementation packets.
 
 It is not a changelog of the current repository. Current source is recorded only as evidence for a CURRENT → TARGET gap or as an implementation result to review.
 
@@ -39,15 +39,17 @@ No packet status or contract names a specific coding agent.
 
 ## Target dependency graph
 
-Initial decomposition; recursive design may refine or reorder it.
+Recursive design has identified extension/kernel responsibility separation as a foundation before adding more public abstraction.
 
 ```text
-Target kernel/capability composition
+WB-NS-001A extension runtime responsibility decomposition
+        ↓
+WB-NS-001B shell dependency narrowing
         ↓
 Document + state ownership foundations
         ├─ schema/form/inspector model
         ├─ graph document/controller split
-        └─ extension capability contracts
+        └─ extension capability/trust contracts
                 ↓
 Projection/GUI-builder architecture
                 ↓
@@ -55,12 +57,235 @@ Workflow runtime + published interfaces
                 ↓
 Host adapter maturation / multi-host validation
                 ↓
-Performance and compatibility hardening
+Backendless/performance + compatibility hardening
 ```
+
+`WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
 
 ---
 
 # Active target packets
+
+## WB-NS-001A — Runtime extension responsibility decomposition
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
+- **Ownership:** `GENERIC_KIT`
+- **Reviewed source baseline:** `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55`
+- **Public API impact:** none required in this slice
+
+### Goal
+
+Split catalog/inventory, manifest contribution routing, executable activation and runtime API construction behind the existing public `ExtensionRegistry` compatibility facade.
+
+This closes the highest-value kernel/extension responsibility gap without introducing a global DI/service-locator API or forcing process isolation.
+
+### CURRENT SOURCE FACT
+
+Current `ExtensionRegistry` directly owns:
+
+- extension description storage;
+- dependency/cycle diagnostics;
+- declarative contribution registration;
+- active/activating state;
+- activation/deactivation and lifecycle events;
+- `ExtensionContext` construction;
+- capability registration/access;
+- command activation/execution;
+- lifetime of multiple contribution registries.
+
+`WorkbenchProvider` also exposes the aggregate registry through React context. The public `workbench-core` barrel exports `ExtensionRegistry`, so deleting or radically replacing it in the first slice would create avoidable compatibility churn.
+
+### TARGET roles
+
+Internal names may vary only when responsibility boundaries remain equivalent.
+
+```text
+ExtensionInventory
+ExtensionContributionRouter
+ExtensionActivationService
+ExtensionApiFactory
+ExtensionRegistry compatibility facade
+```
+
+#### `ExtensionInventory`
+
+Owns registered `WorkbenchExtensionDescription` identity/list/get/register semantics only.
+
+Target contract:
+
+```ts
+interface ExtensionInventory {
+  get(extensionId: string): WorkbenchExtensionDescription | undefined;
+  list(): readonly WorkbenchExtensionDescription[];
+  register(description: WorkbenchExtensionDescription): Disposable;
+}
+```
+
+#### `ExtensionContributionRouter`
+
+Registers manifest-declared contributions into explicit focused contribution registries and returns their disposable lifetime. It does not activate executable code and does not become a universal registry.
+
+#### `ExtensionActivationService`
+
+Owns:
+
+- active and in-flight activation state;
+- activation-event matching;
+- dependency-before-dependent activation;
+- lifecycle events;
+- deactivate/deactivate-all;
+- activation subscription lifetime.
+
+It does not own command execution or host composition.
+
+#### `ExtensionApiFactory`
+
+Creates the existing restricted `ExtensionContext` from explicit registration/capability facades, extension identity/path, manifest permissions/capabilities and activation subscription scope.
+
+It does not expose host composition internals.
+
+#### Compatibility facade
+
+Public `ExtensionRegistry` stays source-compatible in this slice and delegates to the focused roles.
+
+### Target data/lifecycle flow
+
+```text
+registerExtension(description)
+  → ExtensionInventory.register
+  → ExtensionContributionRouter.registerManifestContributions
+  → compatibility facade owns combined registration disposable
+
+activation event / explicit activation
+  → ExtensionActivationService
+  → dependency analysis + inventory lookup
+  → ExtensionApiFactory.createContext
+  → module.activate(context)
+  → active state + subscriptions
+
+executeCommand(commandId)
+  → compatibility facade (for current API)
+  → ExtensionActivationService.activateByEvent(onCommand)
+  → CommandRegistry/CommandService executes handler
+```
+
+Manifest contribution lifetime and executable activation lifetime remain distinct.
+
+### Scope
+
+1. Extract inventory/description ownership.
+2. Extract manifest contribution routing using existing normalizers and focused registries.
+3. Extract active/activating lifecycle and activation operations.
+4. Extract `ExtensionContext` construction.
+5. Make current `ExtensionRegistry` delegate while preserving its public methods/options/getters.
+6. Keep current `CapabilityRegistry` semantics scoped; do not turn it into host-wide service discovery.
+7. Add focused unit tests for extracted roles plus facade regression coverage.
+
+### Non-scope
+
+- no public `ExtensionRegistry` removal;
+- no new public generic DI/container API;
+- no mandatory worker/process/remote extension host;
+- no manifest schema change;
+- no shell React-context migration yet;
+- no new capability ID inventory;
+- no persisted-format or installation-flow redesign.
+
+### Compatibility and migration
+
+- preserve `ExtensionRegistryOptions` and public barrel exports;
+- preserve current `ExtensionContext` public shape;
+- preserve manifest contribution-before-activation behavior;
+- preserve duplicate-ID, missing-dependency, cycle, activation coalescing, permission/capability and disposal behavior;
+- any new focused classes remain internal until independent consumer value justifies public exposure.
+
+### Verification layer
+
+`PURE_WEB / backendless core`.
+
+No Electron/native dependency is intrinsic to this slice.
+
+### Focused tests
+
+At minimum cover:
+
+- inventory duplicate registration + disposal;
+- declarative contribution registration without executable activation;
+- dependency and activation-event behavior;
+- concurrent same-extension activation coalescing;
+- activation failure does not mark active;
+- deactivation/disposal order;
+- permission/capability access through created context;
+- current public `ExtensionRegistry` behavior remains compatible.
+
+Current source area to reuse/extend: `packages/workbench-core/src/extension/registry.test.ts` plus focused tests beside extracted internal roles.
+
+### Repository validation
+
+Use the repository's current required commit-safety and applicable fast/full validation from the exact implementation head. Do not weaken gates for this packet.
+
+### Acceptance / Done criteria
+
+- the old `ExtensionRegistry` implementation body no longer contains all inventory, contribution, activation and API-construction behavior;
+- extracted roles are directly testable and have one primary responsibility;
+- public consumers compile without migration;
+- no new arbitrary service lookup or host composition object reaches `ExtensionContext`;
+- command execution remains command-layer responsibility after extension activation;
+- contribution and activation lifetimes remain distinct;
+- source review confirms no accidental public-export/bundle growth;
+- compatibility facade remains a migration boundary, not a new target dependency for features.
+
+### Source-review checklist
+
+Reject the implementation if:
+
+- extracted classes are wrappers that delegate substantive behavior back to the old aggregate;
+- one new replacement class simply recreates the same god object;
+- runtime extensions gain broader internal access;
+- `CapabilityRegistry` is generalized into host service lookup;
+- contribution registries become owned by activation lifecycle;
+- command execution moves into `ExtensionActivationService`;
+- concurrent activation or disposal semantics regress;
+- public API expands without packet justification.
+
+### Discovery decision
+
+`ADOPT`: separate trusted host/application composition from runtime installable extension API/lifecycle.
+
+Evidence: official Theia architecture separates compile-time application extensions/DI from installable plugin mechanisms; official VS Code architecture runs installable extensions through extension hosts and manifest/activation contracts.
+
+`DEFER`: mandatory worker/process/remote extension isolation until untrusted-extension, responsiveness-isolation, remote-workspace or placement requirements justify serialization/runtime cost.
+
+`REJECT`: public global DI/service locator for runtime extensions.
+
+Falsifier for the deferred isolation decision: a committed product requirement needs untrusted third-party execution, remote workspace placement or extension CPU/failure isolation.
+
+## WB-NS-001B — Shell dependency narrowing
+
+- **Status:** `DESIGNING`
+- **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
+- **Ownership:** `GENERIC_KIT`
+- **Dependency:** `WB-NS-001A`
+
+### Goal
+
+Stop shell/features from depending on the aggregate `ExtensionRegistry` when a focused service is sufficient.
+
+### Design work still required
+
+Inventory each current `shell-react` use of `extensionRegistry` and classify it as:
+
+```text
+activation
+command
+contribution read
+extension management/catalog
+capability access
+other
+```
+
+Then define the smallest focused context/facade per category and a compatibility/deprecation path. Do not delegate until that inventory proves the target React context shape.
 
 ## WB-NS-010 — Graph document/controller/renderer/runtime separation
 
@@ -147,8 +372,9 @@ Inventory current field-schema, Field Remap, settings/form/inspector APIs before
 ## WB-NS-040 — Extension capability / trust / compatibility model
 
 - **Status:** `DESIGNING`
-- **Target:** `target-architecture.md` § Extension/plugin architecture
+- **Target:** `target-architecture.md` § Extension/plugin architecture + [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
+- **Dependency:** `WB-NS-001A`
 
 ### Goal
 
@@ -159,11 +385,13 @@ Extensions declare contributions, required/optional capabilities, compatibility,
 ```text
 ExtensionManifest
 ExtensionResolver
-ExtensionActivator
+ExtensionActivationService
 PermissionService
 TrustService
 ContributionRouter
 ```
+
+The activation/contribution responsibility boundary is now owned by `WB-NS-001A`; this packet focuses on trust, compatibility and degradation semantics rather than recreating extension orchestration.
 
 ### Design questions
 
