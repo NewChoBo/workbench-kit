@@ -12,6 +12,7 @@ Existing `docs/architecture`, `docs/workbench`, source code, tests, pull request
 - [`extension-composition-boundary.md`](./extension-composition-boundary.md) — confirmed host-composition vs runtime-extension plane separation, compatibility-facade migration, and isolation discovery decision
 - [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md) — atomic UI composition, typed property/value nodes, manual-first visual authoring, optional generative UI, AI-assisted component/node development, and external node ecosystem interoperability
 - [`layout-and-style-authoring.md`](./layout-and-style-authoring.md) — user-selectable layout strategies, typed CSS-compatible style values, design tokens/resources, responsive variants, Inspector/direct-manipulation parity, and optional AI parity
+- [`design-system-packs.md`](./design-system-packs.md) — installable/versioned DesignSystemPack, runtime Theme/ThemeScope resolution, semantic versus pack-specific component identity, explicit pack migration transactions, trust and compatibility migration
 
 ## Current vs Target
 
@@ -45,6 +46,8 @@ Platform goals
 The target includes both manual and AI-assisted authoring. AI must operate through the same canonical documents, typed schemas, commands, validation, preview, and extension boundaries used by non-AI authoring; it is not a separate source of truth or a required runtime dependency.
 
 For visual design, the manual path is primary: users explicitly choose supported layout structures and valid layout/style values through Canvas/Hierarchy/Inspector surfaces. AI may express the same operations as reviewable typed proposals, but must not be the only authoring path.
+
+Design-system authoring follows the same rule. Theme changes are presentation resolution over the canonical document, while DesignSystemPack changes that require component substitution are explicit compatibility/migration transactions rather than silent layout mutation.
 
 ## Tool neutrality
 
