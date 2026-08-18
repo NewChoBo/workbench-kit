@@ -10,6 +10,7 @@ Existing `docs/architecture`, `docs/workbench`, source code, tests, pull request
 - [`implementation-plan.md`](./implementation-plan.md) — CURRENT → TARGET gaps, dependency order, tool-neutral `READY_FOR_IMPLEMENTATION` packets, and implementation source-review results
 - [`host-capability-boundary.md`](./host-capability-boundary.md) — confirmed focused host/renderer capability boundary and the evidence gate for future generic capability APIs
 - [`extension-composition-boundary.md`](./extension-composition-boundary.md) — confirmed host-composition vs runtime-extension plane separation, compatibility-facade migration, and isolation discovery decision
+- [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md) — atomic UI composition, typed property/value nodes, manual-first visual authoring, optional generative UI, AI-assisted component/node development, and external node ecosystem interoperability
 
 ## Current vs Target
 
@@ -39,6 +40,8 @@ Platform goals
   → target/packet refinement
   ↺
 ```
+
+The target includes both manual and AI-assisted authoring. AI must operate through the same canonical documents, typed schemas, commands, validation, preview, and extension boundaries used by non-AI authoring; it is not a separate source of truth or a required runtime dependency.
 
 ## Tool neutrality
 
