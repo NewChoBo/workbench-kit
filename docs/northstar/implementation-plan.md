@@ -39,28 +39,48 @@ No packet status or contract names a specific coding agent.
 
 ## Target dependency graph
 
-Recursive design has identified extension/kernel responsibility separation as a foundation before adding more public abstraction.
+Recursive design has identified extension/kernel responsibility separation as a foundation before adding more public abstraction. UI authoring adds a second target chain that must inventory/reuse existing schema/layout primitives before creating new public contracts.
 
 ```text
 WB-NS-001A extension runtime responsibility decomposition
         ↓
 WB-NS-001B shell dependency narrowing
-        ↓
+
 Document + state ownership foundations
-        ├─ schema/form/inspector model
-        ├─ graph document/controller split
+        ├─ WB-NS-030 schema/form/inspector model
+        ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
-                ↓
+
+WB-NS-070A typed UI value/property inventory + target contract
+        ↓
+WB-NS-070B selectable layout strategy + typed style constraints
+        ↓
+WB-NS-070C atomic component/composite descriptor contract
+        ↓
+WB-NS-070D UiDocument command + direct-manipulation authoring
+        ↓
+WB-NS-070E responsive variants + tokens/resources
+        ↓
+WB-NS-070F provider-neutral generative UI parity
+        ↓
+WB-NS-071A graph node type/property-input foundation
+        ↓
+WB-NS-071B component/node development requirement flow
+        ↓
+WB-NS-071C external node ecosystem adapter contract
+
 Projection/GUI-builder architecture
-                ↓
+        ↓
 Workflow runtime + published interfaces
-                ↓
+        ↓
 Host adapter maturation / multi-host validation
-                ↓
+        ↓
 Backendless/performance + compatibility hardening
 ```
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
+
+UI packet IDs `WB-NS-070*` / `WB-NS-071*` are canonical target slots but remain `DESIGNING` until source/API inventory proves reuse boundaries and prevents a parallel schema/layout system.
 
 ---
 
@@ -475,6 +495,123 @@ Performance workloads + budgets
 ### Ready gate
 
 Define ownership and API boundaries for fixtures without turning production packages into test-framework containers; identify representative workloads from actual hot paths before budgets are standardized.
+
+## WB-NS-070 — Manual-first UI layout/style authoring foundation
+
+- **Status:** `DESIGNING`
+- **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md) + [`layout-and-style-authoring.md`](./layout-and-style-authoring.md)
+- **Ownership:** `GENERIC_KIT`
+- **Related:** `WB-NS-020`, `WB-NS-030`
+
+### Goal
+
+Allow users to construct UI manually from typed values/resources and atomic components, select valid layout structures, edit CSS-compatible design values through contextual Inspector/Canvas surfaces, create composites/templates, and persist one renderer-neutral canonical UI document. AI later gains parity over the same command model but is not required.
+
+### Target decomposition
+
+```text
+WB-NS-070A typed value/property/source inventory + contract
+WB-NS-070B selectable layout strategy + typed style constraints
+WB-NS-070C atomic component + composite descriptor contract
+WB-NS-070D UiDocument command/direct-manipulation authoring
+WB-NS-070E responsive variants + design tokens/resources
+WB-NS-070F provider-neutral generative UI parity
+```
+
+### Required source/API inventory before delegation
+
+Review and map at minimum:
+
+- existing field/schema/editor descriptor APIs;
+- shell/workbench layout and SplitView semantics;
+- Field Remap typed fields/ports and transform value registry;
+- theme/tokens/CSS custom-property ownership if present;
+- settings/forms/inspectors and renderer property editors;
+- persistence/versioning primitives relevant to a future `UiDocument`;
+- current command/context/undo transaction capabilities.
+
+The target must reuse or deliberately consolidate these semantics rather than adding a parallel universal schema system.
+
+### `WB-NS-070A` ready gate
+
+Close:
+
+- which existing semantic schema is reused vs adapted;
+- typed value source model (`literal | token | resource | binding | expression` or equivalent);
+- renderer-neutral unit/value boundaries;
+- validation/editor metadata ownership;
+- public vs internal API placement.
+
+### `WB-NS-070B` ready gate
+
+Close:
+
+- supported layout strategy descriptor contract;
+- container vs child property ownership;
+- context-valid Inspector property groups;
+- typed sizing/spacing/flex/grid/split/canvas semantics;
+- invalid combination behavior;
+- renderer projection and raw-CSS escape-hatch boundary.
+
+### `WB-NS-070C` ready gate
+
+Close component descriptor identity/version, properties/events/bindings/layout/accessibility/design-time metadata, registry contribution path, and composite public interface semantics.
+
+### `WB-NS-070D` ready gate
+
+Close `UiDocument` node identity/tree model, commands/typed patches, transaction/undo behavior, Canvas↔Inspector parity, selection/hierarchy ownership, and persistence boundary.
+
+### `WB-NS-070E` ready gate
+
+Close responsive/host-width/state variants, design tokens/resources/theme projection, stable token identity and migration semantics.
+
+### `WB-NS-070F` ready gate
+
+Depends on the manual contract. Generative UI may be delegated only after manual commands/validation are sufficient to express the same target operations. It emits reviewable proposals/typed patches and may not introduce arbitrary JSX/HTML/CSS execution as canonical state.
+
+### Acceptance direction
+
+The completed chain must permit an AI-disabled host to:
+
+- choose Stack/Flex/Grid/Split/Canvas-style layout where supported;
+- set width/height/min/max, margin/padding/gap, alignment, typography, color, borders/radius/shadow and other approved typed properties;
+- choose literal/token/resource/binding/expression sources where allowed;
+- manipulate Canvas and Inspector interchangeably;
+- author responsive variants;
+- compose primitives into reusable components/templates;
+- validate/preview/undo/persist without an AI provider.
+
+## WB-NS-071 — Graph node/property authoring and development escalation
+
+- **Status:** `DESIGNING`
+- **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
+- **Ownership:** `GENERIC_KIT`
+- **Related:** `WB-NS-010`, `WB-NS-030`, `WB-NS-070`
+
+### Goal
+
+Support typed graph node descriptors and the useful editor↔connectable-input duality while providing a safe escalation path when users/agents request capabilities not present in the current component/node catalog.
+
+### Target decomposition
+
+```text
+WB-NS-071A NodeTypeDescriptor / typed port + property foundation
+WB-NS-071B missing capability -> component/node development requirement
+WB-NS-071C external node ecosystem adapter contract
+optional ComfyUI adapter experiment
+```
+
+### Direction
+
+- node descriptor, node instance, renderer and runtime remain distinct;
+- properties become connectable only when their schema explicitly supports it;
+- composite/subgraph nodes reuse existing capabilities before source-code node creation;
+- code-backed missing capabilities become tool-neutral implementation requirements handled by the separate implementation lane;
+- external ecosystems are adapters, not canonical Workbench runtime/schema ownership.
+
+### ComfyUI discovery
+
+Evaluate typed input/output compatibility, widget/input duality, custom-node schema/versioning and editor metadata as reusable interaction/schema principles. Do not copy ComfyUI runtime/frontend internals or make Workbench dependent on them.
 
 ---
 
