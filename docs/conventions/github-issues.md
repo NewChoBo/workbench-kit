@@ -1,7 +1,7 @@
 # GitHub Issues
 
 **Status:** Required for new issues  
-**Last updated:** 2026-07-26
+**Last updated:** 2026-08-19
 
 Workbench Kit is a public npm repository. Issues are the primary backlog for
 independent kit work. Prefer GitHub issues over informal notes when the work
@@ -132,25 +132,40 @@ If `type` / `intent` are missing on an implement-like request, automation
 | **Q&A**                 | `question`, or `intent: clarify` / `discuss` without `run agent`                        | No — comment only                                  |
 | **Clarify**             | Ambiguous / thin quality bar                                                            | No — reverse questions + `status:needs-human`      |
 | **Implement**           | `run agent`, or `status:queued` + cron, or clear `intent: implement` with enough detail | Yes — branch/PR into `develop`                     |
-| **Idle refactor**       | Hourly cron when no `status:queued` work; small internal tidy-ups only                  | Yes — one small PR; may auto-merge if Checks green |
+| **Idle refactor**       | Hourly cron when no owned active/queued work; small internal tidy-ups only              | Yes — one small PR; may auto-merge if Checks green |
 | **Structural refactor** | Weekly cron (Mon 09:00 Asia/Seoul); bolder cross-package / architecture work            | Yes — PR **never** auto-merged; human review       |
 | **Security**            | `type: security`                                                                        | No public PoC / no drive-by fix                    |
 
 ### Status labels
 
-| Label                | Meaning                                         |
-| -------------------- | ----------------------------------------------- |
-| `status:queued`      | Eligible for hourly automation pickup           |
-| `status:in-progress` | Claimed; do not double-start                    |
-| `status:pr-open`     | PR opened (issue stays open until humans close) |
-| `status:needs-human` | Blocked on answers / judgment                   |
-| `status:skipped`     | Intentionally not implemented                   |
+| Label                | Meaning                                                                      |
+| -------------------- | ---------------------------------------------------------------------------- |
+| `status:queued`      | Eligible for hourly automation pickup                                        |
+| `status:in-progress` | Claimed; automation must restore/reconcile before starting competing work    |
+| `status:pr-open`     | PR opened; Issue remains open until required review/integration + acceptance |
+| `status:needs-human` | Blocked on answers / judgment                                                |
+| `status:skipped`     | Intentionally not implemented                                                |
 
 Machine-readable marker (HTML comment) on automation posts:
 
 ```html
 <!-- automation:cursor-issue-handler status=<started|skipped|needs-human|pr-open|done|failed|info> issue=<N> pr=<url-optional> source=<comment|cron|idle-refactor|structural-refactor> -->
 ```
+
+### Owned Issue reconciliation and closure
+
+Every automation run inspects Issues/PRs relevant to its own lane before selecting new work.
+
+1. Restore an existing automation-owned `status:in-progress` / `status:pr-open` Issue before consuming another queued Issue.
+2. Reconcile the Issue with its branch, linked PR, Checks, review, merge/integration, dependencies, and acceptance criteria.
+3. Continue valid unfinished work instead of opening a duplicate Issue/branch/PR.
+4. For source-change Issues, keep the Issue open while a required linked PR is still unreviewed/unmerged.
+5. After the linked change is integrated into `develop` **and** the Issue acceptance criteria are verified, automation may close that **owned** Issue in the same run and persist one concise `status=done` completion marker when useful.
+6. If acceptance is still incomplete after merge, keep the Issue open and route/resume the remaining work.
+7. Never close another owner/role's Issue. Route/handoff it instead.
+8. A completion comment or green PR alone is not sufficient when the Issue's acceptance criteria are still unmet.
+
+Closing an owned Issue does not replace required review, release/publication gates, effect validation, or escalation/reporting obligations.
 
 ### Human / consumer how-to
 
@@ -179,9 +194,7 @@ When the request is ambiguous, automation should:
   self-triggers; still ignore marker comments in prompts.
 - Ordinary discussion without `run agent` should stay in Q&A / Clarify — not
   full implement runs.
-- Hourly backlog drain prefers `status:queued` first. If the queue is empty,
-  automation may run a single **idle refactor** (small internal tidy-up only;
-  no public API breaks).
+- Hourly backlog drain first reconciles one owned `status:in-progress` / `status:pr-open` work item, then prefers `status:queued`. If no owned active/queued work remains, automation may run a single **idle refactor** (small internal tidy-up only; no public API breaks).
 - Weekly (Monday 09:00 Asia/Seoul): **structural refactor** — one bolder
   architecture-oriented PR, always left for human review (never auto-merged).
   Details:
@@ -232,7 +245,9 @@ the flow becomes a required UI gate.
 
 Automation implement runs must pass `pnpm check:commit-safety` and the lane
 above before merge into `develop`. Merge only when GitHub Checks are green.
-Never push `main` from automation.
+After merge, reconcile the linked owned Issue: close it only when acceptance is
+verified; otherwise keep it open with the remaining work state. Never push
+`main` from automation.
 
 ## Triage checklist (maintainers)
 
@@ -256,3 +271,4 @@ When an agent files or updates issues:
 5. After creating thin issues, immediately edit them to the quality bar above.
 6. Follow the [Comment protocol](#comment-protocol-issueops) for automation
    coordination; use reverse questions instead of guessing.
+7. Before new work, restore relevant owned in-progress/pr-open Issues; after verified integration + acceptance, close the owned Issue rather than leaving stale completed tickets.

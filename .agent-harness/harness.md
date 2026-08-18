@@ -51,6 +51,22 @@ When the upstream source is available, use it for shared semantics such as Decis
 
 Workbench Kit-specific validation, release/publication, public-reference, package ownership, and IssueOps constraints remain local.
 
+## Role-owned GitHub Issue lifecycle
+
+Every recurring Workbench automation must inspect current open Issues and PRs relevant to its own role/scope before selecting new work. This is role-scoped ticket ownership, not a full-repository backlog sweep for every agent.
+
+- restore explicitly routed/assigned owned Issues before creating duplicate work;
+- reconcile an owned Issue with its linked branch, PR, review, CI, dependency, and integration state;
+- continue valid unfinished owned work before starting a competing duplicate;
+- for source-change Issues, keep the Issue open while required linked PR review/integration remains unresolved;
+- after required integration and the owned Issue's actual acceptance/done criteria are verified, close that Issue in the same run when current capability and authority permit;
+- do not leave a verified-complete owned Issue open merely because implementation/merge was reported elsewhere;
+- do not close an Issue owned by another role; route/handoff it through current Workbench IssueOps ownership instead;
+- a merged PR or completion report alone is not sufficient to close an Issue whose acceptance criteria are still unmet;
+- comments are material-delta/evidence surfaces, not per-run heartbeat logs.
+
+Issue closure does not replace required independent review, release/publication gates, post-adoption effect validation, or upward failure reporting.
+
 ## Canary / migration rule
 
 This entrypoint does **not** authorize deleting existing public guidance, changing automation cadence/population, or changing release/main authority.
