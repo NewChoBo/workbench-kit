@@ -11,22 +11,22 @@ A host should be able to assemble IDE/workbench experiences, workflow/graph edit
 
 ## 2. Target capability map
 
-| Capability | Target responsibility |
-| --- | --- |
-| Kernel / lifecycle | bootstrap ordered services/capabilities without a god object |
-| Commands / context / keybindings | reusable interaction primitives |
-| Workbench shell | activities, views, panels, layout, menus, status and restoration |
-| Documents / editors | document identity, models, editor inputs, dirty/save lifecycle |
-| Graph composition | graph document model and structural editing |
-| Workflow runtime | execution semantics independent from graph renderer |
-| GUI builder | component tree/artboard/layout/property/event/binding design |
-| Schema/forms/inspectors | field schemas, editor selection, validation and property surfaces |
-| Projection system | full graph, GUI builder, form/inspector, code/schema, preview and end-user projections |
-| Extension/plugin platform | manifests, contributions, capabilities, compatibility, trust/permissions |
-| Host/platform adapters | browser/Electron/native capabilities behind typed ports |
-| Persistence | versioned workbench/document/layout/preferences state with migrations |
-| Diagnostics | structured errors, capability degradation and lifecycle diagnostics |
-| Test/performance harness | deterministic backendless fixtures and representative budgets |
+| Capability                       | Target responsibility                                                                  |
+| -------------------------------- | -------------------------------------------------------------------------------------- |
+| Kernel / lifecycle               | bootstrap ordered services/capabilities without a god object                           |
+| Commands / context / keybindings | reusable interaction primitives                                                        |
+| Workbench shell                  | activities, views, panels, layout, menus, status and restoration                       |
+| Documents / editors              | document identity, models, editor inputs, dirty/save lifecycle                         |
+| Graph composition                | graph document model and structural editing                                            |
+| Workflow runtime                 | execution semantics independent from graph renderer                                    |
+| GUI builder                      | component tree/artboard/layout/property/event/binding design                           |
+| Schema/forms/inspectors          | field schemas, editor selection, validation and property surfaces                      |
+| Projection system                | full graph, GUI builder, form/inspector, code/schema, preview and end-user projections |
+| Extension/plugin platform        | manifests, contributions, capabilities, compatibility, trust/permissions               |
+| Host/platform adapters           | browser/Electron/native capabilities behind typed ports                                |
+| Persistence                      | versioned workbench/document/layout/preferences state with migrations                  |
+| Diagnostics                      | structured errors, capability degradation and lifecycle diagnostics                    |
+| Test/performance harness         | deterministic backendless fixtures and representative budgets                          |
 
 ## 3. Target runtime layers
 
