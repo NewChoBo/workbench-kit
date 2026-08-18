@@ -1,7 +1,15 @@
 # Architecture
 
 Workbench Kit architecture documents for the VS Code–like workbench shell,
-extension system, and repository migration.
+extension system, repository migration, and target architecture.
+
+## Target Design
+
+- [Northstar](../northstar/README.md) — future-state design loop and CURRENT vs TARGET distinction.
+- [Target Architecture](../northstar/target-architecture.md) — desired capability, package/module/class/API, state/data-flow, extension, host, test and performance architecture.
+- [Implementation Plan](../northstar/implementation-plan.md) — ordered CURRENT → TARGET gaps and tool-neutral `READY_FOR_IMPLEMENTATION` packets.
+
+`docs/northstar/*` owns the desired future state. The documents below remain normative current/detailed architecture inputs and migration constraints; current structure is not automatically the target structure.
 
 ## Start Here
 
@@ -10,10 +18,10 @@ extension system, and repository migration.
 - [Package Map](./package-map.md) — every package's current role, target role,
   and migration action.
 - [Consumer-driven Development](./consumer-driven-development.md) — Kit
-  ownership, host promotion, release, and Codex order.
+  ownership, host promotion, release, and implementation order.
 - [Migration Strategy](./migration-strategy.md) — direct migration plan for
   `platform` and `shell-react`.
-- [Phase Roadmap](./phase-roadmap.md) — phased delivery and exit criteria.
+- [Phase Roadmap](./phase-roadmap.md) — completed baseline phases and exit criteria.
 - [Project Structure](./project-structure.md) — repository layout.
 - [Dependency Rules](./dependency-rules.md) — allowed and forbidden package
   edges.
