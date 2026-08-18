@@ -12,10 +12,13 @@ The target combines:
 - Android Studio / Qt Designer-style visual UI authoring;
 - graph/node authoring similar in interaction class to ComfyUI;
 - schema/property-driven inspectors;
+- user-selectable layout structures and typed CSS-compatible design properties;
 - optional conversational/generative authoring;
 - AI-assisted creation of missing reusable components or graph node types through a separate implementation lane.
 
 AI is an accelerator and authoring interface, not a prerequisite, runtime source of truth, or privileged bypass around validation.
+
+Detailed layout/style target: [`layout-and-style-authoring.md`](./layout-and-style-authoring.md).
 
 ## 2. Atomic composition hierarchy
 
@@ -130,6 +133,7 @@ AI chat / generation    ┘                              ↓
 Target rules:
 
 - the visual designer remains fully usable when AI is disabled or unavailable;
+- users can explicitly choose layout strategy and valid layout/style values through Inspector and direct manipulation;
 - AI does not own a parallel UI document;
 - code/schema editing follows explicit `AUTHORITATIVE_EDITABLE`, `ROUND_TRIP_EDITABLE`, or `DERIVED_READ_ONLY` projection rules;
 - every accepted edit passes through the same command/transaction and validation path;
@@ -137,7 +141,7 @@ Target rules:
 
 ## 4. Typed property/value model
 
-The same semantic value model should drive inspector editors, form fields, component inputs, graph inputs, bindings, and generation constraints without forcing identical UI.
+The same semantic value model should drive inspector editors, form fields, component inputs, graph inputs, bindings, layout/style authoring, and generation constraints without forcing identical UI.
 
 Provisional target roles:
 
@@ -200,9 +204,38 @@ Examples:
 - `font` → font selector or typography token node;
 - `text` → text editor or bound string/value node;
 - `spacing` → numeric/token editor or connected layout value;
+- `width` / `height` → typed length editor or connected size value where explicitly supported;
 - `visibility` → boolean/expression editor or graph binding.
 
-## 5. Component registry target
+## 5. Layout/style authoring relationship
+
+Layout is not an opaque CSS blob. A container selects a supported structural strategy such as Stack/Flex/Grid/Split/Overlay/Canvas and then exposes only the properties valid for that context.
+
+The canonical model stores typed layout/style semantics; renderer adapters may project them to CSS or another rendering system.
+
+Examples of user-selectable property groups:
+
+```text
+Layout strategy
+Sizing / min / max
+Margin / padding / gap
+Flex direction/wrap/grow/shrink/alignment
+Grid tracks/areas/spans/alignment
+Split sizing/collapse/resize
+Canvas position/size/anchor
+Typography
+Foreground/background
+Border/radius/shadow
+Overflow/visibility/opacity
+Responsive variants
+Design token/resource/binding source
+```
+
+Canvas manipulation and Inspector changes must update the same typed properties. Raw CSS is an advanced renderer-specific escape hatch only when a host explicitly enables it.
+
+See [`layout-and-style-authoring.md`](./layout-and-style-authoring.md) for the detailed target.
+
+## 6. Component registry target
 
 The component catalog is extensible and typed.
 
@@ -235,7 +268,7 @@ Imported external component descriptors
 
 A renderer adapter resolves a descriptor to React/Vue/etc. rendering. The descriptor is not a React component reference in the canonical model.
 
-## 6. Generative UI as a first-class authoring mode
+## 7. Generative UI as a first-class authoring mode
 
 Generative UI is a proposal/command interface over existing target primitives.
 
@@ -245,6 +278,7 @@ User intent / agent request
 Authoring context
   - current document/selection
   - component catalog
+  - layout strategies
   - value/property schemas
   - capabilities
   - policy/permissions
@@ -287,8 +321,10 @@ Examples:
 insert component
 remove component
 move/reparent component
+set layout strategy
 set property
 set layout constraint
+set responsive/state variant
 set binding
 set event/action binding
 create composite from selection
@@ -297,7 +333,7 @@ replace component with compatible component
 
 The default target explicitly rejects arbitrary generated JSX/HTML/script execution as the primary authoring protocol.
 
-## 7. Capability resolution for missing UI
+## 8. Capability resolution for missing UI
 
 If a requested UI cannot be expressed by the available catalog, generation must not invent a nonexistent component ID.
 
@@ -326,7 +362,7 @@ Creates a **development requirement**, not executable code inside the canonical 
 
 The requirement enters the same tool-neutral implementation planning/execution/review loop used elsewhere in Northstar.
 
-## 8. AI-assisted component and node development
+## 9. AI-assisted component and node development
 
 The target supports using an implementation agent to create reusable code-backed components or graph node types when declarative composition is insufficient.
 
@@ -356,7 +392,7 @@ Authoring request
 
 The design automation may specify the target contract and review source. It does not implement the node/component itself.
 
-## 9. Graph node type target
+## 10. Graph node type target
 
 Workbench should distinguish a graph node **type descriptor** from a node instance and from runtime execution implementation.
 
@@ -402,7 +438,7 @@ Code-backed node type
   → requires implementation lane + validation + registry/extension contribution
 ```
 
-## 10. External node ecosystem interoperability
+## 11. External node ecosystem interoperability
 
 Workbench may integrate ecosystems such as ComfyUI through adapters rather than making their node schema/runtime the Workbench core model.
 
@@ -430,19 +466,22 @@ Useful principles to evaluate/adopt:
 
 Do not bind Workbench's canonical `GraphDocumentModel`, `UiDocumentModel`, or extension runtime to ComfyUI internals.
 
-## 11. Manual-first requirement
+## 12. Manual-first requirement
 
 AI-off is a first-class supported mode.
 
 A capable host should be able to:
 
 - browse/search a component/node catalog;
+- select container/layout strategies;
 - drag/place/connect/reparent;
-- edit typed properties;
+- edit typed layout/style/content properties;
+- choose literal/token/resource/binding/expression value sources where allowed;
 - convert eligible properties to bindings/graph inputs;
 - create composites/subgraphs;
 - edit hierarchy;
 - configure events/actions;
+- author responsive variants;
 - preview;
 - undo/redo;
 - validate and persist;
@@ -452,7 +491,7 @@ without an AI provider.
 
 AI then uses the same catalog, schemas, commands and validation surface to accelerate those operations.
 
-## 12. Trust and execution boundary
+## 13. Trust and execution boundary
 
 - generated proposals are data until explicitly applied;
 - code-backed component/node development happens in a separate source implementation lane;
@@ -461,7 +500,7 @@ AI then uses the same catalog, schemas, commands and validation surface to accel
 - imported external node types declare compatibility and runtime requirements;
 - generated/installed components cannot bypass host capability or extension permission boundaries.
 
-## 13. Source-of-truth and persistence
+## 14. Source-of-truth and persistence
 
 Persist canonical UI/graph data, not model transcripts.
 
@@ -470,7 +509,9 @@ Potential persisted artifacts:
 ```text
 UiDocument
 component/subgraph definitions
+layout strategies/constraints
 property/token/resource values
+responsive/state variants
 bindings/events
 GraphDocument
 external adapter references/version pins
@@ -478,7 +519,7 @@ external adapter references/version pins
 
 AI conversation/proposal history is optional authoring metadata and must not become required runtime state.
 
-## 14. Testing target
+## 15. Testing target
 
 Core model and proposal validation are backendless.
 
@@ -486,8 +527,10 @@ Minimum target layers:
 
 ```text
 value/property schema unit tests
+layout strategy/constraint validation
 component/node descriptor validation
 UiDocument/GraphDocument command transaction tests
+Canvas/Inspector parity tests
 proposal normalize/validate/apply tests
 manual and generated authoring parity fixtures
 renderer/component/browser scenarios
@@ -497,18 +540,22 @@ minimal real runtime canaries
 
 Important invariant: the same expected document result should be testable whether an edit was expressed as direct commands or as an accepted generated proposal.
 
-## 15. Target implementation sequence
+## 16. Target implementation sequence
 
 ```text
-Existing document/graph/schema ownership inventory
+Existing document/graph/schema/layout ownership inventory
         ↓
 WB-NS-070A typed UI value/property foundation
         ↓
-WB-NS-070B atomic component + composite registry contract
+WB-NS-070B layout strategy + typed style constraint contract
         ↓
-WB-NS-070C UiDocument command/proposal authoring contract
+WB-NS-070C atomic component + composite registry contract
         ↓
-WB-NS-070D generative UI provider-neutral planner integration
+WB-NS-070D UiDocument command/direct-manipulation authoring contract
+        ↓
+WB-NS-070E responsive/variant + design token/resource model
+        ↓
+WB-NS-070F generative UI provider-neutral planner integration
         ↓
 WB-NS-071A graph NodeTypeDescriptor/property-input foundation
         ↓
@@ -521,23 +568,25 @@ optional ComfyUI adapter experiment
 
 These packet IDs are target placeholders until the canonical implementation plan completes source/API inventory and closes each ready gate.
 
-## 16. Non-goals
+## 17. Non-goals
 
 - AI required to author UI or graphs;
-- LLM-generated JSX/HTML as canonical UI state;
+- LLM-generated JSX/HTML or opaque CSS as canonical UI state;
 - arbitrary generated code executed directly from chat;
 - one universal registry that collapses UI components, graph nodes, commands, services and extension internals;
 - copying ComfyUI's runtime or frontend architecture wholesale;
 - forcing every property to become a graph socket;
+- exposing every CSS property in one unstructured Inspector regardless of context;
 - creating a code-backed primitive when a declarative composite is sufficient;
 - coupling implementation packets to one coding agent vendor.
 
-## 17. Discovery status
+## 18. Discovery status
 
 `ADOPT` as target direction:
 
 - atomic-to-composite UI composition;
-- typed property/value schemas shared across inspector and connectable authoring where semantics match;
+- selectable layout strategies and typed CSS-compatible design properties;
+- typed property/value schemas shared across Inspector and connectable authoring where semantics match;
 - AI as an optional proposal/controller over the same canonical authoring model;
 - missing-capability escalation from reuse/composition to extension or implementation requirement;
 - AI-assisted node/component development through the separate implementation lane.
@@ -546,6 +595,7 @@ These packet IDs are target placeholders until the canonical implementation plan
 
 - ComfyUI schema/workflow adapter;
 - external generative-UI protocol adapters;
-- automated component/node scaffold generation.
+- automated component/node scaffold generation;
+- advanced raw renderer/CSS projection where portable typed properties are insufficient.
 
 Falsifier: if source/API inventory shows that a proposed shared value/property abstraction would create more cross-domain coupling than reuse, keep narrower typed adapters and preserve the higher-level authoring/proposal semantics without forcing one universal schema.
