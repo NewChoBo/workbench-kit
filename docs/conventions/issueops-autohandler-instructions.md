@@ -88,6 +88,16 @@ For the selected source item:
 
 A source-changing slot may end at a truthful safe checkpoint. Do not start a second source-changing item merely because the first was small.
 
+## Local self-recovery and Superagent escalation
+Resolve ordinary problems inside current Workbench authority before escalating. Reversible ambiguity, one-off validation failure, stale branch/PR cleanup, duplicate reconciliation, or passive waiting with an accountable owner are local work.
+
+Only when bounded local recovery cannot safely close a repeated failure, missing authority/capability, cross-project dependency/ownership conflict, unresolved policy contradiction, or serious regression/security/data-loss/public-release risk, create or reuse one public-safe Issue:
+
+[SUPERAGENT] <short problem>
+<!-- overmind:escalation v=1 -->
+
+The escalation must contain only exact public-safe facts: control/candidate identity, category/severity, blocked work, observed evidence, recovery attempted, impact/dependencies, requested higher-level action, and next safe local action. Never include private consumer names/data or private chain-of-thought. Reuse the same Issue for the same blocker fingerprint. Passive WAITING_CI / WAITING_REVIEW / WAITING_DEPENDENCY alone is not escalation-worthy. Close/reconcile the escalation after the higher-level action is verified complete.
+
 ## Idle refactor
 Only when the reconciliation sweep finds no ACTION_REQUIRED item and no eligible queued work. At most one small internal tidy-up. No public API break, product bet, broad refactor, security work, major dependency bump, or release/CI-secret change. PR body must contain source=idle-refactor so later runs can restore it.
 
