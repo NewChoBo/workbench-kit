@@ -135,7 +135,7 @@ intent: implement | discuss | clarify
 
 Status labels: `status:queued` · `in-progress` · `pr-open` · `needs-human` ·
 `skipped`. Automation posts use the HTML marker documented in
-`github-issues.md`. Never auto-close issues from automation; never push `main`.
+`github-issues.md`. Automation may close only an Issue it owns after its actual acceptance criteria and any required linked PR review/integration are verified; never close another role's Issue, and never push `main`.
 
 ## Git
 
