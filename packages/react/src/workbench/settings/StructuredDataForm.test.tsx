@@ -174,6 +174,23 @@ describe('WorkbenchStructuredDataForm helpers', () => {
     expect(data.request.fields[1].name).toBe('status');
   });
 
+  it('keeps reserved form-path keys as own data without changing source prototypes', () => {
+    const data = { profile: {} };
+    const nextData = setWorkbenchStructuredDataValue(
+      data,
+      ['profile', '__proto__', 'name'],
+      'Workbench',
+    );
+    const profile = nextData.profile as Record<string, unknown>;
+
+    expect(getWorkbenchStructuredDataValue(nextData, ['profile', '__proto__', 'name'])).toBe(
+      'Workbench',
+    );
+    expect(Object.prototype.hasOwnProperty.call(profile, '__proto__')).toBe(true);
+    expect(Object.getPrototypeOf(profile)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(data.profile)).toBe(Object.prototype);
+  });
+
   it('interprets lightweight schema field definitions', () => {
     expect(getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B'] })).toBe('radio');
     expect(getWorkbenchStructuredDataSchemaFieldControl({ enum: ['A', 'B', 'C', 'D', 'E'] })).toBe(
