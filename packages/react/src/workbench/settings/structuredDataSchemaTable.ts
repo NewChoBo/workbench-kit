@@ -7,7 +7,10 @@ import type {
   WorkbenchStructuredDataSchemaTableRowKeyInput,
 } from './structuredDataSchemaTypes';
 import { getWorkbenchStructuredDataSchemaFieldDefaultValue } from './structuredDataSchemaField';
-import { getWorkbenchStructuredDataSchemaSectionPath } from './structuredDataSchemaSection';
+import {
+  getWorkbenchStructuredDataSchemaPathSegments,
+  getWorkbenchStructuredDataSchemaSectionPath,
+} from './structuredDataSchemaSection';
 
 export function getWorkbenchStructuredDataSchemaTableRows(
   value: unknown,
@@ -34,7 +37,7 @@ export function getWorkbenchStructuredDataSchemaTablePath(
   section: WorkbenchStructuredDataSchemaSectionSummary,
 ) {
   const tablePath = getWorkbenchStructuredDataSchemaSectionPath(section);
-  return tablePath ? tablePath.split('.') : [];
+  return getWorkbenchStructuredDataSchemaPathSegments(tablePath);
 }
 
 export function getWorkbenchStructuredDataSchemaTableRowKey({

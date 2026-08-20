@@ -21,6 +21,10 @@ export function getWorkbenchStructuredDataSchemaSectionPath(
   return section.sectionKey || section.id || '';
 }
 
+export function getWorkbenchStructuredDataSchemaPathSegments(path: string) {
+  return path ? path.split('.') : [];
+}
+
 export function getWorkbenchStructuredDataSchemaFieldDataPath(
   section: WorkbenchStructuredDataSchemaSectionSummary,
   fieldPath: string,

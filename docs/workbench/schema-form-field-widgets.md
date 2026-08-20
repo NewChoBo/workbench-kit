@@ -33,6 +33,14 @@ Built-in panel validation runs on change and blur. External `fieldErrors` prop s
 
 Helpers: `validateWorkbenchStructuredDataSchemaFieldValue`, `buildWorkbenchStructuredDataSchemaSelectOptions`.
 
+## Schema paths
+
+Schema `dataPath` and field path strings use a dotted hierarchy shorthand. For example,
+`request.fields` addresses nested `data.request.fields` consistently for section reads,
+field edits, generated samples, tables, and validation targeting. A literal top-level key
+named `request.fields` does not take precedence. Literal member names containing `.` are
+not representable by this shorthand; use segment-array APIs where available.
+
 ## Example field definitions
 
 ```json
