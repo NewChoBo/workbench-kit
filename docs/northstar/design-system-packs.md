@@ -206,12 +206,7 @@ Conceptual result:
 ```ts
 interface ResolvedDesignValue<T = unknown> {
   readonly value: T;
-  readonly source:
-    | 'instance'
-    | 'theme-scope'
-    | 'theme'
-    | 'pack-default'
-    | 'component-fallback';
+  readonly source: 'instance' | 'theme-scope' | 'theme' | 'pack-default' | 'component-fallback';
   readonly sourceId?: string;
 }
 ```
@@ -346,8 +341,16 @@ interface PackChangePlan {
 
 type ComponentCompatibilityResult =
   | { readonly kind: 'direct'; readonly nodeId: string; readonly target: ComponentRef }
-  | { readonly kind: 'semantic-role'; readonly nodeId: string; readonly candidates: readonly ComponentRef[] }
-  | { readonly kind: 'replacement-required'; readonly nodeId: string; readonly candidates: readonly ComponentRef[] }
+  | {
+      readonly kind: 'semantic-role';
+      readonly nodeId: string;
+      readonly candidates: readonly ComponentRef[];
+    }
+  | {
+      readonly kind: 'replacement-required';
+      readonly nodeId: string;
+      readonly candidates: readonly ComponentRef[];
+    }
   | { readonly kind: 'unsupported'; readonly nodeId: string; readonly reason: string };
 ```
 
@@ -599,22 +602,30 @@ WB-NS-072A existing theme/token/widget/JDW API consolidation map
         ↓
 WB-NS-072B DesignSystemPack + Theme/ThemeScope descriptor/resolver foundation
         ↓
-WB-NS-072C component-role + typed token/resource resolution
-        ↓
-WB-NS-072D explicit pack compatibility/migration planner + transaction
+{ WB-NS-072C component-role + typed token/resource resolution
+  WB-NS-072D explicit pack compatibility/migration planner + transaction }
         ↓
 WB-NS-072E Canvas/Inspector/provenance integration
         ↓
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup
 ```
 
-`WB-NS-072A` must decide exact package/subpath ownership and compatibility adapters. `072B+` may become `READY_FOR_IMPLEMENTATION` only after that mapping removes the risk of a parallel theme/widget/property engine.
+`WB-NS-072A` is the only currently `READY_FOR_IMPLEMENTATION` packet. It must decide exact package/subpath ownership and compatibility adapters. `072B+` remain `DESIGNING` until that mapping removes the risk of a parallel theme/widget/property engine.
+
+Canonical packet gates are maintained in [`implementation-plan.md`](./implementation-plan.md):
+
+- `WB-NS-072A`: map current foundations to one owner and adapter/removal boundary; validate public exports and consumers; done when no duplicate engine is proposed.
+- `WB-NS-072B`: define descriptors, registry, resolver, provenance, and dependency diagnostics; validate backendless resolution; done when same-pack Theme changes preserve document structure.
+- `WB-NS-072C`: define component-role and typed token/resource resolution; validate classifications and diagnostics; done when role portability is explicit rather than assumed.
+- `WB-NS-072D`: define explicit migration planning and atomic application; validate stale-plan, transaction, and undo behavior; done when cross-pack changes cannot mutate silently.
+- `WB-NS-072E`: integrate Canvas/Inspector and provenance; validate browser projection and focus behavior; done when both surfaces retain command parity.
+- `WB-NS-072F`: delegate legacy theme/appearance paths and remove duplicates only after migration evidence; validate regression, public exports, and packed consumers; done when one resolver boundary remains.
 
 Cross-chain dependency:
 
 - `WB-NS-070A/B/C/D` provide typed values/layout/components/UiDocument command semantics used by DesignSystem packs;
 - `WB-NS-040` provides extension trust/compatibility semantics for installable contributions;
-- `WB-NS-072B-D` must land and be source-reviewed before an external consumer is told to build product policy against them;
+- `WB-NS-072B`, `WB-NS-072C`, and `WB-NS-072D` must land and be source-reviewed before an external consumer is told to build product policy against them;
 - publish/release approval precedes exact external consumption.
 
 ## 24. Discovery decision
@@ -652,7 +663,7 @@ Reject or mark `REVISION_REQUIRED` if an implementation:
 - treats all components as fake portable roles;
 - stores renderer CSS as the only canonical typed design state;
 - leaves current `ThemeRegistry` and the new resolver as permanent conflicting sources of theme truth without an explicit boundary;
-- allows TilePaper or another consumer to invent a parallel permanent generic design-system engine because Workbench APIs are incomplete;
+- allows an integrating host to invent a parallel permanent generic design-system engine because Workbench APIs are incomplete;
 - permits stale pack-change plans to apply after document/registry assumptions changed;
 - introduces host/Electron dependencies into pure descriptor/resolution logic;
 - bypasses extension trust/capability boundaries for executable component factories or resources;

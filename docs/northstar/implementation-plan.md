@@ -281,31 +281,49 @@ Evidence: official Theia architecture separates compile-time application extensi
 
 Falsifier for the deferred isolation decision: a committed product requirement needs untrusted third-party execution, remote workspace placement or extension CPU/failure isolation.
 
-## WB-NS-001B — Shell dependency narrowing
+## WB-NS-001B1 - Shell dependency inventory and focused-service contract
 
-- **Status:** `DESIGNING`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependency:** `WB-NS-001A`
 
 ### Goal
 
-Stop shell/features from depending on the aggregate `ExtensionRegistry` when a focused service is sufficient.
+Produce the bounded shell dependency map and focused-service contract required before replacing aggregate `ExtensionRegistry` reach-through.
+
+### Implementation packet
+
+1. Inventory every `shell-react` use of `extensionRegistry` as activation, command, contribution read, extension management/catalog, capability access, or other.
+2. Record the smallest focused service/context facade needed by each category, including its lifecycle and disposal owner.
+3. Define compatibility/deprecation seams without widening extension runtime access or introducing a global service locator.
+
+### Validation
+
+- focused inventory/contract review against the extracted `WB-NS-001A` roles;
+- affected shell typecheck plus `pnpm check:commit-safety`;
+- repository validation applicable to the exact implementation head.
+
+### Done criteria
+
+- every aggregate-registry use has one classified owner and replacement seam;
+- the proposed React context shape is explicit and does not expose host composition internals;
+- the result is sufficient to implement the migration without reopening target ownership decisions.
+
+## WB-NS-001B2 - Shell dependency narrowing migration
+
+- **Status:** `DESIGNING`
+- **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
+- **Ownership:** `GENERIC_KIT`
+- **Dependency:** `WB-NS-001B1`
+
+### Goal
+
+Replace proven aggregate-registry reach-through incrementally while retaining each package's behavior, goals, actions, diagnostics, and migration scope.
 
 ### Design work still required
 
-Inventory each current `shell-react` use of `extensionRegistry` and classify it as:
-
-```text
-activation
-command
-contribution read
-extension management/catalog
-capability access
-other
-```
-
-Then define the smallest focused context/facade per category and a compatibility/deprecation path. Do not delegate until that inventory proves the target React context shape.
+Define the ordered package migration, compatibility/deprecation period, focused-context availability behavior, diagnostics for unavailable capabilities, and cleanup trigger after all consumers leave the aggregate path.
 
 ## WB-NS-010 — Graph document/controller/renderer/runtime separation
 
@@ -612,6 +630,120 @@ optional ComfyUI adapter experiment
 ### ComfyUI discovery
 
 Evaluate typed input/output compatibility, widget/input duality, custom-node schema/versioning and editor metadata as reusable interaction/schema principles. Do not copy ComfyUI runtime/frontend internals or make Workbench dependent on them.
+
+## WB-NS-072A - Existing design-system foundation consolidation map
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md)
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-070A`, `WB-NS-040`
+
+### Packet
+
+Map existing theme, token, widget, document, inspector, and extension-contribution APIs to one proposed package/subpath ownership and compatibility-adapter boundary.
+
+### Validation
+
+Review current public exports and consumers, then run `pnpm check:commit-safety` and the applicable static validation lane.
+
+### Done criteria
+
+The map names one canonical owner for every retained concern, one adapter/removal trigger for every superseded path, and no parallel permanent theme/widget/property engine.
+
+## WB-NS-072B - DesignSystemPack and Theme resolver foundation
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 4-10
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072A`, `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D`, `WB-NS-040`
+
+### Packet
+
+Define versioned pack/theme/scope descriptors, registry ownership, resolver inputs, provenance, and structured missing/incompatible dependency diagnostics.
+
+### Validation
+
+Backendless descriptor, version, scope-resolution, provenance, and missing-dependency tests; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+One canonical document dependency model resolves registered descriptors without rewriting structure for a same-pack theme change or silently substituting an incompatible pack.
+
+## WB-NS-072C - Component-role and typed token/resource resolution
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 8-10
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072B`
+
+### Packet
+
+Define portable semantic-role eligibility, explicit pack component references, typed token/resource resolution, and compatibility classifications.
+
+### Validation
+
+Backendless role-mapping, typed-resolution, provenance, and unsupported-component diagnostics tests; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+Resolution distinguishes direct, semantic-role, replacement-required, and unsupported outcomes without inventing fake portable roles.
+
+## WB-NS-072D - Explicit pack migration planner and transaction
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 11-16
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072B`
+
+### Packet
+
+Define deterministic plan/preview/choice/apply operations for pack changes, including revision snapshots, stale-plan rejection, atomicity, and undo/redo.
+
+### Validation
+
+Backendless planning, stale-result, replacement-choice, atomic transaction, and undo/redo tests; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+Cross-pack changes are explicit, previewable, stale-safe, and atomic; cancellation or planning alone cannot mutate the canonical document.
+
+## WB-NS-072E - Canvas, Inspector, and provenance integration
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 12, 18-21
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072C`, `WB-NS-072D`
+
+### Packet
+
+Project resolved values, scope inheritance, compatibility choices, and diagnostics through Canvas/Inspector surfaces while preserving command and transaction parity.
+
+### Validation
+
+Backendless controller tests plus browser coverage for projection, focus preservation, scoped inheritance, and visible diagnostics; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+Canvas and Inspector expose equivalent supported operations and provenance, while same-pack theme changes preserve canonical structure and focus identity.
+
+## WB-NS-072F - Existing theme compatibility delegation and cleanup
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) section 22
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072E`
+
+### Packet
+
+Delegate existing theme-registry and shell-appearance paths through the validated resolver boundary, retain compatibility adapters, and remove duplicates only after consumer migration evidence.
+
+### Validation
+
+Regression coverage for existing theme behavior, public-export and packed-consumer checks, commit safety, and repository validation on the exact head.
+
+### Done criteria
+
+Existing consumers retain supported behavior through one resolver boundary, with explicit adapter-removal criteria and no competing source of theme truth.
 
 ---
 

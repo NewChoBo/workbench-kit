@@ -118,9 +118,7 @@ Target shape:
 
 ```ts
 interface ExtensionContributionRouter {
-  registerManifestContributions(
-    description: WorkbenchExtensionDescription,
-  ): Disposable;
+  registerManifestContributions(description: WorkbenchExtensionDescription): Disposable;
 }
 ```
 

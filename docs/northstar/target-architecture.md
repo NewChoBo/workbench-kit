@@ -19,7 +19,7 @@ A host should be able to assemble IDE/workbench experiences, workflow/graph edit
 | Documents / editors              | document identity, models, editor inputs, dirty/save lifecycle                         |
 | Graph composition                | graph document model and structural editing                                            |
 | Workflow runtime                 | execution semantics independent from graph renderer                                    |
-| GUI builder                      | atomic-to-composite component tree, selectable layout/style/property authoring          |
+| GUI builder                      | atomic-to-composite component tree, selectable layout/style/property authoring         |
 | Schema/forms/inspectors          | field schemas, editor selection, validation and property surfaces                      |
 | Projection system                | full graph, GUI builder, form/inspector, code/schema, preview and end-user projections |
 | Extension/plugin platform        | manifests, contributions, capabilities, compatibility, trust/permissions               |
