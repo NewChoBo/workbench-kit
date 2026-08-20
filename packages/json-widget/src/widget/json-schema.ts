@@ -1,6 +1,7 @@
 import type { WidgetJsonSchema, WidgetTypeDefinition } from '@workbench-kit/contracts';
 
 import { WORKBENCH_JDW_KNOWN_TYPES } from '../jdw/profile.js';
+import { JDW_VALUE_PATH_PATTERN_SOURCE } from '../jdw/value-path.js';
 
 type JsonSchemaObject = Record<string, unknown>;
 
@@ -237,7 +238,7 @@ const JDW_NODE_DEFINITION_NAMES = [
   'ButtonJdwNode',
 ] as const;
 
-const JDW_DYNAMIC_VALUE_PATTERN = '^\\$\\{[A-Za-z0-9_.-]+\\}$';
+const JDW_DYNAMIC_VALUE_PATTERN = `^\\$\\{${JDW_VALUE_PATH_PATTERN_SOURCE}\\}$`;
 const JDW_MAIN_AXIS_ALIGNMENT_VALUES = [
   'start',
   'center',
@@ -261,7 +262,10 @@ const JDW_STACK_PLACEMENT_PROPERTY_NAMES = ['left', 'top', 'right', 'bottom'] as
 const JDW_COMMON_NODE_PROPERTIES = {
   $schema: { type: 'string', minLength: 1 },
   id: { type: 'string', minLength: 1 },
-  listen: { type: 'array', items: { type: 'string' } },
+  listen: {
+    type: 'array',
+    items: { type: 'string', pattern: `^${JDW_VALUE_PATH_PATTERN_SOURCE}$` },
+  },
 } satisfies JsonSchemaObject;
 
 function jdwDefinitionRef(definitionName: string): JsonSchemaObject {

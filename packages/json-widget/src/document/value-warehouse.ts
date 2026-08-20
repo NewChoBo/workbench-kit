@@ -5,6 +5,7 @@ import {
   type JsonWidgetNode,
   type JsonWidgetValueMap,
 } from '../jdw/node.js';
+import { parseJdwValuePath, readJdwValuePath, setJdwValuePath } from '../jdw/value-path.js';
 
 export type JsonWidgetValueWarehouseListener = (event: JsonWidgetValueWarehouseFlushEvent) => void;
 
@@ -68,13 +69,13 @@ export function createJsonWidgetValueWarehouse(
     },
 
     setValue(path, value) {
-      const trimmed = path.trim();
-      if (trimmed.length === 0) {
-        throw new Error('JsonWidgetValueWarehouse.setValue requires a non-empty path.');
+      const segments = parseJdwValuePath(path);
+      if (!segments) {
+        throw new Error('JsonWidgetValueWarehouse.setValue requires a valid JDW value path.');
       }
 
       const previous = values;
-      const next = setValueAtPath(previous, trimmed, value);
+      const next = setJdwValuePath(previous, segments, value);
       if (Object.is(previous, next)) {
         return;
       }
@@ -154,74 +155,6 @@ function shallowEqualRecords(left: JsonWidgetValueMap, right: JsonWidgetValueMap
 }
 
 function readValuePath(values: JsonWidgetValueMap, path: string): unknown {
-  const segments = path.split('.').filter((segment) => segment.length > 0);
-  if (segments.length === 0) {
-    return undefined;
-  }
-
-  let current: unknown = values;
-  for (const segment of segments) {
-    if (current === null || current === undefined || typeof current !== 'object') {
-      return undefined;
-    }
-
-    current = (current as Record<string, unknown>)[segment];
-  }
-
-  return current;
-}
-
-function setValueAtPath(
-  values: JsonWidgetValueMap,
-  path: string,
-  value: unknown,
-): JsonWidgetValueMap {
-  const segments = path.split('.').filter((segment) => segment.length > 0);
-  if (segments.length === 0) {
-    return values;
-  }
-
-  return Object.freeze(setNestedRecord(values, segments, 0, value) as Record<string, unknown>);
-}
-
-function setNestedRecord(
-  current: unknown,
-  segments: readonly string[],
-  index: number,
-  value: unknown,
-): unknown {
-  const key = segments[index]!;
-  const isLeaf = index === segments.length - 1;
-  const base =
-    current !== null &&
-    current !== undefined &&
-    typeof current === 'object' &&
-    !Array.isArray(current)
-      ? (current as Record<string, unknown>)
-      : {};
-
-  if (isLeaf) {
-    if (Object.is(base[key], value)) {
-      return current !== null &&
-        current !== undefined &&
-        typeof current === 'object' &&
-        !Array.isArray(current)
-        ? current
-        : Object.freeze({ ...base, [key]: value });
-    }
-
-    return Object.freeze({ ...base, [key]: value });
-  }
-
-  const nextChild = setNestedRecord(base[key], segments, index + 1, value);
-  if (
-    Object.is(base[key], nextChild) &&
-    current !== null &&
-    typeof current === 'object' &&
-    !Array.isArray(current)
-  ) {
-    return current;
-  }
-
-  return Object.freeze({ ...base, [key]: nextChild });
+  const segments = parseJdwValuePath(path);
+  return segments ? readJdwValuePath(values, segments) : undefined;
 }

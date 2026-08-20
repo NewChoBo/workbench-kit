@@ -53,7 +53,10 @@ describe('createWidgetJsonSchema', () => {
         JdwNode?: { oneOf?: unknown[] };
         JdwDynamicValue?: unknown;
         TextJdwNode?: {
-          properties?: { args?: { properties?: { fontSize?: unknown } } };
+          properties?: {
+            args?: { properties?: { fontSize?: unknown } };
+            listen?: unknown;
+          };
         };
         FlexibleJdwNode?: {
           properties?: { args?: { properties?: { fit?: unknown } } };
@@ -67,11 +70,15 @@ describe('createWidgetJsonSchema', () => {
     expect(schema.definitions?.JdwNode?.oneOf?.length).toBeGreaterThanOrEqual(16);
     expect(schema.definitions?.JdwDynamicValue).toMatchObject({
       type: 'string',
-      pattern: '^\\$\\{[A-Za-z0-9_.-]+\\}$',
+      pattern: '^\\$\\{[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*\\}$',
     });
     expect(schema.definitions?.StackJdwNode).toBeDefined();
     expect(schema.definitions?.ImageJdwNode).toBeDefined();
     expect(schema.definitions?.ButtonJdwNode).toBeDefined();
+    expect(schema.definitions?.TextJdwNode?.properties?.listen).toEqual({
+      type: 'array',
+      items: { type: 'string', pattern: '^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$' },
+    });
     expect(schema.definitions?.TextJdwNode?.properties?.args?.properties?.fontSize).toEqual({
       oneOf: [{ type: 'number', minimum: 1 }, { $ref: '#/definitions/JdwDynamicValue' }],
     });
