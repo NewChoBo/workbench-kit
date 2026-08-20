@@ -125,6 +125,13 @@ export interface ExtensionDependencyDiagnostic {
 interface RegisteredExtension {
   readonly contributionDisposables: DisposableStore;
   readonly description: WorkbenchExtensionDescription;
+  invalidated: boolean;
+}
+
+interface PendingActivation {
+  readonly promise: Promise<ActivatedExtension>;
+  readonly registration: RegisteredExtension;
+  readonly subscriptions: DisposableStore;
 }
 
 interface ActiveExtension {
@@ -153,7 +160,7 @@ export class ExtensionRegistry implements Disposable {
   private readonly onDidActivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
   private readonly onDidDeactivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
   private readonly activeExtensions = new Map<string, ActiveExtension>();
-  private readonly activatingExtensions = new Map<string, Promise<ActivatedExtension>>();
+  private readonly activatingExtensions = new Map<string, PendingActivation>();
   private readonly extensions = new Map<string, RegisteredExtension>();
 
   readonly onDidActivateExtension = this.onDidActivateExtensionEmitter.event;
@@ -223,7 +230,7 @@ export class ExtensionRegistry implements Disposable {
     }
 
     const contributionDisposables = new DisposableStore();
-    const entry: RegisteredExtension = { contributionDisposables, description };
+    const entry: RegisteredExtension = { contributionDisposables, description, invalidated: false };
     this.extensions.set(id, entry);
 
     try {
@@ -235,11 +242,12 @@ export class ExtensionRegistry implements Disposable {
     }
 
     return toDisposable(() => {
-      void this.deactivateExtension(id);
       const current = this.extensions.get(id);
       if (current === entry) {
+        this.invalidateRegistration(id, entry);
         this.extensions.delete(id);
         contributionDisposables.dispose();
+        void this.deactivateExtension(id);
       }
     });
   }
@@ -309,38 +317,64 @@ export class ExtensionRegistry implements Disposable {
       };
     }
 
-    const pending = this.activatingExtensions.get(extensionId);
-    if (pending) {
-      return pending;
+    const registration = this.extensions.get(extensionId);
+    if (!registration) {
+      throw new Error(`Extension "${extensionId}" is not registered.`);
     }
 
-    const activation = this.doActivateExtension(extensionId);
-    this.activatingExtensions.set(extensionId, activation);
+    const pending = this.activatingExtensions.get(extensionId);
+    if (pending?.registration === registration) {
+      return pending.promise;
+    }
+
+    let resolveActivation: (extension: ActivatedExtension) => void = () => undefined;
+    let rejectActivation: (error: unknown) => void = () => undefined;
+    const activation = new Promise<ActivatedExtension>((resolve, reject) => {
+      resolveActivation = resolve;
+      rejectActivation = reject;
+    });
+    const pendingActivation: PendingActivation = {
+      promise: activation,
+      registration,
+      subscriptions: new DisposableStore(),
+    };
+    this.activatingExtensions.set(extensionId, pendingActivation);
+    void this.doActivateExtension(extensionId, pendingActivation).then(
+      resolveActivation,
+      rejectActivation,
+    );
 
     try {
       return await activation;
     } finally {
-      this.activatingExtensions.delete(extensionId);
+      if (this.activatingExtensions.get(extensionId) === pendingActivation) {
+        this.activatingExtensions.delete(extensionId);
+      }
     }
   }
 
-  private async doActivateExtension(extensionId: string): Promise<ActivatedExtension> {
-    const extension = this.extensions.get(extensionId);
-    if (!extension) {
-      throw new Error(`Extension "${extensionId}" is not registered.`);
-    }
-
-    for (const dependencyId of extension.description.manifest.extensionDependencies ?? []) {
-      await this.activateExtension(dependencyId);
-    }
-
-    const subscriptions = new DisposableStore();
+  private async doActivateExtension(
+    extensionId: string,
+    pendingActivation: PendingActivation,
+  ): Promise<ActivatedExtension> {
+    const { registration: extension, subscriptions } = pendingActivation;
     try {
+      this.assertCurrentRegistration(extensionId, extension);
+
+      for (const dependencyId of extension.description.manifest.extensionDependencies ?? []) {
+        await this.activateExtension(dependencyId);
+        this.assertCurrentRegistration(extensionId, extension);
+      }
+
+      this.assertCurrentRegistration(extensionId, extension);
+
       const context = this.createExtensionContext(extension.description, subscriptions);
       const activationResult = await extension.description.module?.activate?.(context);
       if (isDisposable(activationResult)) {
         subscriptions.add(activationResult);
       }
+
+      this.assertCurrentRegistration(extensionId, extension);
 
       this.activeExtensions.set(extensionId, {
         deactivate: extension.description.module?.deactivate,
@@ -378,6 +412,9 @@ export class ExtensionRegistry implements Disposable {
   }
 
   dispose(): void {
+    for (const [extensionId, extension] of this.extensions) {
+      this.invalidateRegistration(extensionId, extension);
+    }
     void this.deactivateAll();
     for (const extension of this.extensions.values()) {
       extension.contributionDisposables.dispose();
@@ -400,6 +437,21 @@ export class ExtensionRegistry implements Disposable {
     this.capabilityRegistry.dispose();
     this.onDidActivateExtensionEmitter.dispose();
     this.onDidDeactivateExtensionEmitter.dispose();
+  }
+
+  private assertCurrentRegistration(extensionId: string, registration: RegisteredExtension): void {
+    if (registration.invalidated || this.extensions.get(extensionId) !== registration) {
+      throw new Error(`Extension "${extensionId}" activation was invalidated.`);
+    }
+  }
+
+  private invalidateRegistration(extensionId: string, registration: RegisteredExtension): void {
+    registration.invalidated = true;
+    const pendingActivation = this.activatingExtensions.get(extensionId);
+    if (pendingActivation?.registration === registration) {
+      pendingActivation.subscriptions.dispose();
+      this.activatingExtensions.delete(extensionId);
+    }
   }
 
   private assertDependencyGraph(): void {
