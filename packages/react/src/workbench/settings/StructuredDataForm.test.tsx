@@ -403,6 +403,33 @@ describe('WorkbenchStructuredDataForm helpers', () => {
         section: { sectionKey: 'requestFields' },
       }),
     ).toEqual([{ name: 'code' }]);
+    const ownReservedKeys = JSON.parse(
+      '{"constructor":"own constructor","__proto__":"own prototype key"}',
+    ) as Record<string, unknown>;
+    const nullPrototypeKeys = Object.create(null) as Record<string, unknown>;
+    nullPrototypeKeys['constructor'] = 'null-prototype constructor';
+    nullPrototypeKeys['__proto__'] = 'null-prototype key';
+
+    for (const sectionKey of ['constructor', '__proto__']) {
+      expect(
+        getWorkbenchStructuredDataSchemaDocumentSectionValue({
+          data: {},
+          section: { sectionKey },
+        }),
+      ).toBeNull();
+      expect(
+        getWorkbenchStructuredDataSchemaDocumentSectionValue({
+          data: ownReservedKeys,
+          section: { sectionKey },
+        }),
+      ).toBe(ownReservedKeys[sectionKey]);
+      expect(
+        getWorkbenchStructuredDataSchemaDocumentSectionValue({
+          data: nullPrototypeKeys,
+          section: { sectionKey },
+        }),
+      ).toBe(nullPrototypeKeys[sectionKey]);
+    }
     expect(sample).toEqual({
       request: { fields: [{ name: 'id', required: false }] },
       summary: { name: 'Untitled' },

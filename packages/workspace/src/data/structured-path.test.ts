@@ -119,7 +119,7 @@ describe('structured data paths', () => {
     expect(getWorkbenchStructuredDataArrayIndex('4294967294')).toBe(4_294_967_294);
     expect(getWorkbenchStructuredDataArrayIndex(4_294_967_294)).toBe(4_294_967_294);
 
-    for (const segment of ['', ' ', '01', '1e2', '-1', '1.5', '4294967295']) {
+    for (const segment of ['', ' ', '01', '1e2', '-0', '-1', '1.5', '4294967295']) {
       expect(getWorkbenchStructuredDataArrayIndex(segment)).toBeNull();
       expect(getWorkbenchStructuredDataValue(['zero', 'one'], [segment])).toBeUndefined();
       expect(setWorkbenchStructuredDataPathValue(['zero', 'one'], [segment], 'changed')).toEqual([
