@@ -24,29 +24,19 @@ These planes may be assembled in the same JavaScript realm today, but they are n
 - A runtime extension never receives the host composition container, React provider internals, arbitrary service lookup or transport primitives.
 - A single aggregate object may exist temporarily as a compatibility facade, but it is not the target service boundary.
 
-## Historical source snapshot evidence
+## Source snapshot evidence
 
 Current integration baseline: `origin/develop@598deebf9512e39d46c636bd00926867816c0186`.
 
-Historical source snapshot reviewed: `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55`. The following is candidate evidence, not a current integration fact until re-verified.
+The current baseline was re-verified against the bounded source inventory recorded in
+[`implementation-plan.md`](./implementation-plan.md) packet `WB-NS-001A`:
 
-The historical source snapshot showed `packages/workbench-core/src/extension/registry.ts` making `ExtensionRegistry` responsible for all of the following:
+- `packages/workbench-core/src/extension/registry.ts` still makes `ExtensionRegistry` responsible for extension inventory, contribution routing, dependency analysis, activation/deactivation, runtime API construction, command activation/execution and focused-registry lifetime;
+- `packages/workbench-core/src/index.ts` still exports `ExtensionRegistry`, its options and `CapabilityRegistry`, so the first slice requires a source-compatible facade;
+- `packages/workbench-extension-sdk/src/contributions.ts` still exposes a restricted `ExtensionContext` rather than host composition internals;
+- `packages/shell-react/src/shell/provider.tsx` still creates and exposes the aggregate registry while using its focused registries directly, which keeps shell narrowing in a later packet.
 
-- extension description storage and duplicate-ID checks;
-- manifest contribution normalization and registration;
-- dependency/cycle validation and diagnostics;
-- activation-event matching;
-- extension activation/deactivation state and lifecycle events;
-- construction of `ExtensionContext`;
-- capability-provider registration and capability lookup;
-- command activation and command execution;
-- ownership/lifetime of activity, configuration, editor, menu, status, view, theme, localization and host-factory registries.
-
-Current `packages/shell-react/src/shell/provider.tsx` exposes that aggregate `ExtensionRegistry` through `WorkbenchContextValue` in addition to focused services.
-
-Current `@workbench-kit/workbench-extension-sdk` already provides a narrower runtime-facing `ExtensionContext` and manifest model. This is useful target evidence: installable extensions do not need the full host service graph.
-
-The current public `@workbench-kit/workbench-core` barrel exports `ExtensionRegistry` and `CapabilityRegistry`, so immediate removal would be a compatibility break rather than a prerequisite for internal decomposition.
+Historical snapshot `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` reached the same architectural finding, but it is corroborating history rather than readiness evidence.
 
 ## GAP
 
@@ -130,12 +120,13 @@ The router delegates to focused registries. It does not become a second universa
 
 Owns executable lifecycle only:
 
-- active and activating state;
+- inactive, activating, active, deactivating and activation-failed state;
+- a monotonic lifecycle epoch and explicit teardown barrier for each extension identity;
 - activation-event matching;
 - dependency-before-dependent activation;
 - activate/deactivate events;
 - teardown of activation subscriptions;
-- explicit activation failure state.
+- explicit activation failure state and teardown-failure diagnostics.
 
 Target operations:
 
@@ -217,15 +208,44 @@ Runtime extension module
 
 No arrow points from a runtime extension to the host composition object.
 
-## Lifecycle and failure semantics
+## Lifecycle, concurrency and failure semantics
 
-- Manifest registration is distinct from executable activation.
-- Declarative contributions can exist while executable code is inactive.
-- A failed activation does not silently convert the extension to active state.
-- Concurrent activation of the same extension coalesces to one pending activation.
-- Dependency activation happens before dependent activation and cycles/missing hard dependencies fail deterministically.
-- Deactivation removes active state before asynchronous teardown completes so a new command cannot observe a falsely active extension.
-- Contribution disposal and activation-subscription disposal remain separate lifetimes.
+### State and ownership
+
+`ExtensionActivationService` is the sole owner of executable lifecycle state. For each extension identity it records a monotonic epoch, the activation-scoped subscriptions and one of these internal states:
+
+```text
+inactive
+  → activating(epoch, shared activation promise)
+  → active(epoch, activation scope)
+  → deactivating(epoch, teardown barrier)
+  → inactive
+
+activating(epoch) → activation-failed(epoch, error)
+activation-failed → activating(new epoch) on a later explicit trigger
+```
+
+- Manifest registration and declarative contribution lifetime remain separate from executable activation lifetime.
+- `isActive()` and other external active-state observations return false as soon as active state transitions to `deactivating`, before the asynchronous hook starts.
+- Internal deactivating state remains present until that epoch's deactivate hook, activation-scope disposal and deactivation event have all completed.
+- Registration disposal may remove inventory and declarative contributions, but it must not erase a still-running teardown barrier for the same extension identity.
+
+### Ordering and coalescing
+
+- Every activation entry path—explicit activation, dependency activation, command/view/startup events and reactivation after re-registration—first awaits the prior teardown barrier, then re-reads inventory and lifecycle epoch before activating.
+- Concurrent activation requests for the same post-teardown epoch coalesce to one activation promise.
+- Deactivation requested while activation is in flight waits for that activation attempt to settle and then tears down a successful result; activation failure makes the queued deactivation a no-op after cleanup.
+- Repeated deactivation requests for the same epoch share one teardown operation.
+- A teardown captures its own epoch and activation scope. It can dispose only that scope and emit only that epoch's deactivation event.
+- The teardown barrier resolves only after the deactivation event is emitted. A later activation event therefore cannot be observed before the prior deactivation event or be disposed by prior-epoch cleanup.
+- Dependency activation happens before dependent activation and cycles or missing hard dependencies fail deterministically.
+
+### Error, timeout, cancellation and retry policy
+
+- Activation failure disposes only the failed attempt's scope, records no active state, rejects all coalesced callers with that attempt's error and emits no activation event. A later explicit trigger may retry with a new epoch; there is no automatic retry loop.
+- Deactivation hook failure does not skip cleanup: activation-scope disposal and the deactivation event run once, the teardown barrier releases only after that cleanup, and the public deactivation operation rejects with the teardown error. A later explicit activation may retry only after the barrier releases.
+- Slice A introduces no synthetic timeout and no cancellation of extension hooks. A non-settling deactivate hook intentionally keeps reactivation blocked rather than allowing old and new epochs to overlap. Any bounded shutdown, forced cancellation or quarantine policy requires a separate target packet.
+- `deactivate()` and `deactivateAll()` await their owned teardown operations. The existing synchronous facade `dispose()` first closes the service to new activation, starts teardown without deleting its barriers and attaches a rejection handler that records any teardown failure in service-owned diagnostics; it neither creates an unhandled rejection nor implies teardown has finished. An awaitable shutdown API, if later required, needs a separate compatibility decision.
 - Optional capability/dependency absence degrades according to manifest policy rather than arbitrary lookup failure.
 
 ## Discovery decision
@@ -267,7 +287,7 @@ Status: target is sufficiently closed for implementation.
 
 1. Extract extension-description ownership from `ExtensionRegistry` into `ExtensionInventory` or an equivalent focused internal role.
 2. Extract manifest contribution registration into `ExtensionContributionRouter` using the existing focused registries and current normalizers.
-3. Extract executable active/activating state and activate/deactivate operations into `ExtensionActivationService`.
+3. Extract executable lifecycle state and activate/deactivate operations into `ExtensionActivationService`, including the per-extension epoch and teardown barrier.
 4. Extract `ExtensionContext` construction into `ExtensionApiFactory` or equivalent focused factory.
 5. Keep public `ExtensionRegistry` API and constructor behavior as a compatibility facade delegating to those roles.
 6. Preserve current `CapabilityRegistry` behavior; do not broaden it into host service discovery.
@@ -291,6 +311,9 @@ Only design worker/process/remote placement when an actual requirement exists. I
 - Existing public `ExtensionRegistry` consumers compile without source changes.
 - Manifest contributions still register before executable activation where current behavior requires it.
 - activation-event, dependency, duplicate-ID, capability/permission and disposal semantics are regression-covered.
+- external inactive observation is preserved during teardown while every activation path waits for the prior epoch's teardown barrier;
+- late teardown work cannot dispose or emit lifecycle events for a newer activation epoch;
+- activation/deactivation failure and retry behavior follows the explicit policy above without adding timeout or cancellation APIs;
 - current extension SDK public types do not require incompatible changes.
 - no runtime extension receives a host composition object or arbitrary service lookup API.
 - no new public generic service registry is introduced.
@@ -308,4 +331,7 @@ After implementation, verify:
 - no React/shell package starts importing internal source paths;
 - tests exercise the focused roles directly in addition to facade regression behavior;
 - disposal order and concurrent activation behavior remain deterministic;
+- every activation entry path observes the same teardown barrier and epoch check;
+- deactivation error cleanup releases the barrier only after scope disposal and event emission;
+- no old teardown, subscription disposal or lifecycle event can overlap a newer activation epoch;
 - bundle/public export surface does not grow accidentally.

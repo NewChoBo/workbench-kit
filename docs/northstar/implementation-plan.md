@@ -109,7 +109,8 @@ UI packet IDs `WB-NS-070*` / `WB-NS-071*` are canonical target slots but remain 
 - **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
-- **Historical source evidence:** `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` (candidate evidence; not the current integration baseline)
+- **Current source evidence:** `origin/develop@598deebf9512e39d46c636bd00926867816c0186` (bounded review below)
+- **Historical source evidence:** `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` (corroborating candidate evidence only)
 - **Public API impact:** none required in this slice
 
 ### Goal
@@ -118,21 +119,27 @@ Split catalog/inventory, manifest contribution routing, executable activation an
 
 This closes the highest-value kernel/extension responsibility gap without introducing a global DI/service-locator API or forcing process isolation.
 
-### HISTORICAL SOURCE SNAPSHOT EVIDENCE
+### CURRENT-BASELINE SOURCE EVIDENCE
 
-The historical source snapshot showed `ExtensionRegistry` directly owning:
+Re-verified on 2026-08-21 at exact `origin/develop@598deebf9512e39d46c636bd00926867816c0186`:
 
-- extension description storage;
-- dependency/cycle diagnostics;
-- declarative contribution registration;
-- active/activating state;
-- activation/deactivation and lifecycle events;
-- `ExtensionContext` construction;
-- capability registration/access;
-- command activation/execution;
-- lifetime of multiple contribution registries.
+- `packages/workbench-core/src/extension/registry.ts` defines public `ExtensionRegistryOptions` for the focused registries, but `ExtensionRegistry` still creates or owns those registries plus `extensions`, `activeExtensions` and `activatingExtensions` maps.
+- The same file still performs inventory lookup/registration, dependency and cycle validation, manifest contribution routing, activation-event matching, dependency-first activation, active-state mutation, lifecycle events, `ExtensionContext` construction and command activation/execution.
+- Current `deactivateExtension()` removes the externally visible active entry before awaiting the asynchronous deactivate hook, while `activateExtension()` has no deactivating-state or teardown-barrier check. Reactivation can therefore overlap old teardown unless Slice A adds the normative epoch/barrier semantics.
+- `packages/workbench-core/src/index.ts` publicly exports `ExtensionRegistry`, `ExtensionRegistryOptions`, lifecycle types and `CapabilityRegistry`; retaining a source-compatible facade is an evidenced migration requirement.
+- `packages/workbench-extension-sdk/src/contributions.ts` exposes a restricted `ExtensionContext` with explicit registration/capability facades and activation-scoped subscriptions. It does not expose the host composition object or arbitrary service lookup, so `ExtensionApiFactory` can preserve the current public shape.
+- `packages/shell-react/src/shell/provider.tsx` creates `ExtensionRegistry`, exposes it through `WorkbenchContextValue` and consumes several focused registries through the aggregate. That evidence supports deferring shell reach-through classification and migration to `WB-NS-001B1/B2` rather than widening Slice A.
+- `packages/workbench-core/src/extension/registry.test.ts` covers registration, contribution-before-activation behavior, lifecycle events, dependency activation, capabilities and disposal, but does not close asynchronous deactivate/reactivate ordering. The focused test list below owns that missing regression evidence.
 
-`WorkbenchProvider` also exposes the aggregate registry through React context. The public `workbench-core` barrel exports `ExtensionRegistry`, so deleting or radically replacing it in the first slice would create avoidable compatibility churn.
+This current inventory still maps directly to the target roles and shows no missing public API or package decision for the internal-first slice. With the teardown epoch/barrier policy closed in the target, `WB-NS-001A` remains `READY_FOR_IMPLEMENTATION`.
+
+Evidence freshness and falsifier rule:
+
+- The readiness claim is valid only for the exact SHA above. Before implementation starts, re-run this bounded inventory if that SHA is no longer the implementation base or any listed source path changed.
+- Demote this packet to `DESIGNING` if re-verification finds that lifecycle ownership, the public facade/SDK compatibility seam or shell dependency boundary changed in a way that requires a new API, migration or teardown decision.
+- Any implementation that lets activation bypass an earlier epoch's teardown barrier, or lets old teardown dispose or emit after a newer activation, falsifies this packet's lifecycle contract and must be rejected rather than treated as a compatible variation.
+
+Historical snapshot `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` reached the same aggregate-responsibility finding, but it is not used independently for promotion.
 
 ### TARGET roles
 
@@ -168,12 +175,14 @@ Registers manifest-declared contributions into explicit focused contribution reg
 
 Owns:
 
-- active and in-flight activation state;
+- inactive, in-flight activation, active, deactivating and activation-failed state;
+- per-extension lifecycle epoch and teardown barrier;
 - activation-event matching;
 - dependency-before-dependent activation;
 - lifecycle events;
 - deactivate/deactivate-all;
-- activation subscription lifetime.
+- activation subscription lifetime;
+- activation-failure state and teardown-failure diagnostics, including synchronous facade disposal.
 
 It does not own command execution or host composition.
 
@@ -206,15 +215,29 @@ executeCommand(commandId)
   → compatibility facade (for current API)
   → ExtensionActivationService.activateByEvent(onCommand)
   → CommandRegistry/CommandService executes handler
+
+deactivate(extensionId)
+  → remove external active observation
+  → retain internal deactivating(epoch, barrier)
+  → await deactivate hook
+  → dispose only that epoch's activation scope
+  → emit that epoch's deactivation event
+  → release barrier
+
+any later activation path
+  → await prior teardown barrier
+  → re-read inventory + epoch
+  → coalesce one new activation attempt
 ```
 
 Manifest contribution lifetime and executable activation lifetime remain distinct.
+The normative error, no-timeout, no-cancellation and explicit-retry behavior is defined in [`extension-composition-boundary.md`](./extension-composition-boundary.md) and is part of this packet, not an implementation choice.
 
 ### Scope
 
 1. Extract inventory/description ownership.
 2. Extract manifest contribution routing using existing normalizers and focused registries.
-3. Extract active/activating lifecycle and activation operations.
+3. Extract lifecycle state and activation operations, including the per-extension epoch and teardown barrier shared by every activation path.
 4. Extract `ExtensionContext` construction.
 5. Make current `ExtensionRegistry` delegate while preserving its public methods/options/getters.
 6. Keep current `CapabilityRegistry` semantics scoped; do not turn it into host-wide service discovery.
@@ -236,6 +259,8 @@ Manifest contribution lifetime and executable activation lifetime remain distinc
 - preserve current `ExtensionContext` public shape;
 - preserve manifest contribution-before-activation behavior;
 - preserve duplicate-ID, missing-dependency, cycle, activation coalescing, permission/capability and disposal behavior;
+- preserve external inactive observation during asynchronous deactivation while preventing reactivation until teardown hook, scope disposal and event completion;
+- keep teardown and activation errors scoped to their epoch; add no timeout/cancellation API and no automatic retry loop;
 - any new focused classes remain internal until independent consumer value justifies public exposure.
 
 ### Verification layer
@@ -253,7 +278,10 @@ At minimum cover:
 - dependency and activation-event behavior;
 - concurrent same-extension activation coalescing;
 - activation failure does not mark active;
-- deactivation/disposal order;
+- deactivation/disposal order and external inactive observation during teardown;
+- explicit, dependency, command, view and startup activation all await a prior teardown barrier;
+- deactivation failure still disposes the old scope and releases its barrier before an explicit retry;
+- old teardown completion/event cannot dispose or follow a newer activation epoch;
 - permission/capability access through created context;
 - current public `ExtensionRegistry` behavior remains compatible.
 
@@ -271,6 +299,9 @@ Use the repository's current required commit-safety and applicable fast/full val
 - no new arbitrary service lookup or host composition object reaches `ExtensionContext`;
 - command execution remains command-layer responsibility after extension activation;
 - contribution and activation lifetimes remain distinct;
+- every activation path awaits the prior teardown barrier and re-checks its lifecycle epoch;
+- teardown hook failure still performs scope disposal and emits deactivation once before the barrier releases;
+- old teardown work cannot overlap, dispose or emit after a newer activation;
 - source review confirms no accidental public-export/bundle growth;
 - compatibility facade remains a migration boundary, not a new target dependency for features.
 
@@ -285,6 +316,8 @@ Reject the implementation if:
 - contribution registries become owned by activation lifecycle;
 - command execution moves into `ExtensionActivationService`;
 - concurrent activation or disposal semantics regress;
+- any activation path bypasses the teardown barrier or old-epoch cleanup/event reaches a newer activation;
+- a timeout, cancellation or automatic retry policy is added without a separate target decision;
 - public API expands without packet justification.
 
 ### Discovery decision
