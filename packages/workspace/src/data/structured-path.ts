@@ -58,7 +58,9 @@ export function isWorkbenchStructuredDataRecord(
 
 export function getWorkbenchStructuredDataArrayIndex(segment: number | string) {
   if (typeof segment === 'number') {
-    return Number.isInteger(segment) && segment >= 0 && segment <= MAX_WORKBENCH_STRUCTURED_DATA_ARRAY_INDEX
+    return Number.isInteger(segment) &&
+      segment >= 0 &&
+      segment <= MAX_WORKBENCH_STRUCTURED_DATA_ARRAY_INDEX
       ? segment
       : null;
   }

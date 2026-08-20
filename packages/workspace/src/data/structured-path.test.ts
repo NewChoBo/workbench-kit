@@ -19,10 +19,57 @@ describe('structured data paths', () => {
     expect(Object.prototype.hasOwnProperty.call(nextProfile, '__proto__')).toBe(true);
     expect(Object.getPrototypeOf(nextProfile)).toBe(Object.prototype);
     expect(Object.getPrototypeOf(source.profile)).toBe(Object.prototype);
-    expect(getWorkbenchStructuredDataValue(source, ['profile', '__proto__', 'name'])).toBeUndefined();
+    expect(
+      getWorkbenchStructuredDataValue(source, ['profile', '__proto__', 'name']),
+    ).toBeUndefined();
 
     const inherited = Object.create({ hidden: 'inherited' }) as WorkbenchStructuredDataRecord;
     expect(getWorkbenchStructuredDataValue(inherited, ['hidden'])).toBeUndefined();
+  });
+
+  it('reads own accessors and replaces them with data properties without invoking setters', () => {
+    let getterCalls = 0;
+    let setterCalls = 0;
+    const source: WorkbenchStructuredDataRecord = {};
+    const getter = () => {
+      getterCalls += 1;
+      return 'from getter';
+    };
+    const setter = () => {
+      setterCalls += 1;
+    };
+    const sourcePrototype = Object.getPrototypeOf(source);
+
+    Object.defineProperty(source, 'value', {
+      configurable: true,
+      enumerable: true,
+      get: getter,
+      set: setter,
+    });
+
+    expect(getWorkbenchStructuredDataValue(source, ['value'])).toBe('from getter');
+    expect(getterCalls).toBe(1);
+
+    const next = setWorkbenchStructuredDataValue(source, ['value'], 'replacement');
+    const nextDescriptor = Object.getOwnPropertyDescriptor(next, 'value');
+    const sourceDescriptor = Object.getOwnPropertyDescriptor(source, 'value');
+
+    expect(next).not.toBe(source);
+    expect(nextDescriptor).toMatchObject({
+      configurable: true,
+      enumerable: true,
+      value: 'replacement',
+      writable: true,
+    });
+    expect(nextDescriptor?.get).toBeUndefined();
+    expect(nextDescriptor?.set).toBeUndefined();
+    expect(setterCalls).toBe(0);
+    expect(getterCalls).toBeGreaterThan(1);
+    expect(sourceDescriptor?.get).toBe(getter);
+    expect(sourceDescriptor?.set).toBe(setter);
+    expect(getWorkbenchStructuredDataValue(source, ['value'])).toBe('from getter');
+    expect(Object.getPrototypeOf(next)).toBe(sourcePrototype);
+    expect(Object.getPrototypeOf(source)).toBe(sourcePrototype);
   });
 
   it('keeps source containers immutable and preserves supported container prototypes', () => {
