@@ -49,6 +49,61 @@ describe('createJsonWidgetValueWarehouse', () => {
     expect([...warehouse.pendingChangedPaths()].sort()).toEqual(['theme.color', 'title']);
   });
 
+  it('uses the resolver path contract for arrays, invalidation, and immutable writes', () => {
+    const initialValues = { items: [{ name: 'first' }, { name: 'second' }] };
+    const warehouse = createJsonWidgetValueWarehouse({ initialValues });
+
+    warehouse.setValue('items.0.name', 'updated');
+
+    expect(warehouse.getValue('items.0.name')).toBe('updated');
+    expect(warehouse.getValues().items).toEqual([{ name: 'updated' }, { name: 'second' }]);
+    expect(warehouse.getValues().items).not.toBe(initialValues.items);
+    expect(initialValues.items[0]?.name).toBe('first');
+    expect(warehouse.pendingChangedPaths()).toEqual(['items.0.name']);
+    expect(
+      warehouse.flushInvalidations({
+        type: 'text',
+        listen: ['items.0.name'],
+        args: { text: '${items.0.name}' },
+      }),
+    ).toHaveLength(1);
+  });
+
+  it('rejects malformed and array-mismatched writes without inferring arrays', () => {
+    const warehouse = createJsonWidgetValueWarehouse({
+      initialValues: { items: [{ name: 'first' }] },
+    });
+
+    for (const path of ['.items', 'items.', 'items..0', 'items.01.name', 'items.name']) {
+      expect(warehouse.getValue(path)).toBeUndefined();
+      expect(() => warehouse.setValue(path, 'updated')).toThrow();
+    }
+
+    warehouse.setValue('missing.0.name', 'object member');
+    expect(warehouse.getValue('missing.0.name')).toBe('object member');
+    expect(Array.isArray(warehouse.getValue('missing'))).toBe(false);
+  });
+
+  it('blocks inherited values while preserving explicit own sensitive names', () => {
+    const initialValues = Object.create({ inherited: 'blocked' }) as Record<string, unknown>;
+    Object.defineProperties(initialValues, {
+      constructor: { enumerable: true, value: 'explicit constructor' },
+    });
+    Object.defineProperty(initialValues, '__proto__', {
+      enumerable: true,
+      value: { safe: 'initial' },
+    });
+    const warehouse = createJsonWidgetValueWarehouse({ initialValues });
+
+    expect(warehouse.getValue('inherited')).toBeUndefined();
+    expect(warehouse.getValue('constructor')).toBe('explicit constructor');
+    expect(warehouse.getValue('__proto__.safe')).toBe('initial');
+
+    warehouse.setValue('__proto__.safe', 'updated');
+    expect(warehouse.getValue('__proto__.safe')).toBe('updated');
+    expect(({} as { safe?: string }).safe).toBeUndefined();
+  });
+
   it('coalesces a burst of writes into one invalidation collect pass', () => {
     const warehouse = createJsonWidgetValueWarehouse({
       initialValues: {

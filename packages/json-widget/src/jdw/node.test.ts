@@ -125,6 +125,9 @@ describe('jdw-node', () => {
     expect(isJsonWidgetDynamicValueExpression('${theme.spacing}')).toBe(true);
     expect(isJsonWidgetDynamicValueExpression('Size ${theme.spacing}')).toBe(false);
     expect(isJsonWidgetDynamicValueExpression('${theme.spacing}px')).toBe(false);
+    expect(isJsonWidgetDynamicValueExpression('${theme..spacing}')).toBe(false);
+    expect(isJsonWidgetDynamicValueExpression('${.theme}')).toBe(false);
+    expect(isJsonWidgetDynamicValueExpression('${theme.}')).toBe(false);
   });
 
   it('resolves template variable expressions inside strings', () => {
@@ -143,6 +146,57 @@ describe('jdw-node', () => {
 
     expect(node.args.text).toBe('Hello JDW');
     expect(node.args.color).toBe('${missing}');
+  });
+
+  it('uses own properties and canonical array indices for value resolution', () => {
+    const values = Object.create({ inherited: 'blocked' }) as Record<string, unknown>;
+    Object.defineProperties(values, {
+      constructor: { enumerable: true, value: 'explicit constructor' },
+    });
+    Object.defineProperty(values, '__proto__', { enumerable: true, value: 'explicit proto' });
+    values.items = [{ name: 'first' }];
+
+    const node = resolveJsonWidgetValues(
+      {
+        type: 'text',
+        args: {
+          inherited: '${inherited}',
+          constructor: '${constructor}',
+          proto: '${__proto__}',
+          item: '${items.0.name}',
+          nonCanonical: '${items.01.name}',
+          arrayProperty: '${items.name}',
+        },
+      },
+      values,
+    );
+
+    expect(node.args).toEqual({
+      inherited: '${inherited}',
+      constructor: 'explicit constructor',
+      proto: 'explicit proto',
+      item: 'first',
+      nonCanonical: '${items.01.name}',
+      arrayProperty: '${items.name}',
+    });
+  });
+
+  it('rejects malformed listen paths in the direct parser', () => {
+    for (const listen of ['.theme', 'theme.', 'theme..color']) {
+      const parsed = parseJsonWidgetData(
+        JSON.stringify({ type: 'text', listen: [listen], args: {} }),
+      );
+      expect(parsed.parseError).toContain('valid JDW value paths');
+    }
+  });
+
+  it('ignores malformed changed paths for listen invalidation', () => {
+    expect(
+      collectJsonWidgetInvalidations(
+        { type: 'text', listen: ['theme.color'], args: { color: '${theme.color}' } },
+        ['theme..color', ' theme.color'],
+      ),
+    ).toEqual([]);
   });
 
   it('collects dynamic value dependencies across the widget tree', () => {
