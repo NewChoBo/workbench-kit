@@ -84,6 +84,31 @@ describe('createJsonWidgetValueWarehouse', () => {
     expect(Array.isArray(warehouse.getValue('missing'))).toBe(false);
   });
 
+  it('supports the maximum array index and rejects out-of-range array properties', () => {
+    const maxArrayIndex = 4_294_967_294;
+    const initialItems: Array<{ name: string }> = [];
+    initialItems[maxArrayIndex] = { name: 'before' };
+    const warehouse = createJsonWidgetValueWarehouse({ initialValues: { items: initialItems } });
+
+    warehouse.setValue('items.4294967294.name', 'after');
+
+    expect(warehouse.getValue('items.4294967294.name')).toBe('after');
+    expect(initialItems[maxArrayIndex]?.name).toBe('before');
+    expect(warehouse.pendingChangedPaths()).toEqual(['items.4294967294.name']);
+    expect(
+      warehouse.flushInvalidations({
+        type: 'text',
+        listen: ['items.4294967294.name'],
+        args: { text: '${items.4294967294.name}' },
+      }),
+    ).toHaveLength(1);
+
+    for (const path of ['items.4294967295.name', 'items.9007199254740992.name']) {
+      expect(warehouse.getValue(path)).toBeUndefined();
+      expect(() => warehouse.setValue(path, 'updated')).toThrow();
+    }
+  });
+
   it('blocks inherited values while preserving explicit own sensitive names', () => {
     const initialValues = Object.create({ inherited: 'blocked' }) as Record<string, unknown>;
     Object.defineProperties(initialValues, {

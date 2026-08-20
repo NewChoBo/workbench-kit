@@ -82,8 +82,9 @@ grammar: a path is one or more `[A-Za-z0-9_-]+` segments separated by single
 dots. It is not a lossless arbitrary-JSON path notation: leading, trailing,
 and repeated dots are invalid, and literal property names containing dots are
 not addressable. Records resolve own properties only. Existing arrays accept
-only canonical decimal indices such as `0` and `12`; a numeric-looking segment
-does not cause a missing branch to become an array.
+only canonical decimal indices in the JavaScript array-index range `0` through
+`4294967294`; a numeric-looking segment does not cause a missing branch to
+become an array.
 
 ### 3.3 Measurement is host/registry, not the wire format (JD-3)
 

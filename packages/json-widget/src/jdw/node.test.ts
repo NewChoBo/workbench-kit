@@ -149,12 +149,16 @@ describe('jdw-node', () => {
   });
 
   it('uses own properties and canonical array indices for value resolution', () => {
+    const maxArrayIndex = 4_294_967_294;
     const values = Object.create({ inherited: 'blocked' }) as Record<string, unknown>;
     Object.defineProperties(values, {
       constructor: { enumerable: true, value: 'explicit constructor' },
     });
     Object.defineProperty(values, '__proto__', { enumerable: true, value: 'explicit proto' });
     values.items = [{ name: 'first' }];
+    const maxIndexedItems: Array<{ name: string }> = [];
+    maxIndexedItems[maxArrayIndex] = { name: 'max' };
+    values.maxIndexedItems = maxIndexedItems;
 
     const node = resolveJsonWidgetValues(
       {
@@ -166,6 +170,9 @@ describe('jdw-node', () => {
           item: '${items.0.name}',
           nonCanonical: '${items.01.name}',
           arrayProperty: '${items.name}',
+          maxItem: '${maxIndexedItems.4294967294.name}',
+          outOfRange: '${maxIndexedItems.4294967295.name}',
+          unsafe: '${maxIndexedItems.9007199254740992.name}',
         },
       },
       values,
@@ -178,6 +185,9 @@ describe('jdw-node', () => {
       item: 'first',
       nonCanonical: '${items.01.name}',
       arrayProperty: '${items.name}',
+      maxItem: 'max',
+      outOfRange: '${maxIndexedItems.4294967295.name}',
+      unsafe: '${maxIndexedItems.9007199254740992.name}',
     });
   });
 
@@ -352,5 +362,32 @@ describe('jdw-node', () => {
         changedListen: ['title'],
       },
     ]);
+  });
+
+  it('emits the maximum array index path for matching listen invalidation', () => {
+    const maxArrayIndex = 4_294_967_294;
+    const previousItems: Array<{ name: string }> = [];
+    previousItems[maxArrayIndex] = { name: 'before' };
+    const nextItems = Object.assign(new Array(previousItems.length), previousItems) as Array<{
+      name: string;
+    }>;
+    nextItems[maxArrayIndex] = { name: 'after' };
+
+    const changedPaths = collectJsonWidgetChangedValuePaths(
+      { items: previousItems },
+      { items: nextItems },
+    );
+
+    expect(changedPaths).toEqual(['items.4294967294.name']);
+    expect(
+      collectJsonWidgetInvalidations(
+        {
+          type: 'text',
+          listen: ['items.4294967294.name'],
+          args: { text: '${items.4294967294.name}' },
+        },
+        changedPaths,
+      ),
+    ).toHaveLength(1);
   });
 });

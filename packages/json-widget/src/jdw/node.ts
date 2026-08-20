@@ -2,6 +2,7 @@ import type { WidgetPath } from '../document/path.js';
 import { isObjectRecord } from '../is-object-record.js';
 import type { GenericWidget } from '../widget/tree.js';
 import {
+  isJdwArrayIndexSegment,
   isJdwValuePath,
   isJdwValuePathSegment,
   JDW_VALUE_PATH_PATTERN_SOURCE,
@@ -189,7 +190,7 @@ function isTraversableValue(value: unknown): value is readonly unknown[] | Recor
 
 function valueChildKeys(value: readonly unknown[] | Record<string, unknown>): readonly string[] {
   if (Array.isArray(value)) {
-    return Array.from({ length: value.length }, (_, index) => String(index));
+    return Object.getOwnPropertyNames(value).filter(isJdwArrayIndexSegment);
   }
 
   return Object.keys(value);

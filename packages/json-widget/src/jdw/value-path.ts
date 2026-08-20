@@ -5,6 +5,7 @@ export const JDW_VALUE_PATH_PATTERN_SOURCE = '[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+
 const JDW_VALUE_PATH_PATTERN = new RegExp(`^${JDW_VALUE_PATH_PATTERN_SOURCE}$`);
 const JDW_VALUE_PATH_SEGMENT_PATTERN = /^[A-Za-z0-9_-]+$/;
 const CANONICAL_ARRAY_INDEX_PATTERN = /^(?:0|[1-9][0-9]*)$/;
+const MAX_ARRAY_INDEX = 2 ** 32 - 2;
 const hasOwn = (value: object, key: string): boolean =>
   Object.prototype.hasOwnProperty.call(value, key);
 
@@ -16,6 +17,15 @@ export function isJdwValuePathSegment(value: unknown): value is string {
   return typeof value === 'string' && JDW_VALUE_PATH_SEGMENT_PATTERN.test(value);
 }
 
+export function isJdwArrayIndexSegment(value: unknown): value is string {
+  if (typeof value !== 'string' || !CANONICAL_ARRAY_INDEX_PATTERN.test(value)) {
+    return false;
+  }
+
+  const index = Number(value);
+  return Number.isSafeInteger(index) && index >= 0 && index <= MAX_ARRAY_INDEX;
+}
+
 export function parseJdwValuePath(path: string): readonly string[] | null {
   return isJdwValuePath(path) ? path.split('.') : null;
 }
@@ -25,7 +35,7 @@ export function readJdwValuePath(root: unknown, segments: readonly string[]): un
 
   for (const segment of segments) {
     if (Array.isArray(current)) {
-      if (!CANONICAL_ARRAY_INDEX_PATTERN.test(segment) || !hasOwn(current, segment)) {
+      if (!isJdwArrayIndexSegment(segment) || !hasOwn(current, segment)) {
         return undefined;
       }
       current = current[Number(segment)];
@@ -59,7 +69,7 @@ function setJdwValuePathValue(
   const isLeaf = position === segments.length - 1;
 
   if (Array.isArray(current)) {
-    if (!CANONICAL_ARRAY_INDEX_PATTERN.test(segment)) {
+    if (!isJdwArrayIndexSegment(segment)) {
       throw new Error('JDW array paths require canonical decimal indices.');
     }
 
@@ -73,7 +83,7 @@ function setJdwValuePathValue(
       return current;
     }
 
-    const next = current.slice();
+    const next = Object.assign(new Array(current.length), current);
     next[index] = nextValue;
     return Object.freeze(next);
   }
