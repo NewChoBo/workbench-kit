@@ -1,8 +1,13 @@
 # Workbench Kit Northstar Implementation Plan
 
-This document decomposes [`target-architecture.md`](./target-architecture.md) into ordered, tool-neutral implementation packets.
+This document decomposes [`target-architecture.md`](./target-architecture.md) and its detailed Northstar decisions into ordered, tool-neutral implementation packets.
 
 It is not a changelog of the current repository. Current source is recorded only as evidence for a CURRENT → TARGET gap or as an implementation result to review.
+
+## Evidence baselines
+
+- **Current integration baseline:** `origin/develop@598deebf9512e39d46c636bd00926867816c0186`.
+- **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
 
@@ -39,28 +44,296 @@ No packet status or contract names a specific coding agent.
 
 ## Target dependency graph
 
-Initial decomposition; recursive design may refine or reorder it.
+Recursive design has identified extension/kernel responsibility separation as a foundation before adding more public abstraction. UI authoring adds a second target chain that must inventory/reuse existing schema/layout primitives before creating new public contracts.
 
 ```text
-Target kernel/capability composition
+WB-NS-001A extension runtime responsibility decomposition
         ↓
+WB-NS-001B1 shell dependency inventory + focused-service contract [DESIGNING; dependency: WB-NS-001A]
+        ↓
+WB-NS-001B2 shell dependency narrowing migration [DESIGNING; dependency: WB-NS-001B1]
+
 Document + state ownership foundations
-        ├─ schema/form/inspector model
-        ├─ graph document/controller split
-        └─ extension capability contracts
-                ↓
+        ├─ WB-NS-030 schema/form/inspector model
+        ├─ WB-NS-010 graph document/controller split
+        └─ extension capability/trust contracts
+
+WB-NS-070A typed UI value/property inventory + target contract
+        ↓
+WB-NS-070B selectable layout strategy + typed style constraints
+        ↓
+WB-NS-070C atomic component/composite descriptor contract
+        ↓
+WB-NS-070D UiDocument command + direct-manipulation authoring
+        ↓
+WB-NS-070E responsive variants + tokens/resources
+        ↓
+WB-NS-070F provider-neutral generative UI parity
+        ↓
+WB-NS-071A graph node type/property-input foundation
+        ↓
+WB-NS-071B component/node development requirement flow
+        ↓
+WB-NS-071C external node ecosystem adapter contract
+
+WB-NS-072A design-system foundation consolidation map [DESIGNING; dependencies: WB-NS-070A, WB-NS-040]
+        ↓
+WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DESIGNING; dependencies: WB-NS-072A, WB-NS-070A/B/C/D, WB-NS-040]
+        ↓
+{ WB-NS-072C component-role + typed token/resource resolution [DESIGNING; dependency: WB-NS-072B]
+  WB-NS-072D explicit pack migration planner + transaction [DESIGNING; dependency: WB-NS-072B] }
+        ↓
+WB-NS-072E Canvas/Inspector/provenance integration [DESIGNING; dependencies: WB-NS-072C, WB-NS-072D]
+        ↓
+WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [DESIGNING; dependency: WB-NS-072E]
+
 Projection/GUI-builder architecture
-                ↓
+        ↓
 Workflow runtime + published interfaces
-                ↓
+        ↓
 Host adapter maturation / multi-host validation
-                ↓
-Performance and compatibility hardening
+        ↓
+Backendless/performance + compatibility hardening
 ```
+
+`WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
+
+UI packet IDs `WB-NS-070*` / `WB-NS-071*` are canonical target slots but remain `DESIGNING` until source/API inventory proves reuse boundaries and prevents a parallel schema/layout system.
 
 ---
 
 # Active target packets
+
+## WB-NS-001A — Runtime extension responsibility decomposition
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
+- **Ownership:** `GENERIC_KIT`
+- **Historical source evidence:** `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` (candidate evidence; not the current integration baseline)
+- **Public API impact:** none required in this slice
+
+### Goal
+
+Split catalog/inventory, manifest contribution routing, executable activation and runtime API construction behind the existing public `ExtensionRegistry` compatibility facade.
+
+This closes the highest-value kernel/extension responsibility gap without introducing a global DI/service-locator API or forcing process isolation.
+
+### HISTORICAL SOURCE SNAPSHOT EVIDENCE
+
+The historical source snapshot showed `ExtensionRegistry` directly owning:
+
+- extension description storage;
+- dependency/cycle diagnostics;
+- declarative contribution registration;
+- active/activating state;
+- activation/deactivation and lifecycle events;
+- `ExtensionContext` construction;
+- capability registration/access;
+- command activation/execution;
+- lifetime of multiple contribution registries.
+
+`WorkbenchProvider` also exposes the aggregate registry through React context. The public `workbench-core` barrel exports `ExtensionRegistry`, so deleting or radically replacing it in the first slice would create avoidable compatibility churn.
+
+### TARGET roles
+
+Internal names may vary only when responsibility boundaries remain equivalent.
+
+```text
+ExtensionInventory
+ExtensionContributionRouter
+ExtensionActivationService
+ExtensionApiFactory
+ExtensionRegistry compatibility facade
+```
+
+#### `ExtensionInventory`
+
+Owns registered `WorkbenchExtensionDescription` identity/list/get/register semantics only.
+
+Target contract:
+
+```ts
+interface ExtensionInventory {
+  get(extensionId: string): WorkbenchExtensionDescription | undefined;
+  list(): readonly WorkbenchExtensionDescription[];
+  register(description: WorkbenchExtensionDescription): Disposable;
+}
+```
+
+#### `ExtensionContributionRouter`
+
+Registers manifest-declared contributions into explicit focused contribution registries and returns their disposable lifetime. It does not activate executable code and does not become a universal registry.
+
+#### `ExtensionActivationService`
+
+Owns:
+
+- active and in-flight activation state;
+- activation-event matching;
+- dependency-before-dependent activation;
+- lifecycle events;
+- deactivate/deactivate-all;
+- activation subscription lifetime.
+
+It does not own command execution or host composition.
+
+#### `ExtensionApiFactory`
+
+Creates the existing restricted `ExtensionContext` from explicit registration/capability facades, extension identity/path, manifest permissions/capabilities and activation subscription scope.
+
+It does not expose host composition internals.
+
+#### Compatibility facade
+
+Public `ExtensionRegistry` stays source-compatible in this slice and delegates to the focused roles.
+
+### Target data/lifecycle flow
+
+```text
+registerExtension(description)
+  → ExtensionInventory.register
+  → ExtensionContributionRouter.registerManifestContributions
+  → compatibility facade owns combined registration disposable
+
+activation event / explicit activation
+  → ExtensionActivationService
+  → dependency analysis + inventory lookup
+  → ExtensionApiFactory.createContext
+  → module.activate(context)
+  → active state + subscriptions
+
+executeCommand(commandId)
+  → compatibility facade (for current API)
+  → ExtensionActivationService.activateByEvent(onCommand)
+  → CommandRegistry/CommandService executes handler
+```
+
+Manifest contribution lifetime and executable activation lifetime remain distinct.
+
+### Scope
+
+1. Extract inventory/description ownership.
+2. Extract manifest contribution routing using existing normalizers and focused registries.
+3. Extract active/activating lifecycle and activation operations.
+4. Extract `ExtensionContext` construction.
+5. Make current `ExtensionRegistry` delegate while preserving its public methods/options/getters.
+6. Keep current `CapabilityRegistry` semantics scoped; do not turn it into host-wide service discovery.
+7. Add focused unit tests for extracted roles plus facade regression coverage.
+
+### Non-scope
+
+- no public `ExtensionRegistry` removal;
+- no new public generic DI/container API;
+- no mandatory worker/process/remote extension host;
+- no manifest schema change;
+- no shell React-context migration yet;
+- no new capability ID inventory;
+- no persisted-format or installation-flow redesign.
+
+### Compatibility and migration
+
+- preserve `ExtensionRegistryOptions` and public barrel exports;
+- preserve current `ExtensionContext` public shape;
+- preserve manifest contribution-before-activation behavior;
+- preserve duplicate-ID, missing-dependency, cycle, activation coalescing, permission/capability and disposal behavior;
+- any new focused classes remain internal until independent consumer value justifies public exposure.
+
+### Verification layer
+
+`PURE_WEB / backendless core`.
+
+No Electron/native dependency is intrinsic to this slice.
+
+### Focused tests
+
+At minimum cover:
+
+- inventory duplicate registration + disposal;
+- declarative contribution registration without executable activation;
+- dependency and activation-event behavior;
+- concurrent same-extension activation coalescing;
+- activation failure does not mark active;
+- deactivation/disposal order;
+- permission/capability access through created context;
+- current public `ExtensionRegistry` behavior remains compatible.
+
+Candidate source area to re-verify before reuse: `packages/workbench-core/src/extension/registry.test.ts` plus focused tests beside extracted internal roles.
+
+### Repository validation
+
+Use the repository's current required commit-safety and applicable fast/full validation from the exact implementation head. Do not weaken gates for this packet.
+
+### Acceptance / Done criteria
+
+- the old `ExtensionRegistry` implementation body no longer contains all inventory, contribution, activation and API-construction behavior;
+- extracted roles are directly testable and have one primary responsibility;
+- public consumers compile without migration;
+- no new arbitrary service lookup or host composition object reaches `ExtensionContext`;
+- command execution remains command-layer responsibility after extension activation;
+- contribution and activation lifetimes remain distinct;
+- source review confirms no accidental public-export/bundle growth;
+- compatibility facade remains a migration boundary, not a new target dependency for features.
+
+### Source-review checklist
+
+Reject the implementation if:
+
+- extracted classes are wrappers that delegate substantive behavior back to the old aggregate;
+- one new replacement class simply recreates the same god object;
+- runtime extensions gain broader internal access;
+- `CapabilityRegistry` is generalized into host service lookup;
+- contribution registries become owned by activation lifecycle;
+- command execution moves into `ExtensionActivationService`;
+- concurrent activation or disposal semantics regress;
+- public API expands without packet justification.
+
+### Discovery decision
+
+`ADOPT`: separate trusted host/application composition from runtime installable extension API/lifecycle.
+
+Evidence: official Theia architecture separates compile-time application extensions/DI from installable plugin mechanisms; official VS Code architecture runs installable extensions through extension hosts and manifest/activation contracts.
+
+`DEFER`: mandatory worker/process/remote extension isolation until untrusted-extension, responsiveness-isolation, remote-workspace or placement requirements justify serialization/runtime cost.
+
+`REJECT`: public global DI/service locator for runtime extensions.
+
+Falsifier for the deferred isolation decision: a committed product requirement needs untrusted third-party execution, remote workspace placement or extension CPU/failure isolation.
+
+## WB-NS-001B1 - Shell dependency inventory and focused-service contract
+
+- **Status:** `DESIGNING`
+- **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
+- **Ownership:** `GENERIC_KIT`
+- **Dependency:** `WB-NS-001A`
+
+### Goal
+
+Produce the bounded shell dependency map and focused-service contract required before replacing aggregate `ExtensionRegistry` reach-through.
+
+### Design work still required
+
+1. Inventory every `shell-react` use of `extensionRegistry` as activation, command, contribution read, extension management/catalog, capability access, or other.
+2. Define the smallest focused service/context facade for each category, including lifecycle and disposal ownership.
+3. Close the React context shape and compatibility/deprecation seams without widening extension runtime access or introducing a global service locator.
+
+### Promotion gate
+
+Do not promote this packet until every aggregate-registry use has a classified owner and replacement seam, the focused facade and lifecycle/disposal owner are explicit, and the proposed React context does not expose host composition internals.
+
+## WB-NS-001B2 - Shell dependency narrowing migration
+
+- **Status:** `DESIGNING`
+- **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
+- **Ownership:** `GENERIC_KIT`
+- **Dependency:** `WB-NS-001B1`
+
+### Goal
+
+Replace proven aggregate-registry reach-through incrementally while retaining each package's behavior, goals, actions, diagnostics, and migration scope.
+
+### Design work still required
+
+Define the ordered package migration, compatibility/deprecation period, focused-context availability behavior, diagnostics for unavailable capabilities, and cleanup trigger after all consumers leave the aggregate path.
 
 ## WB-NS-010 — Graph document/controller/renderer/runtime separation
 
@@ -147,8 +420,9 @@ Inventory current field-schema, Field Remap, settings/form/inspector APIs before
 ## WB-NS-040 — Extension capability / trust / compatibility model
 
 - **Status:** `DESIGNING`
-- **Target:** `target-architecture.md` § Extension/plugin architecture
+- **Target:** `target-architecture.md` § Extension/plugin architecture + [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
+- **Dependency:** `WB-NS-001A`
 
 ### Goal
 
@@ -159,11 +433,13 @@ Extensions declare contributions, required/optional capabilities, compatibility,
 ```text
 ExtensionManifest
 ExtensionResolver
-ExtensionActivator
+ExtensionActivationService
 PermissionService
 TrustService
 ContributionRouter
 ```
+
+The activation/contribution responsibility boundary is now owned by `WB-NS-001A`; this packet focuses on trust, compatibility and degradation semantics rather than recreating extension orchestration.
 
 ### Design questions
 
@@ -180,7 +456,7 @@ ContributionRouter
 - **Target:** `target-architecture.md` § Host/platform architecture + [`host-capability-boundary.md`](./host-capability-boundary.md)
 - **Ownership:** `GENERIC_KIT`
 - **Source-review result:** `NARROWED`
-- **Reviewed source baseline:** `develop@b11e21a91634830626fdcde7758b32dff0dd26ef`
+- **Historical source evidence:** `develop@b11e21a91634830626fdcde7758b32dff0dd26ef` (candidate evidence; not the current integration baseline)
 
 ### Resolved target
 
@@ -188,9 +464,9 @@ Workbench Kit owns focused, typed, product-neutral ports and host-adapter leaves
 
 The current `CapabilityRegistry<TCapability>` target role remains a scoped composition concept unless independent consumers prove a stable public registry contract.
 
-### Current implementation evidence
+### Historical source snapshot evidence
 
-The current source already provides the boundary foundation:
+The historical source snapshot provided the following boundary evidence:
 
 - `@workbench-kit/platform` exposes focused framework-neutral leaves;
 - `@workbench-kit/electron-shell` exposes focused Electron security/lifecycle/window/preload leaves;
@@ -247,6 +523,233 @@ Performance workloads + budgets
 ### Ready gate
 
 Define ownership and API boundaries for fixtures without turning production packages into test-framework containers; identify representative workloads from actual hot paths before budgets are standardized.
+
+## WB-NS-070 — Manual-first UI layout/style authoring foundation
+
+- **Status:** `DESIGNING`
+- **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md) + [`layout-and-style-authoring.md`](./layout-and-style-authoring.md)
+- **Ownership:** `GENERIC_KIT`
+- **Related:** `WB-NS-020`, `WB-NS-030`
+
+### Goal
+
+Allow users to construct UI manually from typed values/resources and atomic components, select valid layout structures, edit CSS-compatible design values through contextual Inspector/Canvas surfaces, create composites/templates, and persist one renderer-neutral canonical UI document. AI later gains parity over the same command model but is not required.
+
+### Target decomposition
+
+```text
+WB-NS-070A typed value/property/source inventory + contract
+WB-NS-070B selectable layout strategy + typed style constraints
+WB-NS-070C atomic component + composite descriptor contract
+WB-NS-070D UiDocument command/direct-manipulation authoring
+WB-NS-070E responsive variants + design tokens/resources
+WB-NS-070F provider-neutral generative UI parity
+```
+
+### Required source/API inventory before delegation
+
+Review and map at minimum:
+
+- existing field/schema/editor descriptor APIs;
+- shell/workbench layout and SplitView semantics;
+- Field Remap typed fields/ports and transform value registry;
+- theme/tokens/CSS custom-property ownership if present;
+- settings/forms/inspectors and renderer property editors;
+- persistence/versioning primitives relevant to a future `UiDocument`;
+- current command/context/undo transaction capabilities.
+
+The target must reuse or deliberately consolidate these semantics rather than adding a parallel universal schema system.
+
+### `WB-NS-070A` ready gate
+
+Close:
+
+- which existing semantic schema is reused vs adapted;
+- typed value source model (`literal | token | resource | binding | expression` or equivalent);
+- renderer-neutral unit/value boundaries;
+- validation/editor metadata ownership;
+- public vs internal API placement.
+
+### `WB-NS-070B` ready gate
+
+Close:
+
+- supported layout strategy descriptor contract;
+- container vs child property ownership;
+- context-valid Inspector property groups;
+- typed sizing/spacing/flex/grid/split/canvas semantics;
+- invalid combination behavior;
+- renderer projection and raw-CSS escape-hatch boundary.
+
+### `WB-NS-070C` ready gate
+
+Close component descriptor identity/version, properties/events/bindings/layout/accessibility/design-time metadata, registry contribution path, and composite public interface semantics.
+
+### `WB-NS-070D` ready gate
+
+Close `UiDocument` node identity/tree model, commands/typed patches, transaction/undo behavior, Canvas↔Inspector parity, selection/hierarchy ownership, and persistence boundary.
+
+### `WB-NS-070E` ready gate
+
+Close responsive/host-width/state variants, design tokens/resources/theme projection, stable token identity and migration semantics.
+
+### `WB-NS-070F` ready gate
+
+Depends on the manual contract. Generative UI may be delegated only after manual commands/validation are sufficient to express the same target operations. It emits reviewable proposals/typed patches and may not introduce arbitrary JSX/HTML/CSS execution as canonical state.
+
+### Acceptance direction
+
+The completed chain must permit an AI-disabled host to:
+
+- choose Stack/Flex/Grid/Split/Canvas-style layout where supported;
+- set width/height/min/max, margin/padding/gap, alignment, typography, color, borders/radius/shadow and other approved typed properties;
+- choose literal/token/resource/binding/expression sources where allowed;
+- manipulate Canvas and Inspector interchangeably;
+- author responsive variants;
+- compose primitives into reusable components/templates;
+- validate/preview/undo/persist without an AI provider.
+
+## WB-NS-071 — Graph node/property authoring and development escalation
+
+- **Status:** `DESIGNING`
+- **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
+- **Ownership:** `GENERIC_KIT`
+- **Related:** `WB-NS-010`, `WB-NS-030`, `WB-NS-070`
+
+### Goal
+
+Support typed graph node descriptors and the useful editor↔connectable-input duality while providing a safe escalation path when users/agents request capabilities not present in the current component/node catalog.
+
+### Target decomposition
+
+```text
+WB-NS-071A NodeTypeDescriptor / typed port + property foundation
+WB-NS-071B missing capability -> component/node development requirement
+WB-NS-071C external node ecosystem adapter contract
+optional ComfyUI adapter experiment
+```
+
+### Direction
+
+- node descriptor, node instance, renderer and runtime remain distinct;
+- properties become connectable only when their schema explicitly supports it;
+- composite/subgraph nodes reuse existing capabilities before source-code node creation;
+- code-backed missing capabilities become tool-neutral implementation requirements handled by the separate implementation lane;
+- external ecosystems are adapters, not canonical Workbench runtime/schema ownership.
+
+### ComfyUI discovery
+
+Evaluate typed input/output compatibility, widget/input duality, custom-node schema/versioning and editor metadata as reusable interaction/schema principles. Do not copy ComfyUI runtime/frontend internals or make Workbench dependent on them.
+
+## WB-NS-072A - Existing design-system foundation consolidation map
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md)
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-070A`, `WB-NS-040`
+
+### Design work still required
+
+Map existing theme, token, widget, document, inspector, and extension-contribution APIs to one canonical package/subpath owner, compatibility-adapter boundary, and removal trigger. Re-verify the `WB-NS-070A` and `WB-NS-040` dependency boundaries against the current integration baseline.
+
+### Promotion gate
+
+Do not promote this packet until every retained concern has one canonical owner, every superseded path has an adapter/removal trigger, the `WB-NS-070A`/`WB-NS-040` dependencies are closed, and the mapping rules out a parallel permanent theme/widget/property engine.
+
+## WB-NS-072B - DesignSystemPack and Theme resolver foundation
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 4-10
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072A`, `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D`, `WB-NS-040`
+
+### Packet
+
+Define versioned pack/theme/scope descriptors, registry ownership, resolver inputs, provenance, and structured missing/incompatible dependency diagnostics.
+
+### Validation
+
+Backendless descriptor, version, scope-resolution, provenance, and missing-dependency tests; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+One canonical document dependency model resolves registered descriptors without rewriting structure for a same-pack theme change or silently substituting an incompatible pack.
+
+## WB-NS-072C - Component-role and typed token/resource resolution
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 8-10
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072B`
+
+### Packet
+
+Define portable semantic-role eligibility, explicit pack component references, typed token/resource resolution, and compatibility classifications.
+
+### Validation
+
+Backendless role-mapping, typed-resolution, provenance, and unsupported-component diagnostics tests; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+Resolution distinguishes direct, semantic-role, replacement-required, and unsupported outcomes without inventing fake portable roles.
+
+## WB-NS-072D - Explicit pack migration planner and transaction
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 11-16
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072B`
+
+### Packet
+
+Define deterministic plan/preview/choice/apply operations for pack changes, including revision snapshots, stale-plan rejection, atomicity, and undo/redo.
+
+### Validation
+
+Backendless planning, stale-result, replacement-choice, atomic transaction, and undo/redo tests; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+Cross-pack changes are explicit, previewable, stale-safe, and atomic; cancellation or planning alone cannot mutate the canonical document.
+
+## WB-NS-072E - Canvas, Inspector, and provenance integration
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 12, 18-21
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072C`, `WB-NS-072D`
+
+### Packet
+
+Project resolved values, scope inheritance, compatibility choices, and diagnostics through Canvas/Inspector surfaces while preserving command and transaction parity.
+
+### Validation
+
+Backendless controller tests plus browser coverage for projection, focus preservation, scoped inheritance, and visible diagnostics; commit safety and repository validation on the exact head.
+
+### Done criteria
+
+Canvas and Inspector expose equivalent supported operations and provenance, while same-pack theme changes preserve canonical structure and focus identity.
+
+## WB-NS-072F - Existing theme compatibility delegation and cleanup
+
+- **Status:** `DESIGNING`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) section 22
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** `WB-NS-072E`
+
+### Packet
+
+Delegate existing theme-registry and shell-appearance paths through the validated resolver boundary, retain compatibility adapters, and remove duplicates only after consumer migration evidence.
+
+### Validation
+
+Regression coverage for existing theme behavior, public-export and packed-consumer checks, commit safety, and repository validation on the exact head.
+
+### Done criteria
+
+Existing consumers retain supported behavior through one resolver boundary, with explicit adapter-removal criteria and no competing source of theme truth.
 
 ---
 
