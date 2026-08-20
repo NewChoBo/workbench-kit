@@ -748,6 +748,7 @@ export {
 } from './workbench/editor/editorTabContextMenu';
 export type {
   CreateWorkbenchStandaloneEditorTabCommandContextInput,
+  CreateWorkbenchStandaloneEditorTabContextMenuItemsInput,
   WorkbenchStandaloneEditorTabLike,
 } from './workbench/editor/editorTabContextMenu';
 export { useWorkbenchEditorTabContextMenu } from './workbench/editor/useWorkbenchEditorTabContextMenu';

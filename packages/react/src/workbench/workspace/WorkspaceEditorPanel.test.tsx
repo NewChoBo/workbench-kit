@@ -163,6 +163,46 @@ describe('WorkspaceEditorPanel', () => {
     });
     container.remove();
   });
+
+  it('keeps Close to the right hidden when the full editor context does not advertise support', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkspaceDraftsProvider>
+          <WorkspaceEditorPanel
+            files={[
+              { path: 'first.md', content: 'first' },
+              { path: 'second.md', content: 'second' },
+            ]}
+            openPaths={['first.md', 'second.md']}
+            selectedPath="first.md"
+            onCloseAll={() => undefined}
+            onCloseOthers={() => undefined}
+            onClosePath={() => undefined}
+            onSelectedPathChange={() => undefined}
+          />
+        </WorkspaceDraftsProvider>,
+      );
+    });
+
+    const firstTab = container.querySelector('[title="first.md"]');
+    expect(firstTab).toBeTruthy();
+    await act(async () => {
+      firstTab?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    });
+
+    const menu = document.querySelector('[aria-label="Editor tab menu"]');
+    expect(menu).toBeTruthy();
+    expect(menu?.textContent).not.toContain('Close to the right');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });
 
 async function click(container: HTMLElement, label: string): Promise<void> {
