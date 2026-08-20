@@ -22,9 +22,11 @@ The `CapabilityRegistry<TCapability>` role in `target-architecture.md` is theref
 6. A generic capability is promoted only when it can be specified without consumer nouns and validated as a focused public package/subpath contract.
 7. Public APIs prefer capability-specific imports and adapters over one broad preload/application facade.
 
-## CURRENT SOURCE FACT
+## Current integration baseline and candidate source evidence
 
-The current public package structure already provides substantial evidence for this boundary:
+Current integration baseline: `origin/develop@598deebf9512e39d46c636bd00926867816c0186`.
+
+The following public package structure is candidate source evidence and must be re-verified before it is treated as a current integration fact:
 
 - `@workbench-kit/platform` publishes focused framework-neutral leaves for window geometry/residency, persistence helpers, network and Node-specific helpers.
 - `@workbench-kit/electron-shell` publishes focused leaves for window controls, external links, sender security, secret vault, preload helpers, asset protocol and application quit lifecycle.
