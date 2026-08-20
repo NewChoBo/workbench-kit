@@ -208,12 +208,15 @@ export function getWorkbenchStructuredDataSchemaDocumentSectionValue({
   const sectionKey = getWorkbenchStructuredDataSchemaSectionPath(section);
   const record = asWorkbenchStructuredDataRecord(data);
   if (!sectionKey || !record) return sectionKey ? null : data;
-  if (sectionKey in record) return record[sectionKey];
+  if (Object.prototype.hasOwnProperty.call(record, sectionKey)) return record[sectionKey];
 
   const directValue = getWorkbenchStructuredDataValue(data, sectionKey.split('.'));
   if (directValue !== null && directValue !== undefined) return directValue;
 
-  for (const path of aliases[sectionKey] ?? []) {
+  const sectionAliases = Object.prototype.hasOwnProperty.call(aliases, sectionKey)
+    ? (aliases[sectionKey] ?? [])
+    : [];
+  for (const path of sectionAliases) {
     if (!path.length) return data;
     const value = getWorkbenchStructuredDataValue(data, path);
     if (value !== null && value !== undefined) return value;
