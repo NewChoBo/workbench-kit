@@ -363,6 +363,7 @@ export class ExtensionRegistry implements Disposable {
 
       for (const dependencyId of extension.description.manifest.extensionDependencies ?? []) {
         await this.activateExtension(dependencyId);
+        this.assertCurrentRegistration(extensionId, extension);
       }
 
       this.assertCurrentRegistration(extensionId, extension);

@@ -380,6 +380,105 @@ describe('ExtensionRegistry', () => {
     expect(activationEvents).toEqual(['workbench-kit.test.dependency']);
   });
 
+  it('does not activate later dependencies after unregistering a dependent that awaits one', async () => {
+    const registry = new ExtensionRegistry();
+    const activationEvents: string[] = [];
+    let laterDependencyActivateCalls = 0;
+    let resolveFirstDependency: () => void = () => undefined;
+    let signalFirstDependencyStarted: () => void = () => undefined;
+    const firstDependencyGate = new Promise<void>((resolve) => {
+      resolveFirstDependency = resolve;
+    });
+    const firstDependencyStarted = new Promise<void>((resolve) => {
+      signalFirstDependencyStarted = resolve;
+    });
+
+    registry.onDidActivateExtension((event) => activationEvents.push(event.extensionId));
+    const parentRegistration = registry.registerExtension(
+      createTestExtension(
+        'workbench-kit.test.two-dependency-parent',
+        { activate: () => undefined },
+        {
+          extensionDependencies: [
+            'workbench-kit.test.first-dependency',
+            'workbench-kit.test.later-dependency',
+          ],
+        },
+      ),
+    );
+    registry.registerExtension(
+      createTestExtension('workbench-kit.test.first-dependency', {
+        activate: async () => {
+          signalFirstDependencyStarted();
+          await firstDependencyGate;
+        },
+      }),
+    );
+    registry.registerExtension(
+      createTestExtension('workbench-kit.test.later-dependency', {
+        activate: () => {
+          laterDependencyActivateCalls += 1;
+        },
+      }),
+    );
+
+    const activation = registry.activateExtension('workbench-kit.test.two-dependency-parent');
+    await firstDependencyStarted;
+    parentRegistration.dispose();
+    resolveFirstDependency();
+
+    await expect(activation).rejects.toThrow(
+      'Extension "workbench-kit.test.two-dependency-parent" activation was invalidated.',
+    );
+    expect(laterDependencyActivateCalls).toBe(0);
+    expect(registry.isActive('workbench-kit.test.later-dependency')).toBe(false);
+    expect(activationEvents).toEqual(['workbench-kit.test.first-dependency']);
+  });
+
+  it('does not activate a dependent after registry disposal while awaiting a dependency', async () => {
+    const registry = new ExtensionRegistry();
+    let dependentActivateCalls = 0;
+    let resolveDependency: () => void = () => undefined;
+    let signalDependencyStarted: () => void = () => undefined;
+    const dependencyGate = new Promise<void>((resolve) => {
+      resolveDependency = resolve;
+    });
+    const dependencyStarted = new Promise<void>((resolve) => {
+      signalDependencyStarted = resolve;
+    });
+
+    registry.registerExtension(
+      createTestExtension(
+        'workbench-kit.test.dispose-dependent',
+        {
+          activate: () => {
+            dependentActivateCalls += 1;
+          },
+        },
+        { extensionDependencies: ['workbench-kit.test.dispose-dependency'] },
+      ),
+    );
+    registry.registerExtension(
+      createTestExtension('workbench-kit.test.dispose-dependency', {
+        activate: async () => {
+          signalDependencyStarted();
+          await dependencyGate;
+        },
+      }),
+    );
+
+    const activation = registry.activateExtension('workbench-kit.test.dispose-dependent');
+    await dependencyStarted;
+    registry.dispose();
+    resolveDependency();
+
+    await expect(activation).rejects.toThrow(
+      'Extension "workbench-kit.test.dispose-dependency" activation was invalidated.',
+    );
+    expect(dependentActivateCalls).toBe(0);
+    expect(registry.isActive('workbench-kit.test.dispose-dependent')).toBe(false);
+  });
+
   it('disposes pending activation subscriptions when an extension is unregistered', async () => {
     const registry = new ExtensionRegistry();
     const activationEvents: string[] = [];
