@@ -80,4 +80,64 @@ describe('WorkbenchEditorTabs', () => {
       root.unmount();
     });
   });
+
+  it('keeps the observer and appends host items without replacing built-ins', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const onClose = vi.fn();
+    const onInspect = vi.fn();
+    const onTabContextMenu = vi.fn();
+
+    await act(async () => {
+      root.render(
+        <WorkbenchEditorTabs
+          activeId="middle"
+          getExtraTabContextMenuItems={(tabId) => [
+            { id: 'inspect', label: 'Inspect tab', onSelect: () => onInspect(tabId) },
+          ]}
+          onClose={onClose}
+          onSelect={() => undefined}
+          onTabContextMenu={onTabContextMenu}
+          tabs={[
+            { id: 'first', label: 'First' },
+            { id: 'middle', label: 'Middle' },
+            { closable: false, id: 'pinned', label: 'Pinned' },
+            { id: 'last', label: 'Last' },
+          ]}
+        />,
+      );
+    });
+
+    const middleTab = container.querySelector('[aria-selected="true"]');
+    expect(middleTab).toBeTruthy();
+
+    await act(async () => {
+      middleTab?.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    });
+
+    expect(onTabContextMenu).toHaveBeenCalledOnce();
+    expect(onTabContextMenu).toHaveBeenCalledWith('middle', expect.any(Object));
+
+    const menu = document.querySelector('[aria-label="Editor tab menu"]');
+    expect(menu).toBeTruthy();
+    expect(
+      Array.from(menu?.querySelectorAll('button') ?? []).map((button) => button.textContent),
+    ).toEqual(['Close', 'Close others', 'Close to the right', 'Close all', 'Inspect tab']);
+    expect(menu?.querySelectorAll('[role="separator"]')).toHaveLength(1);
+
+    const inspectButton = Array.from(menu?.querySelectorAll('button') ?? []).find(
+      (button) => button.textContent === 'Inspect tab',
+    );
+    await act(async () => {
+      inspectButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+
+    expect(onInspect).toHaveBeenCalledWith('middle');
+    expect(onClose).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });

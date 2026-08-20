@@ -298,6 +298,7 @@ export {
   WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_COMMAND_ID,
   WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID,
+  WORKBENCH_EDITOR_CLOSE_TO_RIGHT_COMMAND_ID,
   WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID,
   WORKBENCH_EDITOR_DELETE_COMMAND_ID,
   WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID,
@@ -605,6 +606,7 @@ export {
 } from './editor/editorTabContextMenu';
 export type {
   CreateWorkbenchStandaloneEditorTabCommandContextInput,
+  CreateWorkbenchStandaloneEditorTabContextMenuItemsInput,
   WorkbenchStandaloneEditorTabLike,
 } from './editor/editorTabContextMenu';
 export { useWorkbenchEditorTabContextMenu } from './editor/useWorkbenchEditorTabContextMenu';

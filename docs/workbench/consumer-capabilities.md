@@ -214,13 +214,16 @@ layout defaults for review/patch flows.
 
 ### `WorkbenchEditorTabs`, `useWorkbenchEditorTabContextMenu`
 
-**Purpose:** Editor tab strip with a built-in Close / Close others / Close all context menu for
-`WorkbenchStandaloneShell` hosts that own tab state without pin, split, or delete actions.
+**Purpose:** Editor tab strip with a built-in Close / Close others / Close to the right / Close
+all context menu for `WorkbenchStandaloneShell` hosts that own tab state without pin, split, or
+delete actions.
 
 **Import:** `@workbench-kit/react/editor-tabs` or `@workbench-kit/react/workbench/shell`
 
-**Key props / options:** Same as `EditorTabs`, plus optional `onCloseAll` / `onCloseOthers`.
-Defaults call `onClose` for every closable tab (`closable !== false`).
+**Key props / options:** Same as `EditorTabs`, plus optional `onCloseAll` / `onCloseOthers` /
+`onCloseToRight` bulk-close overrides and `getExtraTabContextMenuItems`. Defaults call `onClose`
+for the matching closable tabs (`closable !== false`). Additional items append after the built-in
+close group rather than replacing it.
 
 **When to use:** Standalone secondary-area tab bars that need the standard close menu with
 minimal host glue.

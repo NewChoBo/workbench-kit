@@ -23,6 +23,7 @@ export const WORKBENCH_EDITOR_SPLIT_RIGHT_COMMAND_ID = 'editor.splitRight';
 export const WORKBENCH_EDITOR_SPLIT_DOWN_COMMAND_ID = 'editor.splitDown';
 export const WORKBENCH_EDITOR_CLOSE_COMMAND_ID = 'editor.close';
 export const WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID = 'editor.closeOthers';
+export const WORKBENCH_EDITOR_CLOSE_TO_RIGHT_COMMAND_ID = 'editor.closeToRight';
 export const WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID = 'editor.closeAll';
 export const WORKBENCH_EDITOR_DELETE_COMMAND_ID = 'editor.delete';
 export const WORKBENCH_WORKSPACE_NEW_FILE_COMMAND_ID = 'workspace.newFile';
@@ -113,6 +114,8 @@ export interface WorkbenchShellCommandPresetOptions<TActivityId extends string =
 export interface WorkbenchEditorCommandContext {
   canCloseAll: boolean;
   canCloseOthers: boolean;
+  /** Optional so existing public command-context object literals remain source-compatible. */
+  canCloseToRight?: boolean | undefined;
   canClosePath: boolean;
   canCopyPath: boolean;
   canDeletePath: boolean;
@@ -123,6 +126,8 @@ export interface WorkbenchEditorCommandContext {
   canTogglePinned: boolean;
   closeAll: () => void;
   closeOthers: () => void;
+  /** Presence advertises support and makes Close to the right visible. */
+  closeToRight?: (() => void) | undefined;
   closePath: () => void;
   copyPath: () => void;
   deletePath: () => void;
@@ -343,6 +348,14 @@ export function createWorkbenchEditorCommands({
         run: ({ closeOthers }) => closeOthers(),
       },
       {
+        id: WORKBENCH_EDITOR_CLOSE_TO_RIGHT_COMMAND_ID,
+        icon: 'codicon-close-all',
+        isEnabled: ({ canCloseToRight, filePath }) => Boolean(filePath && canCloseToRight),
+        isVisible: ({ closeToRight }) => Boolean(closeToRight),
+        label: 'Close to the right',
+        run: ({ closeToRight }) => closeToRight?.(),
+      },
+      {
         id: WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID,
         icon: 'codicon-close-all',
         isEnabled: ({ canCloseAll, hasOpenFiles }) => canCloseAll && hasOpenFiles,
@@ -405,6 +418,9 @@ export function createWorkbenchStandaloneEditorTabMenuEntries(): CommandMenuEntr
       surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
     }),
     commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_OTHERS_COMMAND_ID, {
+      surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
+    }),
+    commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_TO_RIGHT_COMMAND_ID, {
       surfaces: [WORKBENCH_COMMAND_SURFACE_EDITOR],
     }),
     commandMenuEntry<WorkbenchEditorCommandContext>(WORKBENCH_EDITOR_CLOSE_ALL_COMMAND_ID, {
