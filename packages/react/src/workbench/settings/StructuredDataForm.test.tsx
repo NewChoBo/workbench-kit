@@ -49,6 +49,7 @@ import {
 import { WorkbenchStructuredDataSchemaPanel } from './StructuredDataSchemaPanel';
 import { WorkbenchStructuredDataSchemaPanelEmbed } from './StructuredDataSchemaPanelEmbed';
 import { WorkbenchStructuredDataSchemaPanelFrame } from './StructuredDataSchemaPanelFrame';
+import { getWorkbenchStructuredDataSchemaPathSegments } from './structuredDataSchemaSection';
 
 const sections: WorkbenchStructuredDataFormSection[] = [
   {
@@ -189,6 +190,70 @@ describe('WorkbenchStructuredDataForm helpers', () => {
     expect(Object.prototype.hasOwnProperty.call(profile, '__proto__')).toBe(true);
     expect(Object.getPrototypeOf(profile)).toBe(Object.prototype);
     expect(Object.getPrototypeOf(data.profile)).toBe(Object.prototype);
+  });
+
+  it('uses dotted schema paths for nested section reads, samples, and field edits', () => {
+    const section = {
+      dataPath: 'request.fields',
+      fields: ['name'],
+      sectionKey: 'requestFields',
+      title: 'Fields',
+    };
+    const data = {
+      'request.fields': { name: 'literal' },
+      request: { fields: { name: 'nested' } },
+    };
+    const schema = {
+      schema: {
+        properties: { 'request.fields.name': { default: 'sample' } },
+        sections: [section],
+      },
+    };
+
+    expect(getWorkbenchStructuredDataSchemaPathSegments('name')).toEqual(['name']);
+    expect(getWorkbenchStructuredDataSchemaDocumentSectionValue({ data, section })).toEqual({
+      name: 'nested',
+    });
+    expect(createWorkbenchStructuredDataSchemaDocumentSampleData(schema, '')).toEqual({
+      request: { fields: { name: 'sample' } },
+    });
+
+    const nextData = setWorkbenchStructuredDataValue(
+      data,
+      getWorkbenchStructuredDataSchemaPathSegments(
+        getWorkbenchStructuredDataSchemaFieldDataPath(section, 'name'),
+      ),
+      'edited',
+    );
+
+    expect(nextData.request).toEqual({ fields: { name: 'edited' } });
+    expect(nextData['request.fields']).toEqual({ name: 'literal' });
+  });
+
+  it('uses dotted schema table paths for nested cells and table edits', () => {
+    const section = {
+      dataPath: 'request.fields',
+      sectionKey: 'requestFields',
+      title: 'Fields',
+      type: 'table' as const,
+    };
+    const data = {
+      'request.fields': [{ name: 'literal' }],
+      request: { fields: [{ name: 'nested' }] },
+    };
+    const cellPath = getWorkbenchStructuredDataSchemaTableCellPath({
+      column: 'name',
+      rowKey: '0',
+      section,
+    });
+
+    expect(getWorkbenchStructuredDataSchemaTablePath(section)).toEqual(['request', 'fields']);
+    expect(cellPath).toEqual(['request', 'fields', '0', 'name']);
+
+    const nextData = setWorkbenchStructuredDataValue(data, cellPath, 'edited');
+
+    expect(nextData.request).toEqual({ fields: [{ name: 'edited' }] });
+    expect(nextData['request.fields']).toEqual([{ name: 'literal' }]);
   });
 
   it('interprets lightweight schema field definitions', () => {

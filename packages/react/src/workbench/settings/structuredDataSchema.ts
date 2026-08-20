@@ -19,6 +19,7 @@ import {
 import {
   getWorkbenchStructuredDataSchemaFieldDataPath,
   getWorkbenchStructuredDataSchemaFieldDefinition,
+  getWorkbenchStructuredDataSchemaPathSegments,
   getWorkbenchStructuredDataSchemaSectionFieldLabel,
   getWorkbenchStructuredDataSchemaSectionPath,
 } from './structuredDataSchemaSection';
@@ -206,11 +207,12 @@ export function getWorkbenchStructuredDataSchemaDocumentSectionValue({
   section: WorkbenchStructuredDataSchemaSectionSummary;
 }) {
   const sectionKey = getWorkbenchStructuredDataSchemaSectionPath(section);
-  const record = asWorkbenchStructuredDataRecord(data);
-  if (!sectionKey || !record) return sectionKey ? null : data;
-  if (Object.prototype.hasOwnProperty.call(record, sectionKey)) return record[sectionKey];
+  if (!sectionKey) return data;
 
-  const directValue = getWorkbenchStructuredDataValue(data, sectionKey.split('.'));
+  const directValue = getWorkbenchStructuredDataValue(
+    data,
+    getWorkbenchStructuredDataSchemaPathSegments(sectionKey),
+  );
   if (directValue !== null && directValue !== undefined) return directValue;
 
   const sectionAliases = Object.prototype.hasOwnProperty.call(aliases, sectionKey)
@@ -282,13 +284,17 @@ export function createWorkbenchStructuredDataSchemaDocumentSampleData(
         ? section.columns
         : Object.keys(schemaTable?.items ?? {});
 
-      return setWorkbenchStructuredDataValue(sample, path.split('.'), [
-        createWorkbenchStructuredDataSchemaDocumentEmptyRow({
-          columns,
-          schema,
-          section,
-        }),
-      ]);
+      return setWorkbenchStructuredDataValue(
+        sample,
+        getWorkbenchStructuredDataSchemaPathSegments(path),
+        [
+          createWorkbenchStructuredDataSchemaDocumentEmptyRow({
+            columns,
+            schema,
+            section,
+          }),
+        ],
+      );
     }
 
     return (section.fields ?? []).reduce<WorkbenchStructuredDataRecord>((nextSample, fieldPath) => {
@@ -299,7 +305,9 @@ export function createWorkbenchStructuredDataSchemaDocumentSampleData(
       );
       return setWorkbenchStructuredDataValue(
         nextSample,
-        getWorkbenchStructuredDataSchemaFieldDataPath(section, fieldPath).split('.'),
+        getWorkbenchStructuredDataSchemaPathSegments(
+          getWorkbenchStructuredDataSchemaFieldDataPath(section, fieldPath),
+        ),
         getWorkbenchStructuredDataSchemaFieldDefaultValue(definition),
       );
     }, sample);
