@@ -44,7 +44,9 @@ Recursive design has identified extension/kernel responsibility separation as a 
 ```text
 WB-NS-001A extension runtime responsibility decomposition
         ↓
-WB-NS-001B shell dependency narrowing
+WB-NS-001B1 shell dependency inventory + focused-service contract [READY_FOR_IMPLEMENTATION; dependency: WB-NS-001A]
+        ↓
+WB-NS-001B2 shell dependency narrowing migration [DESIGNING; dependency: WB-NS-001B1]
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
@@ -68,6 +70,17 @@ WB-NS-071A graph node type/property-input foundation
 WB-NS-071B component/node development requirement flow
         ↓
 WB-NS-071C external node ecosystem adapter contract
+
+WB-NS-072A design-system foundation consolidation map [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-070A, WB-NS-040]
+        ↓
+WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DESIGNING; dependencies: WB-NS-072A, WB-NS-070A/B/C/D, WB-NS-040]
+        ↓
+{ WB-NS-072C component-role + typed token/resource resolution [DESIGNING; dependency: WB-NS-072B]
+  WB-NS-072D explicit pack migration planner + transaction [DESIGNING; dependency: WB-NS-072B] }
+        ↓
+WB-NS-072E Canvas/Inspector/provenance integration [DESIGNING; dependencies: WB-NS-072C, WB-NS-072D]
+        ↓
+WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [DESIGNING; dependency: WB-NS-072E]
 
 Projection/GUI-builder architecture
         ↓
