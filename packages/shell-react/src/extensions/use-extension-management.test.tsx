@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { act, StrictMode, useEffect } from 'react';
+import { act, StrictMode, useEffect, useReducer } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
@@ -10,13 +10,14 @@ import {
 } from '@workbench-kit/workbench-core';
 import { resolveExtensionInstallOptions } from '@workbench-kit/react/workbench/management';
 
-import { WorkbenchProvider } from '../shell/provider.js';
+import { useWorkbench, WorkbenchProvider } from '../shell/provider.js';
 import {
   useExtensionManagementModel,
   type UseExtensionManagementModelOptions,
 } from './use-extension-management.js';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from './builtin-extensions.js';
 import { useExtensionEnablementController } from './extension-enablement-context.js';
+import { createThemeSelectionProtectionSnapshot } from './theme-selection-protection.js';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 type ExtensionManagementModel = ReturnType<typeof useExtensionManagementModel>;
@@ -104,10 +105,21 @@ function ThemeLifecycleManagementProbe({
   onChange: (model: ExtensionManagementModel) => void;
 }) {
   const controller = useExtensionEnablementController();
+  const { themes } = useWorkbench();
+  const [themeRevision, bumpThemeRevision] = useReducer((revision: number) => revision + 1, 0);
+  useEffect(() => themes.onDidChangeThemes(bumpThemeRevision).dispose, [themes]);
   useEffect(() => {
-    controller.setProtectedThemeIds([]);
-    return () => controller.setProtectedThemeIds(undefined);
-  }, [controller]);
+    controller.setThemeSelectionProtection(
+      createThemeSelectionProtectionSnapshot({
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: 'workbench-kit.test.host-theme',
+        themeOptions: [{ id: 'workbench-kit.test.host-theme' }],
+        themes,
+      }),
+    );
+    return () => controller.setThemeSelectionProtection(undefined);
+  }, [controller, themeRevision, themes]);
 
   return <ExtensionManagementProbe catalogUrl="" onChange={onChange} />;
 }

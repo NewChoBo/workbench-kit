@@ -8,6 +8,8 @@ import {
   type WorkbenchStorageAdapter,
 } from '@workbench-kit/workbench-core';
 
+import type { ThemeSelectionProtectionSnapshot } from './theme-selection-protection.js';
+
 interface DisposableLike {
   dispose(): void;
 }
@@ -61,7 +63,7 @@ export class ExtensionEnablementController implements DisposableLike {
   private readonly storage: WorkbenchStorageAdapter | undefined;
   private readonly storageKey: string;
   private installedRecords: readonly InstalledExtensionRecord[];
-  private protectedThemeIds: ReadonlySet<string> | undefined;
+  private themeSelectionProtection: ThemeSelectionProtectionSnapshot | undefined;
   private disposed = false;
 
   constructor({
@@ -107,11 +109,11 @@ export class ExtensionEnablementController implements DisposableLike {
     };
   };
 
-  setProtectedThemeIds(themeIds: readonly (string | undefined)[] | undefined): void {
-    this.protectedThemeIds =
-      themeIds === undefined
-        ? undefined
-        : new Set(themeIds.filter((themeId): themeId is string => Boolean(themeId)));
+  setThemeSelectionProtection(snapshot: ThemeSelectionProtectionSnapshot | undefined): void {
+    this.themeSelectionProtection =
+      snapshot?.kind === 'known'
+        ? { ...snapshot, protectedThemeIds: [...snapshot.protectedThemeIds] }
+        : snapshot;
   }
 
   commitInstalledRecords(
@@ -174,6 +176,9 @@ export class ExtensionEnablementController implements DisposableLike {
     if (!eligibility.eligible) {
       if (eligibility.kind === 'failed') {
         return this.failed(extensionId, current.enabled);
+      }
+      if (!eligibility.commitRequestedState) {
+        return this.reloadRequired(extensionId, current.enabled);
       }
       if (!this.persist(next)) {
         return this.failed(extensionId, current.enabled);
@@ -295,21 +300,35 @@ export class ExtensionEnablementController implements DisposableLike {
     enabled: boolean,
   ):
     | { readonly eligible: true; readonly description: WorkbenchExtensionDescription }
-    | { readonly eligible: false; readonly kind: 'failed' | 'reloadRequired' } {
+    | {
+        readonly commitRequestedState: boolean;
+        readonly eligible: false;
+        readonly kind: 'failed' | 'reloadRequired';
+      } {
     const description = this.availableExtensionsById.get(extensionId);
     if (!description) {
-      return { eligible: false, kind: 'reloadRequired' };
+      return { commitRequestedState: true, eligible: false, kind: 'reloadRequired' };
     }
     if (!this.integrityAcceptedExtensionIds.has(extensionId)) {
-      return { eligible: false, kind: 'failed' };
+      return { commitRequestedState: false, eligible: false, kind: 'failed' };
     }
-    if (!isThemeOnlyDeclarativeExtension(description) || this.protectedThemeIds === undefined) {
-      return { eligible: false, kind: 'reloadRequired' };
+    if (!isThemeOnlyDeclarativeExtension(description)) {
+      return { commitRequestedState: true, eligible: false, kind: 'reloadRequired' };
     }
 
+    const selectionProtection = this.themeSelectionProtection;
+    if (
+      selectionProtection?.kind !== 'known' ||
+      selectionProtection.themeRegistryRevision !== this.registry.themes.getRevision()
+    ) {
+      return { commitRequestedState: false, eligible: false, kind: 'reloadRequired' };
+    }
+
+    const protectedThemeIds = new Set(selectionProtection.protectedThemeIds);
+
     const themes = description.manifest.contributes?.themes ?? [];
-    if (themes.some((theme) => this.protectedThemeIds?.has(theme.id))) {
-      return { eligible: false, kind: 'reloadRequired' };
+    if (themes.some((theme) => protectedThemeIds.has(theme.id))) {
+      return { commitRequestedState: true, eligible: false, kind: 'reloadRequired' };
     }
 
     const registeredHardDependent = [...this.registrationHandles.keys()].some((candidateId) => {
@@ -321,12 +340,12 @@ export class ExtensionEnablementController implements DisposableLike {
         ?.manifest.extensionDependencies?.includes(extensionId);
     });
     if (registeredHardDependent) {
-      return { eligible: false, kind: 'reloadRequired' };
+      return { commitRequestedState: true, eligible: false, kind: 'reloadRequired' };
     }
 
     const hasRegistration = this.registrationHandles.has(extensionId);
     if ((enabled && hasRegistration) || (!enabled && !hasRegistration)) {
-      return { eligible: false, kind: 'reloadRequired' };
+      return { commitRequestedState: true, eligible: false, kind: 'reloadRequired' };
     }
 
     return { eligible: true, description };

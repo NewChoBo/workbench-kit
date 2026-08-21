@@ -219,9 +219,11 @@ review; they do not change the persistence and eligibility contract above.
 An already-installed extension can enable or disable without a reload only when
 it contributes one or more themes and has no executable module, localization or
 other contribution, capability, hard dependency, registered hard dependent, or
-integrity rejection. The host must also supply the current theme, light preset,
-and dark preset selection; a selected theme pack and a host without that
-selection snapshot fail closed to the reload path.
+integrity rejection. The shell must also resolve the current theme, light preset,
+and dark preset against the current option sources and `ThemeRegistry` revision.
+A selected theme pack and any missing, unknown, ambiguous, or stale selection
+snapshot fail closed to the reload path. That uncertain path does not register or
+unregister themes, persist the requested state, or publish a new projection.
 
 `WorkbenchProvider` owns the installed-record snapshot and exact extension
 registration handles. Enable registers the extension and verifies its themes

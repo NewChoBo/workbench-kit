@@ -7,6 +7,7 @@ import {
 } from '@workbench-kit/workbench-core';
 
 import { ExtensionEnablementController } from './extension-enablement-controller.js';
+import { createThemeSelectionProtectionSnapshot } from './theme-selection-protection.js';
 
 const STORAGE_KEY = 'workbench-kit/.workbench/installed-extensions/theme-lifecycle-test';
 
@@ -90,8 +91,23 @@ function createHarness({
     registrationLifetime,
     registry,
   });
-  controller.setProtectedThemeIds([]);
+  setKnownUnselectedTheme(controller, registry);
   return { controller, diagnostics, persistence, registry };
+}
+
+function setKnownUnselectedTheme(
+  controller: ExtensionEnablementController,
+  registry: ExtensionRegistry,
+): void {
+  controller.setThemeSelectionProtection(
+    createThemeSelectionProtectionSnapshot({
+      darkPreset: undefined,
+      lightPreset: undefined,
+      theme: 'workbench-kit.test.host-theme',
+      themeOptions: [{ id: 'workbench-kit.test.host-theme' }],
+      themes: registry.themes,
+    }),
+  );
 }
 
 describe('ExtensionEnablementController', () => {
@@ -106,6 +122,8 @@ describe('ExtensionEnablementController', () => {
     });
     expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
     expect(controller.getInstalledRecordsSnapshot()[0]?.enabled).toBe(true);
+
+    setKnownUnselectedTheme(controller, registry);
 
     expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
       enabled: false,
@@ -151,12 +169,29 @@ describe('ExtensionEnablementController', () => {
   });
 
   it.each([
-    ['selected theme', [themeExtension.manifest.contributes?.themes?.[0]?.id]],
-    ['selected light preset', ['workbench-kit.samples.theme-alt.dark-blue', 'workbench.light']],
-    ['selected dark preset', ['workbench.dark', 'workbench-kit.samples.theme-alt.dark-blue']],
-  ])('requires reload for a protected %s', (_label, protectedThemeIds) => {
+    [
+      'selected theme',
+      {
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: 'workbench-kit.samples.theme-alt.dark-blue',
+        themeOptions: undefined,
+      },
+    ],
+    [
+      'selected dark preset',
+      {
+        darkPreset: 'workbench-kit.samples.theme-alt.dark-blue',
+        lightPreset: 'skyblue',
+        theme: 'system',
+        themeOptions: undefined,
+      },
+    ],
+  ])('requires reload for a known %s', (_label, selection) => {
     const { controller, persistence, registry } = createHarness({ enabled: true });
-    controller.setProtectedThemeIds(protectedThemeIds);
+    controller.setThemeSelectionProtection(
+      createThemeSelectionProtectionSnapshot({ ...selection, themes: registry.themes }),
+    );
 
     expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
       enabled: false,
@@ -164,6 +199,124 @@ describe('ExtensionEnablementController', () => {
     });
     expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
     expect(JSON.parse(persistence.values.get(STORAGE_KEY) ?? '[]')[0]?.enabled).toBe(false);
+  });
+
+  it.each([
+    [
+      'missing primary selection with a contributed first-option fallback',
+      {
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: undefined,
+        themeOptions: undefined,
+      },
+    ],
+    [
+      'unknown primary selection with a contributed first-option fallback',
+      {
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: 'workbench-kit.missing.theme',
+        themeOptions: undefined,
+      },
+    ],
+    [
+      'unknown color scheme selection',
+      {
+        darkPreset: 'workbench-kit.samples.theme-alt.dark-blue',
+        lightPreset: 'skyblue',
+        theme: 'contrast',
+        themeOptions: undefined,
+      },
+    ],
+    [
+      'unknown preset selection',
+      {
+        darkPreset: 'workbench-kit.missing.dark',
+        lightPreset: 'skyblue',
+        theme: 'system',
+        themeOptions: undefined,
+      },
+    ],
+    [
+      'ambiguous selected theme source',
+      {
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: 'workbench-kit.samples.theme-alt.dark-blue',
+        themeOptions: [{ id: 'workbench-kit.samples.theme-alt.dark-blue' }],
+      },
+    ],
+  ])('fails closed without mutating for %s', (_label, selection) => {
+    const { controller, persistence, registry } = createHarness({ enabled: true });
+    const changes: string[] = [];
+    registry.themes.onDidChangeThemes(({ kind, theme }) => changes.push(`${kind}:${theme.id}`));
+    const snapshot = createThemeSelectionProtectionSnapshot({
+      ...selection,
+      themes: registry.themes,
+    });
+    expect(snapshot.kind).toBe('unknown');
+    controller.setThemeSelectionProtection(snapshot);
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: true,
+      kind: 'reloadRequired',
+    });
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([installedRecord(true)]);
+    expect(persistence.setItem).not.toHaveBeenCalled();
+    expect(changes).toEqual([]);
+  });
+
+  it('fails closed before registering an unselected target when selection is unknown', () => {
+    const { controller, persistence, registry } = createHarness({ enabled: false });
+    controller.setThemeSelectionProtection(
+      createThemeSelectionProtectionSnapshot({
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: undefined,
+        themeOptions: [{ id: 'workbench-kit.test.fallback-theme' }],
+        themes: registry.themes,
+      }),
+    );
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, true)).toMatchObject({
+      enabled: false,
+      kind: 'reloadRequired',
+    });
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeUndefined();
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeUndefined();
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([installedRecord(false)]);
+    expect(persistence.setItem).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when a known selection snapshot is stale', () => {
+    const { controller, persistence, registry } = createHarness({ enabled: true });
+    const staleSnapshot = createThemeSelectionProtectionSnapshot({
+      darkPreset: undefined,
+      lightPreset: undefined,
+      theme: 'workbench-kit.test.host-theme',
+      themeOptions: [{ id: 'workbench-kit.test.host-theme' }],
+      themes: registry.themes,
+    });
+    const unrelatedRegistration = registry.themes.registerTheme({
+      extensionId: 'workbench-kit.test.unrelated-theme',
+      id: 'workbench-kit.test.unrelated-theme.light',
+      label: 'Unrelated Light',
+      mode: 'light',
+    });
+    controller.setThemeSelectionProtection(staleSnapshot);
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: true,
+      kind: 'reloadRequired',
+    });
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([installedRecord(true)]);
+    expect(persistence.setItem).not.toHaveBeenCalled();
+
+    unrelatedRegistration.dispose();
   });
 
   it.each([
@@ -214,14 +367,17 @@ describe('ExtensionEnablementController', () => {
     expect(persistence.setItem).toHaveBeenCalledTimes(1);
   });
 
-  it('requires reload when selection ownership is unavailable', () => {
-    const { controller, registry } = createHarness({ enabled: true });
-    controller.setProtectedThemeIds(undefined);
+  it('requires reload without persistence when selection ownership is unavailable', () => {
+    const { controller, persistence, registry } = createHarness({ enabled: true });
+    controller.setThemeSelectionProtection(undefined);
 
     expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: true,
       kind: 'reloadRequired',
     });
     expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([installedRecord(true)]);
+    expect(persistence.setItem).not.toHaveBeenCalled();
   });
 
   it('fails without persistence when integrity rejects the candidate', () => {
@@ -263,7 +419,11 @@ describe('ExtensionEnablementController', () => {
       registrationLifetime,
       registry,
     });
-    controller.setProtectedThemeIds([]);
+    controller.setThemeSelectionProtection({
+      kind: 'known',
+      protectedThemeIds: [],
+      themeRegistryRevision: registry.themes.getRevision(),
+    });
 
     expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
       kind: 'reloadRequired',

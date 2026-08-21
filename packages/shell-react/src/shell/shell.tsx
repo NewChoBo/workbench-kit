@@ -27,6 +27,7 @@ import {
 
 import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from '../commands/view-data.js';
 import { useExtensionEnablementController } from '../extensions/extension-enablement-context.js';
+import { createThemeSelectionProtectionSnapshot } from '../extensions/theme-selection-protection.js';
 import { BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID } from '../extensions/view-data.js';
 import {
   filterActivityBarItems,
@@ -229,6 +230,17 @@ export function WorkbenchShell({
   );
   const forceRender = useForceRender();
   const themeRevision = themes.getRevision();
+  const themeSelectionProtection = useMemo(
+    () =>
+      createThemeSelectionProtectionSnapshot({
+        darkPreset,
+        lightPreset,
+        theme,
+        themeOptions,
+        themes,
+      }),
+    [darkPreset, lightPreset, theme, themeOptions, themeRevision, themes],
+  );
   const [preferenceRevision, bumpPreferenceRevision] = useReducer((count: number) => count + 1, 0);
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
@@ -301,11 +313,11 @@ export function WorkbenchShell({
   });
 
   useEffect(() => {
-    extensionEnablement.setProtectedThemeIds([theme, lightPreset, darkPreset]);
+    extensionEnablement.setThemeSelectionProtection(themeSelectionProtection);
     return () => {
-      extensionEnablement.setProtectedThemeIds(undefined);
+      extensionEnablement.setThemeSelectionProtection(undefined);
     };
-  }, [darkPreset, extensionEnablement, lightPreset, theme]);
+  }, [extensionEnablement, themeSelectionProtection]);
 
   useEffect(() => {
     if (visibleActivityItems.length === 0) {
