@@ -439,6 +439,7 @@
 }
 
 .workbench-field-remap-convert-palette__header,
+.workbench-field-remap-convert-palette__filter,
 .workbench-field-remap-convert-palette__place,
 .workbench-field-remap-convert-palette__operators {
   flex: 0 0 auto;
@@ -455,6 +456,14 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.7rem;
+}
+
+.workbench-field-remap-convert-palette__empty {
+  flex: 1 1 auto;
+  margin: 0;
+  padding: 0.35rem;
+  font-size: 0.75rem;
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
 }
 
 .workbench-field-remap-convert-palette__operators {
