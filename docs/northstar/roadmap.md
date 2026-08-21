@@ -4,9 +4,9 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## Current checkpoint
 
-- **Integration baseline:** `develop@14ebec740a82beb1e6b53c153f967cb0dea68baf`.
+- **Integration baseline:** `develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1`.
 - `WB-NS-001A` is integrated through PR #301. The compatible `ExtensionRegistry` facade now delegates focused inventory, contribution-routing, API-construction, and activation-lifecycle responsibilities, including teardown barriers.
-- The next extension-runtime slice is not automatically implementation-ready: `WB-NS-001B1` still requires the current shell dependency inventory and focused-service contract before shell reach-through is narrowed.
+- The reviewed `WB-NS-001B1` shell inventory and focused-service contract are closed and ready for implementation. `WB-NS-001B2` source migration remains gated on integrating that promotion projection and revalidating an exact implementation base and separate owner.
 - Existing correctness, UX, release, and lifecycle Issues retain their own ownership. This roadmap does not replace or duplicate their acceptance criteria.
 
 ## Strategic outcomes
@@ -21,7 +21,7 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## NOW
 
-- **Close the extension-runtime decomposition follow-through.** Reconcile the integrated `WB-NS-001A` result into the Northstar packet ledger, then complete the bounded current-source inventory needed to decide `WB-NS-001B1`. Do not widen the public runtime API merely to remove aggregate shell reach-through.
+- **Close the extension-runtime decomposition follow-through.** Integrate the reviewed `WB-NS-001B1` promotion projection, then open the separately owned `WB-NS-001B2` implementation lane only after fresh exact-base revalidation. Do not widen the public runtime API merely to remove aggregate shell reach-through.
 - **Maintain one durable roadmap projection.** Keep this file synchronized only when repository truth materially changes the horizon, dependency order, or effect gate. Detailed Issue/packet state stays with its canonical owner.
 - **Finish independently owned high-value work without collapsing ownership.** Correctness, accessibility, Field Remap, JDW, extension-management, and repository-lifecycle work continue through their focused Issues and producer/reviewer lanes.
 

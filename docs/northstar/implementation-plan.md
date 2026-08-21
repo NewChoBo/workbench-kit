@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e`.
+- **Current integration baseline:** `origin/develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -47,11 +47,11 @@ No packet status or contract names a specific coding agent.
 Recursive design has identified extension/kernel responsibility separation as a foundation before adding more public abstraction. UI authoring adds a second target chain that must inventory/reuse existing schema/layout primitives before creating new public contracts.
 
 ```text
-WB-NS-001A extension runtime responsibility decomposition
+WB-NS-001A extension runtime responsibility decomposition [DONE]
         ↓
-WB-NS-001B1 shell dependency inventory + focused-service contract [DESIGNING; dependency: WB-NS-001A]
+WB-NS-001B1 shell dependency inventory + focused-service contract [READY_FOR_IMPLEMENTATION; dependency: WB-NS-001A DONE]
         ↓
-WB-NS-001B2 shell dependency narrowing migration [DESIGNING; dependency: WB-NS-001B1]
+WB-NS-001B2 shell dependency narrowing migration [BLOCKED; dependency: WB-NS-001B1 projection integration]
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
@@ -106,10 +106,10 @@ UI packet IDs `WB-NS-070*` / `WB-NS-071*` are canonical target slots but remain 
 
 ## WB-NS-001A — Runtime extension responsibility decomposition
 
-- **Status:** `SOURCE_REVIEW_REQUIRED`
+- **Status:** `DONE`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
-- **Current source evidence:** `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e` (bounded review below)
+- **Current source evidence:** `origin/develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1` (integrated through PR #301; bounded review below)
 - **Historical source evidence:** `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` (corroborating candidate evidence only)
 - **Public API impact:** none required in this slice
 
@@ -119,26 +119,18 @@ Split catalog/inventory, manifest contribution routing, executable activation an
 
 This closes the highest-value kernel/extension responsibility gap without introducing a global DI/service-locator API or forcing process isolation.
 
-### CURRENT-BASELINE SOURCE EVIDENCE
+### CURRENT-BASELINE INTEGRATION EVIDENCE
 
-Re-verified on 2026-08-21 at exact `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e`:
+Re-verified on 2026-08-21 at exact `origin/develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1` after PR #301 integration:
 
-- `packages/workbench-core/src/extension/registry.ts` defines public `ExtensionRegistryOptions` for the focused registries, but `ExtensionRegistry` still creates or owns those registries plus `extensions`, `activeExtensions` and `activatingExtensions` maps.
-- The same file still performs inventory lookup/registration, dependency and cycle validation, manifest contribution routing, activation-event matching, dependency-first activation, active-state mutation, lifecycle events, `ExtensionContext` construction and command activation/execution.
-- Registration-bound invalidation is now explicit through `RegisteredExtension.invalidated`, registration-bound `PendingActivation` state and repeated current-registration assertions around dependency and module activation. Slice A must preserve those generation-isolation semantics while moving lifecycle ownership.
-- Current `deactivateExtension()` removes the externally visible active entry before awaiting the asynchronous deactivate hook, while `activateExtension()` has no deactivating-state or teardown-barrier check. Reactivation can therefore overlap old teardown unless Slice A adds the normative epoch/barrier semantics.
-- `packages/workbench-core/src/index.ts` publicly exports `ExtensionRegistry`, `ExtensionRegistryOptions`, lifecycle types and `CapabilityRegistry`; retaining a source-compatible facade is an evidenced migration requirement.
-- `packages/workbench-extension-sdk/src/contributions.ts` exposes a restricted `ExtensionContext` with explicit registration/capability facades and activation-scoped subscriptions. It does not expose the host composition object or arbitrary service lookup, so `ExtensionApiFactory` can preserve the current public shape.
-- `packages/shell-react/src/shell/provider.tsx` creates `ExtensionRegistry`, exposes it through `WorkbenchContextValue` and consumes several focused registries through the aggregate. That evidence supports deferring shell reach-through classification and migration to `WB-NS-001B1/B2` rather than widening Slice A.
-- `packages/workbench-core/src/extension/registry.test.ts` covers registration, contribution-before-activation behavior, lifecycle events, dependency activation, capabilities and disposal, but does not close asynchronous deactivate/reactivate ordering. The focused test list below owns that missing regression evidence.
+- `packages/workbench-core/src/extension/registry.ts` retains the public compatibility facade while delegating substantive inventory, contribution-routing, API-construction and activation-lifecycle behavior to focused internal roles.
+- `ExtensionActivationService` preserves registration-bound pending-activation invalidation and current-registration checks while enforcing a per-extension teardown barrier and epoch-scoped cleanup, diagnostics and lifecycle events across explicit, startup, command, view and dependency activation paths.
+- `packages/workbench-core/src/index.ts`, `packages/workbench-core/package.json` and the extension SDK retain their prior public boundary; runtime extensions still receive the restricted `ExtensionContext` rather than host composition internals.
+- Focused role tests and facade regressions cover contribution-before-activation behavior, dependency/cycle semantics, activation coalescing, teardown failure, re-registration isolation, stale epoch completion, exhaustive disposal and listener failure isolation.
+- Exact candidate `f0184ab208e91efbc11fa9114be4e543cf99084e` passed producer-distinct source review and repository CI before integration as PR #301 at `14ebec740a82beb1e6b53c153f967cb0dea68baf`.
+- `packages/shell-react/src/shell/provider.tsx` still privately creates the compatibility registry and publicly exposes it through `WorkbenchContextValue`; narrowing that shell reach-through remains owned by `WB-NS-001B1/B2` rather than reopening Slice A.
 
-This current inventory maps directly to the target roles and shows no missing public API or package decision for the internal-first slice. An implementation candidate now exists behind the compatibility facade, including the teardown epoch/barrier and focused role regressions. `WB-NS-001A` remains `SOURCE_REVIEW_REQUIRED` until review is bound to an exact candidate SHA and the reviewed candidate is integrated.
-
-Evidence freshness and falsifier rule:
-
-- The readiness claim is valid only for the exact SHA above. Before implementation starts, re-run this bounded inventory if that SHA is no longer the implementation base or any listed source path changed.
-- Demote this packet to `DESIGNING` if re-verification finds that lifecycle ownership, the public facade/SDK compatibility seam or shell dependency boundary changed in a way that requires a new API, migration or teardown decision.
-- Any implementation that lets activation bypass an earlier epoch's teardown barrier, or lets old teardown dispose or emit after a newer activation, falsifies this packet's lifecycle contract and must be rejected rather than treated as a compatible variation.
+This evidence closes `WB-NS-001A`. Reopen or revise the packet only if a later change breaks the public facade/SDK compatibility boundary, bypasses the teardown barrier, or lets stale epoch cleanup, diagnostics or lifecycle events affect a newer activation.
 
 Historical snapshot `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` reached the same aggregate-responsibility finding, but it is not used independently for promotion.
 
@@ -335,39 +327,45 @@ Falsifier for the deferred isolation decision: a committed product requirement n
 
 ## WB-NS-001B1 - Shell dependency inventory and focused-service contract
 
-- **Status:** `DESIGNING`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
-- **Dependency:** `WB-NS-001A`
+- **Dependency:** `WB-NS-001A` (`DONE`)
+- **Current design evidence:** GitHub Issue #303, revalidated at exact `origin/develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1`
 
 ### Goal
 
 Produce the bounded shell dependency map and focused-service contract required before replacing aggregate `ExtensionRegistry` reach-through.
 
-### Design work still required
+### Reviewed implementation contract
 
-1. Inventory every `shell-react` use of `extensionRegistry` as activation, command, contribution read, extension management/catalog, capability access, or other.
-2. Define the smallest focused service/context facade for each category, including lifecycle and disposal ownership.
-3. Close the React context shape and compatibility/deprecation seams without widening extension runtime access or introducing a global service locator.
+1. `WorkbenchProvider` remains the single private owner of the compatibility `ExtensionRegistry` and the focused adapters it creates; React context stops exposing the aggregate registry or arbitrary capability/service lookup.
+2. Existing focused contribution registries remain direct context dependencies. Narrow activation access, read-only activation-state observation, extension catalog/diagnostics and settings-capability publication cover the aggregate-only behaviors.
+3. The four direct aggregate ingress files move to focused seams: `explorer/view.tsx` and `editor/area.tsx` use command/menu registries plus existing command execution, while `extensions/use-extension-management.ts` and `devtools/use-workbench-devtools-snapshot.ts` use read-only catalog/provider-ID and activation-state readers.
+4. Activation-state observation reacts after both activation and deactivation while preserving the `WB-NS-001A` epoch/teardown ordering. Command execution remains command-layer behavior.
+5. Settings-capability publication is a no-op for an existing provider and owns/disposes only the exact registration it creates; duplicate collision handling never removes a pre-existing provider.
+6. `listCapabilityProviderIds()` preserves the complete current `CapabilityRegistry.listProviderIds()` result without inventing host-origin filtering.
+7. The explicit host-owned `useExtensionRegistryCommandDescriptors(registry, ...)` compatibility seam remains source-compatible.
+8. Issue #303 owns the exact current ingress map, ordered migration, non-goals and focused verification matrix for `WB-NS-001B2`; implementation must revalidate those paths on its exact base rather than widening this packet.
 
 ### Promotion gate
 
-Do not promote this packet until every aggregate-registry use has a classified owner and replacement seam, the focused facade and lifecycle/disposal owner are explicit, and the proposed React context does not expose host composition internals.
+The producer-distinct design review passed and current-source revalidation found the reviewed contract unchanged. Demote this packet if an implementation base changes aggregate ownership, adds an unmapped production ingress, cannot preserve activate/deactivate observation and settings-capability ownership, or requires a broader public runtime/service-locator API.
 
 ## WB-NS-001B2 - Shell dependency narrowing migration
 
-- **Status:** `DESIGNING`
+- **Status:** `BLOCKED`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
-- **Dependency:** `WB-NS-001B1`
+- **Dependency:** integrated `WB-NS-001B1` promotion projection
 
 ### Goal
 
 Replace proven aggregate-registry reach-through incrementally while retaining each package's behavior, goals, actions, diagnostics, and migration scope.
 
-### Design work still required
+### Implementation gate
 
-Define the ordered package migration, compatibility/deprecation period, focused-context availability behavior, diagnostics for unavailable capabilities, and cleanup trigger after all consumers leave the aggregate path.
+Issue #303 defines the ordered migration, compatibility seams, ownership rules and focused verification matrix. Do not begin source migration from this projection-only packet. After the `WB-NS-001B1` promotion is integrated, revalidate then-current `develop`, establish a separate implementation owner and preserve the aggregate facade until every internal context consumer has moved.
 
 ## WB-NS-010 — Graph document/controller/renderer/runtime separation
 

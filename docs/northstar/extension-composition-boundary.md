@@ -26,14 +26,14 @@ These planes may be assembled in the same JavaScript realm today, but they are n
 
 ## Source snapshot evidence
 
-Current integration baseline: `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e`.
+Current integration baseline: `origin/develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1`.
 
 The current baseline was re-verified against the bounded source inventory recorded in
 [`implementation-plan.md`](./implementation-plan.md) packet `WB-NS-001A`:
 
-- `packages/workbench-core/src/extension/registry.ts` still makes `ExtensionRegistry` responsible for extension inventory, contribution routing, dependency analysis, activation/deactivation, runtime API construction, command activation/execution and focused-registry lifetime;
-- registration-bound invalidation and pending-activation identity checks are now present and remain required behavior during the internal decomposition;
-- `packages/workbench-core/src/index.ts` still exports `ExtensionRegistry`, its options and `CapabilityRegistry`, so the first slice requires a source-compatible facade;
+- `packages/workbench-core/src/extension/registry.ts` now keeps `ExtensionRegistry` as a source-compatible facade over focused inventory, contribution-routing, API-construction and activation-lifecycle roles;
+- registration-bound invalidation, pending-activation identity checks, per-extension teardown barriers and epoch-scoped cleanup/events are covered by the integrated Slice A implementation;
+- `packages/workbench-core/src/index.ts` still exports `ExtensionRegistry`, its options and `CapabilityRegistry`, preserving the public compatibility seam;
 - `packages/workbench-extension-sdk/src/contributions.ts` still exposes a restricted `ExtensionContext` rather than host composition internals;
 - `packages/shell-react/src/shell/provider.tsx` still creates and exposes the aggregate registry while using its focused registries directly, which keeps shell narrowing in a later packet.
 
@@ -284,7 +284,7 @@ Reason: it would enlarge internal reach-through, weaken capability/trust boundar
 
 ### Slice A — internal decomposition behind compatibility facade
 
-Status: target is sufficiently closed for implementation.
+Status: `DONE` through PR #301.
 
 1. Extract extension-description ownership from `ExtensionRegistry` into `ExtensionInventory` or an equivalent focused internal role.
 2. Extract manifest contribution registration into `ExtensionContributionRouter` using the existing focused registries and current normalizers.
@@ -296,9 +296,9 @@ Status: target is sufficiently closed for implementation.
 
 ### Slice B — shell dependency narrowing
 
-Status: `DESIGNING`.
+Design contract: `READY_FOR_IMPLEMENTATION` through reviewed Issue #303 / `WB-NS-001B1`.
 
-Review each `shell-react` use of `extensionRegistry` and replace aggregate reach-through with the smallest focused service/facade. Define the migration/deprecation policy only after the usage inventory is complete.
+Source migration: `BLOCKED` under `WB-NS-001B2` until this promotion projection is integrated and the exact implementation base and owner are revalidated. The later migration follows Issue #303's reviewed ingress map and focused seams; it does not expose the aggregate registry or arbitrary capability/service lookup through React context.
 
 ### Slice C — executable isolation/runtime placement
 
