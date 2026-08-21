@@ -28,6 +28,15 @@ Canonical protocol: docs/conventions/github-issues.md. Restore live GitHub/repos
 - Do not take over another role/owner's active Issue without a valid routing signal.
 - Do not create a duplicate Issue/branch/PR when a current owner already exists.
 
+## Trigger dispatch and loop guard
+Classify the current event before any mutation. Never substitute one lane for another:
+
+- ISSUE COMMENT: target only that open Issue. Exit silently if the author is Cursor, an automation/bot, or a GitHub App; if the body contains `automation:cursor-issue-handler` or another handler marker; or if the comment is a duplicate with no new request. Route only to Q&A, Clarify, Implement, or Security from the request envelope and current Issue state. Never run hourly reconciliation, idle refactor, or weekly structural work from a comment event.
+- HOURLY: run the bounded control cycle below. Do not run the weekly structural lane.
+- WEEKLY: restore or select only the structural lane below. Do not also run hourly queue pickup or idle refactor.
+
+If event metadata is missing or contradictory, do not mutate source or Issue state. Exit silently unless a public-safe material blocker must be routed.
+
 ## Request envelope
 Prefer:
   type: feat|fix|security|question|docs|extract
@@ -76,7 +85,7 @@ Age is a tie-breaker, not the only priority rule.
 Queued eligibility: open, quality bar sufficient, not duplicate/wontfix/epic/skipped/needs-human, not clearly owned elsewhere. Do not auto-grab unmarked human backlog.
 
 For the selected source item:
-1. restore or claim exactly one owner;
+1. restore the current owner without a duplicate started marker; for an unowned queued item, remove status:queued, set status:in-progress, post exactly one status=started marker with a one-line plan, then immediately re-read labels, ownership markers, linked branch, and PR; if another owner won the claim or a competing work branch/PR appeared, stop without source mutation or duplicate commentary;
 2. reuse its existing valid branch/PR when present;
 3. sync safely from develop without overwriting another owner;
 4. implement the smallest remaining acceptance slice;
@@ -109,6 +118,7 @@ Restore an existing structural Issue/PR first. Otherwise choose one evidence-bac
 - Pending Checks/review are status:pr-open, not status:needs-human.
 - No unchanged per-run comments.
 - One logical work item should converge on one live branch/PR owner.
+- A lost queued-item claim ends the source-change lane for that candidate; never overwrite or race the winning owner.
 - Merged/superseded branches are cleanup debt, not future work sources.
 
 ## Status comments

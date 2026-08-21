@@ -11,11 +11,11 @@ This repo also uses an **IssueOps** automation lane. Labels and comments are the
 
 ## Which template?
 
-| Template | Use when |
-| --- | --- |
-| **Feature / API addition** | Net-new kit capability designed in-kit |
-| **Bug report** | Incorrect behavior in kit packages / Storybook / sample |
-| **Consumer extract** | A host already proved a pattern; promote the generic slice into kit |
+| Template                   | Use when                                                            |
+| -------------------------- | ------------------------------------------------------------------- |
+| **Feature / API addition** | Net-new kit capability designed in-kit                              |
+| **Bug report**             | Incorrect behavior in kit packages / Storybook / sample             |
+| **Consumer extract**       | A host already proved a pattern; promote the generic slice into kit |
 
 Security reports: do **not** file exploit detail in a public issue. Prefer a GitHub Security Advisory or maintainer private channel. Public threads may use `type: security` only to request private follow-up.
 
@@ -67,26 +67,36 @@ run agent
 
 Missing/ambiguous implementation intent must not be guessed. Ask one bounded reverse-question checklist and use `status:needs-human` only when real human information/judgment is required.
 
+### Event dispatch and loop safety
+
+The executable handler must classify its trigger before mutation:
+
+- **Issue comment:** process only the target Issue through Q&A, Clarify, Implement, or Security. Ignore bot, automation, GitHub App, handler-marker, and unchanged duplicate comments. Never enter hourly, idle, or weekly work from a comment event.
+- **Hourly:** run bounded active-owner reconciliation plus at most one source-changing logical item. Never enter the weekly structural lane.
+- **Weekly:** restore or select one structural item. Do not also pick up the hourly queue or idle work.
+
+Missing or contradictory event metadata does not authorize mutation.
+
 ### Modes
 
-| Mode | When | Mutates code? |
-| --- | --- | --- |
-| **Q&A** | question/discuss/clarify without implementation request | No |
-| **Clarify** | ambiguous / thin quality bar | No |
-| **Implement** | explicit run request or eligible scheduled pickup | Yes, PR to `develop` |
-| **Idle refactor** | no actionable active or queued work | One small internal PR |
-| **Structural refactor** | weekly architecture lane | Yes, never auto-merge |
-| **Security** | security-sensitive request | No public PoC |
+| Mode                    | When                                                    | Mutates code?         |
+| ----------------------- | ------------------------------------------------------- | --------------------- |
+| **Q&A**                 | question/discuss/clarify without implementation request | No                    |
+| **Clarify**             | ambiguous / thin quality bar                            | No                    |
+| **Implement**           | explicit run request or eligible scheduled pickup       | Yes, PR to `develop`  |
+| **Idle refactor**       | no actionable active or queued work                     | One small internal PR |
+| **Structural refactor** | weekly architecture lane                                | Yes, never auto-merge |
+| **Security**            | security-sensitive request                              | No public PoC         |
 
 ### Status labels
 
-| Label | Meaning |
-| --- | --- |
-| `status:queued` | Eligible for scheduled source-work selection |
-| `status:in-progress` | Claimed owner; restore/reconcile on future runs |
-| `status:pr-open` | PR exists; review/integration/acceptance remains unresolved |
-| `status:needs-human` | Real human answer/judgment/policy authority is required |
-| `status:skipped` | Intentionally not implemented |
+| Label                | Meaning                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| `status:queued`      | Eligible for scheduled source-work selection                |
+| `status:in-progress` | Claimed owner; restore/reconcile on future runs             |
+| `status:pr-open`     | PR exists; review/integration/acceptance remains unresolved |
+| `status:needs-human` | Real human answer/judgment/policy authority is required     |
+| `status:skipped`     | Intentionally not implemented                               |
 
 Pending CI, pending review, or an external dependency normally remain `status:pr-open` / current owned state. They are not automatically `status:needs-human`.
 
@@ -126,7 +136,8 @@ Rules:
 4. `ACTION_REQUIRED` active work is preferred for the one source-changing slot.
 5. If no active owned work requires a source change, select one eligible `status:queued` Issue.
 6. At most one logical work item receives source mutation per hourly run. Multiple read-only reconciliations and already-gated lifecycle actions are allowed.
-7. Never close or take over another owner's Issue. Never create duplicate Issue/branch/PR work for the same concern.
+7. For a new queued item, attempt an optimistic claim: remove `status:queued`, set `status:in-progress`, and post one `status=started` marker with a one-line plan. Immediately re-read labels, ownership markers, linked branches, and PRs. If another owner won, stop without source mutation or duplicate commentary. Restoring an existing owner does not emit another started marker.
+8. Never close or take over another owner's Issue. Never create duplicate Issue/branch/PR work for the same concern.
 
 ### Actionable queue priority
 
@@ -157,12 +168,12 @@ A waiting PR must not monopolize every hourly execution while unrelated actionab
 
 ## Verification lanes
 
-| Change type | Minimum |
-| --- | --- |
+| Change type                   | Minimum                                                          |
+| ----------------------------- | ---------------------------------------------------------------- |
 | Pure logic / platform helpers | package unit tests + `pnpm validate:fast` or targeted equivalent |
-| Public export surface | `pnpm check:public-exports` |
-| React UI | unit + matching Storybook story; UI gate when required |
-| Docs / templates only | `pnpm validate:static` / public-reference checks |
+| Public export surface         | `pnpm check:public-exports`                                      |
+| React UI                      | unit + matching Storybook story; UI gate when required           |
+| Docs / templates only         | `pnpm validate:static` / public-reference checks                 |
 
 Automation source changes must pass `pnpm check:commit-safety` and applicable validation. Merge only when current required gates are satisfied. After merge, verify acceptance before closing the owned Issue. Never push `main` from automation.
 
