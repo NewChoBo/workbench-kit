@@ -390,9 +390,10 @@ and unchanged capability-provider ID projection before this packet can move to
 - **Dependencies:** Issue #229 uninstall v1 and Issue #232 Provider-owned extension
   enablement are integrated
 - **Current source evidence:** `origin/develop@de0d32182963f646c6eab8fc3c087d0f21539cd6`
-- **Source candidate:** `b8ac9dff50814b1054894ac6e72be15afe318d26`
+- **Source candidate:** `1f0045c0f0ebb00480db06554465c46c4446f594`
 - **Candidate validation:** repair-focused shell 51 tests, focused React 10 tests,
-  `check:commit-safety`, public exports, exact optional, packed consumer,
+  explicit-undefined exact-optional forwarding, `check:commit-safety`, public exports,
+  packed consumer,
   `validate:static`, `validate:fast` (416 files / 1,974 tests), Storybook build,
   and required Chromium (12 suites / 57 interactions) passed
 - **Public API impact:** restore the established
@@ -419,7 +420,7 @@ uninstall for every non-builtin persisted record, including dependency targets.
 1. `packages/react` remains presentation-only. Its exported
    `ExtensionManagementPendingAction.kind` is exactly `install | toggle`.
    `ExtensionManagementSidebarProps` may add
-   `pendingUninstallEntryId?: string` to render and disable the existing uninstall
+   `pendingUninstallEntryId?: string | undefined` to render and disable the existing uninstall
    action without widening the legacy discriminated union.
 2. `packages/shell-react` owns one private, pure uninstall-eligibility evaluator.
    It consumes persisted records plus the canonical available/catalog extension
@@ -495,10 +496,12 @@ release/tag work, and unrelated extension-management redesign.
 - Canonical description merging deterministically de-duplicates and sorts the
   available/catalog descriptions, compares manifest integrity, and fails closed on
   conflicting IDs. After that separate merge, the snapshot evaluator precomputes
-  reusable per-target eligibility and diagnostic ID arrays once in
-  `O(installed records + declared hard-dependency edges)`; row lookup is `O(1)` and
-  performs no per-row unresolved filtering or sorting. The evaluator performs no I/O;
-  only the controller performs the existing storage read/write.
+  reusable per-target eligibility and diagnostic ID arrays once. Dependency graph
+  construction remains `O(installed records + declared hard-dependency edges)`;
+  unresolved IDs and each target's dependent IDs are sorted once during precompute for
+  stable diagnostics. Row lookup is `O(1)` and performs no per-row filtering or sorting.
+  The evaluator performs no I/O; only the controller performs the existing storage
+  read/write.
 - The packet is `PURE_WEB` and backendless. Browser coverage is required only for
   the existing sidebar pending/disabled interaction, not for Electron or native
   behavior.
