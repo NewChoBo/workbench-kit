@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@598deebf9512e39d46c636bd00926867816c0186`.
+- **Current integration baseline:** `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -106,10 +106,10 @@ UI packet IDs `WB-NS-070*` / `WB-NS-071*` are canonical target slots but remain 
 
 ## WB-NS-001A — Runtime extension responsibility decomposition
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
-- **Current source evidence:** `origin/develop@598deebf9512e39d46c636bd00926867816c0186` (bounded review below)
+- **Current source evidence:** `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e` (bounded review below)
 - **Historical source evidence:** `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55` (corroborating candidate evidence only)
 - **Public API impact:** none required in this slice
 
@@ -121,17 +121,18 @@ This closes the highest-value kernel/extension responsibility gap without introd
 
 ### CURRENT-BASELINE SOURCE EVIDENCE
 
-Re-verified on 2026-08-21 at exact `origin/develop@598deebf9512e39d46c636bd00926867816c0186`:
+Re-verified on 2026-08-21 at exact `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e`:
 
 - `packages/workbench-core/src/extension/registry.ts` defines public `ExtensionRegistryOptions` for the focused registries, but `ExtensionRegistry` still creates or owns those registries plus `extensions`, `activeExtensions` and `activatingExtensions` maps.
 - The same file still performs inventory lookup/registration, dependency and cycle validation, manifest contribution routing, activation-event matching, dependency-first activation, active-state mutation, lifecycle events, `ExtensionContext` construction and command activation/execution.
+- Registration-bound invalidation is now explicit through `RegisteredExtension.invalidated`, registration-bound `PendingActivation` state and repeated current-registration assertions around dependency and module activation. Slice A must preserve those generation-isolation semantics while moving lifecycle ownership.
 - Current `deactivateExtension()` removes the externally visible active entry before awaiting the asynchronous deactivate hook, while `activateExtension()` has no deactivating-state or teardown-barrier check. Reactivation can therefore overlap old teardown unless Slice A adds the normative epoch/barrier semantics.
 - `packages/workbench-core/src/index.ts` publicly exports `ExtensionRegistry`, `ExtensionRegistryOptions`, lifecycle types and `CapabilityRegistry`; retaining a source-compatible facade is an evidenced migration requirement.
 - `packages/workbench-extension-sdk/src/contributions.ts` exposes a restricted `ExtensionContext` with explicit registration/capability facades and activation-scoped subscriptions. It does not expose the host composition object or arbitrary service lookup, so `ExtensionApiFactory` can preserve the current public shape.
 - `packages/shell-react/src/shell/provider.tsx` creates `ExtensionRegistry`, exposes it through `WorkbenchContextValue` and consumes several focused registries through the aggregate. That evidence supports deferring shell reach-through classification and migration to `WB-NS-001B1/B2` rather than widening Slice A.
 - `packages/workbench-core/src/extension/registry.test.ts` covers registration, contribution-before-activation behavior, lifecycle events, dependency activation, capabilities and disposal, but does not close asynchronous deactivate/reactivate ordering. The focused test list below owns that missing regression evidence.
 
-This current inventory still maps directly to the target roles and shows no missing public API or package decision for the internal-first slice. With the teardown epoch/barrier policy closed in the target, `WB-NS-001A` remains `READY_FOR_IMPLEMENTATION`.
+This current inventory maps directly to the target roles and shows no missing public API or package decision for the internal-first slice. An implementation candidate now exists behind the compatibility facade, including the teardown epoch/barrier and focused role regressions. `WB-NS-001A` remains `SOURCE_REVIEW_REQUIRED` until review is bound to an exact candidate SHA and the reviewed candidate is integrated.
 
 Evidence freshness and falsifier rule:
 
