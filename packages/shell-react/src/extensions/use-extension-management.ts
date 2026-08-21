@@ -34,6 +34,7 @@ import {
 import { useWorkbench, type WorkbenchStorageAdapter } from '../shell/provider.js';
 import { useWorkbenchPersistenceDiagnosticHandler } from '../shell/persistence-diagnostic-context.js';
 import {
+  reportPersistenceDiagnostic,
   reportPersistenceWriteResult,
   usePersistenceDiagnosticHandlerRef,
   useReportPersistenceReadDiagnostic,
@@ -156,12 +157,23 @@ export function useExtensionManagementModel({
   }, [catalogTrustPolicy, catalogUrl]);
 
   const installedEntries = useMemo<readonly ExtensionManagementEntry[]>(() => {
+    const persistedRecords = loadInstalledExtensionsResult(
+      resolvedInstalledExtensionsStorageKey,
+      resolvedInstalledExtensionsStorage,
+    ).value;
     return createExtensionManagementEntries({
       availableExtensions,
       extensionCatalog,
       installedRecords,
+      uninstallableExtensionIds: new Set(persistedRecords.map((record) => record.id)),
     });
-  }, [availableExtensions, extensionCatalog, installedRecords]);
+  }, [
+    availableExtensions,
+    extensionCatalog,
+    installedRecords,
+    resolvedInstalledExtensionsStorage,
+    resolvedInstalledExtensionsStorageKey,
+  ]);
 
   const browseEntries = useMemo<readonly ExtensionCatalogBrowseEntry[]>(() => {
     return createExtensionCatalogBrowseEntries({
@@ -250,6 +262,51 @@ export function useExtensionManagementModel({
     ],
   );
 
+  const uninstallInstalledEntry = useCallback(
+    (entry: ExtensionManagementEntry) => {
+      if (entry.source !== 'installed' || entry.id.startsWith('workbench-kit.builtin.')) {
+        return;
+      }
+
+      const persistedRead = loadInstalledExtensionsResult(
+        resolvedInstalledExtensionsStorageKey,
+        resolvedInstalledExtensionsStorage,
+      );
+      if (persistedRead.diagnostic) {
+        reportPersistenceDiagnostic(persistedRead.diagnostic, diagnosticHandlerRef);
+        return;
+      }
+      if (!persistedRead.value.some((record) => record.id === entry.id)) {
+        return;
+      }
+
+      const next = persistedRead.value.filter((record) => record.id !== entry.id);
+      const persistence = saveInstalledExtensionsResult(
+        next,
+        resolvedInstalledExtensionsStorageKey,
+        resolvedInstalledExtensionsStorage,
+      );
+      reportPersistenceWriteResult(persistence, diagnosticHandlerRef);
+      if (!persistence.committed) {
+        setPendingAction(undefined);
+        return;
+      }
+
+      setInstalledRecords(next);
+      setPendingAction({ entryId: entry.id, kind: 'uninstall' });
+      if (typeof window !== 'undefined') {
+        window.requestAnimationFrame(() => {
+          window.location.reload();
+        });
+      }
+    },
+    [
+      diagnosticHandlerRef,
+      resolvedInstalledExtensionsStorage,
+      resolvedInstalledExtensionsStorageKey,
+    ],
+  );
+
   const rememberInstallTrust = useCallback(
     (entry: ExtensionCatalogBrowseEntry) => {
       const permissions = entry.installPlan?.permissions ?? [];
@@ -280,6 +337,7 @@ export function useExtensionManagementModel({
     pendingAction,
     rememberInstallTrust,
     toggleInstalledEntry,
+    uninstallInstalledEntry,
   };
 }
 

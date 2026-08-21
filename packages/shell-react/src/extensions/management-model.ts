@@ -22,6 +22,7 @@ export interface CreateExtensionManagementEntriesInput {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
   readonly extensionCatalog: WorkbenchExtensionCatalogReader;
   readonly installedRecords: readonly InstalledExtensionRecord[];
+  readonly uninstallableExtensionIds?: ReadonlySet<string>;
 }
 
 export interface CreateExtensionCatalogBrowseEntriesInput extends CreateExtensionManagementEntriesInput {
@@ -39,6 +40,7 @@ export function createExtensionManagementEntries({
   availableExtensions,
   extensionCatalog,
   installedRecords,
+  uninstallableExtensionIds = new Set(installedRecords.map((record) => record.id)),
 }: CreateExtensionManagementEntriesInput): readonly ExtensionManagementEntry[] {
   const installedById = new Map(installedRecords.map((record) => [record.id, record]));
   const extensionFeatures = createExtensionManagementFeatureMaps(
@@ -55,6 +57,9 @@ export function createExtensionManagementEntries({
       );
 
       return {
+        ...(installed && !isBuiltin && uninstallableExtensionIds.has(extension.manifest.id)
+          ? { canUninstall: true }
+          : {}),
         category: installed?.category ?? (isBuiltin ? 'builtin' : 'sample'),
         description: extension.manifest.displayName,
         diagnostics: featureState.diagnostics,
@@ -83,6 +88,9 @@ export function createExtensionManagementEntries({
       );
 
       return {
+        ...(installed && uninstallableExtensionIds.has(extension.manifest.id)
+          ? { canUninstall: true }
+          : {}),
         category: installed?.category ?? 'installed',
         description: extension.manifest.displayName,
         diagnostics: featureState.diagnostics,

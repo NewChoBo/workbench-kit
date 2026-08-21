@@ -5,6 +5,7 @@ import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   isExtensionInstallTrusted,
+  recordExtensionInstallTrust,
   type WorkbenchStorageAdapter,
 } from '@workbench-kit/workbench-core';
 import { resolveExtensionInstallOptions } from '@workbench-kit/react/workbench/management';
@@ -174,6 +175,288 @@ describe('useExtensionManagementModel', () => {
     });
   });
 
+  it('commits uninstall before projection and retains install trust across remount', async () => {
+    const installedStorage = createMemoryStorage();
+    const trustStorage = createMemoryStorage();
+    const storageKey = 'workbench-kit/.workbench/installed-extensions/uninstall-success';
+    const trustStorageKey = 'workbench-kit/.workbench/extension-install-trust/uninstall-success';
+    const installedRecord = {
+      category: 'editor',
+      enabled: true,
+      id: 'workbench-kit.samples.json-preview',
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: 'workbench-kit.samples.json-preview',
+    };
+    const trustRecords = recordExtensionInstallTrust(
+      installedRecord.id,
+      ['workspace.write'],
+      [],
+      '2026-08-22T00:00:00.000Z',
+    );
+    installedStorage.setItem(storageKey, JSON.stringify([installedRecord]));
+    trustStorage.setItem(trustStorageKey, JSON.stringify(trustRecords));
+    const requestAnimationFrame = vi.mocked(window.requestAnimationFrame);
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]}
+            extensionsConfig={{ enabled: [], recommendations: [] }}
+            installedExtensionsStorage={installedStorage}
+            installedExtensionsStorageKey={storageKey}
+            workspaceHostPort={authCapabilityHostPort}
+          >
+            <ExtensionManagementProbe
+              catalogUrl=""
+              options={{
+                installTrustStorage: trustStorage,
+                installTrustStorageKey: trustStorageKey,
+              }}
+              onChange={(model) => {
+                currentModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(
+      () =>
+        currentModel?.installedEntries.find((entry) => entry.id === installedRecord.id)
+          ?.canUninstall === true,
+    );
+    const installedEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === installedRecord.id,
+    );
+    expect(installedEntry).toBeDefined();
+    expect(installedEntry?.canUninstall).toBe(true);
+
+    await act(async () => {
+      currentModel?.uninstallInstalledEntry(installedEntry!);
+    });
+
+    await waitForModel(
+      () => !currentModel?.installedEntries.some((entry) => entry.id === installedRecord.id),
+    );
+    expect(JSON.parse(installedStorage.getItem(storageKey) ?? 'null')).toEqual([]);
+    expect(currentModel?.pendingAction).toEqual({
+      entryId: installedRecord.id,
+      kind: 'uninstall',
+    });
+    expect(currentModel?.installTrustRecords).toEqual(trustRecords);
+    expect(JSON.parse(trustStorage.getItem(trustStorageKey) ?? 'null')).toEqual(trustRecords);
+    expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.unmount();
+    });
+
+    const remountContainer = document.createElement('div');
+    const remountRoot = createRoot(remountContainer);
+    let remountedModel: ExtensionManagementModel | undefined;
+    await act(async () => {
+      remountRoot.render(
+        <StrictMode>
+          <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]}
+            extensionsConfig={{ enabled: [], recommendations: [] }}
+            installedExtensionsStorage={installedStorage}
+            installedExtensionsStorageKey={storageKey}
+            workspaceHostPort={authCapabilityHostPort}
+          >
+            <ExtensionManagementProbe
+              catalogUrl=""
+              options={{
+                installTrustStorage: trustStorage,
+                installTrustStorageKey: trustStorageKey,
+              }}
+              onChange={(model) => {
+                remountedModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(() => remountedModel !== undefined);
+    expect(remountedModel?.installedEntries.some((entry) => entry.id === installedRecord.id)).toBe(
+      false,
+    );
+    expect(remountedModel?.installTrustRecords).toEqual(trustRecords);
+
+    await act(async () => {
+      remountRoot.unmount();
+    });
+  });
+
+  it('keeps the installed projection when uninstall persistence fails', async () => {
+    const storageKey = 'workbench-kit/.workbench/installed-extensions/uninstall-failure';
+    const installedRecord = {
+      category: 'editor',
+      enabled: true,
+      id: 'workbench-kit.samples.json-preview',
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: 'workbench-kit.samples.json-preview',
+    };
+    const persisted = JSON.stringify([installedRecord]);
+    const writer = vi.fn(() => {
+      throw new Error('backend quota detail');
+    });
+    const storage: WorkbenchStorageAdapter = {
+      getItem: (key) => (key === storageKey ? persisted : null),
+      setItem: writer,
+    };
+    const diagnostics = vi.fn();
+    const requestAnimationFrame = vi.mocked(window.requestAnimationFrame);
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]}
+            extensionsConfig={{ enabled: [], recommendations: [] }}
+            installedExtensionsStorage={storage}
+            installedExtensionsStorageKey={storageKey}
+            onPersistenceDiagnostic={diagnostics}
+            workspaceHostPort={authCapabilityHostPort}
+          >
+            <ExtensionManagementProbe
+              catalogUrl=""
+              onChange={(model) => {
+                currentModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(
+      () =>
+        currentModel?.installedEntries.find((entry) => entry.id === installedRecord.id)
+          ?.canUninstall === true,
+    );
+    const installedEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === installedRecord.id,
+    );
+
+    await act(async () => {
+      currentModel?.uninstallInstalledEntry(installedEntry!);
+    });
+
+    expect(writer).toHaveBeenCalledTimes(1);
+    expect(currentModel?.installedEntries).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ canUninstall: true, id: installedRecord.id }),
+      ]),
+    );
+    expect(currentModel?.pendingAction).toBeUndefined();
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+    expect(diagnostics).toHaveBeenCalledWith({
+      code: 'write_failed',
+      message: 'Workbench storage value could not be written.',
+      operation: 'write',
+      storageKey,
+    });
+    expect(JSON.stringify(diagnostics.mock.calls)).not.toContain('backend quota detail');
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('treats missing records and bundled entries as deterministic uninstall no-ops', async () => {
+    const storageKey = 'workbench-kit/.workbench/installed-extensions/uninstall-no-op';
+    const installedRecord = {
+      category: 'editor',
+      enabled: true,
+      id: 'workbench-kit.samples.json-preview',
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: 'workbench-kit.samples.json-preview',
+    };
+    const values = new Map([[storageKey, JSON.stringify([installedRecord])]]);
+    const writer = vi.fn((key: string, value: string) => {
+      values.set(key, value);
+    });
+    const storage: WorkbenchStorageAdapter = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: writer,
+    };
+    const requestAnimationFrame = vi.mocked(window.requestAnimationFrame);
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, ...SAMPLE_WORKBENCH_EXTENSIONS]}
+            extensionsConfig={{ enabled: [], recommendations: [] }}
+            installedExtensionsStorage={storage}
+            installedExtensionsStorageKey={storageKey}
+            workspaceHostPort={authCapabilityHostPort}
+          >
+            <ExtensionManagementProbe
+              catalogUrl=""
+              onChange={(model) => {
+                currentModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(
+      () =>
+        currentModel?.installedEntries.find((entry) => entry.id === installedRecord.id)
+          ?.canUninstall === true,
+    );
+    const staleEligibleEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === installedRecord.id,
+    );
+    const bundledEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === 'workbench-kit.builtin.explorer',
+    );
+    expect(staleEligibleEntry).toBeDefined();
+    expect(bundledEntry).toBeDefined();
+    values.set(storageKey, '[]');
+
+    await act(async () => {
+      currentModel?.uninstallInstalledEntry(staleEligibleEntry!);
+      currentModel?.uninstallInstalledEntry({
+        category: 'utility',
+        displayName: 'Active Without Record',
+        enabled: true,
+        id: 'workbench-kit.test.active-without-record',
+        source: 'installed',
+      });
+      currentModel?.uninstallInstalledEntry(bundledEntry!);
+    });
+
+    expect(writer).not.toHaveBeenCalled();
+    expect(JSON.parse(values.get(storageKey) ?? 'null')).toEqual([]);
+    expect(currentModel?.installedEntries).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: installedRecord.id })]),
+    );
+    expect(currentModel?.pendingAction).toBeUndefined();
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
   it('keeps failed install state in memory and reloads only after a later committed snapshot', async () => {
     const values = new Map<string, string>();
     const storageKey = 'workbench-kit/.workbench/installed-extensions/recoverable-test';
@@ -246,6 +529,7 @@ describe('useExtensionManagementModel', () => {
       (entry) => entry.id === 'workbench-kit.samples.json-preview',
     );
     expect(installedEntry).toBeDefined();
+    expect(installedEntry?.canUninstall).toBeUndefined();
     await act(async () => {
       currentModel?.toggleInstalledEntry(installedEntry!, false);
     });
@@ -284,6 +568,11 @@ describe('useExtensionManagementModel', () => {
       currentModel?.installedEntries.find(
         (entry) => entry.id === 'workbench-kit.samples.json-preview',
       )?.enabled,
+    ).toBe(true);
+    expect(
+      currentModel?.installedEntries.find(
+        (entry) => entry.id === 'workbench-kit.samples.json-preview',
+      )?.canUninstall,
     ).toBe(true);
     expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
 

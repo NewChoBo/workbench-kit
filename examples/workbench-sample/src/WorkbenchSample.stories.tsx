@@ -418,6 +418,7 @@ export const FieldRemapEditorSmoke: Story = {
 
 export const ExtensionsInstalledList: Story = {
   name: 'Extensions installed list',
+  tags: ['storybook-play-extension-management'],
   render: () => {
     applyExtensionsInstalledListScenario();
     return createSampleHost();
@@ -438,6 +439,21 @@ export const ExtensionsInstalledList: Story = {
         selector: '.workbench-extensions-sidebar__title',
       }),
     ).toBeVisible();
+    const jsonPreviewRow = within(installedList)
+      .getByText('JSON Preview', { selector: '.workbench-extensions-sidebar__title' })
+      .closest('.workbench-extensions-sidebar__item');
+    const explorerRow = within(installedList)
+      .getByText('Explorer', { selector: '.workbench-extensions-sidebar__title' })
+      .closest('.workbench-extensions-sidebar__item');
+    expect(jsonPreviewRow).not.toBeNull();
+    expect(explorerRow).not.toBeNull();
+    await expect(
+      within(jsonPreviewRow as HTMLElement).getByRole('button', { name: 'Uninstall' }),
+    ).toBeVisible();
+    expect(
+      within(explorerRow as HTMLElement).queryByRole('button', { name: 'Uninstall' }),
+    ).toBeNull();
+    expect(within(installedList).getAllByRole('button', { name: 'Uninstall' })).toHaveLength(1);
   },
 };
 
