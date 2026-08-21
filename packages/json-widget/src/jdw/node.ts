@@ -1,6 +1,14 @@
 import type { WidgetPath } from '../document/path.js';
 import { isObjectRecord } from '../is-object-record.js';
 import type { GenericWidget } from '../widget/tree.js';
+import {
+  isJdwArrayIndexSegment,
+  isJdwValuePath,
+  isJdwValuePathSegment,
+  JDW_VALUE_PATH_PATTERN_SOURCE,
+  parseJdwValuePath,
+  readJdwValuePath,
+} from './value-path.js';
 
 export interface JsonWidgetNode {
   readonly type: string;
@@ -37,8 +45,8 @@ export interface JsonWidgetInvalidation {
 
 const CONTAINER_CHILDREN_ARG = 'children';
 const SINGLE_CHILD_ARG = 'child';
-const EXACT_VARIABLE_PATTERN = /^\$\{([A-Za-z0-9_.-]+)\}$/;
-const TEMPLATE_VARIABLE_PATTERN = /\$\{([A-Za-z0-9_.-]+)\}/g;
+const EXACT_VARIABLE_PATTERN = new RegExp(`^\\$\\{(${JDW_VALUE_PATH_PATTERN_SOURCE})\\}$`);
+const TEMPLATE_VARIABLE_PATTERN = new RegExp(`\\$\\{(${JDW_VALUE_PATH_PATTERN_SOURCE})\\}`, 'g');
 
 export function isJsonWidgetDynamicValueExpression(value: unknown): value is string {
   return typeof value === 'string' && EXACT_VARIABLE_PATTERN.test(value);
@@ -141,18 +149,18 @@ function changedListenForNode(
   listen: readonly string[],
   changedPaths: readonly string[],
 ): readonly string[] {
-  return listen.filter((listenPath) =>
-    changedPaths.some((changedPath) => isValuePathRelated(listenPath, changedPath)),
-  );
+  return listen
+    .filter(isJdwValuePath)
+    .filter((listenPath) =>
+      changedPaths.some((changedPath) => isValuePathRelated(listenPath, changedPath)),
+    );
 }
 
 export function collectJsonWidgetInvalidations(
   node: JsonWidgetNode,
   changedPaths: readonly string[],
 ): readonly JsonWidgetInvalidation[] {
-  const uniqueChangedPaths = [
-    ...new Set(changedPaths.map((path) => path.trim()).filter((path) => path.length > 0)),
-  ];
+  const uniqueChangedPaths = [...new Set(changedPaths.filter(isJdwValuePath))];
   if (uniqueChangedPaths.length === 0) {
     return [];
   }
@@ -182,7 +190,7 @@ function isTraversableValue(value: unknown): value is readonly unknown[] | Recor
 
 function valueChildKeys(value: readonly unknown[] | Record<string, unknown>): readonly string[] {
   if (Array.isArray(value)) {
-    return value.map((_, index) => String(index));
+    return Object.getOwnPropertyNames(value).filter(isJdwArrayIndexSegment);
   }
 
   return Object.keys(value);
@@ -190,10 +198,14 @@ function valueChildKeys(value: readonly unknown[] | Record<string, unknown>): re
 
 function readValueChild(value: readonly unknown[] | Record<string, unknown>, key: string): unknown {
   if (Array.isArray(value)) {
-    return (value as readonly unknown[])[Number(key)];
+    return Object.prototype.hasOwnProperty.call(value, key)
+      ? (value as readonly unknown[])[Number(key)]
+      : undefined;
   }
 
-  return (value as Record<string, unknown>)[key];
+  return Object.prototype.hasOwnProperty.call(value, key)
+    ? (value as Record<string, unknown>)[key]
+    : undefined;
 }
 
 function collectChangedValuePathsForValue(
@@ -218,6 +230,10 @@ function collectChangedValuePathsForValue(
   }
 
   for (const key of childKeys) {
+    if (!isJdwValuePathSegment(key)) {
+      changedPaths.push(path);
+      continue;
+    }
     collectChangedValuePathsForValue(
       readValueChild(previousValue, key),
       readValueChild(nextValue, key),
@@ -241,6 +257,9 @@ export function collectJsonWidgetChangedValuePaths(
   const valueKeys = new Set([...Object.keys(previousRecord), ...Object.keys(nextRecord)]);
 
   for (const key of valueKeys) {
+    if (!isJdwValuePathSegment(key)) {
+      continue;
+    }
     collectChangedValuePathsForValue(previousRecord[key], nextRecord[key], key, changedPaths);
   }
 
@@ -283,9 +302,9 @@ function readJsonWidgetNode(value: unknown, errors: string[], path: string): Jso
   const listen = value.listen;
   if (
     listen !== undefined &&
-    (!Array.isArray(listen) || listen.some((item) => typeof item !== 'string'))
+    (!Array.isArray(listen) || listen.some((item) => !isJdwValuePath(item)))
   ) {
-    errors.push(`${path}.listen must be an array of strings.`);
+    errors.push(`${path}.listen must be an array of valid JDW value paths.`);
     return null;
   }
 
@@ -338,16 +357,8 @@ export function parseJsonWidgetData(source: string): ParsedJsonWidgetData {
 }
 
 function readValuePath(values: JsonWidgetValueMap, path: string): unknown {
-  let current: unknown = values;
-
-  for (const segment of path.split('.')) {
-    if (!isObjectRecord(current) || !(segment in current)) {
-      return undefined;
-    }
-    current = current[segment];
-  }
-
-  return current;
+  const segments = parseJdwValuePath(path);
+  return segments ? readJdwValuePath(values, segments) : undefined;
 }
 
 function stringifyTemplateValue(value: unknown): string {

@@ -7,10 +7,10 @@ import {
   type ExtensionFeatureSpec,
   type ExtensionInstallPlan,
   type ExtensionInstallPlanInstallSource,
-  type ExtensionRegistry,
   type InstalledExtensionRecord,
   type WorkbenchExtensionDescription,
 } from '@workbench-kit/workbench-core';
+import type { WorkbenchExtensionCatalogReader } from '../shell/provider.js';
 import type {
   ExtensionCatalogBrowseEntry,
   ExtensionManagementDiagnosticSummary,
@@ -20,7 +20,7 @@ import type {
 
 export interface CreateExtensionManagementEntriesInput {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
-  readonly extensionRegistry: ExtensionRegistry;
+  readonly extensionCatalog: WorkbenchExtensionCatalogReader;
   readonly installedRecords: readonly InstalledExtensionRecord[];
 }
 
@@ -37,13 +37,13 @@ export interface ExtensionInstallPlanningContext extends CreateExtensionManageme
 
 export function createExtensionManagementEntries({
   availableExtensions,
-  extensionRegistry,
+  extensionCatalog,
   installedRecords,
 }: CreateExtensionManagementEntriesInput): readonly ExtensionManagementEntry[] {
   const installedById = new Map(installedRecords.map((record) => [record.id, record]));
   const extensionFeatures = createExtensionManagementFeatureMaps(
     availableExtensions,
-    extensionRegistry,
+    extensionCatalog,
   );
   const bundledEntries = availableExtensions
     .map((extension) => {
@@ -69,7 +69,7 @@ export function createExtensionManagementEntries({
     })
     .filter((entry) => entry.source === 'bundled' || installedById.has(entry.id));
 
-  const activeExtensions = extensionRegistry
+  const activeExtensions = extensionCatalog
     .getExtensions()
     .filter(
       (extension) =>
@@ -104,14 +104,14 @@ export function createExtensionManagementEntries({
 export function createExtensionCatalogBrowseEntries({
   availableExtensions,
   catalogEntries,
-  extensionRegistry,
+  extensionCatalog,
   installedRecords,
 }: CreateExtensionCatalogBrowseEntriesInput): readonly ExtensionCatalogBrowseEntry[] {
   const installedIds = new Set(installedRecords.map((record) => record.id));
   const installContext = createExtensionInstallPlanningContext({
     availableExtensions,
     catalogEntries,
-    extensionRegistry,
+    extensionCatalog,
     installedRecords,
   });
 
@@ -139,21 +139,19 @@ export function createExtensionCatalogBrowseEntries({
 export function createExtensionInstallPlanningContext({
   availableExtensions,
   catalogEntries,
-  extensionRegistry,
+  extensionCatalog,
   installedRecords,
 }: CreateExtensionCatalogBrowseEntriesInput): ExtensionInstallPlanningContext {
   const installableExtensions = mergeUniqueExtensionDescriptions([
     ...availableExtensions,
-    ...extensionRegistry.getExtensions(),
+    ...extensionCatalog.getExtensions(),
   ]);
 
   return {
     availableExtensions: installableExtensions,
-    enabledExtensionIds: extensionRegistry
-      .getExtensions()
-      .map((extension) => extension.manifest.id),
-    extensionRegistry,
-    hostCapabilityIds: extensionRegistry.capabilityRegistry.listProviderIds(),
+    enabledExtensionIds: extensionCatalog.getExtensions().map((extension) => extension.manifest.id),
+    extensionCatalog,
+    hostCapabilityIds: extensionCatalog.listCapabilityProviderIds(),
     installSources: createExtensionInstallSources(catalogEntries, installableExtensions),
     installedRecords,
   };
@@ -220,7 +218,7 @@ function mergeUniqueExtensionDescriptions(
 
 function createExtensionManagementFeatureMaps(
   availableExtensions: readonly WorkbenchExtensionDescription[],
-  extensionRegistry: ExtensionRegistry,
+  extensionCatalog: WorkbenchExtensionCatalogReader,
 ) {
   return {
     bundledFeaturesById: new Map(
@@ -230,7 +228,7 @@ function createExtensionManagementFeatureMaps(
       ]),
     ),
     inspectionsById: new Map(
-      extensionRegistry
+      extensionCatalog
         .getFeatureInspections()
         .map((inspection) => [inspection.feature.id, inspection]),
     ),

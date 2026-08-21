@@ -19,6 +19,7 @@ import {
 import {
   getWorkbenchStructuredDataSchemaFieldDataPath,
   getWorkbenchStructuredDataSchemaFieldDefinition,
+  getWorkbenchStructuredDataSchemaPathSegments,
   getWorkbenchStructuredDataSchemaSectionFieldLabel,
   getWorkbenchStructuredDataSchemaSectionPath,
 } from './structuredDataSchemaSection';
@@ -206,14 +207,18 @@ export function getWorkbenchStructuredDataSchemaDocumentSectionValue({
   section: WorkbenchStructuredDataSchemaSectionSummary;
 }) {
   const sectionKey = getWorkbenchStructuredDataSchemaSectionPath(section);
-  const record = asWorkbenchStructuredDataRecord(data);
-  if (!sectionKey || !record) return sectionKey ? null : data;
-  if (sectionKey in record) return record[sectionKey];
+  if (!sectionKey) return data;
 
-  const directValue = getWorkbenchStructuredDataValue(data, sectionKey.split('.'));
+  const directValue = getWorkbenchStructuredDataValue(
+    data,
+    getWorkbenchStructuredDataSchemaPathSegments(sectionKey),
+  );
   if (directValue !== null && directValue !== undefined) return directValue;
 
-  for (const path of aliases[sectionKey] ?? []) {
+  const sectionAliases = Object.prototype.hasOwnProperty.call(aliases, sectionKey)
+    ? (aliases[sectionKey] ?? [])
+    : [];
+  for (const path of sectionAliases) {
     if (!path.length) return data;
     const value = getWorkbenchStructuredDataValue(data, path);
     if (value !== null && value !== undefined) return value;
@@ -279,13 +284,17 @@ export function createWorkbenchStructuredDataSchemaDocumentSampleData(
         ? section.columns
         : Object.keys(schemaTable?.items ?? {});
 
-      return setWorkbenchStructuredDataValue(sample, path.split('.'), [
-        createWorkbenchStructuredDataSchemaDocumentEmptyRow({
-          columns,
-          schema,
-          section,
-        }),
-      ]);
+      return setWorkbenchStructuredDataValue(
+        sample,
+        getWorkbenchStructuredDataSchemaPathSegments(path),
+        [
+          createWorkbenchStructuredDataSchemaDocumentEmptyRow({
+            columns,
+            schema,
+            section,
+          }),
+        ],
+      );
     }
 
     return (section.fields ?? []).reduce<WorkbenchStructuredDataRecord>((nextSample, fieldPath) => {
@@ -296,7 +305,9 @@ export function createWorkbenchStructuredDataSchemaDocumentSampleData(
       );
       return setWorkbenchStructuredDataValue(
         nextSample,
-        getWorkbenchStructuredDataSchemaFieldDataPath(section, fieldPath).split('.'),
+        getWorkbenchStructuredDataSchemaPathSegments(
+          getWorkbenchStructuredDataSchemaFieldDataPath(section, fieldPath),
+        ),
         getWorkbenchStructuredDataSchemaFieldDefaultValue(definition),
       );
     }, sample);

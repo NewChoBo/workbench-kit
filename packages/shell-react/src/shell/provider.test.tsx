@@ -192,7 +192,7 @@ function createMemoryStorage(): WorkbenchStorageAdapter {
 function CommandProbe() {
   const workbench = useWorkbench();
 
-  return <span>{workbench.extensionRegistry.getExtensions().length}</span>;
+  return <span>{workbench.extensionCatalog.getExtensions().length}</span>;
 }
 
 function ContextKeyValueProbe({ contextKey }: { contextKey: string }) {
@@ -226,15 +226,13 @@ function KeybindingStateProbe({
 function CommandTitleProbe({ commandId }: { commandId: string }) {
   const workbench = useWorkbench();
 
-  return (
-    <span>{workbench.extensionRegistry.commands.getCommand(commandId)?.title ?? 'missing'}</span>
-  );
+  return <span>{workbench.commands.getCommand(commandId)?.title ?? 'missing'}</span>;
 }
 
 function HostThemeProbe({ themeId }: { themeId: string }) {
   const workbench = useWorkbench();
 
-  return <span>{workbench.extensionRegistry.themes.getTheme(themeId)?.label ?? 'missing'}</span>;
+  return <span>{workbench.themes.getTheme(themeId)?.label ?? 'missing'}</span>;
 }
 
 function PreferenceValueProbe({
@@ -421,7 +419,7 @@ function LayoutServiceProbe({ onReady }: { onReady: (service: LayoutService) => 
 
 type WorkbenchServiceIdentitySnapshot = Pick<
   WorkbenchContextValue,
-  'contextKeyService' | 'editorService' | 'extensionRegistry' | 'layoutService'
+  'commands' | 'contextKeyService' | 'editorService' | 'layoutService'
 >;
 
 function WorkbenchServiceIdentityProbe({
@@ -429,10 +427,10 @@ function WorkbenchServiceIdentityProbe({
 }: {
   onSnapshot: (snapshot: WorkbenchServiceIdentitySnapshot) => void;
 }) {
-  const { contextKeyService, editorService, extensionRegistry, layoutService } = useWorkbench();
+  const { commands, contextKeyService, editorService, layoutService } = useWorkbench();
 
   useEffect(() => {
-    onSnapshot({ contextKeyService, editorService, extensionRegistry, layoutService });
+    onSnapshot({ commands, contextKeyService, editorService, layoutService });
   });
 
   return null;
@@ -575,7 +573,7 @@ describe('WorkbenchProvider', () => {
     const secondSnapshot = snapshots[snapshots.length - 1];
     expect(secondSnapshot?.layoutService).toBe(firstSnapshot?.layoutService);
     expect(secondSnapshot?.editorService).toBe(firstSnapshot?.editorService);
-    expect(secondSnapshot?.extensionRegistry).toBe(firstSnapshot?.extensionRegistry);
+    expect(secondSnapshot?.commands).toBe(firstSnapshot?.commands);
     expect(secondSnapshot?.contextKeyService).toBe(firstSnapshot?.contextKeyService);
     expect(activate).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain('Second render');
@@ -1330,6 +1328,81 @@ describe('WorkbenchProvider', () => {
     expect(dialog?.textContent).toContain('Settings');
     expect(dialog?.textContent).toContain('workbench.settings.openOnStartup');
     expect(dialog?.textContent).not.toContain('workbench.accounts.enabledEnable');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('opens a focused settings category through the shell command host context', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: [],
+            recommendations: [],
+          }}
+        >
+          <WorkbenchShell
+            additionalSettingsCategories={[
+              {
+                content: <span>Focused settings category</span>,
+                id: 'test.settings.category',
+                label: 'Test category',
+                title: 'Test category',
+              },
+            ]}
+            commandHost={{
+              additionalCommands: [
+                {
+                  id: 'test.settings.open-category',
+                  label: 'Open focused settings category',
+                },
+              ],
+              onRunCommand: (command, context) => {
+                if (command.id !== 'test.settings.open-category') return false;
+                context.openSettings('test.settings.category');
+                return true;
+              },
+            }}
+            editorArea={<main>Editor Area</main>}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          key: 'P',
+          shiftKey: true,
+        }),
+      );
+    });
+    await flushReactEffects();
+
+    const command = container.querySelector<HTMLButtonElement>(
+      '[data-command-id="test.settings.open-category"]',
+    );
+    expect(command).not.toBeNull();
+
+    await act(async () => {
+      command?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Settings');
+    expect(dialog?.textContent).toContain('Focused settings category');
 
     await act(async () => {
       root.unmount();

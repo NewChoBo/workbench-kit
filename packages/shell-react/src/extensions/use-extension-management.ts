@@ -63,7 +63,7 @@ export function useExtensionManagementModel({
   const diagnosticHandlerRef = usePersistenceDiagnosticHandlerRef(
     onPersistenceDiagnostic ?? providerPersistenceDiagnostic,
   );
-  const { availableExtensions, extensionRegistry } = workbench;
+  const { availableExtensions, extensionCatalog } = workbench;
   const resolvedInstalledExtensionsStorage =
     installedExtensionsStorage ?? workbench.installedExtensionsStorage;
   const resolvedInstalledExtensionsStorageKey =
@@ -158,26 +158,26 @@ export function useExtensionManagementModel({
   const installedEntries = useMemo<readonly ExtensionManagementEntry[]>(() => {
     return createExtensionManagementEntries({
       availableExtensions,
-      extensionRegistry,
+      extensionCatalog,
       installedRecords,
     });
-  }, [availableExtensions, extensionRegistry, installedRecords]);
+  }, [availableExtensions, extensionCatalog, installedRecords]);
 
   const browseEntries = useMemo<readonly ExtensionCatalogBrowseEntry[]>(() => {
     return createExtensionCatalogBrowseEntries({
       availableExtensions,
       catalogEntries,
-      extensionRegistry,
+      extensionCatalog,
       installedRecords,
     });
-  }, [availableExtensions, catalogEntries, extensionRegistry, installedRecords]);
+  }, [availableExtensions, catalogEntries, extensionCatalog, installedRecords]);
 
   const installCatalogEntry = useCallback(
     (entry: ExtensionCatalogBrowseEntry, options?: ExtensionInstallOptions) => {
       const installContext = createExtensionInstallPlanningContext({
         availableExtensions,
         catalogEntries,
-        extensionRegistry,
+        extensionCatalog,
         installedRecords,
       });
       const plan = createCatalogEntryInstallPlan(entry, installContext);
@@ -213,7 +213,7 @@ export function useExtensionManagementModel({
     [
       availableExtensions,
       catalogEntries,
-      extensionRegistry,
+      extensionCatalog,
       installedRecords,
       diagnosticHandlerRef,
       resolvedInstalledExtensionsStorage,

@@ -9,7 +9,7 @@
       "title": "JdwDynamicValue",
       "description": "Exact ${path} expression resolved from explicit render or preview values.",
       "type": "string",
-      "pattern": "^\\$\\{[A-Za-z0-9_.-]+\\}$"
+      "pattern": "^\\$\\{[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*\\}$"
     },
     "JdwPlacementArgs": {
       "title": "JdwPlacementArgs",
@@ -476,7 +476,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -504,7 +505,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -556,7 +558,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -640,7 +643,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -724,7 +728,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -770,7 +775,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -827,7 +833,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -867,7 +874,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -937,7 +945,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -982,7 +991,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -1019,7 +1029,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -1053,7 +1064,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -1109,7 +1121,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -1173,7 +1186,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -1223,7 +1237,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -1297,7 +1312,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {
@@ -1367,7 +1383,8 @@
         "listen": {
           "type": "array",
           "items": {
-            "type": "string"
+            "type": "string",
+            "pattern": "^[A-Za-z0-9_-]+(?:\\.[A-Za-z0-9_-]+)*$"
           }
         },
         "args": {

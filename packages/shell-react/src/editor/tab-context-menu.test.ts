@@ -23,10 +23,11 @@ describe('createEditorTabContextMenuItems', () => {
     });
 
     const items = createEditorTabContextMenuItems({
+      commands: extensionRegistry.commands,
       editorService: createEditorServiceStub(),
       executeExtensionCommand: (commandId) => calls.push(commandId),
-      extensionRegistry,
       groupId: 'group-1',
+      menus: extensionRegistry.menus,
       tab: createEditorTab({ pinned: true }),
       tabs: [createEditorTab({ pinned: true })],
     });

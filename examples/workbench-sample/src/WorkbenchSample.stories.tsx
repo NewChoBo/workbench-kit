@@ -330,6 +330,25 @@ export const BasicPermissionScope: Story = {
     expect(getActivityLabels(canvas)).toEqual(['Explorer', 'Profile']);
     await expect(canvas.queryByRole('button', { name: 'Search' })).toBeNull();
     await expect(canvas.queryByRole('button', { name: 'Settings' })).toBeNull();
+
+    await userEvent.keyboard('{Control>}{Shift>}p{/Control}{/Shift}');
+    const commandPalette = await canvas.findByRole('dialog', { name: /Command Palette/ });
+    const commandSearch = within(commandPalette).getByPlaceholderText('Search commands');
+    // Command palette search uses pointer-events:none; drive input via focus + keyboard.
+    commandSearch.focus();
+    await userEvent.keyboard('Permission Role (Demo)');
+    await waitFor(() => {
+      expect(commandSearch).toHaveValue('>Permission Role (Demo)');
+      expect(
+        within(commandPalette).getByRole('option', { name: /Permission Role \(Demo\)/ }),
+      ).toHaveAttribute('aria-selected', 'true');
+    });
+    await userEvent.keyboard('{Enter}');
+
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await expect(
+      within(settingsDialog).getByRole('combobox', { name: 'Permission role (demo)' }),
+    ).toBeVisible();
   },
 };
 

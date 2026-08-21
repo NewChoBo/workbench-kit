@@ -28,6 +28,7 @@ import {
   useWorkbench,
   useWorkspaceResourceState,
   type WorkbenchProfileInput,
+  type WorkbenchShellCommandRunContext,
 } from '@workbench-kit/shell-react';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from './sample-extensions.js';
 
@@ -79,8 +80,6 @@ import {
   createSampleInstalledExtensionsStorageKey,
   getSampleInstalledExtensionsStorage,
 } from './sample-installed-extension-storage.js';
-
-const WORKBENCH_SETTINGS_CAPABILITY_ID = 'workbench.settings';
 
 const workspaceHostPort = createWorkbenchWorkspaceHostPort();
 
@@ -203,7 +202,7 @@ function SampleWorkbenchHost({
   onPermissionRoleOverrideChange,
 }: SampleWorkbenchHostProps) {
   const auth = useSampleAccount();
-  const { executeCommand, extensionRegistry, layoutService, workspaceHostPort } = useWorkbench();
+  const { executeCommand, layoutService, localizations, workspaceHostPort } = useWorkbench();
   const workspaceState = useWorkspaceResourceState(
     isWorkspaceResourceService(workspaceHostPort?.service) ? workspaceHostPort.service : undefined,
   );
@@ -214,9 +213,8 @@ function SampleWorkbenchHost({
   const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
   const editorTheme: WorkspaceEditorTheme = resolvedTheme;
   const translateShellChrome = useCallback(
-    (key: string, fallback: string) =>
-      extensionRegistry.localizations.translate(locale, key, fallback),
-    [extensionRegistry.localizations, locale],
+    (key: string, fallback: string) => localizations.translate(locale, key, fallback),
+    [localizations, locale],
   );
 
   useEffect(() => {
@@ -335,23 +333,16 @@ function SampleWorkbenchHost({
   const handleRunCommand = useCallback(
     (
       command: Parameters<typeof runSamplePaletteCommand>[0],
-      context: Parameters<typeof runSamplePaletteCommand>[1],
+      context: WorkbenchShellCommandRunContext,
     ) => {
       if (command.id === SAMPLE_OPEN_PERMISSION_ROLE_SETTINGS_COMMAND_ID) {
-        const settings = extensionRegistry.capabilityRegistry.get<{
-          openSettings: (categoryId?: string) => void;
-        }>(WORKBENCH_SETTINGS_CAPABILITY_ID);
-        settings?.openSettings(permissionRoleSettingsCategory.id);
+        context.openSettings(permissionRoleSettingsCategory.id);
         return true;
       }
 
       return runSamplePaletteCommand(command, context);
     },
-    [
-      extensionRegistry.capabilityRegistry,
-      permissionRoleSettingsCategory.id,
-      runSamplePaletteCommand,
-    ],
+    [permissionRoleSettingsCategory.id, runSamplePaletteCommand],
   );
 
   return (

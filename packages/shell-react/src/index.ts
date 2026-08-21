@@ -4,7 +4,12 @@ export {
   WorkbenchProvider,
   useWorkbench,
   type WorkbenchContextValue,
+  type WorkbenchExtensionActivationAccess,
+  type WorkbenchExtensionActivationStateReader,
+  type WorkbenchExtensionCatalogReader,
   type WorkbenchProviderProps,
+  type WorkbenchSettingsCapabilityPublication,
+  type WorkbenchSettingsCapabilityPublisher,
   type WorkbenchStorageAdapter,
   type WorkbenchWorkspaceHostPort,
 } from './shell/provider.js';
@@ -206,6 +211,8 @@ export {
 export {
   WorkbenchShell,
   type WorkbenchLocaleOption,
+  type WorkbenchShellCommandHostProps,
+  type WorkbenchShellCommandRunContext,
   type WorkbenchShellProps,
   type WorkbenchThemeOption,
 } from './shell/shell.js';

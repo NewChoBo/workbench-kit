@@ -1,9 +1,9 @@
 import { isValidElement, useEffect, useMemo, useRef, type FocusEvent, type ReactNode } from 'react';
 import type {
   ExtensionCatalogTrustPolicy,
-  ExtensionRegistry,
   ViewHost,
   ViewHostFactoryRegistry,
+  ViewRegistry,
   ViewProvider,
   WorkbenchViewContribution,
 } from '@workbench-kit/workbench-core';
@@ -11,6 +11,11 @@ import {
   filterWorkbenchContributionsByWhenClause,
   type WorkbenchContextKeySnapshot,
 } from '@workbench-kit/platform';
+
+export interface WorkbenchViewContributionAccess {
+  readonly viewHostFactories: ViewHostFactoryRegistry;
+  readonly views: ViewRegistry;
+}
 
 import { BuiltinChatView } from '../chat/view.js';
 import { isBuiltinChatViewRenderData } from '../chat/view-data.js';
@@ -24,15 +29,15 @@ import { BuiltinSearchView } from '../explorer/search-view.js';
 import { isBuiltinSearchViewRenderData } from '../explorer/search-view-data.js';
 
 export function renderDefaultPrimarySidebar(
-  extensionRegistry: Pick<ExtensionRegistry, 'viewHostFactories' | 'views'>,
+  access: WorkbenchViewContributionAccess,
   activeViewContainerId: string | undefined,
   catalogUrl?: string | undefined,
   catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined,
   contextKeys: WorkbenchContextKeySnapshot = {},
 ) {
   const views = activeViewContainerId
-    ? getVisibleWorkbenchViews(extensionRegistry, activeViewContainerId, contextKeys)
-    : filterWorkbenchContributionsByWhenClause(extensionRegistry.views.getViews(), contextKeys);
+    ? getVisibleWorkbenchViews(access, activeViewContainerId, contextKeys)
+    : filterWorkbenchContributionsByWhenClause(access.views.getViews(), contextKeys);
   if (views.length === 0) {
     return <aside aria-label="Primary sidebar" />;
   }
@@ -42,33 +47,33 @@ export function renderDefaultPrimarySidebar(
       aria-label="Primary sidebar"
       className="workbench-primary-side-bar shell-react-sidebar-host"
     >
-      {renderWorkbenchViews(extensionRegistry, views, { catalogTrustPolicy, catalogUrl })}
+      {renderWorkbenchViews(access, views, { catalogTrustPolicy, catalogUrl })}
     </aside>
   );
 }
 
 export function renderDefaultAuxiliarySidebar(
-  extensionRegistry: Pick<ExtensionRegistry, 'viewHostFactories' | 'views'>,
+  access: WorkbenchViewContributionAccess,
   contextKeys: WorkbenchContextKeySnapshot,
   catalogUrl?: string | undefined,
   catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined,
 ) {
-  const views = extensionRegistry.views
+  const views = access.views
     .getViewContainers('auxiliarybar')
-    .flatMap((container) => getVisibleWorkbenchViews(extensionRegistry, container.id, contextKeys));
+    .flatMap((container) => getVisibleWorkbenchViews(access, container.id, contextKeys));
 
   return (
     <aside
       aria-label="Secondary Side Bar"
       className="workbench-auxiliary-side-bar shell-react-sidebar-host"
     >
-      {renderWorkbenchViews(extensionRegistry, views, { catalogTrustPolicy, catalogUrl })}
+      {renderWorkbenchViews(access, views, { catalogTrustPolicy, catalogUrl })}
     </aside>
   );
 }
 
 export function renderDefaultBottomPanel(
-  extensionRegistry: Pick<ExtensionRegistry, 'viewHostFactories' | 'views'>,
+  access: WorkbenchViewContributionAccess,
   activeViewContainerId: string | undefined,
   options: {
     catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
@@ -77,7 +82,7 @@ export function renderDefaultBottomPanel(
     onActiveViewContainerChange?: ((viewContainerId: string) => void) | undefined;
   } = {},
 ) {
-  const containers = extensionRegistry.views.getViewContainers('panel');
+  const containers = access.views.getViewContainers('panel');
   if (containers.length === 0) {
     return (
       <section aria-label="Panel" className="workbench-bottom-panel">
@@ -92,11 +97,7 @@ export function renderDefaultBottomPanel(
       ? activeViewContainerId
       : containers[0]?.id;
   const views = resolvedActiveViewContainerId
-    ? getVisibleWorkbenchViews(
-        extensionRegistry,
-        resolvedActiveViewContainerId,
-        options.contextKeys ?? {},
-      )
+    ? getVisibleWorkbenchViews(access, resolvedActiveViewContainerId, options.contextKeys ?? {})
     : [];
 
   return (
@@ -127,7 +128,7 @@ export function renderDefaultBottomPanel(
         {views.length === 0 ? (
           <div className="workbench-bottom-panel__empty">No views in this panel container.</div>
         ) : (
-          renderWorkbenchViews(extensionRegistry, views, {
+          renderWorkbenchViews(access, views, {
             catalogTrustPolicy: options.catalogTrustPolicy,
             catalogUrl: options.catalogUrl,
             sectionClassName: 'workbench-bottom-panel__view',
@@ -139,18 +140,18 @@ export function renderDefaultBottomPanel(
 }
 
 export function getVisibleWorkbenchViews(
-  extensionRegistry: Pick<ExtensionRegistry, 'views'>,
+  access: Pick<WorkbenchViewContributionAccess, 'views'>,
   viewContainerId: string,
   contextKeys: WorkbenchContextKeySnapshot,
 ): WorkbenchViewContribution[] {
   return filterWorkbenchContributionsByWhenClause(
-    extensionRegistry.views.getViews(viewContainerId),
+    access.views.getViews(viewContainerId),
     contextKeys,
   );
 }
 
 function renderWorkbenchViews(
-  extensionRegistry: Pick<ExtensionRegistry, 'viewHostFactories' | 'views'>,
+  access: WorkbenchViewContributionAccess,
   views: readonly WorkbenchViewContribution[],
   options: {
     catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
@@ -169,8 +170,8 @@ function renderWorkbenchViews(
         catalogTrustPolicy={options.catalogTrustPolicy}
         catalogUrl={options.catalogUrl}
         fallback={view.name}
-        provider={extensionRegistry.views.getViewProvider(view.id)}
-        viewHostFactories={extensionRegistry.viewHostFactories}
+        provider={access.views.getViewProvider(view.id)}
+        viewHostFactories={access.viewHostFactories}
         viewId={view.id}
       />
     </section>

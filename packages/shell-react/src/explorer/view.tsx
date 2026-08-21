@@ -52,7 +52,7 @@ interface ExplorerContextMenuState {
 }
 
 export function BuiltinExplorerView() {
-  const { executeCommand, extensionRegistry, workspaceHostPort } = useWorkbench();
+  const { commands, executeCommand, menus, workspaceHostPort } = useWorkbench();
   const activeTab = useActiveEditorTab();
   const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
     ? workspaceHostPort.service
@@ -146,6 +146,7 @@ export function BuiltinExplorerView() {
         ariaLabel: `${node.name} menu`,
         items: createExplorerItemContextMenuItems({
           actionPaths: meta.actionPaths,
+          commands,
           copyPaths: (paths) => {
             void executeWorkspaceCommand(WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID, { paths });
           },
@@ -158,8 +159,8 @@ export function BuiltinExplorerView() {
             });
           },
           executeExtensionCommand: (commandId) => executeCommand(commandId),
-          extensionRegistry,
           files: workspaceState?.files ?? [],
+          menus,
           node,
           openFiles: (paths) => {
             void executeWorkspaceCommand(WORKBENCH_WORKSPACE_OPEN_COMMAND_ID, {
@@ -174,7 +175,7 @@ export function BuiltinExplorerView() {
         y: event.clientY,
       });
     },
-    [executeWorkspaceCommand, explorer, workspaceState?.files],
+    [commands, executeWorkspaceCommand, explorer, menus, workspaceState?.files],
   );
 
   if (!workspaceService || !workspaceState) {

@@ -49,6 +49,7 @@ import {
 import { WorkbenchStructuredDataSchemaPanel } from './StructuredDataSchemaPanel';
 import { WorkbenchStructuredDataSchemaPanelEmbed } from './StructuredDataSchemaPanelEmbed';
 import { WorkbenchStructuredDataSchemaPanelFrame } from './StructuredDataSchemaPanelFrame';
+import { getWorkbenchStructuredDataSchemaPathSegments } from './structuredDataSchemaSection';
 
 const sections: WorkbenchStructuredDataFormSection[] = [
   {
@@ -172,6 +173,87 @@ describe('WorkbenchStructuredDataForm helpers', () => {
       'code',
     );
     expect(data.request.fields[1].name).toBe('status');
+  });
+
+  it('keeps reserved form-path keys as own data without changing source prototypes', () => {
+    const data = { profile: {} };
+    const nextData = setWorkbenchStructuredDataValue(
+      data,
+      ['profile', '__proto__', 'name'],
+      'Workbench',
+    );
+    const profile = nextData.profile as Record<string, unknown>;
+
+    expect(getWorkbenchStructuredDataValue(nextData, ['profile', '__proto__', 'name'])).toBe(
+      'Workbench',
+    );
+    expect(Object.prototype.hasOwnProperty.call(profile, '__proto__')).toBe(true);
+    expect(Object.getPrototypeOf(profile)).toBe(Object.prototype);
+    expect(Object.getPrototypeOf(data.profile)).toBe(Object.prototype);
+  });
+
+  it('uses dotted schema paths for nested section reads, samples, and field edits', () => {
+    const section = {
+      dataPath: 'request.fields',
+      fields: ['name'],
+      sectionKey: 'requestFields',
+      title: 'Fields',
+    };
+    const data = {
+      'request.fields': { name: 'literal' },
+      request: { fields: { name: 'nested' } },
+    };
+    const schema = {
+      schema: {
+        properties: { 'request.fields.name': { default: 'sample' } },
+        sections: [section],
+      },
+    };
+
+    expect(getWorkbenchStructuredDataSchemaPathSegments('name')).toEqual(['name']);
+    expect(getWorkbenchStructuredDataSchemaDocumentSectionValue({ data, section })).toEqual({
+      name: 'nested',
+    });
+    expect(createWorkbenchStructuredDataSchemaDocumentSampleData(schema, '')).toEqual({
+      request: { fields: { name: 'sample' } },
+    });
+
+    const nextData = setWorkbenchStructuredDataValue(
+      data,
+      getWorkbenchStructuredDataSchemaPathSegments(
+        getWorkbenchStructuredDataSchemaFieldDataPath(section, 'name'),
+      ),
+      'edited',
+    );
+
+    expect(nextData.request).toEqual({ fields: { name: 'edited' } });
+    expect(nextData['request.fields']).toEqual({ name: 'literal' });
+  });
+
+  it('uses dotted schema table paths for nested cells and table edits', () => {
+    const section = {
+      dataPath: 'request.fields',
+      sectionKey: 'requestFields',
+      title: 'Fields',
+      type: 'table' as const,
+    };
+    const data = {
+      'request.fields': [{ name: 'literal' }],
+      request: { fields: [{ name: 'nested' }] },
+    };
+    const cellPath = getWorkbenchStructuredDataSchemaTableCellPath({
+      column: 'name',
+      rowKey: '0',
+      section,
+    });
+
+    expect(getWorkbenchStructuredDataSchemaTablePath(section)).toEqual(['request', 'fields']);
+    expect(cellPath).toEqual(['request', 'fields', '0', 'name']);
+
+    const nextData = setWorkbenchStructuredDataValue(data, cellPath, 'edited');
+
+    expect(nextData.request).toEqual({ fields: [{ name: 'edited' }] });
+    expect(nextData['request.fields']).toEqual([{ name: 'literal' }]);
   });
 
   it('interprets lightweight schema field definitions', () => {
@@ -386,6 +468,33 @@ describe('WorkbenchStructuredDataForm helpers', () => {
         section: { sectionKey: 'requestFields' },
       }),
     ).toEqual([{ name: 'code' }]);
+    const ownReservedKeys = JSON.parse(
+      '{"constructor":"own constructor","__proto__":"own prototype key"}',
+    ) as Record<string, unknown>;
+    const nullPrototypeKeys = Object.create(null) as Record<string, unknown>;
+    nullPrototypeKeys['constructor'] = 'null-prototype constructor';
+    nullPrototypeKeys['__proto__'] = 'null-prototype key';
+
+    for (const sectionKey of ['constructor', '__proto__']) {
+      expect(
+        getWorkbenchStructuredDataSchemaDocumentSectionValue({
+          data: {},
+          section: { sectionKey },
+        }),
+      ).toBeNull();
+      expect(
+        getWorkbenchStructuredDataSchemaDocumentSectionValue({
+          data: ownReservedKeys,
+          section: { sectionKey },
+        }),
+      ).toBe(ownReservedKeys[sectionKey]);
+      expect(
+        getWorkbenchStructuredDataSchemaDocumentSectionValue({
+          data: nullPrototypeKeys,
+          section: { sectionKey },
+        }),
+      ).toBe(nullPrototypeKeys[sectionKey]);
+    }
     expect(sample).toEqual({
       request: { fields: [{ name: 'id', required: false }] },
       summary: { name: 'Untitled' },

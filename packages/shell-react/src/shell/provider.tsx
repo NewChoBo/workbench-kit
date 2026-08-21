@@ -25,8 +25,16 @@ import {
   verifyWorkbenchExtensionsAgainstLock,
   type EditorState,
   type EditorService,
+  type ActivityRegistry,
+  type ConfigurationRegistry,
   type ExtensionIntegrityMode,
+  type LocalizationRegistry,
+  type MenuRegistry,
   type PreferenceService as PreferenceServiceType,
+  type StatusBarRegistry,
+  type ThemeRegistry,
+  type ViewRegistry,
+  type ViewHostFactoryRegistry,
   type WorkbenchHostThemeRegistration,
   type WorkbenchPersistenceDiagnosticHandler,
   type WorkbenchStorageAdapter,
@@ -38,7 +46,9 @@ import {
 import {
   ContextKeyService,
   createWorkbenchPermissionContextKeys,
+  type CommandRegistry,
   type ContextKeyValue,
+  type KeybindingRegistry,
 } from '@workbench-kit/platform';
 import type {
   WorkbenchExtensionsConfig,
@@ -74,6 +84,24 @@ import {
   BUILTIN_EXTENSIONS_FOCUS_COMMAND_ID,
   BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID,
 } from '../extensions/view-data.js';
+import {
+  createWorkbenchExtensionActivationAccess,
+  createWorkbenchExtensionActivationStateReader,
+  createWorkbenchExtensionCatalogReader,
+  createWorkbenchSettingsCapabilityPublisher,
+  type WorkbenchExtensionActivationAccess,
+  type WorkbenchExtensionActivationStateReader,
+  type WorkbenchExtensionCatalogReader,
+  type WorkbenchSettingsCapabilityPublisher,
+} from './focused-extension-services.js';
+
+export type {
+  WorkbenchExtensionActivationAccess,
+  WorkbenchExtensionActivationStateReader,
+  WorkbenchExtensionCatalogReader,
+  WorkbenchSettingsCapabilityPublication,
+  WorkbenchSettingsCapabilityPublisher,
+} from './focused-extension-services.js';
 import {
   DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   isWorkbenchLocalPreferencePersistenceAvailable,
@@ -154,20 +182,33 @@ export interface WorkbenchProviderProps {
 
 export interface WorkbenchContextValue {
   activateCommand(commandId: string): Promise<readonly { readonly extensionId: string }[]>;
+  activities: ActivityRegistry;
   availableExtensions: readonly WorkbenchExtensionDescription[];
+  commands: CommandRegistry;
+  configurations: ConfigurationRegistry;
   contextKeyService: ContextKeyService;
   editorDocumentViewProviders: EditorDocumentViewProviderRegistry;
   editorService: EditorService;
   executeCommand(commandId: string, ...args: unknown[]): Promise<unknown>;
-  extensionRegistry: ExtensionRegistry;
+  extensionActivation: WorkbenchExtensionActivationAccess;
+  extensionActivationState: WorkbenchExtensionActivationStateReader;
+  extensionCatalog: WorkbenchExtensionCatalogReader;
   installedExtensionsStorage?: WorkbenchStorageAdapter;
   installedExtensionsStorageKey: string;
+  keybindings: KeybindingRegistry;
   keybindingOverrides: readonly WorkbenchKeybindingDefinition[];
   layoutService: LayoutService;
+  localizations: LocalizationRegistry;
+  menus: MenuRegistry;
   missingExtensionIds: readonly string[];
   preferenceService: PreferenceServiceType;
   resetCommandKeybindingOverride(commandId: string): void;
   setCommandKeybindingOverride(commandId: string, key: string): void;
+  settingsCapabilityPublisher: WorkbenchSettingsCapabilityPublisher;
+  statusBar: StatusBarRegistry;
+  themes: ThemeRegistry;
+  viewHostFactories: ViewHostFactoryRegistry;
+  views: ViewRegistry;
   waitForExtensionStartup(): Promise<void>;
   workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
@@ -785,7 +826,10 @@ export function WorkbenchProvider({
   const value = useMemo<WorkbenchContextValue>(
     () => ({
       activateCommand: (commandId) => services.extensionRegistry.activateCommand(commandId),
+      activities: services.extensionRegistry.activities,
       availableExtensions: services.availableExtensions,
+      commands: services.extensionRegistry.commands,
+      configurations: services.extensionRegistry.configurations,
       contextKeyService,
       editorDocumentViewProviders: services.editorDocumentViewProviders,
       editorService: services.editorService,
@@ -804,15 +848,32 @@ export function WorkbenchProvider({
         }
         return result;
       },
-      extensionRegistry: services.extensionRegistry,
+      extensionActivation: createWorkbenchExtensionActivationAccess(
+        services.extensionRegistry,
+        services.waitForExtensionStartup,
+      ),
+      extensionActivationState: createWorkbenchExtensionActivationStateReader(
+        services.extensionRegistry,
+      ),
+      extensionCatalog: createWorkbenchExtensionCatalogReader(services.extensionRegistry),
       installedExtensionsStorage,
       installedExtensionsStorageKey,
+      keybindings: services.extensionRegistry.keybindings,
       keybindingOverrides,
       layoutService: services.layoutService,
+      localizations: services.extensionRegistry.localizations,
+      menus: services.extensionRegistry.menus,
       missingExtensionIds: services.missingExtensionIds,
       preferenceService: services.preferenceService,
       resetCommandKeybindingOverride,
       setCommandKeybindingOverride,
+      settingsCapabilityPublisher: createWorkbenchSettingsCapabilityPublisher(
+        services.extensionRegistry.capabilityRegistry,
+      ),
+      statusBar: services.extensionRegistry.statusBar,
+      themes: services.extensionRegistry.themes,
+      viewHostFactories: services.extensionRegistry.viewHostFactories,
+      views: services.extensionRegistry.views,
       waitForExtensionStartup: services.waitForExtensionStartup,
       workspaceHostPort: services.workspaceHostPort,
     }),

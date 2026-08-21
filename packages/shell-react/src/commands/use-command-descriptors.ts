@@ -1,13 +1,17 @@
 import type { WorkbenchCommandDescriptor } from '@workbench-kit/react/workbench';
 
 import { useWorkbench } from '../shell/provider.js';
-import { useExtensionRegistryCommandDescriptors } from './use-extension-registry-command-descriptors.js';
+import { useCommandRegistryCommandDescriptors } from './use-extension-registry-command-descriptors.js';
 
 const EMPTY_COMMAND_DESCRIPTORS: readonly WorkbenchCommandDescriptor[] = [];
 
 export function useWorkbenchCommandDescriptors(
   additionalCommands: readonly WorkbenchCommandDescriptor[] = EMPTY_COMMAND_DESCRIPTORS,
 ) {
-  const { extensionRegistry } = useWorkbench();
-  return useExtensionRegistryCommandDescriptors(extensionRegistry, additionalCommands);
+  const { commands, extensionCatalog } = useWorkbench();
+  return useCommandRegistryCommandDescriptors(
+    commands,
+    extensionCatalog.getFeatureSpecs(),
+    additionalCommands,
+  );
 }

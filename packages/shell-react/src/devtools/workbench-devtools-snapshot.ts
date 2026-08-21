@@ -1,17 +1,24 @@
 import type {
   EditorService,
   EditorState,
+  ActivityRegistry,
   ExtensionDependencyDiagnostic,
-  ExtensionRegistry,
   LayoutService,
+  MenuRegistry,
+  ViewRegistry,
   WorkbenchLayoutState,
 } from '@workbench-kit/workbench-core';
+import type { CommandRegistry, KeybindingRegistry } from '@workbench-kit/platform';
 import type {
   WorkbenchWorkspaceHostPort as WorkspaceHostPort,
   WorkspaceResourceTransaction,
 } from '@workbench-kit/workspace';
 
-import type { WorkbenchWorkspaceHostPort } from '../shell/provider.js';
+import type {
+  WorkbenchExtensionActivationStateReader,
+  WorkbenchExtensionCatalogReader,
+  WorkbenchWorkspaceHostPort,
+} from '../shell/provider.js';
 
 export interface WorkbenchDevtoolsSnapshot {
   readonly activeExtensions: readonly { readonly extensionId: string }[];
@@ -58,18 +65,30 @@ export interface WorkbenchDevtoolsSnapshot {
 }
 
 export interface CollectWorkbenchDevtoolsSnapshotInput {
+  readonly activities: ActivityRegistry;
   readonly capturedAt?: string | undefined;
+  readonly commands: CommandRegistry;
   readonly editorService: EditorService;
-  readonly extensionRegistry: ExtensionRegistry;
+  readonly extensionActivationState: WorkbenchExtensionActivationStateReader;
+  readonly extensionCatalog: WorkbenchExtensionCatalogReader;
+  readonly keybindings: KeybindingRegistry;
   readonly layoutService: LayoutService;
+  readonly menus: MenuRegistry;
+  readonly views: ViewRegistry;
   readonly workspaceHostPort?: WorkbenchWorkspaceHostPort | undefined;
 }
 
 export function collectWorkbenchDevtoolsSnapshot({
+  activities,
   capturedAt = new Date().toISOString(),
+  commands,
   editorService,
-  extensionRegistry,
+  extensionActivationState,
+  extensionCatalog,
+  keybindings,
   layoutService,
+  menus,
+  views,
   workspaceHostPort,
 }: CollectWorkbenchDevtoolsSnapshotInput): WorkbenchDevtoolsSnapshot {
   const layout = layoutService.getState();
@@ -77,17 +96,17 @@ export function collectWorkbenchDevtoolsSnapshot({
   const activeTabCount = editor.groups.reduce((count, group) => count + group.tabs.length, 0);
 
   return {
-    activeExtensions: extensionRegistry.getActiveExtensions().map(({ extensionId }) => ({
+    activeExtensions: extensionActivationState.getActiveExtensions().map(({ extensionId }) => ({
       extensionId,
     })),
-    activities: extensionRegistry.activities.getActivities().map((activity) => ({
+    activities: activities.getActivities().map((activity) => ({
       icon: activity.icon,
       id: activity.id,
       title: activity.title,
     })),
-    capabilities: extensionRegistry.capabilityRegistry.listProviderIds(),
+    capabilities: extensionCatalog.listCapabilityProviderIds(),
     capturedAt,
-    commands: extensionRegistry.commands.getCommands().map((command) => ({
+    commands: commands.getCommands().map((command) => ({
       category: command.category,
       id: command.id,
       title: command.title,
@@ -102,15 +121,15 @@ export function collectWorkbenchDevtoolsSnapshot({
       'layout.sideBar.visible': layout.sideBar.visible,
       'workspace.hasHostPort': workspaceHostPort !== undefined,
     },
-    dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
+    dependencyDiagnostics: extensionCatalog.getDependencyDiagnostics(),
     editor,
-    keybindings: extensionRegistry.keybindings.getKeybindings().map((binding) => ({
+    keybindings: keybindings.getKeybindings().map((binding) => ({
       command: binding.command,
       key: binding.key,
       when: binding.when,
     })),
     layout,
-    menus: extensionRegistry.menus.getMenuItems().map((menu) => ({
+    menus: menus.getMenuItems().map((menu) => ({
       command: menu.command,
       group: menu.group,
       menu: menu.menu,
@@ -118,13 +137,13 @@ export function collectWorkbenchDevtoolsSnapshot({
       when: menu.when,
     })),
     transactions: readWorkspaceTransactionJournal(workspaceHostPort),
-    viewContainers: extensionRegistry.views.getViewContainers().map((container) => ({
+    viewContainers: views.getViewContainers().map((container) => ({
       icon: container.icon,
       id: container.id,
       location: container.location,
       title: container.title,
     })),
-    views: extensionRegistry.views.getViews().map((view) => ({
+    views: views.getViews().map((view) => ({
       containerId: view.containerId,
       id: view.id,
       name: view.name,

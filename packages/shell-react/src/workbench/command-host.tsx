@@ -101,11 +101,15 @@ export function WorkbenchCommandHost({
   quickOpenTitle = 'Quick Open',
 }: WorkbenchCommandHostProps) {
   const {
+    activities,
+    commands,
     contextKeyService,
     executeCommand,
-    extensionRegistry,
+    extensionCatalog,
+    keybindings,
     keybindingOverrides,
     layoutService,
+    views,
     workspaceHostPort,
   } = useWorkbench();
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -136,12 +140,12 @@ export function WorkbenchCommandHost({
   }, [layoutService]);
 
   const managedShellActivities = useMemo(
-    () => resolveShellCommandActivities(extensionRegistry),
-    [extensionRegistry],
+    () => resolveShellCommandActivities({ activities, views }),
+    [activities, views],
   );
   const visibleShellActivities = useMemo(
-    () => resolveShellCommandActivities(extensionRegistry, contextKeySnapshot),
-    [contextKeySnapshot, extensionRegistry],
+    () => resolveShellCommandActivities({ activities, views }, contextKeySnapshot),
+    [activities, contextKeySnapshot, views],
   );
   const visibleShellActivityIdSet = new Set(visibleShellActivities.map((activity) => activity.id));
   const visibleShellActivitySignature = managedShellActivities
@@ -203,7 +207,7 @@ export function WorkbenchCommandHost({
 
   useEffect(() => {
     const registration = registerWorkbenchShellCommandHandlers(
-      extensionRegistry.commands,
+      commands,
       shellCommandDefinitions,
       () => {
         const context = shellContextRef.current;
@@ -218,14 +222,16 @@ export function WorkbenchCommandHost({
     return () => {
       registration.dispose();
     };
-  }, [extensionRegistry.commands, shellCommandDefinitions]);
+  }, [commands, shellCommandDefinitions]);
 
   const paletteCommands = useMemo(
     () =>
       buildWorkbenchPaletteCommands({
         additionalCommands,
-        extensionCommandFeaturesById: collectExtensionCommandFeaturesById(extensionRegistry),
-        extensionCommands: extensionRegistry.commands
+        extensionCommandFeaturesById: collectExtensionCommandFeaturesById(
+          extensionCatalog.getFeatureSpecs(),
+        ),
+        extensionCommands: commands
           .getCommands()
           .filter((command) => !managedShellCommandIds.has(command.id)),
         shellCommands: shellCommandDefinitions,
@@ -233,7 +239,8 @@ export function WorkbenchCommandHost({
       }),
     [
       additionalCommands,
-      extensionRegistry,
+      commands,
+      extensionCatalog,
       managedShellCommandIds,
       shellContext,
       shellCommandDefinitions,
@@ -356,12 +363,7 @@ export function WorkbenchCommandHost({
         return;
       }
 
-      const match = resolveExtensionKeybindingCommand(
-        extensionRegistry.keybindings,
-        event,
-        {},
-        keybindingOverrides,
-      );
+      const match = resolveExtensionKeybindingCommand(keybindings, event, {}, keybindingOverrides);
       if (!match) {
         return;
       }
@@ -374,12 +376,7 @@ export function WorkbenchCommandHost({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [
-    enableExtensionKeybindings,
-    executeCommand,
-    extensionRegistry.keybindings,
-    keybindingOverrides,
-  ]);
+  }, [enableExtensionKeybindings, executeCommand, keybindings, keybindingOverrides]);
 
   return (
     <>

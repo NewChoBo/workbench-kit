@@ -6,6 +6,7 @@ export {
 } from '../editor/editorTabContextMenu';
 export type {
   CreateWorkbenchStandaloneEditorTabCommandContextInput,
+  CreateWorkbenchStandaloneEditorTabContextMenuItemsInput,
   WorkbenchStandaloneEditorTabLike,
 } from '../editor/editorTabContextMenu';
 export { useEditorTabsStripDnd } from '../editor/useEditorTabsStripDnd';

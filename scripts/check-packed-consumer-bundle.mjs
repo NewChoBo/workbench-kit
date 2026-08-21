@@ -254,6 +254,16 @@ import { StatusBar } from '@workbench-kit/react/workbench/shell';
 import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standalone';
 import { resolveWorkbenchTheme } from '@workbench-kit/react/workbench/theme';
 import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themePresets';
+import type {
+  WorkbenchContextValue,
+  WorkbenchExtensionActivationAccess,
+  WorkbenchExtensionActivationStateReader,
+  WorkbenchExtensionCatalogReader,
+  WorkbenchShellCommandHostProps,
+  WorkbenchShellCommandRunContext,
+  WorkbenchSettingsCapabilityPublication,
+  WorkbenchSettingsCapabilityPublisher,
+} from '@workbench-kit/shell-react';
 import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
 import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
@@ -261,6 +271,23 @@ import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react
 import { useExtensionRegistryCommandDescriptors } from '@workbench-kit/shell-react/registry-command-descriptors';
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
+type ExtensionRegistryRemoved = 'extensionRegistry' extends keyof WorkbenchContextValue
+  ? never
+  : true;
+const extensionRegistryRemoved: ExtensionRegistryRemoved = true;
+type FocusedExtensionContextContracts = {
+  activation: WorkbenchExtensionActivationAccess;
+  activationState: WorkbenchExtensionActivationStateReader;
+  catalog: WorkbenchExtensionCatalogReader;
+  publication: WorkbenchSettingsCapabilityPublication;
+  publisher: WorkbenchSettingsCapabilityPublisher;
+};
+const focusedExtensionContextContracts = null as unknown as FocusedExtensionContextContracts;
+type FocusedShellCommandContracts = {
+  host: WorkbenchShellCommandHostProps;
+  runContext: WorkbenchShellCommandRunContext;
+};
+const focusedShellCommandContracts = null as unknown as FocusedShellCommandContracts;
 
 (globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
   .__workbenchKitPackedConsumer = Object.freeze({
@@ -278,6 +305,9 @@ const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
   WorkbenchShortcutCommandBridge,
   WorkbenchStandaloneShell,
   useExtensionRegistryCommandDescriptors,
+  extensionRegistryRemoved,
+  focusedExtensionContextContracts,
+  focusedShellCommandContracts,
   commands: createWorkbenchShellCommands({ activities: [] }),
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),

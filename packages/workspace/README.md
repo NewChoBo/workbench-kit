@@ -31,6 +31,14 @@ paths stay relative. Use `tryNormalizeWorkspacePath` when invalid input should
 soft-fail. Hosts that map virtual paths onto disk must still confine filesystem
 roots (for example `@workbench-kit/platform/node` `resolvePathUnderRoot`).
 
+## Structured data records
+
+`isWorkbenchStructuredDataRecord` and `asWorkbenchStructuredDataRecord` accept
+plain records with `Object.prototype` and records with a null prototype. Arrays,
+class instances, and other non-plain objects are not structured data records.
+Structured data path helpers read own properties only and preserve arbitrary JSON
+member names, including reserved-looking names such as `__proto__`, as data.
+
 ## Related docs
 
 - [Consumer Capabilities](../../docs/workbench/consumer-capabilities.md) — explorer / selection surfaces

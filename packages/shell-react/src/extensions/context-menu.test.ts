@@ -21,9 +21,10 @@ describe('extension context menu helpers', () => {
     });
 
     const items = createExtensionContextMenuItems({
+      commands: extensionRegistry.commands,
       executeCommand: (commandId) => calls.push(commandId),
-      extensionRegistry,
       menu: 'explorer/context',
+      menus: extensionRegistry.menus,
     });
 
     expect(items).toMatchObject([

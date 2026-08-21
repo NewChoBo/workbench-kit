@@ -1,33 +1,36 @@
 import type { ContextMenuItem } from '@workbench-kit/react/overlay';
 import { commandMenuItemsToContextMenuItems } from '@workbench-kit/react/workbench/commands';
+import type { CommandRegistry } from '@workbench-kit/platform';
 import {
   resolveWorkbenchMenuContributions,
-  type ExtensionRegistry,
+  type MenuRegistry,
 } from '@workbench-kit/workbench-core';
 
 export interface ExtensionContextMenuInput {
+  readonly commands?: CommandRegistry | undefined;
   readonly contextKeys?: object | undefined;
   readonly executeCommand?: ((commandId: string) => unknown) | undefined;
-  readonly extensionRegistry?: ExtensionRegistry | undefined;
   readonly menu: string;
+  readonly menus?: MenuRegistry | undefined;
 }
 
 export function createExtensionContextMenuItems({
+  commands,
   contextKeys,
   executeCommand,
-  extensionRegistry,
   menu,
+  menus,
 }: ExtensionContextMenuInput): ContextMenuItem[] {
-  if (!extensionRegistry || !executeCommand) {
+  if (!commands || !menus || !executeCommand) {
     return [];
   }
 
   const menuItems = resolveWorkbenchMenuContributions({
-    commandRegistry: extensionRegistry.commands,
+    commandRegistry: commands,
     context: undefined,
     contextKeys,
     menu,
-    menuItems: extensionRegistry.menus.getMenuItems(menu),
+    menuItems: menus.getMenuItems(menu),
   });
 
   return commandMenuItemsToContextMenuItems([...menuItems], (commandId) => {

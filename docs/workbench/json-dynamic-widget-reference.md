@@ -75,6 +75,17 @@ convenient but rebuild-heavy. Our analysis of missing/unused listen already
 matches their “prefer hand-written listen” guidance. Keep that as authoring
 policy; do not auto-rewrite JSON to inject listen during draw.
 
+### 3.2.1 JDW binding paths are restricted
+
+JDW `${path}` expressions and `listen` entries use a restricted dotted binding
+grammar: a path is one or more `[A-Za-z0-9_-]+` segments separated by single
+dots. It is not a lossless arbitrary-JSON path notation: leading, trailing,
+and repeated dots are invalid, and literal property names containing dots are
+not addressable. Records resolve own properties only. Existing arrays accept
+only canonical decimal indices in the JavaScript array-index range `0` through
+`4294967294`; a numeric-looking segment does not cause a missing branch to
+become an array.
+
 ### 3.3 Measurement is host/registry, not the wire format (JD-3)
 
 Flutter never puts font metrics in JSON. We should:
