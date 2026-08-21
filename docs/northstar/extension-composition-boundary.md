@@ -296,9 +296,9 @@ Status: `DONE` through PR #301.
 
 ### Slice B — shell dependency narrowing
 
-Design contract: `READY_FOR_IMPLEMENTATION` through reviewed Issue #303 / `WB-NS-001B1`.
+Design contract: `DONE` through reviewed Issue #303 and integrated `WB-NS-001B1`.
 
-Source migration: `BLOCKED` under `WB-NS-001B2` until this promotion projection is integrated and the exact implementation base and owner are revalidated. The later migration follows Issue #303's reviewed ingress map and focused seams; it does not expose the aggregate registry or arbitrary capability/service lookup through React context.
+Source migration: `IMPLEMENTING` under Issue #306 / `WB-NS-001B2` on revalidated base `origin/develop@1da7194dff1bbb62af6b5355f7016d3fde41ea27`. The candidate follows Issue #303's reviewed ingress map and focused seams; it does not expose the aggregate registry or arbitrary capability/service lookup through React context, and still requires exact-head validation and producer-distinct review before integration.
 
 ### Slice C — executable isolation/runtime placement
 

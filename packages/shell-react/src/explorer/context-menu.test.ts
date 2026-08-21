@@ -105,13 +105,14 @@ describe('createExplorerItemContextMenuItems', () => {
 
     const items = createExplorerItemContextMenuItems({
       actionPaths: ['src/App.tsx'],
+      commands: extensionRegistry.commands,
       copyPaths: (paths) => calls.push(`copy:${paths.join(',')}`),
       createFile: (parentPath) => calls.push(`newFile:${parentPath}`),
       createFolder: (parentPath) => calls.push(`newFolder:${parentPath}`),
       deleteTargets: (paths) => calls.push(`delete:${paths.join(',')}`),
       executeExtensionCommand: (commandId) => calls.push(`extension:${commandId}`),
-      extensionRegistry,
       files: [{ path: 'src/App.tsx' }],
+      menus: extensionRegistry.menus,
       node: fileNode('src/App.tsx'),
       openFiles: (paths) => calls.push(`open:${paths.join(',')}`),
       revealFolder: (path) => calls.push(`reveal:${path}`),

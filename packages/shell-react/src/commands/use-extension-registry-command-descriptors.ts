@@ -1,5 +1,6 @@
 import type { WorkbenchCommandDescriptor } from '@workbench-kit/react/workbench';
-import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
+import type { CommandRegistry } from '@workbench-kit/platform';
+import type { ExtensionFeatureSpec, ExtensionRegistry } from '@workbench-kit/workbench-core';
 import { useEffect, useMemo, useReducer } from 'react';
 
 import {
@@ -19,10 +20,22 @@ export function useExtensionRegistryCommandDescriptors(
   extensionRegistry: ExtensionRegistry,
   additionalCommands: readonly WorkbenchCommandDescriptor[] = EMPTY_COMMAND_DESCRIPTORS,
 ): readonly WorkbenchCommandDescriptor[] {
+  return useCommandRegistryCommandDescriptors(
+    extensionRegistry.commands,
+    extensionRegistry.getFeatureSpecs(),
+    additionalCommands,
+  );
+}
+
+export function useCommandRegistryCommandDescriptors(
+  commands: CommandRegistry,
+  featureSpecs: readonly ExtensionFeatureSpec[],
+  additionalCommands: readonly WorkbenchCommandDescriptor[] = EMPTY_COMMAND_DESCRIPTORS,
+): readonly WorkbenchCommandDescriptor[] {
   const [refreshToken, refreshCommands] = useReducer((count: number) => count + 1, 0);
 
   useEffect(() => {
-    const disposable = extensionRegistry.commands.onDidChangeCommands(() => {
+    const disposable = commands.onDidChangeCommands(() => {
       refreshCommands();
     });
     // A host may register commands in a layout effect after this hook rendered
@@ -33,18 +46,18 @@ export function useExtensionRegistryCommandDescriptors(
     return () => {
       disposable.dispose();
     };
-  }, [extensionRegistry.commands]);
+  }, [commands]);
 
   return useMemo(() => {
-    const commandFeaturesById = collectExtensionCommandFeaturesById(extensionRegistry);
+    const commandFeaturesById = collectExtensionCommandFeaturesById(featureSpecs);
 
     return mergeWorkbenchCommandDescriptors(
-      extensionRegistry.commands
+      commands
         .getCommands()
         .map((command) =>
           extensionCommandToDescriptor(command, commandFeaturesById.get(command.id)),
         ),
       [...additionalCommands],
     );
-  }, [additionalCommands, extensionRegistry, refreshToken]);
+  }, [additionalCommands, commands, featureSpecs, refreshToken]);
 }

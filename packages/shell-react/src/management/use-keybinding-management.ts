@@ -1,32 +1,40 @@
 import { useMemo } from 'react';
 import { buildKeybindingManagementEntries } from '@workbench-kit/platform';
 import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
-import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
 
-import { useWorkbench } from '../shell/provider.js';
+import { useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
 import { resolveShellCommandActivities } from '../workbench/command-palette.js';
 
 export function useKeybindingManagementModel() {
   const {
-    extensionRegistry,
+    activities,
+    commands,
+    extensionCatalog,
+    keybindings,
     keybindingOverrides,
     resetCommandKeybindingOverride,
     setCommandKeybindingOverride,
+    views,
   } = useWorkbench();
 
   const defaults = useMemo(
-    () => extensionRegistry.keybindings.getKeybindings(),
-    [extensionRegistry, keybindingOverrides.length],
+    () => keybindings.getKeybindings(),
+    [keybindingOverrides.length, keybindings],
   );
 
   const entries = useMemo(
     () =>
       buildKeybindingManagementEntries({
-        commands: collectKeybindingManagementCommands(extensionRegistry),
+        commands: collectKeybindingManagementCommands({
+          activities,
+          commands,
+          extensionCatalog,
+          views,
+        }),
         defaults,
         overrides: keybindingOverrides,
       }),
-    [defaults, extensionRegistry, keybindingOverrides],
+    [activities, commands, defaults, extensionCatalog, keybindingOverrides, views],
   );
 
   const overrideCount = keybindingOverrides.length;
@@ -49,7 +57,7 @@ export function useKeybindingManagementModel() {
   };
 }
 
-function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistry) {
+function collectKeybindingManagementCommands(access: KeybindingManagementAccess) {
   const commands: Array<{
     category?: string | undefined;
     id: string;
@@ -58,17 +66,17 @@ function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistr
   }> = [];
   const seen = new Set<string>();
   const shellCommands = createWorkbenchShellCommands({
-    activities: resolveShellCommandActivities(extensionRegistry),
+    activities: resolveShellCommandActivities(access),
     includeSettings: true,
     includeSidebarToggle: true,
   });
   const shellCommandIds = new Set(shellCommands.map((command) => command.id));
 
-  for (const extension of extensionRegistry.getExtensions()) {
+  for (const extension of access.extensionCatalog.getExtensions()) {
     const extensionLabel = extension.manifest.displayName ?? extension.manifest.id;
 
     for (const contribution of extension.manifest.contributes?.commands ?? []) {
-      const command = extensionRegistry.commands.getCommand(contribution.command);
+      const command = access.commands.getCommand(contribution.command);
       if (!command || seen.has(contribution.command) || shellCommandIds.has(contribution.command)) {
         continue;
       }
@@ -83,7 +91,7 @@ function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistr
     }
   }
 
-  for (const command of extensionRegistry.commands.getCommands()) {
+  for (const command of access.commands.getCommands()) {
     if (seen.has(command.id) || shellCommandIds.has(command.id)) {
       continue;
     }
@@ -119,3 +127,8 @@ function collectKeybindingManagementCommands(extensionRegistry: ExtensionRegistr
 
   return commands;
 }
+
+type KeybindingManagementAccess = Pick<
+  WorkbenchContextValue,
+  'activities' | 'commands' | 'extensionCatalog' | 'views'
+>;

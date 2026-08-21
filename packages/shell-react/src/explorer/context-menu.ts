@@ -8,12 +8,13 @@ import {
   type WorkbenchWorkspaceCommandContext,
 } from '@workbench-kit/react/workbench/commands';
 import {
+  type CommandRegistry,
   createCommandRegistry,
   executeCommand as executeRegisteredCommand,
   resolveCommandMenuItems,
 } from '@workbench-kit/platform';
 import { parentPathOf, type WorkspaceTreeNode } from '@workbench-kit/workspace';
-import type { ExtensionRegistry } from '@workbench-kit/workbench-core';
+import type { MenuRegistry } from '@workbench-kit/workbench-core';
 import {
   appendExtensionContextMenuItems,
   createExtensionContextMenuItems,
@@ -29,26 +30,28 @@ const EXPLORER_EXTENSION_MENU_SEPARATOR_ID = 'explorer-extension-separator';
 
 export function createExplorerItemContextMenuItems({
   actionPaths,
+  commands,
   copyPaths,
   createFile,
   createFolder,
   deleteTargets,
   executeExtensionCommand,
-  extensionRegistry,
   files,
+  menus,
   node,
   openFiles,
   revealFolder,
   renameTarget,
 }: {
   actionPaths: readonly string[];
+  commands?: CommandRegistry | undefined;
   copyPaths: (paths: string[]) => void;
   createFile: (parentPath: string) => void;
   createFolder: (parentPath: string) => void;
   deleteTargets: (paths: string[]) => void;
   executeExtensionCommand?: ((commandId: string) => unknown) | undefined;
-  extensionRegistry?: ExtensionRegistry | undefined;
   files: readonly { path: string }[];
+  menus?: MenuRegistry | undefined;
   node: WorkspaceTreeNode;
   openFiles: (paths: string[]) => void;
   revealFolder: (path: string) => void;
@@ -104,10 +107,11 @@ export function createExplorerItemContextMenuItems({
   return appendExtensionContextMenuItems(
     baseItems,
     createExtensionContextMenuItems({
+      commands,
       contextKeys,
       executeCommand: executeExtensionCommand,
-      extensionRegistry,
       menu: EXPLORER_CONTEXT_MENU,
+      menus,
     }),
     EXPLORER_EXTENSION_MENU_SEPARATOR_ID,
   );

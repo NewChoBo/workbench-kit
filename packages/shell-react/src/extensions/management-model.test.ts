@@ -28,7 +28,7 @@ describe('extension-management-model', () => {
     const entries = createExtensionCatalogBrowseEntries({
       availableExtensions: AVAILABLE_EXTENSIONS,
       catalogEntries: [helloWorldCatalogEntry],
-      extensionRegistry: registry,
+      extensionCatalog: createCatalogReader(registry),
       installedRecords: [],
     });
 
@@ -52,7 +52,7 @@ describe('extension-management-model', () => {
 
     const entries = createExtensionManagementEntries({
       availableExtensions: AVAILABLE_EXTENSIONS,
-      extensionRegistry: registry,
+      extensionCatalog: createCatalogReader(registry),
       installedRecords: [
         {
           category: 'theme',
@@ -81,3 +81,14 @@ describe('extension-management-model', () => {
     registry.dispose();
   });
 });
+
+function createCatalogReader(registry: ExtensionRegistry) {
+  return {
+    getDependencyDiagnostics: () => registry.getDependencyDiagnostics(),
+    getExtension: (id: string) => registry.getExtension(id),
+    getExtensions: () => registry.getExtensions(),
+    getFeatureInspections: () => registry.getFeatureInspections(),
+    getFeatureSpecs: () => registry.getFeatureSpecs(),
+    listCapabilityProviderIds: () => registry.capabilityRegistry.listProviderIds(),
+  };
+}

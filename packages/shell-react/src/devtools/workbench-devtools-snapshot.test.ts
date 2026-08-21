@@ -69,10 +69,26 @@ describe('collectWorkbenchDevtoolsSnapshot', () => {
     });
 
     const snapshot = collectWorkbenchDevtoolsSnapshot({
+      activities: extensionRegistry.activities,
       capturedAt: '2026-06-20T00:00:00.000Z',
+      commands: extensionRegistry.commands,
       editorService,
-      extensionRegistry,
+      extensionActivationState: {
+        getActiveExtensions: () => extensionRegistry.getActiveExtensions(),
+        onDidChangeActiveExtensions: () => ({ dispose() {} }),
+      },
+      extensionCatalog: {
+        getDependencyDiagnostics: () => extensionRegistry.getDependencyDiagnostics(),
+        getExtension: (id) => extensionRegistry.getExtension(id),
+        getExtensions: () => extensionRegistry.getExtensions(),
+        getFeatureInspections: () => extensionRegistry.getFeatureInspections(),
+        getFeatureSpecs: () => extensionRegistry.getFeatureSpecs(),
+        listCapabilityProviderIds: () => extensionRegistry.capabilityRegistry.listProviderIds(),
+      },
+      keybindings: extensionRegistry.keybindings,
       layoutService,
+      menus: extensionRegistry.menus,
+      views: extensionRegistry.views,
       workspaceHostPort,
     });
 

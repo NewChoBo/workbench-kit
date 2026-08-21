@@ -8,14 +8,31 @@ import { useWorkbench } from '../shell/provider.js';
 import type { WorkbenchWorkspaceHostPort as WorkspaceHostPort } from '@workbench-kit/workspace';
 
 export function useWorkbenchDevtoolsSnapshot(): WorkbenchDevtoolsSnapshot {
-  const { editorService, extensionRegistry, layoutService, workspaceHostPort } = useWorkbench();
+  const {
+    activities,
+    commands,
+    editorService,
+    extensionActivationState,
+    extensionCatalog,
+    keybindings,
+    layoutService,
+    menus,
+    views,
+    workspaceHostPort,
+  } = useWorkbench();
 
   const store = useMemo(() => {
     const collectSnapshot = () =>
       collectWorkbenchDevtoolsSnapshot({
+        activities,
+        commands,
         editorService,
-        extensionRegistry,
+        extensionActivationState,
+        extensionCatalog,
+        keybindings,
         layoutService,
+        menus,
+        views,
         workspaceHostPort,
       });
     let snapshot = collectSnapshot();
@@ -35,31 +52,28 @@ export function useWorkbenchDevtoolsSnapshot(): WorkbenchDevtoolsSnapshot {
           editorService.onDidChangeEditors(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.commands.onDidChangeCommands(() => {
+          commands.onDidChangeCommands(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.menus.onDidRegisterMenuItem(() => {
+          menus.onDidRegisterMenuItem(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.keybindings.onDidRegisterKeybinding(() => {
+          keybindings.onDidRegisterKeybinding(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.views.onDidRegisterView(() => {
+          views.onDidRegisterView(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.views.onDidRegisterViewContainer(() => {
+          views.onDidRegisterViewContainer(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.views.onDidRegisterViewProvider(() => {
+          views.onDidRegisterViewProvider(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.activities.onDidRegisterActivity(() => {
+          activities.onDidRegisterActivity(() => {
             notifyChange(onStoreChange);
           }),
-          extensionRegistry.onDidActivateExtension(() => {
-            notifyChange(onStoreChange);
-          }),
-          extensionRegistry.onDidDeactivateExtension(() => {
+          extensionActivationState.onDidChangeActiveExtensions(() => {
             notifyChange(onStoreChange);
           }),
         ];
@@ -78,7 +92,18 @@ export function useWorkbenchDevtoolsSnapshot(): WorkbenchDevtoolsSnapshot {
         };
       },
     };
-  }, [editorService, extensionRegistry, layoutService, workspaceHostPort]);
+  }, [
+    activities,
+    commands,
+    editorService,
+    extensionActivationState,
+    extensionCatalog,
+    keybindings,
+    layoutService,
+    menus,
+    views,
+    workspaceHostPort,
+  ]);
 
   return useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
 }

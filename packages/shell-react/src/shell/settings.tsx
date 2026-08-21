@@ -18,13 +18,15 @@ import {
 } from '@workbench-kit/react/workbench/settings';
 import {
   applyThemeTokenOverrides,
-  type ExtensionRegistry,
+  type ConfigurationRegistry,
+  type LocalizationRegistry,
   type PreferenceService,
+  type ThemeRegistry,
 } from '@workbench-kit/workbench-core';
 import type { PreferenceScope } from '@workbench-kit/workbench-config';
 
 import { isRecord } from '../is-record.js';
-import { useWorkbench } from './provider.js';
+import { useWorkbench, type WorkbenchExtensionCatalogReader } from './provider.js';
 import { WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
 
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
@@ -60,8 +62,15 @@ export interface WorkbenchSettingsCategoryInput extends WorkbenchAppearanceSetti
   preferenceService: PreferenceService;
 }
 
+export interface WorkbenchSettingsContributionAccess {
+  readonly configurations: ConfigurationRegistry;
+  readonly extensionCatalog: WorkbenchExtensionCatalogReader;
+  readonly localizations: LocalizationRegistry;
+  readonly themes: ThemeRegistry;
+}
+
 export function createSettingsCategories(
-  extensionRegistry: ExtensionRegistry,
+  contributions: WorkbenchSettingsContributionAccess,
   {
     activeScope,
     darkPreset,
@@ -78,9 +87,9 @@ export function createSettingsCategories(
     themeOptions,
   }: WorkbenchSettingsCategoryInput,
 ): WorkbenchSettingsCategory[] {
-  const configurations = extensionRegistry.configurations.getConfigurations();
-  const mergedThemeOptions = mergeThemeOptions(themeOptions, extensionRegistry.themes.getThemes());
-  const localeOptions = buildLocaleOptions(extensionRegistry.localizations.getLocalizations());
+  const configurations = contributions.configurations.getConfigurations();
+  const mergedThemeOptions = mergeThemeOptions(themeOptions, contributions.themes.getThemes());
+  const localeOptions = buildLocaleOptions(contributions.localizations.getLocalizations());
   const appearanceCategory = createAppearanceSettingsCategory({
     darkPreset,
     lightPreset,
@@ -115,7 +124,7 @@ export function createSettingsCategories(
   }
 
   const contributedCategories = configurations.map(({ extensionId, configuration }) => {
-    const extension = extensionRegistry.getExtension(extensionId);
+    const extension = contributions.extensionCatalog.getExtension(extensionId);
     const displayName = extension?.manifest.displayName ?? titleFromExtensionId(extensionId);
     const properties = Object.entries(configuration.properties ?? {});
 
@@ -263,29 +272,29 @@ function AppearanceSettingsSection({
   localeOptions: readonly WorkbenchLocaleOption[];
   themeOptions: readonly WorkbenchThemeOption[];
 }) {
-  const { extensionRegistry } = useWorkbench();
+  const { themes } = useWorkbench();
   const containerRef = useRef<HTMLDivElement>(null);
   const previousThemeOverridesRef = useRef<Readonly<Record<string, string>> | undefined>(undefined);
   const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
   const lightPresetOptions = useMemo<readonly WorkbenchThemePresetOption[]>(
     () => [
       ...LIGHT_THEME_PRESET_OPTIONS,
-      ...extensionRegistry.themes
+      ...themes
         .getThemes()
         .filter((contributedTheme) => contributedTheme.mode === 'light')
         .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
     ],
-    [extensionRegistry.themes],
+    [themes],
   );
   const darkPresetOptions = useMemo<readonly WorkbenchThemePresetOption[]>(
     () => [
       ...DARK_THEME_PRESET_OPTIONS,
-      ...extensionRegistry.themes
+      ...themes
         .getThemes()
         .filter((contributedTheme) => contributedTheme.mode === 'dark')
         .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
     ],
-    [extensionRegistry.themes],
+    [themes],
   );
   const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
   const selectedThemeId = selectedTheme?.id ?? '';
@@ -333,9 +342,7 @@ function AppearanceSettingsSection({
       activeThemeId = selectedThemeId;
     }
 
-    const contributedTheme = activeThemeId
-      ? extensionRegistry.themes.getTheme(activeThemeId)
-      : undefined;
+    const contributedTheme = activeThemeId ? themes.getTheme(activeThemeId) : undefined;
 
     // The actual workbench root (e.g. `.ide-root`) re-declares `data-theme-preset` locally,
     // which shadows inheritance from `documentElement` for everything rendered inside it.
@@ -357,7 +364,7 @@ function AppearanceSettingsSection({
     }
     previousThemeOverridesRef.current = contributedTheme?.tokenOverrides;
   }, [
-    extensionRegistry.themes,
+    themes,
     selectedColorSchemeId,
     selectedDarkPreset.id,
     selectedLightPreset.id,

@@ -51,6 +51,23 @@ registry can use `registry-command-descriptors` without importing Provider
 context into that leaf bundle. The root barrel remains the discovery surface,
 not the default runtime import graph.
 
+### Focused extension context migration
+
+`WorkbenchContextValue` no longer exposes the aggregate `ExtensionRegistry`.
+Consumers that read Provider context use the focused `commands`, `menus`,
+`extensionActivation`, `extensionActivationState`, `extensionCatalog`, and
+`settingsCapabilityPublisher` fields instead. The focused contract types remain
+available from the package root for external TypeScript consumers.
+
+Hosts that explicitly own an `ExtensionRegistry` can continue passing that
+instance to `useExtensionRegistryCommandDescriptors(registry, ...)`; this
+host-composition hook is separate from Provider context and remains supported.
+
+`WorkbenchShell` command hosts receive a focused `openSettings(categoryId?)`
+control in their `onRunCommand` context. Use that host-composition seam for
+commands that open a specific settings category without reading an aggregate
+registry or capability map.
+
 Use `host-shell` when the product owns sidebar, editor, panel, and overlay content.
 It keeps Kit layout, Activity Bar ordering, resize persistence, and status routing
 without loading the full Settings/Profile/Help assembly. Use `shell` for the

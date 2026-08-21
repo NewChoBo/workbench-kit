@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useReducer, useState } from 'react';
-import type { ExtensionCommandFeatureSpec, ExtensionRegistry } from '@workbench-kit/workbench-core';
+import type { ExtensionCommandFeatureSpec } from '@workbench-kit/workbench-core';
 import {
   buildCommandManagementGroups,
   countCommandManagementEntries,
@@ -8,14 +8,15 @@ import {
 import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
 
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
-import { useWorkbench } from '../shell/provider.js';
+import { useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
 import {
   collectExtensionCommandFeaturesById,
   resolveShellCommandActivities,
 } from '../workbench/command-palette.js';
 
 export function useCommandManagementModel() {
-  const { contextKeyService, executeCommand, extensionRegistry } = useWorkbench();
+  const workbench = useWorkbench();
+  const { commands, contextKeyService, executeCommand } = workbench;
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const contextKeySnapshot = useMemo(
     () => contextKeyService.createSnapshot(),
@@ -25,18 +26,18 @@ export function useCommandManagementModel() {
   const [refreshToken, refreshRegistry] = useReducer((count: number) => count + 1, 0);
 
   useEffect(() => {
-    const commandDisposable = extensionRegistry.commands.onDidChangeCommands(() => {
+    const commandDisposable = commands.onDidChangeCommands(() => {
       refreshRegistry();
     });
 
     return () => {
       commandDisposable.dispose();
     };
-  }, [extensionRegistry]);
+  }, [commands]);
 
   const groups = useMemo(
-    () => buildCommandManagementModelGroups(extensionRegistry, refreshToken, contextKeySnapshot),
-    [contextKeySnapshot, extensionRegistry, refreshToken],
+    () => buildCommandManagementModelGroups(workbench, refreshToken, contextKeySnapshot),
+    [contextKeySnapshot, refreshToken, workbench],
   );
 
   const totalCount = countCommandManagementEntries(groups);
@@ -75,12 +76,12 @@ export function useCommandManagementModel() {
 }
 
 export function buildCommandManagementModelGroups(
-  extensionRegistry: ExtensionRegistry,
+  access: CommandManagementAccess,
   _refreshToken = 0,
   contextKeys?: object | undefined,
 ) {
   const managedShellCommands = createWorkbenchShellCommands({
-    activities: resolveShellCommandActivities(extensionRegistry),
+    activities: resolveShellCommandActivities(access),
     includeSettings: true,
     includeSidebarToggle: true,
   });
@@ -89,26 +90,25 @@ export function buildCommandManagementModelGroups(
     contextKeys === undefined
       ? managedShellCommands
       : createWorkbenchShellCommands({
-          activities: resolveShellCommandActivities(extensionRegistry, contextKeys),
+          activities: resolveShellCommandActivities(access, contextKeys),
           includeSettings: true,
           includeSidebarToggle: true,
         });
-  const commandFeaturesById = collectExtensionCommandFeaturesById(extensionRegistry);
+  const commandFeaturesById = collectExtensionCommandFeaturesById(
+    access.extensionCatalog.getFeatureSpecs(),
+  );
 
   return buildCommandManagementGroups({
     extensionCommands: collectExtensionCommandEntries(
-      extensionRegistry,
+      access,
       managedShellCommandIds,
       commandFeaturesById,
     ),
-    keybindingsByCommandId: collectKeybindingsByCommandId(extensionRegistry),
-    menuSurfacesByCommandId: collectMenuSurfacesByCommandId(extensionRegistry),
+    keybindingsByCommandId: collectKeybindingsByCommandId(access),
+    menuSurfacesByCommandId: collectMenuSurfacesByCommandId(access),
     shellCommands: shellCommands.map((command) => ({
       category: command.category ?? 'Workbench',
-      handler:
-        extensionRegistry.commands.getCommand(command.id)?.handler ??
-        command.handler ??
-        command.run,
+      handler: access.commands.getCommand(command.id)?.handler ?? command.handler ?? command.run,
       id: command.id,
       label: typeof command.label === 'string' ? command.label : (command.title ?? command.id),
     })),
@@ -116,7 +116,7 @@ export function buildCommandManagementModelGroups(
 }
 
 function collectExtensionCommandEntries(
-  extensionRegistry: ExtensionRegistry,
+  access: CommandManagementAccess,
   skippedCommandIds: ReadonlySet<string>,
   commandFeaturesById: ReadonlyMap<string, ExtensionCommandFeatureSpec>,
 ) {
@@ -131,11 +131,11 @@ function collectExtensionCommandEntries(
   }> = [];
   const seen = new Set<string>();
 
-  for (const feature of extensionRegistry.getFeatureSpecs()) {
+  for (const feature of access.extensionCatalog.getFeatureSpecs()) {
     const extensionLabel = feature.displayName;
 
     for (const contribution of feature.commands) {
-      const command = extensionRegistry.commands.getCommand(contribution.id);
+      const command = access.commands.getCommand(contribution.id);
       if (!command || seen.has(contribution.id) || skippedCommandIds.has(contribution.id)) {
         continue;
       }
@@ -153,7 +153,7 @@ function collectExtensionCommandEntries(
     }
   }
 
-  for (const command of extensionRegistry.commands.getCommands()) {
+  for (const command of access.commands.getCommands()) {
     if (seen.has(command.id) || skippedCommandIds.has(command.id)) {
       continue;
     }
@@ -172,10 +172,10 @@ function collectExtensionCommandEntries(
   return entries;
 }
 
-function collectKeybindingsByCommandId(extensionRegistry: ExtensionRegistry) {
+function collectKeybindingsByCommandId(access: CommandManagementAccess) {
   const keybindingsByCommandId: Record<string, string> = {};
 
-  for (const keybinding of extensionRegistry.keybindings.getKeybindings()) {
+  for (const keybinding of access.keybindings.getKeybindings()) {
     if (!keybindingsByCommandId[keybinding.command]) {
       keybindingsByCommandId[keybinding.command] = keybinding.key;
     }
@@ -184,10 +184,10 @@ function collectKeybindingsByCommandId(extensionRegistry: ExtensionRegistry) {
   return keybindingsByCommandId;
 }
 
-function collectMenuSurfacesByCommandId(extensionRegistry: ExtensionRegistry) {
+function collectMenuSurfacesByCommandId(access: CommandManagementAccess) {
   const menuSurfacesByCommandId = new Map<string, Set<string>>();
 
-  for (const menuItem of extensionRegistry.menus.getMenuItems()) {
+  for (const menuItem of access.menus.getMenuItems()) {
     if (!menuItem.menu || !menuItem.command) {
       continue;
     }
@@ -204,3 +204,8 @@ function collectMenuSurfacesByCommandId(extensionRegistry: ExtensionRegistry) {
     ]),
   );
 }
+
+type CommandManagementAccess = Pick<
+  WorkbenchContextValue,
+  'activities' | 'commands' | 'extensionCatalog' | 'keybindings' | 'menus' | 'views'
+>;

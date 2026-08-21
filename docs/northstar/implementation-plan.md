@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1`.
+- **Current integration baseline:** `origin/develop@1da7194dff1bbb62af6b5355f7016d3fde41ea27`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -49,9 +49,9 @@ Recursive design has identified extension/kernel responsibility separation as a 
 ```text
 WB-NS-001A extension runtime responsibility decomposition [DONE]
         ↓
-WB-NS-001B1 shell dependency inventory + focused-service contract [READY_FOR_IMPLEMENTATION; dependency: WB-NS-001A DONE]
+WB-NS-001B1 shell dependency inventory + focused-service contract [DONE; dependency: WB-NS-001A DONE]
         ↓
-WB-NS-001B2 shell dependency narrowing migration [BLOCKED; dependency: WB-NS-001B1 projection integration]
+WB-NS-001B2 shell dependency narrowing migration [IMPLEMENTING; dependency: WB-NS-001B1 DONE]
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
@@ -128,7 +128,7 @@ Re-verified on 2026-08-21 at exact `origin/develop@462b1b4d9653a3ac07732e1cfc61c
 - `packages/workbench-core/src/index.ts`, `packages/workbench-core/package.json` and the extension SDK retain their prior public boundary; runtime extensions still receive the restricted `ExtensionContext` rather than host composition internals.
 - Focused role tests and facade regressions cover contribution-before-activation behavior, dependency/cycle semantics, activation coalescing, teardown failure, re-registration isolation, stale epoch completion, exhaustive disposal and listener failure isolation.
 - Exact candidate `f0184ab208e91efbc11fa9114be4e543cf99084e` passed producer-distinct source review and repository CI before integration as PR #301 at `14ebec740a82beb1e6b53c153f967cb0dea68baf`.
-- `packages/shell-react/src/shell/provider.tsx` still privately creates the compatibility registry and publicly exposes it through `WorkbenchContextValue`; narrowing that shell reach-through remains owned by `WB-NS-001B1/B2` rather than reopening Slice A.
+- Integrated `develop` still has `packages/shell-react/src/shell/provider.tsx` privately create the compatibility registry and publicly expose it through `WorkbenchContextValue`; the active `WB-NS-001B2` candidate removes only that public aggregate reach-through while retaining Provider ownership, rather than reopening Slice A.
 
 This evidence closes `WB-NS-001A`. Reopen or revise the packet only if a later change breaks the public facade/SDK compatibility boundary, bypasses the teardown barrier, or lets stale epoch cleanup, diagnostics or lifecycle events affect a newer activation.
 
@@ -327,11 +327,11 @@ Falsifier for the deferred isolation decision: a committed product requirement n
 
 ## WB-NS-001B1 - Shell dependency inventory and focused-service contract
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependency:** `WB-NS-001A` (`DONE`)
-- **Current design evidence:** GitHub Issue #303, revalidated at exact `origin/develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1`
+- **Current design evidence:** GitHub Issue #303 and the integrated promotion projection at `origin/develop@77a61ee01ffb8823584f04d26fca558a71f1cf86`
 
 ### Goal
 
@@ -352,9 +352,13 @@ Produce the bounded shell dependency map and focused-service contract required b
 
 The producer-distinct design review passed and current-source revalidation found the reviewed contract unchanged. Demote this packet if an implementation base changes aggregate ownership, adds an unmapped production ingress, cannot preserve activate/deactivate observation and settings-capability ownership, or requires a broader public runtime/service-locator API.
 
+The reviewed projection is integrated and Issue #306 owns the bounded source
+migration. This packet is complete as a design and dependency-inventory gate;
+implementation evidence belongs to `WB-NS-001B2`.
+
 ## WB-NS-001B2 - Shell dependency narrowing migration
 
-- **Status:** `BLOCKED`
+- **Status:** `IMPLEMENTING`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependency:** integrated `WB-NS-001B1` promotion projection
@@ -365,7 +369,15 @@ Replace proven aggregate-registry reach-through incrementally while retaining ea
 
 ### Implementation gate
 
-Issue #303 defines the ordered migration, compatibility seams, ownership rules and focused verification matrix. Do not begin source migration from this projection-only packet. After the `WB-NS-001B1` promotion is integrated, revalidate then-current `develop`, establish a separate implementation owner and preserve the aggregate facade until every internal context consumer has moved.
+Issue #303 defines the ordered migration, compatibility seams, ownership rules and focused verification matrix. After the `WB-NS-001B1` promotion was integrated, the implementation owner revalidated current `develop` and preserved the aggregate facade until every internal context consumer had moved.
+
+Issue #306 is the canonical implementation owner. The migration was revalidated
+against `origin/develop@1da7194dff1bbb62af6b5355f7016d3fde41ea27` and is active
+on `codex/wb-ns-001b2-focused-services`. The frozen candidate must document the
+prototype API migration, prove package-root focused-type imports, and directly
+cover activate/deactivate observation, settings publication ownership/collision,
+and unchanged capability-provider ID projection before this packet can move to
+`SOURCE_REVIEW_REQUIRED`.
 
 ## WB-NS-010 — Graph document/controller/renderer/runtime separation
 

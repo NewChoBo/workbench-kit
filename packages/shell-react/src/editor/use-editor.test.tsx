@@ -35,11 +35,11 @@ function EditorHookProbe() {
 
 function LateHostProbe({ onReady }: { onReady: (label: string) => void }) {
   const host = useEditorHost();
-  const { extensionRegistry } = useWorkbench();
+  const { extensionActivation } = useWorkbench();
 
   useEffect(() => {
-    void extensionRegistry.activateByEvent(`onView:${LATE_VIEW_ID}`);
-  }, [extensionRegistry]);
+    void extensionActivation.activateView(LATE_VIEW_ID);
+  }, [extensionActivation]);
 
   useEffect(() => {
     onReady(host ? 'host-ready' : 'host-missing');
