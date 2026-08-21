@@ -6,6 +6,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   isExtensionInstallTrusted,
   recordExtensionInstallTrust,
+  type WorkbenchExtensionDescription,
   type WorkbenchStorageAdapter,
 } from '@workbench-kit/workbench-core';
 import { resolveExtensionInstallOptions } from '@workbench-kit/react/workbench/management';
@@ -350,14 +351,11 @@ describe('useExtensionManagementModel', () => {
       currentModel?.uninstallInstalledEntry(installedEntry!);
     });
 
-    await waitForModel(
-      () => !currentModel?.installedEntries.some((entry) => entry.id === installedRecord.id),
-    );
+    await waitForModel(() => currentModel?.pendingUninstallEntryId === installedRecord.id);
     expect(JSON.parse(installedStorage.getItem(storageKey) ?? 'null')).toEqual([]);
-    expect(currentModel?.pendingAction).toEqual({
-      entryId: installedRecord.id,
-      kind: 'uninstall',
-    });
+    expect(currentModel?.installedEntries).toContainEqual(installedEntry);
+    expect(currentModel?.pendingAction).toBeUndefined();
+    expect(currentModel?.pendingUninstallEntryId).toBe(installedRecord.id);
     expect(currentModel?.installTrustRecords).toEqual(trustRecords);
     expect(JSON.parse(trustStorage.getItem(trustStorageKey) ?? 'null')).toEqual(trustRecords);
     expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
@@ -470,6 +468,7 @@ describe('useExtensionManagementModel', () => {
       ]),
     );
     expect(currentModel?.pendingAction).toBeUndefined();
+    expect(currentModel?.pendingUninstallEntryId).toBeUndefined();
     expect(requestAnimationFrame).not.toHaveBeenCalled();
     expect(diagnostics).toHaveBeenCalledWith({
       code: 'write_failed',
@@ -484,7 +483,7 @@ describe('useExtensionManagementModel', () => {
     });
   });
 
-  it('treats missing records and bundled entries as deterministic uninstall no-ops', async () => {
+  it('overlays an action-time diagnostic when a stale eligible record is missing', async () => {
     const storageKey = 'workbench-kit/.workbench/installed-extensions/uninstall-no-op';
     const installedRecord = {
       category: 'editor',
@@ -544,22 +543,118 @@ describe('useExtensionManagementModel', () => {
 
     await act(async () => {
       currentModel?.uninstallInstalledEntry(staleEligibleEntry!);
-      currentModel?.uninstallInstalledEntry({
-        category: 'utility',
-        displayName: 'Active Without Record',
-        enabled: true,
-        id: 'workbench-kit.test.active-without-record',
-        source: 'installed',
-      });
       currentModel?.uninstallInstalledEntry(bundledEntry!);
     });
 
     expect(writer).not.toHaveBeenCalled();
     expect(JSON.parse(values.get(storageKey) ?? 'null')).toEqual([]);
-    expect(currentModel?.installedEntries).toEqual(
-      expect.arrayContaining([expect.objectContaining({ id: installedRecord.id })]),
+    const correctedEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === installedRecord.id,
     );
+    expect(correctedEntry).not.toHaveProperty('canUninstall');
+    expect(correctedEntry?.diagnostics).toContainEqual({
+      message:
+        'Cannot uninstall because these persisted targets are no longer installed: workbench-kit.samples.json-preview.',
+      severity: 'error',
+    });
     expect(currentModel?.pendingAction).toBeUndefined();
+    expect(currentModel?.pendingUninstallEntryId).toBeUndefined();
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('corrects stale eligibility with action-time dependent diagnostics and no mutation', async () => {
+    const storageKey = 'workbench-kit/.workbench/installed-extensions/uninstall-drift';
+    const target = SAMPLE_WORKBENCH_EXTENSIONS.find(
+      (extension) => extension.manifest.id === 'workbench-kit.samples.json-preview',
+    )!;
+    const dependent: WorkbenchExtensionDescription = {
+      manifest: {
+        ...target.manifest,
+        activationEvents: [],
+        displayName: 'Late Persisted Dependent',
+        extensionDependencies: [target.manifest.id],
+        id: 'workbench-kit.test.late-persisted-dependent',
+        name: 'late-persisted-dependent',
+      },
+    };
+    const targetRecord = {
+      category: 'editor',
+      enabled: true,
+      id: target.manifest.id,
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: target.manifest.id,
+    };
+    const dependentRecord = {
+      category: 'utility',
+      enabled: false,
+      id: dependent.manifest.id,
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: dependent.manifest.id,
+    };
+    const values = new Map([[storageKey, JSON.stringify([targetRecord])]]);
+    const writer = vi.fn((key: string, value: string) => values.set(key, value));
+    const storage: WorkbenchStorageAdapter = {
+      getItem: (key) => values.get(key) ?? null,
+      setItem: writer,
+    };
+    const requestAnimationFrame = vi.mocked(window.requestAnimationFrame);
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            availableExtensions={[...BUILTIN_WORKBENCH_EXTENSIONS, target, dependent]}
+            extensionsConfig={{ enabled: [], recommendations: [] }}
+            installedExtensionsStorage={storage}
+            installedExtensionsStorageKey={storageKey}
+            workspaceHostPort={authCapabilityHostPort}
+          >
+            <ExtensionManagementProbe
+              catalogUrl=""
+              onChange={(model) => {
+                currentModel = model;
+              }}
+            />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await waitForModel(
+      () =>
+        currentModel?.installedEntries.find((entry) => entry.id === target.manifest.id)
+          ?.canUninstall === true,
+    );
+    const staleEligibleEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === target.manifest.id,
+    );
+    values.set(storageKey, JSON.stringify([targetRecord, dependentRecord]));
+
+    await act(async () => {
+      currentModel?.uninstallInstalledEntry(staleEligibleEntry!);
+    });
+
+    const correctedEntry = currentModel?.installedEntries.find(
+      (entry) => entry.id === target.manifest.id,
+    );
+    expect(correctedEntry).not.toHaveProperty('canUninstall');
+    expect(correctedEntry?.diagnostics).toContainEqual({
+      message:
+        'Cannot uninstall because these installed extensions depend on it: workbench-kit.test.late-persisted-dependent.',
+      severity: 'error',
+    });
+    expect(writer).not.toHaveBeenCalled();
+    expect(currentModel?.installedEntries.some((entry) => entry.id === dependent.manifest.id)).toBe(
+      false,
+    );
+    expect(currentModel?.pendingUninstallEntryId).toBeUndefined();
     expect(requestAnimationFrame).not.toHaveBeenCalled();
 
     await act(async () => {

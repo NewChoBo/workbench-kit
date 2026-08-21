@@ -123,6 +123,31 @@ describe('ExtensionManagementPanel', () => {
     expect(markup.match(/>Uninstall<\/button>/g)).toHaveLength(1);
   });
 
+  it('renders uninstall pending through the separate sidebar state', () => {
+    const markup = renderToStaticMarkup(
+      createElement(ExtensionManagementSidebar, {
+        browseEntries: [],
+        defaultTab: 'installed',
+        installedEntries: [
+          {
+            canUninstall: true,
+            category: 'editor',
+            displayName: 'JSON Preview',
+            enabled: true,
+            id: 'workbench-kit.samples.json-preview',
+            source: 'installed',
+          },
+        ],
+        onToggleEnabled: () => undefined,
+        onUninstall: () => undefined,
+        pendingUninstallEntryId: 'workbench-kit.samples.json-preview',
+      }),
+    );
+
+    expect(markup).toContain('>Reloading…</button>');
+    expect(markup.match(/disabled=""/g)).toHaveLength(2);
+  });
+
   it('renders extension sidebar action buttons outside row buttons', () => {
     const markup = renderToStaticMarkup(
       createElement(ExtensionManagementSidebar, {

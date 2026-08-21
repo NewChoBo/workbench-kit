@@ -32,6 +32,7 @@ export function BuiltinExtensionsView({
     installedEntries,
     installTrustRecords,
     pendingAction,
+    pendingUninstallEntryId,
     rememberInstallTrust,
     toggleInstalledEntry,
     uninstallInstalledEntry,
@@ -56,6 +57,7 @@ export function BuiltinExtensionsView({
       isInstallTrusted={isInstallTrusted}
       missingExtensionIds={missingExtensionIds}
       pendingAction={pendingAction}
+      pendingUninstallEntryId={pendingUninstallEntryId}
       onInstall={installCatalogEntry}
       onRememberInstallTrust={rememberInstallTrust}
       onToggleEnabled={toggleInstalledEntry}

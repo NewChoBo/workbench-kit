@@ -44,11 +44,12 @@ export interface ExtensionManagementSidebarProps extends ExtensionManagementPane
   emptyMarketplaceLabel?: string | undefined;
   missingExtensionIds?: readonly string[] | undefined;
   pendingAction?: ExtensionManagementPendingAction | undefined;
+  pendingUninstallEntryId?: string | undefined;
 }
 
 export interface ExtensionManagementPendingAction {
   readonly entryId: string;
-  readonly kind: 'install' | 'toggle' | 'uninstall';
+  readonly kind: 'install' | 'toggle';
 }
 
 export function ExtensionManagementSidebar({
@@ -67,6 +68,7 @@ export function ExtensionManagementSidebar({
   onToggleEnabled,
   onUninstall,
   pendingAction,
+  pendingUninstallEntryId,
 }: ExtensionManagementSidebarProps) {
   const [activeTab, setActiveTab] = useState<'installed' | 'marketplace'>(defaultTab);
   const [query, setQuery] = useState('');
@@ -170,6 +172,7 @@ export function ExtensionManagementSidebar({
           emptyLabel={emptyInstalledLabel}
           entries={filteredInstalled}
           pendingAction={pendingAction}
+          pendingUninstallEntryId={pendingUninstallEntryId}
           onToggleEnabled={onToggleEnabled}
           onUninstall={onUninstall}
         />
@@ -184,12 +187,14 @@ function InstalledExtensionList({
   onToggleEnabled,
   onUninstall,
   pendingAction,
+  pendingUninstallEntryId,
 }: {
   emptyLabel: string;
   entries: readonly ExtensionManagementEntry[];
   onToggleEnabled?: ExtensionManagementPanelProps['onToggleEnabled'];
   onUninstall?: ExtensionManagementPanelProps['onUninstall'];
   pendingAction?: ExtensionManagementPendingAction | undefined;
+  pendingUninstallEntryId?: string | undefined;
 }) {
   if (entries.length === 0) {
     return (
@@ -204,8 +209,7 @@ function InstalledExtensionList({
       {entries.map((entry) => {
         const isPendingToggle =
           pendingAction?.kind === 'toggle' && pendingAction.entryId === entry.id;
-        const isPendingUninstall =
-          pendingAction?.kind === 'uninstall' && pendingAction.entryId === entry.id;
+        const isPendingUninstall = pendingUninstallEntryId === entry.id;
         const isPending = isPendingToggle || isPendingUninstall;
         const errorDiagnostics = (entry.diagnostics ?? []).filter(
           (diagnostic) => diagnostic.severity === 'error',

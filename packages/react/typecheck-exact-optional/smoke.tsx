@@ -16,6 +16,7 @@ import { Modal } from './.tmp-types/modal/Modal';
 import { WorkbenchShell } from './.tmp-types/workbench/shell/WorkbenchShell';
 import { ChatPanel } from './.tmp-types/workbench/chat/ChatPanel';
 import { ExtensionManagementPanel } from './.tmp-types/workbench/management/ExtensionManagementPanel';
+import { ExtensionManagementSidebar } from './.tmp-types/workbench/management/ExtensionManagementSidebar';
 import type { ExtensionManagementEntry } from './.tmp-types/workbench/management/types';
 
 export function ExactOptionalPrimitivesSmoke(): ReactElement {
@@ -73,11 +74,33 @@ const legacyExtensionManagementEntry: ExtensionManagementEntry = {
   source: 'installed',
 };
 
-export function ExactOptionalExtensionManagementSmoke(): ReactElement {
+function ForwardPendingUninstallEntry({
+  pendingUninstallEntryId,
+}: {
+  pendingUninstallEntryId: string | undefined;
+}): ReactElement {
   return (
-    <ExtensionManagementPanel
+    <ExtensionManagementSidebar
       browseEntries={[]}
       installedEntries={[legacyExtensionManagementEntry]}
+      pendingUninstallEntryId={pendingUninstallEntryId}
     />
+  );
+}
+
+export function ExactOptionalExtensionManagementSmoke(): ReactElement {
+  return (
+    <>
+      <ExtensionManagementPanel
+        browseEntries={[]}
+        installedEntries={[legacyExtensionManagementEntry]}
+      />
+      <ExtensionManagementSidebar
+        browseEntries={[]}
+        installedEntries={[legacyExtensionManagementEntry]}
+        pendingUninstallEntryId={legacyExtensionManagementEntry.id}
+      />
+      <ForwardPendingUninstallEntry pendingUninstallEntryId={undefined} />
+    </>
   );
 }

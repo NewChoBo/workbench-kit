@@ -26,10 +26,14 @@ import {
   createExtensionCatalogBrowseEntries,
   createExtensionInstallPlanningContext,
   createExtensionManagementEntries,
+  type ExtensionUninstallActionConstraint,
 } from './management-model.js';
 import { useWorkbench, type WorkbenchStorageAdapter } from '../shell/provider.js';
 import { useExtensionEnablementController } from './extension-enablement-context.js';
-import type { ExtensionEnablementTransitionResult } from './extension-enablement-controller.js';
+import type {
+  ExtensionEnablementTransitionResult,
+  ExtensionUninstallActionResult,
+} from './extension-enablement-controller.js';
 import { useWorkbenchPersistenceDiagnosticHandler } from '../shell/persistence-diagnostic-context.js';
 import {
   reportPersistenceWriteResult,
@@ -69,6 +73,12 @@ export function useExtensionManagementModel({
   const [catalogError, setCatalogError] = useState<string | undefined>();
   const [pendingAction, setPendingAction] = useState<
     ExtensionManagementPendingAction | undefined
+  >();
+  const [pendingUninstallEntry, setPendingUninstallEntry] = useState<
+    ExtensionManagementEntry | undefined
+  >();
+  const [uninstallActionConstraint, setUninstallActionConstraint] = useState<
+    ExtensionUninstallActionConstraint | undefined
   >();
   const [lastTransition, setLastTransition] = useState<
     ExtensionEnablementTransitionResult | undefined
@@ -130,14 +140,29 @@ export function useExtensionManagementModel({
   }, [catalogTrustPolicy, catalogUrl]);
 
   const installedEntries = useMemo<readonly ExtensionManagementEntry[]>(() => {
-    return createExtensionManagementEntries({
+    const projectedEntries = createExtensionManagementEntries({
       availableExtensions,
       extensionCatalog,
       installedRecords,
       transition: lastTransition,
-      uninstallableExtensionIds: new Set(installedRecords.map((record) => record.id)),
+      uninstallActionConstraint,
     });
-  }, [availableExtensions, extensionCatalog, installedRecords, lastTransition]);
+    if (!pendingUninstallEntry) {
+      return projectedEntries;
+    }
+
+    return [
+      ...projectedEntries.filter((entry) => entry.id !== pendingUninstallEntry.id),
+      pendingUninstallEntry,
+    ].sort((left, right) => left.displayName.localeCompare(right.displayName));
+  }, [
+    availableExtensions,
+    extensionCatalog,
+    installedRecords,
+    lastTransition,
+    pendingUninstallEntry,
+    uninstallActionConstraint,
+  ]);
 
   const handleTransition = useCallback(
     (
@@ -223,13 +248,26 @@ export function useExtensionManagementModel({
       }
 
       const result = extensionEnablement.uninstallInstalledExtension(entry.id);
-      if (!result) {
-        setPendingAction(undefined);
+      if (result.kind === 'blocked' || result.kind === 'ineligibleTarget') {
+        setUninstallActionConstraint(toExtensionUninstallActionConstraint(result));
         return;
       }
-      handleTransition(result, 'uninstall');
+
+      setUninstallActionConstraint(undefined);
+      setLastTransition(result);
+      if (result.kind !== 'reloadRequired') {
+        setPendingUninstallEntry(undefined);
+        return;
+      }
+
+      setPendingUninstallEntry(entry);
+      if (typeof window !== 'undefined') {
+        window.requestAnimationFrame(() => {
+          window.location.reload();
+        });
+      }
     },
-    [extensionEnablement, handleTransition],
+    [extensionEnablement],
   );
 
   const rememberInstallTrust = useCallback(
@@ -260,8 +298,35 @@ export function useExtensionManagementModel({
     installedEntries,
     installTrustRecords,
     pendingAction,
+    pendingUninstallEntryId: pendingUninstallEntry?.id,
     rememberInstallTrust,
     toggleInstalledEntry,
     uninstallInstalledEntry,
+  };
+}
+
+function toExtensionUninstallActionConstraint(
+  result: Extract<
+    ExtensionUninstallActionResult,
+    { readonly kind: 'blocked' | 'ineligibleTarget' }
+  >,
+): ExtensionUninstallActionConstraint {
+  if (result.kind === 'blocked') {
+    return {
+      eligibility: {
+        dependentExtensionIds: result.dependentExtensionIds,
+        kind: result.kind,
+        unresolvedExtensionIds: result.unresolvedExtensionIds,
+      },
+      extensionId: result.extensionId,
+    };
+  }
+  return {
+    eligibility: {
+      diagnosticExtensionIds: result.diagnosticExtensionIds,
+      kind: result.kind,
+      reason: result.reason,
+    },
+    extensionId: result.extensionId,
   };
 }

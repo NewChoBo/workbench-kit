@@ -430,4 +430,211 @@ describe('ExtensionEnablementController', () => {
     });
     expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
   });
+
+  it('rechecks a stale uninstall action and blocks a newly persisted dependent', () => {
+    const dependent: WorkbenchExtensionDescription = {
+      manifest: {
+        ...themeExtension.manifest,
+        contributes: undefined,
+        displayName: 'Persisted Dependent',
+        extensionDependencies: [themeExtension.manifest.id],
+        id: 'workbench-kit.test.persisted-dependent',
+        name: 'persisted-dependent',
+      },
+    };
+    const targetRecord = installedRecord(true);
+    const dependentRecord: InstalledExtensionRecord = {
+      category: 'utility',
+      enabled: false,
+      id: dependent.manifest.id,
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: dependent.manifest.id,
+    };
+    const persistence = createMemoryStorage([targetRecord]);
+    const registry = new ExtensionRegistry();
+    const registrationLifetime = registry.registerExtensions([themeExtension]);
+    const controller = new ExtensionEnablementController({
+      availableExtensions: [themeExtension, dependent],
+      initialEnabledExtensions: [themeExtension],
+      initialInstalledRecords: [targetRecord],
+      installedExtensionsStorage: persistence.storage,
+      installedExtensionsStorageKey: STORAGE_KEY,
+      integrityAcceptedExtensionIds: new Set([themeExtension.manifest.id, dependent.manifest.id]),
+      registrationLifetime,
+      registry,
+    });
+    persistence.values.set(STORAGE_KEY, JSON.stringify([targetRecord, dependentRecord]));
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toEqual({
+      dependentExtensionIds: [dependent.manifest.id],
+      extensionId: themeExtension.manifest.id,
+      kind: 'blocked',
+      unresolvedExtensionIds: [],
+    });
+    expect(persistence.setItem).not.toHaveBeenCalled();
+    expect(JSON.parse(persistence.values.get(STORAGE_KEY) ?? '[]')).toEqual([
+      targetRecord,
+      dependentRecord,
+    ]);
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([targetRecord]);
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+  });
+
+  it('fails closed on unresolved persisted manifest evidence', () => {
+    const targetRecord = installedRecord(true);
+    const unresolvedRecord: InstalledExtensionRecord = {
+      category: 'utility',
+      enabled: true,
+      id: 'workbench-kit.test.unresolved',
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: 'workbench-kit.test.unresolved',
+    };
+    const persistence = createMemoryStorage([targetRecord, unresolvedRecord]);
+    const registry = new ExtensionRegistry();
+    const registrationLifetime = registry.registerExtensions([themeExtension]);
+    const controller = new ExtensionEnablementController({
+      availableExtensions: [themeExtension],
+      initialEnabledExtensions: [themeExtension],
+      initialInstalledRecords: [targetRecord, unresolvedRecord],
+      installedExtensionsStorage: persistence.storage,
+      installedExtensionsStorageKey: STORAGE_KEY,
+      integrityAcceptedExtensionIds: new Set([themeExtension.manifest.id]),
+      registrationLifetime,
+      registry,
+    });
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toEqual({
+      dependentExtensionIds: [],
+      extensionId: themeExtension.manifest.id,
+      kind: 'blocked',
+      unresolvedExtensionIds: [unresolvedRecord.id],
+    });
+    expect(persistence.setItem).not.toHaveBeenCalled();
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([targetRecord, unresolvedRecord]);
+  });
+
+  it('returns the target ID when an action-time record is no longer installed', () => {
+    const { controller, persistence } = createHarness({ enabled: true });
+    persistence.values.set(STORAGE_KEY, '[]');
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toEqual({
+      diagnosticExtensionIds: [themeExtension.manifest.id],
+      extensionId: themeExtension.manifest.id,
+      kind: 'ineligibleTarget',
+      reason: 'notInstalled',
+    });
+    expect(persistence.setItem).not.toHaveBeenCalled();
+  });
+
+  it('commits a safe uninstall without tearing down the live registration', () => {
+    const { controller, persistence, registry } = createHarness({ enabled: true });
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toMatchObject({
+      enabled: false,
+      kind: 'reloadRequired',
+    });
+    expect(persistence.setItem).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(persistence.values.get(STORAGE_KEY) ?? 'null')).toEqual([]);
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([]);
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+  });
+
+  it('commits a safe uninstall from a catalog-only live description', () => {
+    const record = installedRecord(true);
+    const persistence = createMemoryStorage([record]);
+    const registry = new ExtensionRegistry();
+    const registrationLifetime = registry.registerExtensions([themeExtension]);
+    const controller = new ExtensionEnablementController({
+      availableExtensions: [],
+      initialEnabledExtensions: [themeExtension],
+      initialInstalledRecords: [record],
+      installedExtensionsStorage: persistence.storage,
+      installedExtensionsStorageKey: STORAGE_KEY,
+      integrityAcceptedExtensionIds: new Set(),
+      registrationLifetime,
+      registry,
+    });
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toMatchObject({
+      extensionId: themeExtension.manifest.id,
+      kind: 'reloadRequired',
+    });
+    expect(persistence.setItem).toHaveBeenCalledTimes(1);
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+  });
+
+  it('fails closed when available and current live descriptions conflict', () => {
+    const conflictingLive = {
+      ...themeExtension,
+      manifest: { ...themeExtension.manifest, displayName: 'Conflicting Live Theme' },
+    };
+    const record = installedRecord(true);
+    const persistence = createMemoryStorage([record]);
+    const registry = new ExtensionRegistry();
+    const registrationLifetime = registry.registerExtensions([conflictingLive]);
+    const controller = new ExtensionEnablementController({
+      availableExtensions: [themeExtension],
+      initialEnabledExtensions: [conflictingLive],
+      initialInstalledRecords: [record],
+      installedExtensionsStorage: persistence.storage,
+      installedExtensionsStorageKey: STORAGE_KEY,
+      integrityAcceptedExtensionIds: new Set([themeExtension.manifest.id]),
+      registrationLifetime,
+      registry,
+    });
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toEqual({
+      dependentExtensionIds: [],
+      extensionId: themeExtension.manifest.id,
+      kind: 'blocked',
+      unresolvedExtensionIds: [themeExtension.manifest.id],
+    });
+    expect(persistence.setItem).not.toHaveBeenCalled();
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+  });
+
+  it('uses a current catalog-only dependent for the action-time decision', () => {
+    const dependent: WorkbenchExtensionDescription = {
+      manifest: {
+        ...themeExtension.manifest,
+        contributes: undefined,
+        displayName: 'Live Catalog Dependent',
+        extensionDependencies: [themeExtension.manifest.id],
+        id: 'workbench-kit.test.live-dependent',
+        name: 'live-dependent',
+      },
+    };
+    const targetRecord = installedRecord(true);
+    const dependentRecord: InstalledExtensionRecord = {
+      category: 'utility',
+      enabled: true,
+      id: dependent.manifest.id,
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: dependent.manifest.id,
+    };
+    const persistence = createMemoryStorage([targetRecord, dependentRecord]);
+    const registry = new ExtensionRegistry();
+    const registrationLifetime = registry.registerExtensions([themeExtension]);
+    const dependentRegistration = registry.registerExtension(dependent);
+    const controller = new ExtensionEnablementController({
+      availableExtensions: [themeExtension],
+      initialEnabledExtensions: [themeExtension],
+      initialInstalledRecords: [targetRecord, dependentRecord],
+      installedExtensionsStorage: persistence.storage,
+      installedExtensionsStorageKey: STORAGE_KEY,
+      integrityAcceptedExtensionIds: new Set([themeExtension.manifest.id]),
+      registrationLifetime,
+      registry,
+    });
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toEqual({
+      dependentExtensionIds: [dependent.manifest.id],
+      extensionId: themeExtension.manifest.id,
+      kind: 'blocked',
+      unresolvedExtensionIds: [],
+    });
+    expect(persistence.setItem).not.toHaveBeenCalled();
+    dependentRegistration.dispose();
+  });
 });

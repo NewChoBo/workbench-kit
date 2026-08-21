@@ -53,6 +53,8 @@ WB-NS-001B1 shell dependency inventory + focused-service contract [DONE; depende
         ↓
 WB-NS-001B2 shell dependency narrowing migration [IMPLEMENTING; dependency: WB-NS-001B1 DONE]
 
+WB-NS-040A extension uninstall compatibility + dependency safety [SOURCE_REVIEW_REQUIRED; independent bounded correction]
+
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
         ├─ WB-NS-010 graph document/controller split
@@ -378,6 +380,180 @@ prototype API migration, prove package-root focused-type imports, and directly
 cover activate/deactivate observation, settings publication ownership/collision,
 and unchanged capability-provider ID projection before this packet can move to
 `SOURCE_REVIEW_REQUIRED`.
+
+## WB-NS-040A — Extension uninstall compatibility and dependency safety
+
+- **Status:** `SOURCE_REVIEW_REQUIRED`
+- **Target:** `WB-NS-040` compatibility/trust boundary and
+  [`public-api-governance.md`](../conventions/public-api-governance.md)
+- **Ownership:** `GENERIC_KIT`
+- **Dependencies:** Issue #229 uninstall v1 and Issue #232 Provider-owned extension
+  enablement are integrated
+- **Current source evidence:** `origin/develop@de0d32182963f646c6eab8fc3c087d0f21539cd6`
+- **Source candidate:** `1f0045c0f0ebb00480db06554465c46c4446f594`
+- **Candidate validation:** repair-focused shell 51 tests, focused React 10 tests,
+  explicit-undefined exact-optional forwarding, `check:commit-safety`, public exports,
+  packed consumer,
+  `validate:static`, `validate:fast` (416 files / 1,974 tests), Storybook build,
+  and required Chromium (12 suites / 57 interactions) passed
+- **Public API impact:** restore the established
+  `ExtensionManagementPendingAction.kind` union to `install | toggle`; carry uninstall
+  pending state through one additive optional sidebar prop
+
+### Goal
+
+Preserve the accepted persisted-record uninstall lifecycle while restoring public
+pending-action source compatibility and preventing uninstall from leaving any
+persisted extension with a missing hard dependency.
+
+### Current gap
+
+At the current source baseline, `ExtensionManagementPendingAction.kind` includes
+`uninstall`, so an existing exhaustive consumer of the prior `install | toggle`
+union no longer compiles. The Provider-owned `ExtensionEnablementController`
+re-reads installed records before uninstall persistence, but does not evaluate
+reverse `extensionDependencies`. The management projection consequently exposes
+uninstall for every non-builtin persisted record, including dependency targets.
+
+### Target ownership and contracts
+
+1. `packages/react` remains presentation-only. Its exported
+   `ExtensionManagementPendingAction.kind` is exactly `install | toggle`.
+   `ExtensionManagementSidebarProps` may add
+   `pendingUninstallEntryId?: string | undefined` to render and disable the existing uninstall
+   action without widening the legacy discriminated union.
+2. `packages/shell-react` owns one private, pure uninstall-eligibility evaluator.
+   It consumes persisted records plus the canonical available/catalog extension
+   descriptions and returns either eligible or a deterministic blocked result with
+   dependent or unresolved extension IDs. It does not create another dependency
+   graph, registry, or persisted store.
+3. The management model uses that evaluator to omit `canUninstall` and append an
+   error through the existing `ExtensionManagementEntry.diagnostics` surface when
+   a target is blocked.
+4. `ExtensionEnablementController` remains the sole owner of the action-time
+   persisted re-read, write, installed projection publication, and reload-required
+   transition introduced by Issues #229 and #232.
+5. `extensionDependencies` remains the only hard-dependency contract. Optional
+   capabilities and extension-pack membership are not promoted to uninstall blockers
+   by this packet.
+
+### State and action flow
+
+```text
+installed snapshot + canonical descriptions
+  -> evaluate every persisted target against every other persisted record
+  -> known hard dependent, enabled or disabled: blocked + dependent IDs
+  -> unresolved remaining manifest: blocked + unresolved IDs
+  -> otherwise: canUninstall
+
+uninstall action
+  -> re-read persisted records
+  -> target missing or builtin: deterministic no-op
+  -> re-run the same evaluator against the fresh records
+  -> blocked: no write, projection publication, transition, pending state or reload
+  -> eligible: persist records without the target
+  -> persistence failure: retain prior projection, publish failure, no uninstall pending or reload
+  -> committed: publish records, set separate uninstall pending ID, request reload
+```
+
+The persisted `enabled` flag does not weaken the reverse-dependency rule. A
+disabled dependent still blocks removal because the current enable path does not
+restore a missing dependency. Unknown or ambiguous manifest evidence fails closed.
+No cascade, implicit dependent disable, or durable broken-extension state is added.
+
+### Ordered implementation
+
+1. Add the private pure evaluator and focused enabled, disabled, unresolved, safe,
+   builtin, and missing-target tests.
+2. Use its snapshot result in management entry eligibility and diagnostics without
+   changing the public entry schema.
+3. Re-run it inside `uninstallInstalledExtension` after the persisted re-read and
+   before any write or local publication.
+4. Restore the public pending-action union and route committed uninstall reload
+   feedback through the separate optional sidebar prop and private hook state.
+5. Add public-consumer exhaustive-union and exact-optional regressions, plus focused
+   panel/sidebar behavior coverage.
+6. Run the complete validation matrix and freeze the exact source candidate for a
+   producer-distinct review.
+
+### Scope and non-scope
+
+In scope: the React management public compatibility correction, shell management
+projection, Provider-owned uninstall transaction, diagnostics, and their tests.
+
+Out of scope: cascading uninstall, dependency auto-install, automatic re-enable
+repair, a new public dependency service, a second dependency graph/store, general
+pending-action abstraction, live extension teardown, trust-record deletion,
+release/tag work, and unrelated extension-management redesign.
+
+### Compatibility, lifecycle, and performance
+
+- Install and toggle pending behavior stays unchanged.
+- Safe uninstall retains persisted-record re-read/no-op behavior, remembered install
+  trust, failure rollback, committed reload, and Issue #232 live-teardown separation.
+- A stale direct action is safe because the reverse dependency decision is repeated
+  against the action-time persisted snapshot.
+- Canonical description merging deterministically de-duplicates and sorts the
+  available/catalog descriptions, compares manifest integrity, and fails closed on
+  conflicting IDs. After that separate merge, the snapshot evaluator precomputes
+  reusable per-target eligibility and diagnostic ID arrays once. Dependency graph
+  construction remains `O(installed records + declared hard-dependency edges)`;
+  unresolved IDs and each target's dependent IDs are sorted once during precompute for
+  stable diagnostics. Row lookup is `O(1)` and performs no per-row filtering or sorting.
+  The evaluator performs no I/O; only the controller performs the existing storage
+  read/write.
+- The packet is `PURE_WEB` and backendless. Browser coverage is required only for
+  the existing sidebar pending/disabled interaction, not for Electron or native
+  behavior.
+
+### Focused verification
+
+- persisted enabled `A -> B`: `B` is unavailable for uninstall with `A` diagnosed;
+- persisted disabled `A -> B`: same blocked result;
+- unresolved remaining persisted manifest: fail closed with no mutation;
+- stale/direct invocation: fresh re-check, no write/projection/pending/reload;
+- unrelated safe uninstall: one committed write, projection update, separate pending
+  ID, reload request, and trust retention;
+- public exhaustive `install | toggle` consumer compiles;
+- sidebar shows and disables committed uninstall pending state through the additive
+  prop while install/toggle behavior is unchanged.
+
+Repository gates:
+
+```powershell
+pnpm check:commit-safety
+pnpm --filter @workbench-kit/react typecheck
+pnpm --filter @workbench-kit/shell-react typecheck
+pnpm typecheck:react-exact-optional
+pnpm check:public-exports
+pnpm check:packed-consumer
+pnpm validate:static
+pnpm validate:fast
+pnpm build:storybook
+pnpm test:storybook-play:required
+```
+
+### Acceptance / Done criteria
+
+- the legacy pending-action union is source-compatible and uninstall pending remains
+  visible without entering that union;
+- every known persisted hard dependent blocks target uninstall regardless of enabled
+  state, and unresolved evidence fails closed;
+- projection and action-time decisions use the same evaluator and diagnostics;
+- blocked paths perform no persistence, local publication, transition, pending state,
+  reload, cascade, or trust deletion;
+- safe and failed uninstall behavior from Issues #229 and #232 remains intact;
+- focused, public-consumer, static, full fast, and required browser gates pass on one
+  exact candidate.
+
+### Readiness and source-review gate
+
+Source implementation must not begin until a producer-distinct reviewer confirms
+this exact packet closes ownership, public API, state flow, dependency policy,
+non-scope, and validation decisions. Reject a source candidate that widens the
+legacy union, checks only enabled dependents, trusts unresolved manifests, duplicates
+dependency state, mutates any blocked path, cascades removal, or weakens the existing
+trust/reload/live-lifecycle invariants.
 
 ## WB-NS-010 — Graph document/controller/renderer/runtime separation
 

@@ -9,6 +9,11 @@ import {
 } from '@workbench-kit/workbench-core';
 
 import type { ThemeSelectionProtectionSnapshot } from './theme-selection-protection.js';
+import { createCanonicalExtensionDescriptionSnapshot } from './canonical-extension-descriptions.js';
+import {
+  createExtensionUninstallEvaluation,
+  type ExtensionUninstallEligibility,
+} from './uninstall-eligibility.js';
 
 interface DisposableLike {
   dispose(): void;
@@ -39,6 +44,13 @@ export type ExtensionEnablementTransitionResult =
       readonly message: string;
     };
 
+export type ExtensionUninstallActionResult =
+  | ExtensionEnablementTransitionResult
+  | ({ readonly extensionId: string } & Exclude<
+      ExtensionUninstallEligibility,
+      { readonly kind: 'eligible' }
+    >);
+
 export interface ExtensionEnablementControllerOptions {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
   readonly initialEnabledExtensions: readonly WorkbenchExtensionDescription[];
@@ -53,6 +65,7 @@ export interface ExtensionEnablementControllerOptions {
 
 /** Provider-owned live installed/enabled state for the narrow theme lifecycle. */
 export class ExtensionEnablementController implements DisposableLike {
+  private readonly availableExtensions: readonly WorkbenchExtensionDescription[];
   private readonly availableExtensionsById: ReadonlyMap<string, WorkbenchExtensionDescription>;
   private readonly integrityAcceptedExtensionIds: ReadonlySet<string>;
   private readonly listeners = new Set<() => void>();
@@ -77,6 +90,7 @@ export class ExtensionEnablementController implements DisposableLike {
     registrationLifetime,
     registry,
   }: ExtensionEnablementControllerOptions) {
+    this.availableExtensions = [...availableExtensions];
     this.availableExtensionsById = new Map(
       availableExtensions.map((description) => [description.manifest.id, description]),
     );
@@ -129,18 +143,33 @@ export class ExtensionEnablementController implements DisposableLike {
     return this.reloadRequired(extensionId, this.isRecordEnabled(extensionId));
   }
 
-  uninstallInstalledExtension(
-    extensionId: string,
-  ): ExtensionEnablementTransitionResult | undefined {
+  uninstallInstalledExtension(extensionId: string): ExtensionUninstallActionResult {
     const persisted = loadInstalledExtensionsResult(this.storageKey, this.storage, {
       onDiagnostic: this.onPersistenceDiagnostic,
     });
     if (persisted.diagnostic) {
       return this.failed(extensionId, this.isRecordEnabled(extensionId));
     }
+    const canonicalDescriptions = createCanonicalExtensionDescriptionSnapshot({
+      availableExtensions: this.availableExtensions,
+      liveExtensions: this.registry.getExtensions(),
+    });
+    const eligibility = createExtensionUninstallEvaluation({
+      canonicalDescriptions,
+      installedRecords: persisted.value,
+    }).getEligibility(extensionId);
+    if (eligibility.kind !== 'eligible') {
+      return { ...eligibility, extensionId };
+    }
+
     const target = persisted.value.find((record) => record.id === extensionId);
-    if (!target || extensionId.startsWith('workbench-kit.builtin.')) {
-      return undefined;
+    if (!target) {
+      return {
+        diagnosticExtensionIds: [extensionId],
+        extensionId,
+        kind: 'ineligibleTarget',
+        reason: 'notInstalled',
+      };
     }
 
     const next = persisted.value.filter((record) => record.id !== extensionId);

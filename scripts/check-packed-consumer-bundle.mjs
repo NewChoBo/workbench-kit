@@ -259,6 +259,7 @@ import type {
   ExtensionManagementPanelProps,
   ExtensionManagementTransition,
 } from '@workbench-kit/react';
+import type { ExtensionManagementPendingAction } from '@workbench-kit/react/workbench/management';
 import {
   ExtensionRegistry,
   type ExtensionRegistrationStore,
@@ -313,6 +314,23 @@ const extensionManagementTransition: ExtensionManagementTransition = {
   kind: 'applied',
   message: 'Applied without a reload.',
 };
+function consumeLegacyPendingAction(action: ExtensionManagementPendingAction): string {
+  const kind = action.kind;
+  switch (kind) {
+    case 'install':
+      return \`install:\${action.entryId}\`;
+    case 'toggle':
+      return \`toggle:\${action.entryId}\`;
+    default: {
+      const exhaustive: never = kind;
+      return exhaustive;
+    }
+  }
+}
+const legacyPendingAction = consumeLegacyPendingAction({
+  entryId: legacyExtensionManagementEntry.id,
+  kind: 'toggle',
+});
 const packedExtensionRegistry = new ExtensionRegistry();
 const packedExtensionRegistrations: ExtensionRegistrationStore =
   packedExtensionRegistry.registerExtensions([]);
@@ -338,6 +356,7 @@ const packedThemeChange = null as unknown as ThemeRegistryChangeEvent;
   focusedExtensionContextContracts,
   focusedShellCommandContracts,
   legacyExtensionManagementPanelProps,
+  legacyPendingAction,
   extensionManagementTransition,
   packedExtensionRegistrations,
   packedThemeChange,
