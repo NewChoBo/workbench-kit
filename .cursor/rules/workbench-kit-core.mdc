@@ -72,14 +72,14 @@ Never commit or hardcode secrets anywhere in the tree:
   × `implement|discuss|clarify`). Ambiguous → reverse questions +
   `status:needs-human`, do not guess. Implement only after quality bar +
   `run agent` or `status:queued`. `security` → no public PoC.
-- Hourly automation must reconcile one automation-owned `status:in-progress` or
-  `status:pr-open` Issue/PR before consuming `status:queued` or considering idle
-  work. Pending Checks/review remain `status:pr-open`; reserve
-  `status:needs-human` for actual failure, authority/policy blocker, or required
-  human judgment. Only when no owned active/queued work remains may an hourly
-  run open one small idle-refactor PR (no API breaks), with the documented
-  `source=idle-refactor` marker. Weekly (Mon): one structural/architecture PR —
-  **never auto-merge**; human review. See
+- Hourly automation has two budgets: a bounded control/lifecycle reconciliation
+  sweep across several owned `status:in-progress` / `status:pr-open` items, and
+  at most one source-changing logical work item. Waiting Checks/review/dependency
+  states do not consume the source-change slot. Prefer an `ACTION_REQUIRED`
+  active item, otherwise one eligible `status:queued` item. Only when neither
+  exists may the run open one small idle-refactor PR (no API breaks), with the
+  documented `source=idle-refactor` marker. Weekly (Mon): one
+  structural/architecture PR — **never auto-merge**; human review. See
   `issueops-autohandler-instructions.md`.
 - Automation may close only its own Issue after required linked PR
   review/integration and the Issue acceptance criteria are verified. Never

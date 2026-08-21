@@ -67,6 +67,31 @@ Every recurring Workbench automation must inspect current open Issues and PRs re
 
 Issue closure does not replace required independent review, release/publication gates, post-adoption effect validation, or upward failure reporting.
 
+## Local self-recovery and higher-control escalation
+
+Recurring Workbench roles resolve ordinary encountered problems locally before asking for higher coordination.
+
+Local work includes reversible implementation/design ambiguity, one-off validation failures, stale branch/PR cleanup, duplicate reconciliation, passive waiting with an accountable owner, and other problems that current Workbench authority can safely close.
+
+Create or reuse a repository-local escalation Issue only when bounded local recovery cannot safely close one of these classes:
+
+- repeated failure with the same blocker fingerprint;
+- missing authority/capability required for the next safe action;
+- cross-project dependency or ownership conflict;
+- unresolved policy contradiction across effective guidance;
+- serious regression, security, data-loss, or public-release risk requiring higher coordination.
+
+Use this public-safe shape:
+
+```text
+[SUPERAGENT] <short problem>
+<!-- overmind:escalation v=1 -->
+```
+
+The Issue records only the exact public-safe facts needed for higher control: current control/candidate identity, category/severity, blocked work, observed evidence, bounded recovery already attempted, impact/dependencies, requested higher-level action, and the next safe local action. Never persist private chain-of-thought or private consumer evidence in this public repository.
+
+Reuse one escalation Issue for the same blocker fingerprint. Passive `WAITING_CI`, `WAITING_REVIEW`, or `WAITING_DEPENDENCY` with an accountable active owner is not by itself an escalation. When the higher-level action is verified complete, reconcile/close the escalation Issue normally.
+
 ## Canary / migration rule
 
 This entrypoint does **not** authorize deleting existing public guidance, changing automation cadence/population, or changing release/main authority.
