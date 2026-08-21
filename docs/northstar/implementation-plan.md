@@ -390,10 +390,10 @@ and unchanged capability-provider ID projection before this packet can move to
 - **Dependencies:** Issue #229 uninstall v1 and Issue #232 Provider-owned extension
   enablement are integrated
 - **Current source evidence:** `origin/develop@de0d32182963f646c6eab8fc3c087d0f21539cd6`
-- **Source candidate:** `80f261002f8d9c9bd1a3b0acbeab1833ffb0c73a`
-- **Candidate validation:** focused shell 40 tests, focused React 10 tests,
+- **Source candidate:** `b8ac9dff50814b1054894ac6e72be15afe318d26`
+- **Candidate validation:** repair-focused shell 51 tests, focused React 10 tests,
   `check:commit-safety`, public exports, exact optional, packed consumer,
-  `validate:static`, `validate:fast` (414 files / 1,963 tests), Storybook build,
+  `validate:static`, `validate:fast` (416 files / 1,974 tests), Storybook build,
   and required Chromium (12 suites / 57 interactions) passed
 - **Public API impact:** restore the established
   `ExtensionManagementPendingAction.kind` union to `install | toggle`; carry uninstall
@@ -492,8 +492,12 @@ release/tag work, and unrelated extension-management redesign.
   trust, failure rollback, committed reload, and Issue #232 live-teardown separation.
 - A stale direct action is safe because the reverse dependency decision is repeated
   against the action-time persisted snapshot.
-- The snapshot evaluator indexes canonical descriptions and builds its blocked-target
-  map in `O(installed records + declared hard-dependency edges)`. It performs no I/O;
+- Canonical description merging deterministically de-duplicates and sorts the
+  available/catalog descriptions, compares manifest integrity, and fails closed on
+  conflicting IDs. After that separate merge, the snapshot evaluator precomputes
+  reusable per-target eligibility and diagnostic ID arrays once in
+  `O(installed records + declared hard-dependency edges)`; row lookup is `O(1)` and
+  performs no per-row unresolved filtering or sorting. The evaluator performs no I/O;
   only the controller performs the existing storage read/write.
 - The packet is `PURE_WEB` and backendless. Browser coverage is required only for
   the existing sidebar pending/disabled interaction, not for Electron or native
