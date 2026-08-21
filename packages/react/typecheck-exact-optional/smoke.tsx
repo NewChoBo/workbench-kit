@@ -74,6 +74,20 @@ const legacyExtensionManagementEntry: ExtensionManagementEntry = {
   source: 'installed',
 };
 
+function ForwardPendingUninstallEntry({
+  pendingUninstallEntryId,
+}: {
+  pendingUninstallEntryId: string | undefined;
+}): ReactElement {
+  return (
+    <ExtensionManagementSidebar
+      browseEntries={[]}
+      installedEntries={[legacyExtensionManagementEntry]}
+      pendingUninstallEntryId={pendingUninstallEntryId}
+    />
+  );
+}
+
 export function ExactOptionalExtensionManagementSmoke(): ReactElement {
   return (
     <>
@@ -86,6 +100,7 @@ export function ExactOptionalExtensionManagementSmoke(): ReactElement {
         installedEntries={[legacyExtensionManagementEntry]}
         pendingUninstallEntryId={legacyExtensionManagementEntry.id}
       />
+      <ForwardPendingUninstallEntry pendingUninstallEntryId={undefined} />
     </>
   );
 }

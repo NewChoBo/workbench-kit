@@ -13,14 +13,23 @@ describe('createExtensionUninstallEvaluation', () => {
   it.each([true, false])(
     'blocks a target with a persisted hard dependent when enabled=%s',
     (enabled) => {
-      const dependent = extensionDescription('workbench-kit.test.dependent', [target.manifest.id]);
+      const laterDependent = extensionDescription('workbench-kit.test.z-dependent', [
+        target.manifest.id,
+      ]);
+      const earlierDependent = extensionDescription('workbench-kit.test.a-dependent', [
+        target.manifest.id,
+      ]);
       const evaluation = createExtensionUninstallEvaluation({
-        canonicalDescriptions: canonical([target, dependent]),
-        installedRecords: [installedRecord(target, true), installedRecord(dependent, enabled)],
+        canonicalDescriptions: canonical([target, laterDependent, earlierDependent]),
+        installedRecords: [
+          installedRecord(target, true),
+          installedRecord(laterDependent, enabled),
+          installedRecord(earlierDependent, enabled),
+        ],
       });
 
       expect(evaluation.getEligibility(target.manifest.id)).toEqual({
-        dependentExtensionIds: [dependent.manifest.id],
+        dependentExtensionIds: [earlierDependent.manifest.id, laterDependent.manifest.id],
         kind: 'blocked',
         unresolvedExtensionIds: [],
       });
@@ -42,7 +51,7 @@ describe('createExtensionUninstallEvaluation', () => {
     expect(evaluation.getEligibility(target.manifest.id)).toEqual({
       dependentExtensionIds: [],
       kind: 'blocked',
-      unresolvedExtensionIds: ['workbench-kit.test.missing', 'workbench-kit.test.ambiguous'],
+      unresolvedExtensionIds: ['workbench-kit.test.ambiguous', 'workbench-kit.test.missing'],
     });
   });
 

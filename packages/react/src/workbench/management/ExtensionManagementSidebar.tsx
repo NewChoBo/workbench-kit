@@ -44,7 +44,7 @@ export interface ExtensionManagementSidebarProps extends ExtensionManagementPane
   emptyMarketplaceLabel?: string | undefined;
   missingExtensionIds?: readonly string[] | undefined;
   pendingAction?: ExtensionManagementPendingAction | undefined;
-  pendingUninstallEntryId?: string;
+  pendingUninstallEntryId?: string | undefined;
 }
 
 export interface ExtensionManagementPendingAction {
@@ -194,7 +194,7 @@ function InstalledExtensionList({
   onToggleEnabled?: ExtensionManagementPanelProps['onToggleEnabled'];
   onUninstall?: ExtensionManagementPanelProps['onUninstall'];
   pendingAction?: ExtensionManagementPendingAction | undefined;
-  pendingUninstallEntryId?: string;
+  pendingUninstallEntryId?: string | undefined;
 }) {
   if (entries.length === 0) {
     return (

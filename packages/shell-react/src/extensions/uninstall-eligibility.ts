@@ -60,7 +60,9 @@ export function createExtensionUninstallEvaluation({
     }
   }
 
-  const unresolvedExtensionIds = [...unresolvedExtensionIdSet];
+  const unresolvedExtensionIds = [...unresolvedExtensionIdSet].sort((left, right) =>
+    left.localeCompare(right),
+  );
   const eligibilityByExtensionId = new Map<string, ExtensionUninstallEligibility>();
   for (const extensionId of installedRecordsById.keys()) {
     if (extensionId.startsWith(BUILTIN_EXTENSION_ID_PREFIX)) {
@@ -72,7 +74,9 @@ export function createExtensionUninstallEvaluation({
       continue;
     }
 
-    const dependentExtensionIds = [...(dependentsByTargetId.get(extensionId) ?? [])];
+    const dependentExtensionIds = [...(dependentsByTargetId.get(extensionId) ?? [])].sort(
+      (left, right) => left.localeCompare(right),
+    );
     eligibilityByExtensionId.set(
       extensionId,
       dependentExtensionIds.length === 0 && unresolvedExtensionIds.length === 0
