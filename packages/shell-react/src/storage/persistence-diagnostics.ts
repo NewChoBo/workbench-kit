@@ -49,7 +49,7 @@ export function reportPersistenceWriteResult(
   }
 }
 
-function reportPersistenceDiagnostic(
+export function reportPersistenceDiagnostic(
   diagnostic: WorkbenchPersistenceDiagnostic,
   handlerRef: WorkbenchPersistenceDiagnosticHandlerRef,
 ): void {

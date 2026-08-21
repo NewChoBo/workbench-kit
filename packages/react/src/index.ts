@@ -19,6 +19,10 @@ export type {
   WorkbenchIconResolver,
 } from './icons';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands/commands';
+export type {
+  ExtensionManagementEntry,
+  ExtensionManagementPanelProps,
+} from './workbench/management';
 export {
   WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,

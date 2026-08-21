@@ -255,6 +255,10 @@ import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standal
 import { resolveWorkbenchTheme } from '@workbench-kit/react/workbench/theme';
 import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themePresets';
 import type {
+  ExtensionManagementEntry,
+  ExtensionManagementPanelProps,
+} from '@workbench-kit/react';
+import type {
   WorkbenchContextValue,
   WorkbenchExtensionActivationAccess,
   WorkbenchExtensionActivationStateReader,
@@ -288,6 +292,17 @@ type FocusedShellCommandContracts = {
   runContext: WorkbenchShellCommandRunContext;
 };
 const focusedShellCommandContracts = null as unknown as FocusedShellCommandContracts;
+const legacyExtensionManagementEntry: ExtensionManagementEntry = {
+  category: 'utility',
+  displayName: 'Legacy Extension',
+  enabled: true,
+  id: 'workbench-kit.consumer.legacy-extension',
+  source: 'installed',
+};
+const legacyExtensionManagementPanelProps: ExtensionManagementPanelProps = {
+  browseEntries: [],
+  installedEntries: [legacyExtensionManagementEntry],
+};
 
 (globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
   .__workbenchKitPackedConsumer = Object.freeze({
@@ -308,6 +323,7 @@ const focusedShellCommandContracts = null as unknown as FocusedShellCommandContr
   extensionRegistryRemoved,
   focusedExtensionContextContracts,
   focusedShellCommandContracts,
+  legacyExtensionManagementPanelProps,
   commands: createWorkbenchShellCommands({ activities: [] }),
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),

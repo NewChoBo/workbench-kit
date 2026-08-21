@@ -15,6 +15,8 @@ import { TextInput } from './.tmp-types/primitives/text-input/TextInput';
 import { Modal } from './.tmp-types/modal/Modal';
 import { WorkbenchShell } from './.tmp-types/workbench/shell/WorkbenchShell';
 import { ChatPanel } from './.tmp-types/workbench/chat/ChatPanel';
+import { ExtensionManagementPanel } from './.tmp-types/workbench/management/ExtensionManagementPanel';
+import type { ExtensionManagementEntry } from './.tmp-types/workbench/management/types';
 
 export function ExactOptionalPrimitivesSmoke(): ReactElement {
   return (
@@ -59,6 +61,23 @@ export function ExactOptionalChatSmoke(): ReactElement {
       onValueChange={() => undefined}
       onSubmit={() => undefined}
       messages={[]}
+    />
+  );
+}
+
+const legacyExtensionManagementEntry: ExtensionManagementEntry = {
+  category: 'utility',
+  displayName: 'Legacy Extension',
+  enabled: true,
+  id: 'workbench-kit.consumer.legacy-extension',
+  source: 'installed',
+};
+
+export function ExactOptionalExtensionManagementSmoke(): ReactElement {
+  return (
+    <ExtensionManagementPanel
+      browseEntries={[]}
+      installedEntries={[legacyExtensionManagementEntry]}
     />
   );
 }

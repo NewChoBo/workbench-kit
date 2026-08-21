@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { ExtensionRegistry, type ExtensionCatalogEntry } from '@workbench-kit/workbench-core';
+import {
+  ExtensionRegistry,
+  type ExtensionCatalogEntry,
+  type WorkbenchExtensionDescription,
+} from '@workbench-kit/workbench-core';
 
 import {
   createExtensionCatalogBrowseEntries,
@@ -71,6 +75,7 @@ describe('extension-management-model', () => {
           source: 'bundled',
         }),
         expect.objectContaining({
+          canUninstall: true,
           enabled: true,
           id: 'workbench-kit.samples.theme-alt',
           source: 'installed',
@@ -80,7 +85,70 @@ describe('extension-management-model', () => {
 
     registry.dispose();
   });
+
+  it('derives uninstall eligibility only from persisted installed records', () => {
+    const registry = new ExtensionRegistry();
+    const activeOnlyExtension = createActiveOnlyExtension();
+    registry.registerExtension(activeOnlyExtension);
+
+    const withoutRecord = createExtensionManagementEntries({
+      availableExtensions: AVAILABLE_EXTENSIONS,
+      extensionCatalog: createCatalogReader(registry),
+      installedRecords: [],
+    });
+    const activeOnlyWithoutRecord = withoutRecord.find(
+      (entry) => entry.id === activeOnlyExtension.manifest.id,
+    );
+
+    expect(activeOnlyWithoutRecord).toMatchObject({
+      id: activeOnlyExtension.manifest.id,
+      source: 'installed',
+    });
+    expect(activeOnlyWithoutRecord).not.toHaveProperty('canUninstall');
+    expect(
+      withoutRecord.find((entry) => entry.id === 'workbench-kit.builtin.explorer'),
+    ).not.toHaveProperty('canUninstall');
+
+    const withRecord = createExtensionManagementEntries({
+      availableExtensions: AVAILABLE_EXTENSIONS,
+      extensionCatalog: createCatalogReader(registry),
+      installedRecords: [
+        {
+          category: 'utility',
+          enabled: true,
+          id: activeOnlyExtension.manifest.id,
+          installedAt: '2026-08-22T00:00:00.000Z',
+          manifestUrl: activeOnlyExtension.manifest.id,
+        },
+      ],
+    });
+
+    expect(withRecord.find((entry) => entry.id === activeOnlyExtension.manifest.id)).toMatchObject({
+      canUninstall: true,
+      source: 'installed',
+    });
+
+    registry.dispose();
+  });
 });
+
+function createActiveOnlyExtension(): WorkbenchExtensionDescription {
+  return {
+    manifest: {
+      activationEvents: ['onStartup'],
+      displayName: 'Active Only Extension',
+      engines: {
+        extensionApi: '^0.0.0',
+        workbench: '^0.0.0',
+      },
+      id: 'workbench-kit.test.active-only',
+      name: 'active-only',
+      publisher: 'workbench-kit',
+      schemaVersion: 1,
+      version: '0.0.0',
+    },
+  };
+}
 
 function createCatalogReader(registry: ExtensionRegistry) {
   return {

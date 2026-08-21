@@ -55,6 +55,7 @@ export function WorkbenchExtensionManagementSettings({
     installTrustRecords,
     rememberInstallTrust,
     toggleInstalledEntry,
+    uninstallInstalledEntry,
   } = useExtensionManagementModel({ catalogTrustPolicy, catalogUrl });
 
   const isInstallTrusted = useCallback(
@@ -77,6 +78,7 @@ export function WorkbenchExtensionManagementSettings({
       onInstall={installCatalogEntry}
       onRememberInstallTrust={rememberInstallTrust}
       onToggleEnabled={toggleInstalledEntry}
+      onUninstall={uninstallInstalledEntry}
     />
   );
 }

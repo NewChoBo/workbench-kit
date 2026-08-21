@@ -190,6 +190,30 @@ keyed by extension id + permissions rather than publisher):
 If the plan later requests additional permissions, the fingerprint changes and
 the user is prompted again.
 
+## Uninstall v1
+
+The shell management model derives uninstall eligibility from installed-record
+ownership. `ExtensionManagementEntry.canUninstall` is optional and defaults to
+false; it is true only for a non-built-in `source: 'installed'` entry with a
+matching persisted `InstalledExtensionRecord`. Legacy consumers that omit the
+field and `ExtensionManagementPanelProps.onUninstall` remain non-uninstallable.
+
+The action re-checks the installed record instead of trusting the projected UI
+flag. Missing records, bundled entries, and built-ins are deterministic no-ops.
+For an eligible entry the model removes only that record, persists the complete
+next list, and updates the local projection only after the write commits. Failed
+writes retain the previous projection, report the standard persistence
+diagnostic, and do not schedule reload.
+
+A committed uninstall uses the same full-page reload boundary as install and
+enable/disable. It does not unregister executable contributions live and does
+not revoke `ExtensionInstallTrustRecord` state; lifecycle teardown and explicit
+trust revocation remain separate operations.
+
+**UX review residual:** v1 follows the existing compact management action row.
+Confirmation behavior and dense-sidebar action placement remain a separate UX
+review; they do not change the persistence and eligibility contract above.
+
 ## Recommend ≠ enable
 
 `.workbench/extensions.json` `recommendations` must not be treated as an
