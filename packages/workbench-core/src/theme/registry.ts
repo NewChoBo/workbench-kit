@@ -7,6 +7,11 @@ export interface WorkbenchThemeContribution extends ThemeContribution {
   readonly extensionId: string;
 }
 
+export interface ThemeRegistryChangeEvent {
+  readonly kind: 'registered' | 'unregistered';
+  readonly theme: WorkbenchThemeContribution;
+}
+
 /**
  * Every token a light/dark preset defines (see `@workbench-kit/tokens/src/themes/**`).
  * Contributed theme `tokenOverrides` are applied as inline styles on the document root,
@@ -38,10 +43,17 @@ export const REQUIRED_THEME_TOKEN_KEYS = [
 ] as const;
 
 export class ThemeRegistry implements Disposable {
+  private readonly onDidChangeThemesEmitter = new Emitter<ThemeRegistryChangeEvent>();
   private readonly onDidRegisterThemeEmitter = new Emitter<WorkbenchThemeContribution>();
   private readonly themesById = new Map<string, WorkbenchThemeContribution>();
+  private revision = 0;
 
+  readonly onDidChangeThemes = this.onDidChangeThemesEmitter.event;
   readonly onDidRegisterTheme = this.onDidRegisterThemeEmitter.event;
+
+  getRevision(): number {
+    return this.revision;
+  }
 
   getTheme(themeId: string): WorkbenchThemeContribution | undefined {
     return this.themesById.get(themeId);
@@ -76,17 +88,27 @@ export class ThemeRegistry implements Disposable {
 
     this.themesById.set(theme.id, theme);
     this.onDidRegisterThemeEmitter.fire(theme);
+    this.revision += 1;
+    this.onDidChangeThemesEmitter.fire({ kind: 'registered', theme });
 
+    let disposed = false;
     return toDisposable(() => {
+      if (disposed) {
+        return;
+      }
+      disposed = true;
       const current = this.themesById.get(theme.id);
       if (current === theme) {
         this.themesById.delete(theme.id);
+        this.revision += 1;
+        this.onDidChangeThemesEmitter.fire({ kind: 'unregistered', theme });
       }
     });
   }
 
   dispose(): void {
     this.themesById.clear();
+    this.onDidChangeThemesEmitter.dispose();
     this.onDidRegisterThemeEmitter.dispose();
   }
 }

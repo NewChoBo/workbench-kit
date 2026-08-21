@@ -26,6 +26,7 @@ import type {
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
 } from './types.js';
 
 const BROWSE_CATEGORIES = ['all', 'feature', 'editor', 'theme', 'language'] as const;
@@ -103,8 +104,8 @@ export function ExtensionManagementSidebar({
       footer={
         <p className="workbench-extensions-sidebar__notice" role="note">
           <i aria-hidden className={cxCodicon('codicon-info')} />
-          Installing, toggling, or uninstalling extensions reloads the workbench to apply
-          contributions.
+          Eligible unselected theme packs apply immediately. Other extension changes reload the
+          workbench.
         </p>
       }
       footerPlacement="overlay"
@@ -269,6 +270,14 @@ function InstalledExtensionList({
                     {warningDiagnostics.length} warning{warningDiagnostics.length === 1 ? '' : 's'}
                   </Badge>
                 ) : null}
+                {entry.transition ? (
+                  <Badge
+                    title={entry.transition.message}
+                    variant={extensionTransitionBadgeVariant(entry.transition.kind)}
+                  >
+                    {extensionTransitionLabel(entry.transition.kind)}
+                  </Badge>
+                ) : null}
               </>
             }
             title={entry.displayName}
@@ -277,6 +286,22 @@ function InstalledExtensionList({
       })}
     </SideBarList>
   );
+}
+
+function extensionTransitionLabel(kind: ExtensionManagementTransition['kind']): string {
+  if (kind === 'reloadRequired') {
+    return 'Reload required';
+  }
+  return kind === 'failed' ? 'Failed' : 'Applied';
+}
+
+function extensionTransitionBadgeVariant(
+  kind: ExtensionManagementTransition['kind'],
+): 'accent' | 'danger' | 'muted' {
+  if (kind === 'failed') {
+    return 'danger';
+  }
+  return kind === 'applied' ? 'accent' : 'muted';
 }
 
 function MarketplaceExtensionList({

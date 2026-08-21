@@ -16,12 +16,15 @@ import type {
   ExtensionManagementDiagnosticSummary,
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
+  ExtensionManagementTransition,
 } from '@workbench-kit/react/workbench/management';
 
 export interface CreateExtensionManagementEntriesInput {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
   readonly extensionCatalog: WorkbenchExtensionCatalogReader;
   readonly installedRecords: readonly InstalledExtensionRecord[];
+  readonly transition?:
+    (ExtensionManagementTransition & { readonly extensionId: string }) | undefined;
   readonly uninstallableExtensionIds?: ReadonlySet<string>;
 }
 
@@ -40,6 +43,7 @@ export function createExtensionManagementEntries({
   availableExtensions,
   extensionCatalog,
   installedRecords,
+  transition,
   uninstallableExtensionIds = new Set(installedRecords.map((record) => record.id)),
 }: CreateExtensionManagementEntriesInput): readonly ExtensionManagementEntry[] {
   const installedById = new Map(installedRecords.map((record) => [record.id, record]));
@@ -70,6 +74,9 @@ export function createExtensionManagementEntries({
         installedAt: installed?.installedAt,
         manifestUrl: installed?.manifestUrl,
         source: isBuiltin ? ('bundled' as const) : ('installed' as const),
+        ...(transition?.extensionId === extension.manifest.id
+          ? { transition: { kind: transition.kind, message: transition.message } }
+          : {}),
       } satisfies ExtensionManagementEntry;
     })
     .filter((entry) => entry.source === 'bundled' || installedById.has(entry.id));
@@ -101,6 +108,9 @@ export function createExtensionManagementEntries({
         installedAt: installed?.installedAt,
         manifestUrl: installed?.manifestUrl,
         source: 'installed',
+        ...(transition?.extensionId === extension.manifest.id
+          ? { transition: { kind: transition.kind, message: transition.message } }
+          : {}),
       } satisfies ExtensionManagementEntry;
     });
 

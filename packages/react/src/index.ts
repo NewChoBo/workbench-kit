@@ -22,6 +22,7 @@ export { commandMenuItemsToContextMenuItems } from './workbench/commands/command
 export type {
   ExtensionManagementEntry,
   ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
 } from './workbench/management';
 export {
   WorkbenchArtifactModeControls,

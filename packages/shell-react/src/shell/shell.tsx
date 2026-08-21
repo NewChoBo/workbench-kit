@@ -26,6 +26,8 @@ import {
 } from '@workbench-kit/react/workbench';
 
 import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from '../commands/view-data.js';
+import { useExtensionEnablementController } from '../extensions/extension-enablement-context.js';
+import { createThemeSelectionProtectionSnapshot } from '../extensions/theme-selection-protection.js';
 import { BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID } from '../extensions/view-data.js';
 import {
   filterActivityBarItems,
@@ -220,12 +222,25 @@ export function WorkbenchShell({
     viewHostFactories,
     views,
   } = useWorkbench();
+  const extensionEnablement = useExtensionEnablementController();
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const contextKeySnapshot = useMemo(
     () => contextKeyService.createSnapshot(),
     [contextKeyRevision, contextKeyService],
   );
   const forceRender = useForceRender();
+  const themeRevision = themes.getRevision();
+  const themeSelectionProtection = useMemo(
+    () =>
+      createThemeSelectionProtectionSnapshot({
+        darkPreset,
+        lightPreset,
+        theme,
+        themeOptions,
+        themes,
+      }),
+    [darkPreset, lightPreset, theme, themeOptions, themeRevision, themes],
+  );
   const [preferenceRevision, bumpPreferenceRevision] = useReducer((count: number) => count + 1, 0);
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
@@ -296,6 +311,13 @@ export function WorkbenchShell({
     profileTitle: chromeLabels.profileTitle,
     settingsLabel: chromeLabels.settingsLabel,
   });
+
+  useEffect(() => {
+    extensionEnablement.setThemeSelectionProtection(themeSelectionProtection);
+    return () => {
+      extensionEnablement.setThemeSelectionProtection(undefined);
+    };
+  }, [extensionEnablement, themeSelectionProtection]);
 
   useEffect(() => {
     if (visibleActivityItems.length === 0) {
@@ -390,6 +412,7 @@ export function WorkbenchShell({
     settingsScopeId,
     shellPreset,
     theme,
+    themeRevision,
     themes,
     themeOptions,
   ]);
@@ -439,13 +462,15 @@ export function WorkbenchShell({
     const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
     const viewProviderDisposable = views.onDidRegisterViewProvider(forceRender);
     const preferenceDisposable = preferenceService.onDidChangePreference(bumpPreferenceRevision);
+    const themeDisposable = themes.onDidChangeThemes(forceRender);
 
     return () => {
       layoutDisposable.dispose();
       viewProviderDisposable.dispose();
       preferenceDisposable.dispose();
+      themeDisposable.dispose();
     };
-  }, [forceRender, layoutService, preferenceService, views]);
+  }, [forceRender, layoutService, preferenceService, themes, views]);
 
   useEffect(() => {
     if (!activeViewContainerId) {

@@ -257,7 +257,13 @@ import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themeP
 import type {
   ExtensionManagementEntry,
   ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
 } from '@workbench-kit/react';
+import {
+  ExtensionRegistry,
+  type ExtensionRegistrationStore,
+  type ThemeRegistryChangeEvent,
+} from '@workbench-kit/workbench-core';
 import type {
   WorkbenchContextValue,
   WorkbenchExtensionActivationAccess,
@@ -303,6 +309,14 @@ const legacyExtensionManagementPanelProps: ExtensionManagementPanelProps = {
   browseEntries: [],
   installedEntries: [legacyExtensionManagementEntry],
 };
+const extensionManagementTransition: ExtensionManagementTransition = {
+  kind: 'applied',
+  message: 'Applied without a reload.',
+};
+const packedExtensionRegistry = new ExtensionRegistry();
+const packedExtensionRegistrations: ExtensionRegistrationStore =
+  packedExtensionRegistry.registerExtensions([]);
+const packedThemeChange = null as unknown as ThemeRegistryChangeEvent;
 
 (globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
   .__workbenchKitPackedConsumer = Object.freeze({
@@ -324,6 +338,9 @@ const legacyExtensionManagementPanelProps: ExtensionManagementPanelProps = {
   focusedExtensionContextContracts,
   focusedShellCommandContracts,
   legacyExtensionManagementPanelProps,
+  extensionManagementTransition,
+  packedExtensionRegistrations,
+  packedThemeChange,
   commands: createWorkbenchShellCommands({ activities: [] }),
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),

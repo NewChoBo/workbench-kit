@@ -9,7 +9,7 @@
     "workbench": "^0.0.0",
     "extensionApi": "^0.0.0"
   },
-  "activationEvents": ["onStartup"],
+  "activationEvents": [],
   "contributes": {
     "themes": [
       {

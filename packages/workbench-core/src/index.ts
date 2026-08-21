@@ -78,6 +78,7 @@ export {
 } from './host/factory-registry.js';
 export {
   collectExtensionDependencyDiagnostics,
+  ExtensionRegistrationStore,
   ExtensionRegistry,
   type ActivatedExtension,
   type ExtensionDependencyDiagnostic,
@@ -214,6 +215,7 @@ export {
   applyThemeTokenOverrides,
   REQUIRED_THEME_TOKEN_KEYS,
   ThemeRegistry,
+  type ThemeRegistryChangeEvent,
   type WorkbenchThemeContribution,
 } from './theme/registry.js';
 export { sanitizeThemeTokenValue } from './theme/sanitize-token-value.js';

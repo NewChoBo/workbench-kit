@@ -149,6 +149,48 @@ describe('ExtensionManagementPanel', () => {
     );
   });
 
+  it.each([
+    ['settings panel', ExtensionManagementPanel],
+    ['activity sidebar', ExtensionManagementSidebar],
+  ] as const)('renders applied and failed transition evidence in the %s', (_, Surface) => {
+    const markup = renderToStaticMarkup(
+      createElement(Surface, {
+        browseEntries: [],
+        ...(Surface === ExtensionManagementSidebar ? { defaultTab: 'installed' as const } : {}),
+        installedEntries: [
+          {
+            category: 'theme',
+            displayName: 'Applied Theme',
+            enabled: true,
+            id: 'workbench-kit.samples.applied-theme',
+            source: 'installed',
+            transition: {
+              kind: 'applied',
+              message: 'Applied without reloading the workbench.',
+            },
+          },
+          {
+            category: 'theme',
+            displayName: 'Failed Theme',
+            enabled: false,
+            id: 'workbench-kit.samples.failed-theme',
+            source: 'installed',
+            transition: {
+              kind: 'failed',
+              message: 'The previous state was retained.',
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(markup).toContain('Applied');
+    expect(markup).toContain('Applied without reloading the workbench.');
+    expect(markup).toContain('Failed');
+    expect(markup).toContain('The previous state was retained.');
+    expect(markup).toContain('Eligible unselected theme packs apply immediately.');
+  });
+
   it('renders sidebar diagnostics and missing-extension alerts', () => {
     const markup = renderToStaticMarkup(
       createElement(ExtensionManagementSidebar, {

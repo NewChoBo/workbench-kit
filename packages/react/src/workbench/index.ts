@@ -450,6 +450,7 @@ export type {
   ExtensionManagementEntry,
   ExtensionManagementPanelProps,
   ExtensionManagementSidebarProps,
+  ExtensionManagementTransition,
   KeybindingManagementPanelProps,
   ManagementPanelFrameProps,
   ManagementPanelToolbarProps,

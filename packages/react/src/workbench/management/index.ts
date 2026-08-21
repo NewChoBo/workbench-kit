@@ -141,4 +141,5 @@ export type {
   ExtensionManagementFeatureItem,
   ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
 } from './types.js';

@@ -58,6 +58,17 @@ export function applyExtensionsInstalledListScenario(): void {
   applyHostInstallStateScenario();
 }
 
+/** Disabled persisted theme pack → live enable/disable lifecycle without navigation reload. */
+export function applyThemeSoftLifecycleScenario(): void {
+  applyHostInstallStateScenario({
+    category: 'theme',
+    enabled: false,
+    id: 'workbench-kit.samples.theme-alt',
+    installedAt: '2026-08-22T00:00:00.000Z',
+    manifestUrl: 'workbench-kit.samples.theme-alt',
+  });
+}
+
 /** Settings → Appearance category fields (color scheme / theme presets). */
 export function applySettingsAppearanceScenario(): void {
   resetSampleHostStorage('tester');

@@ -48,9 +48,12 @@ const groups = extensionGroups.map(({ exportName, outputPath, prefix }) => ({
 }));
 
 for (const { exportName, extensions, outputPath } of groups) {
-  const moduleImports = extensions.map(
-    ({ importName, modulePath }) => `import * as ${importName} from ${JSON.stringify(modulePath)};`,
-  );
+  const moduleImports = extensions
+    .filter(({ hasModule }) => hasModule)
+    .map(
+      ({ importName, modulePath }) =>
+        `import * as ${importName} from ${JSON.stringify(modulePath)};`,
+    );
   const content = [
     "import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';",
     ...moduleImports,
@@ -92,6 +95,7 @@ function readExtensionGroup(prefix, outputPath) {
     .filter(({ directory }) => directory.startsWith(prefix))
     .map(({ directory, extensionPath, manifest, modulePath }) => ({
       extensionPath,
+      hasModule: manifest.activationEvents.length > 0,
       importName: toModuleImportName(directory),
       manifest,
       modulePath: relativeImportPath(path.dirname(outputPath), modulePath),
@@ -106,12 +110,12 @@ function relativeImportPath(fromDirectory, targetPath) {
   return relativePath.startsWith('.') ? relativePath : `./${relativePath}`;
 }
 
-function formatExtensionDescription({ extensionPath, importName, manifest }) {
+function formatExtensionDescription({ extensionPath, hasModule, importName, manifest }) {
   return [
     '  {',
     `    extensionPath: ${JSON.stringify(extensionPath)},`,
     `    manifest: ${formatManifest(manifest, 4)},`,
-    `    module: ${importName},`,
+    ...(hasModule ? [`    module: ${importName},`] : []),
     '  },',
   ].join('\n');
 }

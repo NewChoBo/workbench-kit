@@ -79,6 +79,19 @@ describe('ExtensionRegistry', () => {
     });
   });
 
+  it('retains focused registration handles without changing batch disposal', () => {
+    const registry = new ExtensionRegistry();
+    const registrations = registry.registerExtensions([helloWorldExtension]);
+
+    expect(registrations.getRegistration(helloWorldExtension.manifest.id)).toBeDefined();
+    expect(registrations.isDisposed).toBe(false);
+    registrations.getRegistration(helloWorldExtension.manifest.id)?.dispose();
+    expect(registry.getExtension(helloWorldExtension.manifest.id)).toBeUndefined();
+
+    registrations.dispose();
+    expect(registrations.isDisposed).toBe(true);
+  });
+
   it('hard-fails duplicate contributed command IDs', () => {
     const registry = new ExtensionRegistry();
     registry.registerExtension(helloWorldExtension);
