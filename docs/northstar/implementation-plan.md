@@ -53,7 +53,7 @@ WB-NS-001B1 shell dependency inventory + focused-service contract [DONE; depende
         ↓
 WB-NS-001B2 shell dependency narrowing migration [IMPLEMENTING; dependency: WB-NS-001B1 DONE]
 
-WB-NS-040A extension uninstall compatibility + dependency safety [READY_FOR_IMPLEMENTATION; independent bounded correction]
+WB-NS-040A extension uninstall compatibility + dependency safety [SOURCE_REVIEW_REQUIRED; independent bounded correction]
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
@@ -383,13 +383,18 @@ and unchanged capability-provider ID projection before this packet can move to
 
 ## WB-NS-040A — Extension uninstall compatibility and dependency safety
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
 - **Target:** `WB-NS-040` compatibility/trust boundary and
   [`public-api-governance.md`](../conventions/public-api-governance.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** Issue #229 uninstall v1 and Issue #232 Provider-owned extension
   enablement are integrated
 - **Current source evidence:** `origin/develop@de0d32182963f646c6eab8fc3c087d0f21539cd6`
+- **Source candidate:** `80f261002f8d9c9bd1a3b0acbeab1833ffb0c73a`
+- **Candidate validation:** focused shell 40 tests, focused React 10 tests,
+  `check:commit-safety`, public exports, exact optional, packed consumer,
+  `validate:static`, `validate:fast` (414 files / 1,963 tests), Storybook build,
+  and required Chromium (12 suites / 57 interactions) passed
 - **Public API impact:** restore the established
   `ExtensionManagementPendingAction.kind` union to `install | toggle`; carry uninstall
   pending state through one additive optional sidebar prop
