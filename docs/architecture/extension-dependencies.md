@@ -43,7 +43,11 @@ Capabilities enable loose coupling (e.g. `filesystem-provider`, `auth-provider`)
 | `engines.workbench`    | Semver range of supported workbench host version             |
 | `engines.extensionApi` | Semver range of `@workbench-kit/workbench-extension-sdk` API |
 
-Mismatch fails manifest validation with a clear error.
+These fields declare the extension's intended compatibility ranges. Current
+validation requires each value to be a non-empty string; it does not parse the
+Semver range or compare it with the running host or SDK version. A non-empty but
+incompatible range therefore does not currently fail manifest validation or
+install planning.
 
 ## Current Enforcement
 
@@ -104,7 +108,8 @@ are committed as one local install-state update.
 - Pre-release extension versions (`1.0.0-beta.1`) require explicit range allowance.
 - Workspace built-ins may use `0.0.0` with `workspace:` protocol internally.
 - The current manifest checker requires non-empty engine range strings. Full npm
-  semver solving is reserved for the external extension/install phase.
+  semver compatibility evaluation is reserved for the
+  [packaged extension/install phase](https://github.com/NewChoBo/workbench-kit/issues/230).
 
 ## Lockfile Purpose
 
@@ -118,13 +123,14 @@ Reproducible team workspaces depend on committing the lockfile; local-only exten
 
 ## Failure Modes
 
-| Condition                             | Behavior                         |
-| ------------------------------------- | -------------------------------- |
-| Missing hard extension dependency     | Fail load with diagnostic        |
-| Missing optional extension dependency | Warn; disable dependent features |
-| Engine mismatch                       | Fail load; suggest upgrade       |
-| Cycle in graph                        | Fail load with cycle report      |
-| Permission denied at runtime          | Command/view disabled; log once  |
+| Condition                             | Behavior                                                                                   |
+| ------------------------------------- | ------------------------------------------------------------------------------------------ |
+| Missing hard extension dependency     | Fail load with diagnostic                                                                  |
+| Missing optional extension dependency | Warn; disable dependent features                                                           |
+| Missing or empty engine range string  | Fail manifest validation                                                                   |
+| Declared engine incompatibility       | Not evaluated yet; tracked in [#230](https://github.com/NewChoBo/workbench-kit/issues/230) |
+| Cycle in graph                        | Fail load with cycle report                                                                |
+| Permission denied at runtime          | Command/view disabled; log once                                                            |
 
 ## Related Documents
 
