@@ -16,6 +16,7 @@ import {
   type UseExtensionManagementModelOptions,
 } from './use-extension-management.js';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from './builtin-extensions.js';
+import { useExtensionEnablementController } from './extension-enablement-context.js';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 type ExtensionManagementModel = ReturnType<typeof useExtensionManagementModel>;
@@ -46,6 +47,28 @@ const authCapabilityHostPort = {
   service: {},
 };
 
+const declarativeThemeExtension = {
+  manifest: {
+    schemaVersion: 1 as const,
+    id: 'workbench-kit.samples.theme-soft-lifecycle',
+    name: 'samples-theme-soft-lifecycle',
+    displayName: 'Soft Lifecycle Theme',
+    version: '0.0.0',
+    publisher: 'workbench-kit',
+    engines: { workbench: '^0.0.0', extensionApi: '^0.0.0' },
+    activationEvents: [],
+    contributes: {
+      themes: [
+        {
+          id: 'workbench-kit.samples.theme-soft-lifecycle.dark',
+          label: 'Soft Lifecycle Dark',
+          mode: 'dark' as const,
+        },
+      ],
+    },
+  },
+};
+
 function createMemoryStorage(): WorkbenchStorageAdapter {
   const values = new Map<string, string>();
 
@@ -73,6 +96,20 @@ function ExtensionManagementProbe({
   }, [model, onChange]);
 
   return null;
+}
+
+function ThemeLifecycleManagementProbe({
+  onChange,
+}: {
+  onChange: (model: ExtensionManagementModel) => void;
+}) {
+  const controller = useExtensionEnablementController();
+  useEffect(() => {
+    controller.setProtectedThemeIds([]);
+    return () => controller.setProtectedThemeIds(undefined);
+  }, [controller]);
+
+  return <ExtensionManagementProbe catalogUrl="" onChange={onChange} />;
 }
 
 describe('useExtensionManagementModel', () => {
@@ -173,6 +210,67 @@ describe('useExtensionManagementModel', () => {
     await act(async () => {
       root.unmount();
     });
+  });
+
+  it('shares the provider snapshot and applies an eligible theme toggle without reload', async () => {
+    const storage = createMemoryStorage();
+    const storageKey = 'workbench-kit/.workbench/installed-extensions/theme-soft-lifecycle';
+    storage.setItem(
+      storageKey,
+      JSON.stringify([
+        {
+          category: 'theme',
+          enabled: false,
+          id: declarativeThemeExtension.manifest.id,
+          installedAt: '2026-08-22T00:00:00.000Z',
+          manifestUrl: declarativeThemeExtension.manifest.id,
+        },
+      ]),
+    );
+    const requestAnimationFrame = vi.mocked(window.requestAnimationFrame);
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let currentModel: ExtensionManagementModel | undefined;
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          availableExtensions={[declarativeThemeExtension]}
+          extensionsConfig={{ enabled: [], recommendations: [] }}
+          installedExtensionsStorage={storage}
+          installedExtensionsStorageKey={storageKey}
+        >
+          <ThemeLifecycleManagementProbe
+            onChange={(model) => {
+              currentModel = model;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    await waitForModel(
+      () => currentModel?.installedEntries[0]?.id === declarativeThemeExtension.manifest.id,
+    );
+    await act(async () => {
+      currentModel?.toggleInstalledEntry(currentModel.installedEntries[0]!, true);
+    });
+
+    await waitForModel(() => currentModel?.installedEntries[0]?.enabled === true);
+    expect(currentModel?.installedEntries[0]?.transition).toMatchObject({ kind: 'applied' });
+    expect(JSON.parse(storage.getItem(storageKey) ?? '[]')[0]?.enabled).toBe(true);
+    expect(currentModel?.pendingAction).toBeUndefined();
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+
+    await act(async () => {
+      currentModel?.toggleInstalledEntry(currentModel.installedEntries[0]!, false);
+    });
+    await waitForModel(() => currentModel?.installedEntries[0]?.enabled === false);
+    expect(currentModel?.installedEntries[0]?.transition).toMatchObject({ kind: 'applied' });
+    expect(JSON.parse(storage.getItem(storageKey) ?? '[]')[0]?.enabled).toBe(false);
+    expect(requestAnimationFrame).not.toHaveBeenCalled();
+
+    await act(async () => root.unmount());
   });
 
   it('commits uninstall before projection and retains install trust across remount', async () => {
@@ -457,7 +555,7 @@ describe('useExtensionManagementModel', () => {
     });
   });
 
-  it('keeps failed install state in memory and reloads only after a later committed snapshot', async () => {
+  it('rolls back a failed install projection and reloads only after a later commit', async () => {
     const values = new Map<string, string>();
     const storageKey = 'workbench-kit/.workbench/installed-extensions/recoverable-test';
     let failWrites = true;
@@ -508,12 +606,12 @@ describe('useExtensionManagementModel', () => {
       currentModel?.installCatalogEntry(jsonPreview!, { approved: true });
     });
 
-    await waitForModel(
-      () =>
-        currentModel?.installedEntries.find(
-          (entry) => entry.id === 'workbench-kit.samples.json-preview',
-        )?.enabled === true,
-    );
+    await waitForModel(() => diagnostics.mock.calls.length === 1);
+    expect(
+      currentModel?.installedEntries.some(
+        (entry) => entry.id === 'workbench-kit.samples.json-preview',
+      ),
+    ).toBe(false);
     expect(currentModel?.pendingAction).toBeUndefined();
     expect(requestAnimationFrame).not.toHaveBeenCalled();
     expect(diagnostics).toHaveBeenCalledTimes(1);
@@ -525,37 +623,9 @@ describe('useExtensionManagementModel', () => {
     });
     expect(JSON.stringify(diagnostics.mock.calls)).not.toContain('backend quota detail');
 
-    const installedEntry = currentModel?.installedEntries.find(
-      (entry) => entry.id === 'workbench-kit.samples.json-preview',
-    );
-    expect(installedEntry).toBeDefined();
-    expect(installedEntry?.canUninstall).toBeUndefined();
-    await act(async () => {
-      currentModel?.toggleInstalledEntry(installedEntry!, false);
-    });
-
-    expect(
-      currentModel?.installedEntries.find(
-        (entry) => entry.id === 'workbench-kit.samples.json-preview',
-      )?.enabled,
-    ).toBe(false);
-    expect(currentModel?.pendingAction).toBeUndefined();
-    expect(requestAnimationFrame).not.toHaveBeenCalled();
-    expect(diagnostics).toHaveBeenCalledTimes(2);
-    expect(diagnostics).toHaveBeenLastCalledWith({
-      code: 'write_failed',
-      message: 'Workbench storage value could not be written.',
-      operation: 'write',
-      storageKey,
-    });
-
     failWrites = false;
-    const recoveredEntry = currentModel?.installedEntries.find(
-      (entry) => entry.id === 'workbench-kit.samples.json-preview',
-    );
-    expect(recoveredEntry).toBeDefined();
     await act(async () => {
-      currentModel?.toggleInstalledEntry(recoveredEntry!, true);
+      currentModel?.installCatalogEntry(jsonPreview!, { approved: true });
     });
 
     expect(JSON.parse(values.get(storageKey) ?? '[]')).toMatchObject([

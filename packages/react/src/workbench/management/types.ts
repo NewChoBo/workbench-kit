@@ -82,6 +82,11 @@ export interface ExtensionManagementDiagnosticSummary {
   readonly severity: 'error' | 'warning';
 }
 
+export interface ExtensionManagementTransition {
+  readonly kind: 'applied' | 'reloadRequired' | 'failed';
+  readonly message: string;
+}
+
 export interface ExtensionInstallPlanSummary {
   readonly blocked: boolean;
   readonly diagnostics?: readonly ExtensionManagementDiagnosticSummary[] | undefined;
@@ -104,6 +109,7 @@ export interface ExtensionManagementEntry {
   readonly installedAt?: string | undefined;
   readonly manifestUrl?: string | undefined;
   readonly source: ExtensionManagementEntrySource;
+  readonly transition?: ExtensionManagementTransition;
 }
 
 export interface ExtensionCatalogBrowseEntry {

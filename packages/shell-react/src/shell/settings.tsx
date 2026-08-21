@@ -273,6 +273,7 @@ function AppearanceSettingsSection({
   themeOptions: readonly WorkbenchThemeOption[];
 }) {
   const { themes } = useWorkbench();
+  const themeRevision = themes.getRevision();
   const containerRef = useRef<HTMLDivElement>(null);
   const previousThemeOverridesRef = useRef<Readonly<Record<string, string>> | undefined>(undefined);
   const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
@@ -284,7 +285,7 @@ function AppearanceSettingsSection({
         .filter((contributedTheme) => contributedTheme.mode === 'light')
         .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
     ],
-    [themes],
+    [themeRevision, themes],
   );
   const darkPresetOptions = useMemo<readonly WorkbenchThemePresetOption[]>(
     () => [
@@ -294,7 +295,7 @@ function AppearanceSettingsSection({
         .filter((contributedTheme) => contributedTheme.mode === 'dark')
         .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
     ],
-    [themes],
+    [themeRevision, themes],
   );
   const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
   const selectedThemeId = selectedTheme?.id ?? '';
@@ -364,6 +365,7 @@ function AppearanceSettingsSection({
     }
     previousThemeOverridesRef.current = contributedTheme?.tokenOverrides;
   }, [
+    themeRevision,
     themes,
     selectedColorSchemeId,
     selectedDarkPreset.id,

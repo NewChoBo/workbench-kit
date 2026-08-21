@@ -29,6 +29,7 @@ import {
   applyTesterWorkbenchScenario,
   applyFieldRemapEditorScenario,
   applyExtensionsInstalledListScenario,
+  applyThemeSoftLifecycleScenario,
   applySettingsAppearanceScenario,
   applyCommandsActivityScenario,
 } from './storybook/scenarios/index.js';
@@ -476,6 +477,73 @@ export const SettingsAppearanceSmoke: Story = {
       within(settingsDialog).getByRole('combobox', { name: 'Color scheme' }),
     ).toBeVisible();
     await expect(within(settingsDialog).getByRole('heading', { name: 'Appearance' })).toBeVisible();
+  },
+};
+
+export const ThemeSoftLifecycle: Story = {
+  name: 'Theme soft lifecycle',
+  tags: ['storybook-play-extension-management'],
+  render: () => {
+    applyThemeSoftLifecycleScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Extensions' }));
+    const listSwitcher = await canvas.findByLabelText('Extension lists');
+    await userEvent.click(within(listSwitcher).getByRole('button', { name: 'Installed' }));
+    const installedList = await canvas.findByLabelText('Installed extensions');
+    const themeRow = within(installedList)
+      .getByText('Alternate Theme Pack', { selector: '.workbench-extensions-sidebar__title' })
+      .closest('.workbench-extensions-sidebar__item');
+    expect(themeRow).not.toBeNull();
+
+    await userEvent.click(within(themeRow as HTMLElement).getByRole('button', { name: 'Enable' }));
+    await expect(within(themeRow as HTMLElement).getByText('Applied')).toBeVisible();
+    await expect(
+      within(themeRow as HTMLElement).getByRole('button', { name: 'Disable' }),
+    ).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    const darkThemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Preferred Dark Color Theme',
+    });
+    await userEvent.click(darkThemeSelect);
+    const documentCanvas = within(canvasElement.ownerDocument.body);
+    await expect(
+      await documentCanvas.findByRole('option', { name: 'Dark Blue Alt' }),
+    ).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Close' }));
+
+    const restoredListSwitcher = await canvas.findByRole('group', { name: 'Extension lists' });
+    await userEvent.click(within(restoredListSwitcher).getByRole('button', { name: 'Installed' }));
+    const restoredInstalledList = await canvas.findByRole('list', {
+      name: 'Installed extensions',
+    });
+    const restoredThemeRow = within(restoredInstalledList)
+      .getByText('Alternate Theme Pack', { selector: '.workbench-extensions-sidebar__title' })
+      .closest('.workbench-extensions-sidebar__item');
+    expect(restoredThemeRow).not.toBeNull();
+    await userEvent.click(
+      within(restoredThemeRow as HTMLElement).getByRole('button', { name: 'Disable' }),
+    );
+    await expect(within(restoredThemeRow as HTMLElement).getByText('Applied')).toBeVisible();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const restoredSettingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await userEvent.click(
+      within(restoredSettingsDialog).getByRole('button', { name: 'Appearance' }),
+    );
+    const restoredDarkThemeSelect = within(restoredSettingsDialog).getByRole('combobox', {
+      name: 'Preferred Dark Color Theme',
+    });
+    await userEvent.click(restoredDarkThemeSelect);
+    expect(documentCanvas.queryByRole('option', { name: 'Dark Blue Alt' })).toBeNull();
   },
 };
 

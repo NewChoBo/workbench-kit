@@ -66,6 +66,11 @@ describe('extension-management-model', () => {
           manifestUrl: 'workbench-kit.samples.theme-alt',
         },
       ],
+      transition: {
+        extensionId: 'workbench-kit.samples.theme-alt',
+        kind: 'applied',
+        message: 'Applied without reloading the workbench.',
+      },
     });
 
     expect(entries).toEqual(
@@ -79,6 +84,10 @@ describe('extension-management-model', () => {
           enabled: true,
           id: 'workbench-kit.samples.theme-alt',
           source: 'installed',
+          transition: {
+            kind: 'applied',
+            message: 'Applied without reloading the workbench.',
+          },
         }),
       ]),
     );

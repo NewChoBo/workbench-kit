@@ -115,8 +115,11 @@ import {
   type EditorDocumentViewProvider,
 } from '../editor/view-providers.js';
 import type { EditorDocumentViewProviderRegistry } from '@workbench-kit/workbench-core';
+import { ExtensionEnablementController } from '../extensions/extension-enablement-controller.js';
+import { ExtensionEnablementContext } from '../extensions/extension-enablement-context.js';
 import {
   reportPersistenceWriteResult,
+  reportPersistenceDiagnostic,
   usePersistenceDiagnosticHandlerRef,
   useReportPersistenceReadDiagnostic,
 } from '../storage/persistence-diagnostics.js';
@@ -219,6 +222,7 @@ interface WorkbenchProviderServices {
   dispose(): void;
   editorDocumentViewProviders: EditorDocumentViewProviderRegistry;
   editorService: EditorService;
+  extensionEnablement: ExtensionEnablementController;
   extensionRegistry: ExtensionRegistry;
   layoutService: LayoutService;
   missingExtensionIds: readonly string[];
@@ -628,7 +632,26 @@ export function WorkbenchProvider({
         console.warn(`[workbench-kit] ${diagnostic.message}`);
       }
     }
-    const extensionDisposables = extensionRegistry.registerExtensions(integrity.accepted);
+    const extensionRegistrations = extensionRegistry.registerExtensions(integrity.accepted);
+    const availableIntegrity = verifyWorkbenchExtensionsAgainstLock(
+      resolvedAvailableExtensions,
+      extensionsLock,
+      extensionIntegrityMode,
+    );
+    const extensionEnablement = new ExtensionEnablementController({
+      availableExtensions: resolvedAvailableExtensions,
+      initialEnabledExtensions: integrity.accepted,
+      initialInstalledRecords: installedRecords,
+      installedExtensionsStorage,
+      installedExtensionsStorageKey,
+      integrityAcceptedExtensionIds: new Set(
+        availableIntegrity.accepted.map((description) => description.manifest.id),
+      ),
+      onPersistenceDiagnostic: (diagnostic) =>
+        reportPersistenceDiagnostic(diagnostic, diagnosticHandlerRef),
+      registrationLifetime: extensionRegistrations,
+      registry: extensionRegistry,
+    });
     const hostThemeDisposables = registerHostWorkbenchThemes(extensionRegistry.themes, hostThemes);
     const editorServiceCapabilityDisposable = extensionRegistry.capabilityRegistry.register({
       id: WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
@@ -675,7 +698,7 @@ export function WorkbenchProvider({
         editorServiceCapabilityDisposable.dispose();
         workspaceHostCapabilityDisposable?.dispose();
         hostThemeDisposables.dispose();
-        extensionDisposables.dispose();
+        extensionEnablement.dispose();
         if (!workspaceHostCapabilityDisposable) {
           workspaceHostPort?.dispose?.();
         }
@@ -692,6 +715,7 @@ export function WorkbenchProvider({
       },
       editorDocumentViewProviders,
       editorService,
+      extensionEnablement,
       extensionRegistry,
       layoutService,
       missingExtensionIds: [
@@ -712,6 +736,8 @@ export function WorkbenchProvider({
     hostThemes,
     includeDefaultDocumentViewProviders,
     initialWorkspaceSettings,
+    installedExtensionsStorage,
+    installedExtensionsStorageKey,
     installedExtensionRecords,
     resolvedInitialEditorState,
     resolvedInitialLayout,
@@ -719,6 +745,7 @@ export function WorkbenchProvider({
     userCommands,
     viewHostFactories,
     workspaceHostPort,
+    diagnosticHandlerRef,
   ]);
 
   useEffect(() => {
@@ -891,8 +918,10 @@ export function WorkbenchProvider({
   return (
     <WorkbenchPersistenceDiagnosticContext.Provider value={onPersistenceDiagnostic}>
       <WorkbenchContext.Provider value={value}>
-        <EditorWorkspaceReconciler />
-        {children}
+        <ExtensionEnablementContext.Provider value={services.extensionEnablement}>
+          <EditorWorkspaceReconciler />
+          {children}
+        </ExtensionEnablementContext.Provider>
       </WorkbenchContext.Provider>
     </WorkbenchPersistenceDiagnosticContext.Provider>
   );

@@ -24,6 +24,7 @@ import type {
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
 } from './types.js';
 
 const BROWSE_CATEGORIES = ['all', 'feature', 'editor', 'theme', 'language'] as const;
@@ -124,8 +125,8 @@ export function ExtensionManagementPanel({
         onSelect={(tabId) => setActiveTab(tabId as 'installed' | 'browse')}
       />
       <ManagementPanelNotice>
-        Installing, toggling, or uninstalling extensions reloads the workbench to apply
-        contributions.
+        Eligible unselected theme packs apply immediately. Other extension changes reload the
+        workbench.
       </ManagementPanelNotice>
     </ManagementPanelFrame>
   );
@@ -197,6 +198,14 @@ function InstalledExtensionsTab({
                         {entry.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
                     )}
+                    {entry.transition ? (
+                      <Badge
+                        title={entry.transition.message}
+                        variant={extensionTransitionBadgeVariant(entry.transition.kind)}
+                      >
+                        {extensionTransitionLabel(entry.transition.kind)}
+                      </Badge>
+                    ) : null}
                   </>
                 }
                 description={entry.description}
@@ -213,6 +222,22 @@ function InstalledExtensionsTab({
       )}
     </>
   );
+}
+
+function extensionTransitionLabel(kind: ExtensionManagementTransition['kind']): string {
+  if (kind === 'reloadRequired') {
+    return 'Reload required';
+  }
+  return kind === 'failed' ? 'Failed' : 'Applied';
+}
+
+function extensionTransitionBadgeVariant(
+  kind: ExtensionManagementTransition['kind'],
+): 'accent' | 'danger' | 'muted' {
+  if (kind === 'failed') {
+    return 'danger';
+  }
+  return kind === 'applied' ? 'accent' : 'muted';
 }
 
 function ExtensionFeatureDetails({ entry }: { entry: ExtensionManagementEntry }) {

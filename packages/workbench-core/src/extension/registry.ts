@@ -81,6 +81,32 @@ export interface ExtensionLifecycleEvent {
   readonly extensionId: string;
 }
 
+/**
+ * Batch registration lifetime that preserves the historical DisposableStore
+ * surface while allowing the composing host to retain a focused handle for an
+ * individual registration.
+ */
+export class ExtensionRegistrationStore extends DisposableStore {
+  private readonly registrationsById = new Map<string, Disposable>();
+
+  addRegistration(extensionId: string, registration: Disposable): void {
+    this.registrationsById.set(extensionId, registration);
+    this.add(registration);
+  }
+
+  getRegistration(extensionId: string): Disposable | undefined {
+    return this.registrationsById.get(extensionId);
+  }
+
+  override dispose(): void {
+    try {
+      super.dispose();
+    } finally {
+      this.registrationsById.clear();
+    }
+  }
+}
+
 export interface ExtensionFeatureInspection {
   readonly diagnostics: readonly ExtensionDependencyDiagnostic[];
   readonly feature: ExtensionFeatureSpec;
@@ -261,12 +287,14 @@ export class ExtensionRegistry implements Disposable {
     return registrationLifetime;
   }
 
-  registerExtensions(descriptions: Iterable<WorkbenchExtensionDescription>): DisposableStore {
-    const store = new DisposableStore();
+  registerExtensions(
+    descriptions: Iterable<WorkbenchExtensionDescription>,
+  ): ExtensionRegistrationStore {
+    const store = new ExtensionRegistrationStore();
 
     try {
       for (const description of descriptions) {
-        store.add(this.registerExtension(description));
+        store.addRegistration(description.manifest.id, this.registerExtension(description));
       }
       this.assertDependencyGraph();
     } catch (error) {
