@@ -9,7 +9,11 @@ import {
 } from '@workbench-kit/workbench-core';
 
 import type { ThemeSelectionProtectionSnapshot } from './theme-selection-protection.js';
-import { createExtensionUninstallEvaluation } from './uninstall-eligibility.js';
+import { createCanonicalExtensionDescriptionSnapshot } from './canonical-extension-descriptions.js';
+import {
+  createExtensionUninstallEvaluation,
+  type ExtensionUninstallEligibility,
+} from './uninstall-eligibility.js';
 
 interface DisposableLike {
   dispose(): void;
@@ -39,6 +43,13 @@ export type ExtensionEnablementTransitionResult =
       readonly kind: 'failed';
       readonly message: string;
     };
+
+export type ExtensionUninstallActionResult =
+  | ExtensionEnablementTransitionResult
+  | ({ readonly extensionId: string } & Exclude<
+      ExtensionUninstallEligibility,
+      { readonly kind: 'eligible' }
+    >);
 
 export interface ExtensionEnablementControllerOptions {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
@@ -132,26 +143,33 @@ export class ExtensionEnablementController implements DisposableLike {
     return this.reloadRequired(extensionId, this.isRecordEnabled(extensionId));
   }
 
-  uninstallInstalledExtension(
-    extensionId: string,
-  ): ExtensionEnablementTransitionResult | undefined {
+  uninstallInstalledExtension(extensionId: string): ExtensionUninstallActionResult {
     const persisted = loadInstalledExtensionsResult(this.storageKey, this.storage, {
       onDiagnostic: this.onPersistenceDiagnostic,
     });
     if (persisted.diagnostic) {
       return this.failed(extensionId, this.isRecordEnabled(extensionId));
     }
-    const target = persisted.value.find((record) => record.id === extensionId);
-    if (!target || extensionId.startsWith('workbench-kit.builtin.')) {
-      return undefined;
-    }
-
-    const eligibility = createExtensionUninstallEvaluation({
+    const canonicalDescriptions = createCanonicalExtensionDescriptionSnapshot({
       availableExtensions: this.availableExtensions,
+      liveExtensions: this.registry.getExtensions(),
+    });
+    const eligibility = createExtensionUninstallEvaluation({
+      canonicalDescriptions,
       installedRecords: persisted.value,
     }).getEligibility(extensionId);
     if (eligibility.kind !== 'eligible') {
-      return undefined;
+      return { ...eligibility, extensionId };
+    }
+
+    const target = persisted.value.find((record) => record.id === extensionId);
+    if (!target) {
+      return {
+        diagnosticExtensionIds: [extensionId],
+        extensionId,
+        kind: 'ineligibleTarget',
+        reason: 'notInstalled',
+      };
     }
 
     const next = persisted.value.filter((record) => record.id !== extensionId);

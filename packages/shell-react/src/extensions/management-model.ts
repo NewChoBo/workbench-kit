@@ -22,6 +22,12 @@ import {
   createExtensionUninstallEvaluation,
   type ExtensionUninstallEligibility,
 } from './uninstall-eligibility.js';
+import { createCanonicalExtensionDescriptionSnapshot } from './canonical-extension-descriptions.js';
+
+export interface ExtensionUninstallActionConstraint {
+  readonly eligibility: Exclude<ExtensionUninstallEligibility, { readonly kind: 'eligible' }>;
+  readonly extensionId: string;
+}
 
 export interface CreateExtensionManagementEntriesInput {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
@@ -29,6 +35,7 @@ export interface CreateExtensionManagementEntriesInput {
   readonly installedRecords: readonly InstalledExtensionRecord[];
   readonly transition?:
     (ExtensionManagementTransition & { readonly extensionId: string }) | undefined;
+  readonly uninstallActionConstraint?: ExtensionUninstallActionConstraint | undefined;
 }
 
 export interface CreateExtensionCatalogBrowseEntriesInput extends CreateExtensionManagementEntriesInput {
@@ -47,20 +54,28 @@ export function createExtensionManagementEntries({
   extensionCatalog,
   installedRecords,
   transition,
+  uninstallActionConstraint,
 }: CreateExtensionManagementEntriesInput): readonly ExtensionManagementEntry[] {
   const installedById = new Map(installedRecords.map((record) => [record.id, record]));
-  const uninstallEvaluation = createExtensionUninstallEvaluation({
+  const liveExtensions = extensionCatalog.getExtensions();
+  const liveExtensionIds = new Set(liveExtensions.map((extension) => extension.manifest.id));
+  const canonicalDescriptions = createCanonicalExtensionDescriptionSnapshot({
     availableExtensions,
+    liveExtensions,
+  });
+  const uninstallEvaluation = createExtensionUninstallEvaluation({
+    canonicalDescriptions,
     installedRecords,
   });
   const extensionFeatures = createExtensionManagementFeatureMaps(
-    availableExtensions,
+    canonicalDescriptions.descriptions,
     extensionCatalog,
   );
-  const bundledEntries = availableExtensions
+  return canonicalDescriptions.descriptions
     .map((extension) => {
       const installed = installedById.get(extension.manifest.id);
       const isBuiltin = extension.manifest.id.startsWith('workbench-kit.builtin.');
+      const isLive = liveExtensionIds.has(extension.manifest.id);
       const featureState = resolveExtensionManagementFeatureState(
         extension.manifest.id,
         extensionFeatures,
@@ -69,12 +84,22 @@ export function createExtensionManagementEntries({
         installed && !isBuiltin
           ? uninstallEvaluation.getEligibility(extension.manifest.id)
           : undefined;
+      const actionConstraint =
+        uninstallActionConstraint?.extensionId === extension.manifest.id
+          ? uninstallActionConstraint.eligibility
+          : undefined;
 
       return {
-        ...(uninstallEligibility?.kind === 'eligible' ? { canUninstall: true } : {}),
-        category: installed?.category ?? (isBuiltin ? 'builtin' : 'sample'),
+        ...(uninstallEligibility?.kind === 'eligible' && !actionConstraint
+          ? { canUninstall: true }
+          : {}),
+        category: installed?.category ?? (isBuiltin ? 'builtin' : isLive ? 'installed' : 'sample'),
         description: extension.manifest.displayName,
-        diagnostics: mergeUninstallDiagnostics(featureState.diagnostics, uninstallEligibility),
+        diagnostics: mergeUninstallDiagnostics(
+          featureState.diagnostics,
+          uninstallEligibility,
+          actionConstraint,
+        ),
         displayName: extension.manifest.displayName,
         enabled: isBuiltin ? true : (installed?.enabled ?? false),
         features: featureState.features,
@@ -87,70 +112,59 @@ export function createExtensionManagementEntries({
           : {}),
       } satisfies ExtensionManagementEntry;
     })
-    .filter((entry) => entry.source === 'bundled' || installedById.has(entry.id));
-
-  const activeExtensions = extensionCatalog
-    .getExtensions()
     .filter(
-      (extension) =>
-        !availableExtensions.some((bundled) => bundled.manifest.id === extension.manifest.id),
+      (entry) =>
+        entry.source === 'bundled' || installedById.has(entry.id) || liveExtensionIds.has(entry.id),
     )
-    .map((extension) => {
-      const installed = installedById.get(extension.manifest.id);
-      const featureState = resolveExtensionManagementFeatureState(
-        extension.manifest.id,
-        extensionFeatures,
-      );
-      const uninstallEligibility = installed
-        ? uninstallEvaluation.getEligibility(extension.manifest.id)
-        : undefined;
-
-      return {
-        ...(uninstallEligibility?.kind === 'eligible' ? { canUninstall: true } : {}),
-        category: installed?.category ?? 'installed',
-        description: extension.manifest.displayName,
-        diagnostics: mergeUninstallDiagnostics(featureState.diagnostics, uninstallEligibility),
-        displayName: extension.manifest.displayName,
-        enabled: installed?.enabled ?? true,
-        features: featureState.features,
-        id: extension.manifest.id,
-        installedAt: installed?.installedAt,
-        manifestUrl: installed?.manifestUrl,
-        source: 'installed',
-        ...(transition?.extensionId === extension.manifest.id
-          ? { transition: { kind: transition.kind, message: transition.message } }
-          : {}),
-      } satisfies ExtensionManagementEntry;
-    });
-
-  return [...bundledEntries, ...activeExtensions].sort((left, right) =>
-    left.displayName.localeCompare(right.displayName),
-  );
+    .sort((left, right) => left.displayName.localeCompare(right.displayName));
 }
 
 function mergeUninstallDiagnostics(
   diagnostics: readonly ExtensionManagementDiagnosticSummary[] | undefined,
   eligibility: ExtensionUninstallEligibility | undefined,
+  actionConstraint?: ExtensionUninstallActionConstraint['eligibility'] | undefined,
 ): readonly ExtensionManagementDiagnosticSummary[] | undefined {
-  if (eligibility?.kind !== 'blocked') {
-    return diagnostics;
+  const merged = [
+    ...(diagnostics ?? []),
+    ...toUninstallDiagnostics(eligibility),
+    ...toUninstallDiagnostics(actionConstraint),
+  ];
+  const byMessage = new Map(merged.map((diagnostic) => [diagnostic.message, diagnostic]));
+  return byMessage.size > 0 ? [...byMessage.values()] : undefined;
+}
+
+function toUninstallDiagnostics(
+  eligibility: ExtensionUninstallEligibility | undefined,
+): readonly ExtensionManagementDiagnosticSummary[] {
+  if (!eligibility || eligibility.kind === 'eligible') {
+    return [];
+  }
+  if (eligibility.kind === 'ineligibleTarget') {
+    return [
+      {
+        message:
+          eligibility.reason === 'builtin'
+            ? `Cannot uninstall built-in extensions: ${eligibility.diagnosticExtensionIds.join(', ')}.`
+            : `Cannot uninstall because these persisted targets are no longer installed: ${eligibility.diagnosticExtensionIds.join(', ')}.`,
+        severity: 'error',
+      },
+    ];
   }
 
-  const uninstallDiagnostics: ExtensionManagementDiagnosticSummary[] = [];
+  const result: ExtensionManagementDiagnosticSummary[] = [];
   if (eligibility.dependentExtensionIds.length > 0) {
-    uninstallDiagnostics.push({
+    result.push({
       message: `Cannot uninstall because these installed extensions depend on it: ${eligibility.dependentExtensionIds.join(', ')}.`,
       severity: 'error',
     });
   }
   if (eligibility.unresolvedExtensionIds.length > 0) {
-    uninstallDiagnostics.push({
+    result.push({
       message: `Cannot verify uninstall safety because these extension manifests are unavailable or ambiguous: ${eligibility.unresolvedExtensionIds.join(', ')}.`,
       severity: 'error',
     });
   }
-
-  return [...(diagnostics ?? []), ...uninstallDiagnostics];
+  return result;
 }
 
 export function createExtensionCatalogBrowseEntries({
