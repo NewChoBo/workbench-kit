@@ -97,6 +97,38 @@ export const NestedAB: Story = {
   },
 };
 
+export const ConvertPaletteFilterKeyboard: Story = {
+  name: 'Convert palette filter / keyboard',
+  args: { sampleId: 'nested-ab' },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const filter = canvas.getByRole('searchbox', { name: 'Filter converts' });
+    const placeButton = canvas.getByTestId('field-remap-place-draft');
+    const converts = within(canvas.getByRole('listbox', { name: 'Converts' }));
+
+    await userEvent.type(filter, 'UPPERCASE');
+    await expect(canvas.getByTestId('field-remap-palette-item-string:upper')).toBeVisible();
+    await expect(canvas.queryByTestId('field-remap-palette-item-array:first')).toBeNull();
+    await expect(converts.queryByRole('option', { selected: true })).toBeNull();
+    await expect(placeButton).toBeDisabled();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Clear convert filter' }));
+    await expect(filter).toHaveValue('');
+    await expect(canvas.getByTestId('field-remap-palette-item-array:first')).toHaveAttribute(
+      'aria-selected',
+      'true',
+    );
+    await expect(placeButton).toBeEnabled();
+
+    filter.focus();
+    await userEvent.keyboard('{ArrowDown}');
+    await expect(canvas.getByTestId('field-remap-palette-item-array:first')).toHaveFocus();
+    await userEvent.keyboard('{End}{Enter}');
+    await expect(canvas.getByTestId('field-remap-detail-draft-id')).toBeVisible();
+  },
+};
+
 export const HostChromeHooks: Story = {
   name: 'Host chrome (minimap / fitView)',
   args: {

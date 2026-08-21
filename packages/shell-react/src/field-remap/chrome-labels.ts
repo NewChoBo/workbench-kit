@@ -18,6 +18,11 @@ export interface FieldRemapChromeLabels {
   readonly convertPaletteDescription: string;
   readonly convertPaletteAriaLabel: string;
   readonly convertsListAriaLabel: string;
+  /** Additive filter copy. Omitted legacy label objects use the English defaults. */
+  readonly convertFilterLabel?: string;
+  readonly convertFilterPlaceholder?: string;
+  readonly clearConvertFilter?: string;
+  readonly noMatchingConverts?: string;
   readonly placeConvert: string;
   readonly addCombine: string;
   readonly addSplit: string;
@@ -34,13 +39,17 @@ export interface FieldRemapChromeLabels {
   readonly emptyDetailDescription: string;
 }
 
-export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
+export const defaultFieldRemapChromeLabels = {
   bindingsTitle: 'Bindings',
   convertPaletteTitle: 'Convert palette',
   convertPaletteDescription:
     'Place a convert first, then wire source → draft → target. Drafts stay off the document until both ports bind.',
   convertPaletteAriaLabel: 'Convert palette',
   convertsListAriaLabel: 'Converts',
+  convertFilterLabel: 'Filter converts',
+  convertFilterPlaceholder: 'Filter by label or id',
+  clearConvertFilter: 'Clear convert filter',
+  noMatchingConverts: 'No matching converts.',
   placeConvert: 'Place convert',
   addCombine: 'Add combine',
   addSplit: 'Add split',
@@ -57,7 +66,7 @@ export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
   emptyDetailTitle: 'Start with a convert',
   emptyDetailDescription:
     'Use the Convert palette to place a convert, then wire source → draft → target. Or select an existing binding / convert note on the canvas.',
-};
+} as const satisfies Required<FieldRemapChromeLabels>;
 
 /** Stable capability ids for optional `t()` injection (not free prose). */
 export const fieldRemapChromeLabelKeys = {
@@ -66,6 +75,10 @@ export const fieldRemapChromeLabelKeys = {
   convertPaletteDescription: 'fieldRemap.convertPaletteDescription',
   convertPaletteAriaLabel: 'fieldRemap.convertPaletteAriaLabel',
   convertsListAriaLabel: 'fieldRemap.convertsListAriaLabel',
+  convertFilterLabel: 'fieldRemap.convertFilterLabel',
+  convertFilterPlaceholder: 'fieldRemap.convertFilterPlaceholder',
+  clearConvertFilter: 'fieldRemap.clearConvertFilter',
+  noMatchingConverts: 'fieldRemap.noMatchingConverts',
   placeConvert: 'fieldRemap.placeConvert',
   addCombine: 'fieldRemap.addCombine',
   addSplit: 'fieldRemap.addSplit',
@@ -101,6 +114,10 @@ export function resolveFieldRemapChromeLabels(
     convertPaletteDescription: resolve('convertPaletteDescription'),
     convertPaletteAriaLabel: resolve('convertPaletteAriaLabel'),
     convertsListAriaLabel: resolve('convertsListAriaLabel'),
+    convertFilterLabel: resolve('convertFilterLabel'),
+    convertFilterPlaceholder: resolve('convertFilterPlaceholder'),
+    clearConvertFilter: resolve('clearConvertFilter'),
+    noMatchingConverts: resolve('noMatchingConverts'),
     placeConvert: resolve('placeConvert'),
     addCombine: resolve('addCombine'),
     addSplit: resolve('addSplit'),
