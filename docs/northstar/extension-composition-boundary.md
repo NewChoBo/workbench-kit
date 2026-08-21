@@ -26,12 +26,13 @@ These planes may be assembled in the same JavaScript realm today, but they are n
 
 ## Source snapshot evidence
 
-Current integration baseline: `origin/develop@598deebf9512e39d46c636bd00926867816c0186`.
+Current integration baseline: `origin/develop@80e5a8e891c1529960b5e8640f470f87b51ff24e`.
 
 The current baseline was re-verified against the bounded source inventory recorded in
 [`implementation-plan.md`](./implementation-plan.md) packet `WB-NS-001A`:
 
 - `packages/workbench-core/src/extension/registry.ts` still makes `ExtensionRegistry` responsible for extension inventory, contribution routing, dependency analysis, activation/deactivation, runtime API construction, command activation/execution and focused-registry lifetime;
+- registration-bound invalidation and pending-activation identity checks are now present and remain required behavior during the internal decomposition;
 - `packages/workbench-core/src/index.ts` still exports `ExtensionRegistry`, its options and `CapabilityRegistry`, so the first slice requires a source-compatible facade;
 - `packages/workbench-extension-sdk/src/contributions.ts` still exposes a restricted `ExtensionContext` rather than host composition internals;
 - `packages/shell-react/src/shell/provider.tsx` still creates and exposes the aggregate registry while using its focused registries directly, which keeps shell narrowing in a later packet.
