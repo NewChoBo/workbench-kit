@@ -139,7 +139,80 @@ describe('extension-management-model', () => {
 
     registry.dispose();
   });
+
+  it.each([true, false])(
+    'blocks uninstall for a persisted hard dependent when enabled=%s',
+    (enabled) => {
+      const registry = new ExtensionRegistry();
+      const target = createActiveOnlyExtension();
+      const dependent: WorkbenchExtensionDescription = {
+        manifest: {
+          ...target.manifest,
+          displayName: 'Dependent Extension',
+          extensionDependencies: [target.manifest.id],
+          id: 'workbench-kit.test.dependent',
+          name: 'dependent',
+        },
+      };
+      const records = [
+        installedRecord(target.manifest.id, true),
+        installedRecord(dependent.manifest.id, enabled),
+      ];
+
+      const entries = createExtensionManagementEntries({
+        availableExtensions: [target, dependent],
+        extensionCatalog: createCatalogReader(registry),
+        installedRecords: records,
+      });
+      const targetEntry = entries.find((entry) => entry.id === target.manifest.id);
+
+      expect(targetEntry).not.toHaveProperty('canUninstall');
+      expect(targetEntry?.diagnostics).toContainEqual({
+        message:
+          'Cannot uninstall because these installed extensions depend on it: workbench-kit.test.dependent.',
+        severity: 'error',
+      });
+      expect(entries.find((entry) => entry.id === dependent.manifest.id)).toMatchObject({
+        canUninstall: true,
+      });
+
+      registry.dispose();
+    },
+  );
+
+  it('fails closed with visible diagnostics for unresolved remaining manifests', () => {
+    const registry = new ExtensionRegistry();
+    const target = createActiveOnlyExtension();
+    const entries = createExtensionManagementEntries({
+      availableExtensions: [target],
+      extensionCatalog: createCatalogReader(registry),
+      installedRecords: [
+        installedRecord(target.manifest.id, true),
+        installedRecord('workbench-kit.test.unresolved', false),
+      ],
+    });
+    const targetEntry = entries.find((entry) => entry.id === target.manifest.id);
+
+    expect(targetEntry).not.toHaveProperty('canUninstall');
+    expect(targetEntry?.diagnostics).toContainEqual({
+      message:
+        'Cannot verify uninstall safety because these extension manifests are unavailable or ambiguous: workbench-kit.test.unresolved.',
+      severity: 'error',
+    });
+
+    registry.dispose();
+  });
 });
+
+function installedRecord(id: string, enabled: boolean) {
+  return {
+    category: 'utility',
+    enabled,
+    id,
+    installedAt: '2026-08-22T00:00:00.000Z',
+    manifestUrl: id,
+  };
+}
 
 function createActiveOnlyExtension(): WorkbenchExtensionDescription {
   return {

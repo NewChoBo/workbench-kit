@@ -18,6 +18,10 @@ import type {
   ExtensionManagementFeatureSummary,
   ExtensionManagementTransition,
 } from '@workbench-kit/react/workbench/management';
+import {
+  createExtensionUninstallEvaluation,
+  type ExtensionUninstallEligibility,
+} from './uninstall-eligibility.js';
 
 export interface CreateExtensionManagementEntriesInput {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
@@ -25,7 +29,6 @@ export interface CreateExtensionManagementEntriesInput {
   readonly installedRecords: readonly InstalledExtensionRecord[];
   readonly transition?:
     (ExtensionManagementTransition & { readonly extensionId: string }) | undefined;
-  readonly uninstallableExtensionIds?: ReadonlySet<string>;
 }
 
 export interface CreateExtensionCatalogBrowseEntriesInput extends CreateExtensionManagementEntriesInput {
@@ -44,9 +47,12 @@ export function createExtensionManagementEntries({
   extensionCatalog,
   installedRecords,
   transition,
-  uninstallableExtensionIds = new Set(installedRecords.map((record) => record.id)),
 }: CreateExtensionManagementEntriesInput): readonly ExtensionManagementEntry[] {
   const installedById = new Map(installedRecords.map((record) => [record.id, record]));
+  const uninstallEvaluation = createExtensionUninstallEvaluation({
+    availableExtensions,
+    installedRecords,
+  });
   const extensionFeatures = createExtensionManagementFeatureMaps(
     availableExtensions,
     extensionCatalog,
@@ -59,14 +65,16 @@ export function createExtensionManagementEntries({
         extension.manifest.id,
         extensionFeatures,
       );
+      const uninstallEligibility =
+        installed && !isBuiltin
+          ? uninstallEvaluation.getEligibility(extension.manifest.id)
+          : undefined;
 
       return {
-        ...(installed && !isBuiltin && uninstallableExtensionIds.has(extension.manifest.id)
-          ? { canUninstall: true }
-          : {}),
+        ...(uninstallEligibility?.kind === 'eligible' ? { canUninstall: true } : {}),
         category: installed?.category ?? (isBuiltin ? 'builtin' : 'sample'),
         description: extension.manifest.displayName,
-        diagnostics: featureState.diagnostics,
+        diagnostics: mergeUninstallDiagnostics(featureState.diagnostics, uninstallEligibility),
         displayName: extension.manifest.displayName,
         enabled: isBuiltin ? true : (installed?.enabled ?? false),
         features: featureState.features,
@@ -93,14 +101,15 @@ export function createExtensionManagementEntries({
         extension.manifest.id,
         extensionFeatures,
       );
+      const uninstallEligibility = installed
+        ? uninstallEvaluation.getEligibility(extension.manifest.id)
+        : undefined;
 
       return {
-        ...(installed && uninstallableExtensionIds.has(extension.manifest.id)
-          ? { canUninstall: true }
-          : {}),
+        ...(uninstallEligibility?.kind === 'eligible' ? { canUninstall: true } : {}),
         category: installed?.category ?? 'installed',
         description: extension.manifest.displayName,
-        diagnostics: featureState.diagnostics,
+        diagnostics: mergeUninstallDiagnostics(featureState.diagnostics, uninstallEligibility),
         displayName: extension.manifest.displayName,
         enabled: installed?.enabled ?? true,
         features: featureState.features,
@@ -117,6 +126,31 @@ export function createExtensionManagementEntries({
   return [...bundledEntries, ...activeExtensions].sort((left, right) =>
     left.displayName.localeCompare(right.displayName),
   );
+}
+
+function mergeUninstallDiagnostics(
+  diagnostics: readonly ExtensionManagementDiagnosticSummary[] | undefined,
+  eligibility: ExtensionUninstallEligibility | undefined,
+): readonly ExtensionManagementDiagnosticSummary[] | undefined {
+  if (eligibility?.kind !== 'blocked') {
+    return diagnostics;
+  }
+
+  const uninstallDiagnostics: ExtensionManagementDiagnosticSummary[] = [];
+  if (eligibility.dependentExtensionIds.length > 0) {
+    uninstallDiagnostics.push({
+      message: `Cannot uninstall because these installed extensions depend on it: ${eligibility.dependentExtensionIds.join(', ')}.`,
+      severity: 'error',
+    });
+  }
+  if (eligibility.unresolvedExtensionIds.length > 0) {
+    uninstallDiagnostics.push({
+      message: `Cannot verify uninstall safety because these extension manifests are unavailable or ambiguous: ${eligibility.unresolvedExtensionIds.join(', ')}.`,
+      severity: 'error',
+    });
+  }
+
+  return [...(diagnostics ?? []), ...uninstallDiagnostics];
 }
 
 export function createExtensionCatalogBrowseEntries({

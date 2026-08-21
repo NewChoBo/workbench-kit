@@ -9,6 +9,7 @@ import {
 } from '@workbench-kit/workbench-core';
 
 import type { ThemeSelectionProtectionSnapshot } from './theme-selection-protection.js';
+import { createExtensionUninstallEvaluation } from './uninstall-eligibility.js';
 
 interface DisposableLike {
   dispose(): void;
@@ -53,6 +54,7 @@ export interface ExtensionEnablementControllerOptions {
 
 /** Provider-owned live installed/enabled state for the narrow theme lifecycle. */
 export class ExtensionEnablementController implements DisposableLike {
+  private readonly availableExtensions: readonly WorkbenchExtensionDescription[];
   private readonly availableExtensionsById: ReadonlyMap<string, WorkbenchExtensionDescription>;
   private readonly integrityAcceptedExtensionIds: ReadonlySet<string>;
   private readonly listeners = new Set<() => void>();
@@ -77,6 +79,7 @@ export class ExtensionEnablementController implements DisposableLike {
     registrationLifetime,
     registry,
   }: ExtensionEnablementControllerOptions) {
+    this.availableExtensions = [...availableExtensions];
     this.availableExtensionsById = new Map(
       availableExtensions.map((description) => [description.manifest.id, description]),
     );
@@ -140,6 +143,14 @@ export class ExtensionEnablementController implements DisposableLike {
     }
     const target = persisted.value.find((record) => record.id === extensionId);
     if (!target || extensionId.startsWith('workbench-kit.builtin.')) {
+      return undefined;
+    }
+
+    const eligibility = createExtensionUninstallEvaluation({
+      availableExtensions: this.availableExtensions,
+      installedRecords: persisted.value,
+    }).getEligibility(extensionId);
+    if (eligibility.kind !== 'eligible') {
       return undefined;
     }
 

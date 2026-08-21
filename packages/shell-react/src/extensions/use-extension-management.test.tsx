@@ -354,10 +354,8 @@ describe('useExtensionManagementModel', () => {
       () => !currentModel?.installedEntries.some((entry) => entry.id === installedRecord.id),
     );
     expect(JSON.parse(installedStorage.getItem(storageKey) ?? 'null')).toEqual([]);
-    expect(currentModel?.pendingAction).toEqual({
-      entryId: installedRecord.id,
-      kind: 'uninstall',
-    });
+    expect(currentModel?.pendingAction).toBeUndefined();
+    expect(currentModel?.pendingUninstallEntryId).toBe(installedRecord.id);
     expect(currentModel?.installTrustRecords).toEqual(trustRecords);
     expect(JSON.parse(trustStorage.getItem(trustStorageKey) ?? 'null')).toEqual(trustRecords);
     expect(requestAnimationFrame).toHaveBeenCalledTimes(1);
@@ -470,6 +468,7 @@ describe('useExtensionManagementModel', () => {
       ]),
     );
     expect(currentModel?.pendingAction).toBeUndefined();
+    expect(currentModel?.pendingUninstallEntryId).toBeUndefined();
     expect(requestAnimationFrame).not.toHaveBeenCalled();
     expect(diagnostics).toHaveBeenCalledWith({
       code: 'write_failed',
@@ -560,6 +559,7 @@ describe('useExtensionManagementModel', () => {
       expect.arrayContaining([expect.objectContaining({ id: installedRecord.id })]),
     );
     expect(currentModel?.pendingAction).toBeUndefined();
+    expect(currentModel?.pendingUninstallEntryId).toBeUndefined();
     expect(requestAnimationFrame).not.toHaveBeenCalled();
 
     await act(async () => {

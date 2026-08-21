@@ -430,4 +430,90 @@ describe('ExtensionEnablementController', () => {
     });
     expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
   });
+
+  it('rechecks a stale uninstall action and blocks a newly persisted dependent', () => {
+    const dependent: WorkbenchExtensionDescription = {
+      manifest: {
+        ...themeExtension.manifest,
+        contributes: undefined,
+        displayName: 'Persisted Dependent',
+        extensionDependencies: [themeExtension.manifest.id],
+        id: 'workbench-kit.test.persisted-dependent',
+        name: 'persisted-dependent',
+      },
+    };
+    const targetRecord = installedRecord(true);
+    const dependentRecord: InstalledExtensionRecord = {
+      category: 'utility',
+      enabled: false,
+      id: dependent.manifest.id,
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: dependent.manifest.id,
+    };
+    const persistence = createMemoryStorage([targetRecord]);
+    const registry = new ExtensionRegistry();
+    const registrationLifetime = registry.registerExtensions([themeExtension]);
+    const controller = new ExtensionEnablementController({
+      availableExtensions: [themeExtension, dependent],
+      initialEnabledExtensions: [themeExtension],
+      initialInstalledRecords: [targetRecord],
+      installedExtensionsStorage: persistence.storage,
+      installedExtensionsStorageKey: STORAGE_KEY,
+      integrityAcceptedExtensionIds: new Set([themeExtension.manifest.id, dependent.manifest.id]),
+      registrationLifetime,
+      registry,
+    });
+    persistence.values.set(STORAGE_KEY, JSON.stringify([targetRecord, dependentRecord]));
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toBeUndefined();
+    expect(persistence.setItem).not.toHaveBeenCalled();
+    expect(JSON.parse(persistence.values.get(STORAGE_KEY) ?? '[]')).toEqual([
+      targetRecord,
+      dependentRecord,
+    ]);
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([targetRecord]);
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+  });
+
+  it('fails closed on unresolved persisted manifest evidence', () => {
+    const targetRecord = installedRecord(true);
+    const unresolvedRecord: InstalledExtensionRecord = {
+      category: 'utility',
+      enabled: true,
+      id: 'workbench-kit.test.unresolved',
+      installedAt: '2026-08-22T00:00:00.000Z',
+      manifestUrl: 'workbench-kit.test.unresolved',
+    };
+    const persistence = createMemoryStorage([targetRecord, unresolvedRecord]);
+    const registry = new ExtensionRegistry();
+    const registrationLifetime = registry.registerExtensions([themeExtension]);
+    const controller = new ExtensionEnablementController({
+      availableExtensions: [themeExtension],
+      initialEnabledExtensions: [themeExtension],
+      initialInstalledRecords: [targetRecord, unresolvedRecord],
+      installedExtensionsStorage: persistence.storage,
+      installedExtensionsStorageKey: STORAGE_KEY,
+      integrityAcceptedExtensionIds: new Set([themeExtension.manifest.id]),
+      registrationLifetime,
+      registry,
+    });
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toBeUndefined();
+    expect(persistence.setItem).not.toHaveBeenCalled();
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([targetRecord, unresolvedRecord]);
+  });
+
+  it('commits a safe uninstall without tearing down the live registration', () => {
+    const { controller, persistence, registry } = createHarness({ enabled: true });
+
+    expect(controller.uninstallInstalledExtension(themeExtension.manifest.id)).toMatchObject({
+      enabled: false,
+      kind: 'reloadRequired',
+    });
+    expect(persistence.setItem).toHaveBeenCalledTimes(1);
+    expect(JSON.parse(persistence.values.get(STORAGE_KEY) ?? 'null')).toEqual([]);
+    expect(controller.getInstalledRecordsSnapshot()).toEqual([]);
+    expect(registry.getExtension(themeExtension.manifest.id)).toBeDefined();
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+  });
 });

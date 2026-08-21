@@ -70,6 +70,7 @@ export function useExtensionManagementModel({
   const [pendingAction, setPendingAction] = useState<
     ExtensionManagementPendingAction | undefined
   >();
+  const [pendingUninstallEntryId, setPendingUninstallEntryId] = useState<string | undefined>();
   const [lastTransition, setLastTransition] = useState<
     ExtensionEnablementTransitionResult | undefined
   >();
@@ -135,7 +136,6 @@ export function useExtensionManagementModel({
       extensionCatalog,
       installedRecords,
       transition: lastTransition,
-      uninstallableExtensionIds: new Set(installedRecords.map((record) => record.id)),
     });
   }, [availableExtensions, extensionCatalog, installedRecords, lastTransition]);
 
@@ -224,12 +224,23 @@ export function useExtensionManagementModel({
 
       const result = extensionEnablement.uninstallInstalledExtension(entry.id);
       if (!result) {
-        setPendingAction(undefined);
         return;
       }
-      handleTransition(result, 'uninstall');
+
+      setLastTransition(result);
+      if (result.kind !== 'reloadRequired') {
+        setPendingUninstallEntryId(undefined);
+        return;
+      }
+
+      setPendingUninstallEntryId(result.extensionId);
+      if (typeof window !== 'undefined') {
+        window.requestAnimationFrame(() => {
+          window.location.reload();
+        });
+      }
     },
-    [extensionEnablement, handleTransition],
+    [extensionEnablement],
   );
 
   const rememberInstallTrust = useCallback(
@@ -260,6 +271,7 @@ export function useExtensionManagementModel({
     installedEntries,
     installTrustRecords,
     pendingAction,
+    pendingUninstallEntryId,
     rememberInstallTrust,
     toggleInstalledEntry,
     uninstallInstalledEntry,
