@@ -584,6 +584,225 @@ WorkflowRuntime
 
 Do not delegate implementation until these are closed.
 
+## WB-NS-011 — Field Remap runtime-only preview projection
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Issue owner:** [#225](https://github.com/NewChoBo/workbench-kit/issues/225)
+- **Ownership:** `GENERIC_KIT`
+- **Runtime layer:** `PURE_WEB`
+- **Verified current base:** `develop@df20eebae0dc1c352f4c2ce1a31841f2952df691`
+- **Related:** `WB-NS-010`, `WB-NS-020`
+
+### Goal
+
+Give direct Field Remap Flow embeds an optional, canvas-adjacent sample preview without
+creating a second evaluator or a competing document source of truth. One shared headless
+controller owns preview execution for a Panel composition; the legacy Panel output and
+the nested Flow consume the same precomputed snapshot. A direct Flow embed remains a
+presentation consumer and receives a host-precomputed snapshot.
+
+The snapshot is `RUNTIME_ONLY`. It does not enter `FieldRemapDocument`, semantic history,
+persistence, or the broader projection architecture.
+
+### Scope
+
+- extract the current Panel async effect into one React-independent, package-private
+  preview controller under `shell-react/field-remap`;
+- reuse `convertMappedInputs` as the only Kit evaluation path, including edges,
+  operators, transforms and `AbortSignal`;
+- project one precomputed snapshot through both the existing Panel result pane and an
+  optional Flow preview rail;
+- derive selected preview content in Flow from its current controlled or uncontrolled
+  `FieldRemapSelection` without starting another evaluation;
+- compose the preview beside the existing detail surface using the established Flow
+  splitter and chrome-label patterns;
+- add focused controller, Panel, Flow, public-consumer and browser evidence.
+
+Non-scope:
+
+- transform-step intermediate tracing;
+- operator-local intermediate tracing;
+- a debugger, breakpoints, persistence, document/history changes, or a generic
+  projection framework;
+- replacement of an integrating host's evaluation pipeline;
+- public controller or new `@workbench-kit/field-remap` runtime API;
+- Electron, preload, main-process or native-host behavior.
+
+### Public API
+
+Add the following source-compatible types and optional props through
+`@workbench-kit/shell-react/field-remap` and its existing barrel:
+
+```ts
+export type FieldRemapPreviewState =
+  | {
+      readonly status: 'unavailable';
+      readonly reason: 'hidden' | 'no-sample';
+    }
+  | { readonly status: 'loading' }
+  | {
+      readonly status: 'ready';
+      readonly result: ConvertToShapeResult;
+    }
+  | {
+      readonly status: 'error';
+      readonly message: string;
+    };
+
+export interface FieldRemapFlowMapperProps {
+  readonly preview?: FieldRemapPreviewState;
+  readonly showPreview?: boolean;
+}
+
+export interface FieldRemapPanelProps {
+  readonly showFlowPreview?: boolean;
+}
+```
+
+New public optional props follow exact-optional convention and do not add explicit
+`| undefined`. Direct Flow consumers may adapt their existing runtime result to
+`FieldRemapPreviewState`; Flow never calls `convertMappedInputs` itself. When a snapshot
+is supplied, the preview is visible unless `showPreview` is `false`. Panel passes its
+snapshot to Flow only when `showFlowPreview` is `true`, preserving the current default
+Panel presentation.
+
+Add preview copy as optional additive keys on `FieldRemapChromeLabels`, with English
+defaults and stable `fieldRemapChromeLabelKeys`. Existing complete legacy label objects
+must continue to typecheck.
+
+### Controller and state flow
+
+The package-private controller accepts exactly one of:
+
+```ts
+type FieldRemapPreviewCommand =
+  | { readonly kind: 'hidden' }
+  | { readonly kind: 'no-sample' }
+  | {
+      readonly kind: 'evaluate';
+      readonly input: Omit<ConvertMappedInputsInput, 'signal'>;
+    };
+```
+
+It exposes internal `getSnapshot`, `subscribe`, `update` and idempotent `dispose`
+operations. Its transition order is:
+
+```text
+new command
+  -> abort the prior AbortController
+  -> increment the private generation
+  -> hidden/no-sample: publish unavailable and do not evaluate
+  -> evaluate: publish loading
+     -> convertMappedInputs(input + controller-owned signal)
+     -> current generation + live controller: publish ready
+     -> current generation + non-abort failure: publish error
+     -> superseded/aborted/disposed result: discard without publication
+```
+
+Changing source sample, durable sources/targets, edges, operators or transform registry
+creates a new evaluation command. Selection changes only change the Flow projection and
+must not abort, re-run or duplicate conversion. Loading and error states do not retain or
+display a stale prior result.
+
+`showPreview=false`, `hidden`, and `no-sample` unmount the preview rail and its splitter
+track; they do not leave an empty column. In a Panel composition, hiding only the Flow
+rail does not cancel evaluation while the legacy Panel output remains an active consumer.
+A direct Flow has no internal evaluator to leave running. `includeHidden` remains an
+authoring projection flag: Panel evaluation continues to use the durable full
+sources/targets/edges, matching current preview semantics, and does not reinterpret
+hidden fields as absent runtime data.
+
+### Selection projection semantics
+
+Projection from one `ready` result is deterministic:
+
+| Selection                       | Preview meaning                                                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `null`                          | Final document output after edge conversion and all mapping operators                                             |
+| `edge`                          | The matching `result.slots[edgeId]` binding value, before any document-level operator overwrite                   |
+| `transformStep`                 | The same final binding value as its edge, explicitly labeled that per-step intermediate values are v1-unsupported |
+| `operator`                      | Final document output, explicitly labeled that selected-operator intermediate values are v1-unsupported           |
+| `draft`                         | Stable unsupported state because an ephemeral draft is not a persisted/executable binding                         |
+| stale or missing selected owner | Stable unavailable state, not an execution error                                                                  |
+
+The renderer may memoize an edge-id lookup for `O(1)` selection projection after one
+`O(edges)` index build. It must not execute transforms while selecting or rendering.
+
+### Ordered implementation tasks
+
+1. Add the private controller/state adapter and focused generation, abort, failure,
+   hidden, no-sample and disposal tests.
+2. Replace the Panel-owned async effect with one controller instance using
+   `convertMappedInputs`; keep the full durable shape/edge/operator inputs and bind the
+   existing result pane to its snapshot.
+3. Add Flow's additive preview props and selection-only projection, then pass the same
+   snapshot from Panel when `showFlowPreview` is enabled.
+4. Compose the optional preview with the existing detail splitter; add additive labels,
+   accessible status/error semantics, minimal token-based CSS, and no empty track.
+5. Add focused Panel/Flow regressions, public root and packed-consumer coverage, and an
+   exact-optional consumer fixture.
+6. Add Storybook play evidence for document, edge, transform-step, operator, draft,
+   hidden and no-sample states using a delayed transform to prove latest-result wins.
+7. Update the Field Remap README and consumer capability documentation with execution
+   ownership, injection and non-tracing semantics.
+
+### Validation
+
+Focused evidence must prove:
+
+- a delayed superseded request cannot overwrite the latest sample/graph result;
+- abort and dispose publish neither stale ready nor abort-as-error state;
+- one Panel composition performs one evaluation per semantic input revision and both
+  Panel and Flow render the same snapshot;
+- selection-only changes perform zero new evaluations;
+- edge, transform-step, operator, draft and stale selections follow the table above;
+- hidden/no-sample omit both rail and splitter track;
+- current controlled/uncontrolled Panel behavior and hidden-shape projection remain
+  intact;
+- legacy label objects and Flow/Panel consumers remain source-compatible.
+
+Repository gates on one exact candidate:
+
+```powershell
+pnpm check:commit-safety
+pnpm --filter @workbench-kit/field-remap typecheck
+pnpm --filter @workbench-kit/shell-react typecheck
+pnpm --filter @workbench-kit/workbench-sample typecheck
+pnpm typecheck:react-exact-optional
+pnpm check:public-exports
+pnpm check:packed-consumer
+pnpm validate:static
+pnpm validate:fast
+pnpm build:storybook
+pnpm test:storybook-play:required
+```
+
+The required browser evidence is real Chromium Storybook play coverage. This packet
+makes no Electron or native-host claim and requires no Electron gate.
+
+### Acceptance / Done criteria
+
+- Panel composition has one preview execution owner and no Panel/Flow duplicate run;
+- Panel's legacy result and enabled Flow preview consume the same immutable snapshot;
+- direct Flow embeds remain presentation-only and accept a precomputed preview state;
+- selection changes never cause evaluation, cancellation or document mutation;
+- late, aborted and disposed results cannot overwrite the current generation;
+- step/operator intermediate values are not invented or implied;
+- draft, stale selection, no-sample and hidden behavior is deterministic;
+- hidden/no-sample preview leaves no rail or reserved splitter track;
+- `FieldRemapDocument`, history, persistence and integrating-host pipelines are unchanged;
+- focused, compatibility, static, fast and required Chromium gates pass on one exact
+  implementation candidate.
+
+### Readiness and source-review gate
+
+This packet is ready at the verified base above because preview execution ownership,
+public API, runtime-only authority, cancellation, selection projection, non-scope and
+verification are closed. Reject an implementation that evaluates inside Flow, creates
+separate Panel and Flow controllers, re-runs on selection, persists preview state,
+claims step/operator intermediate values, leaves hidden/no-sample layout tracks, or
+claims Electron coverage.
+
 ## WB-NS-020 — Projection ownership and round-trip contracts
 
 - **Status:** `DESIGNING`
