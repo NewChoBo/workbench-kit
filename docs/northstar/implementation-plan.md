@@ -64,7 +64,7 @@ WB-NS-070A typed UI value/property inventory + target contract [DONE]
         ↓
 WB-NS-070B selectable layout strategy + typed style constraints [DONE]
         ↓
-WB-NS-070C atomic component/composite descriptor contract [SOURCE_REVIEW_REQUIRED]
+WB-NS-070C atomic component/composite descriptor contract [DONE]
         ↓
 WB-NS-070D UiDocument command + direct-manipulation authoring
         ↓
@@ -2277,11 +2277,173 @@ Descriptor validation and catalog construction must be linear in total supplied 
 
 The packet is complete when a browser- and Electron-free consumer can declare and validate atomic/container/composite public interfaces, contribute them from existing registry/asset compatibility surfaces, construct a deterministic immutable catalog and perform exact identity lookup without a renderer, document tree or evaluator.
 
-Producer-distinct readiness review confirmed identity/version, public interface, layout/accessibility cross-references, contribution conflict semantics and composite opacity on exact successor `2c8e81db3f972b3dd0e085af128a7981e6b0bf23`. Exact-source review must now reject lossy automatic schema inference, last-writer-wins component replacement, inline composite trees or executable renderer strings, mutation, implicit latest-version selection, a second runtime registry/catalog, or any change to existing JDW build/content behavior.
+Producer-distinct readiness review confirmed identity/version, public interface, layout/accessibility cross-references, contribution conflict semantics and composite opacity on exact successor `2c8e81db3f972b3dd0e085af128a7981e6b0bf23`. Source implementation and its single review successor passed exact-source review and the frozen static, unit and browser gates, then merged to `develop` as `156cf741fead48d5c177b157c0e295f8b318df91`.
 
-### `WB-NS-070D` ready gate
+## WB-NS-070D - UiDocument command and direct-manipulation authoring
 
-Close `UiDocument` node identity/tree model, commands/typed patches, transaction/undo behavior, Canvas↔Inspector parity, selection/hierarchy ownership, and persistence boundary.
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target owner:** `@workbench-kit/jdw`
+- **Implementation scope:** stable node identity, node-index/hierarchy projection, renderer-neutral authoring commands, atomic transactions, undo/redo session state, selection repair, JDW persistence adapter, root exports and backendless tests
+- **Dependencies:** `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`
+
+### Outcome
+
+An AI-disabled host can load one JDW source as a `UiDocument`, resolve nodes by stable ID, send the same typed command from Palette, Canvas, Hierarchy, Inspector or API, commit the resulting JDW patches atomically, repair selection after structural edits, undo/redo whole transactions and persist the resulting source. Canvas and Inspector do not receive separate mutation APIs or editable state.
+
+This packet reuses the existing `WidgetDocument` source/root projection, `WidgetPath`, `WidgetPatch`, tree operations, placement normalization and layout gesture-to-patch mappings. It does not introduce a second tree/layout engine, renderer, component materializer, evaluator or persistence format.
+
+### Current source/API decisions
+
+| Existing surface                                    | Decision                      | Reason / follow-up                                                                                                                                                                                                |
+| --------------------------------------------------- | ----------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WidgetDocument` and formatted JDW JSON             | `REUSE_CANONICAL_SOURCE`      | Persisted JDW `source` remains the single editable source of truth. `UiDocument` is a validated authoring envelope over that source/root projection, not a second serialized document.                            |
+| `JsonWidgetNode.id` / `GenericWidget.id`            | `PROMOTE_WITH_ROUND_TRIP`     | JDW top-level `id` maps to authoring `nodeId` and back; it is never stored as `args.id`. A non-blank ID on every node is required. Missing or duplicate IDs fail closed; loading never invents IDs silently.      |
+| `WidgetPath` and tree collection                    | `REUSE_AS_DERIVED_INDEX`      | Paths remain operation-local locators derived from stable IDs. Selection, Hierarchy and commands do not persist array-index paths as identity.                                                                    |
+| `WidgetPatch` and layout gesture mappings           | `REUSE_AS_PATCH_ENGINE`       | Commands resolve IDs to current paths and delegate structure/layout mechanics to the existing immutable patch functions. Layout strategy calculations are not duplicated.                                         |
+| 070A property values and 070B layout metadata       | `REUSE_AS_COMMAND_VALUES`     | Property and layout edits carry typed `UiValueSource` values. This packet stores authoring metadata without evaluating bindings, tokens, resources or expressions. Runtime projection remains an adapter concern. |
+| 070C exact component references                     | `REUSE_AS_NODE_IDENTITY`      | Every authoring node names an exact `{ id, version }` component reference; no implicit latest-version lookup is introduced.                                                                                       |
+| `WidgetSelectionState`                              | `SUPERSEDE_WITH_ID_SELECTION` | Path-key selection cannot survive reorder/reparent. A compatibility projection may expose current paths, while the session owns ordered stable node IDs and prunes IDs that no longer exist.                      |
+| legacy `WorkbenchDocument` and JSON-pointer history | `KEEP_COMPATIBILITY_ONLY`     | It remains source-compatible for current consumers. There is no automatic bidirectional conversion and it is not extended with UiDocument semantics. Removal requires named consumer migration evidence.          |
+
+### Public authoring contract
+
+Implementation names may change only if the same ownership and fail-closed behavior remain explicit.
+
+```ts
+const UI_DOCUMENT_AUTHORING_ARG = '$authoring';
+
+interface UiDocumentNodeAuthoring {
+  readonly component: UiComponentRef;
+  readonly properties: Readonly<Record<string, UiValueSource>>;
+  readonly layout?: {
+    readonly strategyId: string;
+    readonly values: Readonly<Record<string, UiValueSource>>;
+  };
+}
+
+type UiDocumentNode = GenericWidget & {
+  readonly id: string;
+  readonly $authoring: UiDocumentNodeAuthoring;
+};
+
+interface UiDocument {
+  readonly documentId: string;
+  readonly revision: number;
+  readonly source: string;
+  readonly root: UiDocumentNode;
+}
+
+interface UiDocumentNodeIdentity {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+}
+
+type UiDocumentCommand =
+  | {
+      readonly type: 'insert-node';
+      readonly commandId: string;
+      readonly parentId: string;
+      readonly index: number;
+      readonly node: UiDocumentNode;
+    }
+  | { readonly type: 'remove-node'; readonly commandId: string; readonly nodeId: string }
+  | {
+      readonly type: 'replace-node';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly node: UiDocumentNode;
+    }
+  | {
+      readonly type: 'move-node';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly targetParentId: string;
+      readonly index: number;
+    }
+  | {
+      readonly type: 'set-property';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly propertyId: string;
+      readonly value?: UiValueSource;
+    }
+  | {
+      readonly type: 'set-layout';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly strategyId: string;
+      readonly values: Readonly<Record<string, UiValueSource>>;
+    };
+
+interface UiDocumentTransaction {
+  readonly transactionId: string;
+  readonly command: UiDocumentCommand;
+  readonly baseRevision: number;
+  readonly nextRevision: number;
+  readonly patches: readonly WidgetPatch[];
+}
+
+interface UiDocumentTransactionRecord {
+  readonly transaction: UiDocumentTransaction;
+  readonly beforeDocument: UiDocument;
+  readonly afterDocument: UiDocument;
+  readonly beforeSelectedNodeIds: readonly string[];
+  readonly afterSelectedNodeIds: readonly string[];
+}
+
+interface UiAuthoringSessionState {
+  readonly document: UiDocument;
+  readonly selectedNodeIds: readonly string[];
+  readonly past: readonly UiDocumentTransactionRecord[];
+  readonly future: readonly UiDocumentTransactionRecord[];
+}
+```
+
+`UiDocumentNode` is the typed authoring projection over the existing open `GenericWidget`; it does not introduce another recursive tree representation. Conversion is frozen as follows:
+
+- For an ordinary JDW node, top-level `JsonWidgetNode.id` maps losslessly to `UiDocumentNode.id` and back; the converter excludes `id` from `args`.
+- `expanded` and `flexible` nodes are structural serialization wrappers, not independent authoring nodes. Their top-level `id` and `$authoring` args must be absent; the contained semantic child owns both. Loading or migration reports a structured wrapper-identity issue and returns no editable/migrated document when a wrapper carries either field. Serialization writes the semantic ID/metadata to the child and never copies or invents them on the wrapper.
+- JDW `args[UI_DOCUMENT_AUTHORING_ARG]`, whose literal key is `$authoring`, is the only canonical envelope for exact `component`, typed `properties` and optional typed `layout`. It maps to `UiDocumentNode.$authoring` unchanged and is never promoted into ad-hoc runtime fields.
+- Inserted and replacement subtrees must have non-blank globally unique IDs, exact non-blank component ID/version, valid `UiValueSource` property values and a valid strategy ID/layout values before any `WidgetPatch` is applied. Invalid authoring metadata produces ordered issues and no partial patch.
+
+Existing runtime fields remain source-compatible and are not reinterpreted. A runtime/renderer adapter may derive current fields from supported literal authoring values, but that projection is not editable truth and is outside this packet.
+
+### Command, transaction and parity rules
+
+1. A command resolves every referenced node ID against one index built from the current root. Missing, blank or duplicate identity produces structured issues and no mutation.
+2. Structural commands translate to the existing `WidgetPatch` operations. Root removal/move, insertion into an unsupported parent, descendant reparenting, duplicate subtree IDs and replacement whose root ID differs from the target fail closed.
+3. A property command replaces only the named authoring property. A layout command replaces one strategy ID plus its typed values as one transaction; partial layout commits are not observable.
+4. Every successful non-noop command increments the revision once and records the before/after source plus emitted patches as one transaction. A failed or noop command does not change revision or history.
+5. Each history record stores the transaction plus immutable before/after `UiDocument` and ordered selection snapshots. Undo/redo does not create a transaction or increment a revision: it moves the same record between `past`/`future`, restores the matching document and selection snapshot, then prunes selection IDs absent from that restored document. Applying a new command after undo clears the future stack.
+6. Palette, Canvas, Hierarchy, Inspector and programmatic callers all use `applyUiDocumentCommand`; source labels are diagnostic metadata only and never change semantics.
+7. Selection is session state, not persisted document state. It is ordered, deduplicated, limited to existing node IDs and may be projected to current `WidgetPath` values for compatibility renderers.
+8. `commandId` is a required non-blank diagnostic/correlation identifier. 070D does not provide deduplication or idempotency semantics; applying the same command twice is evaluated twice against the current revision.
+
+### Persistence and migration boundary
+
+- `createUiDocument(documentId, source)` parses the existing JDW format and validates stable authoring identity. Invalid JSON, missing/duplicate node IDs, blank component identity/version or malformed authoring values return ordered structured issues and no editable document.
+- `formatUiDocument` returns the document's canonical JDW source; command commits update root and source together through existing JDW formatting.
+- `migrateWidgetDocumentToUiDocument` requires a caller-supplied deterministic resolver for nodes lacking a valid ID or exact component reference. The resolver receives the immutable current widget, derived `WidgetPath`, parent path, existing valid ID if present and existing valid exact component reference if present; it returns the missing identity fields or a structured failure. Already-valid IDs and component references are preserved and are not passed through replacement policy.
+- Migration visits nodes in the current `collectWidgetNodes` root-first supplied-child order, accumulates ordered issues, then validates resolved IDs/references globally. Any resolver failure, blank/malformed value or collision returns issues with no migrated source/document. Only an issue-free full traversal returns the newly formatted JDW source; the input is never mutated. The helper does not use random/time-based IDs, infer component versions from widget types or expose a partially migrated tree.
+- Existing `createWidgetDocument`, raw `WidgetPatch`, Screen Spec and legacy `WorkbenchDocument` APIs remain compatible. No automatic two-way synchronization is added.
+
+### Ordered implementation tasks
+
+1. Add the UiDocument envelope, stable identity/index validation and ordered issue codes under `packages/json-widget/src/ui-authoring/`.
+2. Add explicit legacy-source migration using caller-supplied stable identity resolution.
+3. Translate the six command kinds to existing `WidgetPatch` operations and commit root/source atomically.
+4. Add ID-owned selection/hierarchy projections and transaction history with undo/redo.
+5. Export the contract from `@workbench-kit/jdw` without changing the existing widget/document exports.
+6. Add backendless tests for identity failures, every command, Canvas/Inspector parity, transaction atomicity/noop behavior, selection repair, undo/redo, migration determinism, expanded/flexible wrapper rejection and semantic-child identity round-trip, and JDW persistence.
+
+### Validation and acceptance
+
+- during development: focused JDW UiDocument tests plus `@workbench-kit/jdw` typecheck/build;
+- frozen candidate: repository static, full unit and browser gates once on the exact SHA;
+- Electron is not required because this packet changes no native boundary;
+- performance review rejects repeated full-tree scans inside one command, snapshot mutation and duplicate tree/layout implementations. One O(n) identity/index build and immutable snapshot history are acceptable for this first contract slice; no arbitrary bundle-size cap is added.
+
+The packet is complete when a browser-, Electron- and AI-free consumer can migrate or load one valid JDW source, apply all accepted manual edits through one command path, observe identical results regardless of caller surface, undo/redo transactionally and persist/reload the same stable node/component identities. Exact-source review must reject hidden ID invention, path-owned selection, partial commits, last-writer-wins duplicate identity, renderer-specific state, automatic legacy-document synchronization or a second structural/layout engine.
 
 ### `WB-NS-070E` ready gate
 
