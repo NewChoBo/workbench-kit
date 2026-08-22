@@ -177,6 +177,8 @@ export function projectValueTransformToNodeType(
   options: ProjectValueTransformNodeTypeOptions,
 ): ProjectValueTransformNodeTypeResult {
   const issues: FieldRemapNodeProjectionIssue[] = [];
+  const inputType = definition.inputTypes?.[0];
+  const outputType = definition.outputType;
   if (options.nodeTypeRef === null || options.nodeTypeRef === undefined) {
     issues.push({
       code: 'missing-node-type-identity',
@@ -196,7 +198,7 @@ export function projectValueTransformToNodeType(
     });
   }
 
-  if (definition.inputTypes?.length !== 1 || !isFieldDataType(definition.inputTypes[0])) {
+  if (definition.inputTypes?.length !== 1 || !isFieldDataType(inputType)) {
     issues.push({
       code: 'unsupported-transform-input-arity',
       message: 'Transform node projection requires exactly one declared FieldDataType input.',
@@ -204,7 +206,7 @@ export function projectValueTransformToNodeType(
       transformId: definition.id,
     });
   }
-  if (definition.outputType === undefined || !isFieldDataType(definition.outputType)) {
+  if (!isFieldDataType(outputType)) {
     issues.push({
       code: 'missing-transform-output-type',
       message: 'Transform node projection requires one declared FieldDataType output.',
@@ -233,7 +235,8 @@ export function projectValueTransformToNodeType(
     options.nodeTypeRef === null ||
     options.nodeTypeRef === undefined ||
     definition.inputTypes?.length !== 1 ||
-    definition.outputType === undefined
+    !isFieldDataType(inputType) ||
+    !isFieldDataType(outputType)
   ) {
     return failed({ descriptor: null, issues });
   }
@@ -245,7 +248,7 @@ export function projectValueTransformToNodeType(
       Object.freeze({
         id: 'input',
         label: 'Input',
-        value: fieldDataTypeToUiValueSchema(definition.inputTypes[0]),
+        value: fieldDataTypeToUiValueSchema(inputType),
         required: true,
       }),
     ]),
@@ -253,7 +256,7 @@ export function projectValueTransformToNodeType(
       Object.freeze({
         id: 'output',
         label: 'Output',
-        value: fieldDataTypeToUiValueSchema(definition.outputType),
+        value: fieldDataTypeToUiValueSchema(outputType),
       }),
     ]),
     ...(properties.length === 0 ? {} : { properties: Object.freeze(properties) }),
