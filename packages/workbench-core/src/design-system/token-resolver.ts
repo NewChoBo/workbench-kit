@@ -3,6 +3,7 @@ import {
   isCanonicalDesignSystemText,
   isStructurallyValidUiValueSource,
   normalizeUiAllowedSources,
+  snapshotDesignSystemResolutionInput,
   validateUiPropertyValue,
   type DesignSystemContributionProvenance,
   type DesignSystemDiagnostic,
@@ -60,6 +61,12 @@ interface TokenSourceSelection {
   readonly provenance: DesignValueProvenanceEntry;
 }
 
+function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
 function freezeDiagnostics(
   diagnostics: readonly DesignSystemDiagnostic[],
 ): readonly DesignSystemDiagnostic[] {
@@ -77,6 +84,14 @@ function freezeDiagnostics(
 
 function failure(diagnostic: DesignSystemDiagnostic): DesignValueResolutionResult {
   return Object.freeze({ diagnostics: freezeDiagnostics([diagnostic]) });
+}
+
+function invalidRequest(path: 'selection' | 'request'): DesignValueResolutionResult {
+  return failure({
+    code: 'invalid-value-resolution-request',
+    message: 'Design value resolution requires declarative selection and request data.',
+    path,
+  });
 }
 
 function cloneJsonValue(value: unknown): unknown {
@@ -334,10 +349,60 @@ export class DesignTokenResolver {
     selection: ResolvedDesignSystemSelection,
     request: DesignTokenResolutionRequest,
   ): DesignValueResolutionResult {
-    return resolveTokenInternal(selection, request.tokenId, request.expectedType, [], []);
+    let normalizedSelection: ResolvedDesignSystemSelection;
+    let normalizedRequest: DesignTokenResolutionRequest;
+    try {
+      normalizedSelection = snapshotDesignSystemResolutionInput(selection);
+      if (!isPlainRecord(normalizedSelection)) return invalidRequest('selection');
+    } catch {
+      return invalidRequest('selection');
+    }
+    try {
+      normalizedRequest = snapshotDesignSystemResolutionInput(request);
+      if (!isPlainRecord(normalizedRequest)) return invalidRequest('request');
+    } catch {
+      return invalidRequest('request');
+    }
+    try {
+      return resolveTokenInternal(
+        normalizedSelection,
+        normalizedRequest.tokenId,
+        normalizedRequest.expectedType,
+        [],
+        [],
+      );
+    } catch {
+      return invalidRequest('request');
+    }
   }
 
   resolveComponentProperty(
+    selection: ResolvedDesignSystemSelection,
+    request: DesignComponentPropertyResolutionRequest,
+  ): DesignValueResolutionResult {
+    let normalizedSelection: ResolvedDesignSystemSelection;
+    let normalizedRequest: DesignComponentPropertyResolutionRequest;
+    try {
+      normalizedSelection = snapshotDesignSystemResolutionInput(selection);
+      if (!isPlainRecord(normalizedSelection)) return invalidRequest('selection');
+    } catch {
+      return invalidRequest('selection');
+    }
+    try {
+      normalizedRequest = snapshotDesignSystemResolutionInput(request);
+      if (!isPlainRecord(normalizedRequest)) return invalidRequest('request');
+    } catch {
+      return invalidRequest('request');
+    }
+
+    try {
+      return this.resolveComponentPropertySnapshot(normalizedSelection, normalizedRequest);
+    } catch {
+      return invalidRequest('request');
+    }
+  }
+
+  private resolveComponentPropertySnapshot(
     selection: ResolvedDesignSystemSelection,
     request: DesignComponentPropertyResolutionRequest,
   ): DesignValueResolutionResult {

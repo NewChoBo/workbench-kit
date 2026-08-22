@@ -304,6 +304,7 @@ export {
 export {
   UnsupportedDesignSystemSnapshotValueError,
   snapshotDesignSystemPackContribution,
+  snapshotDesignSystemResolutionInput,
   snapshotUiDesignSystemState,
 } from './design-system/snapshot';
 export type {

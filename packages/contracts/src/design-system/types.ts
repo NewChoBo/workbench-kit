@@ -194,6 +194,8 @@ export const DESIGN_SYSTEM_DIAGNOSTIC_CODES = Object.freeze([
   'replacement-source-conflicted',
   'replacement-candidate-not-found',
   'duplicate-replacement-candidate',
+  'invalid-value-resolution-request',
+  'invalid-component-compatibility-request',
 ] as const);
 
 export type DesignSystemDiagnosticCode = (typeof DESIGN_SYSTEM_DIAGNOSTIC_CODES)[number];

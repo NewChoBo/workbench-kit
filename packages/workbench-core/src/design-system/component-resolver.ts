@@ -1,7 +1,10 @@
 import {
   designSystemComponentRoleRefKey,
+  isCanonicalDesignSystemText,
   isSameDesignSystemComponentRoleRequirements,
+  snapshotDesignSystemResolutionInput,
   uiComponentRefKey,
+  validateDesignSystemPackDescriptor,
   type DesignSystemComponentRoleRef,
   type DesignSystemDiagnostic,
   type DesignSystemPackDescriptor,
@@ -51,6 +54,20 @@ export interface ComponentCompatibilityResolution {
   readonly diagnostics: readonly DesignSystemDiagnostic[];
 }
 
+function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function isCanonicalComponentRef(value: unknown): value is UiComponentRef {
+  return (
+    isPlainRecord(value) &&
+    isCanonicalDesignSystemText(value.id) &&
+    isCanonicalDesignSystemText(value.version)
+  );
+}
+
 function freezeRef(ref: UiComponentRef): UiComponentRef {
   return Object.freeze({ id: ref.id, version: ref.version });
 }
@@ -79,6 +96,41 @@ function unsupported(
   return result({ kind: 'unsupported', source: freezeRef(source), reason }, diagnostics);
 }
 
+function invalidCompatibilityRequest(source?: UiComponentRef): ComponentCompatibilityResolution {
+  return unsupported(source ?? { id: '', version: '' }, 'source-component-not-found', [
+    {
+      code: 'invalid-component-compatibility-request',
+      message: 'Component compatibility requires declarative valid Pack and replacement data.',
+      path: 'request',
+    },
+  ]);
+}
+
+function isValidCompatibilityRequest(
+  value: Readonly<Record<string, unknown>>,
+): value is Readonly<Record<string, unknown>> & ComponentCompatibilityRequest {
+  if (
+    !isPlainRecord(value.sourcePack) ||
+    !isPlainRecord(value.targetPack) ||
+    !isCanonicalComponentRef(value.component) ||
+    validateDesignSystemPackDescriptor(value.sourcePack as unknown as DesignSystemPackDescriptor)
+      .length > 0 ||
+    validateDesignSystemPackDescriptor(value.targetPack as unknown as DesignSystemPackDescriptor)
+      .length > 0
+  ) {
+    return false;
+  }
+  if (value.replacements === undefined) return true;
+  if (!Array.isArray(value.replacements)) return false;
+  return value.replacements.every(
+    (replacement) =>
+      isPlainRecord(replacement) &&
+      isCanonicalComponentRef(replacement.source) &&
+      Array.isArray(replacement.candidates) &&
+      replacement.candidates.every((candidate) => isCanonicalComponentRef(candidate)),
+  );
+}
+
 function hasExactComponent(pack: DesignSystemPackDescriptor, ref: UiComponentRef): boolean {
   return pack.components.some(
     (candidate) => candidate.id === ref.id && candidate.version === ref.version,
@@ -97,6 +149,29 @@ function matchingReplacementIndexes(
 
 export class ComponentResolver {
   classify(request: ComponentCompatibilityRequest): ComponentCompatibilityResolution {
+    let snapshot: unknown;
+    try {
+      snapshot = snapshotDesignSystemResolutionInput(request);
+    } catch {
+      return invalidCompatibilityRequest();
+    }
+    if (!isPlainRecord(snapshot) || !isValidCompatibilityRequest(snapshot)) {
+      const source =
+        isPlainRecord(snapshot) && isCanonicalComponentRef(snapshot.component)
+          ? snapshot.component
+          : undefined;
+      return invalidCompatibilityRequest(source);
+    }
+    try {
+      return this.classifySnapshot(snapshot);
+    } catch {
+      return invalidCompatibilityRequest(snapshot.component);
+    }
+  }
+
+  private classifySnapshot(
+    request: ComponentCompatibilityRequest,
+  ): ComponentCompatibilityResolution {
     const source = freezeRef(request.component);
     if (!hasExactComponent(request.sourcePack, request.component)) {
       return unsupported(source, 'source-component-not-found');

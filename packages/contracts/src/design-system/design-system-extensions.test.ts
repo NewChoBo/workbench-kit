@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
 import {
+  designSystemComponentRoleRefKey,
   isSameDesignSystemComponentRoleRequirements,
   validateDesignSystemPackDescriptor,
   type DesignSystemPackDescriptor,
@@ -43,6 +44,35 @@ const roleRequirements = {
 };
 
 describe('Design System typed descriptor extensions', () => {
+  it('keeps public role helpers fail-closed without executing accessors', () => {
+    let getterCalled = false;
+    const accessorRef = { version: '1.0.0' } as Record<string, unknown>;
+    Object.defineProperty(accessorRef, 'id', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return 'unsafe';
+      },
+    });
+    const accessorRequirements = {} as Record<string, unknown>;
+    Object.defineProperty(accessorRequirements, 'properties', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return [];
+      },
+    });
+
+    expect(designSystemComponentRoleRefKey(accessorRef as never)).toBe('');
+    expect(isSameDesignSystemComponentRoleRequirements(accessorRequirements as never, {})).toBe(
+      false,
+    );
+    expect(isSameDesignSystemComponentRoleRequirements({ properties: {} } as never, {})).toBe(
+      false,
+    );
+    expect(getterCalled).toBe(false);
+  });
+
   it('normalizes role equality without changing existing allowed-source defaults', () => {
     expect(
       isSameDesignSystemComponentRoleRequirements(

@@ -104,6 +104,44 @@ function selection(
 }
 
 describe('DesignTokenResolver', () => {
+  it('fails malformed/accessor public inputs closed without executing caller code', () => {
+    const resolver = new DesignTokenResolver();
+    const active = selection();
+    let getterCalled = false;
+    const accessorRequest = {} as Record<string, unknown>;
+    Object.defineProperty(accessorRequest, 'tokenId', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return 'color.text';
+      },
+    });
+    const accessorSelection = { ...active } as Record<string, unknown>;
+    Object.defineProperty(accessorSelection, 'pack', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return active.pack;
+      },
+    });
+
+    const malformed = resolver.resolveToken(active, null as never);
+    expect(malformed.diagnostics[0]?.code).toBe('invalid-value-resolution-request');
+    expect(Object.isFrozen(malformed)).toBe(true);
+    expect(Object.isFrozen(malformed.diagnostics)).toBe(true);
+    expect(resolver.resolveToken(active, accessorRequest as never).diagnostics[0]?.code).toBe(
+      'invalid-value-resolution-request',
+    );
+    expect(
+      resolver.resolveToken(accessorSelection as never, { tokenId: 'color.text' }).diagnostics[0]
+        ?.code,
+    ).toBe('invalid-value-resolution-request');
+    expect(resolver.resolveComponentProperty(active, null as never).diagnostics[0]?.code).toBe(
+      'invalid-value-resolution-request',
+    );
+    expect(getterCalled).toBe(false);
+  });
+
   it('resolves aliases through nearest scope precedence with ordered frozen provenance', () => {
     const resolved = new DesignTokenResolver().resolveToken(
       selection(pack(), {
@@ -402,5 +440,55 @@ describe('ComponentResolver', () => {
         component: { id: 'missing', version: '1.0.0' },
       }).compatibility,
     ).toMatchObject({ kind: 'unsupported', reason: 'source-component-not-found' });
+  });
+
+  it('fails malformed/accessor compatibility requests closed without executing accessors', () => {
+    const resolver = new ComponentResolver();
+    let getterCalled = false;
+    const accessorRequest = {
+      sourcePack: pack(),
+      targetPack: target,
+    } as Record<string, unknown>;
+    Object.defineProperty(accessorRequest, 'component', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return { id: button.id, version: button.version };
+      },
+    });
+    const accessorReplacement = {
+      source: { id: button.id, version: button.version },
+    } as Record<string, unknown>;
+    Object.defineProperty(accessorReplacement, 'candidates', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return [];
+      },
+    });
+
+    for (const request of [
+      null,
+      accessorRequest,
+      {
+        sourcePack: pack(),
+        targetPack: target,
+        component: { id: button.id, version: button.version },
+        replacements: {},
+      },
+      {
+        sourcePack: pack(),
+        targetPack: target,
+        component: { id: button.id, version: button.version },
+        replacements: [accessorReplacement],
+      },
+    ]) {
+      const resolution = resolver.classify(request as never);
+      expect(resolution.diagnostics[0]?.code).toBe('invalid-component-compatibility-request');
+      expect(Object.isFrozen(resolution)).toBe(true);
+      expect(Object.isFrozen(resolution.compatibility)).toBe(true);
+      expect(Object.isFrozen(resolution.diagnostics)).toBe(true);
+    }
+    expect(getterCalled).toBe(false);
   });
 });

@@ -7,6 +7,7 @@ import {
 import { uiComponentRefKey } from '../ui-authoring/component-validation';
 import { isUiValueSourceKind, normalizeUiAllowedSources } from '../ui-authoring/validation';
 import type { UiValueSourceKind } from '../ui-authoring/types';
+import { cloneAndFreezeDeclarativeSnapshot } from '../declarative-snapshot';
 import {
   type DesignSystemComponentRoleMapping,
   type DesignSystemComponentRoleRequirements,
@@ -32,6 +33,14 @@ function hasOnlyKeys(
   return Reflect.ownKeys(value).every((key) => typeof key === 'string' && allowedKeys.has(key));
 }
 
+function snapshotRoleInput<T>(value: T): T | null {
+  try {
+    return cloneAndFreezeDeclarativeSnapshot(value, () => new TypeError('invalid role input'));
+  } catch {
+    return null;
+  }
+}
+
 function diagnostic(
   descriptor: DesignSystemPackDescriptor,
   issue: Omit<DesignSystemDiagnostic, 'packId' | 'requestedVersion'>,
@@ -51,7 +60,15 @@ export function designSystemComponentRoleRefKey(ref: {
   readonly id: string;
   readonly version: string;
 }): string {
-  return JSON.stringify([ref.id, ref.version]);
+  const snapshot = snapshotRoleInput(ref);
+  if (
+    !isPlainRecord(snapshot) ||
+    !isCanonicalDesignSystemText(snapshot.id) ||
+    !isCanonicalDesignSystemText(snapshot.version)
+  ) {
+    return '';
+  }
+  return JSON.stringify([snapshot.id, snapshot.version]);
 }
 
 function normalizedSources(sources?: readonly UiValueSourceKind[]): readonly UiValueSourceKind[] {
@@ -60,33 +77,40 @@ function normalizedSources(sources?: readonly UiValueSourceKind[]): readonly UiV
 
 export function designSystemComponentRoleRequirementsKey(
   requirements: DesignSystemComponentRoleRequirements,
-): string {
+): string | null {
+  const snapshot = snapshotRoleInput(requirements);
+  if (!isPlainRecord(snapshot)) return null;
+  const normalizedRequirements = snapshot as unknown as DesignSystemComponentRoleRequirements;
   const byId = <T extends { readonly id: string }>(values: readonly T[] | undefined) =>
     [...(values ?? [])].sort((left, right) =>
       left.id < right.id ? -1 : left.id > right.id ? 1 : 0,
     );
-  return JSON.stringify({
-    properties: byId(requirements.properties).map((property) => ({
-      id: property.id,
-      type: property.type,
-      allowedSources: normalizedSources(property.allowedSources),
-    })),
-    events: byId(requirements.events).map((event) => ({
-      id: event.id,
-      ...(event.payloadType === undefined ? {} : { payloadType: event.payloadType }),
-    })),
-    bindings: byId(requirements.bindings).map((binding) => ({
-      id: binding.id,
-      direction: binding.direction,
-      type: binding.type,
-    })),
-    childSlots: byId(requirements.childSlots).map((slot) => ({
-      id: slot.id,
-      cardinality: slot.cardinality,
-    })),
-    supportedStrategyIds: [...(requirements.supportedStrategyIds ?? [])].sort(),
-    accessibilityRoles: [...(requirements.accessibilityRoles ?? [])].sort(),
-  });
+  try {
+    return JSON.stringify({
+      properties: byId(normalizedRequirements.properties).map((property) => ({
+        id: property.id,
+        type: property.type,
+        allowedSources: normalizedSources(property.allowedSources),
+      })),
+      events: byId(normalizedRequirements.events).map((event) => ({
+        id: event.id,
+        ...(event.payloadType === undefined ? {} : { payloadType: event.payloadType }),
+      })),
+      bindings: byId(normalizedRequirements.bindings).map((binding) => ({
+        id: binding.id,
+        direction: binding.direction,
+        type: binding.type,
+      })),
+      childSlots: byId(normalizedRequirements.childSlots).map((slot) => ({
+        id: slot.id,
+        cardinality: slot.cardinality,
+      })),
+      supportedStrategyIds: [...(normalizedRequirements.supportedStrategyIds ?? [])].sort(),
+      accessibilityRoles: [...(normalizedRequirements.accessibilityRoles ?? [])].sort(),
+    });
+  } catch {
+    return null;
+  }
 }
 
 function invalidRole(
@@ -643,6 +667,7 @@ function validateComponentRoles(
     if (requirementDiagnostics.length === 0) {
       const roleKey = designSystemComponentRoleRefKey(normalizedMapping.role);
       const contractKey = designSystemComponentRoleRequirementsKey(normalizedMapping.requirements);
+      if (contractKey === null) return;
       const contracts = roleContracts.get(roleKey) ?? new Map<string, number[]>();
       const indexes = contracts.get(contractKey) ?? [];
       indexes.push(index);
@@ -688,8 +713,7 @@ export function isSameDesignSystemComponentRoleRequirements(
   left: DesignSystemComponentRoleRequirements,
   right: DesignSystemComponentRoleRequirements,
 ): boolean {
-  return (
-    designSystemComponentRoleRequirementsKey(left) ===
-    designSystemComponentRoleRequirementsKey(right)
-  );
+  const leftKey = designSystemComponentRoleRequirementsKey(left);
+  const rightKey = designSystemComponentRoleRequirementsKey(right);
+  return leftKey !== null && rightKey !== null && leftKey === rightKey;
 }
