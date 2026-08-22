@@ -3328,6 +3328,7 @@ interface DesignSystemPackChangeRequest {
   readonly document: DesignSystemAuthoredDocumentSnapshot;
   readonly targetPack: DesignSystemPackRef;
   readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
   readonly componentReplacements?: readonly ExplicitComponentReplacement[];
   readonly tokenReplacements?: readonly DesignSystemDependencyReplacement[];
   readonly resourceReplacements?: readonly DesignSystemDependencyReplacement[];
@@ -3337,10 +3338,20 @@ interface DesignSystemPackChangeRequest {
 The JDW projection enumerates every semantic node exactly once in document order. Properties and
 layout strategy/value state stay separate, and every node carries its active root-to-leaf scope
 chain. The projection includes authored sources only; it does not persist resolved values or CSS.
-The request supplies the existing 070B `UiLayoutStrategyDescriptor` values needed by the current
-document; this is a detached caller catalog, not a new global layout registry. Strategy IDs are
-unique, every authored strategy must be present, and existing descriptor validators remain the
-only layout-value semantics.
+The request supplies the existing 070B `UiLayoutStrategyDescriptor` and
+`UiLayoutPropertyDescriptor` values needed by the current document; this is detached caller data,
+not a new global layout registry. Strategy and property IDs are unique, every authored strategy
+and supported property must be present, and `validateUiLayoutStrategyDescriptor` remains the
+cross-reference owner.
+
+Add one contracts helper, `validateUiLayoutPropertyValue`, that composes
+`validateUiPropertyValue` with the already-public 070B named literal validators. Its built-in
+dispatch is fixed by the existing semantic layout value-type IDs and calls those validators rather
+than copying their rules. Non-literal sources use existing allowed-source/reference validation.
+An open custom layout value type with a literal source is fail-closed as
+`unsupported-layout-literal-type` until its trusted pure validator has a separately approved
+adapter boundary; 072D never assumes an unknown literal is portable and never accepts executable
+validators from Pack/request data.
 
 Planner inputs are detached through the existing declarative snapshot boundary. Null, non-plain,
 accessor-bearing, duplicate-node, duplicate-scope or noncanonical inputs fail closed without
@@ -3409,6 +3420,7 @@ interface DesignSystemPackChangePlan {
   readonly documentId: string;
   readonly documentRevision: number;
   readonly registryRevision: number;
+  readonly sourceDocument: DesignSystemAuthoredDocumentSnapshot;
   readonly sourcePack: DesignSystemPackRef;
   readonly targetPack: DesignSystemPackRef;
   readonly components: readonly DesignSystemNodeCompatibility[];
@@ -3425,6 +3437,12 @@ document/scope/node/source keys and unrelated extra entries. Declaration order i
 order. A plan with any unsupported dependency or invalid request is blocked and cannot be
 finalized.
 
+The plan retains the full detached, deeply frozen `sourceDocument` projection. Finalization does
+not rely on revision alone and does not invent a hash identity: after safe snapshotting it compares
+the current projection with this retained value using declarative deep equality (array order is
+significant; plain-record key order is not). Component/dependency occurrence records are plan
+projections, not a substitute source of stale identity.
+
 ### Finalize and stale safety
 
 `finalize(snapshot, currentDocument, plan, choices)` is pure and returns either a frozen
@@ -3437,8 +3455,9 @@ building the mutation:
    plan input;
 4. every required choice is present once and belongs to its exact candidate set;
 5. the chosen target component accepts every authored property through existing
-   `validateUiPropertyValue`, and its declared layout support plus the supplied 070B strategy
-   descriptor accepts every authored layout value;
+   `validateUiPropertyValue`, and its declared layout support plus the supplied 070B strategy and
+   property descriptors accept every authored layout value through
+   `validateUiLayoutPropertyValue`;
 6. the projected target `UiDesignSystemState`, every scope chain and every rewritten authored
    token/resource source resolve through the existing `DesignSystemResolver` and
    `DesignTokenResolver` without error.
@@ -3448,6 +3467,14 @@ or blocked plan never yields a partial mutation. The mutation contains the exact
 target state, per-node component substitutions and global token/resource ID rewrites required by
 the JDW adapter; it contains no function, registry object, resolved CSS/value cache or executable
 resource data.
+
+`plan` and `finalize` are both hostile public-input boundaries. Each snapshots every public
+argument independently through the existing declarative own-data snapshot helper before reading
+any field. Null, non-plain, accessor-bearing or unsnapshotable registry/request/current-document/
+plan/choice data returns a deeply frozen structured failure and never invokes caller getters.
+Finalization never trusts a caller-reconstructed plan merely because IDs/revisions match; the plan
+shape, retained source projection, candidates, diagnostics and blocked state are validated as one
+declarative record before any choice lookup.
 
 ### Atomic JDW apply
 
@@ -3473,12 +3500,12 @@ source-compatible.
 
 Extend the existing lowercase kebab-case vocabulary only with the required families:
 
-| Boundary             | Required codes                                                                                                                                                                              |
-| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| request/projection   | `invalid-pack-change-request`, `source-design-system-state-required`, `source-pack-mismatch`, `duplicate-authored-node`, `invalid-authored-scope-chain`                                     |
-| compatibility/choice | `pack-change-choice-required`, `pack-change-choice-invalid`, `pack-change-dependency-unsupported`, `pack-change-replacement-source-conflicted`, `pack-change-replacement-candidate-invalid` |
-| stale/finalize       | `pack-change-document-stale`, `pack-change-registry-stale`, `pack-change-target-resolution-failed`                                                                                          |
-| JDW apply            | `invalid-pack-change-mutation`, `pack-change-apply-rejected`                                                                                                                                |
+| Boundary             | Required codes                                                                                                                                                                                                                 |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| request/projection   | `invalid-pack-change-request`, `source-design-system-state-required`, `source-pack-mismatch`, `duplicate-authored-node`, `invalid-authored-scope-chain`                                                                        |
+| compatibility/choice | `pack-change-choice-required`, `pack-change-choice-invalid`, `pack-change-dependency-unsupported`, `pack-change-replacement-source-conflicted`, `pack-change-replacement-candidate-invalid`, `unsupported-layout-literal-type` |
+| stale/finalize       | `pack-change-document-stale`, `pack-change-registry-stale`, `pack-change-target-resolution-failed`                                                                                                                             |
+| JDW apply            | `invalid-pack-change-mutation`, `pack-change-apply-rejected`                                                                                                                                                                   |
 
 Diagnostics carry only relevant request/node/scope/component/token/resource context and stable
 paths. Do not collapse stale document, stale registry, unsupported dependency and invalid choice
@@ -3490,19 +3517,23 @@ into one generic error.
    existing contracts design-system module; extend safe snapshot/public-export tests. Add planner
    request/plan/choice types beside the existing workbench-core component resolver without moving
    or duplicating its compatibility contract.
-2. Extend the JDW root `$authoring` envelope and `UiDocument` projection with optional exact
+2. Add the narrow contracts `validateUiLayoutPropertyValue` composer over existing 070A source
+   validation and 070B named built-in literal validators; unknown custom literals fail closed and
+   no Pack/request callback is accepted.
+3. Extend the JDW root `$authoring` envelope and `UiDocument` projection with optional exact
    design-system state plus per-node `themeScopeId`, root-only state validation, scope-reference
    validation, round-trip formatting and historical absence compatibility.
-3. Add the JDW authored-document projection with stable node/path/scope ordering; do not import
+4. Add the JDW authored-document projection with stable node/path/scope ordering; do not import
    workbench-core.
-4. Implement the pure workbench-core planner by composing existing exact Pack lookup,
+5. Implement the pure workbench-core planner by composing existing exact Pack lookup,
    `ComponentResolver`, component/property metadata, 070B layout validation and explicit
    dependency replacement rules.
-5. Implement pure finalization with exact choice validation, registry/document staleness checks and
-   existing resolver revalidation; emit one declarative mutation.
-6. Implement one atomic JDW apply adapter and normal session history integration without changing
+6. Implement pure finalization with hostile input snapshots, retained-projection equality, exact
+   choice validation, registry/document staleness checks and existing resolver revalidation; emit
+   one declarative mutation.
+7. Implement one atomic JDW apply adapter and normal session history integration without changing
    existing single-command semantics.
-7. Add backendless hostile, planning, stale, atomicity and undo/redo evidence. Do not add React,
+8. Add backendless hostile, planning, stale, atomicity and undo/redo evidence. Do not add React,
    DOM, CSS, browser views, Electron, extension activation, resource acquisition or product policy.
 
 ### Validation
@@ -3512,9 +3543,12 @@ into one generic error.
 - projection/planning: document order and scope chains; exact source/target lookup; direct and every
   component compatibility arm; repeated dependency grouping; exact-ID/type direct token/resource;
   explicit replacement, conflict, duplicate, invalid candidate and unsupported behavior; explicit
-  document/scope Theme choices; opaque binding/expression preservation;
-- finalize: missing/extra/invalid choices; source/target conflict; stale document and registry;
-  target resolver failure; frozen deterministic mutation and diagnostics;
+  document/scope Theme choices; strategy/property descriptor pairing; every built-in layout literal
+  validator; unknown custom literal rejection; opaque binding/expression preservation;
+- finalize: null/non-plain/accessor current-document/plan/choice inputs without getter execution;
+  missing/extra/invalid choices; retained source-projection equality independent of plain-record key
+  order; source/target conflict; stale document and registry; target resolver failure; frozen
+  deterministic mutation and diagnostics;
 - apply/history: exact before-state checks; one revision and one record; whole-document atomicity;
   no intermediate source; selection repair; undo/redo parity; redo clearing; malformed/accessor
   mutation; original-state identity on every failure;
