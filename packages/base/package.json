@@ -3,6 +3,7 @@
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
   "type": "module",
+  "types": "./src/index.ts",
   "scripts": {
     "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit"

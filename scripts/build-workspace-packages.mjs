@@ -5,6 +5,7 @@ const packages = [
   '@workbench-kit/electron-shell',
   '@workbench-kit/jdw',
   '@workbench-kit/platform',
+  '@workbench-kit/workbench-core',
 ];
 
 for (const packageName of packages) {

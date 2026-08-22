@@ -3,17 +3,31 @@
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
   "type": "module",
+  "typesVersions": {
+    "*": {
+      "design-system": [
+        "dist/design-system.d.cts"
+      ]
+    }
+  },
   "scripts": {
+    "build": "tsup",
     "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts",
-    "./design-system": "./src/design-system/index.ts",
+    "./design-system": {
+      "types": "./dist/design-system.d.cts",
+      "require": "./dist/design-system.cjs",
+      "import": "./src/design-system/index.ts",
+      "default": "./src/design-system/index.ts"
+    },
     "./layout": "./src/layout/service.ts",
     "./storage": "./src/storage.ts"
   },
   "files": [
+    "dist",
     "src",
     "!src/**/*.test.ts",
     "!src/**/*.test.tsx",
@@ -26,6 +40,9 @@
     "@workbench-kit/platform": "workspace:*",
     "@workbench-kit/workbench-config": "workspace:*",
     "@workbench-kit/workbench-extension-sdk": "workspace:*"
+  },
+  "devDependencies": {
+    "tsup": "^8.5.0"
   },
   "description": "Framework-neutral workbench registries, extension activation, layout, and contribution orchestration.",
   "publishConfig": {
