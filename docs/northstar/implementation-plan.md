@@ -64,7 +64,7 @@ WB-NS-070A typed UI value/property inventory + target contract [DONE]
         ↓
 WB-NS-070B selectable layout strategy + typed style constraints [DONE]
         ↓
-WB-NS-070C atomic component/composite descriptor contract [DESIGNING; REVIEW CANDIDATE]
+WB-NS-070C atomic component/composite descriptor contract [READY_FOR_IMPLEMENTATION; SUCCESSOR REVIEW PENDING]
         ↓
 WB-NS-070D UiDocument command + direct-manipulation authoring
         ↓
@@ -2100,7 +2100,7 @@ The packet is complete when a browser- and Electron-free consumer can declare co
 
 #### `WB-NS-070C` bounded packet — atomic/composite descriptors and immutable catalog projection
 
-- **Status:** `DESIGNING` — promotion to `READY_FOR_IMPLEMENTATION` requires producer-distinct review of this exact packet
+- **Status:** `READY_FOR_IMPLEMENTATION` — successor promotion claim requires producer-distinct review before source work
 - **Source/API evidence:** `origin/develop@6ae4fc83b5a13db483855cdde4e64b9ad0964d67`
 - **Dependencies:** `WB-NS-070A` and `WB-NS-070B` `DONE`
 - **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
@@ -2155,7 +2155,7 @@ interface UiComponentBindingDescriptor {
 interface UiComponentChildSlotDescriptor {
   id: string;
   cardinality: UiChildSlotCardinality;
-  allowedComponentIds?: readonly string[];
+  allowedComponents?: readonly UiComponentRef[];
 }
 
 interface UiComponentLayoutSupport {
@@ -2213,7 +2213,7 @@ Normative semantics:
 - `properties`, `events` and `bindings` are the complete public interface of both atomic and composite descriptors. Composite internal node paths, private properties and renderer handles never leak through this interface.
 - event descriptors declare emitted semantic events only. They contain no callback, command handler or executable payload.
 - binding descriptors declare typed public data slots only. They do not resolve 070A `bindingId`, execute transforms or duplicate Field Remap.
-- child slots declare authoring cardinality and optional component-ID allowlists. They do not store child instances or define the future `UiDocument` tree.
+- child slots declare authoring cardinality and optional exact `{ id, version }` component allowlists. Every allowed reference follows the same already-trimmed, non-blank exact-identity rules as catalog lookup; there is no all-versions shorthand, range or implicit latest selection. Child slots do not store child instances or define the future `UiDocument` tree.
 - `supportedStrategyIds` references separately supplied 070B strategy descriptors. `defaultStrategyId`, when present, must be included exactly once in that list. Empty or duplicate references fail validation.
 - accessibility property references must name a declared component property. `defaultRole`, when present, must occur in `supportedRoles`. The contract records authoring metadata; renderer-specific ARIA/DOM/native projection remains adapter-owned.
 - design-time metadata is presentation-only. It cannot change runtime behavior, grant capabilities or select a renderer.
@@ -2221,7 +2221,7 @@ Normative semantics:
 
 ##### Validation and catalog behavior
 
-Add a frozen `UI_COMPONENT_VALIDATION_ISSUE_CODES` vocabulary and pure validation that accumulates deterministic issues in descriptor order. At minimum it covers blank identity/version/labels/refs, unknown discriminants, duplicate property/event/binding/slot IDs, invalid nested 070A schemas, blank/duplicate strategy and allowlist entries, invalid default strategy/role references, invalid accessibility property references, and a missing composite `compositionRef`.
+Add a frozen `UI_COMPONENT_VALIDATION_ISSUE_CODES` vocabulary and pure validation that accumulates deterministic issues in descriptor order. At minimum it covers blank identity/version/labels/refs, unknown discriminants, duplicate property/event/binding/slot IDs, invalid nested 070A schemas, blank/duplicate strategy and exact allowed-component references, invalid default strategy/role references, invalid accessibility property references, and a missing composite `compositionRef`.
 
 The immutable catalog projection:
 
@@ -2233,6 +2233,8 @@ The immutable catalog projection:
 6. performs no build lookup, content materialization, renderer selection, persistence, network I/O or dynamic import.
 
 An invalid descriptor is excluded from the usable catalog while independent valid descriptors remain available. A duplicate exact component identity excludes every conflicting definition for that identity, so contribution order cannot silently grant override authority.
+
+When a duplicate `contributorId` exists, every contribution carrying that ID is excluded from the usable catalog, including an earlier otherwise-valid contribution. One structured duplicate-contributor issue is emitted for each conflicting contribution in supplied order. Independent contributor IDs remain usable.
 
 ##### Compatibility and contribution path
 
@@ -2260,8 +2262,8 @@ Not in scope: React components, render/build handlers, JDW layout or content mat
 ##### Focused and final validation
 
 - descriptors: representative atomic leaf, atomic container and composite interface fixtures with literal/token/resource/binding property sources;
-- failures: blank identity/version/labels/refs, duplicate public IDs, invalid nested property schemas, missing/duplicate layout refs, invalid accessibility refs and composite reference;
-- catalog: multiple contributors, exact lookup, stable order, invalid-descriptor isolation, duplicate contributor and duplicate exact identity fail-closed behavior, immutability;
+- failures: blank identity/version/labels/refs, duplicate public IDs, invalid nested property schemas, missing/duplicate layout refs, blank/duplicate exact allowed-component refs, invalid accessibility refs and composite reference;
+- catalog: multiple contributors, exact lookup, stable order, invalid-descriptor isolation, exclusion of every duplicate-contributor member in supplied order, duplicate exact identity fail-closed behavior and immutability;
 - compatibility: old `WidgetTypeDefinition`, `WidgetRegistryContract`, `WidgetPlacementAsset` and catalog consumers compile and behave unchanged; attached semantic descriptors survive existing registry/catalog reads;
 - public envelope: browser/Electron-free import from `@workbench-kit/contracts` with no React, JDW, Field Remap or native dependency;
 - candidate gates: contracts typecheck/tests/lint/format plus repository `validate:static`, full unit and browser-safe validation once on the frozen source SHA;
