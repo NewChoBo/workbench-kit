@@ -604,7 +604,7 @@ Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage`
 
 **Purpose:** Fixed-position menu (`items`, `x`, `y`, `onClose`). Items: label, icon, shortcut, `onSelect`, separators. Icon and shortcut columns are opt-in: when no item provides `icon` / `shortcut`, those columns are omitted (`data-has-icons` / `data-has-shortcuts`) so empty grid tracks do not add side padding. Selecting an item calls `onSelect` then `onClose`. Dismiss also runs on outside pointer down, Escape, scroll, and resize (`useFixedOverlayDismiss`). Coordinates are viewport (`clientX` / `clientY`).
 
-**Keyboard / a11y:** `role="menu"` / `menuitem` with a WAI-ARIA menu model — ArrowUp/ArrowDown and Home/End move highlight (skipping disabled items and separators), Enter/Space activate, Escape closes. Highlight stays in sync with pointer hover (`data-highlighted`); roving `tabIndex` keeps only the highlighted enabled item at `0`. Nested submenus are out of scope for this surface.
+**Keyboard / a11y:** `role="menu"` / `menuitem` with a WAI-ARIA menu model — ArrowUp/ArrowDown and Home/End move highlight (skipping disabled items and separators), Enter/Space activate, Escape closes. On Escape only, focus returns to a connected `returnFocusTarget` when supplied, or to the active element captured before menu-item focus. Activation, outside pointer, scroll, and resize dismissal do not restore focus. Highlight stays in sync with pointer hover (`data-highlighted`); roving `tabIndex` keeps only the highlighted enabled item at `0`. Nested submenus are out of scope for this surface.
 
 **When to use:** Tab context menu, catalog item menu, facet overflow.
 
