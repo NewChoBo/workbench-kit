@@ -137,15 +137,24 @@ export function validateUiDocumentWrapperIdentity(
   path = 'root',
 ): readonly UiDocumentIssue[] {
   const issues: UiDocumentIssue[] = [];
+  const hasOwnId = Object.prototype.hasOwnProperty.call(node, 'id');
+  if (hasOwnId && typeof node.id === 'string' && !isCanonicalText(node.id)) {
+    issues.push({
+      code: 'noncanonical-node-id',
+      message: 'UI document node ids must be non-blank and already trimmed.',
+      path: `${path}.id`,
+      nodeId: node.id,
+    });
+  }
   if (
     (node.type === 'expanded' || node.type === 'flexible') &&
-    (node.id !== undefined || node.args[UI_DOCUMENT_AUTHORING_ARG] !== undefined)
+    (hasOwnId || Object.prototype.hasOwnProperty.call(node.args, UI_DOCUMENT_AUTHORING_ARG))
   ) {
     issues.push({
       code: 'wrapper-authoring-identity',
       message: 'Expanded/flexible serialization wrappers must not own authoring identity.',
       path,
-      ...(node.id !== undefined ? { nodeId: node.id } : {}),
+      ...(typeof node.id === 'string' ? { nodeId: node.id } : {}),
     });
   }
 
@@ -182,6 +191,14 @@ export function validateUiDocumentRoot(root: GenericWidget): readonly UiDocument
   for (const entry of collectWidgetNodes(root)) {
     const path = widgetPathKey(entry.path);
     const nodeId = isCanonicalText(entry.widget.id) ? entry.widget.id : undefined;
+    if (entry.widget.type === 'expanded' || entry.widget.type === 'flexible') {
+      issues.push({
+        code: 'wrapper-authoring-identity',
+        message: 'Expanded/flexible serialization wrappers cannot be authoring nodes.',
+        path,
+        ...(nodeId !== undefined ? { nodeId } : {}),
+      });
+    }
     if (nodeId === undefined) {
       issues.push({
         code: 'missing-node-id',
@@ -270,7 +287,8 @@ export function createUiDocument(documentId: string, source: string): CreateUiDo
     return { document: null, issues: Object.freeze(issues) };
   }
 
-  issues.push(...validateUiDocumentWrapperIdentity(parsed.value));
+  const raw = JSON.parse(source) as JsonWidgetNode;
+  issues.push(...validateUiDocumentWrapperIdentity(raw));
   const widgetDocument: WidgetDocument = createWidgetDocument(source);
   if (widgetDocument.root === null) {
     issues.push({

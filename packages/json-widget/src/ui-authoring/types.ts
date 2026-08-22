@@ -32,6 +32,7 @@ export const UI_DOCUMENT_ISSUE_CODES = Object.freeze([
   'invalid-source',
   'wrapper-authoring-identity',
   'missing-node-id',
+  'noncanonical-node-id',
   'duplicate-node-id',
   'invalid-authoring-envelope',
   'invalid-component-ref',
@@ -114,6 +115,7 @@ export const UI_DOCUMENT_COMMAND_ISSUE_CODES = Object.freeze([
   'node-not-found',
   'root-structural-command',
   'replacement-id-mismatch',
+  'invalid-command-payload',
   'patch-rejected',
 ] as const);
 

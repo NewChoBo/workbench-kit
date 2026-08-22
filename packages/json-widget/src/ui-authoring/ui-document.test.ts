@@ -8,6 +8,7 @@ import {
   createUiDocument,
   listUiDocumentHierarchy,
   projectUiDocumentSelectionPaths,
+  readUiDocumentNodeAuthoring,
 } from './document.js';
 import { migrateWidgetDocumentToUiDocument } from './migration.js';
 import {
@@ -118,6 +119,25 @@ describe('UiDocument identity and persistence', () => {
     ]);
   });
 
+  it('rejects whitespace-padded source ids without changing legacy parsing', () => {
+    const source = JSON.stringify({
+      type: 'text',
+      id: ' padded-id ',
+      args: {
+        $authoring: {
+          component: { id: 'test:text', version: '1.0.0' },
+          properties: {},
+        },
+      },
+    });
+
+    expect(createWidgetDocument(source).root?.id).toBe('padded-id');
+    expect(createUiDocument('strict', source)).toMatchObject({
+      document: null,
+      issues: [{ code: 'noncanonical-node-id', nodeId: ' padded-id ' }],
+    });
+  });
+
   it('projects stable-id hierarchy and selection to current paths', () => {
     const document = createFixtureDocument();
     expect(
@@ -214,20 +234,65 @@ describe('UiDocument migration', () => {
       issues: [{ code: 'wrapper-authoring-identity' }],
     });
   });
+
+  it('isolates and freezes resolver inputs and converts resolver throws to issues', () => {
+    const source = sourceFor({ type: 'text', text: 'legacy' });
+    let widgetSnapshot: Readonly<GenericWidget> | undefined;
+    const isolated = migrateWidgetDocumentToUiDocument(source, {
+      documentId: 'migrated',
+      resolveIdentity: (context) => {
+        widgetSnapshot = context.widget;
+        expect(Object.isFrozen(context.widget)).toBe(true);
+        expect(Object.isFrozen(context.path)).toBe(true);
+        try {
+          (context.widget as unknown as { type: string }).type = 'mutated';
+        } catch {
+          // Frozen snapshots reject mutation in strict mode.
+        }
+        return {
+          nodeId: 'stable',
+          component: { id: 'test:text', version: '1.0.0' },
+        };
+      },
+    });
+    expect(widgetSnapshot?.type).toBe('text');
+    expect(isolated.document?.root.type).toBe('text');
+    expect(isolated.source).not.toContain('mutated');
+
+    const thrown = migrateWidgetDocumentToUiDocument(source, {
+      documentId: 'migrated',
+      resolveIdentity: () => {
+        throw new Error('resolver failed');
+      },
+    });
+    expect(thrown).toMatchObject({
+      document: null,
+      source: null,
+      issues: [{ code: 'migration-resolution-failed', message: 'resolver failed' }],
+    });
+  });
 });
 
 describe('UiDocument commands and history', () => {
   it('applies all structural commands through WidgetPatch with one revision each', () => {
     let document = createFixtureDocument();
+    const insertedNode = authored('inserted', 'text', { text: 'Inserted' });
     const inserted = applyUiDocumentCommand(document, {
       type: 'insert-node',
       commandId: 'insert',
       parentId: 'root',
       index: 1,
-      node: authored('inserted', 'text', { text: 'Inserted' }),
+      node: insertedNode,
     });
     expect(inserted.changed).toBe(true);
     expect(inserted.transaction?.patches).toHaveLength(1);
+    expect(Object.isFrozen(inserted.transaction)).toBe(true);
+    expect(Object.isFrozen(inserted.transaction?.command)).toBe(true);
+    expect(Object.isFrozen(insertedNode)).toBe(false);
+    insertedNode.text = 'Caller mutation';
+    expect((inserted.document.root.children as readonly GenericWidget[])[1]).toMatchObject({
+      text: 'Inserted',
+    });
     expect(inserted.document.revision).toBe(1);
     document = inserted.document;
 
@@ -358,6 +423,219 @@ describe('UiDocument commands and history', () => {
     });
     expect(repeated.changed).toBe(false);
     expect(repeated.document.revision).toBe(1);
+  });
+
+  it('rejects cyclic command payloads before tree patches or history', () => {
+    const document = createFixtureDocument();
+    const cyclicNode = authored('cyclic', 'text') as UiDocumentNode & {
+      loop?: unknown;
+    };
+    cyclicNode.loop = cyclicNode;
+    const cyclicValue: Record<string, unknown> = {};
+    cyclicValue.self = cyclicValue;
+
+    const commands = [
+      {
+        type: 'insert-node',
+        commandId: 'cyclic-insert',
+        parentId: 'root',
+        index: 0,
+        node: cyclicNode,
+      },
+      {
+        type: 'replace-node',
+        commandId: 'cyclic-replace',
+        nodeId: 'first',
+        node: { ...authored('first', 'text'), loop: cyclicValue },
+      },
+      {
+        type: 'set-property',
+        commandId: 'cyclic-property',
+        nodeId: 'first',
+        propertyId: 'value',
+        value: { kind: 'literal', value: cyclicValue },
+      },
+      {
+        type: 'set-layout',
+        commandId: 'cyclic-layout',
+        nodeId: 'root',
+        strategyId: 'flex',
+        values: { gap: { kind: 'literal', value: cyclicValue } },
+      },
+    ] as const;
+
+    for (const command of commands) {
+      const result = applyUiDocumentCommand(document, command);
+      expect(result.document).toBe(document);
+      expect(result.document.revision).toBe(0);
+      expect(result.transaction).toBeNull();
+      expect(result.issues).toMatchObject([{ code: 'invalid-command-payload' }]);
+    }
+  });
+
+  it('rejects lossy non-JSON command values without recording history', () => {
+    const document = createFixtureDocument();
+    const commands = [
+      {
+        type: 'set-property',
+        commandId: 'nan-property',
+        nodeId: 'first',
+        propertyId: 'value',
+        value: { kind: 'literal', value: Number.NaN },
+      },
+      {
+        type: 'set-property',
+        commandId: 'infinite-property',
+        nodeId: 'first',
+        propertyId: 'value',
+        value: { kind: 'literal', value: Number.POSITIVE_INFINITY },
+      },
+      {
+        type: 'set-property',
+        commandId: 'undefined-array-property',
+        nodeId: 'first',
+        propertyId: 'value',
+        value: { kind: 'literal', value: [undefined] },
+      },
+    ] as unknown as readonly Parameters<typeof applyUiDocumentCommand>[1][];
+
+    for (const command of commands) {
+      const direct = applyUiDocumentCommand(document, command);
+      expect(direct.document).toBe(document);
+      expect(direct.document.revision).toBe(0);
+      expect(direct.changed).toBe(false);
+      expect(direct.transaction).toBeNull();
+      expect(direct.issues).toMatchObject([{ code: 'invalid-command-payload' }]);
+
+      const session = applyUiAuthoringSessionCommand(createUiAuthoringSession(document), command);
+      expect(session.state.document).toBe(document);
+      expect(session.state.document.revision).toBe(0);
+      expect(session.state.past).toEqual([]);
+      expect(session.state.future).toEqual([]);
+    }
+  });
+
+  it('rejects command accessors before reading caller-owned values', () => {
+    const document = createFixtureDocument();
+    const command = {
+      type: 'remove-node',
+      nodeId: 'first',
+    } as Record<string, unknown>;
+    Object.defineProperty(command, 'commandId', {
+      enumerable: true,
+      get(): never {
+        throw new Error('commandId getter must not run');
+      },
+    });
+
+    const direct = applyUiDocumentCommand(
+      document,
+      command as unknown as Parameters<typeof applyUiDocumentCommand>[1],
+    );
+    expect(direct.document).toBe(document);
+    expect(direct.document.revision).toBe(0);
+    expect(direct.changed).toBe(false);
+    expect(direct.transaction).toBeNull();
+    expect(direct.issues).toMatchObject([{ code: 'invalid-command-payload' }]);
+
+    const session = applyUiAuthoringSessionCommand(
+      createUiAuthoringSession(document),
+      command as unknown as Parameters<typeof applyUiDocumentCommand>[1],
+    );
+    expect(session.state.document).toBe(document);
+    expect(session.state.document.revision).toBe(0);
+    expect(session.state.past).toEqual([]);
+    expect(session.state.future).toEqual([]);
+  });
+
+  it('uses own-data-property semantics for prototype-shaped property ids', () => {
+    let document = createFixtureDocument();
+    for (const propertyId of ['__proto__', 'constructor', 'prototype']) {
+      const result = applyUiDocumentCommand(document, {
+        type: 'set-property',
+        commandId: `set-${propertyId}`,
+        nodeId: 'first',
+        propertyId,
+        value: { kind: 'literal', value: propertyId },
+      });
+      expect(result.changed).toBe(true);
+      document = result.document;
+    }
+
+    const first = (document.root.children as readonly GenericWidget[])[0]!;
+    const properties = readUiDocumentNodeAuthoring(first)!.properties;
+    for (const propertyId of ['__proto__', 'constructor', 'prototype']) {
+      expect(Object.prototype.hasOwnProperty.call(properties, propertyId)).toBe(true);
+      expect(properties[propertyId]).toEqual({ kind: 'literal', value: propertyId });
+    }
+
+    const deleted = applyUiDocumentCommand(document, {
+      type: 'set-property',
+      commandId: 'delete-proto',
+      nodeId: 'first',
+      propertyId: '__proto__',
+    });
+    const nextFirst = (deleted.document.root.children as readonly GenericWidget[])[0]!;
+    expect(
+      Object.prototype.hasOwnProperty.call(
+        readUiDocumentNodeAuthoring(nextFirst)!.properties,
+        '__proto__',
+      ),
+    ).toBe(false);
+  });
+
+  it('reports rejected structural targets while preserving legitimate move noops', () => {
+    const document = createUiDocument(
+      'nested',
+      sourceFor(
+        authored('root', 'column', {
+          children: [
+            authored('container', 'column', {
+              children: [authored('leaf', 'text')],
+            }),
+          ],
+        }),
+      ),
+    ).document!;
+
+    const rejectedCommands = [
+      {
+        type: 'insert-node',
+        commandId: 'unsupported-parent',
+        parentId: 'leaf',
+        index: 0,
+        node: authored('inserted', 'text'),
+      },
+      {
+        type: 'insert-node',
+        commandId: 'invalid-index',
+        parentId: 'root',
+        index: 99,
+        node: authored('inserted', 'text'),
+      },
+      {
+        type: 'move-node',
+        commandId: 'descendant-move',
+        nodeId: 'container',
+        targetParentId: 'leaf',
+        index: 0,
+      },
+    ] as const;
+    for (const command of rejectedCommands) {
+      const result = applyUiDocumentCommand(document, command);
+      expect(result.document).toBe(document);
+      expect(result.issues).toMatchObject([{ code: 'patch-rejected' }]);
+    }
+
+    const noop = applyUiDocumentCommand(document, {
+      type: 'move-node',
+      commandId: 'same-position',
+      nodeId: 'container',
+      targetParentId: 'root',
+      index: 0,
+    });
+    expect(noop.changed).toBe(false);
+    expect(noop.issues).toEqual([]);
   });
 
   it('repairs selection and moves complete records through undo/redo', () => {

@@ -11,6 +11,7 @@ import {
   type MigrateWidgetDocumentResult,
   type UiDocumentIssue,
 } from './types.js';
+import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutability.js';
 
 function isCanonicalText(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value === value.trim();
@@ -42,7 +43,8 @@ export function migrateWidgetDocumentToUiDocument(
     };
   }
 
-  const wrapperIssues = validateUiDocumentWrapperIdentity(parsed.value);
+  const raw = JSON.parse(source) as typeof parsed.value;
+  const wrapperIssues = validateUiDocumentWrapperIdentity(raw);
   if (wrapperIssues.length > 0) {
     return { document: null, source: null, issues: wrapperIssues };
   }
@@ -76,13 +78,16 @@ export function migrateWidgetDocumentToUiDocument(
     if (nodeId === null || component === null) {
       let resolved: ReturnType<MigrateWidgetDocumentOptions['resolveIdentity']>;
       try {
-        resolved = options.resolveIdentity({
-          widget: entry.widget,
-          path: entry.path,
-          parentPath: entry.parentPath,
+        const context = deepFreezeUiAuthoringValue({
+          widget: cloneUiAuthoringJsonValue(entry.widget),
+          path: cloneUiAuthoringJsonValue(entry.path),
+          parentPath:
+            entry.parentPath === null ? null : cloneUiAuthoringJsonValue(entry.parentPath),
           existingNodeId,
-          existingComponent,
+          existingComponent:
+            existingComponent === null ? null : cloneUiAuthoringJsonValue(existingComponent),
         });
+        resolved = options.resolveIdentity(context);
       } catch (error) {
         resolved = {
           error: error instanceof Error ? error.message : String(error),
