@@ -89,6 +89,28 @@ try {
     ],
     { cwd: repoRoot, stdio: 'inherit' },
   );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'CommonJS',
+      '--moduleResolution',
+      'Node',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2020',
+      path.join(consumerDir, 'src', 'node-design-system.ts'),
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  runCommand('node', [path.join(consumerDir, 'src', 'node-design-system-runtime.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
 
   console.log('[check-packed-consumer] Building external production consumer...');
   runCommand(
@@ -465,6 +487,21 @@ export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
     `import type { ContextMenuItem } from '@workbench-kit/react/overlay/context-menu-item';
 
 export type NodeResolvedContextMenuItem = ContextMenuItem;
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'node-design-system.ts'),
+    `import { DesignSystemPackRegistry } from '@workbench-kit/workbench-core/design-system';
+
+export const packedDesignSystemRegistry = new DesignSystemPackRegistry();
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'node-design-system-runtime.cjs'),
+    `const { DesignSystemPackRegistry } = require('@workbench-kit/workbench-core/design-system');
+
+const registry = new DesignSystemPackRegistry();
+if (registry.snapshot().revision !== 0) process.exit(1);
 `,
   );
   fs.writeFileSync(
