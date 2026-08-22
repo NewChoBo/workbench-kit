@@ -1885,7 +1885,128 @@ The built-in strategy-kind vocabulary carries these semantics without defining a
 | `overlay` | layered alignment/inset context                                                                          | typed insets/anchor/z-order                                              |
 | `canvas`  | explicit free-placement coordinate space                                                                 | typed x/y/width/height, anchor, integer z-order and optional constraints |
 
-Row/column is represented as a typed direction property of `stack` or `flex`, not a separate universal strategy engine. Grid track lists, positive line/span placement, Split track policy, Canvas coordinates and Flex grow/shrink/basis are expressed by ordinary `UiLayoutPropertyDescriptor`s whose semantic `value.type`, constraints and literal validator close their exact domain. 070B exports named supporting literal types for Grid track lists/placement, Flex child sizing, Split track sizing/policy and Canvas placement; it does not prescribe renderer syntax.
+Row/column is represented as a typed direction property of `stack` or `flex`, not a separate universal strategy engine. Strategy-specific public literal types are fixed as follows; a component may expose their individual members as separate `UiLayoutPropertyDescriptor`s, but it must retain the same vocabulary and validation semantics.
+
+```ts
+type UiLayoutDirection = 'row' | 'column';
+type UiFlexWrap = 'nowrap' | 'wrap' | 'wrap-reverse';
+type UiMainAxisAlignment =
+  'start' | 'center' | 'end' | 'space-between' | 'space-around' | 'space-evenly';
+type UiCrossAxisAlignment = 'stretch' | 'start' | 'center' | 'end';
+type UiSelfAlignment = 'auto' | UiCrossAxisAlignment;
+
+interface UiFlexContainerValue {
+  kind: 'flex-container';
+  direction: UiLayoutDirection;
+  wrap: UiFlexWrap;
+  mainAxisAlignment: UiMainAxisAlignment;
+  crossAxisAlignment: UiCrossAxisAlignment;
+}
+
+interface UiFlexChildValue {
+  kind: 'flex-child';
+  grow: number;
+  shrink: number;
+  basis: UiLengthValue | UiPercentageValue | UiIntrinsicSizeValue;
+  order: number;
+  alignSelf: UiSelfAlignment;
+}
+
+type UiGridTrackBreadthValue =
+  UiLengthValue | UiPercentageValue | UiFlexFractionValue | UiIntrinsicSizeValue;
+
+interface UiGridMinMaxValue {
+  kind: 'grid-minmax';
+  min: Exclude<UiGridTrackBreadthValue, UiFlexFractionValue>;
+  max: UiGridTrackBreadthValue;
+}
+
+type UiGridTrackValue = UiGridTrackBreadthValue | UiGridMinMaxValue;
+
+interface UiGridRepeatValue {
+  kind: 'grid-repeat';
+  count: number | 'auto-fill' | 'auto-fit';
+  tracks: readonly UiGridTrackValue[];
+}
+
+interface UiGridTrackListValue {
+  kind: 'grid-track-list';
+  tracks: readonly (UiGridTrackValue | UiGridRepeatValue)[];
+}
+
+type UiGridPlacementValue =
+  | {
+      kind: 'grid-placement';
+      mode: 'lines';
+      columnStart: number;
+      rowStart: number;
+      columnSpan: number;
+      rowSpan: number;
+    }
+  | { kind: 'grid-placement'; mode: 'area'; area: string };
+
+interface UiSplitValue {
+  kind: 'split';
+  orientation: 'horizontal' | 'vertical';
+  fixedTrack: 'primary' | 'secondary';
+  size: UiLengthValue | UiPercentageValue;
+  minSize?: UiLengthValue | UiPercentageValue;
+  maxSize?: UiLengthValue | UiPercentageValue;
+  collapsible: boolean;
+  collapsed: boolean;
+  resizable: boolean;
+}
+
+type UiLayoutAnchor =
+  | 'top-start'
+  | 'top-center'
+  | 'top-end'
+  | 'center-start'
+  | 'center'
+  | 'center-end'
+  | 'bottom-start'
+  | 'bottom-center'
+  | 'bottom-end';
+
+interface UiOverlayPlacementValue {
+  kind: 'overlay-placement';
+  anchor: UiLayoutAnchor;
+  top?: UiLengthOrPercentageValue;
+  right?: UiLengthOrPercentageValue;
+  bottom?: UiLengthOrPercentageValue;
+  left?: UiLengthOrPercentageValue;
+  zIndex: number;
+}
+
+interface UiCanvasSizeConstraintsValue {
+  minWidth?: UiLengthOrPercentageValue;
+  maxWidth?: UiLengthOrPercentageValue;
+  minHeight?: UiLengthOrPercentageValue;
+  maxHeight?: UiLengthOrPercentageValue;
+  aspectRatio?: number;
+}
+
+interface UiCanvasPlacementValue {
+  kind: 'canvas-placement';
+  x: UiLengthOrPercentageValue;
+  y: UiLengthOrPercentageValue;
+  width: UiLengthValue | UiPercentageValue | UiIntrinsicSizeValue;
+  height: UiLengthValue | UiPercentageValue | UiIntrinsicSizeValue;
+  anchor: UiLayoutAnchor;
+  zIndex: number;
+  constraints?: UiCanvasSizeConstraintsValue;
+}
+```
+
+Normative strategy-specific rules:
+
+- Flex `grow`/`shrink` are finite and non-negative, `order` is an integer, and `basis` excludes flex fractions. `UiLayoutDirection`, `UiFlexWrap`, the main/cross alignment vocabularies and `UiFlexChildValue` are also used by Stack/Flex property descriptors rather than renderer strings.
+- Grid track lists and repeat bodies are non-empty. Numeric repeat counts are positive integers; repeats cannot contain another repeat. `grid-minmax.min` cannot be a flex fraction. All track length/percentage values are non-negative and fractions are positive.
+- Canonical Grid `columnStart`/`rowStart` are **one-based semantic line positions** and spans are positive integers. The first JDW compatibility adapter subtracts one when projecting them to current zero-based `col`/`row` cell indices and copies spans unchanged. Area placement requires a non-blank stable area name and is unsupported by that adapter until JDW gains an explicit area seam; it must fail adapter capability validation rather than silently degrade.
+- Split `size`/`minSize`/`maxSize` describe the selected fixed track; the other track consumes remaining space. Sizes are non-negative and exclude intrinsic/fraction values. `collapsed: true` requires `collapsible: true`. `minSize > maxSize` is rejected when both values have the same discriminant and, for lengths, the same unit. Current React `SplitView` is an adapter candidate and may reject units it cannot project without changing the generic contract.
+- Overlay insets and Canvas x/y may be negative; width/height and Canvas min/max constraints may not. Overlay/Canvas `zIndex` is an integer. Canvas size excludes flex fractions; `aspectRatio`, when present, is finite and strictly positive. Min/max pairs follow the same comparable-kind/unit rule as Split.
+- `UiLayoutAnchor` uses logical `start`/`end`; renderer adapters own writing-direction projection. Omitted Overlay insets mean unconstrained on that edge, not zero.
+- No validator converts units or guesses rendered measurements. Cross-unit range comparison is deferred to a renderer/measurement adapter and must not be reported as portable validation success.
 
 #### Pure validation and Inspector projection
 
@@ -1897,11 +2018,43 @@ validateUiSpacingValue(value, options?)
 validateUiBorderValue(value)
 validateUiRadiusValue(value)
 validateUiShadowValue(value)
+validateUiFlexContainerValue(value)
+validateUiFlexChildValue(value)
+validateUiGridTrackListValue(value)
+validateUiGridPlacementValue(value)
+validateUiSplitValue(value)
+validateUiOverlayPlacementValue(value)
+validateUiCanvasPlacementValue(value)
 validateUiLayoutStrategyDescriptor(strategy, properties)
 resolveUiLayoutInspectorGroups(strategy, properties, scope)
 ```
 
-Dimension options explicitly select allowed member kinds and whether negative numeric values are permitted. Strategy validation rejects blank IDs/kinds/groups, duplicate or unknown property IDs, a property listed under the wrong scope, and a property whose `strategyKinds` does not include the strategy kind. Grid lines/spans and Canvas z-order must be integers; line/span values are positive where required. Split min/max combinations reject `min > max` only when comparable literal kinds/units are equal; cross-unit ordering remains renderer/measurement validation rather than guessed conversion.
+Dimension options explicitly select allowed member kinds and whether negative numeric values are permitted. Strategy validation rejects blank IDs/kinds/groups, duplicate or unknown property IDs, a property listed under the wrong scope, and a property whose `strategyKinds` does not include the strategy kind.
+
+The frozen `UI_LAYOUT_VALIDATION_ISSUE_CODES` vocabulary is:
+
+```text
+blank-layout-strategy-id
+blank-layout-strategy-kind
+blank-layout-property-id
+blank-layout-property-group
+duplicate-layout-property-id
+unknown-layout-property-id
+layout-property-scope-mismatch
+layout-property-strategy-mismatch
+invalid-layout-number
+invalid-layout-dimension-kind
+invalid-layout-range
+invalid-layout-enum
+invalid-flex-value
+invalid-grid-track-list
+invalid-grid-placement
+invalid-split-value
+invalid-overlay-placement
+invalid-canvas-placement
+```
+
+Every `UiLayoutValidationIssue` carries `code`, `message`, and a stable path relative to the validated value/descriptor. It also carries `strategyId`, `propertyId`, `scope` and `valueKind` when that context exists. Strategy-specific validators use their named strategy code for malformed domain combinations and the shared number/dimension/range/enum codes for the corresponding leaf violation; callers therefore do not parse messages. Validation accumulates deterministic issues in declaration/property order and does not mutate input.
 
 `resolveUiLayoutInspectorGroups` first validates the supplied strategy/property set. On any issue it returns no groups plus those issues. Otherwise it preserves strategy property order, groups properties by their declared group, and returns only the requested `container` or `child` scope. It is a projection, not a mutable Inspector registry.
 
