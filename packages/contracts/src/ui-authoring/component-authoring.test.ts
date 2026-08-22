@@ -276,6 +276,44 @@ describe('UI component catalog', () => {
     ]);
   });
 
+  it('still validates malformed descriptors inside excluded contributor conflicts', () => {
+    const malformed = {
+      ...atomicDescriptor(' '),
+      designTime: { label: 'Malformed' },
+    };
+    const independent = atomicDescriptor('workbench.independent');
+    const resolution = resolveUiComponentCatalog([
+      { contributorId: 'duplicate', components: [malformed] },
+      { contributorId: 'independent', components: [independent] },
+      { contributorId: 'duplicate', components: [textDescriptor] },
+    ]);
+
+    expect(resolution.catalog.components()).toEqual([independent]);
+    expect(resolution.issues.map((issue) => [issue.code, issue.path])).toEqual([
+      ['duplicate-contributor-id', 'contributions[0].contributorId'],
+      ['blank-component-id', 'contributions[0].components[0].id'],
+      ['duplicate-contributor-id', 'contributions[2].contributorId'],
+    ]);
+  });
+
+  it('still validates malformed descriptors for a blank contributor id', () => {
+    const malformed = {
+      ...atomicDescriptor(' '),
+      designTime: { label: 'Malformed' },
+    };
+    const valid = atomicDescriptor('workbench.valid');
+    const resolution = resolveUiComponentCatalog([
+      { contributorId: ' ', components: [malformed] },
+      { contributorId: 'valid', components: [valid] },
+    ]);
+
+    expect(resolution.catalog.components()).toEqual([valid]);
+    expect(resolution.issues.map((issue) => [issue.code, issue.path])).toEqual([
+      ['blank-contributor-id', 'contributions[0].contributorId'],
+      ['blank-component-id', 'contributions[0].components[0].id'],
+    ]);
+  });
+
   it('excludes every conflicting exact component identity without hiding other versions', () => {
     const duplicateA = atomicDescriptor('workbench.badge', '1.0.0');
     const duplicateB = atomicDescriptor('workbench.badge', '1.0.0');

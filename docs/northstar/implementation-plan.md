@@ -2257,7 +2257,7 @@ When a duplicate `contributorId` exists, every contribution carrying that ID is 
 
 In scope: renderer-neutral types, stable issue codes, pure structural/cross-reference validation, immutable catalog projection, optional compatibility attachments/adapters and backendless tests.
 
-Not in scope: React components, render/build handlers, JDW layout or content materialization, node identity/tree/commands/history, component instance state, asset manifest persistence changes, automatic JSON Schema conversion, value/binding/expression resolution, Field Remap transforms, responsive variants, tokens/resources/themes, extension activation, dynamic imports, version ranges/migrations, arbitrary CSS/JSX/HTML/script, Electron/native or TilePaper product policy.
+Not in scope: React components, render/build handlers, JDW layout or content materialization, node identity/tree/commands/history, component instance state, asset manifest persistence changes, automatic JSON Schema conversion, value/binding/expression resolution, Field Remap transforms, responsive variants, tokens/resources/themes, extension activation, dynamic imports, version ranges/migrations, arbitrary CSS/JSX/HTML/script, Electron/native or host/product-specific policy.
 
 ##### Focused and final validation
 

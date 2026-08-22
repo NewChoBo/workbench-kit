@@ -28,6 +28,12 @@ interface IndexedDescriptor {
   readonly refKey: string | null;
 }
 
+interface IndexedContribution {
+  readonly conflictIssue: UiComponentValidationIssue | null;
+  readonly eligible: boolean;
+  readonly descriptors: readonly IndexedDescriptor[];
+}
+
 function isCanonicalText(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value === value.trim();
 }
@@ -93,55 +99,73 @@ export function resolveUiComponentCatalog(
     }
   }
 
-  const issues: UiComponentValidationIssue[] = [];
-  const indexedDescriptors: IndexedDescriptor[] = [];
-
-  contributions.forEach((contribution, contributionIndex) => {
-    if (!isCanonicalText(contribution.contributorId)) {
-      issues.push(blankContributorIssue(contribution, contributionIndex));
-      return;
-    }
-
-    if ((contributorCounts.get(contribution.contributorId) ?? 0) > 1) {
-      issues.push(duplicateContributorIssue(contribution, contributionIndex));
-      return;
-    }
-
-    contribution.components.forEach((descriptor, componentIndex) => {
-      const descriptorIssues = validateUiComponentDescriptor(descriptor).map((issue) =>
-        prefixIssue(issue, contributionIndex, componentIndex, contribution.contributorId),
-      );
-      const refKey =
-        isCanonicalText(descriptor.id) && isCanonicalText(descriptor.version)
-          ? uiComponentRefKey(descriptor)
+  const indexedContributions: IndexedContribution[] = contributions.map(
+    (contribution, contributionIndex) => {
+      const canonicalContributorId = isCanonicalText(contribution.contributorId);
+      const duplicatedContributorId =
+        canonicalContributorId && (contributorCounts.get(contribution.contributorId) ?? 0) > 1;
+      const conflictIssue = !canonicalContributorId
+        ? blankContributorIssue(contribution, contributionIndex)
+        : duplicatedContributorId
+          ? duplicateContributorIssue(contribution, contributionIndex)
           : null;
-      indexedDescriptors.push({
-        contributionIndex,
-        componentIndex,
-        contributorId: contribution.contributorId,
-        descriptor,
-        issues: descriptorIssues,
-        refKey,
+      const descriptors = contribution.components.map((descriptor, componentIndex) => {
+        const descriptorIssues = validateUiComponentDescriptor(descriptor).map((issue) =>
+          prefixIssue(issue, contributionIndex, componentIndex, contribution.contributorId),
+        );
+        const refKey =
+          isCanonicalText(descriptor.id) && isCanonicalText(descriptor.version)
+            ? uiComponentRefKey(descriptor)
+            : null;
+        return {
+          contributionIndex,
+          componentIndex,
+          contributorId: contribution.contributorId,
+          descriptor,
+          issues: descriptorIssues,
+          refKey,
+        } satisfies IndexedDescriptor;
       });
-    });
-  });
+
+      return {
+        conflictIssue,
+        eligible: conflictIssue === null,
+        descriptors,
+      };
+    },
+  );
 
   const componentCounts = new Map<string, number>();
-  for (const entry of indexedDescriptors) {
-    if (entry.refKey !== null) {
-      componentCounts.set(entry.refKey, (componentCounts.get(entry.refKey) ?? 0) + 1);
+  for (const indexedContribution of indexedContributions) {
+    if (!indexedContribution.eligible) {
+      continue;
+    }
+    for (const entry of indexedContribution.descriptors) {
+      if (entry.refKey !== null) {
+        componentCounts.set(entry.refKey, (componentCounts.get(entry.refKey) ?? 0) + 1);
+      }
     }
   }
 
+  const issues: UiComponentValidationIssue[] = [];
   const components: UiComponentDescriptor[] = [];
-  for (const entry of indexedDescriptors) {
-    issues.push(...entry.issues);
-    const duplicate = entry.refKey !== null && (componentCounts.get(entry.refKey) ?? 0) > 1;
-    if (duplicate) {
-      issues.push(duplicateComponentIssue(entry));
+  for (const indexedContribution of indexedContributions) {
+    if (indexedContribution.conflictIssue !== null) {
+      issues.push(indexedContribution.conflictIssue);
     }
-    if (entry.issues.length === 0 && !duplicate) {
-      components.push(entry.descriptor);
+
+    for (const entry of indexedContribution.descriptors) {
+      issues.push(...entry.issues);
+      const duplicate =
+        indexedContribution.eligible &&
+        entry.refKey !== null &&
+        (componentCounts.get(entry.refKey) ?? 0) > 1;
+      if (duplicate) {
+        issues.push(duplicateComponentIssue(entry));
+      }
+      if (indexedContribution.eligible && entry.issues.length === 0 && !duplicate) {
+        components.push(entry.descriptor);
+      }
     }
   }
 
