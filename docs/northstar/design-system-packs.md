@@ -595,7 +595,7 @@ Migration principles:
 
 ## 23. Implementation packet readiness
 
-The DesignSystemPack slice is not `READY_FOR_IMPLEMENTATION` as one monolith. High-level ownership and behavior are closed. The exact current-source ownership, adapter and removal map is now a documentation-only `WB-NS-072A` candidate under producer-distinct review; 072B+ remain separate bounded packets.
+The DesignSystemPack slice is not `READY_FOR_IMPLEMENTATION` as one monolith. High-level ownership and behavior are closed. The exact current-source ownership, adapter and removal map completed producer-distinct review as documentation-only `WB-NS-072A`; 072B+ remain separate bounded packets.
 
 Split the implementation chain in the canonical implementation plan as:
 
@@ -612,7 +612,7 @@ WB-NS-072E Canvas/Inspector/provenance integration
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup
 ```
 
-`WB-NS-072A` is `READINESS_REVIEW_REQUIRED` at the current integration baseline. Its canonical consolidation map is maintained in `implementation-plan.md`; producer-distinct PASS makes that documentation packet `DONE`, not source-ready. `072B+` remain `DESIGNING` until their own readiness packets close API/state/diagnostic semantics. WB-NS-040 is a boundary constraint rather than a 072B completion dependency: extension trust/manifest integration stays blocked on WB-NS-040/072F, while a future 072B packet may cover only pure already-authorized declarative descriptor registration and resolution.
+`WB-NS-072A` is `DONE` after producer-distinct `PASS`; its canonical consolidation map and integration evidence are maintained in `implementation-plan.md`. `WB-NS-072B` now has a separate `READINESS_REVIEW_REQUIRED` packet that freezes its pure descriptor/registry/resolver API, state, exact-version and diagnostic semantics. `072C+` remain `DESIGNING`. WB-NS-040 is a boundary constraint rather than a 072B completion dependency: extension trust/manifest integration stays blocked on WB-NS-040/072F, while 072B covers only pure already-authorized declarative descriptor registration and resolution.
 
 Canonical packet gates are maintained in [`implementation-plan.md`](./implementation-plan.md):
 
