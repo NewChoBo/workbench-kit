@@ -56,7 +56,19 @@ export interface FieldRemapPersistenceInput {
   readonly nextDocument: FieldRemapDocument;
   readonly expectedRevision: string;
   readonly nextRevision: string;
+  /**
+   * Identifies the owner epoch that issued this commit. Persistence adapters must include this
+   * identity and the revision pair in their final durable compare-and-swap boundary.
+   */
+  readonly ownerEpoch: string;
   readonly signal: AbortSignal;
+  /**
+   * Returns true only while this exact owner/revision attempt may still commit. A persistence
+   * adapter must check this together with `signal.aborted` immediately inside its final atomic
+   * commit boundary, after any asynchronous staging work. Once it returns false, this attempt
+   * must be unable to mutate durable state.
+   */
+  isCommitFenceCurrent(): boolean;
 }
 
 export interface FieldRemapTraversalSample {
@@ -622,7 +634,7 @@ export function createFieldRemapProjectionOwner(
   }
 
   async function runPersistence(
-    input: Omit<FieldRemapPersistenceInput, 'signal'>,
+    input: Omit<FieldRemapPersistenceInput, 'ownerEpoch' | 'signal' | 'isCommitFenceCurrent'>,
   ): Promise<FieldRemapPersistenceResult> {
     const controller = new AbortController();
     activePersistenceAbort = controller;
@@ -632,7 +644,21 @@ export function createFieldRemapProjectionOwner(
       });
     });
     const pending: Promise<FieldRemapPersistenceResult> = Promise.resolve()
-      .then(() => persist({ ...input, signal: controller.signal }))
+      .then(() =>
+        persist(
+          Object.freeze({
+            ...input,
+            ownerEpoch,
+            signal: controller.signal,
+            isCommitFenceCurrent: () =>
+              !controller.signal.aborted &&
+              !closed &&
+              !reconciliationPending &&
+              activePersistenceAbort === controller &&
+              revision() === input.expectedRevision,
+          }),
+        ),
+      )
       .then((result): FieldRemapPersistenceResult =>
         isPersistenceResult(result) ? result : { status: 'indeterminate' },
       )

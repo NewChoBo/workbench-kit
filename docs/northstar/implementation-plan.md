@@ -51,9 +51,9 @@ WB-NS-001A extension runtime responsibility decomposition [DONE]
         ↓
 WB-NS-001B1 shell dependency inventory + focused-service contract [DONE; dependency: WB-NS-001A DONE]
         ↓
-WB-NS-001B2 shell dependency narrowing migration [IMPLEMENTING; dependency: WB-NS-001B1 DONE]
+WB-NS-001B2 shell dependency narrowing migration [DONE; dependency: WB-NS-001B1 DONE]
 
-WB-NS-040A extension uninstall compatibility + dependency safety [SOURCE_REVIEW_REQUIRED; independent bounded correction]
+WB-NS-040A extension uninstall compatibility + dependency safety [DONE; independent bounded correction]
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
@@ -360,10 +360,12 @@ implementation evidence belongs to `WB-NS-001B2`.
 
 ## WB-NS-001B2 - Shell dependency narrowing migration
 
-- **Status:** `IMPLEMENTING`
+- **Status:** `DONE`
 - **Target:** [`extension-composition-boundary.md`](./extension-composition-boundary.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependency:** integrated `WB-NS-001B1` promotion projection
+- **Current source evidence:** `origin/develop@47766fd16189eb32169bdfdae39e32edd3f57544`
+- **Integrated implementation:** `08744d847b143509846b65c687dcda83d5cccb8e`
 
 ### Goal
 
@@ -373,24 +375,24 @@ Replace proven aggregate-registry reach-through incrementally while retaining ea
 
 Issue #303 defines the ordered migration, compatibility seams, ownership rules and focused verification matrix. After the `WB-NS-001B1` promotion was integrated, the implementation owner revalidated current `develop` and preserved the aggregate facade until every internal context consumer had moved.
 
-Issue #306 is the canonical implementation owner. The migration was revalidated
-against `origin/develop@1da7194dff1bbb62af6b5355f7016d3fde41ea27` and is active
-on `codex/wb-ns-001b2-focused-services`. The frozen candidate must document the
-prototype API migration, prove package-root focused-type imports, and directly
-cover activate/deactivate observation, settings publication ownership/collision,
-and unchanged capability-provider ID projection before this packet can move to
-`SOURCE_REVIEW_REQUIRED`.
+Issue #306 was the canonical implementation owner. The integrated source keeps
+`ExtensionRegistry` private to `WorkbenchProvider`, removes it from `WorkbenchContextValue`, and
+routes internal consumers through the reviewed focused services. Issue #306 was reconciled and
+closed after current-source verification; the `.35` release validates the focused public migration
+and packed-consumer boundary.
 
 ## WB-NS-040A — Extension uninstall compatibility and dependency safety
 
-- **Status:** `SOURCE_REVIEW_REQUIRED`
+- **Status:** `DONE`
 - **Target:** `WB-NS-040` compatibility/trust boundary and
   [`public-api-governance.md`](../conventions/public-api-governance.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** Issue #229 uninstall v1 and Issue #232 Provider-owned extension
   enablement are integrated
-- **Current source evidence:** `origin/develop@de0d32182963f646c6eab8fc3c087d0f21539cd6`
-- **Source candidate:** `1f0045c0f0ebb00480db06554465c46c4446f594`
+- **Current source evidence:** `origin/develop@47766fd16189eb32169bdfdae39e32edd3f57544`
+- **Integrated implementation:** PR #307 plus dependency-safety/compatibility repair PR #309 /
+  `d51bb4a75b801e2397c60c4274d043fb96668d40`
+- **Release evidence:** `v0.0.2-prototype.0.2.35`
 - **Candidate validation:** repair-focused shell 51 tests, focused React 10 tests,
   explicit-undefined exact-optional forwarding, `check:commit-safety`, public exports,
   packed consumer,
@@ -586,11 +588,13 @@ Do not delegate implementation until these are closed.
 
 ## WB-NS-011 — Field Remap runtime-only preview projection
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Issue owner:** [#225](https://github.com/NewChoBo/workbench-kit/issues/225)
 - **Ownership:** `GENERIC_KIT`
 - **Runtime layer:** `PURE_WEB`
-- **Verified current base:** `develop@df20eebae0dc1c352f4c2ce1a31841f2952df691`
+- **Current source evidence:** `origin/develop@28abf5fba07893b19e3a203e1579a72152d5e3fe`
+- **Integrated implementation:** PR #314 / `23a0d2317b5a1cadcb72a99ab76b0efa663c58ce`
+- **Release evidence:** `v0.0.2-prototype.0.2.35`
 - **Related:** `WB-NS-010`, `WB-NS-020`
 
 ### Goal
@@ -805,10 +809,14 @@ claims Electron coverage.
 
 ## WB-NS-020 — Projection ownership and round-trip contracts
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
 - **Target:** `target-architecture.md` § Projection architecture
 - **Ownership:** `GENERIC_KIT`
-- **Current source evidence:** `origin/develop@28abf5fba07893b19e3a203e1579a72152d5e3fe`
+- **Current integrated source:** `origin/develop@47766fd16189eb32169bdfdae39e32edd3f57544`
+- **Integrated implementation:** PR #316 / `b47037714622b0c48e22ca4c2524f33a92336f80`
+- **Active correction:** the same `WB-NS-020` lineage adds a live owner/revision commit
+  fence after post-integration review found that an abort-ignoring persistence adapter could
+  otherwise perform a late durable commit after timeout or disposal
 - **Verification layer:** `PURE_WEB / backendless`
 - **Public API impact:** additive projection contracts through the existing
   `@workbench-kit/contracts` root export
@@ -1283,6 +1291,9 @@ At minimum cover:
 - proven persistence failure returns `commit-failed` only after durable and
   in-memory rollback; indeterminate persistence returns unavailable with no
   authoritative publication pending reconciliation;
+- delayed persistence checks the owner epoch, expected/next revision, abort signal and live commit
+  fence in its final atomic durable boundary, so timeout/disposal cannot be followed by a late
+  durable mutation;
 - deterministic domain rebase expressed as a new transaction;
 - derived/runtime ports expose no mutation method;
 - selection/filter/draft/viewport/runtime state leaves serialization/history
@@ -1381,6 +1392,8 @@ Reject the implementation if:
   failed rollback is reported as a healthy authoritative revision;
 - an indeterminate durable outcome returns `commit-failed`, publishes a current
   revision, or proceeds without fail-closed reconciliation;
+- persistence performs a late durable commit after its abort signal or live owner/revision commit
+  fence has been invalidated;
 - selection, drafts, filters, viewport or runtime state enters document
   serialization by default;
 - local visibility expands a publication contract or exposes internal topology;
