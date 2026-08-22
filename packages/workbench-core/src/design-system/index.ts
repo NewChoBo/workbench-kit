@@ -28,3 +28,19 @@ export {
   type ComponentCompatibilityResolution,
   type ExplicitComponentReplacement,
 } from './component-resolver.js';
+export {
+  DesignSystemPackChangePlanner,
+  type DesignSystemComponentChoice,
+  type DesignSystemDependencyChoice,
+  type DesignSystemDependencyCompatibility,
+  type DesignSystemDependencyOccurrence,
+  type DesignSystemDependencyReplacement,
+  type DesignSystemNodeCompatibility,
+  type DesignSystemPackChangeChoices,
+  type DesignSystemPackChangeFinalizeResult,
+  type DesignSystemPackChangePlan,
+  type DesignSystemPackChangePlanResult,
+  type DesignSystemPackChangeRequest,
+  type DesignSystemThemeChoice,
+  type DesignSystemThemeChoiceRequirement,
+} from './pack-change-planner.js';

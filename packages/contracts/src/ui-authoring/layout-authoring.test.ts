@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   UI_LAYOUT_STRATEGY_KINDS,
+  UI_LAYOUT_VALUE_TYPES,
   UI_LAYOUT_VALIDATION_ISSUE_CODES,
   isUiLayoutStrategyKind,
   resolveUiLayoutInspectorGroups,
@@ -12,6 +13,7 @@ import {
   validateUiGridPlacementValue,
   validateUiGridTrackListValue,
   validateUiLayoutStrategyDescriptor,
+  validateUiLayoutPropertyValue,
   validateUiOverlayPlacementValue,
   validateUiPropertyValue,
   validateUiRadiusValue,
@@ -36,6 +38,144 @@ describe('UI layout literal values', () => {
     expect(Object.isFrozen(UI_LAYOUT_VALIDATION_ISSUE_CODES)).toBe(true);
     expect(isUiLayoutStrategyKind('host-flow')).toBe(true);
     expect(isUiLayoutStrategyKind(' ')).toBe(false);
+    expect(Object.isFrozen(UI_LAYOUT_VALUE_TYPES)).toBe(true);
+    expect(UI_LAYOUT_VALUE_TYPES).toContain('layout.canvas-placement');
+  });
+
+  it('composes the source envelope with built-in layout literal validators and fails unknown literals closed', () => {
+    const spacing: UiLayoutPropertyDescriptor = {
+      id: 'gap',
+      scope: 'container',
+      group: 'spacing',
+      strategyKinds: ['flex'],
+      value: { type: 'layout.spacing', allowedSources: ['literal', 'token'] },
+    };
+
+    expect(
+      validateUiLayoutPropertyValue(spacing, {
+        kind: 'literal',
+        value: {
+          kind: 'spacing',
+          top: px(1),
+          right: px(2),
+          bottom: px(3),
+          left: px(4),
+        },
+      }),
+    ).toEqual([]);
+    expect(validateUiLayoutPropertyValue(spacing, { kind: 'token', tokenId: 'space.gap' })).toEqual(
+      [],
+    );
+    expect(
+      validateUiLayoutPropertyValue(
+        { ...spacing, value: { type: 'layout.vendor-custom', allowedSources: ['literal'] } },
+        { kind: 'literal', value: { vendor: true } },
+      ),
+    ).toContainEqual(
+      expect.objectContaining({
+        code: 'unsupported-layout-literal-type',
+        propertyId: 'gap',
+        path: 'value',
+      }),
+    );
+  });
+
+  it.each([
+    ['layout.dimension', px(12)],
+    ['layout.spacing', { kind: 'spacing', top: px(1), right: px(1), bottom: px(1), left: px(1) }],
+    ['layout.border', { kind: 'border', width: px(1), style: 'solid', color: '#fff' }],
+    [
+      'layout.radius',
+      {
+        kind: 'radius',
+        topLeft: px(1),
+        topRight: px(1),
+        bottomRight: px(1),
+        bottomLeft: px(1),
+      },
+    ],
+    [
+      'layout.shadow',
+      {
+        kind: 'shadow',
+        offsetX: px(0),
+        offsetY: px(1),
+        blur: px(4),
+        spread: px(0),
+        color: '#0008',
+      },
+    ],
+    [
+      'layout.flex-container',
+      {
+        kind: 'flex-container',
+        direction: 'row',
+        wrap: 'nowrap',
+        mainAxisAlignment: 'start',
+        crossAxisAlignment: 'stretch',
+      },
+    ],
+    [
+      'layout.flex-child',
+      {
+        kind: 'flex-child',
+        grow: 1,
+        shrink: 1,
+        basis: px(20),
+        order: 0,
+        alignSelf: 'auto',
+      },
+    ],
+    ['layout.grid-tracks', { kind: 'grid-track-list', tracks: [px(100)] }],
+    [
+      'layout.grid-placement',
+      {
+        kind: 'grid-placement',
+        mode: 'lines',
+        columnStart: 1,
+        rowStart: 1,
+        columnSpan: 1,
+        rowSpan: 1,
+      },
+    ],
+    [
+      'layout.split',
+      {
+        kind: 'split',
+        orientation: 'horizontal',
+        fixedTrack: 'primary',
+        size: percent(40),
+        collapsible: false,
+        collapsed: false,
+        resizable: true,
+      },
+    ],
+    ['layout.overlay-placement', { kind: 'overlay-placement', anchor: 'center', zIndex: 0 }],
+    [
+      'layout.canvas-placement',
+      {
+        kind: 'canvas-placement',
+        x: px(0),
+        y: px(0),
+        width: px(100),
+        height: px(100),
+        anchor: 'top-start',
+        zIndex: 0,
+      },
+    ],
+  ] as const)('dispatches %s to its existing named validator', (type, value) => {
+    expect(
+      validateUiLayoutPropertyValue(
+        {
+          id: 'layout-value',
+          scope: 'container',
+          group: 'advanced',
+          strategyKinds: ['custom'],
+          value: { type, allowedSources: ['literal'] },
+        },
+        { kind: 'literal', value },
+      ),
+    ).toEqual([]);
   });
 
   it.each<UiDimensionValue>([

@@ -1,6 +1,8 @@
 import {
   isStructurallyValidUiValueSource,
+  validateUiDesignSystemState,
   type UiComponentRef,
+  type UiDesignSystemState,
   type UiValueSource,
 } from '@workbench-kit/contracts';
 
@@ -78,9 +80,15 @@ export function readUiDocumentNodeAuthoring(widget: GenericWidget): UiDocumentNo
   if (!component || !isObjectRecord(value.properties)) return null;
 
   const properties = value.properties as Readonly<Record<string, UiValueSource>>;
-  if (value.layout === undefined) {
-    return { component, properties };
-  }
+  const extras = {
+    ...(value.themeScopeId !== undefined && isCanonicalText(value.themeScopeId)
+      ? { themeScopeId: value.themeScopeId }
+      : {}),
+    ...(value.designSystem !== undefined && isObjectRecord(value.designSystem)
+      ? { designSystem: value.designSystem as unknown as UiDesignSystemState }
+      : {}),
+  };
+  if (value.layout === undefined) return { component, properties, ...extras };
   if (
     !isObjectRecord(value.layout) ||
     !isCanonicalText(value.layout.strategyId) ||
@@ -92,6 +100,7 @@ export function readUiDocumentNodeAuthoring(widget: GenericWidget): UiDocumentNo
   return {
     component,
     properties,
+    ...extras,
     layout: {
       strategyId: value.layout.strategyId,
       values: value.layout.values as Readonly<Record<string, UiValueSource>>,
@@ -154,6 +163,27 @@ export function validateUiDocumentWrapperIdentity(
 export function validateUiDocumentRoot(root: GenericWidget): readonly UiDocumentIssue[] {
   const issues: UiDocumentIssue[] = [];
   const seen = new Set<string>();
+  const rawRootAuthoring = root[UI_DOCUMENT_AUTHORING_ARG];
+  const rawDesignSystem = isObjectRecord(rawRootAuthoring)
+    ? rawRootAuthoring.designSystem
+    : undefined;
+  const designSystem = isObjectRecord(rawDesignSystem)
+    ? (rawDesignSystem as unknown as UiDesignSystemState)
+    : null;
+  if (rawDesignSystem !== undefined) {
+    const diagnostics = validateUiDesignSystemState(
+      rawDesignSystem as UiDesignSystemState,
+      `root.${UI_DOCUMENT_AUTHORING_ARG}.designSystem`,
+    );
+    issues.push(
+      ...diagnostics.map((diagnostic) => ({
+        code: 'invalid-design-system-state' as const,
+        message: diagnostic.message,
+        path: diagnostic.path,
+      })),
+    );
+  }
+  const scopeChains = new Map<string, readonly string[]>();
 
   for (const entry of collectWidgetNodes(root)) {
     const path = widgetPathKey(entry.path);
@@ -193,6 +223,56 @@ export function validateUiDocumentRoot(root: GenericWidget): readonly UiDocument
       });
       continue;
     }
+
+    if (entry.path.length > 0 && authoring.designSystem !== undefined) {
+      issues.push({
+        code: 'nonroot-design-system-state',
+        message: 'Only the semantic root may own the UI document design-system state.',
+        path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.designSystem`,
+        ...(nodeId !== undefined ? { nodeId } : {}),
+      });
+    }
+
+    const parentChain = entry.parent
+      ? (scopeChains.get(entry.parent.id as string) ?? Object.freeze([]))
+      : Object.freeze([]);
+    let scopeChain = parentChain;
+    if (authoring.themeScopeId !== undefined) {
+      if (!isCanonicalText(authoring.themeScopeId)) {
+        issues.push({
+          code: 'invalid-theme-scope-id',
+          message: 'UI document ThemeScope ids must be non-blank and already trimmed.',
+          path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.themeScopeId`,
+          ...(nodeId !== undefined ? { nodeId } : {}),
+        });
+      } else if (designSystem === null) {
+        issues.push({
+          code: 'theme-scope-without-state',
+          message: 'A ThemeScope reference requires root design-system state.',
+          path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.themeScopeId`,
+          ...(nodeId !== undefined ? { nodeId } : {}),
+        });
+      } else if (
+        !Object.prototype.hasOwnProperty.call(designSystem.scopes ?? {}, authoring.themeScopeId)
+      ) {
+        issues.push({
+          code: 'theme-scope-not-found',
+          message: `ThemeScope "${authoring.themeScopeId}" is not declared by the root state.`,
+          path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.themeScopeId`,
+          ...(nodeId !== undefined ? { nodeId } : {}),
+        });
+      } else if (parentChain.includes(authoring.themeScopeId)) {
+        issues.push({
+          code: 'duplicate-active-theme-scope',
+          message: `ThemeScope "${authoring.themeScopeId}" is repeated on one ancestry path.`,
+          path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.themeScopeId`,
+          ...(nodeId !== undefined ? { nodeId } : {}),
+        });
+      } else {
+        scopeChain = Object.freeze([...parentChain, authoring.themeScopeId]);
+      }
+    }
+    if (nodeId !== undefined) scopeChains.set(nodeId, scopeChain);
 
     if (componentRef(authoring.component) === null) {
       issues.push({
@@ -269,6 +349,7 @@ export function createUiDocument(documentId: string, source: string): CreateUiDo
   if (issues.length > 0) {
     return { document: null, issues: Object.freeze(issues) };
   }
+  const designSystem = readUiDocumentNodeAuthoring(widgetDocument.root)?.designSystem ?? null;
 
   return {
     document: deepFreezeUiAuthoringValue({
@@ -276,6 +357,7 @@ export function createUiDocument(documentId: string, source: string): CreateUiDo
       revision: 0,
       source,
       root: widgetDocument.root as UiDocumentNode,
+      designSystem,
     }),
     issues: Object.freeze([]),
   };

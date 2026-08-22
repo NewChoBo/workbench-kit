@@ -13,6 +13,8 @@ import {
   type UiLayoutStrategyDescriptor,
   type UiLengthOrPercentageValue,
 } from './layout-types';
+import type { UiValueSource } from './types';
+import { validateUiPropertyValue, type UiValueValidationIssue } from './validation';
 
 export const UI_LAYOUT_VALIDATION_ISSUE_CODES = Object.freeze([
   'blank-layout-strategy-id',
@@ -33,6 +35,7 @@ export const UI_LAYOUT_VALIDATION_ISSUE_CODES = Object.freeze([
   'invalid-split-value',
   'invalid-overlay-placement',
   'invalid-canvas-placement',
+  'unsupported-layout-literal-type',
 ] as const);
 
 export type UiLayoutValidationIssueCode = (typeof UI_LAYOUT_VALIDATION_ISSUE_CODES)[number];
@@ -57,6 +60,8 @@ export interface ValidateUiSpacingValueOptions {
   readonly allowNegative?: boolean;
   readonly path?: string;
 }
+
+export type UiLayoutPropertyValueIssue = UiLayoutValidationIssue | UiValueValidationIssue;
 
 type UnknownRecord = Record<string, unknown>;
 
@@ -625,6 +630,53 @@ export function validateUiCanvasPlacementValue(value: unknown): readonly UiLayou
     issues.push(...validateCanvasConstraints(value.constraints, 'constraints'));
   }
   return withValueKind(issues, 'canvas-placement');
+}
+
+export function validateUiLayoutPropertyValue<TLiteral>(
+  descriptor: UiLayoutPropertyDescriptor<TLiteral>,
+  source: UiValueSource<TLiteral>,
+): readonly UiLayoutPropertyValueIssue[] {
+  const issues: UiLayoutPropertyValueIssue[] = [...validateUiPropertyValue(descriptor, source)];
+  if (source.kind !== 'literal') return issues;
+
+  const validators: Readonly<
+    Record<string, (value: unknown) => readonly UiLayoutValidationIssue[]>
+  > = {
+    'layout.dimension': validateUiDimensionValue,
+    'layout.spacing': validateUiSpacingValue,
+    'layout.border': validateUiBorderValue,
+    'layout.radius': validateUiRadiusValue,
+    'layout.shadow': validateUiShadowValue,
+    'layout.flex-container': validateUiFlexContainerValue,
+    'layout.flex-child': validateUiFlexChildValue,
+    'layout.grid-tracks': validateUiGridTrackListValue,
+    'layout.grid-placement': validateUiGridPlacementValue,
+    'layout.split': validateUiSplitValue,
+    'layout.overlay-placement': validateUiOverlayPlacementValue,
+    'layout.canvas-placement': validateUiCanvasPlacementValue,
+  };
+  const validator = validators[descriptor.value.type];
+  if (validator === undefined) {
+    issues.push({
+      code: 'unsupported-layout-literal-type',
+      message: `Layout literal type "${descriptor.value.type}" has no trusted built-in validator.`,
+      path: 'value',
+      propertyId: descriptor.id,
+      scope: descriptor.scope,
+      valueKind: descriptor.value.type,
+    });
+    return issues;
+  }
+  issues.push(
+    ...validator(source.value).map((candidate) => ({
+      ...candidate,
+      path: candidate.path.length === 0 ? 'value' : `value.${candidate.path}`,
+      propertyId: descriptor.id,
+      scope: descriptor.scope,
+      valueKind: descriptor.value.type,
+    })),
+  );
+  return issues;
 }
 
 export function validateUiLayoutStrategyDescriptor<TLiteral>(

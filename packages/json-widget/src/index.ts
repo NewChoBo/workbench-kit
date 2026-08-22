@@ -146,6 +146,7 @@ export {
 
 export type {
   ApplyUiDocumentCommandResult,
+  ApplyUiDesignSystemPackChangeResult,
   CreateUiDocumentResult,
   MigrateWidgetDocumentOptions,
   MigrateWidgetDocumentResult,
@@ -165,7 +166,10 @@ export type {
   UiDocumentNode,
   UiDocumentNodeAuthoring,
   UiDocumentTransaction,
+  UiDocumentTransactionIntent,
   UiDocumentTransactionRecord,
+  UiDesignSystemPackChangeCommand,
+  ProjectUiDesignSystemDocumentResult,
 } from './ui-authoring/types.js';
 export {
   UI_DOCUMENT_AUTHORING_ARG,
@@ -184,6 +188,10 @@ export {
   validateUiDocumentWrapperIdentity,
 } from './ui-authoring/document.js';
 export { applyUiDocumentCommand } from './ui-authoring/commands.js';
+export {
+  applyUiDesignSystemPackChange,
+  projectUiDesignSystemDocument,
+} from './ui-authoring/design-system.js';
 export {
   applyUiAuthoringSessionCommand,
   createUiAuthoringSession,

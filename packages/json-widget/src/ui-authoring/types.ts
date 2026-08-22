@@ -1,4 +1,11 @@
-import type { UiComponentRef, UiValueSource } from '@workbench-kit/contracts';
+import type {
+  DesignSystemDiagnostic,
+  DesignSystemAuthoredDocumentSnapshot,
+  DesignSystemPackChangeMutation,
+  UiComponentRef,
+  UiDesignSystemState,
+  UiValueSource,
+} from '@workbench-kit/contracts';
 
 import type { WidgetPath } from '../document/path.js';
 import type { GenericWidget } from '../widget/tree.js';
@@ -9,6 +16,8 @@ export const UI_DOCUMENT_AUTHORING_ARG = '$authoring' as const;
 export interface UiDocumentNodeAuthoring {
   readonly component: UiComponentRef;
   readonly properties: Readonly<Record<string, UiValueSource>>;
+  readonly themeScopeId?: string;
+  readonly designSystem?: UiDesignSystemState;
   readonly layout?: {
     readonly strategyId: string;
     readonly values: Readonly<Record<string, UiValueSource>>;
@@ -25,6 +34,7 @@ export interface UiDocument {
   readonly revision: number;
   readonly source: string;
   readonly root: UiDocumentNode;
+  readonly designSystem: UiDesignSystemState | null;
 }
 
 export const UI_DOCUMENT_ISSUE_CODES = Object.freeze([
@@ -40,6 +50,12 @@ export const UI_DOCUMENT_ISSUE_CODES = Object.freeze([
   'invalid-layout-strategy',
   'invalid-layout-value',
   'migration-resolution-failed',
+  'invalid-design-system-state',
+  'nonroot-design-system-state',
+  'invalid-theme-scope-id',
+  'theme-scope-without-state',
+  'theme-scope-not-found',
+  'duplicate-active-theme-scope',
 ] as const);
 
 export type UiDocumentIssueCode = (typeof UI_DOCUMENT_ISSUE_CODES)[number];
@@ -103,11 +119,19 @@ export type UiDocumentCommand =
 
 export interface UiDocumentTransaction {
   readonly transactionId: string;
-  readonly command: UiDocumentCommand;
+  readonly command: UiDocumentTransactionIntent;
   readonly baseRevision: number;
   readonly nextRevision: number;
   readonly patches: readonly WidgetPatch[];
 }
+
+export interface UiDesignSystemPackChangeCommand {
+  readonly type: 'apply-design-system-pack-change';
+  readonly commandId: string;
+  readonly mutation: DesignSystemPackChangeMutation;
+}
+
+export type UiDocumentTransactionIntent = UiDocumentCommand | UiDesignSystemPackChangeCommand;
 
 export const UI_DOCUMENT_COMMAND_ISSUE_CODES = Object.freeze([
   'blank-command-id',
@@ -152,6 +176,17 @@ export interface UiAuthoringSessionState {
 export interface UiAuthoringSessionCommandResult {
   readonly state: UiAuthoringSessionState;
   readonly commandResult: ApplyUiDocumentCommandResult;
+}
+
+export interface ApplyUiDesignSystemPackChangeResult {
+  readonly state: UiAuthoringSessionState;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+  readonly changed: boolean;
+}
+
+export interface ProjectUiDesignSystemDocumentResult {
+  readonly document?: DesignSystemAuthoredDocumentSnapshot;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
 }
 
 export interface UiDocumentMigrationContext {
