@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@f4b51bdce89e2d50cfb1838e12d833b510216fce`.
+- **Current integration baseline:** `origin/develop@6ae4fc83b5a13db483855cdde4e64b9ad0964d67`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -62,9 +62,9 @@ Document + state ownership foundations
 
 WB-NS-070A typed UI value/property inventory + target contract [DONE]
         ↓
-WB-NS-070B selectable layout strategy + typed style constraints [SOURCE_REVIEW_REQUIRED]
+WB-NS-070B selectable layout strategy + typed style constraints [DONE]
         ↓
-WB-NS-070C atomic component/composite descriptor contract
+WB-NS-070C atomic component/composite descriptor contract [DESIGNING; REVIEW CANDIDATE]
         ↓
 WB-NS-070D UiDocument command + direct-manipulation authoring
         ↓
@@ -100,7 +100,7 @@ Backendless/performance + compatibility hardening
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
 
-`WB-NS-070A` established the shared typed property/value-source envelope. `WB-NS-070B` is the next promoted slice after current JDW layout, SplitView, ThemeRegistry and legacy WorkbenchDocument ownership were re-inventoried. The remaining `WB-NS-070*` / `WB-NS-071*` target slots stay `DESIGNING` until their own bounded packets prevent a parallel schema, layout, document or graph system.
+`WB-NS-070A` established the shared typed property/value-source envelope and `WB-NS-070B` added renderer-neutral layout/style descriptors without moving JDW runtime ownership. `WB-NS-070C` is the next bounded design-review slice. The remaining `WB-NS-070*` / `WB-NS-071*` target slots stay `DESIGNING` until their own packets prevent a parallel schema, layout, document or graph system.
 
 ---
 
@@ -1765,8 +1765,8 @@ Close:
 
 ### `WB-NS-070B` bounded packet — layout/style values, strategy descriptors and contextual validation
 
-- **Status:** `SOURCE_REVIEW_REQUIRED`
-- **Source/API evidence:** source-bearing parent `origin/develop@f4b51bdce89e2d50cfb1838e12d833b510216fce`; readiness review head `a8befd59656e4144dcb61e3e8799cacd2d0b7460` integrated through PR #323
+- **Status:** `DONE`
+- **Source/API evidence:** readiness review head `a8befd59656e4144dcb61e3e8799cacd2d0b7460` integrated through PR #323; reviewed source successor `6876fe503d4192d4f76d296264931cc35690affa` integrated through PR #324 as `6ae4fc83b5a13db483855cdde4e64b9ad0964d67`
 - **Dependencies:** `WB-NS-070A` `DONE`
 - **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
 - **Implementation scope:** `packages/contracts/src/ui-authoring/*`, root exports and focused backendless tests
@@ -2098,7 +2098,184 @@ The packet is complete when a browser- and Electron-free consumer can declare co
 
 ### `WB-NS-070C` ready gate
 
-Close component descriptor identity/version, properties/events/bindings/layout/accessibility/design-time metadata, registry contribution path, and composite public interface semantics.
+#### `WB-NS-070C` bounded packet — atomic/composite descriptors and immutable catalog projection
+
+- **Status:** `DESIGNING` — promotion to `READY_FOR_IMPLEMENTATION` requires producer-distinct review of this exact packet
+- **Source/API evidence:** `origin/develop@6ae4fc83b5a13db483855cdde4e64b9ad0964d67`
+- **Dependencies:** `WB-NS-070A` and `WB-NS-070B` `DONE`
+- **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
+- **Implementation scope:** component descriptor types, pure structural/cross-reference validation, deterministic immutable catalog projection, source-compatible registry/asset metadata attachment, root exports and focused backendless tests
+
+##### Outcome
+
+Add one renderer-neutral description of atomic and composite components so Palette, Inspector, Canvas and later graph/design-system adapters can share exact component identity, public properties, events, binding slots, layout support, accessibility metadata and design-time presentation. A composite exposes the same public interface as an atomic component while its internal composition remains behind an opaque stable reference until `WB-NS-070D` owns the canonical `UiDocument` tree and commands.
+
+070C does not render, materialize, execute, persist or migrate a component. It does not replace the current JDW widget registry or widget asset catalog.
+
+##### Current source/API decisions
+
+| Existing surface                                        | Decision                   | Reason / follow-up                                                                                                                                                                                                                                    |
+| ------------------------------------------------------- | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WidgetTypeDefinition` and `WidgetRegistryContract`     | `REUSE_RUNTIME_REGISTRY`   | They remain the type-to-build/measure/runtime compatibility path. An optional semantic descriptor attachment and a pure contribution adapter may project authoring metadata without changing existing build lookup, bind order or renderer ownership. |
+| `WidgetPlacementAsset` and `WidgetAssetCatalogContract` | `REUSE_COMPOSITE_CONTENT`  | They remain the concrete JDW subtree/template placement path. An optional composite descriptor attachment and pure contribution adapter may expose catalog metadata; 070C does not reinterpret `content`, placement policy or input materialization.  |
+| React `createBuiltinJdwRegistry`                        | `ADAPT_LATER`              | Its duplicated JSON Schema and Inspector sections are the first consumer migration candidate. 070C must not move React build functions or CSS/DOM metadata into contracts.                                                                            |
+| Widget asset `manifest.json` version                    | `COMPATIBILITY_EVIDENCE`   | The writer emits `1.0.0`, while the current parser does not retain version as a public semantic identity. 070C descriptor versions are exact opaque non-blank identifiers; version-range selection and package migration policy are deferred to 072.  |
+| `UiPropertyDescriptor` and `UiLayoutStrategyDescriptor` | `REUSE_CANONICAL_METADATA` | Component properties reuse 070A directly. Layout support references 070B strategy IDs; it does not embed a second strategy descriptor or calculator.                                                                                                  |
+| JDW document/tree/patch/history                         | `DO_NOT_EXTEND`            | Composite internals use an opaque `compositionRef`. Node identity, tree ownership, commands, persistence and undo remain 070D.                                                                                                                        |
+
+##### Public semantic contract
+
+Implementation names may change only if the same ownership, discriminants and compatibility semantics remain explicit.
+
+```ts
+type UiComponentKind = 'atomic' | 'composite';
+type UiBindingDirection = 'input' | 'output' | 'bidirectional';
+type UiChildSlotCardinality = 'one' | 'many';
+
+interface UiComponentRef {
+  id: string;
+  version: string;
+}
+
+interface UiComponentEventDescriptor {
+  id: string;
+  label?: string;
+  description?: string;
+  payload?: UiValueSchema;
+}
+
+interface UiComponentBindingDescriptor {
+  id: string;
+  label?: string;
+  description?: string;
+  direction: UiBindingDirection;
+  value: UiValueSchema;
+}
+
+interface UiComponentChildSlotDescriptor {
+  id: string;
+  cardinality: UiChildSlotCardinality;
+  allowedComponentIds?: readonly string[];
+}
+
+interface UiComponentLayoutSupport {
+  childSlots?: readonly UiComponentChildSlotDescriptor[];
+  supportedStrategyIds?: readonly string[];
+  defaultStrategyId?: string;
+}
+
+interface UiComponentAccessibilityDescriptor {
+  supportedRoles?: readonly string[];
+  defaultRole?: string;
+  accessibleNamePropertyId?: string;
+  accessibleDescriptionPropertyId?: string;
+}
+
+interface UiComponentDesignTimeMetadata {
+  label: string;
+  description?: string;
+  category?: string;
+  icon?: string;
+  tags?: readonly string[];
+  hiddenFromPalette?: boolean;
+}
+
+interface UiComponentDescriptorBase extends UiComponentRef {
+  kind: UiComponentKind;
+  properties?: readonly UiPropertyDescriptor[];
+  events?: readonly UiComponentEventDescriptor[];
+  bindings?: readonly UiComponentBindingDescriptor[];
+  layout?: UiComponentLayoutSupport;
+  accessibility?: UiComponentAccessibilityDescriptor;
+  designTime: UiComponentDesignTimeMetadata;
+}
+
+interface UiAtomicComponentDescriptor extends UiComponentDescriptorBase {
+  kind: 'atomic';
+}
+
+interface UiCompositeComponentDescriptor extends UiComponentDescriptorBase {
+  kind: 'composite';
+  compositionRef: string;
+}
+
+type UiComponentDescriptor = UiAtomicComponentDescriptor | UiCompositeComponentDescriptor;
+
+interface UiComponentCatalogContribution {
+  contributorId: string;
+  components: readonly UiComponentDescriptor[];
+}
+```
+
+Normative semantics:
+
+- `{ id, version }` is the exact component identity. Both are trimmed non-blank stable strings. No implicit latest version, range match or override exists in 070C.
+- `properties`, `events` and `bindings` are the complete public interface of both atomic and composite descriptors. Composite internal node paths, private properties and renderer handles never leak through this interface.
+- event descriptors declare emitted semantic events only. They contain no callback, command handler or executable payload.
+- binding descriptors declare typed public data slots only. They do not resolve 070A `bindingId`, execute transforms or duplicate Field Remap.
+- child slots declare authoring cardinality and optional component-ID allowlists. They do not store child instances or define the future `UiDocument` tree.
+- `supportedStrategyIds` references separately supplied 070B strategy descriptors. `defaultStrategyId`, when present, must be included exactly once in that list. Empty or duplicate references fail validation.
+- accessibility property references must name a declared component property. `defaultRole`, when present, must occur in `supportedRoles`. The contract records authoring metadata; renderer-specific ARIA/DOM/native projection remains adapter-owned.
+- design-time metadata is presentation-only. It cannot change runtime behavior, grant capabilities or select a renderer.
+- `compositionRef` is an opaque non-blank stable ID owned by the host/composite source adapter. It is not a path, inline tree, script, JSX, HTML, CSS or second document format.
+
+##### Validation and catalog behavior
+
+Add a frozen `UI_COMPONENT_VALIDATION_ISSUE_CODES` vocabulary and pure validation that accumulates deterministic issues in descriptor order. At minimum it covers blank identity/version/labels/refs, unknown discriminants, duplicate property/event/binding/slot IDs, invalid nested 070A schemas, blank/duplicate strategy and allowlist entries, invalid default strategy/role references, invalid accessibility property references, and a missing composite `compositionRef`.
+
+The immutable catalog projection:
+
+1. reads contributions in supplied order;
+2. validates each contributor and descriptor without mutating inputs;
+3. rejects duplicate contributor IDs and duplicate exact `{ id, version }` component identities instead of last-writer-wins replacement;
+4. returns only validated descriptors in deterministic contribution/component order plus structured issues;
+5. supports exact `{ id, version }` lookup only;
+6. performs no build lookup, content materialization, renderer selection, persistence, network I/O or dynamic import.
+
+An invalid descriptor is excluded from the usable catalog while independent valid descriptors remain available. A duplicate exact component identity excludes every conflicting definition for that identity, so contribution order cannot silently grant override authority.
+
+##### Compatibility and contribution path
+
+- Add an optional semantic `componentDescriptor` attachment to `WidgetTypeDefinition` without changing existing required fields, generic build types or lookup behavior. Existing consumers compile unchanged.
+- Add an optional semantic `componentDescriptor` attachment to `WidgetPlacementAsset` without changing content, placement, package parsing or materialization behavior. It accepts only a composite descriptor when carried by a placement asset.
+- Pure adapters collect attached descriptors into named `UiComponentCatalogContribution` values. They do not infer a full descriptor from lossy JSON Schema, Inspector fields or arbitrary asset content.
+- Existing registries/catalogs continue to own runtime definitions and concrete assets. The 070C catalog is an authoring metadata projection, not a universal service registry.
+- Built-in JDW descriptor population, asset-manifest persistence, editor projection and migration/removal of duplicated schemas are later consumer slices after this contract is reviewed and integrated.
+
+##### Ordered implementation slice
+
+1. Add component/event/binding/layout/accessibility/design-time descriptor types, frozen vocabularies and guards under `packages/contracts/src/ui-authoring/`.
+2. Add deterministic pure descriptor validation, reusing 070A property validation and referencing 070B strategy IDs without importing runtime packages.
+3. Add immutable contribution/catalog resolution with exact lookup and fail-closed duplicate handling.
+4. Add optional descriptor attachments to the existing widget definition and placement asset contracts plus pure contribution adapters.
+5. Export the public contract from `@workbench-kit/contracts` root and add focused public-root/type compatibility evidence.
+6. Run focused contracts tests during development. Freeze one source candidate, then run repository static, full unit and browser-safe validation once on that exact SHA; Electron remains skipped because no native boundary changes.
+
+##### Scope and non-scope
+
+In scope: renderer-neutral types, stable issue codes, pure structural/cross-reference validation, immutable catalog projection, optional compatibility attachments/adapters and backendless tests.
+
+Not in scope: React components, render/build handlers, JDW layout or content materialization, node identity/tree/commands/history, component instance state, asset manifest persistence changes, automatic JSON Schema conversion, value/binding/expression resolution, Field Remap transforms, responsive variants, tokens/resources/themes, extension activation, dynamic imports, version ranges/migrations, arbitrary CSS/JSX/HTML/script, Electron/native or TilePaper product policy.
+
+##### Focused and final validation
+
+- descriptors: representative atomic leaf, atomic container and composite interface fixtures with literal/token/resource/binding property sources;
+- failures: blank identity/version/labels/refs, duplicate public IDs, invalid nested property schemas, missing/duplicate layout refs, invalid accessibility refs and composite reference;
+- catalog: multiple contributors, exact lookup, stable order, invalid-descriptor isolation, duplicate contributor and duplicate exact identity fail-closed behavior, immutability;
+- compatibility: old `WidgetTypeDefinition`, `WidgetRegistryContract`, `WidgetPlacementAsset` and catalog consumers compile and behave unchanged; attached semantic descriptors survive existing registry/catalog reads;
+- public envelope: browser/Electron-free import from `@workbench-kit/contracts` with no React, JDW, Field Remap or native dependency;
+- candidate gates: contracts typecheck/tests/lint/format plus repository `validate:static`, full unit and browser-safe validation once on the frozen source SHA;
+- Electron/native: not required because this packet changes no native boundary.
+
+##### Performance boundary
+
+Descriptor validation and catalog construction must be linear in total supplied descriptors plus their declared metadata. Exact lookup is constant-time after construction. No millisecond SLA or bundle-size cap is justified for this contract-only slice; review instead rejects duplicate engines, runtime dependencies and repeated full-catalog scans per lookup.
+
+##### Acceptance and source-review gate
+
+The packet is complete when a browser- and Electron-free consumer can declare and validate atomic/container/composite public interfaces, contribute them from existing registry/asset compatibility surfaces, construct a deterministic immutable catalog and perform exact identity lookup without a renderer, document tree or evaluator.
+
+Producer-distinct design review must confirm the packet closes identity/version, public interface, layout/accessibility cross-references, contribution conflict semantics and composite opacity before status becomes `READY_FOR_IMPLEMENTATION`. Source review must reject lossy automatic schema inference, last-writer-wins component replacement, inline composite trees or executable renderer strings, mutation, implicit latest-version selection, a second runtime registry/catalog, or any change to existing JDW build/content behavior.
 
 ### `WB-NS-070D` ready gate
 
