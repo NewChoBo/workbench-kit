@@ -78,9 +78,9 @@ WB-NS-071B component/node development requirement flow
         ↓
 WB-NS-071C external node ecosystem adapter contract
 
-WB-NS-072A design-system foundation consolidation map [READINESS_REVIEW_REQUIRED; dependencies mapped against WB-NS-070A and WB-NS-040]
+WB-NS-072A design-system foundation consolidation map [DONE]
         ↓
-WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DESIGNING; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
+WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
         ↓
 { WB-NS-072C component-role + typed token/resource resolution [DESIGNING; dependency: WB-NS-072B]
   WB-NS-072D explicit pack migration planner + transaction [DESIGNING; dependency: WB-NS-072B] }
@@ -2665,7 +2665,7 @@ Evaluate typed input/output compatibility, widget/input duality, custom-node sch
 
 ## WB-NS-072A - Existing design-system foundation consolidation map
 
-- **Status:** `READINESS_REVIEW_REQUIRED`
+- **Status:** `DONE`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-070A`, `WB-NS-040`
@@ -2674,7 +2674,7 @@ Evaluate typed input/output compatibility, widget/input duality, custom-node sch
 
 ### Outcome
 
-The current source has enough reusable value, component, document, extension-lifecycle and renderer assets to build Design System Packs without a second theme, widget, property or document engine. The canonical owners and migration order are now fixed below. `WB-NS-072A` itself requires no source implementation; after producer-distinct review this map may become `DONE`, allowing a bounded `WB-NS-072B` readiness packet.
+The current source has enough reusable value, component, document, extension-lifecycle and renderer assets to build Design System Packs without a second theme, widget, property or document engine. The canonical owners and migration order are now fixed below. The documentation successor at `1bf3846d27e54e3a00ff4b347cee8d5dd32fdee7` received producer-distinct `PASS / P0 none / P1 none / P2 none` and was integrated as `e7fdf0aadb166ecedbedbade59f2496caddd7776`; `WB-NS-072A` therefore requires no source implementation and is `DONE`.
 
 ### Canonical ownership map
 
@@ -2714,27 +2714,226 @@ WB-NS-040 is therefore a **boundary constraint, not a 072B completion dependency
 
 ### Promotion gate
 
-Producer-distinct review of the exact documentation candidate must return no P0/P1 ambiguity. On PASS, mark 072A `DONE`; then prepare a separate 072B readiness packet against then-current `develop`. Do not implement 072B source from this map alone.
+Producer-distinct review of the exact documentation successor returned no P0/P1/P2 ambiguity. The separate 072B readiness packet below is based on integrated `develop@e7fdf0aadb166ecedbedbade59f2496caddd7776`; do not widen its source implementation from the 072A map alone.
 
 ## WB-NS-072B - DesignSystemPack and Theme resolver foundation
 
-- **Status:** `DESIGNING`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 4-10
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072A`, `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D`
+- **Exact source/API baseline:** `origin/develop@e7fdf0aadb166ecedbedbade59f2496caddd7776`
 - **WB-NS-040 boundary:** not a completion dependency for this pure slice; manifest/extension contribution integration, activation, trust, executable factories and resource acquisition remain out of scope and blocked until an explicit WB-NS-040/072F packet
 
-### Packet
+### Goal
 
-Define versioned pack/theme/scope descriptors, registry ownership, resolver inputs, provenance, and structured missing/incompatible dependency diagnostics.
+Provide one renderer-neutral, backendless foundation that accepts already-authorized declarative Design System Pack contributions, owns immutable exact-version registry snapshots, and deterministically resolves one document Theme plus its root-to-leaf ThemeScope chain. A same-pack Theme selection changes only the returned design-system context; the resolver has no document-tree or layout mutation API.
 
-### Validation
+### Canonical public contracts
 
-Backendless descriptor, version, scope-resolution, provenance, and missing-dependency tests; commit safety and repository validation on the exact head.
+Add a focused `packages/contracts/src/design-system/` module and export its public types and validation from the `@workbench-kit/contracts` root. The exact names and first-slice fields are:
 
-### Done criteria
+```ts
+interface DesignSystemPackRef {
+  readonly id: string;
+  readonly version: string;
+}
 
-One canonical document dependency model resolves registered descriptors without rewriting structure for a same-pack theme change or silently substituting an incompatible pack.
+interface DesignSystemThemeRef {
+  readonly pack: DesignSystemPackRef;
+  readonly themeId: string;
+}
+
+interface DesignSystemContributionProvenance {
+  readonly source: 'builtin' | 'extension' | 'host';
+  readonly sourceId: string;
+  readonly sourceVersion: string;
+}
+
+interface DesignSystemThemeDescriptor {
+  readonly id: string;
+  readonly displayName?: string;
+  readonly tokenValues?: Readonly<Record<string, UiValueSource>>;
+}
+
+interface DesignSystemThemeScopeSelection {
+  readonly theme?: DesignSystemThemeRef;
+  readonly tokenOverrides?: Readonly<Record<string, UiValueSource>>;
+}
+
+interface UiDesignSystemState {
+  readonly pack: DesignSystemPackRef;
+  readonly theme: DesignSystemThemeRef;
+  readonly scopes?: Readonly<Record<string, DesignSystemThemeScopeSelection>>;
+}
+
+interface DesignSystemPackDescriptor {
+  readonly ref: DesignSystemPackRef;
+  readonly displayName?: string;
+  readonly defaultThemeId: string;
+  readonly defaultTokenValues?: Readonly<Record<string, UiValueSource>>;
+  readonly themes: readonly DesignSystemThemeDescriptor[];
+  readonly components: readonly UiComponentDescriptor[];
+  readonly provenance: DesignSystemContributionProvenance;
+}
+
+interface DesignSystemPackContribution {
+  readonly contributionId: string;
+  readonly packs: readonly DesignSystemPackDescriptor[];
+}
+```
+
+072B carries default/Theme/scope `UiValueSource` maps so the canonical state and provenance chain are stable, but it does **not** interpret token IDs or values. `DesignTokenDescriptor`, resource descriptors, compatibility metadata, component-role mappings and typed value resolution are backward-compatible additive optional 072C fields/behavior; 072C cannot replace this descriptor with a competing envelope. `UiDesignSystemState` is the single future JDW dependency envelope, but persisting and editing it through JDW commands is exclusively 072D scope.
+
+All IDs, versions, Theme IDs, scope IDs, token IDs and provenance strings are non-empty and already trimmed. A pack has at least one Theme, `defaultThemeId` identifies exactly one Theme in that pack, Theme IDs are unique, and every Theme reference in document/scope state repeats the exact selected pack ref. A scope selection must contain a Theme, token overrides, or both. The existing `UiComponentDescriptor` validator is reused for `components`; executable builders never enter a descriptor.
+
+Move the existing pure structural `UiValueSource` guard from JDW into the contracts validation owner and have JDW import it. The guard accepts only the five canonical source arms, canonical reference IDs, and declarative literal data; this is a behavior-preserving ownership move, not a second value validator. Promote the current strict declarative snapshot primitive behind domain-specific contracts helpers so graph-authoring and Design System snapshots share rejection of functions, accessors, custom prototypes and unsupported mutable objects without exposing graph-specific names.
+
+### Registry and dependency direction
+
+Add `@workbench-kit/contracts` to the allowed and declared runtime dependencies of `@workbench-kit/workbench-core`, then expose only the new `@workbench-kit/workbench-core/design-system` subpath. The edge is one way:
+
+```text
+workbench-core/design-system -> contracts/design-system + existing contracts UI types
+contracts -X-> workbench-core
+```
+
+`DesignSystemPackRegistry` owns contribution lifetime and an integer revision. Freeze the complete public registry/snapshot API as:
+
+```ts
+type DesignSystemPackLookupResult =
+  | {
+      readonly status: 'resolved';
+      readonly descriptor: DesignSystemPackDescriptor;
+    }
+  | {
+      readonly status: 'invalid-request';
+      readonly ref: DesignSystemPackRef;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    }
+  | {
+      readonly status: 'not-installed';
+      readonly ref: DesignSystemPackRef;
+    }
+  | {
+      readonly status: 'version-unavailable';
+      readonly ref: DesignSystemPackRef;
+      readonly availableVersions: readonly string[];
+    }
+  | {
+      readonly status: 'invalid';
+      readonly ref: DesignSystemPackRef;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    }
+  | {
+      readonly status: 'conflicted';
+      readonly ref: DesignSystemPackRef;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    };
+
+interface DesignSystemPackRegistrySnapshot {
+  readonly revision: number;
+  packs(): readonly DesignSystemPackDescriptor[];
+  diagnostics(): readonly DesignSystemDiagnostic[];
+  lookup(ref: DesignSystemPackRef): DesignSystemPackLookupResult;
+}
+
+class DesignSystemPackRegistry {
+  register(contribution: DesignSystemPackContribution): Disposable;
+  snapshot(): DesignSystemPackRegistrySnapshot;
+}
+```
+
+`register(contribution)` snapshots and validates caller data immediately and returns the existing `Disposable` contract. An executable/accessor/non-plain input graph is rejected atomically with the shared typed snapshot error before registry state or revision changes; semantic shape errors that are safe to snapshot remain observable as diagnostics. `snapshot()` returns a frozen contract whose returned descriptors, diagnostics and lookup results are deeply frozen; later caller mutation cannot affect them. Registration and a first effective disposal each advance the revision, while repeated disposal is a no-op.
+
+`packs()` returns only valid, unconflicted descriptors in contribution registration and pack declaration order. `diagnostics()` returns all registry validation/conflict diagnostics in contribution, pack and descriptor declaration order. `lookup(ref)` is the only public lookup and never implements latest-version selection:
+
+- `resolved`: exactly one valid, unconflicted descriptor has the requested canonical ref.
+- `invalid-request`: the requested ref itself has a noncanonical ID or version. It returns request-local `noncanonical-pack-id`/`noncanonical-pack-version` diagnostics and never probes registry entries.
+- `not-installed`: no declared canonical pack ref has the requested canonical pack ID.
+- `version-unavailable`: at least one canonical ref has the requested ID, but the requested exact `{id, version}` was never declared. `availableVersions` contains all distinct canonical declared versions for that ID, including invalid/conflicted entries, in lexical order.
+- `invalid`: exactly one eligible contribution declared the requested canonical ref, but semantic descriptor validation excluded it. The result contains only diagnostics owned by that exact pack entry.
+- `conflicted`: the requested canonical ref is excluded by duplicate `contributionId`, duplicate exact pack ref, or both. The result contains only duplicate diagnostics relevant to the contributions/pack entries that block that ref. Duplicate identity takes precedence over `invalid` when both apply.
+
+Invalid contributions/descriptors never enter `packs()` but remain observable through `diagnostics()` and the request-relevant lookup status. Duplicate canonical `contributionId` values make every matching contribution ineligible. Duplicate exact `{id, version}` pack refs make every matching pack ineligible. Removing one conflicting contribution through its disposable deterministically restores the remaining valid pack in the next revision. `availableVersions` and every returned diagnostic list are stable and frozen.
+
+`DesignSystemPackRegistry` does not choose product defaults, mutate a document, activate an extension, execute renderer code, acquire a resource, infer trust or join the global `ExtensionRegistry`. A future already-authorized extension adapter may call `register`; 072B does not create that adapter.
+
+### Resolver input, precedence and output
+
+Expose a stateless `DesignSystemResolver` from the same focused subpath:
+
+```ts
+interface DesignSystemResolutionRequest {
+  readonly state: UiDesignSystemState;
+  readonly scopeChain?: readonly string[];
+}
+
+interface ResolvedDesignSystemSelection {
+  readonly registryRevision: number;
+  readonly pack: DesignSystemPackDescriptor;
+  readonly theme: DesignSystemThemeDescriptor;
+  readonly selectedBy:
+    { readonly kind: 'document' } | { readonly kind: 'scope'; readonly scopeId: string };
+  readonly appliedScopes: readonly {
+    readonly scopeId: string;
+    readonly selection: DesignSystemThemeScopeSelection;
+  }[];
+  readonly provenance: DesignSystemContributionProvenance;
+}
+
+interface DesignSystemResolutionResult {
+  readonly selection?: ResolvedDesignSystemSelection;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+}
+```
+
+`resolve(snapshot, request)` is synchronous and side-effect free. `scopeChain` contains only active scope IDs in root-to-leaf order, has no duplicates, and is supplied explicitly; 072D later derives it from the canonical document ancestry. The resolver first resolves the exact document pack, then its exact document Theme, then each named scope. The last scope in the chain that declares a Theme wins. Token-only scopes remain in `appliedScopes` for 072C and do not change the selected Theme. Scopes not named in the chain have no effect.
+
+Every selected Theme must belong to the exact document pack. A missing scope record, duplicate scope ID, malformed scope, cross-pack Theme ref or missing Theme fails the whole request. The resolver never ignores malformed outer state merely because a valid inner Theme would shadow it. On any error `selection` is absent; there is no fallback to another version, pack default, shell appearance or component fallback. `defaultThemeId` is descriptor metadata for later default-authoring/adapters, not an implicit substitute for an invalid explicit document selection. Resolver diagnostics are request-local: unrelated entries from `snapshot.diagnostics()` are never copied into a resolution result.
+
+The result includes the detached frozen descriptor/provenance from the supplied registry revision and the ordered effective scope selections. It does not return CSS, renderer resources, component factories, resolved token values or document commands. The full value precedence
+
+```text
+instance > nearest scope > selected Theme > pack default > component fallback
+```
+
+is therefore represented but not executed: 072B freezes the `pack default`, `selected Theme` and ordered `scope` inputs; 072C performs typed token/resource/component resolution, and existing instance properties stay under 070A/070D ownership.
+
+### Diagnostics
+
+`DesignSystemDiagnostic` has stable lowercase kebab-case `code`, `message`, `path`, and only relevant optional context fields: `contributionId`, `packId`, `requestedVersion`, `availableVersions`, `themeId`, `scopeId`. Freeze these code families:
+
+| Boundary                           | Required codes                                                                                                                                                                                                                                                                                                               |
+| ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Contribution/descriptor validation | `blank-contribution-id`, `duplicate-contribution-id`, `noncanonical-pack-id`, `noncanonical-pack-version`, `noncanonical-provenance`, `empty-theme-catalog`, `noncanonical-theme-id`, `duplicate-theme-id`, `default-theme-not-found`, `invalid-component-descriptor`, `noncanonical-token-id`, `invalid-token-value-source` |
+| Registry exact identity            | `duplicate-pack-ref`, `pack-not-installed`, `pack-version-unavailable`, `pack-ref-invalid`, `pack-ref-conflicted`                                                                                                                                                                                                            |
+| State/ThemeScope resolution        | `theme-pack-mismatch`, `theme-not-found`, `noncanonical-scope-id`, `duplicate-scope-id`, `invalid-scope-selection`, `scope-selection-not-found`, `scope-theme-pack-mismatch`, `scope-theme-not-found`                                                                                                                        |
+
+The resolver validates the state ref before registry lookup; a standalone lookup `invalid-request` and resolver state validation use the same `noncanonical-pack-id`/`noncanonical-pack-version` diagnostics. `pack-not-installed` maps from lookup `not-installed`. `pack-version-unavailable` maps from lookup `version-unavailable` and reports the same sorted versions. `pack-ref-invalid` maps from lookup `invalid` and is followed by only that exact entry's validation diagnostics. `pack-ref-conflicted` maps from lookup `conflicted` and is followed by only the relevant duplicate diagnostics. Resolver lookup failures therefore never copy unrelated registry diagnostics, collapse into generic missing, or silently select a nearby version. Validation paths begin at `contributions[n]`, `state` or `scopeChain[n]` and remain deterministic.
+
+### Ordered implementation tasks
+
+1. Add contracts types, canonical text/ref comparison helpers, structural validators and frozen diagnostic vocabulary under `packages/contracts/src/design-system/`; export them from the root.
+2. Neutralize and reuse the strict declarative snapshot helper, then move the JDW structural `UiValueSource` guard to contracts and retain existing JDW behavior/tests.
+3. Add `contracts` to the dependency graph rule and `workbench-core` manifest; create the focused `./design-system` export without changing the root export or existing `ThemeRegistry`.
+4. Implement immutable contribution registration/disposal, fail-closed duplicate handling, exact-ref snapshot lookup and stable registry diagnostics.
+5. Implement the pure exact-pack/document-Theme/root-to-leaf ThemeScope resolver and frozen selection/provenance result.
+6. Add focused public-export, deep-detachment, validation, conflict recovery and resolution tests. Do not add React, browser, Electron, extension activation or JDW mutation fixtures.
+
+### Focused validation
+
+- contracts: canonical/noncanonical refs and provenance; at least one Theme; duplicate/default Theme rules; component validation reuse; structural token source maps; functions/accessors/custom prototypes and post-registration caller mutation rejected or detached.
+- registry: exact public snapshot shape; coexistence of two exact versions; every `lookup` status; invalid entries excluded with stable paths; duplicate contributor and exact pack ref fail closed; duplicate-over-invalid precedence; dispose conflict recovery; monotonic revision and idempotent dispose.
+- resolver: exact pack and document Theme; same-pack Theme switch; root-to-leaf nearest Theme; token-only scope retention; unrelated scope exclusion; missing scope; duplicate chain; cross-pack Theme; missing pack ID versus missing version versus invalid exact ref versus conflicted exact ref; request-local diagnostic composition; frozen provenance/results.
+- preservation: resolve two states that differ only by same-pack Theme against the same frozen document-structure fixture and prove that fixture identity/content and layout/component refs are untouched. This is an architectural purity assertion; no second document model is introduced.
+- package: focused contracts/JDW/workbench-core tests and typechecks during development; candidate commit safety; then one exact-head repository static gate, full unit gate and packed-consumer/public-export gate. Browser and Electron are not run because 072B has no renderer or native boundary.
+
+### Acceptance and readiness-review gate
+
+The packet is complete when a backendless consumer can register multiple exact Pack versions, resolve one explicit document Theme plus an ordered ThemeScope chain from an immutable snapshot, observe source provenance, and distinguish missing ID, unavailable version and duplicate conflict without document mutation or fallback.
+
+The readiness successor closes the public snapshot/lookup shape and the exact invalid-ref diagnostic composition identified in review. Producer-distinct exact-successor review must reject a second property/value/component/document engine, graph-specific snapshot API leakage, implicit latest/default substitution, last-writer-wins duplicates, mutable caller-owned descriptors, unordered or leaf-to-root scope semantics, cross-pack Theme selection, token/resource/component-role evaluation, JDW persistence/commands, React/DOM/CSS, executable factories, extension activation/trust, product defaults or a new global service locator. `READY_FOR_IMPLEMENTATION` authorizes only the bounded source tasks above and remains invalid if exact-successor review finds any P0/P1 ambiguity.
 
 ## WB-NS-072C - Component-role and typed token/resource resolution
 
