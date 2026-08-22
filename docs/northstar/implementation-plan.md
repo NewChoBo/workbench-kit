@@ -68,11 +68,9 @@ WB-NS-070C atomic component/composite descriptor contract [DONE]
         ↓
 WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
         ↓
-WB-NS-070E responsive variants + tokens/resources
-        ↓
-WB-NS-070F provider-neutral generative UI parity
-        ↓
-WB-NS-071A graph node type/property-input foundation [DONE]
+WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
+WB-NS-070F provider-neutral generative UI parity [DESIGNING; optional after the manual command chain, not a WB-NS-071A dependency]
+WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow
         ↓
@@ -82,8 +80,8 @@ WB-NS-072A design-system foundation consolidation map [DONE]
         ↓
 WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DONE; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
         ↓
-{ WB-NS-072C component-role + typed token/resource resolution [READY_FOR_IMPLEMENTATION; dependency: WB-NS-072B]
-  WB-NS-072D explicit pack migration planner + transaction [DESIGNING; dependency: WB-NS-072B] }
+{ WB-NS-072C component-role + typed token/resource resolution [DONE; dependency: WB-NS-072B]
+  WB-NS-072D explicit pack migration planner + transaction [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-072B/C] }
         ↓
 WB-NS-072E Canvas/Inspector/provenance integration [DESIGNING; dependencies: WB-NS-072C, WB-NS-072D]
         ↓
@@ -1576,9 +1574,16 @@ WB-NS-070A typed value/property/source inventory + contract
 WB-NS-070B selectable layout strategy + typed style constraints
 WB-NS-070C atomic component + composite descriptor contract
 WB-NS-070D UiDocument command/direct-manipulation authoring
-WB-NS-070E responsive variants + design tokens/resources
-WB-NS-070F provider-neutral generative UI parity
+WB-NS-070E responsive variants + design tokens/resources (decomposed into the WB-NS-072 chain)
+WB-NS-070F provider-neutral generative UI parity (optional after manual authoring)
 ```
+
+`WB-NS-070E` is a program-level outcome, not a serial prerequisite for `WB-NS-071A`.
+Its pack/theme/token/resource mechanics are owned by `WB-NS-072B..F`; the remaining
+responsive Canvas/Inspector projection is owned by `WB-NS-072E`. `WB-NS-070F` remains an
+optional provider-neutral proposal layer over completed manual commands. Neither packet is
+allowed to retroactively block the already-reviewed independent `WB-NS-071A` foundation or a
+bounded `WB-NS-072B/C/D` release.
 
 ### Required source/API inventory before delegation
 
@@ -2450,11 +2455,17 @@ The source candidate implements the packet under `packages/json-widget/src/ui-au
 
 ### `WB-NS-070E` ready gate
 
-Close responsive/host-width/state variants, design tokens/resources/theme projection, stable token identity and migration semantics.
+The original gate is decomposed rather than implemented as a parallel token/theme engine.
+`WB-NS-072B/C/D` own stable pack, token/resource and migration mechanics;
+`WB-NS-072E` owns responsive/host-width/state and Canvas/Inspector projection. Completion is
+reported through those packets.
 
 ### `WB-NS-070F` ready gate
 
-Depends on the manual contract. Generative UI may be delegated only after manual commands/validation are sufficient to express the same target operations. It emits reviewable proposals/typed patches and may not introduce arbitrary JSX/HTML/CSS execution as canonical state.
+Depends on the manual contract, but is not a prerequisite for `WB-NS-071A` or the Design
+System Pack chain. Generative UI may be delegated only after manual commands/validation are
+sufficient to express the same target operations. It emits reviewable proposals/typed patches
+and may not introduce arbitrary JSX/HTML/CSS execution as canonical state.
 
 ### Acceptance direction
 
@@ -2940,12 +2951,13 @@ The readiness successor closed the public snapshot/lookup shape and exact invali
 
 ## WB-NS-072C - Component-role and typed token/resource resolution
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 7-10
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072B` (`DONE`)
 - **Exact source/API baseline:** `origin/develop@91a469f4c6a29180a434593f5082546641e93b89`
 - **Published predecessor cohort:** `@workbench-kit/*@0.0.2-prototype.0.2.37`
+- **Integrated implementation:** PR #335 / reviewed successor `9a42a5ddff1452996c560ed9e9d096ff72f51c41` / merge `6c91d6171e99b047285fa9624a7120a1b1b10a58`
 - **WB-NS-040 boundary:** pack inputs are already-authorized declarative data; resource acquisition, URL/path interpretation, extension activation, integrity, permission and trust decisions remain out of scope
 
 ### Goal
@@ -3224,26 +3236,304 @@ The packet is complete when a backendless consumer can resolve a component prope
 
 The single readiness successor closes the reviewed token `allowedSources`, duplicate replacement-source and duplicate role-requirement semantics: token sources reuse literal-only omission and explicit allowance, replacement-source conflicts reject every matching entry without union/first-wins, and role capability duplicates are invalid rather than normalized away.
 
-Producer-distinct exact-successor review must reject a second value/property/component catalog, token CSS as canonical identity, executable resource locators/loaders, pack-authored code, custom-type constraint reimplementation, implicit role inference, capability-only fuzzy replacement, id-only/latest version substitution, automatic replacement selection, document/JDW mutation, React/DOM/CSS, extension trust/activation, product defaults or a new global service locator. `READY_FOR_IMPLEMENTATION` authorizes only the bounded tasks above and remains invalid if exact-successor review finds any P0/P1 ambiguity.
+Producer-distinct exact-successor review rejected a second value/property/component catalog, token CSS as canonical identity, executable resource locators/loaders, pack-authored code, custom-type constraint reimplementation, implicit role inference, capability-only fuzzy replacement, id-only/latest version substitution, automatic replacement selection, document/JDW mutation, React/DOM/CSS, extension trust/activation, product defaults and a new global service locator. The initial source review found one public malformed/accessor boundary regression. One successor added detached declarative input snapshots, frozen structured failures and hostile regression coverage; exact-successor review returned `PASS / P0 none / P1 none / P2 none`. The reviewed SHA passed repository static/packed-consumer validation and the full 432-file/2,172-test unit gate. Browser and Electron were not run because no renderer or native boundary changed.
 
 ## WB-NS-072D - Explicit pack migration planner and transaction
 
-- **Status:** `DESIGNING`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 11-16
 - **Ownership:** `GENERIC_KIT`
-- **Dependencies:** `WB-NS-072B`
+- **Dependencies:** `WB-NS-072B`, `WB-NS-072C` (`DONE`)
+- **Exact source/API baseline:** `origin/develop@6c91d6171e99b047285fa9624a7120a1b1b10a58`
+- **Implementation packages:** shared declarative contract in `@workbench-kit/contracts`; pure planner/finalizer in `@workbench-kit/workbench-core/design-system`; canonical persistence and one-transaction apply adapter in `@workbench-kit/jdw`
 
-### Packet
+### Goal
 
-Define deterministic plan/preview/choice/apply operations for pack changes, including revision snapshots, stale-plan rejection, atomicity, and undo/redo.
+Switch an authored document between exact Design System Packs through a deterministic
+plan/preview/choice/finalize/apply path. Planning is read-only. A completed choice set produces
+one declarative mutation, and the JDW adapter applies it as one normal undoable authoring
+transaction or leaves the document unchanged.
+
+This packet reuses the existing exact-version registry/selection/token/component resolvers and
+the existing `UiDocument` revision/history path. It does not add another registry, document,
+component matcher, token resolver, transaction history or renderer controller.
+
+### Frozen ownership and dependency direction
+
+- `@workbench-kit/contracts` owns only the renderer-neutral authored-document projection,
+  finalized mutation record and stable diagnostics that must cross the core/JDW boundary.
+- `@workbench-kit/workbench-core/design-system` owns the pure planner and finalizer. It consumes a
+  caller-projected authored-document snapshot and the existing
+  `DesignSystemPackRegistrySnapshot`; it also owns request/plan/choice records and reuses the
+  existing `ExplicitComponentReplacement`. It never imports `@workbench-kit/jdw` or mutates a
+  document.
+- `@workbench-kit/jdw` remains the only canonical authored tree, revision, source serialization,
+  transaction and undo/redo owner. It consumes the declarative finalized mutation but never
+  imports `@workbench-kit/workbench-core` or reimplements registry/resolver logic.
+- A later controller may import both public surfaces. No package cycle, service locator or
+  product policy enters this packet.
+
+### Canonical authored-state persistence
+
+Extend the existing root node `$authoring` envelope additively with an optional
+`designSystem: UiDesignSystemState`. Project it as `UiDocument.designSystem`, where absence is
+represented as `null`. Only the semantic root may own this field; a child occurrence is invalid.
+The existing JDW source remains the one persisted source, so no parallel document wrapper or
+sidecar state is introduced.
+
+Add an optional canonical `themeScopeId` to each semantic node's existing `$authoring` envelope.
+It references one key in the root-owned `designSystem.scopes` map. Active scope chains are derived
+from semantic root to node; a repeated scope ID on one ancestry path is invalid, while reuse in
+disjoint subtrees is allowed. A node cannot reference a scope when the document state is absent or
+the exact scope record is missing.
+
+Historical sources without the field continue to decode and existing `createUiDocument` callers
+compile unchanged. They cannot plan a pack switch until a caller explicitly authors or migrates
+an exact state; there is no implicit default Pack or Theme. Formatting and reload preserve exact
+Pack version, Theme refs, ThemeScope IDs and token overrides.
+
+### Shared planner projection
+
+Freeze equivalent public data-only shapes. The authored-document projection is contracts-owned;
+the replacement/request records are workbench-core-owned beside the existing component resolver.
+Names may change only if ownership and semantics remain identical.
+
+```ts
+interface DesignSystemAuthoredNodeSnapshot {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+  readonly properties: Readonly<Record<string, UiValueSource>>;
+  readonly layout?: {
+    readonly strategyId: string;
+    readonly values: Readonly<Record<string, UiValueSource>>;
+  };
+  readonly scopeChain: readonly string[]; // root to leaf
+}
+
+interface DesignSystemAuthoredDocumentSnapshot {
+  readonly documentId: string;
+  readonly revision: number;
+  readonly state: UiDesignSystemState;
+  readonly nodes: readonly DesignSystemAuthoredNodeSnapshot[];
+}
+
+// workbench-core/design-system
+interface DesignSystemDependencyReplacement {
+  readonly sourceId: string;
+  readonly candidates: readonly string[];
+}
+
+interface DesignSystemPackChangeRequest {
+  readonly requestId: string;
+  readonly document: DesignSystemAuthoredDocumentSnapshot;
+  readonly targetPack: DesignSystemPackRef;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly componentReplacements?: readonly ExplicitComponentReplacement[];
+  readonly tokenReplacements?: readonly DesignSystemDependencyReplacement[];
+  readonly resourceReplacements?: readonly DesignSystemDependencyReplacement[];
+}
+```
+
+The JDW projection enumerates every semantic node exactly once in document order. Properties and
+layout strategy/value state stay separate, and every node carries its active root-to-leaf scope
+chain. The projection includes authored sources only; it does not persist resolved values or CSS.
+The request supplies the existing 070B `UiLayoutStrategyDescriptor` values needed by the current
+document; this is a detached caller catalog, not a new global layout registry. Strategy IDs are
+unique, every authored strategy must be present, and existing descriptor validators remain the
+only layout-value semantics.
+
+Planner inputs are detached through the existing declarative snapshot boundary. Null, non-plain,
+accessor-bearing, duplicate-node, duplicate-scope or noncanonical inputs fail closed without
+executing caller code. `requestId`, document ID, node IDs and dependency IDs are already-trimmed
+non-empty strings. Document revision and registry revision are finite non-negative integers.
+
+### Plan and explicit choices
+
+`DesignSystemPackChangePlanner.plan(snapshot, request)` returns one deeply frozen plan containing:
+
+- the exact request ID, document ID/revision, registry revision, source and target Pack refs;
+- exact source/target descriptor provenance;
+- one component classification per node by delegating to the existing `ComponentResolver`;
+- every authored token/resource dependency occurrence, grouped by exact source ID while retaining
+  stable document/path order;
+- one target-Theme choice requirement for the document and for every scope that explicitly owns a
+  Theme selection;
+- structured diagnostics and a `blocked` flag; no document or registry mutation.
+
+Component precedence remains 072C `direct > semantic-role > explicit replacement > unsupported`.
+`direct` requires no choice. Every non-direct compatible component requires an explicit per-node
+choice from the returned exact candidate list, even when it contains one candidate. Unsupported
+components block finalization; they are never removed.
+
+Token/resource compatibility is fail closed and does not infer semantic identity from labels,
+paths, CSS names or media type alone:
+
+1. the same exact ID in the target Pack is `direct` only when its semantic value type matches;
+   resources also require the same optional media type;
+2. otherwise only one unconflicted caller-supplied replacement entry may nominate candidates;
+3. target candidates must exist and match the source semantic type;
+4. duplicate replacement sources reject every matching entry; duplicate candidates keep the
+   first and diagnose later declarations; no candidate is auto-selected;
+5. one chosen token/resource mapping applies consistently to every occurrence, including
+   property/layout sources and ThemeScope override keys/values.
+
+Bindings and expressions remain opaque and are not executed or rewritten. Literal values remain
+literal. Target Theme IDs are always explicit choices scoped to the document or exact scope ID;
+the target Pack default Theme is never silently selected, and source Theme IDs are not assumed to
+be portable merely because their text matches.
+
+Equivalent choice and plan shapes:
+
+```ts
+interface DesignSystemPackChangeChoices {
+  readonly themes: readonly {
+    readonly scopeId?: string; // omitted exactly once for the document Theme
+    readonly themeId: string;
+  }[];
+  readonly components?: readonly {
+    readonly nodeId: string;
+    readonly target: UiComponentRef;
+  }[];
+  readonly tokens?: readonly {
+    readonly sourceId: string;
+    readonly targetId: string;
+  }[];
+  readonly resources?: readonly {
+    readonly sourceId: string;
+    readonly targetId: string;
+  }[];
+}
+
+interface DesignSystemPackChangePlan {
+  readonly requestId: string;
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly registryRevision: number;
+  readonly sourcePack: DesignSystemPackRef;
+  readonly targetPack: DesignSystemPackRef;
+  readonly components: readonly DesignSystemNodeCompatibility[];
+  readonly tokens: readonly DesignSystemDependencyCompatibility[];
+  readonly resources: readonly DesignSystemDependencyCompatibility[];
+  readonly themeSelections: readonly DesignSystemThemeChoiceRequirement[];
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+  readonly blocked: boolean;
+}
+```
+
+Choice arrays reject missing required entries, choices outside the exact candidate set, duplicate
+document/scope/node/source keys and unrelated extra entries. Declaration order is diagnostic
+order. A plan with any unsupported dependency or invalid request is blocked and cannot be
+finalized.
+
+### Finalize and stale safety
+
+`finalize(snapshot, currentDocument, plan, choices)` is pure and returns either a frozen
+`DesignSystemPackChangeMutation` or diagnostics with no mutation. It must revalidate before
+building the mutation:
+
+1. current registry revision equals the plan registry revision;
+2. exact source and target Pack lookups are still valid and unconflicted;
+3. document ID, revision, exact source Pack and the authored dependency projection still match the
+   plan input;
+4. every required choice is present once and belongs to its exact candidate set;
+5. the chosen target component accepts every authored property through existing
+   `validateUiPropertyValue`, and its declared layout support plus the supplied 070B strategy
+   descriptor accepts every authored layout value;
+6. the projected target `UiDesignSystemState`, every scope chain and every rewritten authored
+   token/resource source resolve through the existing `DesignSystemResolver` and
+   `DesignTokenResolver` without error.
+
+Registry or document mismatch returns distinct stale diagnostics and requires replanning. A stale
+or blocked plan never yields a partial mutation. The mutation contains the exact base identities,
+target state, per-node component substitutions and global token/resource ID rewrites required by
+the JDW adapter; it contains no function, registry object, resolved CSS/value cache or executable
+resource data.
+
+### Atomic JDW apply
+
+Add a focused JDW adapter such as
+`applyUiDesignSystemPackChange(state, mutation, currentRegistryRevision)`. It snapshots hostile
+inputs with the existing authoring immutability boundary and rejects malformed values without
+caller execution. Before applying it rechecks the exact document ID/revision, source Pack,
+registry revision and every source component/dependency occurrence named by the mutation.
+
+On success it updates the root design-system state, exact component refs and every declared
+token/resource occurrence in one canonical source rewrite, increments the document revision once,
+appends exactly one `UiDocumentTransactionRecord`, clears redo history and repairs selection by
+stable node ID. Undo and redo restore the complete before/after documents and selections through
+the existing session functions. A no-op, stale, invalid or partially applicable mutation returns
+structured issues with the original state object unchanged and no history record.
+
+The transaction stores a declarative `apply-design-system-pack-change` command/intention and the
+actual bounded patch set; it does not call `applyUiDocumentCommand` repeatedly or expose
+intermediate revisions. Existing single-command APIs and transaction records remain
+source-compatible.
+
+### Diagnostics
+
+Extend the existing lowercase kebab-case vocabulary only with the required families:
+
+| Boundary             | Required codes                                                                                                                                                                              |
+| -------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| request/projection   | `invalid-pack-change-request`, `source-design-system-state-required`, `source-pack-mismatch`, `duplicate-authored-node`, `invalid-authored-scope-chain`                                     |
+| compatibility/choice | `pack-change-choice-required`, `pack-change-choice-invalid`, `pack-change-dependency-unsupported`, `pack-change-replacement-source-conflicted`, `pack-change-replacement-candidate-invalid` |
+| stale/finalize       | `pack-change-document-stale`, `pack-change-registry-stale`, `pack-change-target-resolution-failed`                                                                                          |
+| JDW apply            | `invalid-pack-change-mutation`, `pack-change-apply-rejected`                                                                                                                                |
+
+Diagnostics carry only relevant request/node/scope/component/token/resource context and stable
+paths. Do not collapse stale document, stale registry, unsupported dependency and invalid choice
+into one generic error.
+
+### Ordered implementation tasks
+
+1. Add the shared authored-document projection, finalized mutation and diagnostic types to the
+   existing contracts design-system module; extend safe snapshot/public-export tests. Add planner
+   request/plan/choice types beside the existing workbench-core component resolver without moving
+   or duplicating its compatibility contract.
+2. Extend the JDW root `$authoring` envelope and `UiDocument` projection with optional exact
+   design-system state plus per-node `themeScopeId`, root-only state validation, scope-reference
+   validation, round-trip formatting and historical absence compatibility.
+3. Add the JDW authored-document projection with stable node/path/scope ordering; do not import
+   workbench-core.
+4. Implement the pure workbench-core planner by composing existing exact Pack lookup,
+   `ComponentResolver`, component/property metadata, 070B layout validation and explicit
+   dependency replacement rules.
+5. Implement pure finalization with exact choice validation, registry/document staleness checks and
+   existing resolver revalidation; emit one declarative mutation.
+6. Implement one atomic JDW apply adapter and normal session history integration without changing
+   existing single-command semantics.
+7. Add backendless hostile, planning, stale, atomicity and undo/redo evidence. Do not add React,
+   DOM, CSS, browser views, Electron, extension activation, resource acquisition or product policy.
 
 ### Validation
 
-Backendless planning, stale-result, replacement-choice, atomic transaction, and undo/redo tests; commit safety and repository validation on the exact head.
+- contracts/JDW persistence: historical source compatibility; root-only state; exact pack/theme/
+  scope/token-override round trip; invalid/accessor state without getter execution;
+- projection/planning: document order and scope chains; exact source/target lookup; direct and every
+  component compatibility arm; repeated dependency grouping; exact-ID/type direct token/resource;
+  explicit replacement, conflict, duplicate, invalid candidate and unsupported behavior; explicit
+  document/scope Theme choices; opaque binding/expression preservation;
+- finalize: missing/extra/invalid choices; source/target conflict; stale document and registry;
+  target resolver failure; frozen deterministic mutation and diagnostics;
+- apply/history: exact before-state checks; one revision and one record; whole-document atomicity;
+  no intermediate source; selection repair; undo/redo parity; redo clearing; malformed/accessor
+  mutation; original-state identity on every failure;
+- package: focused contracts/workbench-core/JDW tests and typechecks during development; candidate
+  commit safety; then one exact-head static gate, full fast/unit gate and packed-consumer/public-
+  export gate. Browser and Electron are not run because 072D has no renderer or native boundary.
 
 ### Done criteria
 
-Cross-pack changes are explicit, previewable, stale-safe, and atomic; cancellation or planning alone cannot mutate the canonical document.
+A browser-, Electron- and provider-free consumer can project one canonical document, preview an
+exact cross-Pack plan, make explicit Theme/component/token/resource choices, finalize only against
+the same registry/document revisions, and apply one undoable transaction. Cancellation, planning,
+stale results, unsupported dependencies and invalid choices cannot mutate the document or history.
+
+Producer-distinct readiness and source review must reject a second persisted document, registry,
+component matcher, token resolver or history stack; inferred latest/default/theme/component/token/
+resource substitution; label/CSS/path/media-type heuristics; partial multi-revision apply; hidden
+renderer state; executable resources; React/DOM/CSS; extension trust/activation; Electron/native;
+product defaults or a new global service locator.
 
 ## WB-NS-072E - Canvas, Inspector, and provenance integration
 

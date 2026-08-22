@@ -612,7 +612,7 @@ WB-NS-072E Canvas/Inspector/provenance integration
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup
 ```
 
-`WB-NS-072A` and `WB-NS-072B` are `DONE` after producer-distinct `PASS`, integration and the `0.0.2-prototype.0.2.37` release. Their canonical consolidation map, exact registry/resolver contract and integration evidence are maintained in `implementation-plan.md`. The bounded `WB-NS-072C` token/resource/component-role packet is `READY_FOR_IMPLEMENTATION`; `072D+` remain `DESIGNING`. WB-NS-040 remains a boundary constraint: extension trust/manifest integration stays blocked on WB-NS-040/072F, while 072C covers only pure already-authorized declarative descriptor and compatibility resolution.
+`WB-NS-072A`, `WB-NS-072B`, and `WB-NS-072C` are `DONE` after producer-distinct `PASS` and integration; the released predecessor remains `0.0.2-prototype.0.2.37` until the next exact cohort is published. Their canonical consolidation map, exact registry/resolver contracts and integration evidence are maintained in `implementation-plan.md`. The bounded `WB-NS-072D` explicit migration planner/transaction packet is `READY_FOR_IMPLEMENTATION`; `072E+` remain `DESIGNING`. WB-NS-040 remains a boundary constraint: extension trust/manifest integration stays blocked on WB-NS-040/072F, while 072C/D consume only pure already-authorized declarative descriptors and never acquire resources or activate extensions.
 
 Canonical packet gates are maintained in [`implementation-plan.md`](./implementation-plan.md):
 
@@ -629,6 +629,11 @@ Cross-chain dependency:
 - `WB-NS-040` provides extension trust/compatibility semantics for installable contributions;
 - `WB-NS-072B`, `WB-NS-072C`, and `WB-NS-072D` must land and be source-reviewed before an external consumer is told to build product policy against them;
 - publish/release approval precedes exact external consumption.
+
+The earlier `WB-NS-070E -> WB-NS-070F -> WB-NS-071A` drawing is not a release dependency.
+`070E` was decomposed into the `072B..F` Design System chain plus `072E` responsive projection;
+`070F` is optional provider parity after manual commands. The independently reviewed `071A`
+foundation therefore does not block or get blocked by bounded `072B/C/D` integration and release.
 
 ## 24. Discovery decision
 
