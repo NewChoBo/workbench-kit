@@ -1,5 +1,5 @@
 import {
-  isUiValueSourceKind,
+  isStructurallyValidUiValueSource,
   type UiComponentRef,
   type UiValueSource,
 } from '@workbench-kit/contracts';
@@ -35,40 +35,7 @@ function componentRef(value: unknown): UiComponentRef | null {
   return { id: value.id, version: value.version };
 }
 
-function isJsonValue(value: unknown, ancestors = new Set<object>()): boolean {
-  if (value === null || typeof value === 'string' || typeof value === 'boolean') return true;
-  if (typeof value === 'number') return Number.isFinite(value);
-  if (typeof value !== 'object') return false;
-  if (ancestors.has(value)) return false;
-
-  const nextAncestors = new Set(ancestors).add(value);
-  if (Array.isArray(value)) {
-    return value.every((item) => isJsonValue(item, nextAncestors));
-  }
-
-  const prototype = Object.getPrototypeOf(value);
-  if (prototype !== Object.prototype && prototype !== null) return false;
-  return Object.values(value as Record<string, unknown>).every((item) =>
-    isJsonValue(item, nextAncestors),
-  );
-}
-
-export function isStructurallyValidUiValueSource(value: unknown): value is UiValueSource {
-  if (!isObjectRecord(value) || !isUiValueSourceKind(value.kind)) return false;
-
-  switch (value.kind) {
-    case 'literal':
-      return Object.prototype.hasOwnProperty.call(value, 'value') && isJsonValue(value.value);
-    case 'token':
-      return isCanonicalText(value.tokenId);
-    case 'resource':
-      return isCanonicalText(value.resourceId);
-    case 'binding':
-      return isCanonicalText(value.bindingId);
-    case 'expression':
-      return isCanonicalText(value.expressionId);
-  }
-}
+export { isStructurallyValidUiValueSource };
 
 function validateValueMap(
   value: unknown,
