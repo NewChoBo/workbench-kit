@@ -80,7 +80,7 @@ WB-NS-071C external node ecosystem adapter contract
 
 WB-NS-072A design-system foundation consolidation map [DONE]
         ↓
-WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [READINESS_REVIEW_REQUIRED; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
+WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
         ↓
 { WB-NS-072C component-role + typed token/resource resolution [DESIGNING; dependency: WB-NS-072B]
   WB-NS-072D explicit pack migration planner + transaction [DESIGNING; dependency: WB-NS-072B] }
@@ -2718,7 +2718,7 @@ Producer-distinct review of the exact documentation successor returned no P0/P1/
 
 ## WB-NS-072B - DesignSystemPack and Theme resolver foundation
 
-- **Status:** `READINESS_REVIEW_REQUIRED`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 4-10
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072A`, `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D`
@@ -2798,9 +2798,64 @@ workbench-core/design-system -> contracts/design-system + existing contracts UI 
 contracts -X-> workbench-core
 ```
 
-`DesignSystemPackRegistry` owns contribution lifetime and an integer revision. `register(contribution)` snapshots and validates caller data immediately and returns the existing `Disposable` contract. An executable/accessor/non-plain input graph is rejected atomically with the shared typed snapshot error before registry state or revision changes; semantic shape errors that are safe to snapshot remain observable as diagnostics. `snapshot()` returns a deeply frozen `DesignSystemPackRegistrySnapshot`; later caller mutation cannot affect it. Registration and a first effective disposal each advance the revision, while repeated disposal is a no-op.
+`DesignSystemPackRegistry` owns contribution lifetime and an integer revision. Freeze the complete public registry/snapshot API as:
 
-The snapshot exposes immutable ordered descriptors/diagnostics plus exact-ref lookup. It never implements a latest-version lookup. Invalid contributions/descriptors remain visible only through diagnostics. Duplicate canonical `contributionId` values make every matching contribution ineligible. Duplicate exact `{id, version}` pack refs make every matching pack ineligible. Removing one conflicting contribution through its disposable deterministically restores the remaining valid pack in the next revision. Ordering is contribution registration order, pack declaration order and descriptor declaration order; `availableVersions` in a diagnostic is lexically sorted for stable evidence.
+```ts
+type DesignSystemPackLookupResult =
+  | {
+      readonly status: 'resolved';
+      readonly descriptor: DesignSystemPackDescriptor;
+    }
+  | {
+      readonly status: 'invalid-request';
+      readonly ref: DesignSystemPackRef;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    }
+  | {
+      readonly status: 'not-installed';
+      readonly ref: DesignSystemPackRef;
+    }
+  | {
+      readonly status: 'version-unavailable';
+      readonly ref: DesignSystemPackRef;
+      readonly availableVersions: readonly string[];
+    }
+  | {
+      readonly status: 'invalid';
+      readonly ref: DesignSystemPackRef;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    }
+  | {
+      readonly status: 'conflicted';
+      readonly ref: DesignSystemPackRef;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    };
+
+interface DesignSystemPackRegistrySnapshot {
+  readonly revision: number;
+  packs(): readonly DesignSystemPackDescriptor[];
+  diagnostics(): readonly DesignSystemDiagnostic[];
+  lookup(ref: DesignSystemPackRef): DesignSystemPackLookupResult;
+}
+
+class DesignSystemPackRegistry {
+  register(contribution: DesignSystemPackContribution): Disposable;
+  snapshot(): DesignSystemPackRegistrySnapshot;
+}
+```
+
+`register(contribution)` snapshots and validates caller data immediately and returns the existing `Disposable` contract. An executable/accessor/non-plain input graph is rejected atomically with the shared typed snapshot error before registry state or revision changes; semantic shape errors that are safe to snapshot remain observable as diagnostics. `snapshot()` returns a frozen contract whose returned descriptors, diagnostics and lookup results are deeply frozen; later caller mutation cannot affect them. Registration and a first effective disposal each advance the revision, while repeated disposal is a no-op.
+
+`packs()` returns only valid, unconflicted descriptors in contribution registration and pack declaration order. `diagnostics()` returns all registry validation/conflict diagnostics in contribution, pack and descriptor declaration order. `lookup(ref)` is the only public lookup and never implements latest-version selection:
+
+- `resolved`: exactly one valid, unconflicted descriptor has the requested canonical ref.
+- `invalid-request`: the requested ref itself has a noncanonical ID or version. It returns request-local `noncanonical-pack-id`/`noncanonical-pack-version` diagnostics and never probes registry entries.
+- `not-installed`: no declared canonical pack ref has the requested canonical pack ID.
+- `version-unavailable`: at least one canonical ref has the requested ID, but the requested exact `{id, version}` was never declared. `availableVersions` contains all distinct canonical declared versions for that ID, including invalid/conflicted entries, in lexical order.
+- `invalid`: exactly one eligible contribution declared the requested canonical ref, but semantic descriptor validation excluded it. The result contains only diagnostics owned by that exact pack entry.
+- `conflicted`: the requested canonical ref is excluded by duplicate `contributionId`, duplicate exact pack ref, or both. The result contains only duplicate diagnostics relevant to the contributions/pack entries that block that ref. Duplicate identity takes precedence over `invalid` when both apply.
+
+Invalid contributions/descriptors never enter `packs()` but remain observable through `diagnostics()` and the request-relevant lookup status. Duplicate canonical `contributionId` values make every matching contribution ineligible. Duplicate exact `{id, version}` pack refs make every matching pack ineligible. Removing one conflicting contribution through its disposable deterministically restores the remaining valid pack in the next revision. `availableVersions` and every returned diagnostic list are stable and frozen.
 
 `DesignSystemPackRegistry` does not choose product defaults, mutate a document, activate an extension, execute renderer code, acquire a resource, infer trust or join the global `ExtensionRegistry`. A future already-authorized extension adapter may call `register`; 072B does not create that adapter.
 
@@ -2835,7 +2890,7 @@ interface DesignSystemResolutionResult {
 
 `resolve(snapshot, request)` is synchronous and side-effect free. `scopeChain` contains only active scope IDs in root-to-leaf order, has no duplicates, and is supplied explicitly; 072D later derives it from the canonical document ancestry. The resolver first resolves the exact document pack, then its exact document Theme, then each named scope. The last scope in the chain that declares a Theme wins. Token-only scopes remain in `appliedScopes` for 072C and do not change the selected Theme. Scopes not named in the chain have no effect.
 
-Every selected Theme must belong to the exact document pack. A missing scope record, duplicate scope ID, malformed scope, cross-pack Theme ref or missing Theme fails the whole request. The resolver never ignores malformed outer state merely because a valid inner Theme would shadow it. On any error `selection` is absent; there is no fallback to another version, pack default, shell appearance or component fallback. `defaultThemeId` is descriptor metadata for later default-authoring/adapters, not an implicit substitute for an invalid explicit document selection.
+Every selected Theme must belong to the exact document pack. A missing scope record, duplicate scope ID, malformed scope, cross-pack Theme ref or missing Theme fails the whole request. The resolver never ignores malformed outer state merely because a valid inner Theme would shadow it. On any error `selection` is absent; there is no fallback to another version, pack default, shell appearance or component fallback. `defaultThemeId` is descriptor metadata for later default-authoring/adapters, not an implicit substitute for an invalid explicit document selection. Resolver diagnostics are request-local: unrelated entries from `snapshot.diagnostics()` are never copied into a resolution result.
 
 The result includes the detached frozen descriptor/provenance from the supplied registry revision and the ordered effective scope selections. It does not return CSS, renderer resources, component factories, resolved token values or document commands. The full value precedence
 
@@ -2852,10 +2907,10 @@ is therefore represented but not executed: 072B freezes the `pack default`, `sel
 | Boundary                           | Required codes                                                                                                                                                                                                                                                                                                               |
 | ---------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Contribution/descriptor validation | `blank-contribution-id`, `duplicate-contribution-id`, `noncanonical-pack-id`, `noncanonical-pack-version`, `noncanonical-provenance`, `empty-theme-catalog`, `noncanonical-theme-id`, `duplicate-theme-id`, `default-theme-not-found`, `invalid-component-descriptor`, `noncanonical-token-id`, `invalid-token-value-source` |
-| Registry exact identity            | `duplicate-pack-ref`, `pack-not-installed`, `pack-version-unavailable`, `pack-ref-conflicted`                                                                                                                                                                                                                                |
+| Registry exact identity            | `duplicate-pack-ref`, `pack-not-installed`, `pack-version-unavailable`, `pack-ref-invalid`, `pack-ref-conflicted`                                                                                                                                                                                                            |
 | State/ThemeScope resolution        | `theme-pack-mismatch`, `theme-not-found`, `noncanonical-scope-id`, `duplicate-scope-id`, `invalid-scope-selection`, `scope-selection-not-found`, `scope-theme-pack-mismatch`, `scope-theme-not-found`                                                                                                                        |
 
-`pack-not-installed` means no registered descriptor has the requested pack ID. `pack-version-unavailable` means the ID exists but not at the requested exact version and reports sorted available versions. `pack-ref-conflicted` means the requested exact ref exists only in a fail-closed duplicate set. These cases cannot collapse into a generic missing result or silently select a nearby version. Validation paths begin at `contributions[n]`, `state` or `scopeChain[n]` and remain deterministic.
+The resolver validates the state ref before registry lookup; a standalone lookup `invalid-request` and resolver state validation use the same `noncanonical-pack-id`/`noncanonical-pack-version` diagnostics. `pack-not-installed` maps from lookup `not-installed`. `pack-version-unavailable` maps from lookup `version-unavailable` and reports the same sorted versions. `pack-ref-invalid` maps from lookup `invalid` and is followed by only that exact entry's validation diagnostics. `pack-ref-conflicted` maps from lookup `conflicted` and is followed by only the relevant duplicate diagnostics. Resolver lookup failures therefore never copy unrelated registry diagnostics, collapse into generic missing, or silently select a nearby version. Validation paths begin at `contributions[n]`, `state` or `scopeChain[n]` and remain deterministic.
 
 ### Ordered implementation tasks
 
@@ -2869,8 +2924,8 @@ is therefore represented but not executed: 072B freezes the `pack default`, `sel
 ### Focused validation
 
 - contracts: canonical/noncanonical refs and provenance; at least one Theme; duplicate/default Theme rules; component validation reuse; structural token source maps; functions/accessors/custom prototypes and post-registration caller mutation rejected or detached.
-- registry: coexistence of two exact versions; no implicit latest; invalid entries excluded with stable paths; duplicate contributor and exact pack ref fail closed; dispose conflict recovery; monotonic revision and idempotent dispose.
-- resolver: exact pack and document Theme; same-pack Theme switch; root-to-leaf nearest Theme; token-only scope retention; unrelated scope exclusion; missing scope; duplicate chain; cross-pack Theme; missing pack ID versus missing version versus conflicted exact ref; frozen provenance/results.
+- registry: exact public snapshot shape; coexistence of two exact versions; every `lookup` status; invalid entries excluded with stable paths; duplicate contributor and exact pack ref fail closed; duplicate-over-invalid precedence; dispose conflict recovery; monotonic revision and idempotent dispose.
+- resolver: exact pack and document Theme; same-pack Theme switch; root-to-leaf nearest Theme; token-only scope retention; unrelated scope exclusion; missing scope; duplicate chain; cross-pack Theme; missing pack ID versus missing version versus invalid exact ref versus conflicted exact ref; request-local diagnostic composition; frozen provenance/results.
 - preservation: resolve two states that differ only by same-pack Theme against the same frozen document-structure fixture and prove that fixture identity/content and layout/component refs are untouched. This is an architectural purity assertion; no second document model is introduced.
 - package: focused contracts/JDW/workbench-core tests and typechecks during development; candidate commit safety; then one exact-head repository static gate, full unit gate and packed-consumer/public-export gate. Browser and Electron are not run because 072B has no renderer or native boundary.
 
@@ -2878,7 +2933,7 @@ is therefore represented but not executed: 072B freezes the `pack default`, `sel
 
 The packet is complete when a backendless consumer can register multiple exact Pack versions, resolve one explicit document Theme plus an ordered ThemeScope chain from an immutable snapshot, observe source provenance, and distinguish missing ID, unavailable version and duplicate conflict without document mutation or fallback.
 
-Producer-distinct readiness review must reject a second property/value/component/document engine, graph-specific snapshot API leakage, implicit latest/default substitution, last-writer-wins duplicates, mutable caller-owned descriptors, unordered or leaf-to-root scope semantics, cross-pack Theme selection, token/resource/component-role evaluation, JDW persistence/commands, React/DOM/CSS, executable factories, extension activation/trust, product defaults or a new global service locator. Only a reviewed successor with no P0/P1 ambiguity may become `READY_FOR_IMPLEMENTATION`.
+The readiness successor closes the public snapshot/lookup shape and the exact invalid-ref diagnostic composition identified in review. Producer-distinct exact-successor review must reject a second property/value/component/document engine, graph-specific snapshot API leakage, implicit latest/default substitution, last-writer-wins duplicates, mutable caller-owned descriptors, unordered or leaf-to-root scope semantics, cross-pack Theme selection, token/resource/component-role evaluation, JDW persistence/commands, React/DOM/CSS, executable factories, extension activation/trust, product defaults or a new global service locator. `READY_FOR_IMPLEMENTATION` authorizes only the bounded source tasks above and remains invalid if exact-successor review finds any P0/P1 ambiguity.
 
 ## WB-NS-072C - Component-role and typed token/resource resolution
 
