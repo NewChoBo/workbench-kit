@@ -254,6 +254,9 @@ export {
 } from './ui-authoring/validation';
 export { widgetInspectorFieldToUiPropertyDescriptor } from './ui-authoring/widget-inspector-adapter';
 export type {
+  DesignSystemAuthoredDocumentSnapshot,
+  DesignSystemAuthoredLayoutSnapshot,
+  DesignSystemAuthoredNodeSnapshot,
   DesignSystemComponentRoleMapping,
   DesignSystemComponentRoleRef,
   DesignSystemComponentRoleRequirements,
@@ -262,12 +265,15 @@ export type {
   DesignSystemDiagnostic,
   DesignSystemDiagnosticCode,
   DesignSystemPackContribution,
+  DesignSystemPackChangeMutation,
   DesignSystemPackDescriptor,
   DesignSystemPackRef,
   DesignSystemRequiredBindingCapability,
   DesignSystemRequiredChildSlotCapability,
   DesignSystemRequiredEventCapability,
   DesignSystemRequiredPropertyCapability,
+  DesignSystemComponentSubstitution,
+  DesignSystemDependencySubstitution,
   DesignSystemResourceDescriptor,
   DesignSystemResourceLoadingRequirement,
   DesignSystemResourceTrustRequirement,
@@ -312,6 +318,7 @@ export type {
   UiBorderValue,
   UiBuiltinLayoutPropertyGroup,
   UiBuiltinLayoutStrategyKind,
+  UiBuiltinLayoutValueType,
   UiCanvasPlacementValue,
   UiCanvasSizeConstraintsValue,
   UiCrossAxisAlignment,
@@ -357,6 +364,7 @@ export {
   UI_LAYOUT_PROPERTY_GROUPS,
   UI_LAYOUT_PROPERTY_SCOPES,
   UI_LAYOUT_STRATEGY_KINDS,
+  UI_LAYOUT_VALUE_TYPES,
   UI_LENGTH_UNITS,
   UI_MAIN_AXIS_ALIGNMENTS,
   isUiLayoutAnchor,
@@ -365,6 +373,7 @@ export {
   isUiLengthUnit,
 } from './ui-authoring/layout-types';
 export type {
+  UiLayoutPropertyValueIssue,
   UiLayoutValidationIssue,
   UiLayoutValidationIssueCode,
   ValidateUiDimensionValueOptions,
@@ -381,6 +390,7 @@ export {
   validateUiGridPlacementValue,
   validateUiGridTrackListValue,
   validateUiLayoutStrategyDescriptor,
+  validateUiLayoutPropertyValue,
   validateUiOverlayPlacementValue,
   validateUiRadiusValue,
   validateUiShadowValue,

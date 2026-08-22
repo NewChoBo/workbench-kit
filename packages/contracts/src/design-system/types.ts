@@ -122,6 +122,49 @@ export interface UiDesignSystemState {
   readonly scopes?: Readonly<Record<string, DesignSystemThemeScopeSelection>>;
 }
 
+export interface DesignSystemAuthoredLayoutSnapshot {
+  readonly strategyId: string;
+  readonly values: Readonly<Record<string, UiValueSource>>;
+}
+
+export interface DesignSystemAuthoredNodeSnapshot {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+  readonly properties: Readonly<Record<string, UiValueSource>>;
+  readonly layout?: DesignSystemAuthoredLayoutSnapshot;
+  readonly scopeChain: readonly string[];
+}
+
+export interface DesignSystemAuthoredDocumentSnapshot {
+  readonly documentId: string;
+  readonly revision: number;
+  readonly state: UiDesignSystemState;
+  readonly nodes: readonly DesignSystemAuthoredNodeSnapshot[];
+}
+
+export interface DesignSystemComponentSubstitution {
+  readonly nodeId: string;
+  readonly source: UiComponentRef;
+  readonly target: UiComponentRef;
+}
+
+export interface DesignSystemDependencySubstitution {
+  readonly sourceId: string;
+  readonly targetId: string;
+}
+
+export interface DesignSystemPackChangeMutation {
+  readonly requestId: string;
+  readonly registryRevision: number;
+  readonly documentId: string;
+  readonly baseRevision: number;
+  readonly sourceDocument: DesignSystemAuthoredDocumentSnapshot;
+  readonly targetState: UiDesignSystemState;
+  readonly components: readonly DesignSystemComponentSubstitution[];
+  readonly tokens: readonly DesignSystemDependencySubstitution[];
+  readonly resources: readonly DesignSystemDependencySubstitution[];
+}
+
 export interface DesignSystemPackDescriptor {
   readonly ref: DesignSystemPackRef;
   readonly displayName?: string;
@@ -196,6 +239,22 @@ export const DESIGN_SYSTEM_DIAGNOSTIC_CODES = Object.freeze([
   'duplicate-replacement-candidate',
   'invalid-value-resolution-request',
   'invalid-component-compatibility-request',
+  'invalid-pack-change-request',
+  'source-design-system-state-required',
+  'source-pack-mismatch',
+  'duplicate-authored-node',
+  'invalid-authored-scope-chain',
+  'pack-change-choice-required',
+  'pack-change-choice-invalid',
+  'pack-change-dependency-unsupported',
+  'pack-change-replacement-source-conflicted',
+  'pack-change-replacement-candidate-invalid',
+  'unsupported-layout-literal-type',
+  'pack-change-document-stale',
+  'pack-change-registry-stale',
+  'pack-change-target-resolution-failed',
+  'invalid-pack-change-mutation',
+  'pack-change-apply-rejected',
 ] as const);
 
 export type DesignSystemDiagnosticCode = (typeof DESIGN_SYSTEM_DIAGNOSTIC_CODES)[number];
@@ -218,4 +277,6 @@ export interface DesignSystemDiagnostic {
   readonly roleId?: string;
   readonly roleVersion?: string;
   readonly tokenPath?: readonly string[];
+  readonly nodeId?: string;
+  readonly requestId?: string;
 }

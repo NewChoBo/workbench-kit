@@ -1,5 +1,21 @@
 import type { UiPropertyDescriptor } from './types';
 
+export const UI_LAYOUT_VALUE_TYPES = Object.freeze([
+  'layout.dimension',
+  'layout.spacing',
+  'layout.border',
+  'layout.radius',
+  'layout.shadow',
+  'layout.flex-container',
+  'layout.flex-child',
+  'layout.grid-tracks',
+  'layout.grid-placement',
+  'layout.split',
+  'layout.overlay-placement',
+  'layout.canvas-placement',
+] as const);
+export type UiBuiltinLayoutValueType = (typeof UI_LAYOUT_VALUE_TYPES)[number];
+
 export const UI_LENGTH_UNITS = Object.freeze(['px', 'rem', 'em', 'vw', 'vh'] as const);
 export type UiLengthUnit = (typeof UI_LENGTH_UNITS)[number];
 
