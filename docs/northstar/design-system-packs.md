@@ -612,7 +612,7 @@ WB-NS-072E Canvas/Inspector/provenance integration
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup
 ```
 
-`WB-NS-072A` is `DONE` after producer-distinct `PASS`; its canonical consolidation map and integration evidence are maintained in `implementation-plan.md`. The reviewed findings for the separate `WB-NS-072B` packet are closed by freezing its public snapshot/lookup shape and exact invalid/conflicted dependency diagnostics; the bounded packet is now `READY_FOR_IMPLEMENTATION` pending exact-successor confirmation. `072C+` remain `DESIGNING`. WB-NS-040 is a boundary constraint rather than a 072B completion dependency: extension trust/manifest integration stays blocked on WB-NS-040/072F, while 072B covers only pure already-authorized declarative descriptor registration and resolution.
+`WB-NS-072A` and `WB-NS-072B` are `DONE` after producer-distinct `PASS`, integration and the `0.0.2-prototype.0.2.37` release. Their canonical consolidation map, exact registry/resolver contract and integration evidence are maintained in `implementation-plan.md`. The bounded `WB-NS-072C` token/resource/component-role packet is `READY_FOR_IMPLEMENTATION`; `072D+` remain `DESIGNING`. WB-NS-040 remains a boundary constraint: extension trust/manifest integration stays blocked on WB-NS-040/072F, while 072C covers only pure already-authorized declarative descriptor and compatibility resolution.
 
 Canonical packet gates are maintained in [`implementation-plan.md`](./implementation-plan.md):
 

@@ -80,9 +80,9 @@ WB-NS-071C external node ecosystem adapter contract
 
 WB-NS-072A design-system foundation consolidation map [DONE]
         ↓
-WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
+WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DONE; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
         ↓
-{ WB-NS-072C component-role + typed token/resource resolution [DESIGNING; dependency: WB-NS-072B]
+{ WB-NS-072C component-role + typed token/resource resolution [READY_FOR_IMPLEMENTATION; dependency: WB-NS-072B]
   WB-NS-072D explicit pack migration planner + transaction [DESIGNING; dependency: WB-NS-072B] }
         ↓
 WB-NS-072E Canvas/Inspector/provenance integration [DESIGNING; dependencies: WB-NS-072C, WB-NS-072D]
@@ -2718,11 +2718,12 @@ Producer-distinct review of the exact documentation successor returned no P0/P1/
 
 ## WB-NS-072B - DesignSystemPack and Theme resolver foundation
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 4-10
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072A`, `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D`
 - **Exact source/API baseline:** `origin/develop@e7fdf0aadb166ecedbedbade59f2496caddd7776`
+- **Integrated implementation:** reviewed source candidate `95cd52a3698fb866ae8246d9f765d5f61ea68dc8`, integrated `develop`/`main@91a469f4c6a29180a434593f5082546641e93b89`, released `0.0.2-prototype.0.2.37`
 - **WB-NS-040 boundary:** not a completion dependency for this pure slice; manifest/extension contribution integration, activation, trust, executable factories and resource acquisition remain out of scope and blocked until an explicit WB-NS-040/072F packet
 
 ### Goal
@@ -2935,26 +2936,295 @@ The resolver validates the state ref before registry lookup; a standalone lookup
 
 The packet is complete when a backendless consumer can register multiple exact Pack versions, resolve one explicit document Theme plus an ordered ThemeScope chain from an immutable snapshot, observe source provenance, and distinguish missing ID, unavailable version and duplicate conflict without document mutation or fallback.
 
-The readiness successor closes the public snapshot/lookup shape and the exact invalid-ref diagnostic composition identified in review. Producer-distinct exact-successor review must reject a second property/value/component/document engine, graph-specific snapshot API leakage, implicit latest/default substitution, last-writer-wins duplicates, mutable caller-owned descriptors, unordered or leaf-to-root scope semantics, cross-pack Theme selection, token/resource/component-role evaluation, JDW persistence/commands, React/DOM/CSS, executable factories, extension activation/trust, product defaults or a new global service locator. `READY_FOR_IMPLEMENTATION` authorizes only the bounded source tasks above and remains invalid if exact-successor review finds any P0/P1 ambiguity.
+The readiness successor closed the public snapshot/lookup shape and exact invalid-ref diagnostic composition. The bounded source candidate then passed producer-distinct review with no P0/P1/P2 findings, was integrated at the exact SHA above, passed the release gate and was published as the recorded cohort. The completed boundary excludes a second property/value/component/document engine, graph-specific snapshot API leakage, implicit latest/default substitution, last-writer-wins duplicates, mutable caller-owned descriptors, unordered or leaf-to-root scope semantics, cross-pack Theme selection, token/resource/component-role evaluation, JDW persistence/commands, React/DOM/CSS, executable factories, extension activation/trust, product defaults and a new global service locator.
 
 ## WB-NS-072C - Component-role and typed token/resource resolution
 
-- **Status:** `DESIGNING`
-- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 8-10
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 7-10
 - **Ownership:** `GENERIC_KIT`
-- **Dependencies:** `WB-NS-072B`
+- **Dependencies:** `WB-NS-072B` (`DONE`)
+- **Exact source/API baseline:** `origin/develop@91a469f4c6a29180a434593f5082546641e93b89`
+- **Published predecessor cohort:** `@workbench-kit/*@0.0.2-prototype.0.2.37`
+- **WB-NS-040 boundary:** pack inputs are already-authorized declarative data; resource acquisition, URL/path interpretation, extension activation, integrity, permission and trust decisions remain out of scope
 
-### Packet
+### Goal
 
-Define portable semantic-role eligibility, explicit pack component references, typed token/resource resolution, and compatibility classifications.
+Complete the pure Design System Pack resolution layer without creating a second property, component or resource runtime. Add typed token/resource descriptors to the 072B pack envelope, resolve effective component property values with deterministic provenance, and classify exact cross-pack component compatibility only from explicit component refs, validated portable-role contracts and caller-supplied replacement candidates.
 
-### Validation
+The slice is renderer-neutral and backendless. It does not mutate a document, plan/apply a pack change, load a resource, emit CSS, execute a binding/expression, activate an extension or infer product defaults.
 
-Backendless role-mapping, typed-resolution, provenance, and unsupported-component diagnostics tests; commit safety and repository validation on the exact head.
+### Canonical descriptor additions
 
-### Done criteria
+Extend the existing `packages/contracts/src/design-system/` contracts additively. The 072B fields remain the only Pack/Theme/ThemeScope envelope. Reuse `UiValueSchema`, `UiValueSource`, `UiComponentRef` and existing component capability types by reference; do not introduce another scalar/property/component schema.
 
-Resolution distinguishes direct, semantic-role, replacement-required, and unsupported outcomes without inventing fake portable roles.
+Freeze these first-slice public shapes:
+
+```ts
+type DesignSystemTokenValueSchema = Omit<UiValueSchema, 'defaultValue'>;
+type DesignSystemResourceValueSchema = Pick<UiValueSchema, 'type'>;
+
+interface DesignSystemTokenDescriptor {
+  readonly id: string;
+  readonly value: DesignSystemTokenValueSchema;
+}
+
+type DesignSystemResourceTrustRequirement = 'authorized-pack';
+type DesignSystemResourceLoadingRequirement = 'renderer-resolved';
+
+interface DesignSystemResourceDescriptor {
+  readonly id: string;
+  readonly value: DesignSystemResourceValueSchema;
+  readonly mediaType?: string;
+  readonly trust: DesignSystemResourceTrustRequirement;
+  readonly loading: DesignSystemResourceLoadingRequirement;
+}
+
+interface DesignSystemComponentRoleRef {
+  readonly id: string;
+  readonly version: string;
+}
+
+interface DesignSystemRequiredPropertyCapability {
+  readonly id: string;
+  readonly type: UiValueType;
+  readonly allowedSources?: readonly UiValueSourceKind[];
+}
+
+interface DesignSystemRequiredEventCapability {
+  readonly id: string;
+  readonly payloadType?: UiValueType;
+}
+
+interface DesignSystemRequiredBindingCapability {
+  readonly id: string;
+  readonly direction: UiBindingDirection;
+  readonly type: UiValueType;
+}
+
+interface DesignSystemRequiredChildSlotCapability {
+  readonly id: string;
+  readonly cardinality: UiChildSlotCardinality;
+}
+
+interface DesignSystemComponentRoleRequirements {
+  readonly properties?: readonly DesignSystemRequiredPropertyCapability[];
+  readonly events?: readonly DesignSystemRequiredEventCapability[];
+  readonly bindings?: readonly DesignSystemRequiredBindingCapability[];
+  readonly childSlots?: readonly DesignSystemRequiredChildSlotCapability[];
+  readonly supportedStrategyIds?: readonly string[];
+  readonly accessibilityRoles?: readonly string[];
+}
+
+interface DesignSystemComponentRoleMapping {
+  readonly role: DesignSystemComponentRoleRef;
+  readonly requirements: DesignSystemComponentRoleRequirements;
+  readonly component: UiComponentRef;
+}
+
+interface DesignSystemPackDescriptor {
+  // Existing 072B fields stay unchanged.
+  readonly tokens?: readonly DesignSystemTokenDescriptor[];
+  readonly resources?: readonly DesignSystemResourceDescriptor[];
+  readonly componentRoles?: readonly DesignSystemComponentRoleMapping[];
+}
+```
+
+`DesignSystemTokenValueSchema` and `DesignSystemResourceValueSchema` are only type-level views of the existing `UiValueSchema`; they are not new runtime schemas. Token defaults continue to live exclusively in the existing `defaultTokenValues` map, so token descriptors cannot introduce a competing `defaultValue` precedence source. A resource declares only its existing semantic `type`; source allowance, defaults, constraints and editor metadata belong to the consuming property/token rather than the resource identity. Omitted descriptor arrays normalize to empty for 072B compatibility. A 072B pack that contains structural token maps but no token descriptors remains registrable, but typed lookup of an undeclared token fails explicitly.
+
+Token/resource/role IDs, role versions, media types and capability IDs are non-empty and already trimmed. Token IDs, resource IDs and exact role-to-component pairs are unique within a pack. A token descriptor's `allowedSources` may contain only `literal`, `token` and `resource`; declaring `binding` or `expression` makes the descriptor invalid. Omission retains the existing `normalizeUiAllowedSources` meaning of literal-only, and every selected Pack/Theme/ThemeScope token value is checked against that normalized set. A token alias or resource terminal is therefore accepted only when the token descriptor explicitly allows `token` or `resource` respectively.
+
+A resource descriptor carries only semantic value type, optional media type and the fixed declarative `authorized-pack`/`renderer-resolved` requirements. It contains no URL, module specifier, byte payload, executable loader, host filesystem path or trust assertion generated by the resolver. The result preserves the pack contribution provenance and exact `{pack ref, resource id}` for a later already-authorized renderer adapter.
+
+### Portable-role eligibility
+
+A role mapping is valid only when its exact component ref exists in that pack and the component satisfies every declared requirement using the existing descriptor metadata:
+
+- property ID and semantic type match; every required allowed source is supported by the component property;
+- event ID exists and an explicitly required payload type matches;
+- binding ID, direction and semantic type match exactly;
+- child-slot ID and cardinality match exactly;
+- every required layout strategy and accessibility role is supported;
+- the requirement object contains at least one capability atom.
+
+Repeated mappings may nominate multiple pack components for one role. All mappings with the same exact role `{id, version}` must have structurally identical normalized requirements; conflicting definitions invalidate those mappings instead of choosing one. Duplicate exact role/component pairs are invalid. Duplicate property, event, binding or child-slot requirement IDs and duplicate strategy or accessibility-role strings are invalid `invalid-component-role` entries; they are never silently set-normalized. A required property's `allowedSources` alone follows the existing `normalizeUiAllowedSources` semantics, so duplicates collapse and omission means literal-only. Contract comparison otherwise ignores labels, descriptions, design-time metadata, editor hints and array declaration order while retaining semantic IDs, types, directions and cardinalities. Normalization sorts unique capability entries and normalized allowed-source sets only for equality; public candidate order remains descriptor declaration order.
+
+Role identity never comes from component IDs, design-time tags, display labels, accessibility roles alone or structural similarity. Cross-pack semantic compatibility requires the same exact role ref, equal normalized requirements and locally valid mappings on both sides. A pack-specific component may intentionally have no portable role and then remains explicit/unsupported until an explicit replacement is supplied. This is the fail-closed rule that prevents fake roles.
+
+### Typed value and resource resolution
+
+Expose `DesignTokenResolver` from the existing `@workbench-kit/workbench-core/design-system` subpath. It consumes a frozen `ResolvedDesignSystemSelection`; it does not register Packs or reselect a Theme.
+
+```ts
+type ResolvedDesignValueSource = Exclude<UiValueSource, { readonly kind: 'token' }>;
+
+type DesignValueProvenanceKind =
+  'instance' | 'theme-scope' | 'theme' | 'pack-default' | 'component-fallback';
+
+interface DesignValueProvenanceEntry {
+  readonly kind: DesignValueProvenanceKind;
+  readonly sourceId: string;
+  readonly tokenId?: string;
+}
+
+interface ResolvedDesignResource {
+  readonly pack: DesignSystemPackRef;
+  readonly descriptor: DesignSystemResourceDescriptor;
+  readonly provenance: DesignSystemContributionProvenance;
+}
+
+interface ResolvedDesignValue {
+  readonly valueType: UiValueType;
+  readonly source: ResolvedDesignValueSource;
+  readonly resource?: ResolvedDesignResource;
+  readonly provenance: readonly DesignValueProvenanceEntry[];
+}
+
+interface DesignTokenResolutionRequest {
+  readonly tokenId: string;
+  readonly expectedType?: UiValueType;
+}
+
+interface DesignComponentPropertyResolutionRequest {
+  readonly component: UiComponentRef;
+  readonly propertyId: string;
+  readonly instanceValue?: UiValueSource;
+}
+
+interface DesignValueResolutionResult {
+  readonly value?: ResolvedDesignValue;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+}
+
+class DesignTokenResolver {
+  resolveToken(
+    selection: ResolvedDesignSystemSelection,
+    request: DesignTokenResolutionRequest,
+  ): DesignValueResolutionResult;
+
+  resolveComponentProperty(
+    selection: ResolvedDesignSystemSelection,
+    request: DesignComponentPropertyResolutionRequest,
+  ): DesignValueResolutionResult;
+}
+```
+
+`resolveToken` first requires a declared token descriptor, then selects its value in this exact order:
+
+```text
+nearest active ThemeScope token override
+  > next outer active ThemeScope override
+  > selected effective Theme token value
+  > Pack default token value
+```
+
+The supplied 072B `appliedScopes` are root-to-leaf, so token lookup scans them leaf-to-root. Every selected source is validated against the current token descriptor by reusing the existing value-source normalization/validation semantics: omitted `allowedSources` is literal-only, while aliases and resources require explicit `token` and `resource` allowance. A token alias then repeats the same precedence lookup for the referenced declared token. Alias cycles fail with the ordered token path; there is no implicit default Theme, alternate Pack/version, CSS variable, legacy `ThemeRegistry` or nearby token fallback. `binding` and `expression` are never legal token descriptor allowances or values inside Pack/Theme/ThemeScope token maps in this slice and produce an invalid-descriptor or explicit unsupported-source diagnostic rather than execution.
+
+`resolveComponentProperty` finds the exact component and property in the selected Pack. An explicit `instanceValue` wins. It is checked with the existing `validateUiPropertyValue`; literal values terminate, token values delegate to `resolveToken`, resource values resolve the declared resource descriptor, and allowed binding/expression values remain opaque terminal sources. When `instanceValue` is absent, the existing property `value.defaultValue`, if present, becomes a literal `component-fallback`; otherwise resolution fails as missing. Theme and scope values do not override a component property without an explicit token reference.
+
+Every token hop has the same semantic type as its declared token, and the terminal token/resource type must match the requested/property type. Built-in literal arms enforce finite `number`, `boolean`, `string`, string-backed `color`, and string-backed `enum`; open custom `UiValueType` values remain declarative JSON and require their existing caller-owned literal validator outside this resolver. Constraints and editor hints are not reimplemented here. Any mismatch, missing ref, invalid source or cycle returns diagnostics with no partial value.
+
+Provenance is ordered from the initiating instance/component fallback through every selected token source to the terminal literal/resource. Scope entries use the exact scope ID, Theme entries the selected Theme ID, Pack defaults the exact serialized Pack ref, instance entries the exact component/property identity, and component fallback the same component/property identity. Returned values, resource descriptors, provenance and diagnostics are frozen and retain the supplied registry revision through the selection.
+
+### Component compatibility classification
+
+Expose a separate pure `ComponentResolver` from the same focused subpath. It receives valid exact Pack descriptors from one registry snapshot; it does not query a latest version or mutate a document.
+
+```ts
+interface ExplicitComponentReplacement {
+  readonly source: UiComponentRef;
+  readonly candidates: readonly UiComponentRef[];
+}
+
+interface ComponentCompatibilityRequest {
+  readonly sourcePack: DesignSystemPackDescriptor;
+  readonly targetPack: DesignSystemPackDescriptor;
+  readonly component: UiComponentRef;
+  readonly replacements?: readonly ExplicitComponentReplacement[];
+}
+
+type ComponentCompatibility =
+  | {
+      readonly kind: 'direct';
+      readonly source: UiComponentRef;
+      readonly target: UiComponentRef;
+    }
+  | {
+      readonly kind: 'semantic-role';
+      readonly source: UiComponentRef;
+      readonly matches: readonly {
+        readonly role: DesignSystemComponentRoleRef;
+        readonly candidate: UiComponentRef;
+      }[];
+      readonly candidates: readonly UiComponentRef[];
+    }
+  | {
+      readonly kind: 'replacement-required';
+      readonly source: UiComponentRef;
+      readonly candidates: readonly UiComponentRef[];
+    }
+  | {
+      readonly kind: 'unsupported';
+      readonly source: UiComponentRef;
+      readonly reason: 'source-component-not-found' | 'no-compatible-component';
+    };
+
+interface ComponentCompatibilityResolution {
+  readonly compatibility: ComponentCompatibility;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+}
+
+class ComponentResolver {
+  classify(request: ComponentCompatibilityRequest): ComponentCompatibilityResolution;
+}
+```
+
+The exact source component must exist in `sourcePack`; otherwise classification immediately returns `unsupported` with `source-component-not-found`. For an existing source component, classification precedence is fixed:
+
+1. `direct` when the target Pack declares the same exact component `{id, version}`.
+2. `semantic-role` when one or more validated source-role mappings have exact equal target-role contracts. `matches` follow source role declaration then target component declaration order; `candidates` de-duplicate refs in first-match order. No candidate is selected.
+3. `replacement-required` only from the one unconflicted exact source entry in caller-supplied `replacements`, after candidate de-duplication and exact target-component validation. Candidate order is caller order and no candidate is selected.
+4. `unsupported` when the source component is absent or no direct/role/explicit replacement is available.
+
+Direct identity always wins. Semantic-role resolution never uses an ID-only version match, role-label/tag heuristic or capability similarity without an exact role contract. Replacement entries are request-local and are consulted only after direct and semantic-role classification fail. At that tier, zero matching source entries continues to `unsupported`, exactly one entry is validated, and two or more entries for the same exact source fail closed: all matching entries are excluded, no candidates are combined or selected, `replacement-source-conflicted` diagnostics are returned in declaration order, and the classification is `unsupported` with `no-compatible-component`. Replacement entries for other source refs are ignored and produce no diagnostics.
+
+Within one unconflicted entry, invalid explicit candidate refs produce diagnostics and are excluded; duplicate candidate refs keep the first declaration, emit `duplicate-replacement-candidate` for each later declaration, and never change order. If no valid candidate remains the result is `unsupported`. Multiple valid explicit candidates remain `replacement-required`, including one candidate, because 072C only classifies and never authorizes document substitution. Node IDs, compatibility counts, choice capture and plan/apply semantics belong to 072D.
+
+### Diagnostics
+
+Extend `DesignSystemDiagnostic` only with relevant optional context: `tokenId`, `resourceId`, `componentId`, `componentVersion`, `propertyId`, `roleId`, `roleVersion`, and `tokenPath`. Freeze these additional code families:
+
+| Boundary                        | Required codes                                                                                                                                                                                                                                                                                  |
+| ------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Descriptor validation           | `invalid-token-descriptor`, `duplicate-token-id`, `invalid-resource-descriptor`, `duplicate-resource-id`, `invalid-component-role`, `duplicate-component-role-mapping`, `conflicting-component-role-contract`, `component-role-target-not-found`, `component-role-capability-mismatch`          |
+| Typed value/resource resolution | `token-not-found`, `token-value-not-found`, `token-cycle`, `token-type-mismatch`, `unsupported-token-source-kind`, `resource-not-found`, `resource-type-mismatch`, `component-not-found`, `property-not-found`, `component-value-not-found`, `disallowed-value-source`, `literal-type-mismatch` |
+| Compatibility classification    | `replacement-source-conflicted`, `replacement-candidate-not-found`, `duplicate-replacement-candidate`                                                                                                                                                                                           |
+
+Descriptor diagnostics use Pack-relative declaration paths. Value diagnostics use `request.tokenId`, `request.component`, `request.propertyId` and the effective Theme/scope path that supplied the failing value. Compatibility diagnostics use `replacements[n]` paths. Results never copy unrelated registry diagnostics and never collapse missing, type mismatch, cycle and unsupported-component cases into one generic error.
+
+### Ordered implementation tasks
+
+1. Add token/resource/role contract types, constants, diagnostic context and structural validators under the existing contracts design-system module; extend snapshot coverage without changing the 072B envelope.
+2. Validate descriptor uniqueness, fixed resource requirements, normalized role-contract equality and actual component capability satisfaction using existing UI component/value metadata.
+3. Add the pure `DesignTokenResolver` with exact scope/Theme/Pack precedence, token alias/cycle handling, resource lookup, component-property fallback and frozen provenance.
+4. Add the pure `ComponentResolver` with direct/role/explicit-replacement/unsupported precedence and deterministic candidate ordering.
+5. Export the contracts from `@workbench-kit/contracts` root and both resolvers only from `@workbench-kit/workbench-core/design-system`; do not expand the workbench-core root export.
+6. Add focused backendless tests. Do not add React, DOM, CSS, browser, Electron, JDW commands, Pack change planning, extension activation or resource I/O fixtures.
+
+### Focused validation
+
+- contracts: optional 072B compatibility; canonical and duplicate token/resource IDs; token allowed-source omission/literal-only behavior; token/resource explicit allowance; token binding/expression allowance rejection; exact resource trust/loading requirements; no executable locator fields in canonical fixtures; role ref/requirement validation; every requirement-list duplicate; conflicting normalized role contracts; missing component; every capability mismatch arm; successful multi-candidate role.
+- token/value: nearest-to-outer scope precedence; selected scoped Theme; Pack default; component fallback only when no instance; direct literal, explicitly allowed token alias and resource terminals; missing token/value/resource/component/property; omitted/disallowed source; built-in literal mismatch; token/resource type mismatch; alias cycle path; binding/expression instance opacity; binding/expression token rejection; full frozen provenance and stable diagnostic paths.
+- compatibility: exact direct precedence; exact-version failure; one/multiple role matches; unequal role contract rejection; no mapping from labels/tags/structural similarity; explicit replacement only; duplicate source entries fail closed without candidate union; invalid/duplicate replacement candidates; unrelated replacement entries ignored; unsupported source missing and no-compatible cases; deterministic frozen output.
+- package: focused contracts/workbench-core tests and typechecks during development; candidate commit safety; then one exact-head static gate, full fast/unit gate and packed-consumer/public-export gate. Browser and Electron are not run because 072C has no renderer or native boundary.
+
+### Acceptance and readiness-review gate
+
+The packet is complete when a backendless consumer can resolve a component property through the exact instance/token/scope/Theme/Pack/fallback chain with typed terminal data and inspectable provenance, resolve a safe declarative resource identity without loading it, and classify a component as `direct`, `semantic-role`, `replacement-required` or `unsupported` without hidden selection or mutation.
+
+The single readiness successor closes the reviewed token `allowedSources`, duplicate replacement-source and duplicate role-requirement semantics: token sources reuse literal-only omission and explicit allowance, replacement-source conflicts reject every matching entry without union/first-wins, and role capability duplicates are invalid rather than normalized away.
+
+Producer-distinct exact-successor review must reject a second value/property/component catalog, token CSS as canonical identity, executable resource locators/loaders, pack-authored code, custom-type constraint reimplementation, implicit role inference, capability-only fuzzy replacement, id-only/latest version substitution, automatic replacement selection, document/JDW mutation, React/DOM/CSS, extension trust/activation, product defaults or a new global service locator. `READY_FOR_IMPLEMENTATION` authorizes only the bounded tasks above and remains invalid if exact-successor review finds any P0/P1 ambiguity.
 
 ## WB-NS-072D - Explicit pack migration planner and transaction
 
