@@ -1619,7 +1619,7 @@ Publish one renderer-neutral contract for typed property descriptors and their a
 
 | Existing surface                                                                                         | Decision                 | Reason / follow-up                                                                                                                                                                                                                                                      |
 | -------------------------------------------------------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `WidgetTypeDefinition.schema` + `WidgetInspectorField`                                                   | `ADAPT_LATER`            | Current widget metadata is renderer-facing and supports only text/color/number/select/boolean editors. `WB-NS-070C` may project new property descriptors into a compatibility `WidgetTypeDefinition`; 070A does not widen the current Inspector.                        |
+| `WidgetTypeDefinition.schema` + `WidgetInspectorField`                                                   | `ADAPT_IN_070A`          | 070A adds a pure, lossless scalar-field projection into `UiPropertyDescriptor` while preserving every existing field signature. `WB-NS-070C` later owns attaching descriptors to component/catalog definitions; 070A does not widen the current Inspector.              |
 | `GenericWidget` + `WidgetPatch` + JDW layout mapping                                                     | `REUSE_LATER`            | JDW already owns one editable WidgetDocument, placement/reparent/reorder patches and Stack/row/column/Grid layout mechanics. `WB-NS-070B`/`070D` must delegate or adapt those mechanics rather than create a parallel tree/layout engine.                               |
 | Field Remap `FieldDataType`, `SourceField`, `TargetSlot`, `FieldRemapDocument`, `ValueTransformRegistry` | `REUSE_BY_REFERENCE`     | Field Remap remains the typed port, mapping and transform owner. A UI `binding` source stores an opaque `bindingId`; evaluation and transform chains stay behind Field Remap/host adapters. `@workbench-kit/contracts` must not depend on `@workbench-kit/field-remap`. |
 | Settings `WorkbenchSchemaFormSettingSpec` / `SchemaForm`                                                 | `ADAPT_LATER`            | These are React form projections with `ReactNode` labels and scalar editor values. `WB-NS-030` may adapt semantic descriptors to them; they are not canonical schema ownership.                                                                                         |
@@ -1633,27 +1633,9 @@ Publish one renderer-neutral contract for typed property descriptors and their a
 The implementation packet must expose the following semantic shape from `@workbench-kit/contracts` (exact property ordering is not normative):
 
 ```ts
-type UiValueType =
-  | 'string'
-  | 'number'
-  | 'boolean'
-  | 'length'
-  | 'percentage'
-  | 'flex-fraction'
-  | 'color'
-  | 'enum'
-  | (string & {});
+type UiValueType = 'string' | 'number' | 'boolean' | 'color' | 'enum' | (string & {});
 
 type UiValueSourceKind = 'literal' | 'token' | 'resource' | 'binding' | 'expression';
-
-interface UiDimensionValue {
-  value: number;
-  unit: 'px' | 'rem' | 'em' | 'vw' | 'vh' | 'percent' | 'fr';
-}
-
-interface UiIntrinsicSizeValue {
-  keyword: 'auto' | 'min-content' | 'max-content';
-}
 
 interface UiValueSchema<TLiteral = unknown> {
   type: UiValueType;
@@ -1679,22 +1661,41 @@ type UiValueSource<TLiteral = unknown> =
   | { kind: 'expression'; expressionId: string };
 
 type UiPropertyValue<TLiteral = unknown> = UiValueSource<TLiteral>;
+
+type WidgetInspectorScalarValue = string | number | boolean;
+
+function widgetInspectorFieldToUiPropertyDescriptor(
+  field: WidgetInspectorField,
+): UiPropertyDescriptor<WidgetInspectorScalarValue>;
 ```
 
 The contract also owns:
 
 - a frozen `UI_VALUE_SOURCE_KINDS` vocabulary and source-kind guard;
 - normalization of `allowedSources` (`undefined` means literal-only, duplicates removed, declaration order retained);
-- structural validation that rejects disallowed source kinds, blank token/resource/binding/expression IDs, non-finite dimensions and unsupported dimension units;
+- structural validation that rejects blank property/type IDs, disallowed source kinds and blank token/resource/binding/expression IDs;
 - structured validation issues with stable codes and property/source context;
-- an optional caller-supplied literal validator. Semantic literal validation beyond the base dimension boundary remains owned by the declaring schema/domain packet.
+- an optional caller-supplied literal validator. Semantic literal validation beyond the existing scalar compatibility set remains owned by the declaring schema/domain packet.
+- a pure `WidgetInspectorField` compatibility adapter that retains `prop`, `label`, field kind and all scalar field metadata while projecting the field to a literal-only `UiPropertyDescriptor`.
+
+The compatibility adapter uses this fixed projection:
+
+| `WidgetInspectorField.kind` | `UiValueSchema.type` | Preserved metadata                                  |
+| --------------------------- | -------------------- | --------------------------------------------------- |
+| `text`                      | `string`             | `placeholder`                                       |
+| `color`                     | `color`              | `placeholder`                                       |
+| `number`                    | `number`             | `min`, `max`, `step`                                |
+| `select`                    | `enum`               | ordered `{ label, value }` options                  |
+| `boolean`                   | `boolean`            | field kind, `prop` and `label` through the envelope |
+
+`prop` becomes the descriptor `id`, `label` remains the descriptor label, the original field kind is retained as the editor id, and optional field data is retained in readonly constraint/editor metadata. The adapter neither mutates `WidgetInspectorField` nor attaches the result to `WidgetTypeDefinition`; component/catalog attachment remains `WB-NS-070C`.
 
 #### Renderer-neutral boundary
 
-- Persist finite numeric magnitude plus an explicit unit; never persist `"12px"`, `"50%"` or arbitrary `calc(...)` text as the normal literal form.
-- `percent` and `fr` are serialized unit identifiers rather than renderer syntax. A renderer adapter decides how to project them.
-- Intrinsic size keywords are explicit values, not an unvalidated string escape hatch.
-- Style-semantic literal families such as color, spacing, border, radius and shadow are completed by `WB-NS-070B`; 070A must not pre-empt their exact renderer-neutral shapes.
+- 070A freezes only the domain-neutral value-source envelope and the existing Inspector scalar compatibility set: string, number, boolean, color and enum-style values.
+- Concrete dimension/layout vocabulary and meaning—including length units, percentage, flex fractions, intrinsic sizing, spacing, grid/flex values and invalid combinations—belong exclusively to `WB-NS-070B`.
+- A later packet may reuse the generic `number` carrier while declaring its own stable semantic type id and literal validator; 070A does not define layout unit names or renderer syntax.
+- Style-semantic literal families such as spacing, border, radius and shadow are completed by `WB-NS-070B`; 070A must not pre-empt their exact renderer-neutral shapes.
 - `expressionId` references a host/registry-owned expression definition. Inline executable text, JSX, HTML, CSS or script is not part of this contract.
 
 #### State, flow and ownership
@@ -1719,10 +1720,11 @@ The canonical property value is the discriminated `UiValueSource`. Inspector wid
 
 1. Add the renderer-neutral types, constants and validation issue codes under `packages/contracts/src/ui-authoring/`.
 2. Implement source-kind normalization/guards and structural validation as pure dependency-free functions.
-3. Export only through the documented `@workbench-kit/contracts` root; do not add an internal-source import path or a new package.
-4. Add focused unit tests for every source variant, default literal-only behavior, duplicate normalization, blank references, dimension finiteness/unit rejection and caller literal validation.
-5. Add a compile-time/public-export fixture proving a consumer can declare a bindable/tokenizable property without React, JDW, Field Remap or Electron imports.
-6. Run focused contracts tests/typecheck during development; freeze one candidate before repository static/fast/browser validation.
+3. Add the pure `WidgetInspectorField` scalar compatibility adapter without changing existing widget contracts or component registry behavior.
+4. Export only through the documented `@workbench-kit/contracts` root; do not add an internal-source import path or a new package.
+5. Add focused unit tests for every source variant, default literal-only behavior, duplicate normalization, blank references, caller literal validation and lossless mapping of every existing Inspector scalar field kind.
+6. Add a compile-time/public-export fixture proving a consumer can declare a bindable/tokenizable property and adapt an existing Inspector field without React, JDW, Field Remap or Electron imports.
+7. Run focused contracts tests/typecheck during development; freeze one candidate before repository static/fast/browser validation.
 
 #### Scope and non-scope
 
@@ -1733,13 +1735,13 @@ Not in scope: FieldSchemaRegistry, React editors, layout descriptors, component 
 #### Compatibility and cleanup
 
 - No existing public contract is removed or reinterpreted in 070A.
-- Existing `WidgetInspectorField`, settings forms and Field Remap types remain supported and receive no permanent duplicate implementation.
+- Existing `WidgetInspectorField` signatures remain supported; 070A adds only the one-way scalar compatibility projection defined above. Settings forms and Field Remap types remain supported and receive no permanent duplicate implementation.
 - Later adapters must be one-way projections from the new semantic contract into existing renderer/domain surfaces; they may be removed only after named consumers migrate.
 - The older flat `WorkbenchDocument` is neither declared canonical nor deleted by this packet; `WB-NS-070D` owns that decision with migration evidence.
 
 #### Validation
 
-- focused: contracts unit tests and contracts typecheck;
+- focused: contracts unit tests covering value-source validation and Inspector scalar projection, plus contracts typecheck;
 - static/fast: repository format/lint/type/public-export/packed-consumer gates on the frozen exact candidate;
 - browser: existing browser-safe repository gate once on the same candidate, even though 070A has no renderer surface;
 - Electron/native: not required because no native boundary changes;
