@@ -19,6 +19,7 @@ export {
   type FieldRemapFlowActions,
   type FieldRemapFlowMapperProps,
 } from './flow.js';
+export type { FieldRemapPreviewState } from './preview.js';
 export {
   defaultFieldRemapChromeLabels,
   fieldRemapChromeLabelKeys,

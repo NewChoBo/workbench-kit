@@ -84,6 +84,7 @@ import {
   type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
+import { FieldRemapPreviewRail, type FieldRemapPreviewState } from './preview.js';
 import './view.css';
 
 function TypeBadge({ dataType }: { readonly dataType?: string }): JSX.Element | null {
@@ -349,6 +350,10 @@ export interface FieldRemapFlowMapperProps {
   readonly targetTitle?: string | undefined;
   readonly selection?: FieldRemapSelection | undefined;
   readonly onSelectionChange?: ((next: FieldRemapSelection) => void) | undefined;
+  /** Precomputed runtime-only preview. Flow never evaluates mappings itself. */
+  readonly preview?: FieldRemapPreviewState;
+  /** Explicitly hide an injected preview without reserving a splitter track. */
+  readonly showPreview?: boolean;
   /**
    * When false, MiniMap is not mounted (not CSS-hidden). Defaults to true for
    * backward compatibility with existing samples.
@@ -508,6 +513,8 @@ function FieldRemapFlowCanvas({
   targetTitle,
   selection: selectionProp,
   onSelectionChange: onSelectionChangeProp,
+  preview,
+  showPreview = true,
   showMinimap = true,
   onShowMinimapChange,
   includeHidden = false,
@@ -531,6 +538,7 @@ function FieldRemapFlowCanvas({
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
+  const previewVisible = showPreview && preview !== undefined && preview.status !== 'unavailable';
   const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
   const [placeTransformId, setPlaceTransformId] = useState(() => {
     const first = transforms.list().find((definition) => definition.id !== 'identity');
@@ -900,6 +908,7 @@ function FieldRemapFlowCanvas({
       data-empty-detail={emptyDetail}
       data-minimap={showMinimap ? 'on' : 'off'}
       data-hidden-fields={includeHidden ? 'on' : 'off'}
+      data-preview={previewVisible ? 'on' : 'off'}
       onKeyDown={onKeyDown}
     >
       {showFlowHint ? (
@@ -914,7 +923,7 @@ function FieldRemapFlowCanvas({
       <FieldRemapSplitWorkspace
         layout={workspaceLayout}
         showConvertPalette={showConvertPalette}
-        showDetail={emptyDetail === 'hint' || selection !== null}
+        showDetail={emptyDetail === 'hint' || selection !== null || previewVisible}
         surface={
           selection?.kind === 'transformStep'
             ? 'convert-note'
@@ -1084,7 +1093,7 @@ function FieldRemapFlowCanvas({
           </ReactFlow>
         </div>
 
-        <>
+        <div className="workbench-field-remap-flow__side-rail">
           {emptyDetail === 'hint' || selection !== null ? (
             <FieldRemapDetailPanel
               selection={selection}
@@ -1104,7 +1113,19 @@ function FieldRemapFlowCanvas({
               emptyDetailDescription={chromeLabels.emptyDetailDescription}
             />
           ) : null}
-        </>
+          {previewVisible && preview ? (
+            <FieldRemapPreviewRail
+              preview={preview}
+              selection={selection}
+              operatorExists={
+                selection?.kind === 'operator'
+                  ? operators.some((operator) => operator.id === selection.operatorId)
+                  : false
+              }
+              labels={chromeLabels}
+            />
+          ) : null}
+        </div>
       </FieldRemapSplitWorkspace>
 
       {showBindingsList ? (

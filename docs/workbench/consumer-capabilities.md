@@ -788,6 +788,18 @@ Panel forwards the same props. Chrome nouns (`Bindings`, Convert palette copy) a
 / optional `t(key, fallback)` on Flow and Panel — hosts can override to “Field maps” /
 “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
 
+**Runtime preview:** `FieldRemapPanel` has one headless preview execution owner. Its existing
+output pane and optional `showFlowPreview` Flow rail consume the same precomputed snapshot.
+Direct `FieldRemapFlowMapper` embeds are presentation-only: inject a
+`FieldRemapPreviewState` through `preview`, and set `showPreview={false}` to unmount the rail
+and splitter track. `hidden` / `no-sample` snapshots also reserve no track.
+
+Selection changes do not evaluate mappings. Empty/operator selection shows final output after
+operators; edge selection shows its pre-operator slot value; transform-step selection shows
+the same final binding value with an explicit no-intermediate notice. Draft, stale selection,
+transform-step intermediate, and operator-local intermediate values are not executable preview
+states. The snapshot is runtime-only and never enters document, history or persistence state.
+
 **Narrow embeds:** Flow workspace breakpoints use the width of `.workbench-field-remap-flow`,
 not the browser viewport, so a narrow secondary pane stacks palette, canvas, and detail instead
 of collapsing the canvas. Hosts can use a simple block wrapper; for the supported narrow layout,

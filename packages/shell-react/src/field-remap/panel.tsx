@@ -8,19 +8,13 @@ import {
   type Ref,
 } from 'react';
 import {
-  applyMappingOperators,
-  convertToShape,
   createBuiltinValueTransformRegistry,
-  defineConversion,
-  defineDataShape,
   findParentChildMappingConflicts,
-  normalizeMappingOperators,
   projectSourceFields,
   projectTargetSlots,
   pruneMappingEdgesForShapes,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
-  withConversionEdges,
   type MappingEdge,
   type MappingOperator,
   type SourceField,
@@ -54,6 +48,11 @@ import {
   ingestSourceShape,
   ingestTargetShape,
 } from './shape-io-editor.js';
+import {
+  createFieldRemapPreviewController,
+  type FieldRemapPreviewController,
+} from './preview-controller.js';
+import type { FieldRemapPreviewState } from './preview.js';
 import './view.css';
 
 export type { FieldRemapHistorySnapshot } from './history.js';
@@ -140,6 +139,8 @@ export interface FieldRemapPanelProps {
   readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
   readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   readonly emptyDetail?: FieldRemapFlowMapperProps['emptyDetail'];
+  /** Show the controller-owned preview snapshot in the nested Flow rail. */
+  readonly showFlowPreview?: boolean;
   /** Forwarded to {@link FieldRemapFlowMapper} Controls MiniMap toggle. */
   readonly onShowMinimapChange?: FieldRemapFlowMapperProps['onShowMinimapChange'];
   readonly onPaneContextMenu?: FieldRemapFlowMapperProps['onPaneContextMenu'];
@@ -150,11 +151,6 @@ export interface FieldRemapPanelProps {
   readonly labels?: FieldRemapFlowMapperProps['labels'];
   readonly t?: FieldRemapFlowMapperProps['t'];
 }
-
-type FieldRemapPreviewResult = {
-  readonly output: Record<string, unknown>;
-  readonly error?: string;
-};
 
 function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSampleDefinition {
   if (!sample) {
@@ -203,6 +199,7 @@ export function FieldRemapPanel({
   showBindingsList,
   showConvertPalette,
   emptyDetail,
+  showFlowPreview,
   onShowMinimapChange,
   onPaneContextMenu,
   onNodeContextMenu,
@@ -243,7 +240,8 @@ export function FieldRemapPanel({
   const [uncontrolledOperators, setUncontrolledOperators] = useState<readonly MappingOperator[]>(
     () => [...(operatorsProp ?? sample.operators ?? [])],
   );
-  const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
+  const [preview, setPreview] = useState<FieldRemapPreviewState>({ status: 'loading' });
+  const previewControllerRef = useRef<FieldRemapPreviewController | null>(null);
   const [uncontrolledSourceSample, setUncontrolledSourceSample] = useState<unknown>(
     () => sourceSampleProp ?? sample.source,
   );
@@ -464,84 +462,44 @@ export function FieldRemapPanel({
     onTargetsChange?.(next);
   };
 
-  const shapes = useMemo(
-    () => [
-      defineDataShape({
-        id: sample.sourceIdPrefix,
-        label: sample.sourceLabel,
-        role: 'source',
-        fields: sourceFields,
-      }),
-      defineDataShape({
-        id: sample.targetIdPrefix,
-        label: sample.targetLabel,
-        role: 'target',
-        fields: targetSlots,
-      }),
-    ],
-    [sample, sourceFields, targetSlots],
-  );
-
   const conflicts = useMemo(
     () => findParentChildMappingConflicts(edges, sourceFields, targetSlots),
     [edges, sourceFields, targetSlots],
   );
 
   useEffect(() => {
-    const controller = new AbortController();
-    const conversion = withConversionEdges(
-      defineConversion({
-        id: `${sample.sourceIdPrefix}→${sample.targetIdPrefix}`,
-        sourceShapeIds: [sample.sourceIdPrefix],
-        targetShapeId: sample.targetIdPrefix,
-        edges: [...sample.edges],
-      }),
-      edges,
-    );
-
-    void convertToShape({
-      conversion,
-      shapes,
-      inputs: { [sample.sourceIdPrefix]: sourceSample },
-      transforms: registry,
-      signal: controller.signal,
-    })
-      .then(async (next) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        const normalizedOps = normalizeMappingOperators(operators);
-        if (!normalizedOps?.length) {
-          setResult({ output: next.output });
-          return;
-        }
-        const merged = await applyMappingOperators({
-          operators: normalizedOps,
-          sources: sourceFields,
-          targets: targetSlots,
-          inputs: { [sample.sourceIdPrefix]: sourceSample },
-          transforms: registry,
-          output: next.output,
-          signal: controller.signal,
-        });
-        if (!controller.signal.aborted) {
-          setResult({ output: merged.output });
-        }
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setResult({
-          output: {},
-          error: error instanceof Error ? error.message : String(error),
-        });
-      });
+    const controller = createFieldRemapPreviewController();
+    previewControllerRef.current = controller;
+    const unsubscribe = controller.subscribe(() => {
+      setPreview(controller.getSnapshot());
+    });
 
     return () => {
-      controller.abort();
+      unsubscribe();
+      if (previewControllerRef.current === controller) {
+        previewControllerRef.current = null;
+      }
+      controller.dispose();
     };
-  }, [edges, operators, registry, sample, shapes, sourceFields, sourceSample, targetSlots]);
+  }, []);
+
+  useEffect(() => {
+    previewControllerRef.current?.update({
+      kind: 'evaluate',
+      input: {
+        sources: sourceFields,
+        targets: targetSlots,
+        edges,
+        operators,
+        inputs: { [sample.sourceIdPrefix]: sourceSample },
+        transforms: registry,
+        sourceShapeIds: [sample.sourceIdPrefix],
+        targetShapeId: sample.targetIdPrefix,
+        sourceLabel: sample.sourceLabel,
+        targetLabel: sample.targetLabel,
+      },
+    });
+  }, [edges, operators, registry, sample, sourceFields, sourceSample, targetSlots]);
 
   const applySourceShape = (parsed: unknown) => {
     const ingested = ingestSourceShape(parsed, sample.sourceIdPrefix);
@@ -639,6 +597,7 @@ export function FieldRemapPanel({
         showBindingsList={showBindingsList}
         showConvertPalette={showConvertPalette}
         emptyDetail={emptyDetail}
+        {...(showFlowPreview ? { preview, showPreview: true } : {})}
         onShowMinimapChange={onShowMinimapChange}
         includeHidden={includeHidden}
         onIncludeHiddenChange={setIncludeHidden}
@@ -662,9 +621,9 @@ export function FieldRemapPanel({
         </p>
       ) : null}
 
-      {result.error ? (
+      {preview.status === 'error' ? (
         <p className="workbench-field-remap-demo__error" role="alert">
-          {result.error}
+          {preview.message}
         </p>
       ) : null}
 
@@ -675,7 +634,9 @@ export function FieldRemapPanel({
         </section>
         <section className="workbench-field-remap-demo__pane" aria-labelledby="field-remap-target">
           <h3 id="field-remap-target">{sample.targetLabel}</h3>
-          <pre data-testid="field-remap-result">{JSON.stringify(result.output, null, 2)}</pre>
+          <pre data-testid="field-remap-result">
+            {JSON.stringify(preview.status === 'ready' ? preview.result.output : {}, null, 2)}
+          </pre>
         </section>
       </div>
     </div>

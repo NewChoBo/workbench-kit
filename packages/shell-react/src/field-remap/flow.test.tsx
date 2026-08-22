@@ -295,6 +295,113 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(getActiveSeparators()[0]?.getAttribute('aria-orientation')).toBe('vertical');
   });
 
+  it('projects one injected preview across document, binding, and transform-step selections', async () => {
+    const preview = {
+      status: 'ready' as const,
+      result: {
+        output: { name: 'post-operator' },
+        slots: [
+          {
+            edgeId: 'e-name',
+            targetSlotId: 'b.name',
+            path: 'name',
+            value: 'edge-local',
+          },
+        ],
+      },
+    };
+    await renderMapper({ chrome: 'embed', emptyDetail: 'collapse', preview });
+
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('post-operator');
+    expect(getActiveSeparators()).toHaveLength(2);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('edge-local');
+    expect(container!.querySelector('[data-testid="field-remap-preview-notice"]')).toBeNull();
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview,
+      selection: { kind: 'transformStep', edgeId: 'e-name', stepIndex: 0 },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('edge-local');
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-notice"]')?.textContent,
+    ).toContain('Per-step intermediate values are unavailable');
+  });
+
+  it('keeps draft/stale preview states deterministic without executing or inventing values', async () => {
+    const preview = {
+      status: 'ready' as const,
+      result: { output: { current: true }, slots: [] },
+    };
+    await renderMapper({
+      preview,
+      selection: { kind: 'draft', localId: 'draft-1' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('not executable');
+    expect(container!.querySelector('[data-testid="field-remap-preview-value"]')).toBeNull();
+
+    await rerenderMapper({
+      preview,
+      selection: { kind: 'edge', edgeId: 'missing' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('no longer available');
+  });
+
+  it('announces injected loading and error states accessibly', async () => {
+    await renderMapper({ preview: { status: 'loading' } });
+    expect(container!.querySelector('[role="status"]')?.textContent).toContain('Updating preview');
+
+    await rerenderMapper({ preview: { status: 'error', message: 'Sample failed' } });
+    expect(container!.querySelector('[role="alert"]')?.textContent).toContain(
+      'Preview failed: Sample failed',
+    );
+  });
+
+  it('unmounts preview rail and splitter track for explicit hidden and no-sample states', async () => {
+    const ready = {
+      status: 'ready' as const,
+      result: { output: { ready: true }, slots: [] },
+    };
+    await renderMapper({ chrome: 'embed', emptyDetail: 'collapse', preview: ready });
+    expect(container!.querySelector('[data-testid="field-remap-preview"]')).toBeTruthy();
+    expect(getActiveSeparators()).toHaveLength(2);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview: ready,
+      showPreview: false,
+    });
+    expect(container!.querySelector('[data-testid="field-remap-preview"]')).toBeNull();
+    expect(getActiveSeparators()).toHaveLength(1);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview: { status: 'unavailable', reason: 'no-sample' },
+    });
+    expect(container!.querySelector('[data-testid="field-remap-preview"]')).toBeNull();
+    expect(getActiveSeparators()).toHaveLength(1);
+  });
+
   it('fills the workspace through collapsed split panes when optional rails are unmounted', async () => {
     await renderMapper({
       chrome: 'embed',

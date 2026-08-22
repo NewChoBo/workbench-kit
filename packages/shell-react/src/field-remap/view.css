@@ -345,6 +345,7 @@
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-palette,
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-flow__canvas,
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-detail,
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-preview,
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-note {
   border-radius: 0;
 }
@@ -359,6 +360,7 @@
 }
 
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-detail,
+.workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-preview,
 .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-note {
   border: 0;
   border-inline-start: 1px solid var(--vscode-panel-border, var(--color-border));
@@ -374,6 +376,9 @@
 .workbench-field-remap-flow[data-chrome='embed']
   .workbench-field-remap-flow__workspace--split
   .workbench-field-remap-detail,
+.workbench-field-remap-flow[data-chrome='embed']
+  .workbench-field-remap-flow__workspace--split
+  .workbench-field-remap-preview,
 .workbench-field-remap-flow[data-chrome='embed']
   .workbench-field-remap-flow__workspace--split
   .workbench-field-remap-convert-note {
@@ -401,6 +406,7 @@
   }
 
   .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-detail,
+  .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-preview,
   .workbench-field-remap-flow[data-chrome='embed'] .workbench-field-remap-convert-note {
     border-inline-start: 0;
     border-block-start: 1px solid var(--vscode-panel-border, var(--color-border));
@@ -780,6 +786,63 @@
   border-radius: 0.375rem;
   background: var(--vscode-sideBar-background, var(--color-surface));
   font-size: 0.8rem;
+}
+
+.workbench-field-remap-flow__side-rail {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: auto;
+}
+
+.workbench-field-remap-preview {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+  min-width: 0;
+  padding: 0.75rem;
+  border: 1px solid var(--vscode-panel-border, var(--color-border));
+  border-radius: 0.375rem;
+  background: var(--vscode-editor-background, var(--color-bg));
+  color: var(--vscode-foreground, var(--color-text));
+  font-size: 0.8rem;
+}
+
+.workbench-field-remap-flow__side-rail > .workbench-field-remap-preview:not(:first-child) {
+  border-block-start: 0;
+  border-start-start-radius: 0;
+  border-start-end-radius: 0;
+}
+
+.workbench-field-remap-preview h4,
+.workbench-field-remap-preview p {
+  margin: 0;
+}
+
+.workbench-field-remap-preview h4 {
+  font-size: 0.85rem;
+}
+
+.workbench-field-remap-preview__scope,
+.workbench-field-remap-preview__notice {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+}
+
+.workbench-field-remap-preview pre {
+  box-sizing: border-box;
+  max-height: 16rem;
+  margin: 0;
+  padding: 0.6rem;
+  overflow: auto;
+  border: 1px solid var(--vscode-panel-border, var(--color-border));
+  border-radius: 0.25rem;
+  background: var(--vscode-textCodeBlock-background, var(--color-surface));
+  color: inherit;
+  font: 0.75rem/1.45 var(--vscode-editor-font-family, ui-monospace, monospace);
+  white-space: pre-wrap;
+  word-break: break-word;
 }
 
 .workbench-field-remap-convert-note {

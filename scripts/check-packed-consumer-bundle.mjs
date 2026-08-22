@@ -274,8 +274,13 @@ import type {
   WorkbenchShellCommandRunContext,
   WorkbenchSettingsCapabilityPublication,
   WorkbenchSettingsCapabilityPublisher,
+  FieldRemapPreviewState as FieldRemapRootPreviewState,
 } from '@workbench-kit/shell-react';
-import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
+import {
+  FieldRemapFlowMapper,
+  type FieldRemapFlowMapperProps,
+  type FieldRemapPreviewState,
+} from '@workbench-kit/shell-react/field-remap';
 import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
@@ -335,6 +340,15 @@ const packedExtensionRegistry = new ExtensionRegistry();
 const packedExtensionRegistrations: ExtensionRegistrationStore =
   packedExtensionRegistry.registerExtensions([]);
 const packedThemeChange = null as unknown as ThemeRegistryChangeEvent;
+const packedFieldRemapPreview: FieldRemapPreviewState = {
+  status: 'unavailable',
+  reason: 'no-sample',
+};
+const packedFieldRemapRootPreview: FieldRemapRootPreviewState = packedFieldRemapPreview;
+const packedFieldRemapPreviewProps: Pick<
+  FieldRemapFlowMapperProps,
+  'preview' | 'showPreview'
+> = { preview: packedFieldRemapPreview };
 
 (globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
   .__workbenchKitPackedConsumer = Object.freeze({
@@ -360,6 +374,9 @@ const packedThemeChange = null as unknown as ThemeRegistryChangeEvent;
   extensionManagementTransition,
   packedExtensionRegistrations,
   packedThemeChange,
+  packedFieldRemapPreview,
+  packedFieldRemapRootPreview,
+  packedFieldRemapPreviewProps,
   commands: createWorkbenchShellCommands({ activities: [] }),
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),

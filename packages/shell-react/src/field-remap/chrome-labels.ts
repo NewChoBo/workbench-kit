@@ -37,6 +37,16 @@ export interface FieldRemapChromeLabels {
   readonly hideHiddenFields: string;
   readonly emptyDetailTitle: string;
   readonly emptyDetailDescription: string;
+  /** Additive Flow preview copy. Omitted legacy label objects use English defaults. */
+  readonly previewTitle?: string;
+  readonly previewLoading?: string;
+  readonly previewError?: string;
+  readonly previewDocumentResult?: string;
+  readonly previewBindingResult?: string;
+  readonly previewStepIntermediateUnavailable?: string;
+  readonly previewOperatorIntermediateUnavailable?: string;
+  readonly previewDraftUnavailable?: string;
+  readonly previewSelectionUnavailable?: string;
 }
 
 export const defaultFieldRemapChromeLabels = {
@@ -66,6 +76,17 @@ export const defaultFieldRemapChromeLabels = {
   emptyDetailTitle: 'Start with a convert',
   emptyDetailDescription:
     'Use the Convert palette to place a convert, then wire source → draft → target. Or select an existing binding / convert note on the canvas.',
+  previewTitle: 'Sample preview',
+  previewLoading: 'Updating preview…',
+  previewError: 'Preview failed',
+  previewDocumentResult: 'Final document output',
+  previewBindingResult: 'Final binding value',
+  previewStepIntermediateUnavailable:
+    'Per-step intermediate values are unavailable; this is the final binding value.',
+  previewOperatorIntermediateUnavailable:
+    'Selected-operator intermediate values are unavailable; this is the final document output.',
+  previewDraftUnavailable: 'Draft converts are not executable until they become a binding.',
+  previewSelectionUnavailable: 'The selected binding or operator is no longer available.',
 } as const satisfies Required<FieldRemapChromeLabels>;
 
 /** Stable capability ids for optional `t()` injection (not free prose). */
@@ -93,6 +114,15 @@ export const fieldRemapChromeLabelKeys = {
   hideHiddenFields: 'fieldRemap.hideHiddenFields',
   emptyDetailTitle: 'fieldRemap.emptyDetailTitle',
   emptyDetailDescription: 'fieldRemap.emptyDetailDescription',
+  previewTitle: 'fieldRemap.previewTitle',
+  previewLoading: 'fieldRemap.previewLoading',
+  previewError: 'fieldRemap.previewError',
+  previewDocumentResult: 'fieldRemap.previewDocumentResult',
+  previewBindingResult: 'fieldRemap.previewBindingResult',
+  previewStepIntermediateUnavailable: 'fieldRemap.previewStepIntermediateUnavailable',
+  previewOperatorIntermediateUnavailable: 'fieldRemap.previewOperatorIntermediateUnavailable',
+  previewDraftUnavailable: 'fieldRemap.previewDraftUnavailable',
+  previewSelectionUnavailable: 'fieldRemap.previewSelectionUnavailable',
 } as const satisfies Record<keyof FieldRemapChromeLabels, string>;
 
 export function resolveFieldRemapChromeLabels(
@@ -132,5 +162,14 @@ export function resolveFieldRemapChromeLabels(
     hideHiddenFields: resolve('hideHiddenFields'),
     emptyDetailTitle: resolve('emptyDetailTitle'),
     emptyDetailDescription: resolve('emptyDetailDescription'),
+    previewTitle: resolve('previewTitle'),
+    previewLoading: resolve('previewLoading'),
+    previewError: resolve('previewError'),
+    previewDocumentResult: resolve('previewDocumentResult'),
+    previewBindingResult: resolve('previewBindingResult'),
+    previewStepIntermediateUnavailable: resolve('previewStepIntermediateUnavailable'),
+    previewOperatorIntermediateUnavailable: resolve('previewOperatorIntermediateUnavailable'),
+    previewDraftUnavailable: resolve('previewDraftUnavailable'),
+    previewSelectionUnavailable: resolve('previewSelectionUnavailable'),
   };
 }

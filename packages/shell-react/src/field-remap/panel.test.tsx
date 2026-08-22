@@ -1,7 +1,7 @@
 /** @vitest-environment jsdom */
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import { createRoot, type Root } from 'react-dom/client';
-import { act, createRef } from 'react';
+import { act, createRef, StrictMode } from 'react';
 import {
   createBuiltinValueTransformRegistry,
   sourceFieldsFromPlainObject,
@@ -74,6 +74,81 @@ describe('FieldRemapPanel', () => {
       container.querySelector('[data-testid="field-remap-result"]')?.textContent ?? '{}',
     );
     expect(output.name).toBe('Ada Lovelace');
+  });
+
+  it('keeps a live preview owner across StrictMode setup-cleanup-setup', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(
+        <StrictMode>
+          <FieldRemapPanel sample="nested-ab" editableShapes={false} showFlowPreview />
+        </StrictMode>,
+      );
+    });
+    await settle();
+
+    expect(container.querySelector('[data-testid="field-remap-result"]')?.textContent).toContain(
+      'Ada Lovelace',
+    );
+    expect(
+      container.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('Ada Lovelace');
+  });
+
+  it('shares one precomputed snapshot with the optional Flow rail without rerunning on selection', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const sample = getFieldRemapSample('nested-ab');
+    const sources = sourceFieldsFromPlainObject(sample.source, {
+      idPrefix: sample.sourceIdPrefix,
+    });
+    const targets = targetSlotsFromPlainObject(sample.targetShape, {
+      idPrefix: sample.targetIdPrefix,
+    });
+    const apply = vi.fn((value: unknown) => value);
+    const transforms = createBuiltinValueTransformRegistry();
+    transforms.register({
+      id: 'test:preview-count',
+      label: 'Preview count',
+      apply,
+    });
+    const edge: MappingEdge = {
+      ...sample.edges[0]!,
+      transformIds: ['test:preview-count'],
+    };
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample={sample}
+          editableShapes={false}
+          edges={[edge]}
+          onEdgesChange={() => {}}
+          sources={sources}
+          targets={targets}
+          sourceSample={sample.source}
+          transforms={transforms}
+          showFlowPreview
+        />,
+      );
+    });
+    await settle();
+
+    const panelOutput = container.querySelector('[data-testid="field-remap-result"]')?.textContent;
+    const flowOutput = container.querySelector(
+      '[data-testid="field-remap-preview-value"]',
+    )?.textContent;
+    expect(JSON.parse(flowOutput ?? '{}')).toEqual(JSON.parse(panelOutput ?? '{}'));
+    expect(apply).toHaveBeenCalledTimes(1);
+
+    await clickTestId(container, `field-remap-select-edge-${edge.id}`);
+    await settle();
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[data-testid="field-remap-preview-value"]')).toBeTruthy();
   });
 
   it('round-trips controlled edges without remounting', async () => {

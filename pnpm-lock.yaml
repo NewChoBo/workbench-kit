@@ -98,6 +98,9 @@ importers:
       '@workbench-kit/contracts':
         specifier: workspace:*
         version: link:../../packages/contracts
+      '@workbench-kit/field-remap':
+        specifier: workspace:*
+        version: link:../../packages/field-remap
       '@workbench-kit/jdw':
         specifier: workspace:*
         version: link:../../packages/json-widget
