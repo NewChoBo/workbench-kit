@@ -172,6 +172,23 @@ export {
 } from './registry/createValueTransformRegistry.js';
 export type { ArePortsCompatibleInput } from './registry/createValueTransformRegistry.js';
 
+export type {
+  FieldRemapNodeProjectionIssue,
+  FieldRemapNodeProjectionIssueCode,
+  ProjectFieldRemapInputPortResult,
+  ProjectFieldRemapOutputPortResult,
+  ProjectValueTransformNodeTypeOptions,
+  ProjectValueTransformNodeTypeResult,
+} from './projection/nodeTypeMetadata.js';
+export {
+  FIELD_REMAP_NODE_PROJECTION_ISSUE_CODES,
+  fieldDataTypeToUiValueSchema,
+  isFieldRemapNodeProjectionIssueCode,
+  projectSourceFieldToNodeOutputPort,
+  projectTargetSlotToNodeInputPort,
+  projectValueTransformToNodeType,
+} from './projection/nodeTypeMetadata.js';
+
 export {
   ARRAY_REDUCE_TRANSFORM_IDS,
   BUILTIN_TRANSFORM_IDS,

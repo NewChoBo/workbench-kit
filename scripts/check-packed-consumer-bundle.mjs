@@ -259,6 +259,8 @@ import type {
   ExtensionManagementPanelProps,
   ExtensionManagementTransition,
 } from '@workbench-kit/react';
+import type { NodeTypeDescriptor } from '@workbench-kit/contracts';
+import type { ValueTransformDefinition } from '@workbench-kit/field-remap';
 import type { ExtensionManagementPendingAction } from '@workbench-kit/react/workbench/management';
 import {
   ExtensionRegistry,
@@ -349,6 +351,13 @@ const packedFieldRemapPreviewProps: Pick<
   FieldRemapFlowMapperProps,
   'preview' | 'showPreview'
 > = { preview: packedFieldRemapPreview };
+async function verifyPackedGraphAuthoring(): Promise<{
+  descriptor: NodeTypeDescriptor;
+  transform: ValueTransformDefinition;
+}> {
+  const { verifyPackedGraphAuthoringRuntime } = await import('./graph-authoring-runtime');
+  return verifyPackedGraphAuthoringRuntime();
+}
 
 (globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
   .__workbenchKitPackedConsumer = Object.freeze({
@@ -377,6 +386,7 @@ const packedFieldRemapPreviewProps: Pick<
   packedFieldRemapPreview,
   packedFieldRemapRootPreview,
   packedFieldRemapPreviewProps,
+  verifyPackedGraphAuthoring,
   commands: createWorkbenchShellCommands({ activities: [] }),
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),
@@ -394,6 +404,53 @@ const packedFieldRemapPreviewProps: Pick<
     shortcut: 'Ctrl+P',
   }),
 });
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'graph-authoring-runtime.ts'),
+    `import {
+  resolveNodeTypeCatalog,
+  validateNodeTypeDescriptor,
+  type NodeTypeDescriptor,
+} from '@workbench-kit/contracts';
+import {
+  projectValueTransformToNodeType,
+  type ValueTransformDefinition,
+} from '@workbench-kit/field-remap';
+
+export function verifyPackedGraphAuthoringRuntime(): {
+  descriptor: NodeTypeDescriptor;
+  transform: ValueTransformDefinition;
+} {
+  const descriptor: NodeTypeDescriptor = {
+    id: 'workbench.consumer.transform',
+    version: '1.0.0',
+    inputs: [{ id: 'input', value: { type: 'number' }, required: true }],
+    outputs: [{ id: 'output', value: { type: 'number' } }],
+    designTime: { label: 'Consumer transform' },
+  };
+  const catalog = resolveNodeTypeCatalog([
+    { contributorId: 'packed-consumer', nodeTypes: [descriptor] },
+  ]);
+  if (validateNodeTypeDescriptor(descriptor).length > 0 || catalog.catalog.nodeTypes().length !== 1) {
+    throw new Error('Packed node type runtime validation failed.');
+  }
+
+  const transform: ValueTransformDefinition = {
+    id: 'consumer:identity-number',
+    label: 'Identity number',
+    inputTypes: ['number'],
+    outputType: 'number',
+    apply: (value) => value,
+  };
+  const projection = projectValueTransformToNodeType(transform, {
+    nodeTypeRef: { id: 'workbench.consumer.identity-number', version: '1.0.0' },
+  });
+  if (projection.descriptor === null || projection.issues.length > 0) {
+    throw new Error('Packed transform projection failed.');
+  }
+  return { descriptor, transform };
+}
 `,
   );
   fs.writeFileSync(
