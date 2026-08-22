@@ -72,7 +72,7 @@ WB-NS-070E responsive variants + tokens/resources
         ↓
 WB-NS-070F provider-neutral generative UI parity
         ↓
-WB-NS-071A graph node type/property-input foundation [READY_FOR_IMPLEMENTATION]
+WB-NS-071A graph node type/property-input foundation [SOURCE_REVIEW_REQUIRED]
         ↓
 WB-NS-071B component/node development requirement flow
         ↓
@@ -2498,7 +2498,7 @@ optional ComfyUI adapter experiment
 
 ### `WB-NS-071A` bounded readiness packet — typed node descriptors and property-input projection
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
 - **Exact source/API base:** `origin/develop@300ff59b0715bd51253fc8355e6abd591a547771`
 - **Dependencies:** `WB-NS-070A`, `WB-NS-070C` and `WB-NS-070D` `DONE`; `WB-NS-010` remains a separate document/controller/runtime packet
 - **Target owner:** `@workbench-kit/contracts` under a focused graph-authoring module, with one-way compatibility adapters in `@workbench-kit/field-remap`
@@ -2654,7 +2654,9 @@ Descriptor validation/catalog construction must be linear in supplied declaratio
 
 The packet is complete when a browser-, Electron- and AI-free consumer can declare and validate exact node types, derive one property-backed input schema without duplicating it, build an immutable exact-version catalog and project compatible Field Remap metadata without changing Field Remap execution or creating a graph document.
 
-Producer-distinct readiness review must reject a second value-schema/type system, implicit property connectability, duplicated property/socket schemas, runtime or renderer functions in contracts, `@xyflow/react` leakage, transform compatibility/evaluation duplication, a universal component/node registry, last-writer-wins catalog conflicts, a new free-form Field Remap graph document or implementation of `WB-NS-010`/071B/071C scope. This successor promotes the packet to `READY_FOR_IMPLEMENTATION`; source implementation may begin only after producer-distinct review passes this exact head and the readiness PR is integrated.
+Producer-distinct readiness review must reject a second value-schema/type system, implicit property connectability, duplicated property/socket schemas, runtime or renderer functions in contracts, `@xyflow/react` leakage, transform compatibility/evaluation duplication, a universal component/node registry, last-writer-wins catalog conflicts, a new free-form Field Remap graph document or implementation of `WB-NS-010`/071B/071C scope. The reviewed readiness successor promoted the packet to `READY_FOR_IMPLEMENTATION` and was integrated before this source lane began.
+
+The source candidate implements the graph-authoring contracts under `packages/contracts/src/graph-authoring/` and the bounded one-way adapter under `packages/field-remap/src/projection/`. Exact-source review is required before integration.
 
 ### ComfyUI discovery
 

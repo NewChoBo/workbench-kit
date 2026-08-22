@@ -259,6 +259,15 @@ import type {
   ExtensionManagementPanelProps,
   ExtensionManagementTransition,
 } from '@workbench-kit/react';
+import {
+  resolveNodeTypeCatalog,
+  validateNodeTypeDescriptor,
+  type NodeTypeDescriptor,
+} from '@workbench-kit/contracts';
+import {
+  projectValueTransformToNodeType,
+  type ValueTransformDefinition,
+} from '@workbench-kit/field-remap';
 import type { ExtensionManagementPendingAction } from '@workbench-kit/react/workbench/management';
 import {
   ExtensionRegistry,
@@ -349,6 +358,26 @@ const packedFieldRemapPreviewProps: Pick<
   FieldRemapFlowMapperProps,
   'preview' | 'showPreview'
 > = { preview: packedFieldRemapPreview };
+const packedNodeType: NodeTypeDescriptor = {
+  id: 'workbench.consumer.transform',
+  version: '1.0.0',
+  inputs: [{ id: 'input', value: { type: 'number' }, required: true }],
+  outputs: [{ id: 'output', value: { type: 'number' } }],
+  designTime: { label: 'Consumer transform' },
+};
+const packedNodeTypeCatalog = resolveNodeTypeCatalog([
+  { contributorId: 'packed-consumer', nodeTypes: [packedNodeType] },
+]);
+const packedTransformDefinition: ValueTransformDefinition = {
+  id: 'consumer:identity-number',
+  label: 'Identity number',
+  inputTypes: ['number'],
+  outputType: 'number',
+  apply: (value) => value,
+};
+const packedTransformProjection = projectValueTransformToNodeType(packedTransformDefinition, {
+  nodeTypeRef: { id: 'workbench.consumer.identity-number', version: '1.0.0' },
+});
 
 (globalThis as typeof globalThis & { __workbenchKitPackedConsumer?: unknown })
   .__workbenchKitPackedConsumer = Object.freeze({
@@ -377,6 +406,9 @@ const packedFieldRemapPreviewProps: Pick<
   packedFieldRemapPreview,
   packedFieldRemapRootPreview,
   packedFieldRemapPreviewProps,
+  packedNodeTypeCatalog,
+  packedNodeTypeIssues: validateNodeTypeDescriptor(packedNodeType),
+  packedTransformProjection,
   commands: createWorkbenchShellCommands({ activities: [] }),
   quickOpenProvider,
   quickOpenPath: resolveQuickOpenItemPath({ id: 'README.md', label: 'README.md' }),

@@ -382,6 +382,28 @@ export {
   uiComponentContributionFromWidgetRegistry,
 } from './ui-authoring/component-adapters';
 export type {
+  NodeInputPortDescriptor,
+  NodeOutputPortDescriptor,
+  NodePortDescriptorBase,
+  NodeTypeCatalogContribution,
+  NodeTypeDescriptor,
+  NodeTypeDesignTimeMetadata,
+  NodeTypeRef,
+} from './graph-authoring/types';
+export type {
+  NodeTypeValidationIssue,
+  NodeTypeValidationIssueCode,
+} from './graph-authoring/validation';
+export {
+  NODE_TYPE_VALIDATION_ISSUE_CODES,
+  isNodeTypeValidationIssueCode,
+  nodeTypeRefKey,
+  resolveNodeInputPortSchema,
+  validateNodeTypeDescriptor,
+} from './graph-authoring/validation';
+export type { NodeTypeCatalog, NodeTypeCatalogResolution } from './graph-authoring/catalog';
+export { resolveNodeTypeCatalog } from './graph-authoring/catalog';
+export type {
   WidgetRendererComponent,
   WidgetRendererEvent,
   WidgetRendererEventKind,
