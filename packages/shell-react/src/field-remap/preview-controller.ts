@@ -12,6 +12,8 @@ export type FieldRemapPreviewCommand =
   | { readonly kind: 'no-sample' }
   | {
       readonly kind: 'evaluate';
+      /** Stable signature of every durable input, including transform implementations. */
+      readonly revision: string;
       readonly input: Omit<ConvertMappedInputsInput, 'signal'>;
     };
 
@@ -37,6 +39,7 @@ export function createFieldRemapPreviewController(
   let generation = 0;
   let disposed = false;
   let abortController: AbortController | undefined;
+  let activeRevision: string | undefined;
   const listeners = new Set<() => void>();
 
   const publish = (next: FieldRemapPreviewState): void => {
@@ -62,6 +65,9 @@ export function createFieldRemapPreviewController(
       if (disposed) {
         return;
       }
+      if (command.kind === 'evaluate' && command.revision === activeRevision) {
+        return;
+      }
 
       abortController?.abort();
       generation += 1;
@@ -69,10 +75,12 @@ export function createFieldRemapPreviewController(
       abortController = undefined;
 
       if (command.kind !== 'evaluate') {
+        activeRevision = undefined;
         publish({ status: 'unavailable', reason: command.kind });
         return;
       }
 
+      activeRevision = command.revision;
       const controller = new AbortController();
       abortController = controller;
       publish({ status: 'loading' });
@@ -107,6 +115,7 @@ export function createFieldRemapPreviewController(
       generation += 1;
       abortController?.abort();
       abortController = undefined;
+      activeRevision = undefined;
       listeners.clear();
     },
   };

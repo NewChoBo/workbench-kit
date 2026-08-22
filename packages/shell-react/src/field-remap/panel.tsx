@@ -48,10 +48,7 @@ import {
   ingestSourceShape,
   ingestTargetShape,
 } from './shape-io-editor.js';
-import {
-  createFieldRemapPreviewController,
-  type FieldRemapPreviewController,
-} from './preview-controller.js';
+import { createFieldRemapPreviewController } from './preview-controller.js';
 import type { FieldRemapPreviewState } from './preview.js';
 import './view.css';
 
@@ -162,6 +159,83 @@ function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSample
   return sample;
 }
 
+function createFieldRemapPreviewSignature(): (value: unknown) => string {
+  const referenceIds = new WeakMap<object, number>();
+  let nextReferenceId = 1;
+  const referenceId = (value: object): number => {
+    const current = referenceIds.get(value);
+    if (current !== undefined) {
+      return current;
+    }
+    const next = nextReferenceId;
+    nextReferenceId += 1;
+    referenceIds.set(value, next);
+    return next;
+  };
+
+  const visit = (value: unknown, ancestors: Set<object>): string => {
+    if (value === null) {
+      return 'null';
+    }
+    if (typeof value === 'string') {
+      return JSON.stringify(value);
+    }
+    if (typeof value === 'number') {
+      return Number.isNaN(value) ? 'number:NaN' : `number:${String(value)}`;
+    }
+    if (typeof value === 'boolean' || typeof value === 'bigint') {
+      return `${typeof value}:${String(value)}`;
+    }
+    if (typeof value === 'undefined') {
+      return 'undefined';
+    }
+    if (typeof value === 'symbol') {
+      return `symbol:${String(value.description)}`;
+    }
+    if (typeof value === 'function') {
+      return `function:${referenceId(value)}`;
+    }
+
+    if (ancestors.has(value)) {
+      return `reference:${referenceId(value)}`;
+    }
+    ancestors.add(value);
+    try {
+      if (Array.isArray(value)) {
+        return `[${value.map((item) => visit(item, ancestors)).join(',')}]`;
+      }
+      if (value instanceof Date) {
+        return `date:${value.toISOString()}`;
+      }
+      if (value instanceof Map) {
+        return `map:{${[...value.entries()]
+          .map(([key, item]) => `${visit(key, ancestors)}=>${visit(item, ancestors)}`)
+          .sort()
+          .join(',')}}`;
+      }
+      if (value instanceof Set) {
+        return `set:{${[...value.values()]
+          .map((item) => visit(item, ancestors))
+          .sort()
+          .join(',')}}`;
+      }
+
+      const record = value as Record<string, unknown>;
+      const tag = Object.prototype.toString.call(value);
+      return `${tag}:{${Object.keys(record)
+        .sort()
+        .map((key) => `${JSON.stringify(key)}:${visit(record[key], ancestors)}`)
+        .join(',')}}`;
+    } catch {
+      return `object:${referenceId(value)}`;
+    } finally {
+      ancestors.delete(value);
+    }
+  };
+
+  return (value) => visit(value, new Set<object>());
+}
+
 /**
  * Self-contained field-remap workbench panel:
  * schema columns A/B + optional convert wires (XYFlow) and `convertToShape` preview.
@@ -241,7 +315,11 @@ export function FieldRemapPanel({
     () => [...(operatorsProp ?? sample.operators ?? [])],
   );
   const [preview, setPreview] = useState<FieldRemapPreviewState>({ status: 'loading' });
-  const previewControllerRef = useRef<FieldRemapPreviewController | null>(null);
+  const [previewController] = useState(() => createFieldRemapPreviewController());
+  const previewControllerDisposeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const [previewSignature] = useState(() => createFieldRemapPreviewSignature());
   const [uncontrolledSourceSample, setUncontrolledSourceSample] = useState<unknown>(
     () => sourceSampleProp ?? sample.source,
   );
@@ -272,6 +350,19 @@ export function FieldRemapPanel({
   const sourceFields = sourcesControlled ? sourcesProp : uncontrolledSources;
   const targetSlots = targetsControlled ? targetsProp : uncontrolledTargets;
   const sourceSample = sourceSampleControlled ? sourceSampleProp : uncontrolledSourceSample;
+  const transformRegistryRevision = previewSignature(registry.list());
+  const previewRevision = previewSignature({
+    sources: sourceFields,
+    targets: targetSlots,
+    edges,
+    operators,
+    sourceSample,
+    sourceShapeId: sample.sourceIdPrefix,
+    targetShapeId: sample.targetIdPrefix,
+    sourceLabel: sample.sourceLabel,
+    targetLabel: sample.targetLabel,
+    transformRegistryRevision,
+  });
   const historyOwnedByPanel = !edgesControlled && !operatorsControlled;
   const [panelHistory, setPanelHistory] = useState(createFieldRemapHistoryState);
   const currentHistorySnapshot = useMemo(
@@ -468,24 +559,34 @@ export function FieldRemapPanel({
   );
 
   useEffect(() => {
-    const controller = createFieldRemapPreviewController();
-    previewControllerRef.current = controller;
-    const unsubscribe = controller.subscribe(() => {
-      setPreview(controller.getSnapshot());
+    if (previewControllerDisposeTimer.current !== undefined) {
+      clearTimeout(previewControllerDisposeTimer.current);
+      previewControllerDisposeTimer.current = undefined;
+    }
+    const unsubscribe = previewController.subscribe(() => {
+      setPreview(previewController.getSnapshot());
     });
+    const currentSnapshot = previewController.getSnapshot();
+    if (currentSnapshot.status !== 'unavailable') {
+      setPreview(currentSnapshot);
+    }
 
     return () => {
       unsubscribe();
-      if (previewControllerRef.current === controller) {
-        previewControllerRef.current = null;
-      }
-      controller.dispose();
+      const timer = setTimeout(() => {
+        if (previewControllerDisposeTimer.current === timer) {
+          previewControllerDisposeTimer.current = undefined;
+          previewController.dispose();
+        }
+      }, 0);
+      previewControllerDisposeTimer.current = timer;
     };
-  }, []);
+  }, [previewController]);
 
   useEffect(() => {
-    previewControllerRef.current?.update({
+    previewController.update({
       kind: 'evaluate',
+      revision: previewRevision,
       input: {
         sources: sourceFields,
         targets: targetSlots,
@@ -499,7 +600,17 @@ export function FieldRemapPanel({
         targetLabel: sample.targetLabel,
       },
     });
-  }, [edges, operators, registry, sample, sourceFields, sourceSample, targetSlots]);
+  }, [
+    edges,
+    operators,
+    previewController,
+    previewRevision,
+    registry,
+    sample,
+    sourceFields,
+    sourceSample,
+    targetSlots,
+  ]);
 
   const applySourceShape = (parsed: unknown) => {
     const ingested = ingestSourceShape(parsed, sample.sourceIdPrefix);

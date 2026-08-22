@@ -1,5 +1,5 @@
 import { useMemo, type JSX } from 'react';
-import type { ConvertToShapeResult } from '@workbench-kit/field-remap';
+import type { ConvertToShapeResult, MappingEdge } from '@workbench-kit/field-remap';
 
 import { defaultFieldRemapChromeLabels, type FieldRemapChromeLabels } from './chrome-labels.js';
 import type { FieldRemapSelection } from './flow-ops.js';
@@ -35,6 +35,7 @@ export type FieldRemapPreviewProjection =
 export function resolveFieldRemapPreviewProjection(
   preview: FieldRemapPreviewState,
   selection: FieldRemapSelection,
+  edges: readonly MappingEdge[],
   operatorExists: boolean,
 ): FieldRemapPreviewProjection {
   if (preview.status !== 'ready') {
@@ -57,7 +58,18 @@ export function resolveFieldRemapPreviewProjection(
       : { status: 'unsupported', reason: 'stale-selection' };
   }
 
-  const slot = preview.result.slots.find((item) => item.edgeId === selection.edgeId);
+  const edge = edges.find((item) => item.id === selection.edgeId);
+  if (!edge) {
+    return { status: 'unsupported', reason: 'stale-selection' };
+  }
+  if (
+    selection.kind === 'transformStep' &&
+    (selection.stepIndex < 0 || selection.stepIndex >= (edge.transformIds?.length ?? 0))
+  ) {
+    return { status: 'unsupported', reason: 'stale-selection' };
+  }
+
+  const slot = preview.result.slots.find((item) => item.edgeId === edge.id);
   if (!slot) {
     return { status: 'unsupported', reason: 'stale-selection' };
   }
@@ -86,6 +98,7 @@ function formatPreviewValue(value: unknown): string {
 export interface FieldRemapPreviewRailProps {
   readonly preview: FieldRemapPreviewState;
   readonly selection: FieldRemapSelection;
+  readonly edges: readonly MappingEdge[];
   readonly operatorExists: boolean;
   readonly labels: FieldRemapChromeLabels;
 }
@@ -93,12 +106,13 @@ export interface FieldRemapPreviewRailProps {
 export function FieldRemapPreviewRail({
   preview,
   selection,
+  edges,
   operatorExists,
   labels,
 }: FieldRemapPreviewRailProps): JSX.Element {
   const projection = useMemo(
-    () => resolveFieldRemapPreviewProjection(preview, selection, operatorExists),
-    [operatorExists, preview, selection],
+    () => resolveFieldRemapPreviewProjection(preview, selection, edges, operatorExists),
+    [edges, operatorExists, preview, selection],
   );
 
   return (

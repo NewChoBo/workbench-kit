@@ -1117,6 +1117,7 @@ function FieldRemapFlowCanvas({
             <FieldRemapPreviewRail
               preview={preview}
               selection={selection}
+              edges={edges}
               operatorExists={
                 selection?.kind === 'operator'
                   ? operators.some((operator) => operator.id === selection.operatorId)

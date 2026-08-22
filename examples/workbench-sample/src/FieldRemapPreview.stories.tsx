@@ -58,6 +58,7 @@ function FieldRemapPreviewScenario(): JSX.Element {
     id: 'edge-value',
     sourceFieldId: 'source.value',
     targetSlotId: 'target.name',
+    transformIds: ['identity'],
   };
   const operator: NonNullable<FieldRemapFlowMapperProps['operators']>[number] = {
     kind: 'combine',

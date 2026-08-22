@@ -58,8 +58,8 @@ describe('Field Remap preview controller', () => {
     const snapshots: string[] = [];
     controller.subscribe(() => snapshots.push(controller.getSnapshot().status));
 
-    controller.update({ kind: 'evaluate', input: request('first') });
-    controller.update({ kind: 'evaluate', input: request('second') });
+    controller.update({ kind: 'evaluate', revision: 'first', input: request('first') });
+    controller.update({ kind: 'evaluate', revision: 'second', input: request('second') });
 
     expect(signals[0]?.aborted).toBe(true);
     expect(signals[1]?.aborted).toBe(false);
@@ -73,6 +73,20 @@ describe('Field Remap preview controller', () => {
     expect(snapshots).toEqual(['loading', 'loading', 'ready']);
   });
 
+  it('keeps one evaluation owner for repeated updates of the same revision', () => {
+    const pending = deferred<ConvertToShapeResult>();
+    const evaluate = vi.fn((_input: ConvertMappedInputsInput) => pending.promise);
+    const controller = createFieldRemapPreviewController(evaluate);
+
+    controller.update({ kind: 'evaluate', revision: 'same', input: request('first') });
+    const signal = evaluate.mock.calls[0]?.[0].signal;
+    controller.update({ kind: 'evaluate', revision: 'same', input: request('second') });
+
+    expect(evaluate).toHaveBeenCalledTimes(1);
+    expect(signal?.aborted).toBe(false);
+    expect(controller.getSnapshot()).toEqual({ status: 'loading' });
+  });
+
   it('publishes hidden/no-sample without evaluating and suppresses abort errors', async () => {
     const pending = deferred<ConvertToShapeResult>();
     const evaluate = vi.fn((_input: ConvertMappedInputsInput) => pending.promise);
@@ -84,7 +98,7 @@ describe('Field Remap preview controller', () => {
     expect(controller.getSnapshot()).toEqual({ status: 'unavailable', reason: 'no-sample' });
     expect(evaluate).not.toHaveBeenCalled();
 
-    controller.update({ kind: 'evaluate', input: request('pending') });
+    controller.update({ kind: 'evaluate', revision: 'pending', input: request('pending') });
     const signal = evaluate.mock.calls[0]?.[0].signal;
     controller.update({ kind: 'hidden' });
     expect(signal?.aborted).toBe(true);
@@ -100,20 +114,20 @@ describe('Field Remap preview controller', () => {
     const listener = vi.fn();
     controller.subscribe(listener);
 
-    controller.update({ kind: 'evaluate', input: request('failure') });
+    controller.update({ kind: 'evaluate', revision: 'failure', input: request('failure') });
     failed.reject(new Error('preview failed'));
     await settle();
     expect(controller.getSnapshot()).toEqual({ status: 'error', message: 'preview failed' });
 
     const late = deferred<ConvertToShapeResult>();
     evaluate.mockImplementationOnce(() => late.promise);
-    controller.update({ kind: 'evaluate', input: request('late') });
+    controller.update({ kind: 'evaluate', revision: 'late', input: request('late') });
     controller.dispose();
     controller.dispose();
     late.resolve(secondResult);
     await settle();
     const callCount = listener.mock.calls.length;
-    controller.update({ kind: 'evaluate', input: request('ignored') });
+    controller.update({ kind: 'evaluate', revision: 'ignored', input: request('ignored') });
     expect(listener).toHaveBeenCalledTimes(callCount);
     expect(controller.getSnapshot()).toEqual({ status: 'loading' });
   });

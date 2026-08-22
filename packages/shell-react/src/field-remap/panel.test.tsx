@@ -76,26 +76,131 @@ describe('FieldRemapPanel', () => {
     expect(output.name).toBe('Ada Lovelace');
   });
 
-  it('keeps a live preview owner across StrictMode setup-cleanup-setup', async () => {
+  it('keeps one live preview owner across StrictMode and aborts it after real unmount', async () => {
     container = document.createElement('div');
     document.body.append(container);
     root = createRoot(container);
+    const sample = getFieldRemapSample('nested-ab');
+    const sources = sourceFieldsFromPlainObject(sample.source, {
+      idPrefix: sample.sourceIdPrefix,
+    });
+    const targets = targetSlotsFromPlainObject(sample.targetShape, {
+      idPrefix: sample.targetIdPrefix,
+    });
+    let signal: AbortSignal | undefined;
+    const apply = vi.fn((_value: unknown, context: { readonly signal?: AbortSignal }) => {
+      signal = context.signal;
+      return new Promise<unknown>(() => {});
+    });
+    const transforms = createBuiltinValueTransformRegistry();
+    transforms.register({
+      id: 'test:strict-preview',
+      label: 'Strict preview',
+      apply,
+    });
+    const edge: MappingEdge = {
+      ...sample.edges[0]!,
+      transformIds: ['test:strict-preview'],
+    };
 
     await act(async () => {
       root!.render(
         <StrictMode>
-          <FieldRemapPanel sample="nested-ab" editableShapes={false} showFlowPreview />
+          <FieldRemapPanel
+            sample={sample}
+            editableShapes={false}
+            edges={[edge]}
+            onEdgesChange={() => {}}
+            sources={sources}
+            targets={targets}
+            sourceSample={sample.source}
+            transforms={transforms}
+            showFlowPreview
+          />
         </StrictMode>,
       );
     });
     await settle();
 
+    expect(apply).toHaveBeenCalledTimes(1);
+    expect(signal?.aborted).toBe(false);
+
+    await act(async () => {
+      root!.unmount();
+      await new Promise((resolve) => setTimeout(resolve, 0));
+    });
+    root = undefined;
+    expect(signal?.aborted).toBe(true);
+  });
+
+  it('re-evaluates and reprojects a mutable transform registry replacement', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const sample = getFieldRemapSample('nested-ab');
+    const sources = sourceFieldsFromPlainObject(sample.source, {
+      idPrefix: sample.sourceIdPrefix,
+    });
+    const targets = targetSlotsFromPlainObject(sample.targetShape, {
+      idPrefix: sample.targetIdPrefix,
+    });
+    const transforms = createBuiltinValueTransformRegistry();
+    const firstApply = vi.fn((value: unknown) => `first:${String(value)}`);
+    transforms.register({
+      id: 'test:mutable-preview',
+      label: 'First transform',
+      apply: firstApply,
+    });
+    const edges: readonly MappingEdge[] = [
+      {
+        ...sample.edges[0]!,
+        transformIds: ['test:mutable-preview'],
+      },
+    ];
+    const renderPanel = async () => {
+      await act(async () => {
+        root!.render(
+          <FieldRemapPanel
+            sample={sample}
+            editableShapes={false}
+            edges={edges}
+            onEdgesChange={() => {}}
+            sources={sources}
+            targets={targets}
+            sourceSample={sample.source}
+            transforms={transforms}
+            showFlowPreview
+          />,
+        );
+      });
+      await settle();
+    };
+
+    await renderPanel();
+    expect(firstApply).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('First transform');
     expect(container.querySelector('[data-testid="field-remap-result"]')?.textContent).toContain(
-      'Ada Lovelace',
+      'first:  Ada Lovelace  ',
+    );
+
+    const secondApply = vi.fn((value: unknown) => `second:${String(value)}`);
+    transforms.register({
+      id: 'test:mutable-preview',
+      label: 'Second transform',
+      apply: secondApply,
+    });
+    await renderPanel();
+
+    expect(firstApply).toHaveBeenCalledTimes(1);
+    expect(secondApply).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('Second transform');
+    expect(container.textContent).not.toContain('First transform');
+    expect(container.querySelector('[data-testid="field-remap-result"]')?.textContent).toContain(
+      'second:  Ada Lovelace  ',
     );
     expect(
       container.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
-    ).toContain('Ada Lovelace');
+    ).toContain('second:  Ada Lovelace  ');
   });
 
   it('shares one precomputed snapshot with the optional Flow rail without rerunning on selection', async () => {

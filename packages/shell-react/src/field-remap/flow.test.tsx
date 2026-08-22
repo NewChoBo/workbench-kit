@@ -365,6 +365,39 @@ describe('FieldRemapFlowMapper host chrome', () => {
     ).toContain('no longer available');
   });
 
+  it('rejects result slots whose durable binding or transform step no longer exists', async () => {
+    const preview = {
+      status: 'ready' as const,
+      result: {
+        output: { current: true },
+        slots: [
+          {
+            edgeId: 'e-name',
+            targetSlotId: 'b.name',
+            path: 'name',
+            value: 'stale value',
+          },
+        ],
+      },
+    };
+    await renderMapper({
+      edges: [],
+      preview,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('no longer available');
+
+    await rerenderMapper({
+      preview,
+      selection: { kind: 'transformStep', edgeId: 'e-name', stepIndex: 1 },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('no longer available');
+  });
+
   it('announces injected loading and error states accessibly', async () => {
     await renderMapper({ preview: { status: 'loading' } });
     expect(container!.querySelector('[role="status"]')?.textContent).toContain('Updating preview');
