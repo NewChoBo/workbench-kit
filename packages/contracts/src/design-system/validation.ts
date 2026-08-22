@@ -2,6 +2,7 @@ import { validateUiComponentDescriptor } from '../ui-authoring/component-validat
 import type { UiComponentDescriptor } from '../ui-authoring/component-types';
 import { isStructurallyValidUiValueSource } from '../ui-authoring/validation';
 import { cloneAndFreezeDeclarativeSnapshot } from '../declarative-snapshot';
+import { validateDesignSystemDescriptorExtensions } from './descriptor-validation';
 import {
   DESIGN_SYSTEM_CONTRIBUTION_SOURCES,
   type DesignSystemContributionProvenance,
@@ -312,6 +313,7 @@ export function validateDesignSystemPackDescriptor(
       requestedVersion: normalizedDescriptor.ref?.version,
     });
   } else {
+    const componentRefs = new Set<string>();
     normalizedDescriptor.components.forEach((component, componentIndex) => {
       if (!isPlainRecord(component)) {
         diagnostics.push({
@@ -322,6 +324,24 @@ export function validateDesignSystemPackDescriptor(
           requestedVersion: normalizedDescriptor.ref?.version,
         });
         return;
+      }
+      if (
+        isCanonicalDesignSystemText(component.id) &&
+        isCanonicalDesignSystemText(component.version)
+      ) {
+        const key = JSON.stringify([component.id, component.version]);
+        if (componentRefs.has(key)) {
+          diagnostics.push({
+            code: 'invalid-component-descriptor',
+            message: 'Design System Pack component exact ref must not be duplicated.',
+            path: `${path}.components[${componentIndex}]`,
+            packId: normalizedDescriptor.ref?.id,
+            requestedVersion: normalizedDescriptor.ref?.version,
+            componentId: component.id,
+            componentVersion: component.version,
+          });
+        }
+        componentRefs.add(key);
       }
       for (const issue of validateUiComponentDescriptor(
         component as unknown as UiComponentDescriptor,
@@ -336,6 +356,8 @@ export function validateDesignSystemPackDescriptor(
       }
     });
   }
+
+  diagnostics.push(...validateDesignSystemDescriptorExtensions(normalizedDescriptor, path));
 
   return freezeDiagnostics(diagnostics);
 }
