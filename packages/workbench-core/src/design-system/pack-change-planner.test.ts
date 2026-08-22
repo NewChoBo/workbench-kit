@@ -558,4 +558,77 @@ describe('DesignSystemPackChangePlanner', () => {
         .diagnostics[0]?.code,
     ).toBe('unsupported-layout-literal-type');
   });
+
+  it('rejects layout token and resource terminal semantic type mismatches', () => {
+    const planner = new DesignSystemPackChangePlanner();
+    const sourcePack = pack(sourceRef, false);
+    const targetPack = pack(targetRef, true);
+    const mismatchRegistry = new DesignSystemPackRegistry();
+    mismatchRegistry.register({
+      contributionId: 'mismatched-layout-token.design-systems',
+      packs: [
+        {
+          ...sourcePack,
+          defaultTokenValues: {
+            ...sourcePack.defaultTokenValues,
+            'space.old': { kind: 'literal', value: '#111111' },
+          },
+          tokens: sourcePack.tokens?.map((token) =>
+            token.id === 'space.old' ? { ...token, value: { type: 'color' } } : token,
+          ),
+        },
+        {
+          ...targetPack,
+          defaultTokenValues: {
+            ...targetPack.defaultTokenValues,
+            'space.new': { kind: 'literal', value: '#222222' },
+          },
+          tokens: targetPack.tokens?.map((token) =>
+            token.id === 'space.new' ? { ...token, value: { type: 'color' } } : token,
+          ),
+        },
+      ],
+    });
+    const tokenSnapshot = mismatchRegistry.snapshot();
+    const tokenPlan = planner.plan(tokenSnapshot, request()).plan!;
+    expect(tokenPlan.blocked).toBe(false);
+    expect(
+      planner.finalize(tokenSnapshot, tokenPlan.sourceDocument, tokenPlan, choices()).diagnostics[0]
+        ?.code,
+    ).toBe('pack-change-target-resolution-failed');
+
+    const resourceDocument = document();
+    const resourceRequest = request({
+      ...resourceDocument,
+      nodes: resourceDocument.nodes.map((node, index) =>
+        index === 0
+          ? {
+              ...node,
+              layout: {
+                strategyId: 'layout.flex',
+                values: { gap: { kind: 'resource', resourceId: 'image.old' } },
+              },
+            }
+          : node,
+      ),
+    });
+    const resourceSnapshot = registry().snapshot();
+    const resourcePlan = planner.plan(resourceSnapshot, {
+      ...resourceRequest,
+      layoutProperties: [
+        {
+          ...properties[0]!,
+          value: { type: 'layout.spacing', allowedSources: ['resource'] },
+        },
+      ],
+      tokenReplacements: [{ sourceId: 'color.old', candidates: ['color.new'] }],
+    }).plan!;
+    expect(resourcePlan.blocked).toBe(false);
+    expect(
+      planner.finalize(resourceSnapshot, resourcePlan.sourceDocument, resourcePlan, {
+        ...choices(),
+        tokens: [{ sourceId: 'color.old', targetId: 'color.new' }],
+      }).diagnostics[0]?.code,
+    ).toBe('pack-change-target-resolution-failed');
+  });
 });

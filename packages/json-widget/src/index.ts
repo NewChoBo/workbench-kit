@@ -166,7 +166,6 @@ export type {
   UiDocumentNode,
   UiDocumentNodeAuthoring,
   UiDocumentTransaction,
-  UiDocumentTransactionIntent,
   UiDocumentTransactionRecord,
   UiDesignSystemPackChangeCommand,
   ProjectUiDesignSystemDocumentResult,

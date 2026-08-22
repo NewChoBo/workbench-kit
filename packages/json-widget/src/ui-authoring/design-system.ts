@@ -21,6 +21,7 @@ import type {
   ProjectUiDesignSystemDocumentResult,
   UiAuthoringSessionState,
   UiDocument,
+  UiDocumentNode,
   UiDocumentTransaction,
   UiDocumentTransactionRecord,
 } from './types.js';
@@ -393,6 +394,11 @@ function isUiDocumentTransactionRecord(value: unknown): value is UiDocumentTrans
     !Number.isInteger(value.transaction.baseRevision) ||
     !Number.isInteger(value.transaction.nextRevision) ||
     !isPlainRecord(value.transaction.command) ||
+    (value.transaction.intent !== undefined &&
+      (!isPlainRecord(value.transaction.intent) ||
+        value.transaction.intent.type !== 'apply-design-system-pack-change' ||
+        !isCanonicalText(value.transaction.intent.commandId) ||
+        !isMutation(value.transaction.intent.mutation))) ||
     !Array.isArray(value.transaction.patches) ||
     !isUiDocumentValue(value.beforeDocument) ||
     !isUiDocumentValue(value.afterDocument) ||
@@ -537,6 +543,12 @@ export function applyUiDesignSystemPackChange(
   const transaction = deepFreezeUiAuthoringValue({
     transactionId: `${safeMutation.requestId}@${safeState.document.revision}->${nextRevision}`,
     command: {
+      type: 'replace-node',
+      commandId: safeMutation.requestId,
+      nodeId: safeState.document.root.id,
+      node: cloneUiAuthoringJsonValue(nextRoot) as UiDocumentNode,
+    },
+    intent: {
       type: 'apply-design-system-pack-change',
       commandId: safeMutation.requestId,
       mutation: safeMutation,

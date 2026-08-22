@@ -1521,8 +1521,10 @@ export class DesignSystemPackChangePlanner {
           }
           if (
             rewritten.kind === 'token' &&
-            tokenResolver.resolveToken(selection, { tokenId: rewritten.tokenId }).diagnostics
-              .length > 0
+            tokenResolver.resolveToken(selection, {
+              tokenId: rewritten.tokenId,
+              expectedType: descriptor.value.type,
+            }).diagnostics.length > 0
           ) {
             return failedFinalize(
               diagnostic(
@@ -1533,10 +1535,9 @@ export class DesignSystemPackChangePlanner {
               ),
             );
           }
-          if (
-            rewritten.kind === 'resource' &&
-            descriptorById(targetPack.resources, rewritten.resourceId) === undefined
-          ) {
+          if (rewritten.kind === 'resource') {
+            const resource = descriptorById(targetPack.resources, rewritten.resourceId);
+            if (resource !== undefined && resource.value.type === descriptor.value.type) continue;
             return failedFinalize(
               diagnostic(
                 'pack-change-target-resolution-failed',

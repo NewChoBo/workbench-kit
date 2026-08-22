@@ -119,7 +119,8 @@ export type UiDocumentCommand =
 
 export interface UiDocumentTransaction {
   readonly transactionId: string;
-  readonly command: UiDocumentTransactionIntent;
+  readonly command: UiDocumentCommand;
+  readonly intent?: UiDesignSystemPackChangeCommand;
   readonly baseRevision: number;
   readonly nextRevision: number;
   readonly patches: readonly WidgetPatch[];
@@ -130,8 +131,6 @@ export interface UiDesignSystemPackChangeCommand {
   readonly commandId: string;
   readonly mutation: DesignSystemPackChangeMutation;
 }
-
-export type UiDocumentTransactionIntent = UiDocumentCommand | UiDesignSystemPackChangeCommand;
 
 export const UI_DOCUMENT_COMMAND_ISSUE_CODES = Object.freeze([
   'blank-command-id',

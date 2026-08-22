@@ -12,6 +12,7 @@ import {
   redoUiAuthoringSession,
   undoUiAuthoringSession,
 } from './session.js';
+import type { UiDocumentCommand } from './types.js';
 
 const sourceRef = Object.freeze({ id: 'source.design', version: '1.0.0' });
 const targetRef = Object.freeze({ id: 'target.design', version: '2.0.0' });
@@ -201,7 +202,14 @@ describe('atomic Design System Pack mutation', () => {
     expect(result.state.document.designSystem).toEqual(mutation.targetState);
     expect(result.state.past).toHaveLength(1);
     expect(result.state.future).toEqual([]);
-    expect(result.state.past[0]?.transaction.command).toMatchObject({
+    const transaction = result.state.past[0]!.transaction;
+    const acceptsExistingCommand = (command: UiDocumentCommand) => command;
+    expect(acceptsExistingCommand(transaction.command)).toMatchObject({
+      type: 'replace-node',
+      commandId: 'pack-change-1',
+      nodeId: 'root',
+    });
+    expect(transaction.intent).toMatchObject({
       type: 'apply-design-system-pack-change',
       commandId: 'pack-change-1',
     });
