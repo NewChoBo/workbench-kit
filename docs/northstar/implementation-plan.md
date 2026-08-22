@@ -60,7 +60,7 @@ Document + state ownership foundations
         ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
 
-WB-NS-070A typed UI value/property inventory + target contract
+WB-NS-070A typed UI value/property inventory + target contract [SOURCE_REVIEW_REQUIRED]
         ↓
 WB-NS-070B selectable layout strategy + typed style constraints
         ↓
@@ -1606,7 +1606,7 @@ Close:
 
 ### `WB-NS-070A` bounded packet — typed UI value/property/source contract
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
 - **Source/API evidence:** `origin/develop@861aac873ed58cc4b60092c4dfddc339c45aa781` with source-bearing parent `e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`
 - **Target owner:** `@workbench-kit/contracts` root export
 - **Implementation scope:** `packages/contracts/src/ui-authoring/*` plus root export and focused tests
