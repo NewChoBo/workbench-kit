@@ -52,7 +52,7 @@ The public Workbench target remains consumer-neutral. No consumer-specific nouns
 
 ## 3. Historical source snapshot evidence and migration input
 
-Current integration baseline: `origin/develop@598deebf9512e39d46c636bd00926867816c0186`.
+Current integration baseline: `origin/develop@a29fb91660c5a29e151fab3b89c4a97e7aacbd8d`.
 
 Historical source snapshot reviewed: `develop@6466359c8f1c48c18cb0dc41659d322a1a0ecd55`. The following are candidate migration evidence, not assertions about the current integration baseline.
 
@@ -595,7 +595,7 @@ Migration principles:
 
 ## 23. Implementation packet readiness
 
-The DesignSystemPack slice is `DESIGNING`, not yet `READY_FOR_IMPLEMENTATION` as one monolith. High-level ownership and behavior are closed, but existing-package/public-API reuse must be resolved before delegation.
+The DesignSystemPack slice is not `READY_FOR_IMPLEMENTATION` as one monolith. High-level ownership and behavior are closed. The exact current-source ownership, adapter and removal map is now a documentation-only `WB-NS-072A` candidate under producer-distinct review; 072B+ remain separate bounded packets.
 
 Split the implementation chain in the canonical implementation plan as:
 
@@ -612,7 +612,7 @@ WB-NS-072E Canvas/Inspector/provenance integration
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup
 ```
 
-All `WB-NS-072*` packets are `DESIGNING`. `WB-NS-072A` must close exact package/subpath ownership, compatibility-adapter boundaries, removal triggers, and its `WB-NS-070A`/`WB-NS-040` dependencies against the current integration baseline before promotion can be evaluated. `072B+` remain `DESIGNING` until that mapping removes the risk of a parallel theme/widget/property engine.
+`WB-NS-072A` is `READINESS_REVIEW_REQUIRED` at the current integration baseline. Its canonical consolidation map is maintained in `implementation-plan.md`; producer-distinct PASS makes that documentation packet `DONE`, not source-ready. `072B+` remain `DESIGNING` until their own readiness packets close API/state/diagnostic semantics. The 072A dependency map deliberately keeps extension trust/manifest integration blocked on WB-NS-040/072F while allowing a future 072B packet to cover only pure already-authorized declarative descriptor registration and resolution.
 
 Canonical packet gates are maintained in [`implementation-plan.md`](./implementation-plan.md):
 
