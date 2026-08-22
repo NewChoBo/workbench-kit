@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@f4b51bdcb47b6d36ce3f0e5a3cfdbefb39fca306`.
+- **Current integration baseline:** `origin/develop@f4b51bdce89e2d50cfb1838e12d833b510216fce`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -1766,7 +1766,7 @@ Close:
 ### `WB-NS-070B` bounded packet — layout/style values, strategy descriptors and contextual validation
 
 - **Status:** `SOURCE_REVIEW_REQUIRED`
-- **Source/API evidence:** source-bearing parent `origin/develop@f4b51bdcb47b6d36ce3f0e5a3cfdbefb39fca306`; readiness review head `a8befd59656e4144dcb61e3e8799cacd2d0b7460` integrated through PR #323
+- **Source/API evidence:** source-bearing parent `origin/develop@f4b51bdce89e2d50cfb1838e12d833b510216fce`; readiness review head `a8befd59656e4144dcb61e3e8799cacd2d0b7460` integrated through PR #323
 - **Dependencies:** `WB-NS-070A` `DONE`
 - **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
 - **Implementation scope:** `packages/contracts/src/ui-authoring/*`, root exports and focused backendless tests

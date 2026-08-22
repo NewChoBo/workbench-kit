@@ -79,6 +79,13 @@ function kindOf(value: unknown): string | undefined {
   return isRecord(value) && typeof value.kind === 'string' ? value.kind : undefined;
 }
 
+function withValueKind(
+  issues: readonly UiLayoutValidationIssue[],
+  valueKind: string,
+): readonly UiLayoutValidationIssue[] {
+  return issues.map((candidate) => ({ ...candidate, valueKind }));
+}
+
 function childPath(path: string, child: string): string {
   return path.length === 0 ? child : `${path}.${child}`;
 }
@@ -145,7 +152,10 @@ export function validateUiDimensionValue(
   }
 
   if (kind === 'intrinsic-size') {
-    return validateEnum(value.value, UI_INTRINSIC_SIZE_KEYWORDS, childPath(path, 'value'));
+    return withValueKind(
+      validateEnum(value.value, UI_INTRINSIC_SIZE_KEYWORDS, childPath(path, 'value')),
+      kind,
+    );
   }
 
   const issues = [
@@ -179,7 +189,7 @@ export function validateUiDimensionValue(
       ),
     );
   }
-  return issues;
+  return withValueKind(issues, kind);
 }
 
 export function validateUiSpacingValue(
@@ -188,101 +198,143 @@ export function validateUiSpacingValue(
 ): readonly UiLayoutValidationIssue[] {
   const path = options.path ?? '';
   if (!isRecord(value) || value.kind !== 'spacing') {
-    return [issue('invalid-layout-dimension-kind', 'Spacing value is invalid.', path)];
+    return [
+      issue('invalid-layout-dimension-kind', 'Spacing value is invalid.', path, {
+        valueKind: 'spacing',
+      }),
+    ];
   }
-  return ['top', 'right', 'bottom', 'left'].flatMap((edge) =>
-    validateUiDimensionValue(value[edge], {
-      allowedKinds: ['length', 'percentage'],
-      allowNegative: options.allowNegative,
-      path: childPath(path, edge),
-    }),
+  return withValueKind(
+    ['top', 'right', 'bottom', 'left'].flatMap((edge) =>
+      validateUiDimensionValue(value[edge], {
+        allowedKinds: ['length', 'percentage'],
+        allowNegative: options.allowNegative,
+        path: childPath(path, edge),
+      }),
+    ),
+    'spacing',
   );
 }
 
 export function validateUiBorderValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'border') {
-    return [issue('invalid-layout-dimension-kind', 'Border value is invalid.', '')];
+    return [
+      issue('invalid-layout-dimension-kind', 'Border value is invalid.', '', {
+        valueKind: 'border',
+      }),
+    ];
   }
-  return [
-    ...validateUiDimensionValue(value.width, {
-      allowedKinds: ['length'],
-      path: 'width',
-    }),
-    ...validateEnum(value.style, UI_BORDER_STYLES, 'style'),
-    ...(typeof value.color === 'string' && value.color.trim().length > 0
-      ? []
-      : [issue('invalid-layout-enum', 'Border color must not be blank.', 'color')]),
-  ];
+  return withValueKind(
+    [
+      ...validateUiDimensionValue(value.width, {
+        allowedKinds: ['length'],
+        path: 'width',
+      }),
+      ...validateEnum(value.style, UI_BORDER_STYLES, 'style'),
+      ...(typeof value.color === 'string' && value.color.trim().length > 0
+        ? []
+        : [issue('invalid-layout-enum', 'Border color must not be blank.', 'color')]),
+    ],
+    'border',
+  );
 }
 
 export function validateUiRadiusValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'radius') {
-    return [issue('invalid-layout-dimension-kind', 'Radius value is invalid.', '')];
+    return [
+      issue('invalid-layout-dimension-kind', 'Radius value is invalid.', '', {
+        valueKind: 'radius',
+      }),
+    ];
   }
-  return ['topLeft', 'topRight', 'bottomRight', 'bottomLeft'].flatMap((corner) =>
-    validateUiDimensionValue(value[corner], {
-      allowedKinds: ['length', 'percentage'],
-      path: corner,
-    }),
+  return withValueKind(
+    ['topLeft', 'topRight', 'bottomRight', 'bottomLeft'].flatMap((corner) =>
+      validateUiDimensionValue(value[corner], {
+        allowedKinds: ['length', 'percentage'],
+        path: corner,
+      }),
+    ),
+    'radius',
   );
 }
 
 export function validateUiShadowValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'shadow') {
-    return [issue('invalid-layout-dimension-kind', 'Shadow value is invalid.', '')];
+    return [
+      issue('invalid-layout-dimension-kind', 'Shadow value is invalid.', '', {
+        valueKind: 'shadow',
+      }),
+    ];
   }
-  return [
-    ...validateUiDimensionValue(value.offsetX, {
-      allowedKinds: ['length'],
-      allowNegative: true,
-      path: 'offsetX',
-    }),
-    ...validateUiDimensionValue(value.offsetY, {
-      allowedKinds: ['length'],
-      allowNegative: true,
-      path: 'offsetY',
-    }),
-    ...validateUiDimensionValue(value.blur, { allowedKinds: ['length'], path: 'blur' }),
-    ...validateUiDimensionValue(value.spread, {
-      allowedKinds: ['length'],
-      allowNegative: true,
-      path: 'spread',
-    }),
-    ...(typeof value.color === 'string' && value.color.trim().length > 0
-      ? []
-      : [issue('invalid-layout-enum', 'Shadow color must not be blank.', 'color')]),
-    ...(value.inset === undefined || typeof value.inset === 'boolean'
-      ? []
-      : [issue('invalid-layout-enum', 'Shadow inset must be boolean.', 'inset')]),
-  ];
+  return withValueKind(
+    [
+      ...validateUiDimensionValue(value.offsetX, {
+        allowedKinds: ['length'],
+        allowNegative: true,
+        path: 'offsetX',
+      }),
+      ...validateUiDimensionValue(value.offsetY, {
+        allowedKinds: ['length'],
+        allowNegative: true,
+        path: 'offsetY',
+      }),
+      ...validateUiDimensionValue(value.blur, { allowedKinds: ['length'], path: 'blur' }),
+      ...validateUiDimensionValue(value.spread, {
+        allowedKinds: ['length'],
+        allowNegative: true,
+        path: 'spread',
+      }),
+      ...(typeof value.color === 'string' && value.color.trim().length > 0
+        ? []
+        : [issue('invalid-layout-enum', 'Shadow color must not be blank.', 'color')]),
+      ...(value.inset === undefined || typeof value.inset === 'boolean'
+        ? []
+        : [issue('invalid-layout-enum', 'Shadow inset must be boolean.', 'inset')]),
+    ],
+    'shadow',
+  );
 }
 
 export function validateUiFlexContainerValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'flex-container') {
-    return [issue('invalid-flex-value', 'Flex container value is invalid.', '')];
+    return [
+      issue('invalid-flex-value', 'Flex container value is invalid.', '', {
+        valueKind: 'flex-container',
+      }),
+    ];
   }
-  return [
-    ...validateEnum(value.direction, UI_LAYOUT_DIRECTIONS, 'direction'),
-    ...validateEnum(value.wrap, UI_FLEX_WRAPS, 'wrap'),
-    ...validateEnum(value.mainAxisAlignment, UI_MAIN_AXIS_ALIGNMENTS, 'mainAxisAlignment'),
-    ...validateEnum(value.crossAxisAlignment, UI_CROSS_AXIS_ALIGNMENTS, 'crossAxisAlignment'),
-  ];
+  return withValueKind(
+    [
+      ...validateEnum(value.direction, UI_LAYOUT_DIRECTIONS, 'direction'),
+      ...validateEnum(value.wrap, UI_FLEX_WRAPS, 'wrap'),
+      ...validateEnum(value.mainAxisAlignment, UI_MAIN_AXIS_ALIGNMENTS, 'mainAxisAlignment'),
+      ...validateEnum(value.crossAxisAlignment, UI_CROSS_AXIS_ALIGNMENTS, 'crossAxisAlignment'),
+    ],
+    'flex-container',
+  );
 }
 
 export function validateUiFlexChildValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'flex-child') {
-    return [issue('invalid-flex-value', 'Flex child value is invalid.', '')];
+    return [
+      issue('invalid-flex-value', 'Flex child value is invalid.', '', {
+        valueKind: 'flex-child',
+      }),
+    ];
   }
-  return [
-    ...validateFiniteNumber(value.grow, 'grow', { min: 0 }),
-    ...validateFiniteNumber(value.shrink, 'shrink', { min: 0 }),
-    ...validateUiDimensionValue(value.basis, {
-      allowedKinds: ['length', 'percentage', 'intrinsic-size'],
-      path: 'basis',
-    }),
-    ...validateFiniteNumber(value.order, 'order', { integer: true }),
-    ...validateEnum(value.alignSelf, ['auto', ...UI_CROSS_AXIS_ALIGNMENTS], 'alignSelf'),
-  ];
+  return withValueKind(
+    [
+      ...validateFiniteNumber(value.grow, 'grow', { min: 0 }),
+      ...validateFiniteNumber(value.shrink, 'shrink', { min: 0 }),
+      ...validateUiDimensionValue(value.basis, {
+        allowedKinds: ['length', 'percentage', 'intrinsic-size'],
+        path: 'basis',
+      }),
+      ...validateFiniteNumber(value.order, 'order', { integer: true }),
+      ...validateEnum(value.alignSelf, ['auto', ...UI_CROSS_AXIS_ALIGNMENTS], 'alignSelf'),
+    ],
+    'flex-child',
+  );
 }
 
 function validateGridTrack(value: unknown, path: string): readonly UiLayoutValidationIssue[] {
@@ -309,69 +361,95 @@ function validateGridTrack(value: unknown, path: string): readonly UiLayoutValid
 
 export function validateUiGridTrackListValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'grid-track-list' || !Array.isArray(value.tracks)) {
-    return [issue('invalid-grid-track-list', 'Grid track list is invalid.', '')];
+    return [
+      issue('invalid-grid-track-list', 'Grid track list is invalid.', '', {
+        valueKind: 'grid-track-list',
+      }),
+    ];
   }
   if (value.tracks.length === 0) {
-    return [issue('invalid-grid-track-list', 'Grid track list must not be empty.', 'tracks')];
+    return [
+      issue('invalid-grid-track-list', 'Grid track list must not be empty.', 'tracks', {
+        valueKind: 'grid-track-list',
+      }),
+    ];
   }
 
-  return value.tracks.flatMap((track, index) => {
-    const path = indexPath('tracks', index);
-    if (!isRecord(track) || track.kind !== 'grid-repeat') {
-      return validateGridTrack(track, path);
-    }
-    const issues: UiLayoutValidationIssue[] = [];
-    if (
-      track.count !== 'auto-fill' &&
-      track.count !== 'auto-fit' &&
-      (typeof track.count !== 'number' || !Number.isInteger(track.count) || track.count <= 0)
-    ) {
-      issues.push(
-        issue(
-          'invalid-grid-track-list',
-          'Grid repeat count must be a positive integer, auto-fill, or auto-fit.',
-          childPath(path, 'count'),
-        ),
-      );
-    }
-    if (!Array.isArray(track.tracks) || track.tracks.length === 0) {
-      issues.push(
-        issue(
-          'invalid-grid-track-list',
-          'Grid repeat tracks must not be empty.',
-          childPath(path, 'tracks'),
-        ),
-      );
-      return issues;
-    }
-    track.tracks.forEach((repeatedTrack, repeatedIndex) => {
-      const repeatedPath = indexPath(childPath(path, 'tracks'), repeatedIndex);
-      if (isRecord(repeatedTrack) && repeatedTrack.kind === 'grid-repeat') {
-        issues.push(
-          issue('invalid-grid-track-list', 'Grid repeats must not be nested.', repeatedPath),
-        );
-        return;
+  return withValueKind(
+    value.tracks.flatMap((track, index) => {
+      const path = indexPath('tracks', index);
+      if (!isRecord(track) || track.kind !== 'grid-repeat') {
+        return validateGridTrack(track, path);
       }
-      issues.push(...validateGridTrack(repeatedTrack, repeatedPath));
-    });
-    return issues;
-  });
+      const issues: UiLayoutValidationIssue[] = [];
+      if (
+        track.count !== 'auto-fill' &&
+        track.count !== 'auto-fit' &&
+        (typeof track.count !== 'number' || !Number.isInteger(track.count) || track.count <= 0)
+      ) {
+        issues.push(
+          issue(
+            'invalid-grid-track-list',
+            'Grid repeat count must be a positive integer, auto-fill, or auto-fit.',
+            childPath(path, 'count'),
+          ),
+        );
+      }
+      if (!Array.isArray(track.tracks) || track.tracks.length === 0) {
+        issues.push(
+          issue(
+            'invalid-grid-track-list',
+            'Grid repeat tracks must not be empty.',
+            childPath(path, 'tracks'),
+          ),
+        );
+        return issues;
+      }
+      track.tracks.forEach((repeatedTrack, repeatedIndex) => {
+        const repeatedPath = indexPath(childPath(path, 'tracks'), repeatedIndex);
+        if (isRecord(repeatedTrack) && repeatedTrack.kind === 'grid-repeat') {
+          issues.push(
+            issue('invalid-grid-track-list', 'Grid repeats must not be nested.', repeatedPath),
+          );
+          return;
+        }
+        issues.push(...validateGridTrack(repeatedTrack, repeatedPath));
+      });
+      return issues;
+    }),
+    'grid-track-list',
+  );
 }
 
 export function validateUiGridPlacementValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'grid-placement') {
-    return [issue('invalid-grid-placement', 'Grid placement value is invalid.', '')];
+    return [
+      issue('invalid-grid-placement', 'Grid placement value is invalid.', '', {
+        valueKind: 'grid-placement',
+      }),
+    ];
   }
   if (value.mode === 'area') {
     return typeof value.area === 'string' && value.area.trim().length > 0
       ? []
-      : [issue('invalid-grid-placement', 'Grid area must not be blank.', 'area')];
+      : [
+          issue('invalid-grid-placement', 'Grid area must not be blank.', 'area', {
+            valueKind: 'grid-placement',
+          }),
+        ];
   }
   if (value.mode !== 'lines') {
-    return [issue('invalid-grid-placement', 'Grid placement mode is invalid.', 'mode')];
+    return [
+      issue('invalid-grid-placement', 'Grid placement mode is invalid.', 'mode', {
+        valueKind: 'grid-placement',
+      }),
+    ];
   }
-  return ['columnStart', 'rowStart', 'columnSpan', 'rowSpan'].flatMap((field) =>
-    validateFiniteNumber(value[field], field, { integer: true, min: 1 }),
+  return withValueKind(
+    ['columnStart', 'rowStart', 'columnSpan', 'rowSpan'].flatMap((field) =>
+      validateFiniteNumber(value[field], field, { integer: true, min: 1 }),
+    ),
+    'grid-placement',
   );
 }
 
@@ -402,7 +480,7 @@ function validateComparableRange(
 
 export function validateUiSplitValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'split') {
-    return [issue('invalid-split-value', 'Split value is invalid.', '')];
+    return [issue('invalid-split-value', 'Split value is invalid.', '', { valueKind: 'split' })];
   }
   const issues: UiLayoutValidationIssue[] = [
     ...validateEnum(value.orientation, ['horizontal', 'vertical'], 'orientation'),
@@ -441,14 +519,18 @@ export function validateUiSplitValue(value: unknown): readonly UiLayoutValidatio
   if (value.minSize !== undefined && value.maxSize !== undefined) {
     issues.push(...validateComparableRange(value.minSize, value.maxSize, 'maxSize'));
   }
-  return issues;
+  return withValueKind(issues, 'split');
 }
 
 export function validateUiOverlayPlacementValue(
   value: unknown,
 ): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'overlay-placement') {
-    return [issue('invalid-overlay-placement', 'Overlay placement value is invalid.', '')];
+    return [
+      issue('invalid-overlay-placement', 'Overlay placement value is invalid.', '', {
+        valueKind: 'overlay-placement',
+      }),
+    ];
   }
   const issues: UiLayoutValidationIssue[] = [];
   if (!isUiLayoutAnchor(value.anchor)) {
@@ -466,7 +548,7 @@ export function validateUiOverlayPlacementValue(
     }
   }
   issues.push(...validateFiniteNumber(value.zIndex, 'zIndex', { integer: true }));
-  return issues;
+  return withValueKind(issues, 'overlay-placement');
 }
 
 function validateCanvasConstraints(
@@ -509,7 +591,11 @@ function validateCanvasConstraints(
 
 export function validateUiCanvasPlacementValue(value: unknown): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value) || value.kind !== 'canvas-placement') {
-    return [issue('invalid-canvas-placement', 'Canvas placement value is invalid.', '')];
+    return [
+      issue('invalid-canvas-placement', 'Canvas placement value is invalid.', '', {
+        valueKind: 'canvas-placement',
+      }),
+    ];
   }
   const issues: UiLayoutValidationIssue[] = [
     ...validateUiDimensionValue(value.x, {
@@ -538,7 +624,7 @@ export function validateUiCanvasPlacementValue(value: unknown): readonly UiLayou
   if (value.constraints !== undefined) {
     issues.push(...validateCanvasConstraints(value.constraints, 'constraints'));
   }
-  return issues;
+  return withValueKind(issues, 'canvas-placement');
 }
 
 export function validateUiLayoutStrategyDescriptor<TLiteral>(
@@ -569,6 +655,7 @@ export function validateUiLayoutStrategyDescriptor<TLiteral>(
       strategyId: strategy.id,
       propertyId: property.id,
       scope: property.scope,
+      valueKind: property.value.type,
     };
     if (property.id.trim().length === 0) {
       issues.push(
@@ -618,7 +705,12 @@ export function validateUiLayoutStrategyDescriptor<TLiteral>(
             'duplicate-layout-property-id',
             `Supported layout property "${id}" is duplicated.`,
             supportedPath,
-            { strategyId: strategy.id, propertyId: id, scope },
+            {
+              strategyId: strategy.id,
+              propertyId: id,
+              scope,
+              ...(byId.get(id) ? { valueKind: byId.get(id)!.value.type } : {}),
+            },
           ),
         );
         return;
@@ -631,7 +723,11 @@ export function validateUiLayoutStrategyDescriptor<TLiteral>(
             'unknown-layout-property-id',
             `Supported layout property "${id}" is unknown.`,
             supportedPath,
-            { strategyId: strategy.id, propertyId: id, scope },
+            {
+              strategyId: strategy.id,
+              propertyId: id,
+              scope,
+            },
           ),
         );
         return;
@@ -642,7 +738,12 @@ export function validateUiLayoutStrategyDescriptor<TLiteral>(
             'layout-property-scope-mismatch',
             `Layout property "${id}" belongs to the ${property.scope} scope.`,
             supportedPath,
-            { strategyId: strategy.id, propertyId: id, scope },
+            {
+              strategyId: strategy.id,
+              propertyId: id,
+              scope,
+              valueKind: property.value.type,
+            },
           ),
         );
       }
@@ -652,7 +753,12 @@ export function validateUiLayoutStrategyDescriptor<TLiteral>(
             'layout-property-strategy-mismatch',
             `Layout property "${id}" does not support strategy kind "${strategy.kind}".`,
             supportedPath,
-            { strategyId: strategy.id, propertyId: id, scope },
+            {
+              strategyId: strategy.id,
+              propertyId: id,
+              scope,
+              valueKind: property.value.type,
+            },
           ),
         );
       }

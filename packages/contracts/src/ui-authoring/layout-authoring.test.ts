@@ -19,9 +19,11 @@ import {
   validateUiSpacingValue,
   validateUiSplitValue,
   type UiDimensionValue,
+  type UiCanvasPlacementValue,
   type UiGridTrackListValue,
   type UiLayoutPropertyDescriptor,
   type UiLayoutStrategyDescriptor,
+  type UiSplitValue,
   type UiValueSource,
 } from '../index';
 
@@ -153,6 +155,29 @@ describe('strategy-specific layout values', () => {
     );
   });
 
+  it('reports deterministic Flex diagnostic order with enclosing value context', () => {
+    const issues = validateUiFlexChildValue({
+      kind: 'flex-child',
+      grow: -1,
+      shrink: -2,
+      basis: { kind: 'flex-fraction', value: 1 },
+      order: 0.5,
+      alignSelf: 'sideways',
+    });
+
+    expect(issues.map(({ code, path, valueKind }) => ({ code, path, valueKind }))).toEqual([
+      { code: 'invalid-layout-range', path: 'grow', valueKind: 'flex-child' },
+      { code: 'invalid-layout-range', path: 'shrink', valueKind: 'flex-child' },
+      {
+        code: 'invalid-layout-dimension-kind',
+        path: 'basis.kind',
+        valueKind: 'flex-child',
+      },
+      { code: 'invalid-layout-number', path: 'order', valueKind: 'flex-child' },
+      { code: 'invalid-layout-enum', path: 'alignSelf', valueKind: 'flex-child' },
+    ]);
+  });
+
   it('validates Grid tracks, repeat, minmax, and one-based line placement', () => {
     const tracks: UiGridTrackListValue = {
       kind: 'grid-track-list',
@@ -217,6 +242,23 @@ describe('strategy-specific layout values', () => {
     ).toContainEqual(expect.objectContaining({ code: 'invalid-grid-placement', path: 'area' }));
   });
 
+  it('reports ordered Grid placement issues with stable value context', () => {
+    const issues = validateUiGridPlacementValue({
+      kind: 'grid-placement',
+      mode: 'lines',
+      columnStart: 0,
+      rowStart: 0,
+      columnSpan: 0,
+      rowSpan: 0,
+    });
+    expect(issues.map(({ path, valueKind }) => ({ path, valueKind }))).toEqual([
+      { path: 'columnStart', valueKind: 'grid-placement' },
+      { path: 'rowStart', valueKind: 'grid-placement' },
+      { path: 'columnSpan', valueKind: 'grid-placement' },
+      { path: 'rowSpan', valueKind: 'grid-placement' },
+    ]);
+  });
+
   it('validates Split state and comparable size ranges', () => {
     expect(
       validateUiSplitValue({
@@ -251,6 +293,26 @@ describe('strategy-specific layout values', () => {
     );
   });
 
+  it('retains Split value context across enum, state, and range diagnostics', () => {
+    const issues = validateUiSplitValue({
+      kind: 'split',
+      orientation: 'diagonal',
+      fixedTrack: 'middle',
+      size: px(10),
+      minSize: px(20),
+      maxSize: px(10),
+      collapsible: false,
+      collapsed: true,
+      resizable: true,
+    });
+    expect(issues.map(({ path, valueKind }) => ({ path, valueKind }))).toEqual([
+      { path: 'orientation', valueKind: 'split' },
+      { path: 'fixedTrack', valueKind: 'split' },
+      { path: 'collapsed', valueKind: 'split' },
+      { path: 'maxSize', valueKind: 'split' },
+    ]);
+  });
+
   it('allows negative Overlay insets but requires integer z-order', () => {
     expect(
       validateUiOverlayPlacementValue({
@@ -267,6 +329,20 @@ describe('strategy-specific layout values', () => {
         zIndex: 1.5,
       }),
     ).toContainEqual(expect.objectContaining({ code: 'invalid-layout-number', path: 'zIndex' }));
+  });
+
+  it('retains Overlay placement context on ordered leaf diagnostics', () => {
+    const issues = validateUiOverlayPlacementValue({
+      kind: 'overlay-placement',
+      anchor: 'side',
+      top: { kind: 'intrinsic-size', value: 'auto' },
+      zIndex: 0.5,
+    });
+    expect(issues.map(({ path, valueKind }) => ({ path, valueKind }))).toEqual([
+      { path: 'anchor', valueKind: 'overlay-placement' },
+      { path: 'top.kind', valueKind: 'overlay-placement' },
+      { path: 'zIndex', valueKind: 'overlay-placement' },
+    ]);
   });
 
   it('allows negative Canvas coordinates while rejecting invalid size constraints', () => {
@@ -300,6 +376,25 @@ describe('strategy-specific layout values', () => {
         expect.objectContaining({ code: 'invalid-layout-range', path: 'constraints.aspectRatio' }),
       ]),
     );
+  });
+
+  it('retains Canvas placement context across size, z-order, anchor, and constraint issues', () => {
+    const issues = validateUiCanvasPlacementValue({
+      kind: 'canvas-placement',
+      x: px(0),
+      y: px(0),
+      width: px(-1),
+      height: px(10),
+      anchor: 'side',
+      zIndex: 0.5,
+      constraints: { aspectRatio: 0 },
+    });
+    expect(issues.map(({ path, valueKind }) => ({ path, valueKind }))).toEqual([
+      { path: 'width.value', valueKind: 'canvas-placement' },
+      { path: 'zIndex', valueKind: 'canvas-placement' },
+      { path: 'anchor', valueKind: 'canvas-placement' },
+      { path: 'constraints.aspectRatio', valueKind: 'canvas-placement' },
+    ]);
   });
 });
 
@@ -388,5 +483,32 @@ describe('layout strategy descriptors and Inspector grouping', () => {
         literalValidator: (literal) => validateUiGridTrackListValue(literal)[0]?.message ?? null,
       }),
     ).toEqual([]);
+
+    const splitSource: UiValueSource<UiSplitValue> = {
+      kind: 'literal',
+      value: {
+        kind: 'split',
+        orientation: 'horizontal',
+        fixedTrack: 'primary',
+        size: percent(40),
+        collapsible: true,
+        collapsed: false,
+        resizable: true,
+      },
+    };
+    const canvasSource: UiValueSource<UiCanvasPlacementValue> = {
+      kind: 'literal',
+      value: {
+        kind: 'canvas-placement',
+        x: px(0),
+        y: px(0),
+        width: px(320),
+        height: px(180),
+        anchor: 'top-start',
+        zIndex: 0,
+      },
+    };
+    expect(validateUiSplitValue(splitSource.value)).toEqual([]);
+    expect(validateUiCanvasPlacementValue(canvasSource.value)).toEqual([]);
   });
 });
