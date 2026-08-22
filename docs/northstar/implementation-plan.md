@@ -72,15 +72,15 @@ WB-NS-070E responsive variants + tokens/resources
         ↓
 WB-NS-070F provider-neutral generative UI parity
         ↓
-WB-NS-071A graph node type/property-input foundation [SOURCE_REVIEW_REQUIRED]
+WB-NS-071A graph node type/property-input foundation [DONE]
         ↓
 WB-NS-071B component/node development requirement flow
         ↓
 WB-NS-071C external node ecosystem adapter contract
 
-WB-NS-072A design-system foundation consolidation map [DESIGNING; dependencies: WB-NS-070A, WB-NS-040]
+WB-NS-072A design-system foundation consolidation map [READINESS_REVIEW_REQUIRED; dependencies mapped against WB-NS-070A and WB-NS-040]
         ↓
-WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DESIGNING; dependencies: WB-NS-072A, WB-NS-070A/B/C/D, WB-NS-040]
+WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DESIGNING; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
         ↓
 { WB-NS-072C component-role + typed token/resource resolution [DESIGNING; dependency: WB-NS-072B]
   WB-NS-072D explicit pack migration planner + transaction [DESIGNING; dependency: WB-NS-072B] }
@@ -2498,8 +2498,9 @@ optional ComfyUI adapter experiment
 
 ### `WB-NS-071A` bounded readiness packet — typed node descriptors and property-input projection
 
-- **Status:** `SOURCE_REVIEW_REQUIRED`
+- **Status:** `DONE`
 - **Exact source/API base:** `origin/develop@300ff59b0715bd51253fc8355e6abd591a547771`
+- **Integrated implementation:** PR #330 / reviewed successor `8095113e0a743032b976cec0bac307ef7cd5f20f` / merge `a29fb91660c5a29e151fab3b89c4a97e7aacbd8d`
 - **Dependencies:** `WB-NS-070A`, `WB-NS-070C` and `WB-NS-070D` `DONE`; `WB-NS-010` remains a separate document/controller/runtime packet
 - **Target owner:** `@workbench-kit/contracts` under a focused graph-authoring module, with one-way compatibility adapters in `@workbench-kit/field-remap`
 - **Implementation scope:** semantic node-type/port descriptors, property-backed input projection, pure validation, deterministic immutable catalog, Field Remap metadata adapters, root exports and backendless tests
@@ -2656,7 +2657,7 @@ The packet is complete when a browser-, Electron- and AI-free consumer can decla
 
 Producer-distinct readiness review must reject a second value-schema/type system, implicit property connectability, duplicated property/socket schemas, runtime or renderer functions in contracts, `@xyflow/react` leakage, transform compatibility/evaluation duplication, a universal component/node registry, last-writer-wins catalog conflicts, a new free-form Field Remap graph document or implementation of `WB-NS-010`/071B/071C scope. The reviewed readiness successor promoted the packet to `READY_FOR_IMPLEMENTATION` and was integrated before this source lane began.
 
-The source candidate implements the graph-authoring contracts under `packages/contracts/src/graph-authoring/` and the bounded one-way adapter under `packages/field-remap/src/projection/`. Exact-source review is required before integration.
+The integrated source implements the graph-authoring contracts under `packages/contracts/src/graph-authoring/` and the bounded one-way adapter under `packages/field-remap/src/projection/`. Producer-distinct exact-source review returned `PASS / P0 none / P1 none / P2 none`; repository static, 428-file/2,136-test unit and Chromium Storybook gates passed on the reviewed successor. Electron was not required because no native boundary changed.
 
 ### ComfyUI discovery
 
@@ -2664,25 +2665,64 @@ Evaluate typed input/output compatibility, widget/input duality, custom-node sch
 
 ## WB-NS-072A - Existing design-system foundation consolidation map
 
-- **Status:** `DESIGNING`
+- **Status:** `READINESS_REVIEW_REQUIRED`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md)
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-070A`, `WB-NS-040`
+- **Exact source/API baseline:** `origin/develop@a29fb91660c5a29e151fab3b89c4a97e7aacbd8d`
+- **Output:** documentation-only consolidation packet; no package source or release change
 
-### Design work still required
+### Outcome
 
-Map existing theme, token, widget, document, inspector, and extension-contribution APIs to one canonical package/subpath owner, compatibility-adapter boundary, and removal trigger. Re-verify the `WB-NS-070A` and `WB-NS-040` dependency boundaries against the current integration baseline.
+The current source has enough reusable value, component, document, extension-lifecycle and renderer assets to build Design System Packs without a second theme, widget, property or document engine. The canonical owners and migration order are now fixed below. `WB-NS-072A` itself requires no source implementation; after producer-distinct review this map may become `DONE`, allowing a bounded `WB-NS-072B` readiness packet.
+
+### Canonical ownership map
+
+| Concern                                                      | Canonical owner                                                                                                                               | Current compatibility surface                                      | Adapter boundary and removal trigger                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| ------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Semantic property/value/source schema                        | `@workbench-kit/contracts` root, `src/ui-authoring/`                                                                                          | `WidgetInspectorField`, structured-data React schemas              | Reuse `UiValueSchema`, `UiPropertyDescriptor` and `UiValueSource`; token/resource arms remain opaque until 072B/C resolution. Existing one-way Inspector projection remains. Do not remove legacy fields until every public widget/Inspector consumer has migration evidence.                                                                                                                                                                                           |
+| Component identity/metadata/catalog                          | `@workbench-kit/contracts` root, existing `src/ui-authoring/component-*`                                                                      | `WidgetTypeDefinition`, `WidgetRegistryContract`, placement assets | `componentDescriptor` and the existing component contribution adapters are the only bridge. Runtime `build` functions stay in the widget/runtime registry and never enter pack descriptors. Remove no widget API in 072B; later cleanup requires exact consumer migration.                                                                                                                                                                                              |
+| Authored tree, stable IDs, values, revision and transactions | `@workbench-kit/jdw`, existing `src/ui-authoring/` and one persisted JDW source                                                               | `WidgetDocument`, `GenericWidget`, `WidgetPatch`                   | Future design-system dependency/theme/scope metadata must extend the same `UiDocument` source/envelope and normal command/history path. It cannot create a second persisted design document or synchronize two editable trees. `WidgetDocument` remains the legacy decode/edit compatibility path.                                                                                                                                                                      |
+| Pack/theme/token/resource/provenance descriptor vocabulary   | `@workbench-kit/contracts` root, new focused `src/design-system/` module                                                                      | No canonical equivalent exists                                     | 072B adds only renderer-neutral data/validation; 072C completes typed token/resource and component-role resolution. It reuses 070A/070C types by reference and cannot copy their schema vocabulary.                                                                                                                                                                                                                                                                     |
+| Pack registry and pure resolver                              | `@workbench-kit/workbench-core/design-system`, new focused public subpath backed by `src/design-system/`                                      | `ThemeRegistry` in `workbench-core`                                | 072B adds the `./design-system` export and a direct `workbench-core -> contracts` dependency; `contracts` must never import `workbench-core`. It owns immutable registered descriptor snapshots, exact lookup, deterministic Theme/ThemeScope resolution, provenance and diagnostics. It is not added to `ExtensionRegistry` or a global service locator in the first slice. `ThemeRegistry` remains shell-appearance compatibility until 072F delegates its consumers. |
+| Built-in token CSS and editor-color conversion               | `@workbench-kit/tokens` as renderer assets/adapters                                                                                           | `styles.css`, preset CSS, `cssVariablesFromEditorColors`           | CSS variable names and preset selectors remain renderer output, not canonical token identity. 072C typed tokens resolve before a renderer adapter emits allowed CSS. CSS assets need not be deleted; any duplicate semantic registry must be removed after adapter coverage.                                                                                                                                                                                            |
+| Shell color preference/preset persistence                    | `@workbench-kit/react/workbench/theme*` plus `@workbench-kit/shell-react` appearance storage                                                  | `WorkbenchThemeProvider`, preset manifests, DOM data attributes    | This is host-shell preference, not authored `UiDesignSystemState`. A host may explicitly link them later, but neither state silently overwrites the other. 072F delegates supported theme lookup/application while preserving current public appearance APIs until consumer evidence permits deprecation.                                                                                                                                                               |
+| Canvas/Inspector editing and provenance UI                   | `@workbench-kit/react/widget-tree` as a projection over contracts/JDW/resolver results                                                        | `WidgetInspectorPanel` reading `WidgetInspectorField`              | 072E projects the same canonical property values, resolver provenance and commands to Inspector/Canvas. React owns controls/focus only; it cannot become a second schema, value store or mutation path.                                                                                                                                                                                                                                                                 |
+| Manifest contribution, activation, disposal and trust        | `@workbench-kit/workbench-extension-sdk` contribution envelope plus existing `workbench-core` activation/router/integrity/permission services | `ThemeContribution` routed to `ThemeRegistry` with `extensionId`   | 072B accepts already-authorized declarative pack descriptors and performs no install, activation, permission, executable factory or resource acquisition. A future manifest pack contribution must carry the canonical descriptor by reference, preserve manifest `{id, version}` provenance, and enter through the existing disposable contribution router. That integration remains gated by WB-NS-040 and 072F rather than being invented inside the resolver.       |
+
+### Dependency closure
+
+- **WB-NS-070A is closed:** `UiValueSchema`, `UiPropertyDescriptor` and `UiValueSource` are integrated and remain the sole semantic value/property envelope. 072B/C may add design token/resource descriptor identities and resolution results, but cannot add a parallel property or scalar schema.
+- **WB-NS-070C/070D are reuse constraints:** exact component descriptors/catalog and the single JDW `UiDocument` command/history path are integrated. Pack resolution refers to those identities and metadata; pack selection cannot own a second component registry or document tree.
+- **WB-NS-040 is bounded, not falsely promoted:** current manifest identity/version, capabilities, permissions, integrity checks, activation and disposable contribution routing are source evidence. The full trust/compatibility packet remains `DESIGNING`. Therefore 072B is limited to pure declarative descriptor validation/registration/resolution supplied by an already-authorized caller. Extension manifest integration, executable renderer factories, resource acquisition and permission/trust decisions remain blocked on an explicit WB-NS-040/072F packet.
+
+WB-NS-040 is therefore a **boundary constraint, not a 072B completion dependency**. This separation closes the 072A ownership dependency without claiming that the broader WB-NS-040 trust model is done.
+
+### Required migration order
+
+1. 072B adds canonical pack/theme/scope/provenance contracts in `contracts`, adds a direct acyclic `workbench-core -> contracts` dependency, and exposes a pure focused registry/resolver from `workbench-core/design-system`; no DOM, React, JDW mutation or extension activation.
+2. 072C adds typed token/resource/component-role resolution using existing value/component contracts; renderer CSS remains derived.
+3. 072D extends the existing JDW `UiDocument` command/transaction path for explicit dependency and pack-change planning/application; no new persisted document.
+4. 072E projects resolver results and provenance through the current Canvas/Inspector while preserving command parity and focus.
+5. 072F adapts built-in presets and legacy `ThemeContribution`/`ThemeRegistry`/shell appearance flows through the validated resolver, then removes only proven duplicate implementation paths.
+
+### Validation and acceptance
+
+- 072A validation is source/API evidence plus docs formatting and producer-distinct exact-head review; it has no runtime gate or package release.
+- Review must verify every retained concern has one owner, every legacy surface has an adapter/removal trigger, the 040 limitation is explicit, and no host/product policy or consumer-specific noun enters the public target.
+- Acceptance is met when 072B can be specified without inventing ownership for descriptors, registry/resolver, document metadata, renderer projection or extension trust, while all source cleanup remains evidence-gated.
 
 ### Promotion gate
 
-Do not promote this packet until every retained concern has one canonical owner, every superseded path has an adapter/removal trigger, the `WB-NS-070A`/`WB-NS-040` dependencies are closed, and the mapping rules out a parallel permanent theme/widget/property engine.
+Producer-distinct review of the exact documentation candidate must return no P0/P1 ambiguity. On PASS, mark 072A `DONE`; then prepare a separate 072B readiness packet against then-current `develop`. Do not implement 072B source from this map alone.
 
 ## WB-NS-072B - DesignSystemPack and Theme resolver foundation
 
 - **Status:** `DESIGNING`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 4-10
 - **Ownership:** `GENERIC_KIT`
-- **Dependencies:** `WB-NS-072A`, `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D`, `WB-NS-040`
+- **Dependencies:** `WB-NS-072A`, `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D`
+- **WB-NS-040 boundary:** not a completion dependency for this pure slice; manifest/extension contribution integration, activation, trust, executable factories and resource acquisition remain out of scope and blocked until an explicit WB-NS-040/072F packet
 
 ### Packet
 
