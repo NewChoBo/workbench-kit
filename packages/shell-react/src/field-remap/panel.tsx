@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useState, type JSX } from 'react';
+import {
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type Ref,
+} from 'react';
 import {
   applyMappingOperators,
   convertToShape,
@@ -33,11 +41,43 @@ import {
 } from './samples.js';
 import { jsonataValueTransform } from './jsonata-transform.js';
 import {
+  areFieldRemapHistorySnapshotsEqual,
+  createFieldRemapHistorySnapshot,
+  createFieldRemapHistoryState,
+  recordFieldRemapHistory,
+  redoFieldRemapHistory,
+  undoFieldRemapHistory,
+  type FieldRemapHistorySnapshot,
+} from './history.js';
+import {
   FieldRemapShapeIoEditor,
   ingestSourceShape,
   ingestTargetShape,
 } from './shape-io-editor.js';
 import './view.css';
+
+export type { FieldRemapHistorySnapshot } from './history.js';
+
+export interface FieldRemapHistoryOwner {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly record: (current: FieldRemapHistorySnapshot, next: FieldRemapHistorySnapshot) => void;
+  readonly reset: (next: FieldRemapHistorySnapshot) => void;
+  readonly undo: () => FieldRemapHistorySnapshot | undefined;
+  readonly redo: () => FieldRemapHistorySnapshot | undefined;
+}
+
+export interface FieldRemapHistoryActions {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly undo: () => void;
+  readonly redo: () => void;
+}
+
+export interface FieldRemapHistoryAvailability {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+}
 
 export interface FieldRemapPanelProps {
   /** Catalog sample id, or a full sample definition. Defaults to `nested-ab` labels/ids. */
@@ -71,6 +111,16 @@ export interface FieldRemapPanelProps {
   /** Optional controlled n→m operators (document v2). */
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
+  /**
+   * Composite history owner for controlled or mixed-control mapping state. When either durable
+   * channel is controlled, the Panel never creates a partial private history.
+   */
+  readonly historyOwner?: FieldRemapHistoryOwner | undefined;
+  /** Imperative semantic undo/redo actions for host chrome. Keyboard routing remains host-owned. */
+  readonly historyActionsRef?: Ref<FieldRemapHistoryActions | null> | undefined;
+  /** Reports the active history owner's current undo/redo availability. */
+  readonly onHistoryAvailabilityChange?:
+    ((availability: FieldRemapHistoryAvailability) => void) | undefined;
   /** Controlled source field tree (host-owned shapes). */
   readonly sources?: readonly SourceField[] | undefined;
   readonly onSourcesChange?: ((fields: readonly SourceField[]) => void) | undefined;
@@ -138,6 +188,9 @@ export function FieldRemapPanel({
   onEdgesChange,
   operators: operatorsProp,
   onOperatorsChange,
+  historyOwner,
+  historyActionsRef,
+  onHistoryAvailabilityChange,
   sources: sourcesProp,
   onSourcesChange,
   targets: targetsProp,
@@ -221,6 +274,13 @@ export function FieldRemapPanel({
   const sourceFields = sourcesControlled ? sourcesProp : uncontrolledSources;
   const targetSlots = targetsControlled ? targetsProp : uncontrolledTargets;
   const sourceSample = sourceSampleControlled ? sourceSampleProp : uncontrolledSourceSample;
+  const historyOwnedByPanel = !edgesControlled && !operatorsControlled;
+  const [panelHistory, setPanelHistory] = useState(createFieldRemapHistoryState);
+  const currentHistorySnapshot = useMemo(
+    () => createFieldRemapHistorySnapshot(edges, operators),
+    [edges, operators],
+  );
+  const shapeRefs = useRef({ sources: sourceFields, targets: targetSlots });
 
   const flowSources = useMemo(
     () => projectSourceFields(sourceFields, { includeHidden }),
@@ -234,15 +294,6 @@ export function FieldRemapPanel({
     () => pruneMappingEdgesForShapes(edges, flowSources, flowTargets),
     [edges, flowSources, flowTargets],
   );
-  const commitFlowEdges = (next: readonly MappingEdge[]) => {
-    if (includeHidden) {
-      commitEdges(next);
-      return;
-    }
-    const visibleIds = new Set(flowEdges.map((edge) => edge.id));
-    const preserved = edges.filter((edge) => !visibleIds.has(edge.id));
-    commitEdges([...preserved, ...next]);
-  };
 
   const commitEdges = (next: readonly MappingEdge[]) => {
     if (!edgesControlled) {
@@ -257,6 +308,147 @@ export function FieldRemapPanel({
     }
     onOperatorsChange?.(next);
   };
+
+  const applyHistorySnapshot = (next: FieldRemapHistorySnapshot) => {
+    if (
+      !areFieldRemapHistorySnapshotsEqual(
+        createFieldRemapHistorySnapshot(edges, next.operators),
+        next,
+      )
+    ) {
+      commitEdges(next.edges);
+    }
+    if (
+      !areFieldRemapHistorySnapshotsEqual(
+        createFieldRemapHistorySnapshot(next.edges, operators),
+        next,
+      )
+    ) {
+      commitOperators(next.operators);
+    }
+  };
+
+  const recordSemanticSnapshot = (next: FieldRemapHistorySnapshot) => {
+    if (areFieldRemapHistorySnapshotsEqual(currentHistorySnapshot, next)) {
+      return;
+    }
+    if (historyOwnedByPanel) {
+      setPanelHistory((current) => recordFieldRemapHistory(current, currentHistorySnapshot, next));
+    } else {
+      historyOwner?.record(currentHistorySnapshot, next);
+    }
+    applyHistorySnapshot(next);
+  };
+
+  const commitFlowEdges = (next: readonly MappingEdge[]) => {
+    if (includeHidden) {
+      recordSemanticSnapshot(createFieldRemapHistorySnapshot(next, operators));
+      return;
+    }
+    const visibleIds = new Set(flowEdges.map((edge) => edge.id));
+    const preserved = edges.filter((edge) => !visibleIds.has(edge.id));
+    recordSemanticSnapshot(createFieldRemapHistorySnapshot([...preserved, ...next], operators));
+  };
+
+  const resetHistory = (next: FieldRemapHistorySnapshot) => {
+    if (historyOwnedByPanel) {
+      setPanelHistory(createFieldRemapHistoryState());
+    } else {
+      historyOwner?.reset(next);
+    }
+  };
+
+  const resetHistoryForShapes = (
+    nextEdges: readonly MappingEdge[],
+    nextSources: readonly SourceField[],
+    nextTargets: readonly TargetSlot[],
+  ) => {
+    shapeRefs.current = { sources: nextSources, targets: nextTargets };
+    const next = createFieldRemapHistorySnapshot(nextEdges, operators);
+    resetHistory(next);
+    applyHistorySnapshot(next);
+  };
+
+  const undo = () => {
+    if (historyOwnedByPanel) {
+      const result = undoFieldRemapHistory(panelHistory, currentHistorySnapshot);
+      if (!result) {
+        return;
+      }
+      setPanelHistory(result.state);
+      applyHistorySnapshot(result.snapshot);
+      return;
+    }
+    if (!historyOwner?.canUndo) {
+      return;
+    }
+    const next = historyOwner.undo();
+    if (next) {
+      applyHistorySnapshot(next);
+    }
+  };
+
+  const redo = () => {
+    if (historyOwnedByPanel) {
+      const result = redoFieldRemapHistory(panelHistory, currentHistorySnapshot);
+      if (!result) {
+        return;
+      }
+      setPanelHistory(result.state);
+      applyHistorySnapshot(result.snapshot);
+      return;
+    }
+    if (!historyOwner?.canRedo) {
+      return;
+    }
+    const next = historyOwner.redo();
+    if (next) {
+      applyHistorySnapshot(next);
+    }
+  };
+
+  const historyAvailability = {
+    canUndo: historyOwnedByPanel ? panelHistory.past.length > 0 : (historyOwner?.canUndo ?? false),
+    canRedo: historyOwnedByPanel
+      ? panelHistory.future.length > 0
+      : (historyOwner?.canRedo ?? false),
+  };
+
+  useImperativeHandle(historyActionsRef, () => ({ ...historyAvailability, undo, redo }), [
+    historyAvailability.canRedo,
+    historyAvailability.canUndo,
+    panelHistory,
+    currentHistorySnapshot,
+    historyOwner,
+  ]);
+
+  useEffect(() => {
+    onHistoryAvailabilityChange?.(historyAvailability);
+  }, [historyAvailability.canRedo, historyAvailability.canUndo, onHistoryAvailabilityChange]);
+
+  useEffect(() => {
+    if (shapeRefs.current.sources === sourceFields && shapeRefs.current.targets === targetSlots) {
+      return;
+    }
+    shapeRefs.current = { sources: sourceFields, targets: targetSlots };
+    const nextEdges = pruneMappingEdgesForShapes(edges, sourceFields, targetSlots);
+    const next = createFieldRemapHistorySnapshot(nextEdges, operators);
+    if (historyOwnedByPanel) {
+      setPanelHistory(createFieldRemapHistoryState());
+    } else {
+      historyOwner?.reset(next);
+    }
+    applyHistorySnapshot(next);
+  }, [
+    edges,
+    historyOwnedByPanel,
+    historyOwner,
+    onEdgesChange,
+    onOperatorsChange,
+    operators,
+    sourceFields,
+    targetSlots,
+  ]);
 
   const commitSources = (next: readonly SourceField[]) => {
     if (!sourcesControlled) {
@@ -358,7 +550,11 @@ export function FieldRemapPanel({
     }
     setSourceJson(ingested.sampleJson);
     commitSources(ingested.fields);
-    commitEdges(pruneMappingEdgesForShapes(edges, ingested.fields, targetSlots));
+    resetHistoryForShapes(
+      pruneMappingEdgesForShapes(edges, ingested.fields, targetSlots),
+      ingested.fields,
+      targetSlots,
+    );
   };
 
   const applyTargetShape = (parsed: unknown) => {
@@ -366,7 +562,11 @@ export function FieldRemapPanel({
     setTargetSample(parsed);
     setTargetJson(ingested.sampleJson);
     commitTargets(ingested.fields);
-    commitEdges(pruneMappingEdgesForShapes(edges, sourceFields, ingested.fields));
+    resetHistoryForShapes(
+      pruneMappingEdgesForShapes(edges, sourceFields, ingested.fields),
+      sourceFields,
+      ingested.fields,
+    );
   };
 
   return (
@@ -428,7 +628,9 @@ export function FieldRemapPanel({
         transforms={registry}
         onEdgesChange={commitFlowEdges}
         operators={operators}
-        onOperatorsChange={commitOperators}
+        onOperatorsChange={(next) =>
+          recordSemanticSnapshot(createFieldRemapHistorySnapshot(edges, next))
+        }
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
         showMinimap={showMinimap}

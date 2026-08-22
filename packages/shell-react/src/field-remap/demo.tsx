@@ -4,7 +4,11 @@ import { Button } from '@workbench-kit/react/primitives';
 import type { FieldRemapChromeLabels, FieldRemapTranslate } from './chrome-labels.js';
 import type { FieldRemapFlowActions, FieldRemapFlowMapperProps } from './flow.js';
 import type { FieldRemapIoChrome } from './io-class-browse.js';
-import { FieldRemapPanel } from './panel.js';
+import {
+  FieldRemapPanel,
+  type FieldRemapHistoryActions,
+  type FieldRemapHistoryAvailability,
+} from './panel.js';
 import {
   getFieldRemapBrowseDemoShapes,
   getFieldRemapSample,
@@ -21,7 +25,7 @@ export interface SampleFieldRemapDemoProps {
   readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
   readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   readonly emptyDetail?: FieldRemapFlowMapperProps['emptyDetail'];
-  /** When true, show host-chrome demo controls (minimap toggle + fit view). */
+  /** When true, show host-chrome demo controls (history + fit view). */
   readonly showHostChromeDemo?: boolean | undefined;
   /** Prefer `browse` for I/O class/field inspection demos. */
   readonly ioChrome?: FieldRemapIoChrome | undefined;
@@ -51,7 +55,12 @@ export function SampleFieldRemapDemo({
   const sample = getFieldRemapSample(sampleId);
   const browseShapes = browseSeedShapes ? getFieldRemapBrowseDemoShapes() : null;
   const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);
+  const historyActionsRef = useRef<FieldRemapHistoryActions | null>(null);
   const [showMinimap, setShowMinimap] = useState(showMinimapProp ?? true);
+  const [historyAvailability, setHistoryAvailability] = useState<FieldRemapHistoryAvailability>({
+    canUndo: false,
+    canRedo: false,
+  });
   const [lastPaneMenu, setLastPaneMenu] = useState<string | null>(null);
 
   useEffect(() => {
@@ -75,6 +84,24 @@ export function SampleFieldRemapDemo({
             onClick={() => flowActionsRef.current?.fitView()}
           >
             Fit view
+          </Button>
+          <Button
+            compact
+            type="button"
+            data-testid="field-remap-undo"
+            disabled={!historyAvailability.canUndo}
+            onClick={() => historyActionsRef.current?.undo()}
+          >
+            Undo
+          </Button>
+          <Button
+            compact
+            type="button"
+            data-testid="field-remap-redo"
+            disabled={!historyAvailability.canRedo}
+            onClick={() => historyActionsRef.current?.redo()}
+          >
+            Redo
           </Button>
           {lastPaneMenu ? (
             <span data-testid="field-remap-pane-menu-log" role="status">
@@ -100,6 +127,8 @@ export function SampleFieldRemapDemo({
         labels={labels}
         t={t}
         flowActionsRef={showHostChromeDemo ? flowActionsRef : undefined}
+        historyActionsRef={showHostChromeDemo ? historyActionsRef : undefined}
+        onHistoryAvailabilityChange={showHostChromeDemo ? setHistoryAvailability : undefined}
         onPaneContextMenu={
           showHostChromeDemo
             ? (event) => {

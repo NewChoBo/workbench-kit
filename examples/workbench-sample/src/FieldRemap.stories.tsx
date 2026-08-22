@@ -150,6 +150,33 @@ export const HostChromeHooks: Story = {
   },
 };
 
+export const SemanticHistory: Story = {
+  name: 'Semantic undo / redo',
+  args: {
+    sampleId: 'nested-ab',
+    showHostChromeDemo: true,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const undo = canvas.getByTestId('field-remap-undo');
+    const redo = canvas.getByTestId('field-remap-redo');
+
+    await expect(undo).toBeDisabled();
+    await expect(redo).toBeDisabled();
+    await userEvent.click(canvas.getByTestId('field-remap-remove-edge-e-name'));
+    await waitFor(() => expect(canvas.queryByTestId('field-remap-lane-e-name')).toBeNull());
+    await expect(undo).toBeEnabled();
+
+    await userEvent.click(undo);
+    await expect(await canvas.findByTestId('field-remap-lane-e-name')).toBeVisible();
+    await expect(redo).toBeEnabled();
+
+    await userEvent.click(redo);
+    await waitFor(() => expect(canvas.queryByTestId('field-remap-lane-e-name')).toBeNull());
+  },
+};
+
 export const IoBrowseChrome: Story = {
   name: 'I/O browse (classRef / hidden)',
   args: {
