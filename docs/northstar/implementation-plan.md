@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@f96e336e4805a2729f705cdf3d904437188abb93`.
+- **Current integration baseline:** `origin/develop@f4b51bdce89e2d50cfb1838e12d833b510216fce`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -62,7 +62,7 @@ Document + state ownership foundations
 
 WB-NS-070A typed UI value/property inventory + target contract [DONE]
         ↓
-WB-NS-070B selectable layout strategy + typed style constraints [READY_FOR_IMPLEMENTATION]
+WB-NS-070B selectable layout strategy + typed style constraints [SOURCE_REVIEW_REQUIRED]
         ↓
 WB-NS-070C atomic component/composite descriptor contract
         ↓
@@ -1765,11 +1765,13 @@ Close:
 
 ### `WB-NS-070B` bounded packet — layout/style values, strategy descriptors and contextual validation
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
-- **Source/API evidence:** `origin/develop@f96e336e4805a2729f705cdf3d904437188abb93`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
+- **Source/API evidence:** source-bearing parent `origin/develop@f4b51bdce89e2d50cfb1838e12d833b510216fce`; readiness review head `a8befd59656e4144dcb61e3e8799cacd2d0b7460` integrated through PR #323
 - **Dependencies:** `WB-NS-070A` `DONE`
 - **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
 - **Implementation scope:** `packages/contracts/src/ui-authoring/*`, root exports and focused backendless tests
+
+The source candidate adds only the declared value/strategy types, frozen vocabularies, pure validators, contextual Inspector grouping and root exports. It does not modify JDW, React, a registry, a document model, a renderer or a native boundary.
 
 #### Outcome
 
