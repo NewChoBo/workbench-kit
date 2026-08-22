@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { act } from 'react';
+import { act, StrictMode, useEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
@@ -52,6 +52,7 @@ describe('useJdwListenScheduler', () => {
       const batch = useJdwListenScheduler({
         root: rootNode,
         changedPaths: ['title', 'theme.color', 'title'],
+        changeVersion: 1,
         schedule,
       });
       if (batch) {
@@ -81,5 +82,153 @@ describe('useJdwListenScheduler', () => {
     await act(async () => {
       reactRoot.unmount();
     });
+  });
+
+  it('creates a live scheduler for the StrictMode setup-cleanup-setup replay', async () => {
+    const scheduled: Array<() => void> = [];
+    const schedule: JsonWidgetListenSchedule = (flush) => {
+      scheduled.push(flush);
+      return () => undefined;
+    };
+    const rootNode: JsonWidgetNode = {
+      type: 'text',
+      listen: ['title'],
+      args: { text: '${title}' },
+    };
+    const container = document.createElement('div');
+    containers.push(container);
+    document.body.append(container);
+    const reactRoot = createRoot(container);
+
+    function Harness() {
+      const batch = useJdwListenScheduler({
+        root: rootNode,
+        changedPaths: ['title'],
+        changeVersion: 1,
+        schedule,
+      });
+      return <output>{batch?.changedPaths.join(',') ?? 'pending'}</output>;
+    }
+
+    await act(async () => {
+      reactRoot.render(
+        <StrictMode>
+          <Harness />
+        </StrictMode>,
+      );
+    });
+
+    expect(scheduled).toHaveLength(2);
+    await act(async () => {
+      scheduled[0]?.();
+    });
+    expect(container.textContent).toBe('pending');
+
+    await act(async () => {
+      scheduled[1]?.();
+    });
+    expect(container.textContent).toBe('title');
+
+    await act(async () => {
+      reactRoot.unmount();
+    });
+  });
+
+  it('publishes the same path again when the change version advances', async () => {
+    const scheduled: Array<() => void> = [];
+    const schedule: JsonWidgetListenSchedule = (flush) => {
+      scheduled.push(flush);
+      return () => undefined;
+    };
+    const rootNode: JsonWidgetNode = {
+      type: 'text',
+      listen: ['title'],
+      args: { text: '${title}' },
+    };
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const container = document.createElement('div');
+    containers.push(container);
+    document.body.append(container);
+    const reactRoot = createRoot(container);
+
+    function Harness({ changeVersion }: { readonly changeVersion: number }) {
+      const batch = useJdwListenScheduler({
+        root: rootNode,
+        changedPaths: ['title'],
+        changeVersion,
+        schedule,
+      });
+      useEffect(() => {
+        if (batch) {
+          batches.push(batch);
+        }
+      }, [batch]);
+      return null;
+    }
+
+    await act(async () => {
+      reactRoot.render(<Harness changeVersion={1} />);
+    });
+    await act(async () => {
+      scheduled[0]?.();
+    });
+
+    await act(async () => {
+      reactRoot.render(<Harness changeVersion={2} />);
+    });
+    await act(async () => {
+      scheduled[1]?.();
+    });
+
+    expect(batches.map((batch) => batch.changedPaths)).toEqual([['title'], ['title']]);
+
+    await act(async () => {
+      reactRoot.unmount();
+    });
+  });
+
+  it('cancels a pending hook delivery when the subscriber unmounts', async () => {
+    const scheduled: Array<() => void> = [];
+    const schedule: JsonWidgetListenSchedule = (flush) => {
+      scheduled.push(flush);
+      return () => undefined;
+    };
+    const rootNode: JsonWidgetNode = {
+      type: 'text',
+      listen: ['title'],
+      args: { text: '${title}' },
+    };
+    const onBatch = vi.fn();
+    const container = document.createElement('div');
+    containers.push(container);
+    document.body.append(container);
+    const reactRoot = createRoot(container);
+
+    function Harness() {
+      const batch = useJdwListenScheduler({
+        root: rootNode,
+        changedPaths: ['title'],
+        changeVersion: 1,
+        schedule,
+      });
+      useEffect(() => {
+        if (batch) {
+          onBatch(batch);
+        }
+      }, [batch]);
+      return null;
+    }
+
+    await act(async () => {
+      reactRoot.render(<Harness />);
+    });
+    await act(async () => {
+      reactRoot.unmount();
+    });
+    await act(async () => {
+      scheduled[0]?.();
+    });
+
+    expect(onBatch).not.toHaveBeenCalled();
   });
 });

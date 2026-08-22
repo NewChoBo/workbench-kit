@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import {
   collectJsonWidgetChangedValuePaths,
@@ -33,6 +33,8 @@ export interface JdwPreviewProps {
   strictKnownTypes?: boolean | undefined;
   values?: JsonWidgetValueMap | undefined;
   changedValuePaths?: readonly string[] | undefined;
+  /** Increment when the same explicit changed-path set represents a new event. */
+  changedValuePathsVersion?: number | undefined;
   invalidationSchedule?: JsonWidgetListenSchedule | undefined;
   onInvalidationBatch?: (batch: JsonWidgetListenSchedulerBatch) => void;
   onSelectPath?: ((path: WidgetPath) => void) | undefined;
@@ -67,6 +69,10 @@ function mergeChangedValuePaths(
   return [...new Set([...first, ...second])];
 }
 
+function areSameChangedValuePaths(first: readonly string[], second: readonly string[]): boolean {
+  return first.length === second.length && first.every((path, index) => path === second[index]);
+}
+
 interface JdwPreviewDocumentState {
   readonly issues: readonly ValidationIssue[];
   readonly node: JsonWidgetNode | null;
@@ -79,6 +85,11 @@ interface JdwPreviewState {
   readonly valid: boolean;
 }
 
+interface JdwPreviewListenEvent {
+  readonly changedPaths: readonly string[];
+  readonly version: number;
+}
+
 export function JdwPreview({
   json,
   registry,
@@ -89,6 +100,7 @@ export function JdwPreview({
   strictKnownTypes = true,
   values,
   changedValuePaths = EMPTY_CHANGED_VALUE_PATHS,
+  changedValuePathsVersion,
   invalidationSchedule,
   onInvalidationBatch,
   onSelectPath,
@@ -96,8 +108,23 @@ export function JdwPreview({
   loadDocument,
 }: JdwPreviewProps) {
   const previousValuesRef = useRef<JsonWidgetValueMap | undefined>(values);
+  const previousExplicitChangeRef = useRef<{
+    readonly hasVersion: boolean;
+    readonly initialized: boolean;
+    readonly paths: readonly string[];
+    readonly version: number | undefined;
+  }>({
+    hasVersion: false,
+    initialized: false,
+    paths: EMPTY_CHANGED_VALUE_PATHS,
+    version: undefined,
+  });
   const onInvalidationBatchRef = useRef(onInvalidationBatch);
   const onSelectPathRef = useRef(onSelectPath);
+  const [listenEvent, setListenEvent] = useState<JdwPreviewListenEvent>({
+    changedPaths: EMPTY_CHANGED_VALUE_PATHS,
+    version: 0,
+  });
   onInvalidationBatchRef.current = onInvalidationBatch;
   onSelectPathRef.current = onSelectPath;
 
@@ -111,8 +138,39 @@ export function JdwPreview({
   );
 
   useEffect(() => {
+    const previousExplicitChange = previousExplicitChangeRef.current;
+    const hasExplicitVersion = changedValuePathsVersion !== undefined;
+    const explicitPathsChanged = previousExplicitChange.initialized
+      ? hasExplicitVersion
+        ? !previousExplicitChange.hasVersion ||
+          !Object.is(previousExplicitChange.version, changedValuePathsVersion)
+        : previousExplicitChange.hasVersion ||
+          !areSameChangedValuePaths(previousExplicitChange.paths, changedValuePaths)
+      : changedValuePaths.length > 0;
+    const inferredChangedPaths = collectJsonWidgetChangedValuePaths(
+      previousValuesRef.current,
+      values,
+    );
+
     previousValuesRef.current = values;
-  }, [values]);
+    previousExplicitChangeRef.current = {
+      hasVersion: hasExplicitVersion,
+      initialized: true,
+      paths: [...changedValuePaths],
+      version: changedValuePathsVersion,
+    };
+
+    const eventPaths = mergeChangedValuePaths(
+      explicitPathsChanged ? changedValuePaths : EMPTY_CHANGED_VALUE_PATHS,
+      inferredChangedPaths,
+    );
+    if (eventPaths.length > 0) {
+      setListenEvent((current) => ({
+        changedPaths: eventPaths,
+        version: current.version + 1,
+      }));
+    }
+  }, [changedValuePaths, changedValuePathsVersion, values]);
 
   const documentState = useMemo<JdwPreviewDocumentState>(() => {
     const parsed = parseJsonWidgetData(json);
@@ -151,7 +209,8 @@ export function JdwPreview({
 
   const scheduledBatch = useJdwListenScheduler({
     root: documentState.node,
-    changedPaths: documentState.node ? activeChangedValuePaths : EMPTY_CHANGED_VALUE_PATHS,
+    changedPaths: documentState.node ? listenEvent.changedPaths : EMPTY_CHANGED_VALUE_PATHS,
+    changeVersion: listenEvent.version,
     ...(invalidationSchedule ? { schedule: invalidationSchedule } : {}),
   });
 

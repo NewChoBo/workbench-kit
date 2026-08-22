@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import {
   createJsonWidgetListenScheduler,
   type JsonWidgetListenSchedule,
+  type JsonWidgetListenScheduler,
   type JsonWidgetListenSchedulerBatch,
   type JsonWidgetNode,
 } from '@workbench-kit/jdw';
@@ -9,6 +10,8 @@ import {
 export interface UseJdwListenSchedulerOptions {
   readonly root: JsonWidgetNode | null;
   readonly changedPaths: readonly string[];
+  /** Increment for each accepted change event, including repeated paths. */
+  readonly changeVersion: number;
   readonly schedule?: JsonWidgetListenSchedule;
 }
 
@@ -33,43 +36,42 @@ const schedulePreviewFrame: JsonWidgetListenSchedule = (flush) => {
 export function useJdwListenScheduler({
   root,
   changedPaths,
+  changeVersion,
   schedule,
 }: UseJdwListenSchedulerOptions): JsonWidgetListenSchedulerBatch | null {
   const rootRef = useRef(root);
   rootRef.current = root;
+  const changedPathsRef = useRef(changedPaths);
+  changedPathsRef.current = changedPaths;
+  const schedulerRef = useRef<JsonWidgetListenScheduler | null>(null);
   const [batch, setBatch] = useState<JsonWidgetListenSchedulerBatch | null>(null);
   const effectiveSchedule = schedule ?? schedulePreviewFrame;
-  const scheduler = useMemo(
-    () =>
-      createJsonWidgetListenScheduler({
-        getRoot: () => rootRef.current,
-        schedule: effectiveSchedule,
-      }),
-    [effectiveSchedule],
-  );
-  const changedPathsKey = JSON.stringify(changedPaths);
-  const changedPathsSnapshotRef = useRef<{
-    readonly key: string;
-    readonly paths: readonly string[];
-  }>({ key: '', paths: [] });
-  if (changedPathsSnapshotRef.current.key !== changedPathsKey) {
-    changedPathsSnapshotRef.current = { key: changedPathsKey, paths: [...changedPaths] };
-  }
-  const stableChangedPaths = changedPathsSnapshotRef.current.paths;
 
   useEffect(() => {
+    const scheduler = createJsonWidgetListenScheduler({
+      getRoot: () => rootRef.current,
+      schedule: effectiveSchedule,
+    });
+    schedulerRef.current = scheduler;
     const unsubscribe = scheduler.subscribe(setBatch);
     return () => {
+      if (schedulerRef.current === scheduler) {
+        schedulerRef.current = null;
+      }
       unsubscribe();
       scheduler.dispose();
     };
-  }, [scheduler]);
+  }, [effectiveSchedule]);
 
   useEffect(() => {
-    for (const path of stableChangedPaths) {
+    const scheduler = schedulerRef.current;
+    if (!scheduler) {
+      return;
+    }
+    for (const path of changedPathsRef.current) {
       scheduler.notify(path);
     }
-  }, [scheduler, stableChangedPaths]);
+  }, [changeVersion, effectiveSchedule]);
 
   return batch;
 }

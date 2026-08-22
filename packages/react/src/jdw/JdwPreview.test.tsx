@@ -328,4 +328,69 @@ describe('JdwPreview', () => {
     });
     container.remove();
   });
+
+  it('publishes repeated inferred paths as independent value-change batches', async () => {
+    const json = formatJsonWidgetData({
+      type: 'text',
+      listen: ['title'],
+      args: { text: '${title}' },
+    });
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const scheduled: Array<() => void> = [];
+    const schedule = (flush: () => void) => {
+      scheduled.push(flush);
+      return () => undefined;
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'First title' }}
+        />,
+      );
+    });
+    expect(scheduled).toHaveLength(0);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'Second title' }}
+        />,
+      );
+    });
+    await act(async () => {
+      scheduled[0]?.();
+    });
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'Third title' }}
+        />,
+      );
+    });
+    await act(async () => {
+      scheduled[1]?.();
+    });
+
+    expect(batches.map((batch) => batch.changedPaths)).toEqual([['title'], ['title']]);
+    expect(container.textContent).toContain('Third title');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
 });
