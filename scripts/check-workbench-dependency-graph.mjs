@@ -13,6 +13,7 @@ const packageRules = toRuleMap({
   '@workbench-kit/workbench-config': ['@workbench-kit/base', '@workbench-kit/platform'],
   '@workbench-kit/workbench-core': [
     '@workbench-kit/base',
+    '@workbench-kit/contracts',
     '@workbench-kit/platform',
     '@workbench-kit/workbench-config',
     '@workbench-kit/workbench-extension-sdk',

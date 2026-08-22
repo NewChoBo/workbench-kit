@@ -246,12 +246,47 @@ export type {
 } from './ui-authoring/validation';
 export {
   UI_VALUE_VALIDATION_ISSUE_CODES,
+  isStructurallyValidUiValueSource,
   isUiValueSourceKind,
   normalizeUiAllowedSources,
   validateUiPropertyDescriptor,
   validateUiPropertyValue,
 } from './ui-authoring/validation';
 export { widgetInspectorFieldToUiPropertyDescriptor } from './ui-authoring/widget-inspector-adapter';
+export type {
+  DesignSystemContributionProvenance,
+  DesignSystemContributionSource,
+  DesignSystemDiagnostic,
+  DesignSystemDiagnosticCode,
+  DesignSystemPackContribution,
+  DesignSystemPackDescriptor,
+  DesignSystemPackRef,
+  DesignSystemThemeDescriptor,
+  DesignSystemThemeRef,
+  DesignSystemThemeScopeSelection,
+  UiDesignSystemState,
+} from './design-system/types';
+export {
+  DESIGN_SYSTEM_CONTRIBUTION_SOURCES,
+  DESIGN_SYSTEM_DIAGNOSTIC_CODES,
+} from './design-system/types';
+export {
+  designSystemPackRefKey,
+  isCanonicalDesignSystemText,
+  isDesignSystemContributionSource,
+  isSameDesignSystemPackRef,
+  validateDesignSystemPackContribution,
+  validateDesignSystemPackDescriptor,
+  validateDesignSystemPackRef,
+  validateDesignSystemThemeRef,
+  validateDesignSystemThemeScopeSelection,
+  validateUiDesignSystemState,
+} from './design-system/validation';
+export {
+  UnsupportedDesignSystemSnapshotValueError,
+  snapshotDesignSystemPackContribution,
+  snapshotUiDesignSystemState,
+} from './design-system/snapshot';
 export type {
   UiBorderStyle,
   UiBorderValue,

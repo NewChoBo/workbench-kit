@@ -390,6 +390,9 @@ importers:
       '@workbench-kit/base':
         specifier: workspace:*
         version: link:../base
+      '@workbench-kit/contracts':
+        specifier: workspace:*
+        version: link:../contracts
       '@workbench-kit/platform':
         specifier: workspace:*
         version: link:../platform
