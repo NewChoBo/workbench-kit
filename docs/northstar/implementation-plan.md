@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@1da7194dff1bbb62af6b5355f7016d3fde41ea27`.
+- **Current integration baseline:** `origin/develop@e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -809,14 +809,18 @@ claims Electron coverage.
 
 ## WB-NS-020 — Projection ownership and round-trip contracts
 
-- **Status:** `SOURCE_REVIEW_REQUIRED`
+- **Status:** `DONE`
 - **Target:** `target-architecture.md` § Projection architecture
 - **Ownership:** `GENERIC_KIT`
-- **Current integrated source:** `origin/develop@47766fd16189eb32169bdfdae39e32edd3f57544`
+- **Current integrated source:** `origin/develop@e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`
 - **Integrated implementation:** PR #316 / `b47037714622b0c48e22ca4c2524f33a92336f80`
-- **Active correction:** the same `WB-NS-020` lineage adds a live owner/revision commit
-  fence after post-integration review found that an abort-ignoring persistence adapter could
-  otherwise perform a late durable commit after timeout or disposal
+- **Corrective successor:** PR #320 / candidate `1d88b15639133052885290adf4e22ec120a27a28` /
+  merge `e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`; the live owner/revision commit fence
+  prevents an abort-ignoring persistence adapter from performing a late durable commit after
+  timeout or disposal
+- **Release evidence:** `v0.0.2-prototype.0.2.36`; workflow
+  [32576927013](https://github.com/NewChoBo/workbench-kit/actions/runs/32576927013) succeeded and
+  all 19 npm `@prototype` packages resolved to the exact cohort
 - **Verification layer:** `PURE_WEB / backendless`
 - **Public API impact:** additive projection contracts through the existing
   `@workbench-kit/contracts` root export
