@@ -11,7 +11,7 @@ import { WorkbenchCommandHost } from './command-host.js';
 
 type CapturedWorkbenchServices = Pick<
   WorkbenchContextValue,
-  'contextKeyService' | 'extensionRegistry' | 'layoutService'
+  'commands' | 'contextKeyService' | 'executeCommand' | 'layoutService'
 >;
 
 function WorkbenchServicesProbe({
@@ -19,11 +19,11 @@ function WorkbenchServicesProbe({
 }: {
   onCapture: (services: CapturedWorkbenchServices) => void;
 }) {
-  const { contextKeyService, extensionRegistry, layoutService } = useWorkbench();
+  const { commands, contextKeyService, executeCommand, layoutService } = useWorkbench();
 
   useEffect(() => {
-    onCapture({ contextKeyService, extensionRegistry, layoutService });
-  }, [contextKeyService, extensionRegistry, layoutService, onCapture]);
+    onCapture({ commands, contextKeyService, executeCommand, layoutService });
+  }, [commands, contextKeyService, executeCommand, layoutService, onCapture]);
 
   return null;
 }
@@ -76,12 +76,8 @@ describe('WorkbenchCommandHost', () => {
     await flushReactEffects();
 
     expect(services).toBeDefined();
-    expect(
-      services?.extensionRegistry.commands.getCommand('workbench.showActivity.primary'),
-    ).toBeDefined();
-    expect(
-      services?.extensionRegistry.commands.getCommand('workbench.showActivity.lab'),
-    ).toBeUndefined();
+    expect(services?.commands.getCommand('workbench.showActivity.primary')).toBeDefined();
+    expect(services?.commands.getCommand('workbench.showActivity.lab')).toBeUndefined();
     expect(
       container.querySelector('[data-testid="management-command-ids"]')?.textContent,
     ).toContain('workbench.showActivity.primary');
@@ -90,11 +86,9 @@ describe('WorkbenchCommandHost', () => {
     ).not.toContain('workbench.showActivity.lab');
 
     let commandRegistryChangeCount = 0;
-    const commandRegistryDisposable = services?.extensionRegistry.commands.onDidChangeCommands(
-      () => {
-        commandRegistryChangeCount += 1;
-      },
-    );
+    const commandRegistryDisposable = services?.commands.onDidChangeCommands(() => {
+      commandRegistryChangeCount += 1;
+    });
 
     await act(async () => {
       services?.contextKeyService.set('workbench.test.unrelated', true);
@@ -125,16 +119,14 @@ describe('WorkbenchCommandHost', () => {
     });
     await flushReactEffects();
 
-    expect(
-      services?.extensionRegistry.commands.getCommand('workbench.showActivity.lab'),
-    ).toBeDefined();
+    expect(services?.commands.getCommand('workbench.showActivity.lab')).toBeDefined();
     expect(palette?.textContent).toContain('Show Lab');
     expect(
       container.querySelector('[data-testid="management-command-ids"]')?.textContent,
     ).toContain('workbench.showActivity.lab');
 
     await act(async () => {
-      await services?.extensionRegistry.executeCommand('workbench.showActivity.lab');
+      await services?.executeCommand('workbench.showActivity.lab');
     });
     expect(services?.layoutService.getState().sideBar.activeViewContainer).toBe('lab');
 
@@ -143,9 +135,7 @@ describe('WorkbenchCommandHost', () => {
     });
     await flushReactEffects();
 
-    expect(
-      services?.extensionRegistry.commands.getCommand('workbench.showActivity.lab'),
-    ).toBeUndefined();
+    expect(services?.commands.getCommand('workbench.showActivity.lab')).toBeUndefined();
     expect(palette?.textContent).not.toContain('Show Lab');
     expect(
       container.querySelector('[data-testid="management-command-ids"]')?.textContent,

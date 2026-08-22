@@ -140,10 +140,13 @@ handlers and providers registered during activation, but it does not remove
 manifest contributions registered for the enabled extension.
 
 Disabling or removing an extension must also dispose its registration (or rebuild
-the registry from the new enabled set). The current management path uses that
-reconstruction boundary. A future no-reload lifecycle must make declarative
-contribution removal and re-registration observable to shell consumers; that work
-is tracked by [#232](https://github.com/NewChoBo/workbench-kit/issues/232).
+the registry from the new enabled set). The management path can retain a focused
+registration handle for an already-installed, unselected, declarative theme-only
+extension and apply that narrow toggle live. `ThemeRegistry` publishes symmetric
+add/remove changes so Appearance projections update. All executable, selected,
+dependent, mixed-contribution, install, and uninstall paths retain the reload
+boundary; broader lifecycle work remains tracked by
+[#232](https://github.com/NewChoBo/workbench-kit/issues/232).
 
 ## Future External Extensions
 

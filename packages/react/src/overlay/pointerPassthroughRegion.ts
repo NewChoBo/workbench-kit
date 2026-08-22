@@ -2,6 +2,22 @@ export interface PointerPassthroughPort {
   setPointerPassthrough(enabled: boolean): void | Promise<void>;
 }
 
+export interface PointerHitTestDocument {
+  elementFromPoint(x: number, y: number): Element | null;
+}
+
+/** Resolve the painted element at finite viewport coordinates. */
+export function resolvePointerHitTarget(
+  clientX: number,
+  clientY: number,
+  documentSurface: PointerHitTestDocument = document,
+): Element | null {
+  if (!Number.isFinite(clientX) || !Number.isFinite(clientY)) {
+    return null;
+  }
+  return documentSurface.elementFromPoint(clientX, clientY);
+}
+
 export interface PointerOverHitRegionOptions {
   readonly hitSelectors: readonly string[];
   readonly controlSelectors?: readonly string[];

@@ -11,7 +11,11 @@ on:
       - main
       - 'chore/**'
       - 'codex/**'
+      - 'docs/**'
       - 'feature/**'
+      - 'fix/**'
+      - 'refactor/**'
+      - 'test/**'
 
 permissions:
   contents: read

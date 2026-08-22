@@ -10,6 +10,14 @@ export interface RectLike {
   readonly height: number;
 }
 
+function isFinitePositive(value: number): boolean {
+  return Number.isFinite(value) && value > 0;
+}
+
+function hasFiniteOrigin(rect: Pick<RectLike, 'x' | 'y'>): boolean {
+  return Number.isFinite(rect.x) && Number.isFinite(rect.y);
+}
+
 /**
  * Compute the source crop rectangle on a wallpaper image for a monitor when the
  * desktop wallpaper is spanned across the virtual desktop.
@@ -22,14 +30,22 @@ export function resolveWallpaperCropRect(
   virtualDesktop: RectLike,
   monitor: RectLike,
 ): RectLike {
-  if (imageSize.width <= 0 || imageSize.height <= 0) {
-    throw new Error('Wallpaper image size must be positive.');
+  if (!isFinitePositive(imageSize.width) || !isFinitePositive(imageSize.height)) {
+    throw new Error('Wallpaper image size must be finite and positive.');
   }
-  if (virtualDesktop.width <= 0 || virtualDesktop.height <= 0) {
-    throw new Error('Virtual desktop size must be positive.');
+  if (
+    !hasFiniteOrigin(virtualDesktop) ||
+    !isFinitePositive(virtualDesktop.width) ||
+    !isFinitePositive(virtualDesktop.height)
+  ) {
+    throw new Error('Virtual desktop bounds must be finite with a positive size.');
   }
-  if (monitor.width <= 0 || monitor.height <= 0) {
-    throw new Error('Monitor size must be positive.');
+  if (
+    !hasFiniteOrigin(monitor) ||
+    !isFinitePositive(monitor.width) ||
+    !isFinitePositive(monitor.height)
+  ) {
+    throw new Error('Monitor bounds must be finite with a positive size.');
   }
 
   const scale = Math.max(
@@ -63,21 +79,101 @@ export interface WallpaperPathResolver {
   resolveWallpaperPath(): Promise<string | null>;
 }
 
+export interface Win32RegistryExecFileOptions {
+  readonly encoding: 'utf8';
+  readonly maxBuffer: number;
+  readonly shell: false;
+  readonly timeout: number;
+  readonly windowsHide: true;
+}
+
+export type Win32RegistryExecFile = (
+  file: string,
+  args: readonly string[],
+  options: Win32RegistryExecFileOptions,
+  callback: (error: Error | null, stdout: string) => void,
+) => void;
+
+export interface CreateWin32RegistryStringReaderOptions {
+  readonly execFile: Win32RegistryExecFile;
+  readonly maxBufferBytes?: number;
+  readonly timeoutMs?: number;
+}
+
+const WIN32_REGISTRY_QUERY_DEFAULT_MAX_BUFFER_BYTES = 64 * 1024;
+const WIN32_REGISTRY_QUERY_DEFAULT_TIMEOUT_MS = 2_000;
+
+function escapeRegularExpression(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&');
+}
+
+/** Create a bounded, shell-free `reg query` string reader. */
+export function createWin32RegistryStringReader(
+  options: CreateWin32RegistryStringReaderOptions,
+): (keyPath: string, valueName: string) => Promise<string | null> {
+  const maxBuffer = options.maxBufferBytes ?? WIN32_REGISTRY_QUERY_DEFAULT_MAX_BUFFER_BYTES;
+  const timeout = options.timeoutMs ?? WIN32_REGISTRY_QUERY_DEFAULT_TIMEOUT_MS;
+  if (!Number.isFinite(maxBuffer) || maxBuffer <= 0) {
+    throw new Error('maxBufferBytes must be a finite positive number.');
+  }
+  if (!Number.isFinite(timeout) || timeout <= 0) {
+    throw new Error('timeoutMs must be a finite positive number.');
+  }
+
+  return (keyPath, valueName) =>
+    new Promise((resolve) => {
+      try {
+        options.execFile(
+          'reg',
+          ['query', keyPath, '/v', valueName],
+          { encoding: 'utf8', maxBuffer, shell: false, timeout, windowsHide: true },
+          (error, stdout) => {
+            if (error) {
+              resolve(null);
+              return;
+            }
+            const pattern = new RegExp(
+              `^\\s*${escapeRegularExpression(valueName)}\\s+REG_\\w+\\s+(.+)$`,
+              'imu',
+            );
+            const value = pattern.exec(stdout)?.[1]?.trim();
+            resolve(value && value.length > 0 ? value : null);
+          },
+        );
+      } catch {
+        resolve(null);
+      }
+    });
+}
+
 /**
  * Win32 wallpaper path resolver behind an injected registry reader.
  * Other platforms should inject a resolver that returns null until implemented.
  */
 export function createWin32WallpaperPathResolver(options: {
   readonly readRegistryString: (keyPath: string, valueName: string) => Promise<string | null>;
+  readonly fallbackPath?: string | null;
+  readonly pathExists?: (filePath: string) => Promise<boolean>;
 }): WallpaperPathResolver {
   return {
     async resolveWallpaperPath(): Promise<string | null> {
       const value = await options.readRegistryString('HKCU\\Control Panel\\Desktop', 'WallPaper');
-      if (value === null) {
-        return null;
+      const registryPath = value?.trim() || null;
+      if (
+        registryPath !== null &&
+        (!options.pathExists || (await options.pathExists(registryPath)))
+      ) {
+        return registryPath;
       }
-      const trimmed = value.trim();
-      return trimmed.length > 0 ? trimmed : null;
+
+      const fallbackPath = options.fallbackPath?.trim() || null;
+      if (
+        fallbackPath !== null &&
+        (!options.pathExists || (await options.pathExists(fallbackPath)))
+      ) {
+        return fallbackPath;
+      }
+      return null;
     },
   };
 }

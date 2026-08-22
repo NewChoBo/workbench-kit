@@ -6,12 +6,20 @@
  * (Flow also side-imports the same stylesheet).
  */
 
-export { FieldRemapPanel, type FieldRemapPanelProps } from './panel.js';
+export {
+  FieldRemapPanel,
+  type FieldRemapHistoryActions,
+  type FieldRemapHistoryAvailability,
+  type FieldRemapHistoryOwner,
+  type FieldRemapHistorySnapshot,
+  type FieldRemapPanelProps,
+} from './panel.js';
 export {
   FieldRemapFlowMapper,
   type FieldRemapFlowActions,
   type FieldRemapFlowMapperProps,
 } from './flow.js';
+export type { FieldRemapPreviewState } from './preview.js';
 export {
   defaultFieldRemapChromeLabels,
   fieldRemapChromeLabelKeys,

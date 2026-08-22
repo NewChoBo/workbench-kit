@@ -11,10 +11,13 @@ describe('resolveFieldRemapChromeLabels', () => {
     const labels = resolveFieldRemapChromeLabels({
       bindingsTitle: 'Field maps',
       addCombine: 'Create join',
+      previewTitle: 'Live result',
     });
     expect(labels.bindingsTitle).toBe('Field maps');
     expect(labels.addCombine).toBe('Create join');
+    expect(labels.previewTitle).toBe('Live result');
     expect(labels.convertPaletteTitle).toBe(defaultFieldRemapChromeLabels.convertPaletteTitle);
+    expect(labels.previewLoading).toBe(defaultFieldRemapChromeLabels.previewLoading);
   });
 
   it('uses t() fallback when label prop is omitted', () => {

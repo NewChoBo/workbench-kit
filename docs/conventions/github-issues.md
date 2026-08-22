@@ -1,21 +1,13 @@
 # GitHub Issues
 
 **Status:** Required for new issues  
-**Last updated:** 2026-07-26
+**Last updated:** 2026-08-19
 
-Workbench Kit is a public npm repository. Issues are the primary backlog for
-independent kit work. Prefer GitHub issues over informal notes when the work
-must be completed inside this repo without private-host context.
+Workbench Kit is a public npm repository. Issues are the primary backlog for independent kit work. Prefer GitHub issues over informal notes when the work must be completed inside this repo without private-host context.
 
-Templates live under [`.github/ISSUE_TEMPLATE/`](../../.github/ISSUE_TEMPLATE/).
-Blank issues are disabled — pick a template.
+Templates live under [`.github/ISSUE_TEMPLATE/`](../../.github/ISSUE_TEMPLATE/). Blank issues are disabled — pick a template.
 
-This repo also uses an **IssueOps** automation lane (Cursor Automations): labels
-and comments are the control plane for triage, Q&A, clarification, and
-optional implementation. Humans and consumer libraries should follow the
-[Comment protocol](#comment-protocol-issueops) below so agents can route safely.
-Executable automation instructions (paste into Cursor):
-[issueops-autohandler-instructions.md](./issueops-autohandler-instructions.md).
+This repo also uses an **IssueOps** automation lane. Labels and comments are the control plane for triage, Q&A, clarification, implementation, reconciliation, and closure. Executable repository-owned instructions: [issueops-autohandler-instructions.md](./issueops-autohandler-instructions.md).
 
 ## Which template?
 
@@ -25,56 +17,32 @@ Executable automation instructions (paste into Cursor):
 | **Bug report**             | Incorrect behavior in kit packages / Storybook / sample             |
 | **Consumer extract**       | A host already proved a pattern; promote the generic slice into kit |
 
-Security reports: do **not** file exploit detail in a public issue. Prefer a
-[GitHub Security Advisory](https://docs.github.com/en/code-security/security-advisories)
-(or maintainer private channel). Public threads may use `type: security` only
-to request private follow-up — never paste PoCs or secrets.
+Security reports: do **not** file exploit detail in a public issue. Prefer a GitHub Security Advisory or maintainer private channel. Public threads may use `type: security` only to request private follow-up.
 
 ## Required quality bar
 
-Every issue must answer **all** of the following. Thin “wishlist” titles are
-rejected in triage (ask for more detail or convert to a discussion).
+Every implementation Issue should answer:
 
-1. **Summary** — what ships when done (1–2 sentences).
+1. **Summary** — what ships when done.
 2. **Problem** — concrete consumer/kit pain today.
 3. **Goals / Non-goals** — especially what stays host-owned.
 4. **Package home** — which `@workbench-kit/*` surface owns it.
-5. **API sketch** — types/props/functions (pseudocode OK).
-6. **Behavior contract** — algorithms, edge cases, defaults, a11y.
-7. **Existing kit surfaces** — what to reuse / not duplicate (`packages/` paths).
-8. **Acceptance criteria** — checkbox list verifiable without private hosts.
-9. **Verification plan** — `validate:*`, unit tests, Storybook story frame.
+5. **API sketch** — types/props/functions when applicable.
+6. **Behavior contract** — edge cases, defaults, a11y.
+7. **Existing kit surfaces** — what to reuse / not duplicate.
+8. **Acceptance criteria** — repository-verifiable checklist.
+9. **Verification plan** — applicable tests / validate lane / Storybook frame.
 10. **Effort** — S / M / L.
 
-### Extra for consumer extracts
+Consumer extracts additionally need a product-neutral capability statement, reference behavior without private identifiers, promote-vs-host-keeps split, and import-layer rules.
 
-11. **Capability statement** — product-neutral; a stranger can understand it.
-12. **Reference behavior** — algorithmic description of the proven host logic
-    (constants, placement rules, debounce, reject rules) **without** private
-    paths or product names.
-13. **Promote vs host keeps** — split list.
-14. **Import rules** — e.g. no Electron in `@workbench-kit/react`; no React in
-    `@workbench-kit/platform`.
+## Public reference rules
 
-## Public reference rules (issues count)
-
-Issues, comments, and PR bodies are public. Follow
-[public-reference-policy.md](./public-reference-policy.md):
-
-| Allowed                                                                    | Forbidden                                            |
-| -------------------------------------------------------------------------- | ---------------------------------------------------- |
-| “desktop consumer”, “integrating host”, “reference implementation”         | Sibling repo names, private clone paths              |
-| Capability language (catalog filter flyout, remembered window layout)      | Product / host codenames                             |
-| Kit file paths under `packages/`, `examples/`, `docs/`                     | Host absolute paths (`E:\…`, `../private-app/…`)     |
-| Generic MIME / preference **shapes** (`application/x-<host>-…` as pattern) | Real private product MIME strings or preference keys |
-
-If you need private-host file pointers for implementers, keep them in the
-**private host’s** tracker and link only by GitHub issue number from here.
+Issues, comments, PR bodies, branch names, and commit messages are public surfaces. Follow [public-reference-policy.md](./public-reference-policy.md). Do not persist sibling/private repository coordinates, private clone paths, product codenames, secrets, or private runtime evidence.
 
 ## Title format
 
-Use Conventional Commits style, English only
-([language-policy.md](./language-policy.md)):
+Use English Conventional Commits style:
 
 ```text
 feat(<scope>): short capability phrase
@@ -82,177 +50,138 @@ fix(<scope>): short failure phrase
 docs(<scope>): short docs phrase
 ```
 
-Scopes (examples): `react`, `overlay`, `platform`, `workbench`, `tokens`,
-`contracts`, `i18n`, `storybook`.
-
 ## Comment protocol (IssueOps)
 
-Comments are the shared coordination surface between maintainers, Cursor
-automations, parent/child issues, and **external consumer libraries** that file
-or discuss work here. Automations may answer simple questions, ask reverse
-questions when the request is ambiguous, or implement when explicitly asked.
-
-### Request envelope
-
-For non-trivial comments (and whenever you want automation to act), start with:
+For non-trivial comments, prefer:
 
 ```text
 type: feat | fix | security | question | docs | extract
 intent: implement | discuss | clarify
 ```
 
-Optional — request a coding run:
+Optional coding request:
 
 ```text
 run agent
 ```
 
-| `type`     | Meaning                          | Maps to template / lane      |
-| ---------- | -------------------------------- | ---------------------------- |
-| `feat`     | Feature / API addition           | Feature                      |
-| `fix`      | Bug                              | Bug report                   |
-| `security` | Vulnerability / sensitive report | Private advisory (see above) |
-| `question` | Usage / API / “where is X”       | Q&A only (no PR by default)  |
-| `docs`     | Documentation                    | Docs change or guidance      |
-| `extract`  | Promote host-proven pattern      | Consumer extract             |
+Missing/ambiguous implementation intent must not be guessed. Ask one bounded reverse-question checklist and use `status:needs-human` only when real human information/judgment is required.
 
-| `intent`    | Meaning                                      |
-| ----------- | -------------------------------------------- |
-| `implement` | Want a code/docs change in this repo         |
-| `discuss`   | Design talk; no implementation yet           |
-| `clarify`   | Answering agent questions or asking for info |
+### Event dispatch and loop safety
 
-If `type` / `intent` are missing on an implement-like request, automation
-**must not guess** — it posts a structured reverse-question comment and waits.
+The executable handler must classify its trigger before mutation:
 
-### Modes (what automation does)
+- **Issue comment:** process only the target Issue through Q&A, Clarify, Implement, or Security. Ignore bot, automation, GitHub App, handler-marker, and unchanged duplicate comments. Never enter hourly, idle, or weekly work from a comment event.
+- **Hourly:** run bounded active-owner reconciliation plus at most one source-changing logical item. Never enter the weekly structural lane.
+- **Weekly:** restore or select one structural item. Do not also pick up the hourly queue or idle work.
 
-| Mode                    | When                                                                                    | Mutates code?                                      |
-| ----------------------- | --------------------------------------------------------------------------------------- | -------------------------------------------------- |
-| **Q&A**                 | `question`, or `intent: clarify` / `discuss` without `run agent`                        | No — comment only                                  |
-| **Clarify**             | Ambiguous / thin quality bar                                                            | No — reverse questions + `status:needs-human`      |
-| **Implement**           | `run agent`, or `status:queued` + cron, or clear `intent: implement` with enough detail | Yes — branch/PR into `develop`                     |
-| **Idle refactor**       | Hourly cron when no `status:queued` work; small internal tidy-ups only                  | Yes — one small PR; may auto-merge if Checks green |
-| **Structural refactor** | Weekly cron (Mon 09:00 Asia/Seoul); bolder cross-package / architecture work            | Yes — PR **never** auto-merged; human review       |
-| **Security**            | `type: security`                                                                        | No public PoC / no drive-by fix                    |
+Missing or contradictory event metadata does not authorize mutation.
+
+### Modes
+
+| Mode                    | When                                                    | Mutates code?         |
+| ----------------------- | ------------------------------------------------------- | --------------------- |
+| **Q&A**                 | question/discuss/clarify without implementation request | No                    |
+| **Clarify**             | ambiguous / thin quality bar                            | No                    |
+| **Implement**           | explicit run request or eligible scheduled pickup       | Yes, PR to `develop`  |
+| **Idle refactor**       | no actionable active or queued work                     | One small internal PR |
+| **Structural refactor** | weekly architecture lane                                | Yes, never auto-merge |
+| **Security**            | security-sensitive request                              | No public PoC         |
 
 ### Status labels
 
-| Label                | Meaning                                         |
-| -------------------- | ----------------------------------------------- |
-| `status:queued`      | Eligible for hourly automation pickup           |
-| `status:in-progress` | Claimed; do not double-start                    |
-| `status:pr-open`     | PR opened (issue stays open until humans close) |
-| `status:needs-human` | Blocked on answers / judgment                   |
-| `status:skipped`     | Intentionally not implemented                   |
+| Label                | Meaning                                                     |
+| -------------------- | ----------------------------------------------------------- |
+| `status:queued`      | Eligible for scheduled source-work selection                |
+| `status:in-progress` | Claimed owner; restore/reconcile on future runs             |
+| `status:pr-open`     | PR exists; review/integration/acceptance remains unresolved |
+| `status:needs-human` | Real human answer/judgment/policy authority is required     |
+| `status:skipped`     | Intentionally not implemented                               |
 
-Machine-readable marker (HTML comment) on automation posts:
+Pending CI, pending review, or an external dependency normally remain `status:pr-open` / current owned state. They are not automatically `status:needs-human`.
+
+Machine-readable marker:
 
 ```html
 <!-- automation:cursor-issue-handler status=<started|skipped|needs-human|pr-open|done|failed|info> issue=<N> pr=<url-optional> source=<comment|cron|idle-refactor|structural-refactor> -->
 ```
 
-### Human / consumer how-to
+## Hourly throughput and owned Issue reconciliation
 
-1. File with the correct **issue template** when opening a new issue.
-2. On an existing issue, use the **request envelope** (`type` / `intent`).
-3. Simple questions → `type: question` (automation may answer from public kit sources).
-4. Want code → fill the quality bar, then comment `run agent` **or** add
-   `status:queued` for scheduled pickup.
-5. When automation asks reverse questions, reply on the same issue
-   (`intent: clarify`). Re-comment `run agent` when ready to implement.
-6. Link parent/child/related issues with `#N` so automation can read dependencies.
+The hourly lane separates **control/lifecycle work** from **source mutation**.
 
-### Reverse questions (automation)
-
-When the request is ambiguous, automation should:
-
-1. Not implement or invent APIs.
-2. Set `status:needs-human`.
-3. Post **one** structured English checklist (type, intent, package home,
-   acceptance, repro for fixes, etc.).
-4. Stop until a human replies.
-
-### Loop and cost notes
-
-- Prefer bot/App identity for automation comments so platform filters avoid
-  self-triggers; still ignore marker comments in prompts.
-- Ordinary discussion without `run agent` should stay in Q&A / Clarify — not
-  full implement runs.
-- Hourly backlog drain prefers `status:queued` first. If the queue is empty,
-  automation may run a single **idle refactor** (small internal tidy-up only;
-  no public API breaks).
-- Weekly (Monday 09:00 Asia/Seoul): **structural refactor** — one bolder
-  architecture-oriented PR, always left for human review (never auto-merged).
-  Details:
-  [issueops-autohandler-instructions.md](./issueops-autohandler-instructions.md).
-  Decline unwanted PRs by closing them.
-
-## Acceptance criteria tips
-
-Good:
-
-```markdown
-- [ ] `resolveWindowOpenLayout` returns defaults when `remember` is false and
-      does not require clearing saved state
-- [ ] Off-screen saved bounds clamp into the union of display work areas
-- [ ] Unit tests cover remember on/off + empty display list
-- [ ] No `electron` import from `@workbench-kit/react`
+```text
+bounded active-owner reconciliation
++ already-gated merge/close cleanup
++ at most ONE source-changing logical work item
 ```
 
-Bad:
+A run may inspect several automation-owned `status:in-progress` / `status:pr-open` Issues. For each, reconcile the linked branch/PR/Checks/review/dependency/integration/acceptance state and classify it as:
 
-```markdown
-- [ ] Works in our app
-- [ ] Looks good
-- [ ] Port the host helper
+```text
+ACTION_REQUIRED
+READY_TO_MERGE
+WAITING_CI
+WAITING_REVIEW
+WAITING_DEPENDENCY
+BLOCKED
+DONE
 ```
 
-## Storybook / sample expectations
+Rules:
 
-When the change is UI-visible, name the **story frame** that matches production
-placement ([storybook.md](./storybook.md)):
+1. `WAITING_CI`, `WAITING_REVIEW`, and `WAITING_DEPENDENCY` do **not** consume the run's source-change slot. Keep state, emit no heartbeat, continue bounded reconciliation.
+2. `READY_TO_MERGE` may be merged in the same run when exact-head gates and repository authority are satisfied; verify `develop`, acceptance, owned-Issue closure, and branch cleanup.
+3. `DONE` requires actual integration + acceptance evidence before closure.
+4. `ACTION_REQUIRED` active work is preferred for the one source-changing slot.
+5. If no active owned work requires a source change, select one eligible `status:queued` Issue.
+6. At most one logical work item receives source mutation per hourly run. Multiple read-only reconciliations and already-gated lifecycle actions are allowed.
+7. For a new queued item, attempt an optimistic claim: remove `status:queued`, set `status:in-progress`, and post one `status=started` marker with a one-line plan. Immediately re-read labels, ownership markers, linked branches, and PRs. If another owner won, stop without source mutation or duplicate commentary. Restoring an existing owner does not emit another started marker.
+8. Never close or take over another owner's Issue. Never create duplicate Issue/branch/PR work for the same concern.
 
-- sidebar panel
-- editor / main area
-- settings / form surface
-- overlay trigger surface
+### Actionable queue priority
 
-Update [storybook-e2e-coverage.md](../workbench/storybook-e2e-coverage.md) when
-the flow becomes a required UI gate.
+Oldest-first is a tie-breaker, not the only policy. Within current authority and explicit product priorities, prefer:
+
+1. correctness/regression or safety-relevant non-secret defects;
+2. prerequisites that unblock multiple owned items;
+3. nearly-complete active work that can reach a safe gate;
+4. small independent quick wins with clear acceptance;
+5. explicit repository/product priority;
+6. oldest ordinary queued item.
+
+A waiting PR must not monopolize every hourly execution while unrelated actionable work exists.
+
+## Human / consumer how-to
+
+1. File with the correct template and quality bar.
+2. Use the request envelope on an existing Issue.
+3. Questions use `type: question`.
+4. For code, fill acceptance/verification and comment `run agent` or add `status:queued`.
+5. Answer reverse questions with `intent: clarify`; re-request implementation when ready.
+6. Link dependencies with `#N`.
+
+## Idle / Weekly
+
+- **Idle refactor:** only when there is no `ACTION_REQUIRED` owned work and no eligible queued Issue. One small internal tidy-up; no API break, product bet, broad refactor, security work, or major dependency/release change.
+- **Weekly structural:** one architecture-oriented theme; human review required and never auto-merged.
 
 ## Verification lanes
 
-| Change type                   | Minimum                                                                        |
-| ----------------------------- | ------------------------------------------------------------------------------ |
-| Pure logic / platform helpers | package unit tests + `pnpm validate:fast` (or targeted typecheck/test)         |
-| Public export surface         | `pnpm check:public-exports`                                                    |
-| React UI                      | unit + Storybook story; `pnpm validate:ui` only when required coverage changes |
-| Docs / templates only         | `pnpm check:public-references` (via `validate:static`)                         |
+| Change type                   | Minimum                                                          |
+| ----------------------------- | ---------------------------------------------------------------- |
+| Pure logic / platform helpers | package unit tests + `pnpm validate:fast` or targeted equivalent |
+| Public export surface         | `pnpm check:public-exports`                                      |
+| React UI                      | unit + matching Storybook story; UI gate when required           |
+| Docs / templates only         | `pnpm validate:static` / public-reference checks                 |
 
-Automation implement runs must pass `pnpm check:commit-safety` and the lane
-above before merge into `develop`. Merge only when GitHub Checks are green.
-Never push `main` from automation.
-
-## Triage checklist (maintainers)
-
-- [ ] Template fields filled; no private host names
-- [ ] Package home and import rules make sense
-- [ ] Non-goals prevent domain leakage
-- [ ] Acceptance criteria are testable in this repo alone
-- [ ] Labels: `enhancement` / `bug` (+ optional milestone)
-- [ ] IssueOps status labels when using automation (`status:*`)
-- [ ] Related backlog section linked when applicable
-      (`docs/workbench/consumer-integration-backlog.md`)
+Automation source changes must pass `pnpm check:commit-safety` and applicable validation. Merge only when current required gates are satisfied. After merge, verify acceptance before closing the owned Issue. Never push `main` from automation.
 
 ## Agent defaults
 
-When an agent files or updates issues:
-
-1. Prefer the **Consumer extract** template for promotion work.
-2. Expand every section; do not leave placeholders.
-3. Link kit source paths that already exist.
-4. Never write private sibling repo names into issue bodies.
-5. After creating thin issues, immediately edit them to the quality bar above.
-6. Follow the [Comment protocol](#comment-protocol-issueops) for automation
-   coordination; use reverse questions instead of guessing.
+1. Prefer existing owner/PR/branch over duplicate work.
+2. Expand thin Issues to the quality bar or Clarify; do not invent requirements.
+3. Keep private consumer evidence out of this public repository.
+4. Reconcile waiting states without spending the source slot.
+5. Close verified-complete owned Issues promptly after integration; keep incomplete acceptance open.
+6. Keep executable automation behavior synchronized with [issueops-autohandler-instructions.md](./issueops-autohandler-instructions.md).

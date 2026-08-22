@@ -7,21 +7,35 @@ import {
   type ExtensionFeatureSpec,
   type ExtensionInstallPlan,
   type ExtensionInstallPlanInstallSource,
-  type ExtensionRegistry,
   type InstalledExtensionRecord,
   type WorkbenchExtensionDescription,
 } from '@workbench-kit/workbench-core';
+import type { WorkbenchExtensionCatalogReader } from '../shell/provider.js';
 import type {
   ExtensionCatalogBrowseEntry,
   ExtensionManagementDiagnosticSummary,
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
+  ExtensionManagementTransition,
 } from '@workbench-kit/react/workbench/management';
+import {
+  createExtensionUninstallEvaluation,
+  type ExtensionUninstallEligibility,
+} from './uninstall-eligibility.js';
+import { createCanonicalExtensionDescriptionSnapshot } from './canonical-extension-descriptions.js';
+
+export interface ExtensionUninstallActionConstraint {
+  readonly eligibility: Exclude<ExtensionUninstallEligibility, { readonly kind: 'eligible' }>;
+  readonly extensionId: string;
+}
 
 export interface CreateExtensionManagementEntriesInput {
   readonly availableExtensions: readonly WorkbenchExtensionDescription[];
-  readonly extensionRegistry: ExtensionRegistry;
+  readonly extensionCatalog: WorkbenchExtensionCatalogReader;
   readonly installedRecords: readonly InstalledExtensionRecord[];
+  readonly transition?:
+    (ExtensionManagementTransition & { readonly extensionId: string }) | undefined;
+  readonly uninstallActionConstraint?: ExtensionUninstallActionConstraint | undefined;
 }
 
 export interface CreateExtensionCatalogBrowseEntriesInput extends CreateExtensionManagementEntriesInput {
@@ -37,27 +51,55 @@ export interface ExtensionInstallPlanningContext extends CreateExtensionManageme
 
 export function createExtensionManagementEntries({
   availableExtensions,
-  extensionRegistry,
+  extensionCatalog,
   installedRecords,
+  transition,
+  uninstallActionConstraint,
 }: CreateExtensionManagementEntriesInput): readonly ExtensionManagementEntry[] {
   const installedById = new Map(installedRecords.map((record) => [record.id, record]));
-  const extensionFeatures = createExtensionManagementFeatureMaps(
+  const liveExtensions = extensionCatalog.getExtensions();
+  const liveExtensionIds = new Set(liveExtensions.map((extension) => extension.manifest.id));
+  const canonicalDescriptions = createCanonicalExtensionDescriptionSnapshot({
     availableExtensions,
-    extensionRegistry,
+    liveExtensions,
+  });
+  const uninstallEvaluation = createExtensionUninstallEvaluation({
+    canonicalDescriptions,
+    installedRecords,
+  });
+  const extensionFeatures = createExtensionManagementFeatureMaps(
+    canonicalDescriptions.descriptions,
+    extensionCatalog,
   );
-  const bundledEntries = availableExtensions
+  return canonicalDescriptions.descriptions
     .map((extension) => {
       const installed = installedById.get(extension.manifest.id);
       const isBuiltin = extension.manifest.id.startsWith('workbench-kit.builtin.');
+      const isLive = liveExtensionIds.has(extension.manifest.id);
       const featureState = resolveExtensionManagementFeatureState(
         extension.manifest.id,
         extensionFeatures,
       );
+      const uninstallEligibility =
+        installed && !isBuiltin
+          ? uninstallEvaluation.getEligibility(extension.manifest.id)
+          : undefined;
+      const actionConstraint =
+        uninstallActionConstraint?.extensionId === extension.manifest.id
+          ? uninstallActionConstraint.eligibility
+          : undefined;
 
       return {
-        category: installed?.category ?? (isBuiltin ? 'builtin' : 'sample'),
+        ...(uninstallEligibility?.kind === 'eligible' && !actionConstraint
+          ? { canUninstall: true }
+          : {}),
+        category: installed?.category ?? (isBuiltin ? 'builtin' : isLive ? 'installed' : 'sample'),
         description: extension.manifest.displayName,
-        diagnostics: featureState.diagnostics,
+        diagnostics: mergeUninstallDiagnostics(
+          featureState.diagnostics,
+          uninstallEligibility,
+          actionConstraint,
+        ),
         displayName: extension.manifest.displayName,
         enabled: isBuiltin ? true : (installed?.enabled ?? false),
         features: featureState.features,
@@ -65,53 +107,77 @@ export function createExtensionManagementEntries({
         installedAt: installed?.installedAt,
         manifestUrl: installed?.manifestUrl,
         source: isBuiltin ? ('bundled' as const) : ('installed' as const),
+        ...(transition?.extensionId === extension.manifest.id
+          ? { transition: { kind: transition.kind, message: transition.message } }
+          : {}),
       } satisfies ExtensionManagementEntry;
     })
-    .filter((entry) => entry.source === 'bundled' || installedById.has(entry.id));
-
-  const activeExtensions = extensionRegistry
-    .getExtensions()
     .filter(
-      (extension) =>
-        !availableExtensions.some((bundled) => bundled.manifest.id === extension.manifest.id),
+      (entry) =>
+        entry.source === 'bundled' || installedById.has(entry.id) || liveExtensionIds.has(entry.id),
     )
-    .map((extension) => {
-      const installed = installedById.get(extension.manifest.id);
-      const featureState = resolveExtensionManagementFeatureState(
-        extension.manifest.id,
-        extensionFeatures,
-      );
+    .sort((left, right) => left.displayName.localeCompare(right.displayName));
+}
 
-      return {
-        category: installed?.category ?? 'installed',
-        description: extension.manifest.displayName,
-        diagnostics: featureState.diagnostics,
-        displayName: extension.manifest.displayName,
-        enabled: installed?.enabled ?? true,
-        features: featureState.features,
-        id: extension.manifest.id,
-        installedAt: installed?.installedAt,
-        manifestUrl: installed?.manifestUrl,
-        source: 'installed',
-      } satisfies ExtensionManagementEntry;
+function mergeUninstallDiagnostics(
+  diagnostics: readonly ExtensionManagementDiagnosticSummary[] | undefined,
+  eligibility: ExtensionUninstallEligibility | undefined,
+  actionConstraint?: ExtensionUninstallActionConstraint['eligibility'] | undefined,
+): readonly ExtensionManagementDiagnosticSummary[] | undefined {
+  const merged = [
+    ...(diagnostics ?? []),
+    ...toUninstallDiagnostics(eligibility),
+    ...toUninstallDiagnostics(actionConstraint),
+  ];
+  const byMessage = new Map(merged.map((diagnostic) => [diagnostic.message, diagnostic]));
+  return byMessage.size > 0 ? [...byMessage.values()] : undefined;
+}
+
+function toUninstallDiagnostics(
+  eligibility: ExtensionUninstallEligibility | undefined,
+): readonly ExtensionManagementDiagnosticSummary[] {
+  if (!eligibility || eligibility.kind === 'eligible') {
+    return [];
+  }
+  if (eligibility.kind === 'ineligibleTarget') {
+    return [
+      {
+        message:
+          eligibility.reason === 'builtin'
+            ? `Cannot uninstall built-in extensions: ${eligibility.diagnosticExtensionIds.join(', ')}.`
+            : `Cannot uninstall because these persisted targets are no longer installed: ${eligibility.diagnosticExtensionIds.join(', ')}.`,
+        severity: 'error',
+      },
+    ];
+  }
+
+  const result: ExtensionManagementDiagnosticSummary[] = [];
+  if (eligibility.dependentExtensionIds.length > 0) {
+    result.push({
+      message: `Cannot uninstall because these installed extensions depend on it: ${eligibility.dependentExtensionIds.join(', ')}.`,
+      severity: 'error',
     });
-
-  return [...bundledEntries, ...activeExtensions].sort((left, right) =>
-    left.displayName.localeCompare(right.displayName),
-  );
+  }
+  if (eligibility.unresolvedExtensionIds.length > 0) {
+    result.push({
+      message: `Cannot verify uninstall safety because these extension manifests are unavailable or ambiguous: ${eligibility.unresolvedExtensionIds.join(', ')}.`,
+      severity: 'error',
+    });
+  }
+  return result;
 }
 
 export function createExtensionCatalogBrowseEntries({
   availableExtensions,
   catalogEntries,
-  extensionRegistry,
+  extensionCatalog,
   installedRecords,
 }: CreateExtensionCatalogBrowseEntriesInput): readonly ExtensionCatalogBrowseEntry[] {
   const installedIds = new Set(installedRecords.map((record) => record.id));
   const installContext = createExtensionInstallPlanningContext({
     availableExtensions,
     catalogEntries,
-    extensionRegistry,
+    extensionCatalog,
     installedRecords,
   });
 
@@ -139,21 +205,19 @@ export function createExtensionCatalogBrowseEntries({
 export function createExtensionInstallPlanningContext({
   availableExtensions,
   catalogEntries,
-  extensionRegistry,
+  extensionCatalog,
   installedRecords,
 }: CreateExtensionCatalogBrowseEntriesInput): ExtensionInstallPlanningContext {
   const installableExtensions = mergeUniqueExtensionDescriptions([
     ...availableExtensions,
-    ...extensionRegistry.getExtensions(),
+    ...extensionCatalog.getExtensions(),
   ]);
 
   return {
     availableExtensions: installableExtensions,
-    enabledExtensionIds: extensionRegistry
-      .getExtensions()
-      .map((extension) => extension.manifest.id),
-    extensionRegistry,
-    hostCapabilityIds: extensionRegistry.capabilityRegistry.listProviderIds(),
+    enabledExtensionIds: extensionCatalog.getExtensions().map((extension) => extension.manifest.id),
+    extensionCatalog,
+    hostCapabilityIds: extensionCatalog.listCapabilityProviderIds(),
     installSources: createExtensionInstallSources(catalogEntries, installableExtensions),
     installedRecords,
   };
@@ -220,7 +284,7 @@ function mergeUniqueExtensionDescriptions(
 
 function createExtensionManagementFeatureMaps(
   availableExtensions: readonly WorkbenchExtensionDescription[],
-  extensionRegistry: ExtensionRegistry,
+  extensionCatalog: WorkbenchExtensionCatalogReader,
 ) {
   return {
     bundledFeaturesById: new Map(
@@ -230,7 +294,7 @@ function createExtensionManagementFeatureMaps(
       ]),
     ),
     inspectionsById: new Map(
-      extensionRegistry
+      extensionCatalog
         .getFeatureInspections()
         .map((inspection) => [inspection.feature.id, inspection]),
     ),

@@ -19,6 +19,11 @@ export type {
   WorkbenchIconResolver,
 } from './icons';
 export { commandMenuItemsToContextMenuItems } from './workbench/commands/commands';
+export type {
+  ExtensionManagementEntry,
+  ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
+} from './workbench/management';
 export {
   WorkbenchArtifactModeControls,
   WorkbenchArtifactPreview,
@@ -213,15 +218,20 @@ export type {
 export {
   createPointerPassthroughController,
   isPointerOverHitRegion,
+  resolvePointerHitTarget,
 } from './overlay/pointerPassthroughRegion';
 export type {
+  PointerHitTestDocument,
   PointerOverHitRegionOptions,
   PointerPassthroughController,
   PointerPassthroughControllerOptions,
   PointerPassthroughPort,
 } from './overlay/pointerPassthroughRegion';
 export { usePointerPassthroughRegion } from './overlay/usePointerPassthroughRegion';
-export type { UsePointerPassthroughRegionOptions } from './overlay/usePointerPassthroughRegion';
+export type {
+  PointerHitTargetResolver,
+  UsePointerPassthroughRegionOptions,
+} from './overlay/usePointerPassthroughRegion';
 export {
   getWorkbenchStatusDescriptor,
   getWorkbenchStatusLabel,
@@ -743,6 +753,7 @@ export {
 } from './workbench/editor/editorTabContextMenu';
 export type {
   CreateWorkbenchStandaloneEditorTabCommandContextInput,
+  CreateWorkbenchStandaloneEditorTabContextMenuItemsInput,
   WorkbenchStandaloneEditorTabLike,
 } from './workbench/editor/editorTabContextMenu';
 export { useWorkbenchEditorTabContextMenu } from './workbench/editor/useWorkbenchEditorTabContextMenu';

@@ -2,6 +2,12 @@ import type { RectLike } from './types.js';
 
 export interface SecondaryWindowBoundsHandlers {
   readonly onBoundsLikelyChanged: () => void;
+  /** Dispatch while the surface is still readable, before native destruction. */
+  readonly onCloseRequested: () => void;
+  /**
+   * Backward-compatible close callback. Dispatch before native destruction when
+   * `onCloseRequested` is not available in an existing adapter.
+   */
   readonly onClosed: () => void;
 }
 
@@ -18,6 +24,10 @@ export interface BindSecondaryWindowBoundsPersistenceOptions {
 
 export interface SecondaryWindowBoundsPersistenceHandle {
   dispose(): void;
+  /**
+   * Queue the current snapshot after already-admitted writes. The promise rejects
+   * when this snapshot cannot be persisted so explicit callers can report it.
+   */
   flush(): Promise<void>;
 }
 
@@ -34,7 +44,7 @@ export function bindSecondaryWindowBoundsPersistence(
   const debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   let timer: ReturnType<typeof setTimeout> | undefined;
   let disposed = false;
-  let pendingFlush: Promise<void> | undefined;
+  let persistenceQueue: Promise<void> = Promise.resolve();
 
   const clearTimer = (): void => {
     if (timer !== undefined) {
@@ -43,11 +53,13 @@ export function bindSecondaryWindowBoundsPersistence(
     }
   };
 
-  const persistNow = async (): Promise<void> => {
-    if (disposed) {
-      return;
-    }
-    await options.persist(options.readBounds());
+  const enqueuePersist = (bounds: RectLike): Promise<void> => {
+    const result = persistenceQueue.then(() => options.persist(bounds));
+    persistenceQueue = result.then(
+      () => undefined,
+      () => undefined,
+    );
+    return result;
   };
 
   const schedule = (): void => {
@@ -57,25 +69,39 @@ export function bindSecondaryWindowBoundsPersistence(
     clearTimer();
     timer = setTimeout(() => {
       timer = undefined;
-      pendingFlush = persistNow().finally(() => {
-        pendingFlush = undefined;
-      });
+      let bounds: RectLike;
+      try {
+        bounds = options.readBounds();
+      } catch {
+        return;
+      }
+      void enqueuePersist(bounds).catch(() => undefined);
     }, debounceMs);
   };
 
   const flush = async (): Promise<void> => {
     clearTimer();
-    if (pendingFlush) {
-      await pendingFlush;
+    if (disposed) {
+      return;
     }
-    await persistNow();
+    const bounds = options.readBounds();
+    // A snapshot captured before dispose still belongs to this flush request.
+    await enqueuePersist(bounds);
+  };
+
+  let closeSnapshotCaptured = false;
+  const captureCloseSnapshot = (): void => {
+    if (closeSnapshotCaptured) {
+      return;
+    }
+    closeSnapshotCaptured = true;
+    void flush().catch(() => undefined);
   };
 
   const unsubscribe = options.subscribe({
     onBoundsLikelyChanged: schedule,
-    onClosed: () => {
-      void flush();
-    },
+    onCloseRequested: captureCloseSnapshot,
+    onClosed: captureCloseSnapshot,
   });
 
   return {

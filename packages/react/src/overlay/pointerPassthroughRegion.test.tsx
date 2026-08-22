@@ -8,6 +8,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
   createPointerPassthroughController,
   isPointerOverHitRegion,
+  resolvePointerHitTarget,
 } from './pointerPassthroughRegion';
 import { usePointerPassthroughRegion } from './usePointerPassthroughRegion';
 
@@ -102,6 +103,18 @@ describe('isPointerOverHitRegion', () => {
   });
 });
 
+describe('resolvePointerHitTarget', () => {
+  it('uses painted-element lookup and rejects non-finite coordinates', () => {
+    const hit = document.createElement('div');
+    const elementFromPoint = vi.fn(() => hit);
+
+    expect(resolvePointerHitTarget(12, 34, { elementFromPoint })).toBe(hit);
+    expect(resolvePointerHitTarget(Number.NaN, 34, { elementFromPoint })).toBeNull();
+    expect(resolvePointerHitTarget(12, Number.POSITIVE_INFINITY, { elementFromPoint })).toBeNull();
+    expect(elementFromPoint).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('createPointerPassthroughController', () => {
   it('enables passthrough outside hit regions and disables over hits', () => {
     const { container, root } = mount(
@@ -147,6 +160,7 @@ function HookHarness(props: {
   enabled: boolean;
   port: { setPointerPassthrough: (enabled: boolean) => void };
   hitSelectors: readonly string[];
+  resolveHitTarget?: (clientX: number, clientY: number) => EventTarget | null;
 }) {
   usePointerPassthroughRegion(props);
   return (
@@ -160,7 +174,7 @@ function HookHarness(props: {
 }
 
 describe('usePointerPassthroughRegion', () => {
-  it('wires pointermove through rAF to the host port', () => {
+  it('uses painted-element coordinates and reasserts through pointer/mouse moves', () => {
     const setPointerPassthrough = vi.fn();
     const rafQueue: FrameRequestCallback[] = [];
     const rafSpy = vi.spyOn(window, 'requestAnimationFrame').mockImplementation((cb) => {
@@ -169,21 +183,43 @@ describe('usePointerPassthroughRegion', () => {
     });
     const cancelSpy = vi.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => undefined);
 
+    let paintedTarget: EventTarget | null = null;
+    const resolveHitTarget = vi.fn(() => paintedTarget);
     const { container, root } = mount(
-      <HookHarness enabled port={{ setPointerPassthrough }} hitSelectors={['[data-hit]']} />,
+      <HookHarness
+        enabled
+        port={{ setPointerPassthrough }}
+        hitSelectors={['[data-hit]']}
+        resolveHitTarget={resolveHitTarget}
+      />,
     );
 
     const outside = container.querySelector('span');
+    const hit = container.querySelector('[data-hit]');
+    paintedTarget = outside;
     act(() => {
-      outside?.dispatchEvent(new PointerEvent('pointermove', { bubbles: true }));
+      hit?.dispatchEvent(
+        new PointerEvent('pointermove', { bubbles: true, clientX: 12, clientY: 34 }),
+      );
     });
 
     expect(rafQueue.length).toBeGreaterThan(0);
     act(() => {
-      rafQueue.forEach((cb) => cb(0));
+      rafQueue.splice(0).forEach((cb) => cb(0));
     });
 
     expect(setPointerPassthrough).toHaveBeenCalledWith(true);
+    expect(resolveHitTarget).toHaveBeenCalledWith(12, 34);
+
+    act(() => {
+      outside?.dispatchEvent(
+        new MouseEvent('mousemove', { bubbles: true, clientX: 56, clientY: 78 }),
+      );
+      rafQueue.splice(0).forEach((cb) => cb(1));
+    });
+
+    expect(setPointerPassthrough.mock.calls).toEqual([[true], [true]]);
+    expect(resolveHitTarget).toHaveBeenCalledWith(56, 78);
 
     act(() => {
       root.unmount();

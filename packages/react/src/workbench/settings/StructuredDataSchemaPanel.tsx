@@ -6,6 +6,7 @@ import { ScrollArea } from '../../primitives/scroll-area';
 import { cx } from '../../utils/cx';
 import { WorkbenchSectionTabPanel } from './SectionTabPanel';
 import { WorkbenchSectionedPanel } from './SectionedPanel';
+import { getWorkbenchStructuredDataSchemaPathSegments } from './structuredDataSchemaSection';
 import {
   WorkbenchStructuredDataSchemaFieldInput,
   appendWorkbenchStructuredDataSchemaTableRow,
@@ -162,7 +163,10 @@ function getSchemaFieldValue({
   sectionValue: unknown;
 }) {
   const fullPath = getWorkbenchStructuredDataSchemaFieldDataPath(section, fieldPath);
-  const rootValue = getWorkbenchStructuredDataValue(data, fullPath.split('.'));
+  const rootValue = getWorkbenchStructuredDataValue(
+    data,
+    getWorkbenchStructuredDataSchemaPathSegments(fullPath),
+  );
   if (rootValue !== null && rootValue !== undefined) return rootValue;
 
   const record = asWorkbenchStructuredDataRecord(sectionValue);
@@ -170,7 +174,8 @@ function getSchemaFieldValue({
 }
 
 function formatSchemaFieldErrorKey(path: string | readonly string[]) {
-  const segments = typeof path === 'string' ? path.split('.') : path;
+  const segments =
+    typeof path === 'string' ? getWorkbenchStructuredDataSchemaPathSegments(path) : path;
   return segments.filter(Boolean).join('.');
 }
 
@@ -286,7 +291,11 @@ function renderSchemaFormSection({
                   mergedFieldErrors: fieldErrors,
                   onValidateField,
                   value: fieldValue,
-                  onValueChange: (nextValue) => onDataValueChange(dataPath.split('.'), nextValue),
+                  onValueChange: (nextValue) =>
+                    onDataValueChange(
+                      getWorkbenchStructuredDataSchemaPathSegments(dataPath),
+                      nextValue,
+                    ),
                 })
               : null;
 
@@ -358,7 +367,12 @@ function renderSchemaFormSection({
                     readOnly={readOnly}
                     textareaClassName={classNames.settingControlTextarea}
                     value={entry}
-                    onValueChange={(nextValue) => onDataValueChange(dataPath.split('.'), nextValue)}
+                    onValueChange={(nextValue) =>
+                      onDataValueChange(
+                        getWorkbenchStructuredDataSchemaPathSegments(dataPath),
+                        nextValue,
+                      )
+                    }
                   />
                 </div>
               </Field>

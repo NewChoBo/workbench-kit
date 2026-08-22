@@ -77,6 +77,12 @@ describe('FieldRemapFlowMapper host chrome', () => {
     });
   }
 
+  function getActiveSeparators(): NodeListOf<HTMLElement> {
+    return container!.querySelectorAll<HTMLElement>(
+      '.ui-workbench-split-view:not(.ui-workbench-split-view--primary-collapsed):not(.ui-workbench-split-view--secondary-collapsed) > [role="separator"]',
+    );
+  }
+
   it('resyncs controlled node content when render metadata changes without topology changes', async () => {
     const sources: readonly SourceField[] = [
       { id: 'source:name', label: 'Original source field', dataType: 'string' },
@@ -248,7 +254,7 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
     expect(mapper?.getAttribute('data-empty-detail')).toBe('hint');
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
-    expect(container!.querySelectorAll('[role="separator"]')).toHaveLength(2);
+    expect(getActiveSeparators()).toHaveLength(2);
   });
 
   it('uses embed defaults that omit the demo hint and binding list', async () => {
@@ -263,7 +269,7 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(container!.querySelector('[data-testid="field-remap-edges"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeTruthy();
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
-    expect(container!.querySelectorAll('[role="separator"]')).toHaveLength(1);
+    expect(getActiveSeparators()).toHaveLength(1);
   });
 
   it('restores an embed detail rail for a selection and honors the empty hint override', async () => {
@@ -285,13 +291,151 @@ describe('FieldRemapFlowMapper host chrome', () => {
     const mapper = container!.querySelector('[data-testid="field-remap-mapper"]');
     expect(mapper?.getAttribute('data-empty-detail')).toBe('collapse');
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
-    expect(container!.querySelectorAll('[role="separator"]')).toHaveLength(2);
-    expect(container!.querySelector('[role="separator"]')?.getAttribute('aria-orientation')).toBe(
-      'vertical',
+    expect(getActiveSeparators()).toHaveLength(2);
+    expect(getActiveSeparators()[0]?.getAttribute('aria-orientation')).toBe('vertical');
+  });
+
+  it('projects one injected preview across document, binding, and transform-step selections', async () => {
+    const preview = {
+      status: 'ready' as const,
+      result: {
+        output: { name: 'post-operator' },
+        slots: [
+          {
+            edgeId: 'e-name',
+            targetSlotId: 'b.name',
+            path: 'name',
+            value: 'edge-local',
+          },
+        ],
+      },
+    };
+    await renderMapper({ chrome: 'embed', emptyDetail: 'collapse', preview });
+
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('post-operator');
+    expect(getActiveSeparators()).toHaveLength(2);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('edge-local');
+    expect(container!.querySelector('[data-testid="field-remap-preview-notice"]')).toBeNull();
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview,
+      selection: { kind: 'transformStep', edgeId: 'e-name', stepIndex: 0 },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('edge-local');
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-notice"]')?.textContent,
+    ).toContain('Per-step intermediate values are unavailable');
+  });
+
+  it('keeps draft/stale preview states deterministic without executing or inventing values', async () => {
+    const preview = {
+      status: 'ready' as const,
+      result: { output: { current: true }, slots: [] },
+    };
+    await renderMapper({
+      preview,
+      selection: { kind: 'draft', localId: 'draft-1' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('not executable');
+    expect(container!.querySelector('[data-testid="field-remap-preview-value"]')).toBeNull();
+
+    await rerenderMapper({
+      preview,
+      selection: { kind: 'edge', edgeId: 'missing' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('no longer available');
+  });
+
+  it('rejects result slots whose durable binding or transform step no longer exists', async () => {
+    const preview = {
+      status: 'ready' as const,
+      result: {
+        output: { current: true },
+        slots: [
+          {
+            edgeId: 'e-name',
+            targetSlotId: 'b.name',
+            path: 'name',
+            value: 'stale value',
+          },
+        ],
+      },
+    };
+    await renderMapper({
+      edges: [],
+      preview,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('no longer available');
+
+    await rerenderMapper({
+      preview,
+      selection: { kind: 'transformStep', edgeId: 'e-name', stepIndex: 1 },
+    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-unavailable"]')?.textContent,
+    ).toContain('no longer available');
+  });
+
+  it('announces injected loading and error states accessibly', async () => {
+    await renderMapper({ preview: { status: 'loading' } });
+    expect(container!.querySelector('[role="status"]')?.textContent).toContain('Updating preview');
+
+    await rerenderMapper({ preview: { status: 'error', message: 'Sample failed' } });
+    expect(container!.querySelector('[role="alert"]')?.textContent).toContain(
+      'Preview failed: Sample failed',
     );
   });
 
-  it('honors explicit chrome visibility overrides and expands when palette is unmounted', async () => {
+  it('unmounts preview rail and splitter track for explicit hidden and no-sample states', async () => {
+    const ready = {
+      status: 'ready' as const,
+      result: { output: { ready: true }, slots: [] },
+    };
+    await renderMapper({ chrome: 'embed', emptyDetail: 'collapse', preview: ready });
+    expect(container!.querySelector('[data-testid="field-remap-preview"]')).toBeTruthy();
+    expect(getActiveSeparators()).toHaveLength(2);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview: ready,
+      showPreview: false,
+    });
+    expect(container!.querySelector('[data-testid="field-remap-preview"]')).toBeNull();
+    expect(getActiveSeparators()).toHaveLength(1);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      preview: { status: 'unavailable', reason: 'no-sample' },
+    });
+    expect(container!.querySelector('[data-testid="field-remap-preview"]')).toBeNull();
+    expect(getActiveSeparators()).toHaveLength(1);
+  });
+
+  it('fills the workspace through collapsed split panes when optional rails are unmounted', async () => {
     await renderMapper({
       chrome: 'embed',
       showFlowHint: true,
@@ -307,6 +451,60 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(
       container!.querySelector('.workbench-field-remap-flow__workspace--without-palette'),
     ).toBeTruthy();
+    expect(
+      container!
+        .querySelector('.workbench-field-remap-flow__palette-split')
+        ?.classList.contains('ui-workbench-split-view--primary-collapsed'),
+    ).toBe(true);
+    expect(
+      container!
+        .querySelector('.workbench-field-remap-flow__canvas-detail-split')
+        ?.classList.contains('ui-workbench-split-view--secondary-collapsed'),
+    ).toBe(true);
+    expect(getActiveSeparators()).toHaveLength(0);
+  });
+
+  it('preserves the canvas and React Flow viewport identity while collapsed detail toggles', async () => {
+    await renderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      showConvertPalette: false,
+      selection: null,
+    });
+
+    const canvas = container!.querySelector('[data-testid="field-remap-flow"]');
+    const reactFlow = container!.querySelector('.react-flow');
+    const viewport = container!.querySelector('.react-flow__viewport');
+    expect(canvas).toBeTruthy();
+    expect(reactFlow).toBeTruthy();
+    expect(viewport).toBeTruthy();
+    expect(getActiveSeparators()).toHaveLength(0);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      showConvertPalette: false,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+    });
+
+    expect(container!.querySelector('[data-testid="field-remap-flow"]')).toBe(canvas);
+    expect(container!.querySelector('.react-flow')).toBe(reactFlow);
+    expect(container!.querySelector('.react-flow__viewport')).toBe(viewport);
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expect(getActiveSeparators()).toHaveLength(1);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      emptyDetail: 'collapse',
+      showConvertPalette: false,
+      selection: null,
+    });
+
+    expect(container!.querySelector('[data-testid="field-remap-flow"]')).toBe(canvas);
+    expect(container!.querySelector('.react-flow')).toBe(reactFlow);
+    expect(container!.querySelector('.react-flow__viewport')).toBe(viewport);
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
+    expect(getActiveSeparators()).toHaveLength(0);
   });
 
   it('fires pane context-menu callback with selection payload', async () => {

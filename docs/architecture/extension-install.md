@@ -7,7 +7,7 @@ host-neutral persistence model for Workbench Kit.
 
 - Install extensions from a **static catalog feed** without runtime `npm install`
 - Persist user install choices through a `WorkbenchStorageAdapter`
-- Enable/disable installed extensions with a full page reload
+- Apply eligible unselected declarative theme enable/disable changes live; reload other changes
 - Resolve installed sample extensions from the build-time bundled extension set
 
 ## Catalog schema
@@ -147,8 +147,8 @@ Semantic scopes (`WorkbenchStorageScope`: `user` | `workspace` | `session` |
 
 Browser hosts can keep using `localStorage` implicitly. Desktop or embedded
 hosts can pass a file-backed or user-data-backed adapter through
-`WorkbenchProvider.installedExtensionsStorage` and the extension management
-model options.
+`WorkbenchProvider.installedExtensionsStorage`. The provider is the sole owner
+of the live installed-record snapshot used by extension management.
 
 ## Extensions lock / integrity
 
@@ -190,6 +190,58 @@ keyed by extension id + permissions rather than publisher):
 If the plan later requests additional permissions, the fingerprint changes and
 the user is prompted again.
 
+## Uninstall v1
+
+The shell management model derives uninstall eligibility from installed-record
+ownership. `ExtensionManagementEntry.canUninstall` is optional and defaults to
+false; it is true only for a non-built-in `source: 'installed'` entry with a
+matching persisted `InstalledExtensionRecord`. Legacy consumers that omit the
+field and `ExtensionManagementPanelProps.onUninstall` remain non-uninstallable.
+
+The action re-checks the installed record instead of trusting the projected UI
+flag. Missing records, bundled entries, and built-ins are deterministic no-ops.
+For an eligible entry the model removes only that record, persists the complete
+next list, and updates the local projection only after the write commits. Failed
+writes retain the previous projection, report the standard persistence
+diagnostic, and do not schedule reload.
+
+A committed uninstall uses the same full-page reload boundary as install and
+enable/disable. It does not unregister executable contributions live and does
+not revoke `ExtensionInstallTrustRecord` state; lifecycle teardown and explicit
+trust revocation remain separate operations.
+
+**UX review residual:** v1 follows the existing compact management action row.
+Confirmation behavior and dense-sidebar action placement remain a separate UX
+review; they do not change the persistence and eligibility contract above.
+
+## Theme soft lifecycle v1
+
+An already-installed extension can enable or disable without a reload only when
+it contributes one or more themes and has no executable module, localization or
+other contribution, capability, hard dependency, registered hard dependent, or
+integrity rejection. The shell must also resolve the current theme, light preset,
+and dark preset against the current option sources and `ThemeRegistry` revision.
+A selected theme pack and any missing, unknown, ambiguous, or stale selection
+snapshot fail closed to the reload path. That uncertain path does not register or
+unregister themes, persist the requested state, or publish a new projection.
+
+`WorkbenchProvider` owns the installed-record snapshot and exact extension
+registration handles. Enable registers the extension and verifies its themes
+before persisting and publishing. Disable unregisters and verifies theme removal
+before persisting and publishing. A failed write compensates the registry change
+and retains the prior projection. Successful soft transitions report `applied`;
+committed fallback transitions report `reloadRequired`; integrity, runtime, or
+persistence failures report `failed`.
+
+`ThemeRegistry.onDidChangeThemes` and its revision cover both registration and
+removal, so an open Settings → Appearance surface updates without navigation.
+Install and uninstall retain their reload boundary, trust records remain
+separate, and executable teardown is outside this v1 slice.
+
+**UX review residual:** management surfaces show the transition result beside
+the affected entry using the established compact badge pattern. Placement,
+duration, and richer recovery guidance still require a dedicated UX review.
+
 ## Recommend ≠ enable
 
 `.workbench/extensions.json` `recommendations` must not be treated as an
@@ -203,9 +255,10 @@ policy without listing them under `enabled` in the shared config file.
 - Extensions pulled in by a plan must have catalog install sources unless they
   are already installed and only need enabling.
 - Static manifest JSON paths are reserved for future manifest-url installs; MVP sample host uses bundled ids
-- Browser install/uninstall/enable/disable currently require
+- Browser install/uninstall and non-eligible enable/disable changes require
   `window.location.reload()`; non-browser hosts should provide an equivalent
-  extension reload or restart path.
+  extension reload or restart path. Eligible theme-only toggles use the soft
+  lifecycle described above.
 - No runtime npm package download or external JS execution
 - Install planning is framework-neutral and host-owned UI decides how to present
   approval, permission, and blocking diagnostic state.

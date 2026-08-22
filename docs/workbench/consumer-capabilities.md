@@ -214,13 +214,16 @@ layout defaults for review/patch flows.
 
 ### `WorkbenchEditorTabs`, `useWorkbenchEditorTabContextMenu`
 
-**Purpose:** Editor tab strip with a built-in Close / Close others / Close all context menu for
-`WorkbenchStandaloneShell` hosts that own tab state without pin, split, or delete actions.
+**Purpose:** Editor tab strip with a built-in Close / Close others / Close to the right / Close
+all context menu for `WorkbenchStandaloneShell` hosts that own tab state without pin, split, or
+delete actions.
 
 **Import:** `@workbench-kit/react/editor-tabs` or `@workbench-kit/react/workbench/shell`
 
-**Key props / options:** Same as `EditorTabs`, plus optional `onCloseAll` / `onCloseOthers`.
-Defaults call `onClose` for every closable tab (`closable !== false`).
+**Key props / options:** Same as `EditorTabs`, plus optional `onCloseAll` / `onCloseOthers` /
+`onCloseToRight` bulk-close overrides and `getExtraTabContextMenuItems`. Defaults call `onClose`
+for the matching closable tabs (`closable !== false`). Additional items append after the built-in
+close group rather than replacing it.
 
 **When to use:** Standalone secondary-area tab bars that need the standard close menu with
 minimal host glue.
@@ -601,7 +604,7 @@ Compose `ChatPhasedRunProgress` into `ChatMessageItem` `footer` / `afterMessage`
 
 **Purpose:** Fixed-position menu (`items`, `x`, `y`, `onClose`). Items: label, icon, shortcut, `onSelect`, separators. Icon and shortcut columns are opt-in: when no item provides `icon` / `shortcut`, those columns are omitted (`data-has-icons` / `data-has-shortcuts`) so empty grid tracks do not add side padding. Selecting an item calls `onSelect` then `onClose`. Dismiss also runs on outside pointer down, Escape, scroll, and resize (`useFixedOverlayDismiss`). Coordinates are viewport (`clientX` / `clientY`).
 
-**Keyboard / a11y:** `role="menu"` / `menuitem` with a WAI-ARIA menu model — ArrowUp/ArrowDown and Home/End move highlight (skipping disabled items and separators), Enter/Space activate, Escape closes. Highlight stays in sync with pointer hover (`data-highlighted`); roving `tabIndex` keeps only the highlighted enabled item at `0`. Nested submenus are out of scope for this surface.
+**Keyboard / a11y:** `role="menu"` / `menuitem` with a WAI-ARIA menu model — ArrowUp/ArrowDown and Home/End move highlight (skipping disabled items and separators), Enter/Space activate, Escape closes. On Escape only, focus returns to a connected `returnFocusTarget` when supplied, or to the active element captured before menu-item focus. Activation, outside pointer, scroll, and resize dismissal do not restore focus. Highlight stays in sync with pointer hover (`data-highlighted`); roving `tabIndex` keeps only the highlighted enabled item at `0`. Nested submenus are out of scope for this surface.
 
 **When to use:** Tab context menu, catalog item menu, facet overflow.
 
@@ -784,6 +787,18 @@ longer need CSS grid overrides for their widths. Empty-detail title/body also ac
 Panel forwards the same props. Chrome nouns (`Bindings`, Convert palette copy) accept `labels`
 / optional `t(key, fallback)` on Flow and Panel — hosts can override to “Field maps” /
 “Mappings” without CSS text hacks (`resolveFieldRemapChromeLabels`).
+
+**Runtime preview:** `FieldRemapPanel` has one headless preview execution owner. Its existing
+output pane and optional `showFlowPreview` Flow rail consume the same precomputed snapshot.
+Direct `FieldRemapFlowMapper` embeds are presentation-only: inject a
+`FieldRemapPreviewState` through `preview`, and set `showPreview={false}` to unmount the rail
+and splitter track. `hidden` / `no-sample` snapshots also reserve no track.
+
+Selection changes do not evaluate mappings. Empty/operator selection shows final output after
+operators; edge selection shows its pre-operator slot value; transform-step selection shows
+the same final binding value with an explicit no-intermediate notice. Draft, stale selection,
+transform-step intermediate, and operator-local intermediate values are not executable preview
+states. The snapshot is runtime-only and never enters document, history or persistence state.
 
 **Narrow embeds:** Flow workspace breakpoints use the width of `.workbench-field-remap-flow`,
 not the browser viewport, so a narrow secondary pane stacks palette, canvas, and detail instead

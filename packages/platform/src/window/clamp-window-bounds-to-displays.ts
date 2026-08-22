@@ -1,11 +1,12 @@
 import type { DisplayWorkArea, RectLike } from './types.js';
 
-/** Reasonable minimum restored window size. */
+/** Reasonable default minimum restored window size. */
 export const WINDOW_BOUNDS_MIN_WIDTH = 200;
 export const WINDOW_BOUNDS_MIN_HEIGHT = 100;
 
-function rectsIntersect(a: RectLike, b: RectLike): boolean {
-  return a.x < b.x + b.width && a.x + a.width > b.x && a.y < b.y + b.height && a.y + a.height > b.y;
+export interface ClampWindowBoundsToDisplaysOptions {
+  readonly minWidth?: number;
+  readonly minHeight?: number;
 }
 
 function centerOf(rect: RectLike): { x: number; y: number } {
@@ -18,39 +19,62 @@ function distanceSquared(a: { x: number; y: number }, b: { x: number; y: number 
   return dx * dx + dy * dy;
 }
 
-function pickTargetDisplay(
-  bounds: RectLike,
-  displays: readonly DisplayWorkArea[],
-): DisplayWorkArea {
-  const center = centerOf(bounds);
-  const containing = displays.find((display) => {
-    const { workArea } = display;
-    return (
-      center.x >= workArea.x &&
-      center.x < workArea.x + workArea.width &&
-      center.y >= workArea.y &&
-      center.y < workArea.y + workArea.height
-    );
-  });
-  if (containing) {
-    return containing;
-  }
-
-  let nearest = displays[0]!;
-  let nearestDistance = Number.POSITIVE_INFINITY;
-  for (const display of displays) {
-    const distance = distanceSquared(center, centerOf(display.workArea));
-    if (distance < nearestDistance) {
-      nearest = display;
-      nearestDistance = distance;
-    }
-  }
-  return nearest;
+function rectIntersectionArea(left: RectLike, right: RectLike): number {
+  const width = Math.max(
+    0,
+    Math.min(left.x + left.width, right.x + right.width) - Math.max(left.x, right.x),
+  );
+  const height = Math.max(
+    0,
+    Math.min(left.y + left.height, right.y + right.height) - Math.max(left.y, right.y),
+  );
+  return width * height;
 }
 
-function clampToWorkArea(bounds: RectLike, workArea: RectLike): RectLike {
-  const width = Math.min(Math.max(WINDOW_BOUNDS_MIN_WIDTH, bounds.width), workArea.width);
-  const height = Math.min(Math.max(WINDOW_BOUNDS_MIN_HEIGHT, bounds.height), workArea.height);
+/** Select greatest intersection, using center distance for ties and off-screen bounds. */
+export function selectWindowDisplayForBounds<TDisplay extends DisplayWorkArea>(
+  bounds: RectLike,
+  displays: readonly TDisplay[],
+): TDisplay | null {
+  if (displays.length === 0) {
+    return null;
+  }
+
+  const center = centerOf(bounds);
+  let selected = displays[0]!;
+  let selectedIntersection = rectIntersectionArea(bounds, selected.workArea);
+  let selectedDistance = distanceSquared(center, centerOf(selected.workArea));
+  for (const display of displays.slice(1)) {
+    const intersection = rectIntersectionArea(bounds, display.workArea);
+    const distance = distanceSquared(center, centerOf(display.workArea));
+    if (
+      intersection > selectedIntersection ||
+      (intersection === selectedIntersection && distance < selectedDistance)
+    ) {
+      selected = display;
+      selectedIntersection = intersection;
+      selectedDistance = distance;
+    }
+  }
+  return selected;
+}
+
+function resolveMinimum(value: number | undefined, fallback: number, name: string): number {
+  const resolved = value ?? fallback;
+  if (!Number.isFinite(resolved) || resolved < 0) {
+    throw new Error(`${name} must be a finite non-negative number.`);
+  }
+  return resolved;
+}
+
+function clampToWorkArea(
+  bounds: RectLike,
+  workArea: RectLike,
+  minWidth: number,
+  minHeight: number,
+): RectLike {
+  const width = Math.min(Math.max(minWidth, bounds.width), workArea.width);
+  const height = Math.min(Math.max(minHeight, bounds.height), workArea.height);
   const maxX = workArea.x + workArea.width - width;
   const maxY = workArea.y + workArea.height - height;
   const x = Math.min(Math.max(bounds.x, workArea.x), maxX);
@@ -59,36 +83,24 @@ function clampToWorkArea(bounds: RectLike, workArea: RectLike): RectLike {
 }
 
 /**
- * Clamp saved window bounds so size stays usable and the rect sits on a
- * known display work area (off-screen recovery when a monitor was removed).
+ * Clamp Window bounds into the greatest-intersection display. Fully off-screen
+ * bounds recover to the display with the nearest center. Hosts may override only
+ * minimum size policy.
  */
 export function clampWindowBoundsToDisplays(
   bounds: RectLike,
   displays: readonly DisplayWorkArea[],
+  options: ClampWindowBoundsToDisplaysOptions = {},
 ): RectLike {
-  const width = Math.max(WINDOW_BOUNDS_MIN_WIDTH, bounds.width);
-  const height = Math.max(WINDOW_BOUNDS_MIN_HEIGHT, bounds.height);
-  const sized: RectLike = { x: bounds.x, y: bounds.y, width, height };
-
-  if (displays.length === 0) {
-    return sized;
-  }
-
-  const maxWorkWidth = Math.max(...displays.map((display) => display.workArea.width));
-  const maxWorkHeight = Math.max(...displays.map((display) => display.workArea.height));
-  const fitted: RectLike = {
-    x: sized.x,
-    y: sized.y,
-    width: Math.min(sized.width, maxWorkWidth),
-    height: Math.min(sized.height, maxWorkHeight),
+  const minWidth = resolveMinimum(options.minWidth, WINDOW_BOUNDS_MIN_WIDTH, 'minWidth');
+  const minHeight = resolveMinimum(options.minHeight, WINDOW_BOUNDS_MIN_HEIGHT, 'minHeight');
+  const sized: RectLike = {
+    x: bounds.x,
+    y: bounds.y,
+    width: Math.max(minWidth, bounds.width),
+    height: Math.max(minHeight, bounds.height),
   };
 
-  const intersectsAny = displays.some((display) => rectsIntersect(fitted, display.workArea));
-
-  if (intersectsAny) {
-    return clampToWorkArea(fitted, pickTargetDisplay(fitted, displays).workArea);
-  }
-
-  const primary = displays.find((display) => display.isPrimary) ?? displays[0]!;
-  return clampToWorkArea(fitted, primary.workArea);
+  const target = selectWindowDisplayForBounds(sized, displays);
+  return target ? clampToWorkArea(sized, target.workArea, minWidth, minHeight) : sized;
 }

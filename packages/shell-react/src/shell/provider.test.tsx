@@ -35,6 +35,7 @@ Object.defineProperty(Element.prototype, 'scrollIntoView', {
 import {
   DEFAULT_WORKBENCH_LOCAL_PREFERENCE_STORAGE_KEY,
   DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+  DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   WorkbenchProvider as BareWorkbenchProvider,
   WorkbenchShell,
   useEditorService,
@@ -191,7 +192,7 @@ function createMemoryStorage(): WorkbenchStorageAdapter {
 function CommandProbe() {
   const workbench = useWorkbench();
 
-  return <span>{workbench.extensionRegistry.getExtensions().length}</span>;
+  return <span>{workbench.extensionCatalog.getExtensions().length}</span>;
 }
 
 function ContextKeyValueProbe({ contextKey }: { contextKey: string }) {
@@ -200,18 +201,38 @@ function ContextKeyValueProbe({ contextKey }: { contextKey: string }) {
   return <span>{String(contextKeyService.get(contextKey))}</span>;
 }
 
+interface KeybindingStateProbeValue {
+  readonly overrides: WorkbenchContextValue['keybindingOverrides'];
+  readonly setOverride: WorkbenchContextValue['setCommandKeybindingOverride'];
+}
+
+function KeybindingStateProbe({
+  onValue,
+}: {
+  onValue: (value: KeybindingStateProbeValue) => void;
+}) {
+  const { keybindingOverrides, setCommandKeybindingOverride } = useWorkbench();
+
+  useEffect(() => {
+    onValue({
+      overrides: keybindingOverrides,
+      setOverride: setCommandKeybindingOverride,
+    });
+  }, [keybindingOverrides, onValue, setCommandKeybindingOverride]);
+
+  return null;
+}
+
 function CommandTitleProbe({ commandId }: { commandId: string }) {
   const workbench = useWorkbench();
 
-  return (
-    <span>{workbench.extensionRegistry.commands.getCommand(commandId)?.title ?? 'missing'}</span>
-  );
+  return <span>{workbench.commands.getCommand(commandId)?.title ?? 'missing'}</span>;
 }
 
 function HostThemeProbe({ themeId }: { themeId: string }) {
   const workbench = useWorkbench();
 
-  return <span>{workbench.extensionRegistry.themes.getTheme(themeId)?.label ?? 'missing'}</span>;
+  return <span>{workbench.themes.getTheme(themeId)?.label ?? 'missing'}</span>;
 }
 
 function PreferenceValueProbe({
@@ -398,7 +419,7 @@ function LayoutServiceProbe({ onReady }: { onReady: (service: LayoutService) => 
 
 type WorkbenchServiceIdentitySnapshot = Pick<
   WorkbenchContextValue,
-  'contextKeyService' | 'editorService' | 'extensionRegistry' | 'layoutService'
+  'commands' | 'contextKeyService' | 'editorService' | 'layoutService'
 >;
 
 function WorkbenchServiceIdentityProbe({
@@ -406,10 +427,10 @@ function WorkbenchServiceIdentityProbe({
 }: {
   onSnapshot: (snapshot: WorkbenchServiceIdentitySnapshot) => void;
 }) {
-  const { contextKeyService, editorService, extensionRegistry, layoutService } = useWorkbench();
+  const { commands, contextKeyService, editorService, layoutService } = useWorkbench();
 
   useEffect(() => {
-    onSnapshot({ contextKeyService, editorService, extensionRegistry, layoutService });
+    onSnapshot({ commands, contextKeyService, editorService, layoutService });
   });
 
   return null;
@@ -552,7 +573,7 @@ describe('WorkbenchProvider', () => {
     const secondSnapshot = snapshots[snapshots.length - 1];
     expect(secondSnapshot?.layoutService).toBe(firstSnapshot?.layoutService);
     expect(secondSnapshot?.editorService).toBe(firstSnapshot?.editorService);
-    expect(secondSnapshot?.extensionRegistry).toBe(firstSnapshot?.extensionRegistry);
+    expect(secondSnapshot?.commands).toBe(firstSnapshot?.commands);
     expect(secondSnapshot?.contextKeyService).toBe(firstSnapshot?.contextKeyService);
     expect(activate).toHaveBeenCalledTimes(1);
     expect(container.textContent).toContain('Second render');
@@ -610,6 +631,232 @@ describe('WorkbenchProvider', () => {
     );
 
     expect(markup).toContain('Hello World: Say Hello');
+  });
+
+  it('does not write old keybinding state into a newly selected persistence target', async () => {
+    const storageKeyA = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/generation-a`;
+    const storageKeyB = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/generation-b`;
+    const overridesA = [{ command: 'command.a', key: 'ctrl+a' }];
+    const overridesB = [{ command: 'command.b', key: 'ctrl+b' }];
+    const valuesA = new Map([[storageKeyA, JSON.stringify(overridesA)]]);
+    const valuesB = new Map([[storageKeyB, JSON.stringify(overridesB)]]);
+    const writesB: string[] = [];
+    const storageA: WorkbenchStorageAdapter = {
+      getItem: (key) => valuesA.get(key) ?? null,
+      setItem: (key, value) => valuesA.set(key, value),
+    };
+    const storageB: WorkbenchStorageAdapter = {
+      getItem: (key) => valuesB.get(key) ?? null,
+      setItem: (key, value) => {
+        writesB.push(value);
+        valuesB.set(key, value);
+      },
+    };
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let latest: KeybindingStateProbeValue | undefined;
+    const onValue = (value: KeybindingStateProbeValue) => {
+      latest = value;
+    };
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            keybindingOverridesStorage={storageA}
+            keybindingOverridesStorageKey={storageKeyA}
+            persistKeybindingOverrides
+          >
+            <KeybindingStateProbe onValue={onValue} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+    expect(latest?.overrides).toEqual(overridesA);
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            keybindingOverridesStorage={storageB}
+            keybindingOverridesStorageKey={storageKeyB}
+            persistKeybindingOverrides
+          >
+            <KeybindingStateProbe onValue={onValue} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    expect(latest?.overrides).toEqual(overridesB);
+    expect(writesB.length).toBeGreaterThan(0);
+    expect(
+      writesB.every((value) => JSON.stringify(JSON.parse(value)) === JSON.stringify(overridesB)),
+    ).toBe(true);
+    expect(JSON.parse(valuesB.get(storageKeyB) ?? '[]')).toEqual(overridesB);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('keeps failed-generation keybindings in memory without acknowledging an old write', async () => {
+    const storageKeyA = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/failure-a`;
+    const storageKeyB = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/failure-b`;
+    const overridesA = [{ command: 'command.a', key: 'ctrl+a' }];
+    const storageA = createMemoryStorage();
+    storageA.setItem(storageKeyA, JSON.stringify(overridesA));
+    let writesB = 0;
+    const storageB: WorkbenchStorageAdapter = {
+      getItem() {
+        throw new Error('backend read detail');
+      },
+      setItem() {
+        writesB += 1;
+        throw new Error('backend write detail');
+      },
+    };
+    const diagnostics = vi.fn();
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let latest: KeybindingStateProbeValue | undefined;
+    const onValue = (value: KeybindingStateProbeValue) => {
+      latest = value;
+    };
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            keybindingOverridesStorage={storageA}
+            keybindingOverridesStorageKey={storageKeyA}
+            onPersistenceDiagnostic={diagnostics}
+            persistKeybindingOverrides
+          >
+            <KeybindingStateProbe onValue={onValue} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            keybindingOverridesStorage={storageB}
+            keybindingOverridesStorageKey={storageKeyB}
+            onPersistenceDiagnostic={diagnostics}
+            persistKeybindingOverrides
+          >
+            <KeybindingStateProbe onValue={onValue} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    expect(latest?.overrides).toEqual([]);
+    expect(writesB).toBe(0);
+    expect(diagnostics).toHaveBeenCalledTimes(1);
+    expect(diagnostics).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        code: 'read_failed',
+        operation: 'read',
+        storageKey: storageKeyB,
+      }),
+    );
+
+    await act(async () => {
+      latest?.setOverride('command.b', 'ctrl+b');
+    });
+
+    expect(latest?.overrides).toEqual([{ command: 'command.b', key: 'ctrl+b' }]);
+    expect(writesB).toBe(1);
+    expect(diagnostics).toHaveBeenCalledTimes(2);
+    expect(diagnostics).toHaveBeenLastCalledWith(
+      expect.objectContaining({
+        code: 'write_failed',
+        operation: 'write',
+        storageKey: storageKeyB,
+      }),
+    );
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('keeps provider services stable when only the diagnostic sink identity changes', async () => {
+    let reads = 0;
+    const storage: WorkbenchStorageAdapter = {
+      getItem() {
+        reads += 1;
+        throw new Error('backend read detail');
+      },
+      setItem() {},
+    };
+    const diagnostics = vi.fn();
+    const services: LayoutService[] = [];
+    const onReady = (service: LayoutService) => {
+      services.push(service);
+    };
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            installedExtensionsStorage={storage}
+            installedExtensionsStorageKey="workbench-kit/.workbench/installed-extensions/a"
+            onPersistenceDiagnostic={(diagnostic) => diagnostics(diagnostic)}
+          >
+            <LayoutServiceProbe onReady={onReady} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+    const serviceAfterMount = services[services.length - 1];
+    const readsAfterMount = reads;
+    expect(diagnostics).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            installedExtensionsStorage={storage}
+            installedExtensionsStorageKey="workbench-kit/.workbench/installed-extensions/a"
+            onPersistenceDiagnostic={(diagnostic) => diagnostics(diagnostic)}
+          >
+            <LayoutServiceProbe onReady={onReady} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    expect(reads).toBe(readsAfterMount);
+    expect(services[services.length - 1]).toBe(serviceAfterMount);
+    expect(diagnostics).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            installedExtensionsStorage={storage}
+            installedExtensionsStorageKey="workbench-kit/.workbench/installed-extensions/b"
+            onPersistenceDiagnostic={(diagnostic) => diagnostics(diagnostic)}
+          >
+            <LayoutServiceProbe onReady={onReady} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    expect(reads).toBeGreaterThan(readsAfterMount);
+    expect(diagnostics).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      root.unmount();
+    });
   });
 
   it('renders a workbench shell from registered view contributions', () => {
@@ -1081,6 +1328,81 @@ describe('WorkbenchProvider', () => {
     expect(dialog?.textContent).toContain('Settings');
     expect(dialog?.textContent).toContain('workbench.settings.openOnStartup');
     expect(dialog?.textContent).not.toContain('workbench.accounts.enabledEnable');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('opens a focused settings category through the shell command host context', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: [],
+            recommendations: [],
+          }}
+        >
+          <WorkbenchShell
+            additionalSettingsCategories={[
+              {
+                content: <span>Focused settings category</span>,
+                id: 'test.settings.category',
+                label: 'Test category',
+                title: 'Test category',
+              },
+            ]}
+            commandHost={{
+              additionalCommands: [
+                {
+                  id: 'test.settings.open-category',
+                  label: 'Open focused settings category',
+                },
+              ],
+              onRunCommand: (command, context) => {
+                if (command.id !== 'test.settings.open-category') return false;
+                context.openSettings('test.settings.category');
+                return true;
+              },
+            }}
+            editorArea={<main>Editor Area</main>}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          key: 'P',
+          shiftKey: true,
+        }),
+      );
+    });
+    await flushReactEffects();
+
+    const command = container.querySelector<HTMLButtonElement>(
+      '[data-command-id="test.settings.open-category"]',
+    );
+    expect(command).not.toBeNull();
+
+    await act(async () => {
+      command?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const dialog = container.querySelector('[role="dialog"]');
+    expect(dialog?.textContent).toContain('Settings');
+    expect(dialog?.textContent).toContain('Focused settings category');
 
     await act(async () => {
       root.unmount();

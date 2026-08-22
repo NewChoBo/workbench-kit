@@ -1,15 +1,26 @@
-import { clampWindowBoundsToDisplays } from './clamp-window-bounds-to-displays.js';
+import {
+  clampWindowBoundsToDisplays,
+  type ClampWindowBoundsToDisplaysOptions,
+} from './clamp-window-bounds-to-displays.js';
 import type { DisplayWorkArea, RectLike, RememberedWindowState } from './types.js';
 
 /** Default restored size before capping to the primary work area. */
 export const DEFAULT_WINDOW_OPEN_WIDTH = 1200;
 export const DEFAULT_WINDOW_OPEN_HEIGHT = 800;
 
+export interface DefaultWindowOpenBoundsOptions {
+  readonly width?: number;
+  readonly height?: number;
+  readonly fallbackWorkArea?: RectLike;
+}
+
 export interface ResolveWindowOpenLayoutInput {
   saved: RememberedWindowState | null;
   displays: readonly DisplayWorkArea[];
   defaults?: RectLike;
+  defaultBoundsOptions?: DefaultWindowOpenBoundsOptions;
   remember: boolean;
+  clampOptions?: ClampWindowBoundsToDisplaysOptions;
 }
 
 export interface ResolvedWindowOpenLayout {
@@ -25,24 +36,32 @@ function resolvePrimaryWorkArea(displays: readonly DisplayWorkArea[]): RectLike 
 }
 
 /** Center a default-sized window on the primary display work area. */
-export function createDefaultWindowOpenBounds(displays: readonly DisplayWorkArea[]): RectLike {
-  const workArea = resolvePrimaryWorkArea(displays);
+export function createDefaultWindowOpenBounds(
+  displays: readonly DisplayWorkArea[],
+  options: DefaultWindowOpenBoundsOptions = {},
+): RectLike {
+  const width = options.width ?? DEFAULT_WINDOW_OPEN_WIDTH;
+  const height = options.height ?? DEFAULT_WINDOW_OPEN_HEIGHT;
+  if (!Number.isFinite(width) || !Number.isFinite(height) || !(width > 0) || !(height > 0)) {
+    throw new Error('Default Window width and height must be finite positive numbers.');
+  }
+  const workArea = resolvePrimaryWorkArea(displays) ?? options.fallbackWorkArea ?? null;
   if (!workArea) {
     return {
       x: 0,
       y: 0,
-      width: DEFAULT_WINDOW_OPEN_WIDTH,
-      height: DEFAULT_WINDOW_OPEN_HEIGHT,
+      width,
+      height,
     };
   }
 
-  const width = Math.min(DEFAULT_WINDOW_OPEN_WIDTH, workArea.width);
-  const height = Math.min(DEFAULT_WINDOW_OPEN_HEIGHT, workArea.height);
+  const fittedWidth = Math.min(width, workArea.width);
+  const fittedHeight = Math.min(height, workArea.height);
   return {
-    x: workArea.x + Math.round((workArea.width - width) / 2),
-    y: workArea.y + Math.round((workArea.height - height) / 2),
-    width,
-    height,
+    x: workArea.x + Math.round((workArea.width - fittedWidth) / 2),
+    y: workArea.y + Math.round((workArea.height - fittedHeight) / 2),
+    width: fittedWidth,
+    height: fittedHeight,
   };
 }
 
@@ -54,14 +73,15 @@ export function createDefaultWindowOpenBounds(displays: readonly DisplayWorkArea
 export function resolveWindowOpenLayout(
   input: ResolveWindowOpenLayoutInput,
 ): ResolvedWindowOpenLayout {
-  const defaults = input.defaults ?? createDefaultWindowOpenBounds(input.displays);
+  const defaults =
+    input.defaults ?? createDefaultWindowOpenBounds(input.displays, input.defaultBoundsOptions);
 
   if (!input.remember || input.saved === null) {
     return { bounds: defaults, isMaximized: false };
   }
 
   return {
-    bounds: clampWindowBoundsToDisplays(input.saved.bounds, input.displays),
+    bounds: clampWindowBoundsToDisplays(input.saved.bounds, input.displays, input.clampOptions),
     isMaximized: input.saved.isMaximized,
   };
 }

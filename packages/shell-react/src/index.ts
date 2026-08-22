@@ -4,7 +4,12 @@ export {
   WorkbenchProvider,
   useWorkbench,
   type WorkbenchContextValue,
+  type WorkbenchExtensionActivationAccess,
+  type WorkbenchExtensionActivationStateReader,
+  type WorkbenchExtensionCatalogReader,
   type WorkbenchProviderProps,
+  type WorkbenchSettingsCapabilityPublication,
+  type WorkbenchSettingsCapabilityPublisher,
   type WorkbenchStorageAdapter,
   type WorkbenchWorkspaceHostPort,
 } from './shell/provider.js';
@@ -99,12 +104,20 @@ export {
   type SampleJdwWidgetPreviewRenderData,
 } from './jdw/document-view-data.js';
 export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
-export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
+export {
+  FieldRemapPanel,
+  type FieldRemapHistoryActions,
+  type FieldRemapHistoryAvailability,
+  type FieldRemapHistoryOwner,
+  type FieldRemapHistorySnapshot,
+  type FieldRemapPanelProps,
+} from './field-remap/panel.js';
 export {
   FieldRemapFlowMapper,
   type FieldRemapFlowActions,
   type FieldRemapFlowMapperProps,
 } from './field-remap/flow.js';
+export type { FieldRemapPreviewState } from './field-remap/preview.js';
 export {
   defaultFieldRemapChromeLabels,
   fieldRemapChromeLabelKeys,
@@ -206,6 +219,8 @@ export {
 export {
   WorkbenchShell,
   type WorkbenchLocaleOption,
+  type WorkbenchShellCommandHostProps,
+  type WorkbenchShellCommandRunContext,
   type WorkbenchShellProps,
   type WorkbenchThemeOption,
 } from './shell/shell.js';

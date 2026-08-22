@@ -43,7 +43,7 @@
     "check:commit-safety": "pnpm check:public-references && pnpm check:secrets",
     "check:workspace-isolation": "node ./scripts/check-workspace-isolation.mjs",
     "check:jdw-schemas": "node ./scripts/check-jdw-schemas.mjs",
-    "typecheck": "pnpm --filter \"@workbench-kit/*\" --if-present typecheck",
+    "typecheck": "pnpm --filter \"@workbench-kit/*\" --filter workbench-sample --if-present typecheck",
     "typecheck:foundation": "pnpm --filter @workbench-kit/base --filter @workbench-kit/platform --filter @workbench-kit/contracts --filter @workbench-kit/services --filter @workbench-kit/runtime --filter @workbench-kit/adapters --if-present typecheck",
     "typecheck:workbench": "pnpm --filter \"@workbench-kit/workbench-*\" --filter @workbench-kit/shell-react --filter @workbench-kit/workspace --if-present typecheck",
     "typecheck:jdw": "pnpm --filter \"@workbench-kit/jdw*\" --filter @workbench-kit/react --if-present typecheck",

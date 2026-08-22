@@ -40,7 +40,7 @@ const packageRules = toRuleMap({
   ],
   '@workbench-kit/jdw': ['@workbench-kit/contracts'],
   '@workbench-kit/jdw-editor': ['@workbench-kit/jdw', '@workbench-kit/react'],
-  '@workbench-kit/field-remap': [],
+  '@workbench-kit/field-remap': ['@workbench-kit/contracts'],
   '@workbench-kit/react': [
     '@workbench-kit/adapters',
     '@workbench-kit/contracts',

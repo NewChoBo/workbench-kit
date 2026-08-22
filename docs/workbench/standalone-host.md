@@ -141,9 +141,11 @@ Integrated shell demo builds context keys via `createIntegratedShellContextKeys`
 `WorkbenchEditorTabs` (or `useWorkbenchEditorTabContextMenu` with `EditorTabs`) from
 `@workbench-kit/react/editor-tabs` / `@workbench-kit/react/workbench/shell`.
 
-That surface wires Close / Close others / Close all through the shared editor command presets
-and respects `closable: false` (Close disabled; skipped by Close others / Close all). Hosts only
-supply `tabs`, `onSelect`, and `onClose`.
+That surface wires Close / Close others / Close to the right / Close all through the shared
+editor command presets and respects `closable: false` (Close disabled; skipped by bulk close
+actions). Hosts normally supply `tabs`, `onSelect`, and `onClose`. They may override
+close-to-right with `onCloseToRight` or append focused host actions with
+`getExtraTabContextMenuItems`; built-in close actions remain present.
 
 ## Non-goals (host responsibility)
 

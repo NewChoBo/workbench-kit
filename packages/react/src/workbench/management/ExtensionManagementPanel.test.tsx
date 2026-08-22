@@ -81,6 +81,71 @@ describe('ExtensionManagementPanel', () => {
     expect(markup).toContain('Permissions');
     expect(markup).toContain('workspace.read');
     expect(markup).toContain('Diagnostics');
+    expect(markup).not.toContain('Uninstall');
+  });
+
+  it.each([
+    ['settings panel', ExtensionManagementPanel],
+    ['activity sidebar', ExtensionManagementSidebar],
+  ] as const)('exposes uninstall only for explicitly eligible entries in the %s', (_, Surface) => {
+    const markup = renderToStaticMarkup(
+      createElement(Surface, {
+        browseEntries: [],
+        ...(Surface === ExtensionManagementSidebar ? { defaultTab: 'installed' as const } : {}),
+        installedEntries: [
+          {
+            category: 'builtin',
+            displayName: 'Explorer',
+            enabled: true,
+            id: 'workbench-kit.builtin.explorer',
+            source: 'bundled',
+          },
+          {
+            category: 'utility',
+            displayName: 'Active Without Record',
+            enabled: true,
+            id: 'workbench-kit.test.active-without-record',
+            source: 'installed',
+          },
+          {
+            canUninstall: true,
+            category: 'editor',
+            displayName: 'JSON Preview',
+            enabled: true,
+            id: 'workbench-kit.samples.json-preview',
+            source: 'installed',
+          },
+        ],
+        onUninstall: () => undefined,
+      }),
+    );
+
+    expect(markup.match(/>Uninstall<\/button>/g)).toHaveLength(1);
+  });
+
+  it('renders uninstall pending through the separate sidebar state', () => {
+    const markup = renderToStaticMarkup(
+      createElement(ExtensionManagementSidebar, {
+        browseEntries: [],
+        defaultTab: 'installed',
+        installedEntries: [
+          {
+            canUninstall: true,
+            category: 'editor',
+            displayName: 'JSON Preview',
+            enabled: true,
+            id: 'workbench-kit.samples.json-preview',
+            source: 'installed',
+          },
+        ],
+        onToggleEnabled: () => undefined,
+        onUninstall: () => undefined,
+        pendingUninstallEntryId: 'workbench-kit.samples.json-preview',
+      }),
+    );
+
+    expect(markup).toContain('>Reloading…</button>');
+    expect(markup.match(/disabled=""/g)).toHaveLength(2);
   });
 
   it('renders extension sidebar action buttons outside row buttons', () => {
@@ -107,6 +172,48 @@ describe('ExtensionManagementPanel', () => {
     expect(markup).not.toContain(
       '<button type="button" class="ui-sidebar-list-item workbench-extensions-sidebar__item"',
     );
+  });
+
+  it.each([
+    ['settings panel', ExtensionManagementPanel],
+    ['activity sidebar', ExtensionManagementSidebar],
+  ] as const)('renders applied and failed transition evidence in the %s', (_, Surface) => {
+    const markup = renderToStaticMarkup(
+      createElement(Surface, {
+        browseEntries: [],
+        ...(Surface === ExtensionManagementSidebar ? { defaultTab: 'installed' as const } : {}),
+        installedEntries: [
+          {
+            category: 'theme',
+            displayName: 'Applied Theme',
+            enabled: true,
+            id: 'workbench-kit.samples.applied-theme',
+            source: 'installed',
+            transition: {
+              kind: 'applied',
+              message: 'Applied without reloading the workbench.',
+            },
+          },
+          {
+            category: 'theme',
+            displayName: 'Failed Theme',
+            enabled: false,
+            id: 'workbench-kit.samples.failed-theme',
+            source: 'installed',
+            transition: {
+              kind: 'failed',
+              message: 'The previous state was retained.',
+            },
+          },
+        ],
+      }),
+    );
+
+    expect(markup).toContain('Applied');
+    expect(markup).toContain('Applied without reloading the workbench.');
+    expect(markup).toContain('Failed');
+    expect(markup).toContain('The previous state was retained.');
+    expect(markup).toContain('Eligible unselected theme packs apply immediately.');
   });
 
   it('renders sidebar diagnostics and missing-extension alerts', () => {

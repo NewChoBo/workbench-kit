@@ -38,7 +38,7 @@ export function useActiveEditorTab(): EditorTabState | undefined {
 
 export function useEditorHost(tabId?: string): EditorHost | undefined {
   const editorService = useEditorService();
-  const { extensionRegistry, waitForExtensionStartup } = useWorkbench();
+  const { extensionActivation, waitForExtensionStartup } = useWorkbench();
   const editorState = useEditorState();
   const forceRender = useForceRender();
   const activeGroup = editorState.groups.find((group) => group.id === editorState.activeGroupId);
@@ -68,11 +68,11 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
   useEffect(() => {
     // Late onView / onCommand activations register editor host factories after the
     // first paint that restores persisted tabs. Retry host creation when they land.
-    const disposable = extensionRegistry.onDidActivateExtension(forceRender);
+    const disposable = extensionActivation.onDidActivateExtension(forceRender);
     return () => {
       disposable.dispose();
     };
-  }, [extensionRegistry, forceRender]);
+  }, [extensionActivation, forceRender]);
 
   if (!resolvedTabId) {
     return undefined;
@@ -87,7 +87,7 @@ export function useEditorHost(tabId?: string): EditorHost | undefined {
 export function useEditorDocumentViewProviders(
   localProviders?: readonly EditorDocumentViewProvider[] | undefined,
 ): readonly EditorDocumentViewProvider[] {
-  const { editorDocumentViewProviders, extensionRegistry, waitForExtensionStartup } =
+  const { editorDocumentViewProviders, extensionActivation, waitForExtensionStartup } =
     useWorkbench();
   const forceRender = useForceRender();
 
@@ -115,11 +115,11 @@ export function useEditorDocumentViewProviders(
   }, [forceRender, waitForExtensionStartup]);
 
   useEffect(() => {
-    const disposable = extensionRegistry.onDidActivateExtension(forceRender);
+    const disposable = extensionActivation.onDidActivateExtension(forceRender);
     return () => {
       disposable.dispose();
     };
-  }, [extensionRegistry, forceRender]);
+  }, [extensionActivation, forceRender]);
 
   const registryProviders = editorDocumentViewProviders.getProviders();
 

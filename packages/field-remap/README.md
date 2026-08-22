@@ -95,6 +95,7 @@ import {
   FieldRemapFlowMapper,
   FieldRemapPanel,
   createJsonataValueTransform,
+  type FieldRemapPreviewState,
 } from '@workbench-kit/shell-react/field-remap';
 import '@workbench-kit/shell-react/field-remap/view.css';
 
@@ -111,11 +112,62 @@ transforms.register(createJsonataValueTransform());
 
 // Evaluate transform-bearing edges without a FieldRemapDocument:
 // await convertMappedInputs({ sources, targets, edges, inputs: { source: bag }, transforms })
+
+// Direct Flow embeds stay presentation-only. Inject a host-precomputed runtime snapshot:
+const preview: FieldRemapPreviewState = {
+  status: 'ready',
+  result: await convertMappedInputs({
+    sources,
+    targets,
+    edges,
+    inputs: { source: bag },
+    transforms,
+  }),
+};
+// <FieldRemapFlowMapper ... preview={preview} />
 ```
 
 Prefer `convertMappedInputs` when the host catalog stores `MappingEdge[]` (+ optional
 `operators[]`) separately from kit document JSON. Prefer `convertToShape` when you already
 build `defineConversion` / `defineDataShape` registries yourself.
+
+### Runtime preview ownership
+
+`FieldRemapPanel` owns one abortable preview execution controller. Its legacy output pane
+and optional `showFlowPreview` rail consume the same immutable result. Direct
+`FieldRemapFlowMapper` embeds never execute mappings; hosts inject `preview` and may use
+`showPreview={false}` to unmount the rail and its splitter track.
+
+Selection is a read-only projection over the injected result and does not re-evaluate:
+
+- no selection and operator selection show final document output after operators;
+- edge selection shows the edge-local `ConvertToShapeResult.slots` value before an
+  operator can overwrite that target;
+- transform-step selection shows the final edge value, not an intermediate step value;
+- operator-local intermediate values are not available;
+- draft and stale selections are stable unsupported states.
+
+An unavailable `hidden` / `no-sample` snapshot mounts no rail. Preview state is runtime-only
+and is never written into `FieldRemapDocument`, history or persistence.
+
+### Projection protocol conformance
+
+The package contains a private, backendless reference owner for the generic
+`@workbench-kit/contracts` projection protocol. It serializes revision comparison,
+edge/operator translation, validation, persistence and publication around one canonical
+`{ edges, operators }` aggregate. Source/target shape revisions participate in the same
+precondition cohort. Hidden-subset projections omit mappings and combine/split operators whose
+operands are hidden while preserving them canonically; ambiguous partial edits fail closed.
+
+The owner is intentionally not exported. Existing `FieldRemapPanel` and
+`FieldRemapFlowMapper` callback props remain compatible, but independent edge/operator callbacks
+are not described as atomic or revision-aware. Ownership remains layered as follows:
+
+| Layer              | Ownership                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Generic contracts  | Descriptor, authority, snapshot, opaque revision, transaction and result envelopes                          |
+| Field Remap domain | Canonical edges/operators, shape revision cohort, translation, validation, persistence and semantic history |
+| React shell        | Selection, drafts, filters, viewport, splitter/chrome and runtime preview presentation                      |
 
 Place-then-wire uses **ephemeral draft nodes** in the shell Flow UI: place a
 transform, wire source then target (or the reverse), and the draft finalizes into
@@ -268,7 +320,8 @@ host transforms (JSONata 2.x) resolve correctly.
 
 Pass `signal` on `convertToShape` (or `TransformContext.signal`) to cancel stale previews.
 Aborted runs reject with `AbortError` and stop further edges / chain steps. The shell Field Remap
-panel wires an `AbortController` to effect cleanup.
+panel controller also uses a private generation so late aborted/disposed results cannot replace
+the latest snapshot.
 
 Host JSONata transforms in `@workbench-kit/shell-react` are fail-closed and bounded by default
 (`timeoutMs`, `maxExpressionLength`). Use `createJsonataValueTransform()` to override the bounds.

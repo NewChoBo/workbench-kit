@@ -1,15 +1,18 @@
 import { useCallback, useState, type MouseEvent as ReactMouseEvent, type ReactNode } from 'react';
 
-import { ContextMenu } from '../../overlay/ContextMenu';
+import { ContextMenu, type ContextMenuItem } from '../../overlay/ContextMenu';
 import {
   createWorkbenchStandaloneEditorTabContextMenuItems,
   type WorkbenchStandaloneEditorTabLike,
 } from './editorTabContextMenu';
 
 export interface UseWorkbenchEditorTabContextMenuOptions {
+  readonly getExtraTabContextMenuItems?:
+    ((tabId: string) => readonly ContextMenuItem[] | undefined) | undefined;
   readonly onClose: (tabId: string) => void;
   readonly onCloseAll?: (() => void) | undefined;
   readonly onCloseOthers?: ((tabId: string) => void) | undefined;
+  readonly onCloseToRight?: ((tabId: string) => void) | undefined;
   readonly onSelectTab?: ((tabId: string) => void) | undefined;
   readonly tabs: readonly WorkbenchStandaloneEditorTabLike[];
 }
@@ -20,13 +23,16 @@ export interface UseWorkbenchEditorTabContextMenuResult {
 }
 
 export function useWorkbenchEditorTabContextMenu({
+  getExtraTabContextMenuItems,
   onClose,
   onCloseAll,
   onCloseOthers,
+  onCloseToRight,
   onSelectTab,
   tabs,
 }: UseWorkbenchEditorTabContextMenuOptions): UseWorkbenchEditorTabContextMenuResult {
   const [menuState, setMenuState] = useState<{
+    returnFocusTarget: HTMLElement;
     tabId: string;
     x: number;
     y: number;
@@ -37,7 +43,12 @@ export function useWorkbenchEditorTabContextMenu({
       event.preventDefault();
       event.stopPropagation();
       onSelectTab?.(tabId);
-      setMenuState({ tabId, x: event.clientX, y: event.clientY });
+      setMenuState({
+        returnFocusTarget: event.currentTarget,
+        tabId,
+        x: event.clientX,
+        y: event.clientY,
+      });
     },
     [onSelectTab],
   );
@@ -47,12 +58,15 @@ export function useWorkbenchEditorTabContextMenu({
       <ContextMenu
         ariaLabel="Editor tab menu"
         items={createWorkbenchStandaloneEditorTabContextMenuItems({
+          getExtraTabContextMenuItems,
           onClose,
           onCloseAll,
           onCloseOthers,
+          onCloseToRight,
           tabId: menuState.tabId,
           tabs,
         })}
+        returnFocusTarget={menuState.returnFocusTarget}
         x={menuState.x}
         y={menuState.y}
         onClose={() => setMenuState(null)}

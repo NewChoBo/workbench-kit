@@ -4,6 +4,9 @@ import {
   type EditorLayoutNode,
   type EditorState,
   type EditorTabState,
+  type WorkbenchPersistenceDiagnosticOptions,
+  type WorkbenchPersistenceReadResult,
+  type WorkbenchPersistenceWriteResult,
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
@@ -11,8 +14,10 @@ import {
 import { isRecord } from '../is-record.js';
 import {
   readLocalJsonStorage,
+  readLocalJsonStorageResult,
   resolveLocalWorkbenchStorage,
   writeLocalJsonStorage,
+  writeLocalJsonStorageResult,
 } from '../storage/local-json-storage.js';
 
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
@@ -49,12 +54,38 @@ export function readPersistedEditorState(
   return readLocalJsonStorage(storageKey, parseEditorStateStorageValue, () => undefined, storage);
 }
 
+export function readPersistedEditorStateResult(
+  storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+  storage?: WorkbenchStorageReader,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceReadResult<EditorState | undefined> {
+  return readLocalJsonStorageResult(
+    storageKey,
+    parseEditorStateStorageValue,
+    () => undefined,
+    storage,
+    options,
+  );
+}
+
 export function writePersistedEditorState(
   state: EditorState,
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
   writeLocalJsonStorage(storageKey, state, storage, {
+    toStorageValue: editorStateToStorageValue,
+  });
+}
+
+export function writePersistedEditorStateResult(
+  state: EditorState,
+  storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+  storage?: WorkbenchStorageWriter,
+  options: WorkbenchPersistenceDiagnosticOptions = {},
+): WorkbenchPersistenceWriteResult {
+  return writeLocalJsonStorageResult(storageKey, state, storage, {
+    ...options,
     toStorageValue: editorStateToStorageValue,
   });
 }

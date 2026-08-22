@@ -1,22 +1,14 @@
-import {
-  DisposableStore,
-  Emitter,
-  isDisposable,
-  toDisposable,
-  type Disposable,
-} from '@workbench-kit/base';
+import { DisposableStore, toDisposable, type Disposable } from '@workbench-kit/base';
 import {
   CommandRegistry,
   CommandNoHandlerError,
   CommandNotFoundError,
   KeybindingRegistry,
-  type CommandServiceHandler,
 } from '@workbench-kit/platform';
 import type {
   ActivateFunction,
   DeactivateFunction,
   ExtensionFeatureSpec,
-  ExtensionContext,
   WorkbenchExtensionManifest,
 } from '@workbench-kit/workbench-extension-sdk';
 
@@ -28,7 +20,7 @@ import {
   StatusBarRegistry,
   ViewRegistry,
 } from '../contributions/registries.js';
-import { CapabilityRegistry, type CapabilityProvider } from '../capability/registry.js';
+import { CapabilityRegistry } from '../capability/registry.js';
 import {
   createEditorHostFactoryRegistry,
   createViewHostFactoryRegistry,
@@ -45,18 +37,11 @@ import {
 } from '../editor/document-view-registry.js';
 import { LocalizationRegistry } from '../localization/registry.js';
 import { ThemeRegistry } from '../theme/registry.js';
-import { assertCapabilityAccess } from './permissions.js';
+import { ExtensionActivationService } from './activation-service.js';
+import { ExtensionApiFactory } from './api-factory.js';
+import { ExtensionContributionRouter } from './contribution-router.js';
 import { createExtensionFeatureSpecs } from './feature-spec.js';
-import {
-  normalizeConfiguration,
-  normalizeMenuContributions,
-  normalizePanels,
-  normalizeStatusBar,
-  normalizeViewContainers,
-  normalizeViews,
-  toCommandDefinition,
-  toKeybindingDefinition,
-} from './contribution-normalizers.js';
+import { ExtensionInventory, type RegisteredExtension } from './inventory.js';
 
 export interface WorkbenchExtensionModule {
   activate?: ActivateFunction;
@@ -96,6 +81,32 @@ export interface ExtensionLifecycleEvent {
   readonly extensionId: string;
 }
 
+/**
+ * Batch registration lifetime that preserves the historical DisposableStore
+ * surface while allowing the composing host to retain a focused handle for an
+ * individual registration.
+ */
+export class ExtensionRegistrationStore extends DisposableStore {
+  private readonly registrationsById = new Map<string, Disposable>();
+
+  addRegistration(extensionId: string, registration: Disposable): void {
+    this.registrationsById.set(extensionId, registration);
+    this.add(registration);
+  }
+
+  getRegistration(extensionId: string): Disposable | undefined {
+    return this.registrationsById.get(extensionId);
+  }
+
+  override dispose(): void {
+    try {
+      super.dispose();
+    } finally {
+      this.registrationsById.clear();
+    }
+  }
+}
+
 export interface ExtensionFeatureInspection {
   readonly diagnostics: readonly ExtensionDependencyDiagnostic[];
   readonly feature: ExtensionFeatureSpec;
@@ -122,17 +133,6 @@ export interface ExtensionDependencyDiagnostic {
   readonly severity: ExtensionDependencyDiagnosticSeverity;
 }
 
-interface RegisteredExtension {
-  readonly contributionDisposables: DisposableStore;
-  readonly description: WorkbenchExtensionDescription;
-}
-
-interface ActiveExtension {
-  readonly deactivate?: DeactivateFunction;
-  readonly extensionId: string;
-  readonly subscriptions: DisposableStore;
-}
-
 export class ExtensionRegistry implements Disposable {
   readonly activities: ActivityRegistry;
   readonly capabilityRegistry: CapabilityRegistry;
@@ -150,14 +150,14 @@ export class ExtensionRegistry implements Disposable {
   readonly viewHostFactories: ViewHostFactoryRegistry;
   readonly views: ViewRegistry;
 
-  private readonly onDidActivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
-  private readonly onDidDeactivateExtensionEmitter = new Emitter<ExtensionLifecycleEvent>();
-  private readonly activeExtensions = new Map<string, ActiveExtension>();
-  private readonly activatingExtensions = new Map<string, Promise<ActivatedExtension>>();
-  private readonly extensions = new Map<string, RegisteredExtension>();
+  private readonly activationService: ExtensionActivationService;
+  private readonly contributionRouter: ExtensionContributionRouter;
+  private readonly inventory = new ExtensionInventory();
+  private readonly registrationLifetimes = new Map<RegisteredExtension, Disposable>();
+  private disposed = false;
 
-  readonly onDidActivateExtension = this.onDidActivateExtensionEmitter.event;
-  readonly onDidDeactivateExtension = this.onDidDeactivateExtensionEmitter.event;
+  readonly onDidActivateExtension: ExtensionActivationService['onDidActivateExtension'];
+  readonly onDidDeactivateExtension: ExtensionActivationService['onDidDeactivateExtension'];
 
   constructor(options: ExtensionRegistryOptions = {}) {
     this.activities = options.activities ?? new ActivityRegistry();
@@ -177,21 +177,43 @@ export class ExtensionRegistry implements Disposable {
     this.editorHostFactories = options.editorHostFactories ?? createEditorHostFactoryRegistry();
     this.editorResolvers = options.editorResolvers ?? createEditorResolverRegistry();
     this.editors = options.editors ?? new EditorRegistry();
+
+    this.contributionRouter = new ExtensionContributionRouter({
+      activities: this.activities,
+      commands: this.commands,
+      configurations: this.configurations,
+      editors: this.editors,
+      keybindings: this.keybindings,
+      localizations: this.localizations,
+      menus: this.menus,
+      statusBar: this.statusBar,
+      themes: this.themes,
+      views: this.views,
+    });
+    const apiFactory = new ExtensionApiFactory({
+      capabilityRegistry: this.capabilityRegistry,
+      commands: this.commands,
+      editorDocumentViews: this.editorDocumentViews,
+      editorHostFactories: this.editorHostFactories,
+      editorResolvers: this.editorResolvers,
+      viewHostFactories: this.viewHostFactories,
+      views: this.views,
+    });
+    this.activationService = new ExtensionActivationService(this.inventory, apiFactory);
+    this.onDidActivateExtension = this.activationService.onDidActivateExtension;
+    this.onDidDeactivateExtension = this.activationService.onDidDeactivateExtension;
   }
 
   getActiveExtensions(): readonly ActivatedExtension[] {
-    return [...this.activeExtensions.values()].map(({ extensionId, subscriptions }) => ({
-      extensionId,
-      subscriptions,
-    }));
+    return this.activationService.getActiveExtensions();
   }
 
   getExtension(extensionId: string): WorkbenchExtensionDescription | undefined {
-    return this.extensions.get(extensionId)?.description;
+    return this.inventory.get(extensionId);
   }
 
   getExtensions(): readonly WorkbenchExtensionDescription[] {
-    return [...this.extensions.values()].map((entry) => entry.description);
+    return this.inventory.list();
   }
 
   getFeatureSpecs(): readonly ExtensionFeatureSpec[] {
@@ -213,43 +235,66 @@ export class ExtensionRegistry implements Disposable {
   }
 
   isActive(extensionId: string): boolean {
-    return this.activeExtensions.has(extensionId);
+    return this.activationService.isActive(extensionId);
   }
 
   registerExtension(description: WorkbenchExtensionDescription): Disposable {
     const { id } = description.manifest;
-    if (this.extensions.has(id)) {
-      throw new Error(`Extension "${id}" is already registered.`);
+    const inventoryRegistration = this.inventory.register(description);
+    const registration = this.inventory.getRegistration(id);
+    if (!registration) {
+      inventoryRegistration.dispose();
+      throw new Error(`Extension "${id}" registration was not retained.`);
     }
 
-    const contributionDisposables = new DisposableStore();
-    const entry: RegisteredExtension = { contributionDisposables, description };
-    this.extensions.set(id, entry);
-
+    let contributionDisposables: DisposableStore;
     try {
-      this.registerContributions(description, contributionDisposables);
+      contributionDisposables = this.contributionRouter.registerManifestContributions(description);
     } catch (error) {
-      this.extensions.delete(id);
-      contributionDisposables.dispose();
+      inventoryRegistration.dispose();
       throw error;
     }
 
-    return toDisposable(() => {
-      void this.deactivateExtension(id);
-      const current = this.extensions.get(id);
-      if (current === entry) {
-        this.extensions.delete(id);
-        contributionDisposables.dispose();
+    const registrationLifetime = toDisposable(() => {
+      if (this.inventory.getRegistration(id) !== registration) {
+        return;
+      }
+
+      let firstError: unknown;
+      let hasError = false;
+      for (const cleanup of [
+        () => this.activationService.invalidateRegistration(id, registration),
+        () => inventoryRegistration.dispose(),
+        () => contributionDisposables.dispose(),
+      ]) {
+        try {
+          cleanup();
+        } catch (error) {
+          if (!hasError) {
+            firstError = error;
+            hasError = true;
+          }
+        }
+      }
+
+      this.registrationLifetimes.delete(registration);
+      void this.deactivateExtension(id).catch(() => undefined);
+      if (hasError) {
+        throw firstError;
       }
     });
+    this.registrationLifetimes.set(registration, registrationLifetime);
+    return registrationLifetime;
   }
 
-  registerExtensions(descriptions: Iterable<WorkbenchExtensionDescription>): DisposableStore {
-    const store = new DisposableStore();
+  registerExtensions(
+    descriptions: Iterable<WorkbenchExtensionDescription>,
+  ): ExtensionRegistrationStore {
+    const store = new ExtensionRegistrationStore();
 
     try {
       for (const description of descriptions) {
-        store.add(this.registerExtension(description));
+        store.addRegistration(description.manifest.id, this.registerExtension(description));
       }
       this.assertDependencyGraph();
     } catch (error) {
@@ -261,16 +306,7 @@ export class ExtensionRegistry implements Disposable {
   }
 
   async activateByEvent(activationEvent: string): Promise<readonly ActivatedExtension[]> {
-    const activated: ActivatedExtension[] = [];
-    for (const extension of this.extensions.values()) {
-      if (!extension.description.manifest.activationEvents.includes(activationEvent)) {
-        continue;
-      }
-
-      activated.push(await this.activateExtension(extension.description.manifest.id));
-    }
-
-    return activated;
+    return this.activationService.activateByEvent(activationEvent);
   }
 
   activateCommand(commandId: string): Promise<readonly ActivatedExtension[]> {
@@ -301,120 +337,74 @@ export class ExtensionRegistry implements Disposable {
   }
 
   async activateExtension(extensionId: string): Promise<ActivatedExtension> {
-    const active = this.activeExtensions.get(extensionId);
-    if (active) {
-      return {
-        extensionId,
-        subscriptions: active.subscriptions,
-      };
-    }
-
-    const pending = this.activatingExtensions.get(extensionId);
-    if (pending) {
-      return pending;
-    }
-
-    const activation = this.doActivateExtension(extensionId);
-    this.activatingExtensions.set(extensionId, activation);
-
-    try {
-      return await activation;
-    } finally {
-      this.activatingExtensions.delete(extensionId);
-    }
-  }
-
-  private async doActivateExtension(extensionId: string): Promise<ActivatedExtension> {
-    const extension = this.extensions.get(extensionId);
-    if (!extension) {
-      throw new Error(`Extension "${extensionId}" is not registered.`);
-    }
-
-    for (const dependencyId of extension.description.manifest.extensionDependencies ?? []) {
-      await this.activateExtension(dependencyId);
-    }
-
-    const subscriptions = new DisposableStore();
-    try {
-      const context = this.createExtensionContext(extension.description, subscriptions);
-      const activationResult = await extension.description.module?.activate?.(context);
-      if (isDisposable(activationResult)) {
-        subscriptions.add(activationResult);
-      }
-
-      this.activeExtensions.set(extensionId, {
-        deactivate: extension.description.module?.deactivate,
-        extensionId,
-        subscriptions,
-      });
-      this.onDidActivateExtensionEmitter.fire({ extensionId });
-
-      return {
-        extensionId,
-        subscriptions,
-      };
-    } catch (error) {
-      subscriptions.dispose();
-      throw error;
-    }
+    return this.activationService.activate(extensionId);
   }
 
   async deactivateExtension(extensionId: string): Promise<void> {
-    const active = this.activeExtensions.get(extensionId);
-    if (!active) {
-      return;
-    }
-
-    this.activeExtensions.delete(extensionId);
-    await active.deactivate?.();
-    active.subscriptions.dispose();
-    this.onDidDeactivateExtensionEmitter.fire({ extensionId });
+    return this.activationService.deactivate(extensionId);
   }
 
   async deactivateAll(): Promise<void> {
-    for (const extensionId of [...this.activeExtensions.keys()].reverse()) {
-      await this.deactivateExtension(extensionId);
-    }
+    return this.activationService.deactivateAll();
   }
 
   dispose(): void {
-    void this.deactivateAll();
-    for (const extension of this.extensions.values()) {
-      extension.contributionDisposables.dispose();
+    if (this.disposed) {
+      return;
     }
-    this.extensions.clear();
-    this.activities.dispose();
-    this.commands.dispose();
-    this.configurations.dispose();
-    this.keybindings.dispose();
-    this.localizations.dispose();
-    this.menus.dispose();
-    this.statusBar.dispose();
-    this.themes.dispose();
-    this.views.dispose();
-    this.editors.dispose();
-    this.editorDocumentViews.dispose();
-    this.viewHostFactories.dispose();
-    this.editorHostFactories.dispose();
-    this.editorResolvers.dispose();
-    this.capabilityRegistry.dispose();
-    this.onDidActivateExtensionEmitter.dispose();
-    this.onDidDeactivateExtensionEmitter.dispose();
+    this.disposed = true;
+
+    let firstError: unknown;
+    let hasError = false;
+    const disposables: readonly Disposable[] = [
+      ...this.registrationLifetimes.values(),
+      this.activationService,
+      this.inventory,
+      this.activities,
+      this.commands,
+      this.configurations,
+      this.keybindings,
+      this.localizations,
+      this.menus,
+      this.statusBar,
+      this.themes,
+      this.views,
+      this.editors,
+      this.editorDocumentViews,
+      this.viewHostFactories,
+      this.editorHostFactories,
+      this.editorResolvers,
+      this.capabilityRegistry,
+    ];
+    for (const disposable of disposables) {
+      try {
+        disposable.dispose();
+      } catch (error) {
+        if (!hasError) {
+          firstError = error;
+          hasError = true;
+        }
+      }
+    }
+    this.registrationLifetimes.clear();
+    if (hasError) {
+      throw firstError;
+    }
   }
 
   private assertDependencyGraph(): void {
-    for (const extension of this.extensions.values()) {
-      for (const dependencyId of extension.description.manifest.extensionDependencies ?? []) {
-        if (!this.extensions.has(dependencyId)) {
+    for (const description of this.inventory.list()) {
+      for (const dependencyId of description.manifest.extensionDependencies ?? []) {
+        if (!this.inventory.get(dependencyId)) {
           throw new Error(
-            `Extension "${extension.description.manifest.id}" depends on missing extension "${dependencyId}".`,
+            `Extension "${description.manifest.id}" depends on missing extension "${dependencyId}".`,
           );
         }
       }
     }
 
-    for (const extensionId of this.extensions.keys()) {
-      this.assertNoDependencyCycle(extensionId, []);
+    for (const description of this.inventory.list()) {
+      this.assertNoDependencyCycle(description.manifest.id, []);
     }
   }
 
@@ -425,177 +415,13 @@ export class ExtensionRegistry implements Disposable {
       );
     }
 
-    const extension = this.extensions.get(extensionId);
-    if (!extension) {
+    const description = this.inventory.get(extensionId);
+    if (!description) {
       return;
     }
 
-    for (const dependencyId of extension.description.manifest.extensionDependencies ?? []) {
+    for (const dependencyId of description.manifest.extensionDependencies ?? []) {
       this.assertNoDependencyCycle(dependencyId, [...path, extensionId]);
-    }
-  }
-
-  private createExtensionContext(
-    description: WorkbenchExtensionDescription,
-    subscriptions: DisposableStore,
-  ): ExtensionContext {
-    return {
-      capabilities: {
-        registerProvider: <T>(provider: CapabilityProvider<T>) =>
-          subscriptions.add(this.capabilityRegistry.register(provider)),
-      },
-      commands: {
-        registerCommand: (commandId, handler) =>
-          subscriptions.add(this.registerCommandHandler(commandId, handler)),
-      },
-      editorDocumentViews: {
-        registerProvider: (provider) =>
-          subscriptions.add(this.editorDocumentViews.registerProvider(provider)),
-      },
-      editorHostFactories: {
-        registerFactory: (factory) => subscriptions.add(this.editorHostFactories.register(factory)),
-      },
-      editorResolvers: {
-        registerResolver: (resolver) => subscriptions.add(this.editorResolvers.register(resolver)),
-      },
-      extensionId: description.manifest.id,
-      extensionPath: description.extensionPath ?? '',
-      getCapability: <T>(capabilityId: string) => {
-        const permissions = [...(description.manifest.permissions ?? [])];
-        const requiredCapabilities = [...(description.manifest.capabilities?.requires ?? [])];
-        assertCapabilityAccess(
-          {
-            extensionId: description.manifest.id,
-            permissions,
-            requiredCapabilities,
-          },
-          capabilityId,
-        );
-        return this.capabilityRegistry.get<T>(capabilityId);
-      },
-      permissions: [...(description.manifest.permissions ?? [])],
-      requiredCapabilities: [...(description.manifest.capabilities?.requires ?? [])],
-      subscriptions,
-      viewHostFactories: {
-        registerFactory: (factory) => subscriptions.add(this.viewHostFactories.register(factory)),
-      },
-      views: {
-        registerViewProvider: (provider) =>
-          subscriptions.add(this.views.registerViewProvider(provider)),
-      },
-    };
-  }
-
-  private registerCommandHandler(commandId: string, handler: CommandServiceHandler): Disposable {
-    const command = this.commands.getCommand(commandId);
-    if (!command) {
-      return this.commands.registerCommand({
-        handler,
-        id: commandId,
-        title: commandId,
-      });
-    }
-
-    const previousHandler = command.handler;
-    command.handler = handler;
-
-    return toDisposable(() => {
-      if (command.handler === handler) {
-        command.handler = previousHandler;
-      }
-    });
-  }
-
-  private registerContributions(
-    description: WorkbenchExtensionDescription,
-    disposables: DisposableStore,
-  ): void {
-    const contributes = description.manifest.contributes;
-    if (!contributes) {
-      return;
-    }
-
-    for (const command of contributes.commands ?? []) {
-      disposables.add(this.commands.registerCommand(toCommandDefinition(command)));
-    }
-
-    for (const keybinding of contributes.keybindings ?? []) {
-      disposables.add(this.keybindings.registerKeybinding(toKeybindingDefinition(keybinding)));
-    }
-
-    for (const menu of normalizeMenuContributions(contributes.menus)) {
-      disposables.add(this.menus.registerMenuItem(menu));
-    }
-
-    const panels = normalizePanels(contributes.panels);
-    for (const container of panels.containers) {
-      disposables.add(this.views.registerViewContainer(container));
-    }
-
-    for (const view of panels.views) {
-      disposables.add(this.views.registerView(view));
-    }
-
-    for (const container of normalizeViewContainers(contributes.viewContainers)) {
-      disposables.add(this.views.registerViewContainer(container));
-    }
-
-    for (const view of normalizeViews(contributes.views)) {
-      disposables.add(this.views.registerView(view));
-    }
-
-    for (const activity of contributes.activities ?? []) {
-      disposables.add(
-        this.activities.registerActivity({
-          ...activity,
-          extensionId: description.manifest.id,
-        }),
-      );
-    }
-
-    for (const statusBarItem of normalizeStatusBar(contributes.statusBar)) {
-      disposables.add(
-        this.statusBar.registerStatusBarItem({
-          ...statusBarItem,
-          extensionId: description.manifest.id,
-        }),
-      );
-    }
-
-    for (const editor of contributes.editors ?? []) {
-      disposables.add(
-        this.editors.registerEditor({
-          ...editor,
-          extensionId: description.manifest.id,
-        }),
-      );
-    }
-
-    if (contributes.configuration !== undefined) {
-      disposables.add(
-        this.configurations.registerConfiguration(
-          description.manifest.id,
-          normalizeConfiguration(contributes.configuration),
-        ),
-      );
-    }
-
-    for (const theme of contributes.themes ?? []) {
-      disposables.add(
-        this.themes.registerTheme({
-          ...theme,
-          extensionId: description.manifest.id,
-        }),
-      );
-    }
-
-    for (const localization of contributes.localizations ?? []) {
-      disposables.add(
-        this.localizations.registerLocalization({
-          ...localization,
-          extensionId: description.manifest.id,
-        }),
-      );
     }
   }
 }

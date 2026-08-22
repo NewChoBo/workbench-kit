@@ -7,10 +7,13 @@ import type {
 import {
   filterActivitiesByWhenClause,
   type ExtensionCommandFeatureSpec,
-  type ExtensionRegistry,
+  type ActivityRegistry,
+  type ExtensionFeatureSpec,
+  type ViewRegistry,
 } from '@workbench-kit/workbench-core';
+import type { CommandRegistry } from '@workbench-kit/platform';
 
-type ExtensionCommand = ReturnType<ExtensionRegistry['commands']['getCommands']>[number];
+type ExtensionCommand = ReturnType<CommandRegistry['getCommands']>[number];
 
 function resolveCommandValue<TContext, TValue>(
   value: CommandDefinition<TContext>[keyof CommandDefinition<TContext>],
@@ -44,10 +47,10 @@ export function resolveExtensionCommandIcon(icon: ExtensionCommand['icon']): str
 }
 
 export function resolveShellCommandActivities(
-  extensionRegistry: ExtensionRegistry,
+  registries: { readonly activities: ActivityRegistry; readonly views: ViewRegistry },
   contextKeys?: object | undefined,
 ): WorkbenchShellCommandActivity[] {
-  const activities = extensionRegistry.activities.getActivities();
+  const activities = registries.activities.getActivities();
   if (activities.length > 0) {
     const visibleActivities =
       contextKeys === undefined
@@ -63,13 +66,11 @@ export function resolveShellCommandActivities(
       .sort((left, right) => left.label.localeCompare(right.label));
   }
 
-  const viewContainerIds = new Set(
-    extensionRegistry.views.getViews().map((view) => view.containerId),
-  );
+  const viewContainerIds = new Set(registries.views.getViews().map((view) => view.containerId));
 
   return [...viewContainerIds].map((containerId) => {
-    const container = extensionRegistry.views.getViewContainer(containerId);
-    const firstView = extensionRegistry.views.getViews(containerId)[0];
+    const container = registries.views.getViewContainer(containerId);
+    const firstView = registries.views.getViews(containerId)[0];
 
     return {
       icon: formatWorkbenchCommandIcon(container?.icon ?? 'files'),
@@ -125,12 +126,12 @@ export function extensionCommandToDescriptor(
 }
 
 export function collectExtensionCommandFeaturesById(
-  extensionRegistry: ExtensionRegistry,
+  featureSpecs: readonly ExtensionFeatureSpec[],
 ): ReadonlyMap<string, ExtensionCommandFeatureSpec> {
   return new Map(
-    extensionRegistry
-      .getFeatureSpecs()
-      .flatMap((feature) => feature.commands.map((command) => [command.id, command] as const)),
+    featureSpecs.flatMap((feature) =>
+      feature.commands.map((command) => [command.id, command] as const),
+    ),
   );
 }
 

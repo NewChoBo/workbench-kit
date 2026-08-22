@@ -201,15 +201,19 @@ sentinel options before passing. Full multi-section dialog landed as §2
 - `registerWindowControlIpc` / `createWindowControlsBridge` — frameless minimize /
   toggle-maximize / close / isMaximized (+ maximized-changed push); hosts inject channel
   names and owned-window resolution.
-- `createEncryptedSecretVault` — OS-backed cipher port + opaque secret ids; fails closed
-  when encryption is unavailable and serializes mutations within one vault instance
-  (compose persistence with platform/node atomic write; hosts coordinate shared files
-  across instances or processes).
+- `createEncryptedSecretVault` — whole-document OS-backed encryption (secret ids remain
+  opaque on disk), bulk/single-key operations, and FIFO reads/writes within one vault.
+  Version 1 entry-encrypted documents migrate on the next mutation. Host-owned document
+  codecs preserve an existing encrypted envelope; sorted commit ids let the persistence
+  port update opaque references or remove an empty vault. Hosts compose atomic persistence
+  and coordinate shared files across instances or processes.
 - `registerPrivilegedAssetProtocolScheme` — repeated secure/fetch/stream scheme
   privileges only. Hosts register it before app readiness and retain scheme names,
   URL parsing, cache policy, response headers, and post-ready `protocol.handle` wiring.
-- `resolveWallpaperCropRect` + `createWin32WallpaperPathResolver` — spanned wallpaper crop
-  math and injectable win32 path resolution (other platforms return null until host provides one).
+- `resolveWallpaperCropRect` + `createWin32RegistryStringReader` +
+  `createWin32WallpaperPathResolver` — one aspect-ratio-preserving cover rule for spanned
+  wallpaper, bounded shell-free `reg query`, and injected path existence/fallback handling
+  (other platforms return null until a host provides a resolver).
 
 **Remember window state contract (implemented API):** Host owns storage path and the
 user preference that gates restore. `@workbench-kit/platform` exposes Electron-free
@@ -218,13 +222,19 @@ helpers under `packages/platform/src/window/`:
 - Types: `RememberedWindowState`, `RectLike`, `DisplayWorkArea`, `PersistableWindow`
 - `resolveWindowOpenLayout({ saved, displays, defaults?, remember })` — clamp off-screen;
   when `remember` is false or `saved` is null, return defaults without clearing saved state
-- `clampWindowBoundsToDisplays(bounds, displays)` — min size, fit work areas, off-screen recovery
+  (`defaultBoundsOptions` may inject host size and an empty-display fallback work area)
+- `clampWindowBoundsToDisplays(bounds, displays)` — optional host-owned minimums, then
+  choose the display by greatest intersection with center-distance tie breaking (also the
+  nearest-display recovery for fully off-screen bounds), and fit into that work area
 - `bindWindowBoundsPersistence(window, save, debounceMs?)` — narrow window surface
   (`getBounds` / `getNormalBounds` / `isMaximized` / move·resize·maximize·close), debounce
   writes; when maximized, persist `getNormalBounds()` plus `isMaximized: true`
 - `bindSecondaryWindowBoundsPersistence({ subscribe, readBounds, persist, debounceMs? })` —
   bounds-only binder for secondary/overlay windows (no maximize policy); host adapts
-  moved/resized/closed events via `subscribe`, with debounced persist + flush-on-close
+  moved/resized/closed events via `subscribe`, with debounced persist + flush-on-close.
+  `onCloseRequested` synchronously captures the final bounds before waiting for an earlier async
+  persist, so hosts may destroy the native window and dispose the binding immediately afterwards.
+  `onClosed` remains a pre-destruction compatibility alias for existing adapters.
 
 **Implemented geometry helpers** (`@workbench-kit/platform`, Electron/React-free):
 
@@ -268,17 +278,22 @@ preference UI. `@workbench-kit/platform` exposes pure decision helpers (no Elect
 **Secondary-window residency applicator (implemented API):** Hosts own BrowserWindow
 construction and which residency policy is active. `@workbench-kit/platform` applies a
 narrow injected surface (`setAlwaysOnTop` / `setFocusable` / `setIgnoreMouseEvents` / optional
-`blur`) via `applyWindowResidencyPolicy` with orthogonal `zOrder`
+`setSkipTaskbar` / `blur`) via `applyWindowResidencyPolicy` with orthogonal `zOrder`
 (`top` | `default` | `back`) and `pointerPassthrough`
 (`off` | `all` | `transparent` | `controls`), plus `positionMode` /
-`dynamicPointerPassthrough`. Pair dynamic pointer policies with renderer hit-region
+`dynamicPointerPassthrough`. Optional `skipTaskbar` is re-applied after focusability so hosts can
+preserve taskbar policy across native focus transitions. Pair dynamic pointer policies with renderer hit-region
 passthrough in `@workbench-kit/react`.
+Focus-only transitions use `applyWindowFocusablePolicy` with the same focusability-before-taskbar
+ordering instead of repeating native mutation order in each host.
 
 **Hit-region pointer passthrough (implemented API):** Hosts inject selector lists and a
 `PointerPassthroughPort` (usually IPC → ignore-mouse-events). `@workbench-kit/react`
 exposes `usePointerPassthroughRegion` / `createPointerPassthroughController` with
-rAF-coalesced pointermove hit-testing. No product selectors ship in the kit. Pair with
-platform `applyWindowResidencyPolicy` on the main-process side.
+rAF-coalesced `elementFromPoint` hit-testing and pointer/mouse event fallback for Electron
+forwarded moves. It reasserts each decision so out-of-band native state changes cannot leave
+the Window stuck in click-through. No product selectors ship in the kit. Pair with platform
+`applyWindowResidencyPolicy` on the main-process side.
 
 ### 16. Collection / dynamic collection save UI
 

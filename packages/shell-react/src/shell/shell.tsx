@@ -10,10 +10,7 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
-import {
-  WORKBENCH_SETTINGS_CAPABILITY_ID,
-  filterActivitiesByWhenClause,
-} from '@workbench-kit/workbench-core';
+import { filterActivitiesByWhenClause } from '@workbench-kit/workbench-core';
 import type {
   ExtensionCatalogTrustPolicy,
   WorkbenchSettingsCapability,
@@ -24,9 +21,13 @@ import {
   resolveActiveThemePreset,
   DEFAULT_SHELL_PRESET,
   useResolvedWorkbenchTheme,
+  type WorkbenchCommandDescriptor,
+  type WorkbenchCommandRunContext,
 } from '@workbench-kit/react/workbench';
 
 import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from '../commands/view-data.js';
+import { useExtensionEnablementController } from '../extensions/extension-enablement-context.js';
+import { createThemeSelectionProtectionSnapshot } from '../extensions/theme-selection-protection.js';
 import { BUILTIN_EXTENSIONS_VIEW_CONTAINER_ID } from '../extensions/view-data.js';
 import {
   filterActivityBarItems,
@@ -85,6 +86,20 @@ import {
 } from './layout-metrics.js';
 export type { WorkbenchLocaleOption, WorkbenchThemeOption } from './settings.js';
 
+export interface WorkbenchShellCommandRunContext extends WorkbenchCommandRunContext {
+  openSettings(categoryId?: string): void;
+}
+
+export interface WorkbenchShellCommandHostProps extends Omit<
+  WorkbenchCommandHostProps,
+  'onOpenSettings' | 'onRunCommand'
+> {
+  onRunCommand?: (
+    command: WorkbenchCommandDescriptor,
+    context: WorkbenchShellCommandRunContext,
+  ) => boolean | void;
+}
+
 export interface WorkbenchShellProps {
   accountManagement?: WorkbenchAccountManagementInput | undefined;
   additionalSettingsCategories?: readonly WorkbenchSettingsCategory[] | undefined;
@@ -92,7 +107,7 @@ export interface WorkbenchShellProps {
   appIcon?: ReactNode;
   catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
   catalogUrl?: string | undefined;
-  commandHost?: false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'>;
+  commandHost?: false | WorkbenchShellCommandHostProps;
   compactStatus?: boolean;
   darkPreset?: string | undefined;
   editorArea?: ReactNode;
@@ -190,19 +205,42 @@ export function WorkbenchShell({
       ? resolveActiveThemePreset(resolvedWorkbenchTheme, { darkPreset, lightPreset })
       : undefined;
   const {
+    activities,
+    commands,
+    configurations,
     contextKeyService,
     executeCommand,
-    extensionRegistry,
+    extensionActivation,
+    extensionCatalog,
     layoutService,
+    localizations,
     missingExtensionIds,
     preferenceService,
+    settingsCapabilityPublisher,
+    statusBar,
+    themes,
+    viewHostFactories,
+    views,
   } = useWorkbench();
+  const extensionEnablement = useExtensionEnablementController();
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const contextKeySnapshot = useMemo(
     () => contextKeyService.createSnapshot(),
     [contextKeyRevision, contextKeyService],
   );
   const forceRender = useForceRender();
+  const themeRevision = themes.getRevision();
+  const themeSelectionProtection = useMemo(
+    () =>
+      createThemeSelectionProtectionSnapshot({
+        darkPreset,
+        lightPreset,
+        theme,
+        themeOptions,
+        themes,
+      }),
+    [darkPreset, lightPreset, theme, themeOptions, themeRevision, themes],
+  );
   const [preferenceRevision, bumpPreferenceRevision] = useReducer((count: number) => count + 1, 0);
   const [isHelpOpen, setHelpOpen] = useState(false);
   const [isProfileOpen, setProfileOpen] = useState(false);
@@ -228,32 +266,28 @@ export function WorkbenchShell({
       statusSections ??
       mergeWorkbenchStatusSections(
         createDefaultWorkbenchStatusSections({
-          dependencyDiagnostics: extensionRegistry.getDependencyDiagnostics(),
-          extensionCount: extensionRegistry.getExtensions().length,
+          dependencyDiagnostics: extensionCatalog.getDependencyDiagnostics(),
+          extensionCount: extensionCatalog.getExtensions().length,
           missingExtensionIds,
           profile,
         }),
-        createContributedWorkbenchStatusSections(extensionRegistry.statusBar.getStatusBarItems()),
+        createContributedWorkbenchStatusSections(statusBar.getStatusBarItems()),
       ),
-    [extensionRegistry, missingExtensionIds, profile, statusSections],
+    [extensionCatalog, missingExtensionIds, profile, statusBar, statusSections],
   );
   const activeViewContainerId = layout.sideBar.activeViewContainer;
   const activePanelViewContainerId = layout.panel.activeViewContainer;
-  const panelViewContainers = extensionRegistry.views.getViewContainers('panel');
+  const panelViewContainers = views.getViewContainers('panel');
   const visibleActivities = useMemo(
-    () =>
-      filterActivitiesByWhenClause(
-        extensionRegistry.activities.getActivities(),
-        contextKeySnapshot,
-      ),
-    [contextKeySnapshot, extensionRegistry],
+    () => filterActivitiesByWhenClause(activities.getActivities(), contextKeySnapshot),
+    [activities, contextKeySnapshot],
   );
   const activityItems = sortActivityBarItems(
     createWorkbenchShellActivityItems({
       activeViewContainerId,
       activities: visibleActivities,
-      viewContainers: extensionRegistry.views.getViewContainers('activitybar'),
-      views: extensionRegistry.views.getViews(),
+      viewContainers: views.getViewContainers('activitybar'),
+      views: views.getViews(),
     }),
     layout.activityBar.itemOrder,
   );
@@ -277,6 +311,13 @@ export function WorkbenchShell({
     profileTitle: chromeLabels.profileTitle,
     settingsLabel: chromeLabels.settingsLabel,
   });
+
+  useEffect(() => {
+    extensionEnablement.setThemeSelectionProtection(themeSelectionProtection);
+    return () => {
+      extensionEnablement.setThemeSelectionProtection(undefined);
+    };
+  }, [extensionEnablement, themeSelectionProtection]);
 
   useEffect(() => {
     if (visibleActivityItems.length === 0) {
@@ -332,30 +373,35 @@ export function WorkbenchShell({
     return [
       ...managementCategories,
       ...(additionalSettingsCategories ?? []),
-      ...createSettingsCategories(extensionRegistry, {
-        activeScope: settingsScopeId,
-        darkPreset,
-        lightPreset,
-        locale,
-        onDarkPresetChange,
-        onLightPresetChange,
-        onLocaleChange,
-        onShellPresetChange,
-        onThemeChange,
-        preferenceService,
-        shellPreset,
-        theme,
-        themeOptions,
-      }),
+      ...createSettingsCategories(
+        { configurations, extensionCatalog, localizations, themes },
+        {
+          activeScope: settingsScopeId,
+          darkPreset,
+          lightPreset,
+          locale,
+          onDarkPresetChange,
+          onLightPresetChange,
+          onLocaleChange,
+          onShellPresetChange,
+          onThemeChange,
+          preferenceService,
+          shellPreset,
+          theme,
+          themeOptions,
+        },
+      ),
     ];
   }, [
     accountManagement,
     additionalSettingsCategories,
     commandHost,
     darkPreset,
-    extensionRegistry,
+    configurations,
+    extensionCatalog,
     lightPreset,
     locale,
+    localizations,
     onDarkPresetChange,
     onLightPresetChange,
     onLocaleChange,
@@ -366,12 +412,14 @@ export function WorkbenchShell({
     settingsScopeId,
     shellPreset,
     theme,
+    themeRevision,
+    themes,
     themeOptions,
   ]);
   const defaultSettingsCategoryId =
     settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
     settingsCategories[0]?.id;
-  const settingsContributionCount = extensionRegistry.configurations.getConfigurations().length;
+  const settingsContributionCount = configurations.getConfigurations().length;
   const showHelpModal = useCallback(() => {
     setSettingsOpen(false);
     setProfileOpen(false);
@@ -412,15 +460,17 @@ export function WorkbenchShell({
 
   useEffect(() => {
     const layoutDisposable = layoutService.onDidChangeLayout(forceRender);
-    const viewProviderDisposable = extensionRegistry.views.onDidRegisterViewProvider(forceRender);
+    const viewProviderDisposable = views.onDidRegisterViewProvider(forceRender);
     const preferenceDisposable = preferenceService.onDidChangePreference(bumpPreferenceRevision);
+    const themeDisposable = themes.onDidChangeThemes(forceRender);
 
     return () => {
       layoutDisposable.dispose();
       viewProviderDisposable.dispose();
       preferenceDisposable.dispose();
+      themeDisposable.dispose();
     };
-  }, [extensionRegistry, forceRender, layoutService, preferenceService]);
+  }, [forceRender, layoutService, preferenceService, themes, views]);
 
   useEffect(() => {
     if (!activeViewContainerId) {
@@ -428,13 +478,13 @@ export function WorkbenchShell({
     }
 
     for (const view of getVisibleWorkbenchViews(
-      extensionRegistry,
+      { views },
       activeViewContainerId,
       contextKeySnapshot,
     )) {
-      void extensionRegistry.activateView(view.id).then(forceRender);
+      void extensionActivation.activateView(view.id).then(forceRender);
     }
-  }, [activeViewContainerId, contextKeySnapshot, extensionRegistry, forceRender]);
+  }, [activeViewContainerId, contextKeySnapshot, extensionActivation, forceRender, views]);
 
   useEffect(() => {
     if (!activePanelViewContainerId) {
@@ -442,54 +492,44 @@ export function WorkbenchShell({
     }
 
     for (const view of getVisibleWorkbenchViews(
-      extensionRegistry,
+      { views },
       activePanelViewContainerId,
       contextKeySnapshot,
     )) {
-      void extensionRegistry.activateView(view.id).then(forceRender);
+      void extensionActivation.activateView(view.id).then(forceRender);
     }
-  }, [activePanelViewContainerId, contextKeySnapshot, extensionRegistry, forceRender]);
+  }, [activePanelViewContainerId, contextKeySnapshot, extensionActivation, forceRender, views]);
 
   useEffect(() => {
     if (!layout.auxiliaryBar.visible) {
       return;
     }
 
-    for (const container of extensionRegistry.views.getViewContainers('auxiliarybar')) {
-      for (const view of getVisibleWorkbenchViews(
-        extensionRegistry,
-        container.id,
-        contextKeySnapshot,
-      )) {
-        void extensionRegistry.activateView(view.id).then(forceRender);
+    for (const container of views.getViewContainers('auxiliarybar')) {
+      for (const view of getVisibleWorkbenchViews({ views }, container.id, contextKeySnapshot)) {
+        void extensionActivation.activateView(view.id).then(forceRender);
       }
     }
-  }, [contextKeySnapshot, extensionRegistry, forceRender, layout.auxiliaryBar.visible]);
+  }, [contextKeySnapshot, extensionActivation, forceRender, layout.auxiliaryBar.visible, views]);
 
   useEffect(() => {
-    if (extensionRegistry.capabilityRegistry.has(WORKBENCH_SETTINGS_CAPABILITY_ID)) {
-      return undefined;
-    }
-
-    const disposable = extensionRegistry.capabilityRegistry.register({
-      id: WORKBENCH_SETTINGS_CAPABILITY_ID,
-      get: () => settingsCapability,
-    });
+    const publication = settingsCapabilityPublisher.publishSettingsCapability(settingsCapability);
+    if (publication.kind === 'already-registered') return undefined;
 
     return () => {
-      disposable.dispose();
+      publication.disposable.dispose();
     };
-  }, [extensionRegistry, settingsCapability]);
+  }, [settingsCapability, settingsCapabilityPublisher]);
 
-  const openSettings = (categoryId?: string) => {
-    showSettingsModal(categoryId);
-    if (
-      categoryId === undefined &&
-      extensionRegistry.commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)
-    ) {
-      void executeCommand(OPEN_SETTINGS_COMMAND_ID).catch(() => undefined);
-    }
-  };
+  const openSettings = useCallback(
+    (categoryId?: string) => {
+      showSettingsModal(categoryId);
+      if (categoryId === undefined && commands.hasCommand(OPEN_SETTINGS_COMMAND_ID)) {
+        void executeCommand(OPEN_SETTINGS_COMMAND_ID).catch(() => undefined);
+      }
+    },
+    [commands, executeCommand, showSettingsModal],
+  );
 
   const resolvedCommandHost = useMemo(():
     false | Omit<WorkbenchCommandHostProps, 'onOpenSettings'> => {
@@ -540,10 +580,10 @@ export function WorkbenchShell({
           return true;
         }
 
-        return hostProps.onRunCommand?.(command, context) ?? false;
+        return hostProps.onRunCommand?.(command, { ...context, openSettings }) ?? false;
       },
     };
-  }, [chromeLabels, commandHost, layoutService]);
+  }, [chromeLabels, commandHost, layoutService, openSettings]);
 
   const handleStatusItemActivate = useCallback(
     (item: StatusBarItemModel) => {
@@ -561,7 +601,7 @@ export function WorkbenchShell({
         return;
       }
 
-      const contributed = extensionRegistry.statusBar.getStatusBarItem(item.id);
+      const contributed = statusBar.getStatusBarItem(item.id);
       if (contributed?.command) {
         void executeCommand(contributed.command).catch(() => undefined);
         return;
@@ -572,10 +612,11 @@ export function WorkbenchShell({
     [
       accountManagement,
       executeCommand,
-      extensionRegistry,
       onStatusItemActivate,
+      openSettings,
       profile,
       showProfileModal,
+      statusBar,
     ],
   );
 
@@ -619,7 +660,7 @@ export function WorkbenchShell({
         node:
           primarySidebar ??
           renderDefaultPrimarySidebar(
-            extensionRegistry,
+            { viewHostFactories, views },
             activeViewContainerId,
             catalogUrl,
             catalogTrustPolicy,
@@ -633,7 +674,7 @@ export function WorkbenchShell({
       auxiliarySidebar={{
         isVisible: layout.auxiliaryBar.visible,
         node: renderDefaultAuxiliarySidebar(
-          extensionRegistry,
+          { viewHostFactories, views },
           contextKeySnapshot,
           catalogUrl,
           catalogTrustPolicy,
@@ -641,7 +682,7 @@ export function WorkbenchShell({
       }}
       bottomPanel={{
         isVisible: layout.panel.visible,
-        node: renderDefaultBottomPanel(extensionRegistry, activePanelViewContainerId, {
+        node: renderDefaultBottomPanel({ viewHostFactories, views }, activePanelViewContainerId, {
           catalogTrustPolicy,
           catalogUrl,
           contextKeys: contextKeySnapshot,

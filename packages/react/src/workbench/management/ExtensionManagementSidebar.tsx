@@ -26,6 +26,7 @@ import type {
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
 } from './types.js';
 
 const BROWSE_CATEGORIES = ['all', 'feature', 'editor', 'theme', 'language'] as const;
@@ -43,6 +44,7 @@ export interface ExtensionManagementSidebarProps extends ExtensionManagementPane
   emptyMarketplaceLabel?: string | undefined;
   missingExtensionIds?: readonly string[] | undefined;
   pendingAction?: ExtensionManagementPendingAction | undefined;
+  pendingUninstallEntryId?: string | undefined;
 }
 
 export interface ExtensionManagementPendingAction {
@@ -64,7 +66,9 @@ export function ExtensionManagementSidebar({
   onInstall,
   onRememberInstallTrust,
   onToggleEnabled,
+  onUninstall,
   pendingAction,
+  pendingUninstallEntryId,
 }: ExtensionManagementSidebarProps) {
   const [activeTab, setActiveTab] = useState<'installed' | 'marketplace'>(defaultTab);
   const [query, setQuery] = useState('');
@@ -102,7 +106,8 @@ export function ExtensionManagementSidebar({
       footer={
         <p className="workbench-extensions-sidebar__notice" role="note">
           <i aria-hidden className={cxCodicon('codicon-info')} />
-          Installing or enabling extensions reloads the workbench to apply contributions.
+          Eligible unselected theme packs apply immediately. Other extension changes reload the
+          workbench.
         </p>
       }
       footerPlacement="overlay"
@@ -167,7 +172,9 @@ export function ExtensionManagementSidebar({
           emptyLabel={emptyInstalledLabel}
           entries={filteredInstalled}
           pendingAction={pendingAction}
+          pendingUninstallEntryId={pendingUninstallEntryId}
           onToggleEnabled={onToggleEnabled}
+          onUninstall={onUninstall}
         />
       )}
     </SideBarViewFrame>
@@ -178,12 +185,16 @@ function InstalledExtensionList({
   emptyLabel,
   entries,
   onToggleEnabled,
+  onUninstall,
   pendingAction,
+  pendingUninstallEntryId,
 }: {
   emptyLabel: string;
   entries: readonly ExtensionManagementEntry[];
   onToggleEnabled?: ExtensionManagementPanelProps['onToggleEnabled'];
+  onUninstall?: ExtensionManagementPanelProps['onUninstall'];
   pendingAction?: ExtensionManagementPendingAction | undefined;
+  pendingUninstallEntryId?: string | undefined;
 }) {
   if (entries.length === 0) {
     return (
@@ -198,6 +209,8 @@ function InstalledExtensionList({
       {entries.map((entry) => {
         const isPendingToggle =
           pendingAction?.kind === 'toggle' && pendingAction.entryId === entry.id;
+        const isPendingUninstall = pendingUninstallEntryId === entry.id;
+        const isPending = isPendingToggle || isPendingUninstall;
         const errorDiagnostics = (entry.diagnostics ?? []).filter(
           (diagnostic) => diagnostic.severity === 'error',
         );
@@ -209,15 +222,28 @@ function InstalledExtensionList({
           <ExtensionSidebarListItem
             key={entry.id}
             action={
-              <Button
-                compact
-                disabled={!onToggleEnabled || entry.source === 'bundled' || isPendingToggle}
-                type="button"
-                variant={entry.enabled ? 'default' : 'primary'}
-                onClick={() => onToggleEnabled?.(entry, !entry.enabled)}
-              >
-                {isPendingToggle ? 'Reloading…' : entry.enabled ? 'Disable' : 'Enable'}
-              </Button>
+              <>
+                <Button
+                  compact
+                  disabled={!onToggleEnabled || entry.source === 'bundled' || isPending}
+                  type="button"
+                  variant={entry.enabled ? 'default' : 'primary'}
+                  onClick={() => onToggleEnabled?.(entry, !entry.enabled)}
+                >
+                  {isPendingToggle ? 'Reloading…' : entry.enabled ? 'Disable' : 'Enable'}
+                </Button>
+                {entry.canUninstall === true && onUninstall ? (
+                  <Button
+                    compact
+                    disabled={isPending}
+                    type="button"
+                    variant="danger"
+                    onClick={() => onUninstall(entry)}
+                  >
+                    {isPendingUninstall ? 'Reloading…' : 'Uninstall'}
+                  </Button>
+                ) : null}
+              </>
             }
             category={entry.category}
             description={entry.description}
@@ -248,6 +274,14 @@ function InstalledExtensionList({
                     {warningDiagnostics.length} warning{warningDiagnostics.length === 1 ? '' : 's'}
                   </Badge>
                 ) : null}
+                {entry.transition ? (
+                  <Badge
+                    title={entry.transition.message}
+                    variant={extensionTransitionBadgeVariant(entry.transition.kind)}
+                  >
+                    {extensionTransitionLabel(entry.transition.kind)}
+                  </Badge>
+                ) : null}
               </>
             }
             title={entry.displayName}
@@ -256,6 +290,22 @@ function InstalledExtensionList({
       })}
     </SideBarList>
   );
+}
+
+function extensionTransitionLabel(kind: ExtensionManagementTransition['kind']): string {
+  if (kind === 'reloadRequired') {
+    return 'Reload required';
+  }
+  return kind === 'failed' ? 'Failed' : 'Applied';
+}
+
+function extensionTransitionBadgeVariant(
+  kind: ExtensionManagementTransition['kind'],
+): 'accent' | 'danger' | 'muted' {
+  if (kind === 'failed') {
+    return 'danger';
+  }
+  return kind === 'applied' ? 'accent' : 'muted';
 }
 
 function MarketplaceExtensionList({

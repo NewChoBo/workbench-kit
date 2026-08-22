@@ -32,8 +32,10 @@ export function BuiltinExtensionsView({
     installedEntries,
     installTrustRecords,
     pendingAction,
+    pendingUninstallEntryId,
     rememberInstallTrust,
     toggleInstalledEntry,
+    uninstallInstalledEntry,
   } = useExtensionManagementModel({ catalogTrustPolicy, catalogUrl });
 
   const isInstallTrusted = useCallback(
@@ -55,9 +57,11 @@ export function BuiltinExtensionsView({
       isInstallTrusted={isInstallTrusted}
       missingExtensionIds={missingExtensionIds}
       pendingAction={pendingAction}
+      pendingUninstallEntryId={pendingUninstallEntryId}
       onInstall={installCatalogEntry}
       onRememberInstallTrust={rememberInstallTrust}
       onToggleEnabled={toggleInstalledEntry}
+      onUninstall={uninstallInstalledEntry}
     />
   );
 }

@@ -18,6 +18,11 @@ export interface FieldRemapChromeLabels {
   readonly convertPaletteDescription: string;
   readonly convertPaletteAriaLabel: string;
   readonly convertsListAriaLabel: string;
+  /** Additive filter copy. Omitted legacy label objects use the English defaults. */
+  readonly convertFilterLabel?: string;
+  readonly convertFilterPlaceholder?: string;
+  readonly clearConvertFilter?: string;
+  readonly noMatchingConverts?: string;
   readonly placeConvert: string;
   readonly addCombine: string;
   readonly addSplit: string;
@@ -32,15 +37,29 @@ export interface FieldRemapChromeLabels {
   readonly hideHiddenFields: string;
   readonly emptyDetailTitle: string;
   readonly emptyDetailDescription: string;
+  /** Additive Flow preview copy. Omitted legacy label objects use English defaults. */
+  readonly previewTitle?: string;
+  readonly previewLoading?: string;
+  readonly previewError?: string;
+  readonly previewDocumentResult?: string;
+  readonly previewBindingResult?: string;
+  readonly previewStepIntermediateUnavailable?: string;
+  readonly previewOperatorIntermediateUnavailable?: string;
+  readonly previewDraftUnavailable?: string;
+  readonly previewSelectionUnavailable?: string;
 }
 
-export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
+export const defaultFieldRemapChromeLabels = {
   bindingsTitle: 'Bindings',
   convertPaletteTitle: 'Convert palette',
   convertPaletteDescription:
     'Place a convert first, then wire source → draft → target. Drafts stay off the document until both ports bind.',
   convertPaletteAriaLabel: 'Convert palette',
   convertsListAriaLabel: 'Converts',
+  convertFilterLabel: 'Filter converts',
+  convertFilterPlaceholder: 'Filter by label or id',
+  clearConvertFilter: 'Clear convert filter',
+  noMatchingConverts: 'No matching converts.',
   placeConvert: 'Place convert',
   addCombine: 'Add combine',
   addSplit: 'Add split',
@@ -57,7 +76,18 @@ export const defaultFieldRemapChromeLabels: FieldRemapChromeLabels = {
   emptyDetailTitle: 'Start with a convert',
   emptyDetailDescription:
     'Use the Convert palette to place a convert, then wire source → draft → target. Or select an existing binding / convert note on the canvas.',
-};
+  previewTitle: 'Sample preview',
+  previewLoading: 'Updating preview…',
+  previewError: 'Preview failed',
+  previewDocumentResult: 'Final document output',
+  previewBindingResult: 'Final binding value',
+  previewStepIntermediateUnavailable:
+    'Per-step intermediate values are unavailable; this is the final binding value.',
+  previewOperatorIntermediateUnavailable:
+    'Selected-operator intermediate values are unavailable; this is the final document output.',
+  previewDraftUnavailable: 'Draft converts are not executable until they become a binding.',
+  previewSelectionUnavailable: 'The selected binding or operator is no longer available.',
+} as const satisfies Required<FieldRemapChromeLabels>;
 
 /** Stable capability ids for optional `t()` injection (not free prose). */
 export const fieldRemapChromeLabelKeys = {
@@ -66,6 +96,10 @@ export const fieldRemapChromeLabelKeys = {
   convertPaletteDescription: 'fieldRemap.convertPaletteDescription',
   convertPaletteAriaLabel: 'fieldRemap.convertPaletteAriaLabel',
   convertsListAriaLabel: 'fieldRemap.convertsListAriaLabel',
+  convertFilterLabel: 'fieldRemap.convertFilterLabel',
+  convertFilterPlaceholder: 'fieldRemap.convertFilterPlaceholder',
+  clearConvertFilter: 'fieldRemap.clearConvertFilter',
+  noMatchingConverts: 'fieldRemap.noMatchingConverts',
   placeConvert: 'fieldRemap.placeConvert',
   addCombine: 'fieldRemap.addCombine',
   addSplit: 'fieldRemap.addSplit',
@@ -80,6 +114,15 @@ export const fieldRemapChromeLabelKeys = {
   hideHiddenFields: 'fieldRemap.hideHiddenFields',
   emptyDetailTitle: 'fieldRemap.emptyDetailTitle',
   emptyDetailDescription: 'fieldRemap.emptyDetailDescription',
+  previewTitle: 'fieldRemap.previewTitle',
+  previewLoading: 'fieldRemap.previewLoading',
+  previewError: 'fieldRemap.previewError',
+  previewDocumentResult: 'fieldRemap.previewDocumentResult',
+  previewBindingResult: 'fieldRemap.previewBindingResult',
+  previewStepIntermediateUnavailable: 'fieldRemap.previewStepIntermediateUnavailable',
+  previewOperatorIntermediateUnavailable: 'fieldRemap.previewOperatorIntermediateUnavailable',
+  previewDraftUnavailable: 'fieldRemap.previewDraftUnavailable',
+  previewSelectionUnavailable: 'fieldRemap.previewSelectionUnavailable',
 } as const satisfies Record<keyof FieldRemapChromeLabels, string>;
 
 export function resolveFieldRemapChromeLabels(
@@ -101,6 +144,10 @@ export function resolveFieldRemapChromeLabels(
     convertPaletteDescription: resolve('convertPaletteDescription'),
     convertPaletteAriaLabel: resolve('convertPaletteAriaLabel'),
     convertsListAriaLabel: resolve('convertsListAriaLabel'),
+    convertFilterLabel: resolve('convertFilterLabel'),
+    convertFilterPlaceholder: resolve('convertFilterPlaceholder'),
+    clearConvertFilter: resolve('clearConvertFilter'),
+    noMatchingConverts: resolve('noMatchingConverts'),
     placeConvert: resolve('placeConvert'),
     addCombine: resolve('addCombine'),
     addSplit: resolve('addSplit'),
@@ -115,5 +162,14 @@ export function resolveFieldRemapChromeLabels(
     hideHiddenFields: resolve('hideHiddenFields'),
     emptyDetailTitle: resolve('emptyDetailTitle'),
     emptyDetailDescription: resolve('emptyDetailDescription'),
+    previewTitle: resolve('previewTitle'),
+    previewLoading: resolve('previewLoading'),
+    previewError: resolve('previewError'),
+    previewDocumentResult: resolve('previewDocumentResult'),
+    previewBindingResult: resolve('previewBindingResult'),
+    previewStepIntermediateUnavailable: resolve('previewStepIntermediateUnavailable'),
+    previewOperatorIntermediateUnavailable: resolve('previewOperatorIntermediateUnavailable'),
+    previewDraftUnavailable: resolve('previewDraftUnavailable'),
+    previewSelectionUnavailable: resolve('previewSelectionUnavailable'),
   };
 }

@@ -1,18 +1,20 @@
-import { useEffect, useMemo, useState, type JSX } from 'react';
 import {
-  applyMappingOperators,
-  convertToShape,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type JSX,
+  type Ref,
+} from 'react';
+import {
   createBuiltinValueTransformRegistry,
-  defineConversion,
-  defineDataShape,
   findParentChildMappingConflicts,
-  normalizeMappingOperators,
   projectSourceFields,
   projectTargetSlots,
   pruneMappingEdgesForShapes,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
-  withConversionEdges,
   type MappingEdge,
   type MappingOperator,
   type SourceField,
@@ -33,11 +35,45 @@ import {
 } from './samples.js';
 import { jsonataValueTransform } from './jsonata-transform.js';
 import {
+  areFieldRemapHistorySnapshotsEqual,
+  createFieldRemapHistorySnapshot,
+  createFieldRemapHistoryState,
+  recordFieldRemapHistory,
+  redoFieldRemapHistory,
+  undoFieldRemapHistory,
+  type FieldRemapHistorySnapshot,
+} from './history.js';
+import {
   FieldRemapShapeIoEditor,
   ingestSourceShape,
   ingestTargetShape,
 } from './shape-io-editor.js';
+import { createFieldRemapPreviewController } from './preview-controller.js';
+import type { FieldRemapPreviewState } from './preview.js';
 import './view.css';
+
+export type { FieldRemapHistorySnapshot } from './history.js';
+
+export interface FieldRemapHistoryOwner {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly record: (current: FieldRemapHistorySnapshot, next: FieldRemapHistorySnapshot) => void;
+  readonly reset: (next: FieldRemapHistorySnapshot) => void;
+  readonly undo: () => FieldRemapHistorySnapshot | undefined;
+  readonly redo: () => FieldRemapHistorySnapshot | undefined;
+}
+
+export interface FieldRemapHistoryActions {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+  readonly undo: () => void;
+  readonly redo: () => void;
+}
+
+export interface FieldRemapHistoryAvailability {
+  readonly canUndo: boolean;
+  readonly canRedo: boolean;
+}
 
 export interface FieldRemapPanelProps {
   /** Catalog sample id, or a full sample definition. Defaults to `nested-ab` labels/ids. */
@@ -71,6 +107,16 @@ export interface FieldRemapPanelProps {
   /** Optional controlled n→m operators (document v2). */
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
+  /**
+   * Composite history owner for controlled or mixed-control mapping state. When either durable
+   * channel is controlled, the Panel never creates a partial private history.
+   */
+  readonly historyOwner?: FieldRemapHistoryOwner | undefined;
+  /** Imperative semantic undo/redo actions for host chrome. Keyboard routing remains host-owned. */
+  readonly historyActionsRef?: Ref<FieldRemapHistoryActions | null> | undefined;
+  /** Reports the active history owner's current undo/redo availability. */
+  readonly onHistoryAvailabilityChange?:
+    ((availability: FieldRemapHistoryAvailability) => void) | undefined;
   /** Controlled source field tree (host-owned shapes). */
   readonly sources?: readonly SourceField[] | undefined;
   readonly onSourcesChange?: ((fields: readonly SourceField[]) => void) | undefined;
@@ -90,6 +136,8 @@ export interface FieldRemapPanelProps {
   readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
   readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   readonly emptyDetail?: FieldRemapFlowMapperProps['emptyDetail'];
+  /** Show the controller-owned preview snapshot in the nested Flow rail. */
+  readonly showFlowPreview?: boolean;
   /** Forwarded to {@link FieldRemapFlowMapper} Controls MiniMap toggle. */
   readonly onShowMinimapChange?: FieldRemapFlowMapperProps['onShowMinimapChange'];
   readonly onPaneContextMenu?: FieldRemapFlowMapperProps['onPaneContextMenu'];
@@ -101,11 +149,6 @@ export interface FieldRemapPanelProps {
   readonly t?: FieldRemapFlowMapperProps['t'];
 }
 
-type FieldRemapPreviewResult = {
-  readonly output: Record<string, unknown>;
-  readonly error?: string;
-};
-
 function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSampleDefinition {
   if (!sample) {
     return getFieldRemapSample('nested-ab');
@@ -114,6 +157,83 @@ function resolveSample(sample: FieldRemapPanelProps['sample']): FieldRemapSample
     return getFieldRemapSample(sample);
   }
   return sample;
+}
+
+function createFieldRemapPreviewSignature(): (value: unknown) => string {
+  const referenceIds = new WeakMap<object, number>();
+  let nextReferenceId = 1;
+  const referenceId = (value: object): number => {
+    const current = referenceIds.get(value);
+    if (current !== undefined) {
+      return current;
+    }
+    const next = nextReferenceId;
+    nextReferenceId += 1;
+    referenceIds.set(value, next);
+    return next;
+  };
+
+  const visit = (value: unknown, ancestors: Set<object>): string => {
+    if (value === null) {
+      return 'null';
+    }
+    if (typeof value === 'string') {
+      return JSON.stringify(value);
+    }
+    if (typeof value === 'number') {
+      return Number.isNaN(value) ? 'number:NaN' : `number:${String(value)}`;
+    }
+    if (typeof value === 'boolean' || typeof value === 'bigint') {
+      return `${typeof value}:${String(value)}`;
+    }
+    if (typeof value === 'undefined') {
+      return 'undefined';
+    }
+    if (typeof value === 'symbol') {
+      return `symbol:${String(value.description)}`;
+    }
+    if (typeof value === 'function') {
+      return `function:${referenceId(value)}`;
+    }
+
+    if (ancestors.has(value)) {
+      return `reference:${referenceId(value)}`;
+    }
+    ancestors.add(value);
+    try {
+      if (Array.isArray(value)) {
+        return `[${value.map((item) => visit(item, ancestors)).join(',')}]`;
+      }
+      if (value instanceof Date) {
+        return `date:${value.toISOString()}`;
+      }
+      if (value instanceof Map) {
+        return `map:{${[...value.entries()]
+          .map(([key, item]) => `${visit(key, ancestors)}=>${visit(item, ancestors)}`)
+          .sort()
+          .join(',')}}`;
+      }
+      if (value instanceof Set) {
+        return `set:{${[...value.values()]
+          .map((item) => visit(item, ancestors))
+          .sort()
+          .join(',')}}`;
+      }
+
+      const record = value as Record<string, unknown>;
+      const tag = Object.prototype.toString.call(value);
+      return `${tag}:{${Object.keys(record)
+        .sort()
+        .map((key) => `${JSON.stringify(key)}:${visit(record[key], ancestors)}`)
+        .join(',')}}`;
+    } catch {
+      return `object:${referenceId(value)}`;
+    } finally {
+      ancestors.delete(value);
+    }
+  };
+
+  return (value) => visit(value, new Set<object>());
 }
 
 /**
@@ -138,6 +258,9 @@ export function FieldRemapPanel({
   onEdgesChange,
   operators: operatorsProp,
   onOperatorsChange,
+  historyOwner,
+  historyActionsRef,
+  onHistoryAvailabilityChange,
   sources: sourcesProp,
   onSourcesChange,
   targets: targetsProp,
@@ -150,6 +273,7 @@ export function FieldRemapPanel({
   showBindingsList,
   showConvertPalette,
   emptyDetail,
+  showFlowPreview,
   onShowMinimapChange,
   onPaneContextMenu,
   onNodeContextMenu,
@@ -190,7 +314,12 @@ export function FieldRemapPanel({
   const [uncontrolledOperators, setUncontrolledOperators] = useState<readonly MappingOperator[]>(
     () => [...(operatorsProp ?? sample.operators ?? [])],
   );
-  const [result, setResult] = useState<FieldRemapPreviewResult>({ output: {} });
+  const [preview, setPreview] = useState<FieldRemapPreviewState>({ status: 'loading' });
+  const [previewController] = useState(() => createFieldRemapPreviewController());
+  const previewControllerDisposeTimer = useRef<ReturnType<typeof setTimeout> | undefined>(
+    undefined,
+  );
+  const [previewSignature] = useState(() => createFieldRemapPreviewSignature());
   const [uncontrolledSourceSample, setUncontrolledSourceSample] = useState<unknown>(
     () => sourceSampleProp ?? sample.source,
   );
@@ -221,6 +350,26 @@ export function FieldRemapPanel({
   const sourceFields = sourcesControlled ? sourcesProp : uncontrolledSources;
   const targetSlots = targetsControlled ? targetsProp : uncontrolledTargets;
   const sourceSample = sourceSampleControlled ? sourceSampleProp : uncontrolledSourceSample;
+  const transformRegistryRevision = previewSignature(registry.list());
+  const previewRevision = previewSignature({
+    sources: sourceFields,
+    targets: targetSlots,
+    edges,
+    operators,
+    sourceSample,
+    sourceShapeId: sample.sourceIdPrefix,
+    targetShapeId: sample.targetIdPrefix,
+    sourceLabel: sample.sourceLabel,
+    targetLabel: sample.targetLabel,
+    transformRegistryRevision,
+  });
+  const historyOwnedByPanel = !edgesControlled && !operatorsControlled;
+  const [panelHistory, setPanelHistory] = useState(createFieldRemapHistoryState);
+  const currentHistorySnapshot = useMemo(
+    () => createFieldRemapHistorySnapshot(edges, operators),
+    [edges, operators],
+  );
+  const shapeRefs = useRef({ sources: sourceFields, targets: targetSlots });
 
   const flowSources = useMemo(
     () => projectSourceFields(sourceFields, { includeHidden }),
@@ -234,15 +383,6 @@ export function FieldRemapPanel({
     () => pruneMappingEdgesForShapes(edges, flowSources, flowTargets),
     [edges, flowSources, flowTargets],
   );
-  const commitFlowEdges = (next: readonly MappingEdge[]) => {
-    if (includeHidden) {
-      commitEdges(next);
-      return;
-    }
-    const visibleIds = new Set(flowEdges.map((edge) => edge.id));
-    const preserved = edges.filter((edge) => !visibleIds.has(edge.id));
-    commitEdges([...preserved, ...next]);
-  };
 
   const commitEdges = (next: readonly MappingEdge[]) => {
     if (!edgesControlled) {
@@ -258,6 +398,147 @@ export function FieldRemapPanel({
     onOperatorsChange?.(next);
   };
 
+  const applyHistorySnapshot = (next: FieldRemapHistorySnapshot) => {
+    if (
+      !areFieldRemapHistorySnapshotsEqual(
+        createFieldRemapHistorySnapshot(edges, next.operators),
+        next,
+      )
+    ) {
+      commitEdges(next.edges);
+    }
+    if (
+      !areFieldRemapHistorySnapshotsEqual(
+        createFieldRemapHistorySnapshot(next.edges, operators),
+        next,
+      )
+    ) {
+      commitOperators(next.operators);
+    }
+  };
+
+  const recordSemanticSnapshot = (next: FieldRemapHistorySnapshot) => {
+    if (areFieldRemapHistorySnapshotsEqual(currentHistorySnapshot, next)) {
+      return;
+    }
+    if (historyOwnedByPanel) {
+      setPanelHistory((current) => recordFieldRemapHistory(current, currentHistorySnapshot, next));
+    } else {
+      historyOwner?.record(currentHistorySnapshot, next);
+    }
+    applyHistorySnapshot(next);
+  };
+
+  const commitFlowEdges = (next: readonly MappingEdge[]) => {
+    if (includeHidden) {
+      recordSemanticSnapshot(createFieldRemapHistorySnapshot(next, operators));
+      return;
+    }
+    const visibleIds = new Set(flowEdges.map((edge) => edge.id));
+    const preserved = edges.filter((edge) => !visibleIds.has(edge.id));
+    recordSemanticSnapshot(createFieldRemapHistorySnapshot([...preserved, ...next], operators));
+  };
+
+  const resetHistory = (next: FieldRemapHistorySnapshot) => {
+    if (historyOwnedByPanel) {
+      setPanelHistory(createFieldRemapHistoryState());
+    } else {
+      historyOwner?.reset(next);
+    }
+  };
+
+  const resetHistoryForShapes = (
+    nextEdges: readonly MappingEdge[],
+    nextSources: readonly SourceField[],
+    nextTargets: readonly TargetSlot[],
+  ) => {
+    shapeRefs.current = { sources: nextSources, targets: nextTargets };
+    const next = createFieldRemapHistorySnapshot(nextEdges, operators);
+    resetHistory(next);
+    applyHistorySnapshot(next);
+  };
+
+  const undo = () => {
+    if (historyOwnedByPanel) {
+      const result = undoFieldRemapHistory(panelHistory, currentHistorySnapshot);
+      if (!result) {
+        return;
+      }
+      setPanelHistory(result.state);
+      applyHistorySnapshot(result.snapshot);
+      return;
+    }
+    if (!historyOwner?.canUndo) {
+      return;
+    }
+    const next = historyOwner.undo();
+    if (next) {
+      applyHistorySnapshot(next);
+    }
+  };
+
+  const redo = () => {
+    if (historyOwnedByPanel) {
+      const result = redoFieldRemapHistory(panelHistory, currentHistorySnapshot);
+      if (!result) {
+        return;
+      }
+      setPanelHistory(result.state);
+      applyHistorySnapshot(result.snapshot);
+      return;
+    }
+    if (!historyOwner?.canRedo) {
+      return;
+    }
+    const next = historyOwner.redo();
+    if (next) {
+      applyHistorySnapshot(next);
+    }
+  };
+
+  const historyAvailability = {
+    canUndo: historyOwnedByPanel ? panelHistory.past.length > 0 : (historyOwner?.canUndo ?? false),
+    canRedo: historyOwnedByPanel
+      ? panelHistory.future.length > 0
+      : (historyOwner?.canRedo ?? false),
+  };
+
+  useImperativeHandle(historyActionsRef, () => ({ ...historyAvailability, undo, redo }), [
+    historyAvailability.canRedo,
+    historyAvailability.canUndo,
+    panelHistory,
+    currentHistorySnapshot,
+    historyOwner,
+  ]);
+
+  useEffect(() => {
+    onHistoryAvailabilityChange?.(historyAvailability);
+  }, [historyAvailability.canRedo, historyAvailability.canUndo, onHistoryAvailabilityChange]);
+
+  useEffect(() => {
+    if (shapeRefs.current.sources === sourceFields && shapeRefs.current.targets === targetSlots) {
+      return;
+    }
+    shapeRefs.current = { sources: sourceFields, targets: targetSlots };
+    const nextEdges = pruneMappingEdgesForShapes(edges, sourceFields, targetSlots);
+    const next = createFieldRemapHistorySnapshot(nextEdges, operators);
+    if (historyOwnedByPanel) {
+      setPanelHistory(createFieldRemapHistoryState());
+    } else {
+      historyOwner?.reset(next);
+    }
+    applyHistorySnapshot(next);
+  }, [
+    edges,
+    historyOwnedByPanel,
+    historyOwner,
+    onEdgesChange,
+    onOperatorsChange,
+    operators,
+    sourceFields,
+    targetSlots,
+  ]);
+
   const commitSources = (next: readonly SourceField[]) => {
     if (!sourcesControlled) {
       setUncontrolledSources(next);
@@ -272,84 +553,64 @@ export function FieldRemapPanel({
     onTargetsChange?.(next);
   };
 
-  const shapes = useMemo(
-    () => [
-      defineDataShape({
-        id: sample.sourceIdPrefix,
-        label: sample.sourceLabel,
-        role: 'source',
-        fields: sourceFields,
-      }),
-      defineDataShape({
-        id: sample.targetIdPrefix,
-        label: sample.targetLabel,
-        role: 'target',
-        fields: targetSlots,
-      }),
-    ],
-    [sample, sourceFields, targetSlots],
-  );
-
   const conflicts = useMemo(
     () => findParentChildMappingConflicts(edges, sourceFields, targetSlots),
     [edges, sourceFields, targetSlots],
   );
 
   useEffect(() => {
-    const controller = new AbortController();
-    const conversion = withConversionEdges(
-      defineConversion({
-        id: `${sample.sourceIdPrefix}→${sample.targetIdPrefix}`,
-        sourceShapeIds: [sample.sourceIdPrefix],
-        targetShapeId: sample.targetIdPrefix,
-        edges: [...sample.edges],
-      }),
-      edges,
-    );
-
-    void convertToShape({
-      conversion,
-      shapes,
-      inputs: { [sample.sourceIdPrefix]: sourceSample },
-      transforms: registry,
-      signal: controller.signal,
-    })
-      .then(async (next) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        const normalizedOps = normalizeMappingOperators(operators);
-        if (!normalizedOps?.length) {
-          setResult({ output: next.output });
-          return;
-        }
-        const merged = await applyMappingOperators({
-          operators: normalizedOps,
-          sources: sourceFields,
-          targets: targetSlots,
-          inputs: { [sample.sourceIdPrefix]: sourceSample },
-          transforms: registry,
-          output: next.output,
-          signal: controller.signal,
-        });
-        if (!controller.signal.aborted) {
-          setResult({ output: merged.output });
-        }
-      })
-      .catch((error: unknown) => {
-        if (controller.signal.aborted) {
-          return;
-        }
-        setResult({
-          output: {},
-          error: error instanceof Error ? error.message : String(error),
-        });
-      });
+    if (previewControllerDisposeTimer.current !== undefined) {
+      clearTimeout(previewControllerDisposeTimer.current);
+      previewControllerDisposeTimer.current = undefined;
+    }
+    const unsubscribe = previewController.subscribe(() => {
+      setPreview(previewController.getSnapshot());
+    });
+    const currentSnapshot = previewController.getSnapshot();
+    if (currentSnapshot.status !== 'unavailable') {
+      setPreview(currentSnapshot);
+    }
 
     return () => {
-      controller.abort();
+      unsubscribe();
+      const timer = setTimeout(() => {
+        if (previewControllerDisposeTimer.current === timer) {
+          previewControllerDisposeTimer.current = undefined;
+          previewController.dispose();
+        }
+      }, 0);
+      previewControllerDisposeTimer.current = timer;
     };
-  }, [edges, operators, registry, sample, shapes, sourceFields, sourceSample, targetSlots]);
+  }, [previewController]);
+
+  useEffect(() => {
+    previewController.update({
+      kind: 'evaluate',
+      revision: previewRevision,
+      input: {
+        sources: sourceFields,
+        targets: targetSlots,
+        edges,
+        operators,
+        inputs: { [sample.sourceIdPrefix]: sourceSample },
+        transforms: registry,
+        sourceShapeIds: [sample.sourceIdPrefix],
+        targetShapeId: sample.targetIdPrefix,
+        sourceLabel: sample.sourceLabel,
+        targetLabel: sample.targetLabel,
+      },
+    });
+  }, [
+    edges,
+    operators,
+    previewController,
+    previewRevision,
+    registry,
+    sample,
+    sourceFields,
+    sourceSample,
+    targetSlots,
+  ]);
 
   const applySourceShape = (parsed: unknown) => {
     const ingested = ingestSourceShape(parsed, sample.sourceIdPrefix);
@@ -358,7 +619,11 @@ export function FieldRemapPanel({
     }
     setSourceJson(ingested.sampleJson);
     commitSources(ingested.fields);
-    commitEdges(pruneMappingEdgesForShapes(edges, ingested.fields, targetSlots));
+    resetHistoryForShapes(
+      pruneMappingEdgesForShapes(edges, ingested.fields, targetSlots),
+      ingested.fields,
+      targetSlots,
+    );
   };
 
   const applyTargetShape = (parsed: unknown) => {
@@ -366,7 +631,11 @@ export function FieldRemapPanel({
     setTargetSample(parsed);
     setTargetJson(ingested.sampleJson);
     commitTargets(ingested.fields);
-    commitEdges(pruneMappingEdgesForShapes(edges, sourceFields, ingested.fields));
+    resetHistoryForShapes(
+      pruneMappingEdgesForShapes(edges, sourceFields, ingested.fields),
+      sourceFields,
+      ingested.fields,
+    );
   };
 
   return (
@@ -428,7 +697,9 @@ export function FieldRemapPanel({
         transforms={registry}
         onEdgesChange={commitFlowEdges}
         operators={operators}
-        onOperatorsChange={commitOperators}
+        onOperatorsChange={(next) =>
+          recordSemanticSnapshot(createFieldRemapHistorySnapshot(edges, next))
+        }
         sourceTitle={sample.sourceLabel}
         targetTitle={sample.targetLabel}
         showMinimap={showMinimap}
@@ -437,6 +708,7 @@ export function FieldRemapPanel({
         showBindingsList={showBindingsList}
         showConvertPalette={showConvertPalette}
         emptyDetail={emptyDetail}
+        {...(showFlowPreview ? { preview, showPreview: true } : {})}
         onShowMinimapChange={onShowMinimapChange}
         includeHidden={includeHidden}
         onIncludeHiddenChange={setIncludeHidden}
@@ -460,9 +732,9 @@ export function FieldRemapPanel({
         </p>
       ) : null}
 
-      {result.error ? (
+      {preview.status === 'error' ? (
         <p className="workbench-field-remap-demo__error" role="alert">
-          {result.error}
+          {preview.message}
         </p>
       ) : null}
 
@@ -473,7 +745,9 @@ export function FieldRemapPanel({
         </section>
         <section className="workbench-field-remap-demo__pane" aria-labelledby="field-remap-target">
           <h3 id="field-remap-target">{sample.targetLabel}</h3>
-          <pre data-testid="field-remap-result">{JSON.stringify(result.output, null, 2)}</pre>
+          <pre data-testid="field-remap-result">
+            {JSON.stringify(preview.status === 'ready' ? preview.result.output : {}, null, 2)}
+          </pre>
         </section>
       </div>
     </div>

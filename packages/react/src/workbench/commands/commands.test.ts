@@ -373,6 +373,7 @@ describe('workbench editor command presets', () => {
       WORKBENCH_COMMAND_SURFACE_EDITOR,
       WORKBENCH_COMMAND_SURFACE_EDITOR,
       WORKBENCH_COMMAND_SURFACE_EDITOR,
+      WORKBENCH_COMMAND_SURFACE_EDITOR,
     ]);
   });
 
@@ -405,7 +406,9 @@ describe('workbench editor command presets', () => {
       context: createEditorContext({
         canCloseAll: true,
         canCloseOthers: true,
+        canCloseToRight: false,
         canClosePath: false,
+        closeToRight: () => undefined,
         hasMultipleOpenFiles: true,
         hasOpenFiles: true,
       }),
@@ -416,13 +419,28 @@ describe('workbench editor command presets', () => {
     expect(items.map((item) => item.type === 'command' && item.label)).toEqual([
       'Close',
       'Close others',
+      'Close to the right',
       'Close all',
     ]);
     expect(items.map((item) => item.type === 'command' && item.disabled)).toEqual([
       true,
       false,
+      true,
       false,
     ]);
+  });
+
+  it('keeps Close to the right hidden for existing command contexts that omit the capability', () => {
+    const registry = createCommandRegistry(createWorkbenchEditorCommands());
+    const items = resolveCommandMenuItems({
+      context: createEditorContext(),
+      entries: createWorkbenchEditorTabMenuEntries(),
+      registry,
+    });
+
+    expect(
+      items.some((item) => item.type === 'command' && item.label === 'Close to the right'),
+    ).toBe(false);
   });
 
   it('creates tab-list entries for close all only', () => {
@@ -451,8 +469,10 @@ describe('workbench editor command presets', () => {
     const calls: string[] = [];
     const registry = createCommandRegistry(createWorkbenchEditorCommands());
     const context = createEditorContext({
+      canCloseToRight: true,
       closeAll: () => calls.push('closeAll'),
       closeOthers: () => calls.push('closeOthers'),
+      closeToRight: () => calls.push('closeToRight'),
       closePath: () => calls.push('close'),
       copyPath: () => calls.push('copy'),
       deletePath: () => calls.push('delete'),
@@ -472,6 +492,7 @@ describe('workbench editor command presets', () => {
       'editor.splitDown',
       'editor.close',
       'editor.closeOthers',
+      'editor.closeToRight',
       'editor.closeAll',
       'editor.delete',
     ].forEach((commandId) => executeCommand(registry, commandId, context));
@@ -485,6 +506,7 @@ describe('workbench editor command presets', () => {
       'splitDown',
       'close',
       'closeOthers',
+      'closeToRight',
       'closeAll',
       'delete',
     ]);

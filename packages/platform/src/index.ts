@@ -225,8 +225,11 @@ export type {
   VersionedEnvelope,
 } from './storage/types.js';
 export {
+  applyWindowFocusablePolicy,
   applyWindowResidencyPolicy,
+  type ApplyWindowFocusablePolicyInput,
   type ApplyWindowResidencyPolicyInput,
+  type FocusableWindowSurface,
   type ResidencyWindowSurface,
   type WindowPointerPassthroughPolicy,
   type WindowZOrder,
@@ -245,12 +248,15 @@ export {
   WINDOW_BOUNDS_MIN_HEIGHT,
   WINDOW_BOUNDS_MIN_WIDTH,
   clampWindowBoundsToDisplays,
+  selectWindowDisplayForBounds,
+  type ClampWindowBoundsToDisplaysOptions,
 } from './window/clamp-window-bounds-to-displays.js';
 export {
   DEFAULT_WINDOW_OPEN_HEIGHT,
   DEFAULT_WINDOW_OPEN_WIDTH,
   createDefaultWindowOpenBounds,
   resolveWindowOpenLayout,
+  type DefaultWindowOpenBoundsOptions,
   type ResolveWindowOpenLayoutInput,
   type ResolvedWindowOpenLayout,
 } from './window/resolve-window-open-layout.js';

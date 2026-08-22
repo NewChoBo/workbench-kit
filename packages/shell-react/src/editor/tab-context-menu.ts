@@ -12,11 +12,8 @@ import {
   createWorkbenchEditorTabMenuEntries,
   type WorkbenchEditorCommandContext,
 } from '@workbench-kit/react/workbench/commands';
-import type {
-  EditorService,
-  EditorTabState,
-  ExtensionRegistry,
-} from '@workbench-kit/workbench-core';
+import type { EditorService, EditorTabState, MenuRegistry } from '@workbench-kit/workbench-core';
+import type { CommandRegistry } from '@workbench-kit/platform';
 
 import { copyResourcePath, pathForResource } from './resource.js';
 import {
@@ -34,17 +31,19 @@ const EDITOR_TAB_CONTEXT_MENU = 'editor/tab/context';
 const EDITOR_TAB_EXTENSION_MENU_SEPARATOR_ID = 'editor-tab-extension-separator';
 
 export function createEditorTabContextMenuItems({
+  commands,
   editorService,
   executeExtensionCommand,
-  extensionRegistry,
   groupId,
+  menus,
   tab,
   tabs,
 }: {
+  commands?: CommandRegistry | undefined;
   editorService: EditorService;
   executeExtensionCommand?: ((commandId: string) => unknown) | undefined;
-  extensionRegistry?: ExtensionRegistry | undefined;
   groupId: string;
+  menus?: MenuRegistry | undefined;
   tab: EditorTabState;
   tabs: readonly EditorTabState[];
 }): ContextMenuItem[] {
@@ -108,10 +107,11 @@ export function createEditorTabContextMenuItems({
   return appendExtensionContextMenuItems(
     baseItems,
     createExtensionContextMenuItems({
+      commands,
       contextKeys,
       executeCommand: executeExtensionCommand,
-      extensionRegistry,
       menu: EDITOR_TAB_CONTEXT_MENU,
+      menus,
     }),
     EDITOR_TAB_EXTENSION_MENU_SEPARATOR_ID,
   );

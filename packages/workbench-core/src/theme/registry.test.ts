@@ -8,6 +8,38 @@ function buildCompleteTokenOverrides(baseColor: string): Record<string, string> 
 }
 
 describe('ThemeRegistry', () => {
+  it('publishes symmetric content changes and ignores stale registration disposal', () => {
+    const registry = new ThemeRegistry();
+    const changes: string[] = [];
+    registry.onDidChangeThemes(({ kind, theme }) => {
+      changes.push(`${kind}:${theme.id}`);
+    });
+    const theme = {
+      extensionId: 'workbench-kit.samples.theme-alt',
+      id: 'workbench-kit.samples.theme-alt.dark-blue',
+      label: 'Dark Blue Alt',
+      mode: 'dark' as const,
+      tokenOverrides: buildCompleteTokenOverrides('#0a1628'),
+    };
+
+    const firstRegistration = registry.registerTheme(theme);
+    expect(registry.getRevision()).toBe(1);
+    firstRegistration.dispose();
+    expect(registry.getRevision()).toBe(2);
+
+    const secondRegistration = registry.registerTheme(theme);
+    firstRegistration.dispose();
+    expect(registry.getRevision()).toBe(3);
+    secondRegistration.dispose();
+    expect(registry.getRevision()).toBe(4);
+    expect(changes).toEqual([
+      'registered:workbench-kit.samples.theme-alt.dark-blue',
+      'unregistered:workbench-kit.samples.theme-alt.dark-blue',
+      'registered:workbench-kit.samples.theme-alt.dark-blue',
+      'unregistered:workbench-kit.samples.theme-alt.dark-blue',
+    ]);
+  });
+
   it('registers contributed themes from extensions', () => {
     const registry = new ExtensionRegistry();
 

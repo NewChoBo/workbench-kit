@@ -1,22 +1,18 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState, useSyncExternalStore } from 'react';
 import {
   DEFAULT_EXTENSION_CATALOG_TRUST_POLICY,
   DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
-  DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY,
   ExtensionInstallApprovalRequiredError,
   applyExtensionInstallPlanToRecords,
   assertExtensionCatalogUrlAllowed,
   loadExtensionInstallTrustRecords,
-  loadInstalledExtensions,
   parseExtensionCatalog,
   recordExtensionInstallTrust,
-  saveExtensionInstallTrustRecords,
-  saveInstalledExtensions,
-  toggleInstalledExtensionEnabled,
+  saveExtensionInstallTrustRecordsResult,
   type ExtensionCatalogEntry,
   type ExtensionCatalogTrustPolicy,
   type ExtensionInstallTrustRecord,
-  type InstalledExtensionRecord,
+  type WorkbenchPersistenceDiagnosticHandler,
 } from '@workbench-kit/workbench-core';
 import type {
   ExtensionCatalogBrowseEntry,
@@ -30,60 +26,66 @@ import {
   createExtensionCatalogBrowseEntries,
   createExtensionInstallPlanningContext,
   createExtensionManagementEntries,
+  type ExtensionUninstallActionConstraint,
 } from './management-model.js';
 import { useWorkbench, type WorkbenchStorageAdapter } from '../shell/provider.js';
+import { useExtensionEnablementController } from './extension-enablement-context.js';
+import type {
+  ExtensionEnablementTransitionResult,
+  ExtensionUninstallActionResult,
+} from './extension-enablement-controller.js';
+import { useWorkbenchPersistenceDiagnosticHandler } from '../shell/persistence-diagnostic-context.js';
+import {
+  reportPersistenceWriteResult,
+  usePersistenceDiagnosticHandlerRef,
+} from '../storage/persistence-diagnostics.js';
 
 export interface UseExtensionManagementModelOptions {
   catalogTrustPolicy?: ExtensionCatalogTrustPolicy | undefined;
   catalogUrl?: string | undefined;
-  installedExtensionsStorage?: WorkbenchStorageAdapter | undefined;
-  installedExtensionsStorageKey?: string | undefined;
   installTrustStorage?: WorkbenchStorageAdapter | undefined;
   installTrustStorageKey?: string | undefined;
+  onPersistenceDiagnostic?: WorkbenchPersistenceDiagnosticHandler | undefined;
 }
 
 export function useExtensionManagementModel({
   catalogTrustPolicy = DEFAULT_EXTENSION_CATALOG_TRUST_POLICY,
   catalogUrl = '/extension-catalog.json',
-  installedExtensionsStorage,
-  installedExtensionsStorageKey,
   installTrustStorage,
   installTrustStorageKey = DEFAULT_EXTENSION_INSTALL_TRUST_STORAGE_KEY,
+  onPersistenceDiagnostic,
 }: UseExtensionManagementModelOptions = {}) {
   const workbench = useWorkbench();
-  const { availableExtensions, extensionRegistry } = workbench;
-  const resolvedInstalledExtensionsStorage =
-    installedExtensionsStorage ?? workbench.installedExtensionsStorage;
-  const resolvedInstalledExtensionsStorageKey =
-    installedExtensionsStorageKey ??
-    workbench.installedExtensionsStorageKey ??
-    DEFAULT_INSTALLED_EXTENSIONS_STORAGE_KEY;
-  const resolvedInstallTrustStorage = installTrustStorage ?? resolvedInstalledExtensionsStorage;
+  const providerPersistenceDiagnostic = useWorkbenchPersistenceDiagnosticHandler();
+  const diagnosticHandlerRef = usePersistenceDiagnosticHandlerRef(
+    onPersistenceDiagnostic ?? providerPersistenceDiagnostic,
+  );
+  const extensionEnablement = useExtensionEnablementController();
+  const { availableExtensions, extensionCatalog } = workbench;
+  const resolvedInstallTrustStorage = installTrustStorage ?? workbench.installedExtensionsStorage;
+  const installedRecords = useSyncExternalStore(
+    extensionEnablement.subscribeInstalledRecords,
+    extensionEnablement.getInstalledRecordsSnapshot,
+    extensionEnablement.getInstalledRecordsSnapshot,
+  );
   const [catalogEntries, setCatalogEntries] = useState<readonly ExtensionCatalogEntry[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(Boolean(catalogUrl));
   const [catalogError, setCatalogError] = useState<string | undefined>();
   const [pendingAction, setPendingAction] = useState<
     ExtensionManagementPendingAction | undefined
   >();
-  const [installedRecords, setInstalledRecords] = useState<readonly InstalledExtensionRecord[]>(
-    () =>
-      loadInstalledExtensions(
-        resolvedInstalledExtensionsStorageKey,
-        resolvedInstalledExtensionsStorage,
-      ),
-  );
+  const [pendingUninstallEntry, setPendingUninstallEntry] = useState<
+    ExtensionManagementEntry | undefined
+  >();
+  const [uninstallActionConstraint, setUninstallActionConstraint] = useState<
+    ExtensionUninstallActionConstraint | undefined
+  >();
+  const [lastTransition, setLastTransition] = useState<
+    ExtensionEnablementTransitionResult | undefined
+  >();
   const [installTrustRecords, setInstallTrustRecords] = useState<
     readonly ExtensionInstallTrustRecord[]
   >(() => loadExtensionInstallTrustRecords(installTrustStorageKey, resolvedInstallTrustStorage));
-
-  useEffect(() => {
-    setInstalledRecords(
-      loadInstalledExtensions(
-        resolvedInstalledExtensionsStorageKey,
-        resolvedInstalledExtensionsStorage,
-      ),
-    );
-  }, [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey]);
 
   useEffect(() => {
     setInstallTrustRecords(
@@ -138,28 +140,66 @@ export function useExtensionManagementModel({
   }, [catalogTrustPolicy, catalogUrl]);
 
   const installedEntries = useMemo<readonly ExtensionManagementEntry[]>(() => {
-    return createExtensionManagementEntries({
+    const projectedEntries = createExtensionManagementEntries({
       availableExtensions,
-      extensionRegistry,
+      extensionCatalog,
       installedRecords,
+      transition: lastTransition,
+      uninstallActionConstraint,
     });
-  }, [availableExtensions, extensionRegistry, installedRecords]);
+    if (!pendingUninstallEntry) {
+      return projectedEntries;
+    }
+
+    return [
+      ...projectedEntries.filter((entry) => entry.id !== pendingUninstallEntry.id),
+      pendingUninstallEntry,
+    ].sort((left, right) => left.displayName.localeCompare(right.displayName));
+  }, [
+    availableExtensions,
+    extensionCatalog,
+    installedRecords,
+    lastTransition,
+    pendingUninstallEntry,
+    uninstallActionConstraint,
+  ]);
+
+  const handleTransition = useCallback(
+    (
+      result: ExtensionEnablementTransitionResult,
+      pendingKind: ExtensionManagementPendingAction['kind'],
+    ) => {
+      setLastTransition(result);
+      if (result.kind !== 'reloadRequired') {
+        setPendingAction(undefined);
+        return;
+      }
+
+      setPendingAction({ entryId: result.extensionId, kind: pendingKind });
+      if (typeof window !== 'undefined') {
+        window.requestAnimationFrame(() => {
+          window.location.reload();
+        });
+      }
+    },
+    [],
+  );
 
   const browseEntries = useMemo<readonly ExtensionCatalogBrowseEntry[]>(() => {
     return createExtensionCatalogBrowseEntries({
       availableExtensions,
       catalogEntries,
-      extensionRegistry,
+      extensionCatalog,
       installedRecords,
     });
-  }, [availableExtensions, catalogEntries, extensionRegistry, installedRecords]);
+  }, [availableExtensions, catalogEntries, extensionCatalog, installedRecords]);
 
   const installCatalogEntry = useCallback(
     (entry: ExtensionCatalogBrowseEntry, options?: ExtensionInstallOptions) => {
       const installContext = createExtensionInstallPlanningContext({
         availableExtensions,
         catalogEntries,
-        extensionRegistry,
+        extensionCatalog,
         installedRecords,
       });
       const plan = createCatalogEntryInstallPlan(entry, installContext);
@@ -178,26 +218,15 @@ export function useExtensionManagementModel({
         installSources: installContext.installSources,
         plan,
       });
-      saveInstalledExtensions(
-        next,
-        resolvedInstalledExtensionsStorageKey,
-        resolvedInstalledExtensionsStorage,
-      );
-      setInstalledRecords(next);
-      setPendingAction({ entryId: entry.id, kind: 'install' });
-      if (typeof window !== 'undefined') {
-        window.requestAnimationFrame(() => {
-          window.location.reload();
-        });
-      }
+      handleTransition(extensionEnablement.commitInstalledRecords(next, entry.id), 'install');
     },
     [
       availableExtensions,
       catalogEntries,
-      extensionRegistry,
+      extensionCatalog,
       installedRecords,
-      resolvedInstalledExtensionsStorage,
-      resolvedInstalledExtensionsStorageKey,
+      extensionEnablement,
+      handleTransition,
     ],
   );
 
@@ -207,31 +236,58 @@ export function useExtensionManagementModel({
         return;
       }
 
-      const next = toggleInstalledExtensionEnabled(
-        entry.id,
-        enabled,
-        resolvedInstalledExtensionsStorageKey,
-        resolvedInstalledExtensionsStorage,
-      );
-      setInstalledRecords(next);
-      setPendingAction({ entryId: entry.id, kind: 'toggle' });
+      handleTransition(extensionEnablement.toggleInstalledExtension(entry.id, enabled), 'toggle');
+    },
+    [extensionEnablement, handleTransition],
+  );
+
+  const uninstallInstalledEntry = useCallback(
+    (entry: ExtensionManagementEntry) => {
+      if (entry.source !== 'installed' || entry.id.startsWith('workbench-kit.builtin.')) {
+        return;
+      }
+
+      const result = extensionEnablement.uninstallInstalledExtension(entry.id);
+      if (result.kind === 'blocked' || result.kind === 'ineligibleTarget') {
+        setUninstallActionConstraint(toExtensionUninstallActionConstraint(result));
+        return;
+      }
+
+      setUninstallActionConstraint(undefined);
+      setLastTransition(result);
+      if (result.kind !== 'reloadRequired') {
+        setPendingUninstallEntry(undefined);
+        return;
+      }
+
+      setPendingUninstallEntry(entry);
       if (typeof window !== 'undefined') {
         window.requestAnimationFrame(() => {
           window.location.reload();
         });
       }
     },
-    [resolvedInstalledExtensionsStorage, resolvedInstalledExtensionsStorageKey],
+    [extensionEnablement],
   );
 
   const rememberInstallTrust = useCallback(
     (entry: ExtensionCatalogBrowseEntry) => {
       const permissions = entry.installPlan?.permissions ?? [];
       const next = recordExtensionInstallTrust(entry.id, permissions, installTrustRecords);
-      saveExtensionInstallTrustRecords(next, installTrustStorageKey, resolvedInstallTrustStorage);
       setInstallTrustRecords(next);
+      const persistence = saveExtensionInstallTrustRecordsResult(
+        next,
+        installTrustStorageKey,
+        resolvedInstallTrustStorage,
+      );
+      reportPersistenceWriteResult(persistence, diagnosticHandlerRef);
     },
-    [installTrustRecords, installTrustStorageKey, resolvedInstallTrustStorage],
+    [
+      diagnosticHandlerRef,
+      installTrustRecords,
+      installTrustStorageKey,
+      resolvedInstallTrustStorage,
+    ],
   );
 
   return {
@@ -242,7 +298,35 @@ export function useExtensionManagementModel({
     installedEntries,
     installTrustRecords,
     pendingAction,
+    pendingUninstallEntryId: pendingUninstallEntry?.id,
     rememberInstallTrust,
     toggleInstalledEntry,
+    uninstallInstalledEntry,
+  };
+}
+
+function toExtensionUninstallActionConstraint(
+  result: Extract<
+    ExtensionUninstallActionResult,
+    { readonly kind: 'blocked' | 'ineligibleTarget' }
+  >,
+): ExtensionUninstallActionConstraint {
+  if (result.kind === 'blocked') {
+    return {
+      eligibility: {
+        dependentExtensionIds: result.dependentExtensionIds,
+        kind: result.kind,
+        unresolvedExtensionIds: result.unresolvedExtensionIds,
+      },
+      extensionId: result.extensionId,
+    };
+  }
+  return {
+    eligibility: {
+      diagnosticExtensionIds: result.diagnosticExtensionIds,
+      kind: result.kind,
+      reason: result.reason,
+    },
+    extensionId: result.extensionId,
   };
 }

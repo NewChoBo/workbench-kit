@@ -82,6 +82,11 @@ export interface ExtensionManagementDiagnosticSummary {
   readonly severity: 'error' | 'warning';
 }
 
+export interface ExtensionManagementTransition {
+  readonly kind: 'applied' | 'reloadRequired' | 'failed';
+  readonly message: string;
+}
+
 export interface ExtensionInstallPlanSummary {
   readonly blocked: boolean;
   readonly diagnostics?: readonly ExtensionManagementDiagnosticSummary[] | undefined;
@@ -92,6 +97,8 @@ export interface ExtensionInstallPlanSummary {
 }
 
 export interface ExtensionManagementEntry {
+  /** True only when a persisted installed record currently owns this entry. */
+  readonly canUninstall?: boolean;
   readonly category: string;
   readonly description?: string | undefined;
   readonly diagnostics?: readonly ExtensionManagementDiagnosticSummary[] | undefined;
@@ -102,6 +109,7 @@ export interface ExtensionManagementEntry {
   readonly installedAt?: string | undefined;
   readonly manifestUrl?: string | undefined;
   readonly source: ExtensionManagementEntrySource;
+  readonly transition?: ExtensionManagementTransition;
 }
 
 export interface ExtensionCatalogBrowseEntry {
@@ -128,6 +136,7 @@ export interface ExtensionManagementPanelProps {
   installedEntries: readonly ExtensionManagementEntry[];
   onInstall?:
     ((entry: ExtensionCatalogBrowseEntry, options?: ExtensionInstallOptions) => void) | undefined;
+  onUninstall?: (entry: ExtensionManagementEntry) => void;
   onToggleEnabled?: ((entry: ExtensionManagementEntry, enabled: boolean) => void) | undefined;
   /**
    * Host-owned durable trust check. When true for an entry, the install confirm

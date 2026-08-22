@@ -2,7 +2,7 @@
 
 import type { WorkbenchCommandDescriptor } from '@workbench-kit/react/workbench';
 import { ExtensionRegistry } from '@workbench-kit/workbench-core';
-import { act } from 'react';
+import { act, useLayoutEffect } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, describe, expect, it } from 'vitest';
 
@@ -65,6 +65,34 @@ describe('useExtensionRegistryCommandDescriptors', () => {
     });
 
     expect(getCommandIds()).toBe('host.help');
+    registry.dispose();
+  });
+
+  it('resynchronizes a command registered before the passive subscription', () => {
+    const registry = new ExtensionRegistry();
+    host = document.createElement('div');
+    document.body.append(host);
+    root = createRoot(host);
+
+    function Harness() {
+      const descriptors = useExtensionRegistryCommandDescriptors(registry);
+      useLayoutEffect(() => {
+        const registration = registry.commands.registerCommand({
+          id: 'layout.registered',
+          title: 'Registered during layout',
+        });
+        return () => registration.dispose();
+      }, []);
+      return <output data-command-ids={descriptors.map((descriptor) => descriptor.id).join(',')} />;
+    }
+
+    act(() => {
+      root?.render(<Harness />);
+    });
+
+    expect(host.querySelector('output')?.getAttribute('data-command-ids')).toBe(
+      'layout.registered',
+    );
     registry.dispose();
   });
 });

@@ -13,6 +13,8 @@ export {
   type CreateEncryptedSecretVaultOptions,
   type EncryptedSecretVault,
   type SafeStorageCipher,
+  type SecretVaultCommitMetadata,
+  type SecretVaultDocumentCodec,
 } from './secrets/encrypted-secret-vault.js';
 export {
   InvalidExternalLinkUrlError,
@@ -33,11 +35,15 @@ export {
   type RegisterPrivilegedAssetProtocolSchemeOptions,
 } from './assets/privileged-asset-protocol.js';
 export {
+  createWin32RegistryStringReader,
   createWin32WallpaperPathResolver,
   resolveWallpaperCropRect,
+  type CreateWin32RegistryStringReaderOptions,
   type RectLike,
   type SizeLike,
   type WallpaperPathResolver,
+  type Win32RegistryExecFile,
+  type Win32RegistryExecFileOptions,
 } from './wallpaper/wallpaper-crop.js';
 export {
   createWindowControlsBridge,

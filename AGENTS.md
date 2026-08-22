@@ -123,19 +123,19 @@ type: feat | fix | security | question | docs | extract
 intent: implement | discuss | clarify
 ```
 
-| Situation                 | Do                                                                               |
-| ------------------------- | -------------------------------------------------------------------------------- |
-| Simple usage/API question | `type: question` — answer from public kit sources; no PR                         |
-| Ambiguous / thin request  | Do **not** guess — one structured reverse-question comment; `status:needs-human` |
-| Want implementation       | Quality bar first, then `run agent` **or** label `status:queued`                 |
-| `type: security`          | No public PoC / no drive-by fix — advisory / private channel                     |
-| Parent/child links        | Read linked `#N` issues; summarize dependencies in the comment                   |
-| Idle hours (automation)   | If queue empty, cron may open one small internal refactor PR — see IssueOps docs |
-| Weekly structural (auto)  | Monday lane may open one bolder architecture PR; **humans merge** — never auto   |
+| Situation                 | Do                                                                                          |
+| ------------------------- | ------------------------------------------------------------------------------------------- |
+| Simple usage/API question | `type: question` — answer from public kit sources; no PR                                    |
+| Ambiguous / thin request  | Do **not** guess — one structured reverse-question comment; `status:needs-human`            |
+| Want implementation       | Quality bar first, then `run agent` **or** label `status:queued`                            |
+| `type: security`          | No public PoC / no drive-by fix — advisory / private channel                                |
+| Parent/child links        | Read linked `#N` issues; summarize dependencies in the comment                              |
+| Idle hours (automation)   | Only with no `ACTION_REQUIRED` or queued item, cron may open one small internal refactor PR |
+| Weekly structural (auto)  | Monday lane may open one bolder architecture PR; **humans merge** — never auto              |
 
 Status labels: `status:queued` · `in-progress` · `pr-open` · `needs-human` ·
 `skipped`. Automation posts use the HTML marker documented in
-`github-issues.md`. Never auto-close issues from automation; never push `main`.
+`github-issues.md`. Automation may close only an Issue it owns after its actual acceptance criteria and any required linked PR review/integration are verified; never close another role's Issue, and never push `main`.
 
 ## Git
 

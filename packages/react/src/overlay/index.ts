@@ -20,12 +20,17 @@ export type {
 export {
   createPointerPassthroughController,
   isPointerOverHitRegion,
+  resolvePointerHitTarget,
 } from './pointerPassthroughRegion';
 export type {
+  PointerHitTestDocument,
   PointerOverHitRegionOptions,
   PointerPassthroughController,
   PointerPassthroughControllerOptions,
   PointerPassthroughPort,
 } from './pointerPassthroughRegion';
 export { usePointerPassthroughRegion } from './usePointerPassthroughRegion';
-export type { UsePointerPassthroughRegionOptions } from './usePointerPassthroughRegion';
+export type {
+  PointerHitTargetResolver,
+  UsePointerPassthroughRegionOptions,
+} from './usePointerPassthroughRegion';

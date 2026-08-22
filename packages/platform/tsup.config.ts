@@ -10,6 +10,8 @@ export default defineConfig({
     'atomic-write': 'src/node/atomic-write.ts',
     node: 'src/node/index.ts',
     'tray-close-policy': 'src/window/tray-close-policy.ts',
+    'window-geometry': 'src/window/window-geometry.ts',
+    'window-residency': 'src/window/window-residency.ts',
     'window-bounds-persistence': 'src/window/window-bounds-persistence.ts',
   },
   format: ['cjs'],

@@ -18,8 +18,14 @@
       "preload": [
         "src/preload/index.ts"
       ],
+      "secret-vault": [
+        "src/secrets/encrypted-secret-vault.ts"
+      ],
       "sender-security": [
         "src/security/require-owned-window-for-sender.ts"
+      ],
+      "wallpaper": [
+        "src/wallpaper/wallpaper-crop.ts"
       ],
       "window-controls": [
         "src/window/window-controls.ts"
@@ -53,11 +59,23 @@
       "default": "./src/security/open-allowlisted-external-link.ts"
     },
     "./preload": "./src/preload/index.ts",
+    "./secret-vault": {
+      "types": "./src/secrets/encrypted-secret-vault.ts",
+      "require": "./dist/secrets/encrypted-secret-vault.js",
+      "import": "./src/secrets/encrypted-secret-vault.ts",
+      "default": "./src/secrets/encrypted-secret-vault.ts"
+    },
     "./sender-security": {
       "types": "./src/security/require-owned-window-for-sender.ts",
       "require": "./dist/security/require-owned-window-for-sender.js",
       "import": "./src/security/require-owned-window-for-sender.ts",
       "default": "./src/security/require-owned-window-for-sender.ts"
+    },
+    "./wallpaper": {
+      "types": "./src/wallpaper/wallpaper-crop.ts",
+      "require": "./dist/wallpaper/wallpaper-crop.js",
+      "import": "./src/wallpaper/wallpaper-crop.ts",
+      "default": "./src/wallpaper/wallpaper-crop.ts"
     },
     "./window-controls": {
       "types": "./src/window/window-controls.ts",

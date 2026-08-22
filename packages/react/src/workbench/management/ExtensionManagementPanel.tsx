@@ -24,6 +24,7 @@ import type {
   ExtensionManagementEntry,
   ExtensionManagementFeatureSummary,
   ExtensionManagementPanelProps,
+  ExtensionManagementTransition,
 } from './types.js';
 
 const BROWSE_CATEGORIES = ['all', 'feature', 'editor', 'theme', 'language'] as const;
@@ -46,6 +47,7 @@ export function ExtensionManagementPanel({
   onInstall,
   onRememberInstallTrust,
   onToggleEnabled,
+  onUninstall,
 }: ExtensionManagementPanelProps) {
   const [activeTab, setActiveTab] = useState<'installed' | 'browse'>(
     EXTENSION_MANAGEMENT_DEFAULT_TAB,
@@ -93,6 +95,7 @@ export function ExtensionManagementPanel({
                 summary={`${filteredInstalled.length} of ${installedEntries.length} visible`}
                 onQueryChange={setInstalledQuery}
                 onToggleEnabled={onToggleEnabled}
+                onUninstall={onUninstall}
               />
             ),
           },
@@ -122,7 +125,8 @@ export function ExtensionManagementPanel({
         onSelect={(tabId) => setActiveTab(tabId as 'installed' | 'browse')}
       />
       <ManagementPanelNotice>
-        Installing or toggling extensions reloads the workbench to apply contributions.
+        Eligible unselected theme packs apply immediately. Other extension changes reload the
+        workbench.
       </ManagementPanelNotice>
     </ManagementPanelFrame>
   );
@@ -133,6 +137,7 @@ function InstalledExtensionsTab({
   entries,
   onQueryChange,
   onToggleEnabled,
+  onUninstall,
   query,
   summary,
 }: {
@@ -140,6 +145,7 @@ function InstalledExtensionsTab({
   entries: readonly ExtensionManagementEntry[];
   onQueryChange: (query: string) => void;
   onToggleEnabled?: ExtensionManagementPanelProps['onToggleEnabled'];
+  onUninstall?: ExtensionManagementPanelProps['onUninstall'];
   query: string;
   summary: string;
 }) {
@@ -160,15 +166,27 @@ function InstalledExtensionsTab({
             <li key={entry.id}>
               <ManagementCard
                 actions={
-                  <Button
-                    compact
-                    disabled={!onToggleEnabled || entry.source === 'bundled'}
-                    type="button"
-                    variant={entry.enabled ? 'default' : 'primary'}
-                    onClick={() => onToggleEnabled?.(entry, !entry.enabled)}
-                  >
-                    {entry.enabled ? 'Disable' : 'Enable'}
-                  </Button>
+                  <>
+                    <Button
+                      compact
+                      disabled={!onToggleEnabled || entry.source === 'bundled'}
+                      type="button"
+                      variant={entry.enabled ? 'default' : 'primary'}
+                      onClick={() => onToggleEnabled?.(entry, !entry.enabled)}
+                    >
+                      {entry.enabled ? 'Disable' : 'Enable'}
+                    </Button>
+                    {entry.canUninstall === true && onUninstall ? (
+                      <Button
+                        compact
+                        type="button"
+                        variant="danger"
+                        onClick={() => onUninstall(entry)}
+                      >
+                        Uninstall
+                      </Button>
+                    ) : null}
+                  </>
                 }
                 badges={
                   <>
@@ -180,6 +198,14 @@ function InstalledExtensionsTab({
                         {entry.enabled ? 'Enabled' : 'Disabled'}
                       </Badge>
                     )}
+                    {entry.transition ? (
+                      <Badge
+                        title={entry.transition.message}
+                        variant={extensionTransitionBadgeVariant(entry.transition.kind)}
+                      >
+                        {extensionTransitionLabel(entry.transition.kind)}
+                      </Badge>
+                    ) : null}
                   </>
                 }
                 description={entry.description}
@@ -196,6 +222,22 @@ function InstalledExtensionsTab({
       )}
     </>
   );
+}
+
+function extensionTransitionLabel(kind: ExtensionManagementTransition['kind']): string {
+  if (kind === 'reloadRequired') {
+    return 'Reload required';
+  }
+  return kind === 'failed' ? 'Failed' : 'Applied';
+}
+
+function extensionTransitionBadgeVariant(
+  kind: ExtensionManagementTransition['kind'],
+): 'accent' | 'danger' | 'muted' {
+  if (kind === 'failed') {
+    return 'danger';
+  }
+  return kind === 'applied' ? 'accent' : 'muted';
 }
 
 function ExtensionFeatureDetails({ entry }: { entry: ExtensionManagementEntry }) {

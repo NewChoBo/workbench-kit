@@ -78,6 +78,7 @@ export {
 } from './host/factory-registry.js';
 export {
   collectExtensionDependencyDiagnostics,
+  ExtensionRegistrationStore,
   ExtensionRegistry,
   type ActivatedExtension,
   type ExtensionDependencyDiagnostic,
@@ -149,7 +150,9 @@ export {
   installExtensionRecord,
   isInstalledExtensionPersistenceAvailable,
   loadInstalledExtensions,
+  loadInstalledExtensionsResult,
   saveInstalledExtensions,
+  saveInstalledExtensionsResult,
   toggleInstalledExtensionEnabled,
   type ApplyExtensionInstallPlanToRecordsInput,
   type ExtensionInstallPlanRecordSource,
@@ -164,9 +167,16 @@ export {
   recordExtensionInstallTrust,
   revokeExtensionInstallTrust,
   saveExtensionInstallTrustRecords,
+  saveExtensionInstallTrustRecordsResult,
   type ExtensionInstallTrustRecord,
 } from './extension/install-trust.js';
 export type {
+  WorkbenchPersistenceDiagnostic,
+  WorkbenchPersistenceDiagnosticCode,
+  WorkbenchPersistenceDiagnosticHandler,
+  WorkbenchPersistenceOperation,
+  WorkbenchPersistenceReadResult,
+  WorkbenchPersistenceWriteResult,
   WorkbenchRemovableStorageAdapter,
   WorkbenchStorageAdapter,
   WorkbenchStorageReader,
@@ -177,8 +187,12 @@ export type {
 export {
   createBrowserWorkbenchStorage,
   createMemoryWorkbenchStorage,
+  readWorkbenchStorageJsonResult,
+  writeWorkbenchStorageJsonResult,
   type BrowserWorkbenchStorageKind,
   type CreateBrowserWorkbenchStorageOptions,
+  type WorkbenchPersistenceDiagnosticOptions,
+  type WriteWorkbenchStorageJsonResultOptions,
 } from './storage-adapters.js';
 export {
   mergeExtensionsConfigWithInstallState,
@@ -201,6 +215,7 @@ export {
   applyThemeTokenOverrides,
   REQUIRED_THEME_TOKEN_KEYS,
   ThemeRegistry,
+  type ThemeRegistryChangeEvent,
   type WorkbenchThemeContribution,
 } from './theme/registry.js';
 export { sanitizeThemeTokenValue } from './theme/sanitize-token-value.js';

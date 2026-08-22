@@ -1,33 +1,59 @@
-import { useEffect, useState } from 'react';
-import type { WorkbenchStorageAdapter } from '@workbench-kit/workbench-core';
+import { useCallback, useEffect, useState } from 'react';
+import type {
+  WorkbenchPersistenceDiagnosticHandler,
+  WorkbenchStorageAdapter,
+} from '@workbench-kit/workbench-core';
 
 import {
-  readPersistedWorkbenchAppearance,
-  writePersistedWorkbenchAppearance,
+  readPersistedWorkbenchAppearanceResult,
+  writePersistedWorkbenchAppearanceResult,
   type WorkbenchAppearanceSettings,
 } from './appearance-storage.js';
+import {
+  reportPersistenceWriteResult,
+  usePersistenceDiagnosticHandlerRef,
+  useReportPersistenceReadDiagnostic,
+} from '../storage/persistence-diagnostics.js';
 
 export interface UsePersistedWorkbenchAppearanceOptions {
+  onPersistenceDiagnostic?: WorkbenchPersistenceDiagnosticHandler | undefined;
   persist?: boolean | undefined;
   storage?: WorkbenchStorageAdapter | undefined;
   storageKey?: string | undefined;
 }
 
+interface PersistedWorkbenchAppearanceState {
+  readonly appearance: WorkbenchAppearanceSettings;
+  readonly writeEligible: boolean;
+}
+
 export function usePersistedWorkbenchAppearance(
   options: UsePersistedWorkbenchAppearanceOptions = {},
 ): [WorkbenchAppearanceSettings, (settings: WorkbenchAppearanceSettings) => void] {
-  const { persist = true, storage, storageKey } = options;
-  const [appearance, setAppearance] = useState(() =>
-    readPersistedWorkbenchAppearance(storageKey, storage),
-  );
+  const { onPersistenceDiagnostic, persist = true, storage, storageKey } = options;
+  const [initialRead] = useState(() => readPersistedWorkbenchAppearanceResult(storageKey, storage));
+  const [state, setState] = useState<PersistedWorkbenchAppearanceState>(() => ({
+    appearance: initialRead.value,
+    writeEligible: initialRead.diagnostic === undefined,
+  }));
+  const diagnosticHandlerRef = usePersistenceDiagnosticHandlerRef(onPersistenceDiagnostic);
+
+  useReportPersistenceReadDiagnostic(initialRead.diagnostic, [], diagnosticHandlerRef);
 
   useEffect(() => {
-    if (!persist) {
+    if (!persist || !state.writeEligible) {
       return;
     }
 
-    writePersistedWorkbenchAppearance(appearance, storageKey, storage);
-  }, [appearance, persist, storage, storageKey]);
+    reportPersistenceWriteResult(
+      writePersistedWorkbenchAppearanceResult(state.appearance, storageKey, storage),
+      diagnosticHandlerRef,
+    );
+  }, [diagnosticHandlerRef, persist, state, storage, storageKey]);
 
-  return [appearance, setAppearance];
+  const setAppearance = useCallback((appearance: WorkbenchAppearanceSettings) => {
+    setState({ appearance, writeEligible: true });
+  }, []);
+
+  return [state.appearance, setAppearance];
 }

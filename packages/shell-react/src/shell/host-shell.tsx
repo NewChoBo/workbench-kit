@@ -59,7 +59,14 @@ export function WorkbenchHostShell({
   themePreset,
   titleBar,
 }: WorkbenchHostShellProps) {
-  const { contextKeyService, executeCommand, extensionRegistry, layoutService } = useWorkbench();
+  const {
+    activities: activityRegistry,
+    contextKeyService,
+    executeCommand,
+    layoutService,
+    statusBar,
+    views,
+  } = useWorkbench();
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const [, forceRender] = useReducer((count: number) => count + 1, 0);
   const rerender = useCallback(() => forceRender(), []);
@@ -69,20 +76,16 @@ export function WorkbenchHostShell({
   );
   const layout = layoutService.getState();
   const activities = useMemo(
-    () =>
-      filterActivitiesByWhenClause(
-        extensionRegistry.activities.getActivities(),
-        contextKeySnapshot,
-      ),
-    [contextKeySnapshot, extensionRegistry],
+    () => filterActivitiesByWhenClause(activityRegistry.getActivities(), contextKeySnapshot),
+    [activityRegistry, contextKeySnapshot],
   );
   const activityItems = filterActivityBarItems(
     sortActivityBarItems(
       createWorkbenchShellActivityItems({
         activeViewContainerId: layout.sideBar.activeViewContainer,
         activities,
-        viewContainers: extensionRegistry.views.getViewContainers('activitybar'),
-        views: extensionRegistry.views.getViews(),
+        viewContainers: views.getViewContainers('activitybar'),
+        views: views.getViews(),
       }),
       layout.activityBar.itemOrder,
     ),
@@ -136,7 +139,7 @@ export function WorkbenchHostShell({
       }
       compactStatus={compactStatus}
       onStatusItemActivate={(item) => {
-        const contributed = extensionRegistry.statusBar.getStatusBarItem(item.id);
+        const contributed = statusBar.getStatusBarItem(item.id);
         if (contributed?.command) {
           void executeCommand(contributed.command).catch(() => undefined);
           return;

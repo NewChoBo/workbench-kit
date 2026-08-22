@@ -1,5 +1,5 @@
 import './context-menu.css';
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Button } from '../primitives/button';
 import { cxCodicon } from '../utils/codicon';
 import { cx } from '../utils/cx';
@@ -13,6 +13,8 @@ export interface ContextMenuProps {
   ariaLabel?: string | undefined;
   className?: string | undefined;
   items: ContextMenuItem[];
+  /** Explicit focus target restored only when Escape dismisses the menu. */
+  returnFocusTarget?: HTMLElement | null | undefined;
   x: number;
   y: number;
   onClose: () => void;
@@ -77,18 +79,33 @@ export function ContextMenu({
   ariaLabel = 'Context menu',
   className,
   items,
+  returnFocusTarget,
   x,
   y,
   onClose,
 }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const [fallbackReturnFocusTarget] = useState<HTMLElement | null>(() => {
+    if (typeof document === 'undefined') {
+      return null;
+    }
+    return document.activeElement instanceof HTMLElement ? document.activeElement : null;
+  });
   const position = useClampedFixedOverlayPosition(ref, { x, y }, items.length);
   const hasIcons = menuHasIcons(items);
   const hasShortcuts = menuHasShortcuts(items);
   const enabledIndexes = useMemo(() => getEnabledItemIndexes(items), [items]);
   const [highlightedIndex, setHighlightedIndex] = useState(() => enabledIndexes[0] ?? -1);
 
-  useFixedOverlayDismiss({ containerRef: ref, onClose });
+  const restoreFocusOnEscape = useCallback(() => {
+    const target = returnFocusTarget ?? fallbackReturnFocusTarget;
+    if (target?.isConnected) {
+      target.focus();
+    }
+    return false;
+  }, [fallbackReturnFocusTarget, returnFocusTarget]);
+
+  useFixedOverlayDismiss({ containerRef: ref, onClose, onEscape: restoreFocusOnEscape });
 
   useEffect(() => {
     const handleContextMenu = (event: MouseEvent) => {
