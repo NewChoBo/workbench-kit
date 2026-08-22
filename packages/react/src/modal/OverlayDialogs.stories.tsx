@@ -119,6 +119,19 @@ export const ContextMenuPointerState: Story = {
     await expect(canvas.getByRole('status', { name: 'Pointer menu event log' })).toHaveTextContent(
       'Opened library-item',
     );
+
+    fireEvent.contextMenu(target, { clientX: 160, clientY: 180 });
+    const escapeMenu = await within(document.body).findByRole('menu', {
+      name: 'Library item menu',
+    });
+    await waitFor(() =>
+      expect(within(escapeMenu).getByRole('menuitem', { name: 'Open' })).toHaveFocus(),
+    );
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() =>
+      expect(within(document.body).queryByRole('menu', { name: 'Library item menu' })).toBeNull(),
+    );
+    await expect(target).toHaveFocus();
   },
   tags: ['storybook-play-required'],
 };
@@ -274,6 +287,7 @@ function ContextMenuColumnLayoutHarness() {
 
 function ContextMenuPointerStateHarness() {
   const menu = useContextMenuState<'library-item'>();
+  const [returnFocusTarget, setReturnFocusTarget] = useState<HTMLElement | null>(null);
   const [status, setStatus] = useState('Ready');
 
   const items: ContextMenuItem[] = [
@@ -292,7 +306,13 @@ function ContextMenuPointerStateHarness() {
   return (
     <StoryWorkbenchShellFrame variant="editor">
       <div className="ui-story-overlay-anchor" aria-label="Pointer state story surface">
-        <Button type="button" onContextMenu={(event) => menu.open(event, 'library-item')}>
+        <Button
+          type="button"
+          onContextMenu={(event) => {
+            setReturnFocusTarget(event.currentTarget);
+            menu.open(event, 'library-item');
+          }}
+        >
           Library item
         </Button>
       </div>
@@ -303,6 +323,7 @@ function ContextMenuPointerStateHarness() {
         <ContextMenu
           ariaLabel="Library item menu"
           items={items}
+          returnFocusTarget={returnFocusTarget}
           x={menu.state.x}
           y={menu.state.y}
           onClose={menu.close}

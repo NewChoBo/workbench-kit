@@ -32,6 +32,7 @@ export function useWorkbenchEditorTabContextMenu({
   tabs,
 }: UseWorkbenchEditorTabContextMenuOptions): UseWorkbenchEditorTabContextMenuResult {
   const [menuState, setMenuState] = useState<{
+    returnFocusTarget: HTMLElement;
     tabId: string;
     x: number;
     y: number;
@@ -42,7 +43,12 @@ export function useWorkbenchEditorTabContextMenu({
       event.preventDefault();
       event.stopPropagation();
       onSelectTab?.(tabId);
-      setMenuState({ tabId, x: event.clientX, y: event.clientY });
+      setMenuState({
+        returnFocusTarget: event.currentTarget,
+        tabId,
+        x: event.clientX,
+        y: event.clientY,
+      });
     },
     [onSelectTab],
   );
@@ -60,6 +66,7 @@ export function useWorkbenchEditorTabContextMenu({
           tabId: menuState.tabId,
           tabs,
         })}
+        returnFocusTarget={menuState.returnFocusTarget}
         x={menuState.x}
         y={menuState.y}
         onClose={() => setMenuState(null)}

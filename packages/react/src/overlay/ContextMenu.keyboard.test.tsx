@@ -75,4 +75,145 @@ describe('ContextMenu keyboard model', () => {
     });
     container.remove();
   });
+
+  it('restores an explicit connected target only when Escape dismisses the menu', async () => {
+    const onClose = vi.fn();
+    const invoker = document.createElement('button');
+    const container = document.createElement('div');
+    document.body.append(invoker, container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <ContextMenu
+          items={[{ id: 'open', label: 'Open', onSelect: vi.fn() }]}
+          returnFocusTarget={invoker}
+          x={12}
+          y={24}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    expect(document.activeElement).toBe(container.querySelector<HTMLElement>('[role="menuitem"]'));
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(invoker);
+
+    await act(async () => {
+      root.unmount();
+    });
+    invoker.remove();
+    container.remove();
+  });
+
+  it('falls back to the active element captured before menu-item focus', async () => {
+    const onClose = vi.fn();
+    const invoker = document.createElement('button');
+    const container = document.createElement('div');
+    document.body.append(invoker, container);
+    invoker.focus();
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <ContextMenu
+          items={[{ id: 'open', label: 'Open', onSelect: vi.fn() }]}
+          x={12}
+          y={24}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    expect(document.activeElement).toBe(container.querySelector<HTMLElement>('[role="menuitem"]'));
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).toBe(invoker);
+
+    await act(async () => {
+      root.unmount();
+    });
+    invoker.remove();
+    container.remove();
+  });
+
+  it('closes safely without focusing a detached explicit target', async () => {
+    const onClose = vi.fn();
+    const invoker = document.createElement('button');
+    const container = document.createElement('div');
+    document.body.append(invoker, container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <ContextMenu
+          items={[{ id: 'open', label: 'Open', onSelect: vi.fn() }]}
+          returnFocusTarget={invoker}
+          x={12}
+          y={24}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    invoker.remove();
+    const focus = vi.spyOn(invoker, 'focus');
+
+    await act(async () => {
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    });
+
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(focus).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('does not restore focus when a menu item activates', async () => {
+    const onClose = vi.fn();
+    const onOpen = vi.fn();
+    const invoker = document.createElement('button');
+    const container = document.createElement('div');
+    document.body.append(invoker, container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <ContextMenu
+          items={[{ id: 'open', label: 'Open', onSelect: onOpen }]}
+          returnFocusTarget={invoker}
+          x={12}
+          y={24}
+          onClose={onClose}
+        />,
+      );
+    });
+
+    const menu = container.querySelector<HTMLElement>('[role="menu"]');
+    await act(async () => {
+      menu?.dispatchEvent(new KeyboardEvent('keydown', { bubbles: true, key: 'Enter' }));
+    });
+
+    expect(onOpen).toHaveBeenCalledTimes(1);
+    expect(onClose).toHaveBeenCalledTimes(1);
+    expect(document.activeElement).not.toBe(invoker);
+
+    await act(async () => {
+      root.unmount();
+    });
+    invoker.remove();
+    container.remove();
+  });
 });
