@@ -150,6 +150,25 @@ Selection is a read-only projection over the injected result and does not re-eva
 An unavailable `hidden` / `no-sample` snapshot mounts no rail. Preview state is runtime-only
 and is never written into `FieldRemapDocument`, history or persistence.
 
+### Projection protocol conformance
+
+The package contains a private, backendless reference owner for the generic
+`@workbench-kit/contracts` projection protocol. It serializes revision comparison,
+edge/operator translation, validation, persistence and publication around one canonical
+`{ edges, operators }` aggregate. Source/target shape revisions participate in the same
+precondition cohort. Hidden-subset projections omit mappings and combine/split operators whose
+operands are hidden while preserving them canonically; ambiguous partial edits fail closed.
+
+The owner is intentionally not exported. Existing `FieldRemapPanel` and
+`FieldRemapFlowMapper` callback props remain compatible, but independent edge/operator callbacks
+are not described as atomic or revision-aware. Ownership remains layered as follows:
+
+| Layer              | Ownership                                                                                                   |
+| ------------------ | ----------------------------------------------------------------------------------------------------------- |
+| Generic contracts  | Descriptor, authority, snapshot, opaque revision, transaction and result envelopes                          |
+| Field Remap domain | Canonical edges/operators, shape revision cohort, translation, validation, persistence and semantic history |
+| React shell        | Selection, drafts, filters, viewport, splitter/chrome and runtime preview presentation                      |
+
 Place-then-wire uses **ephemeral draft nodes** in the shell Flow UI: place a
 transform, wire source then target (or the reverse), and the draft finalizes into
 a `MappingEdge` with `transformIds: [id]`. Escape discards unfinished drafts.

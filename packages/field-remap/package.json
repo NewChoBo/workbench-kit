@@ -17,6 +17,9 @@
     "!src/**/*.stories.ts",
     "!src/**/*.stories.tsx"
   ],
+  "dependencies": {
+    "@workbench-kit/contracts": "workspace:*"
+  },
   "description": "Field remap runtime: convert structure A into structure B via edges and convertToShape.",
   "publishConfig": {
     "access": "public",

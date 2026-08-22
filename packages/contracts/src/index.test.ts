@@ -30,6 +30,8 @@ import {
   workspaceFilesToDocument,
   normalizeServiceFailureMessage,
   type ServiceFailureCode,
+  isWorkbenchProjectionDescriptor,
+  type WorkbenchProjectionDescriptor,
 } from './index';
 
 const writePatch = {
@@ -44,6 +46,18 @@ const deletePatch = {
 };
 
 describe('contract helpers', () => {
+  it('exports projection contracts from the public root', () => {
+    const descriptor: WorkbenchProjectionDescriptor = {
+      id: 'sample-preview',
+      documentKind: 'sample-document',
+      projectionVersion: 1,
+      kind: 'PREVIEW',
+      authority: 'RUNTIME_ONLY',
+    };
+
+    expect(isWorkbenchProjectionDescriptor(descriptor)).toBe(true);
+  });
+
   it('classifies patch event variant', () => {
     expect(isWorkspacePatchDeleteFile(writePatch)).toBe(false);
     expect(isWorkspacePatchWriteFile(writePatch)).toBe(true);

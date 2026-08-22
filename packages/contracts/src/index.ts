@@ -20,6 +20,31 @@ export {
 } from './chat/chat';
 
 export type {
+  WorkbenchDerivedProjectionDescriptor,
+  WorkbenchEditableProjectionAuthority,
+  WorkbenchEditableProjectionDescriptor,
+  WorkbenchEditableProjectionKind,
+  WorkbenchEditableProjectionPort,
+  WorkbenchProjectionAuthority,
+  WorkbenchProjectionDescriptor,
+  WorkbenchProjectionDescriptorBase,
+  WorkbenchProjectionFailureCode,
+  WorkbenchProjectionKind,
+  WorkbenchProjectionPort,
+  WorkbenchProjectionRejectionCode,
+  WorkbenchProjectionRevision,
+  WorkbenchProjectionSnapshot,
+  WorkbenchProjectionTransaction,
+  WorkbenchProjectionTransactionResult,
+  WorkbenchReadOnlyProjectionAuthority,
+  WorkbenchReadOnlyProjectionDescriptor,
+  WorkbenchReadOnlyProjectionPort,
+  WorkbenchRuntimeProjectionDescriptor,
+  WorkbenchRuntimeProjectionKind,
+} from './projection/projection';
+export { isWorkbenchProjectionDescriptor } from './projection/projection';
+
+export type {
   WorkspacePatchApplyFailure,
   WorkspacePatchApplyResult,
   WorkspacePatchApplyStatus,
