@@ -612,7 +612,7 @@ WB-NS-072E Canvas/Inspector/provenance integration
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup
 ```
 
-`WB-NS-072A` is `READINESS_REVIEW_REQUIRED` at the current integration baseline. Its canonical consolidation map is maintained in `implementation-plan.md`; producer-distinct PASS makes that documentation packet `DONE`, not source-ready. `072B+` remain `DESIGNING` until their own readiness packets close API/state/diagnostic semantics. The 072A dependency map deliberately keeps extension trust/manifest integration blocked on WB-NS-040/072F while allowing a future 072B packet to cover only pure already-authorized declarative descriptor registration and resolution.
+`WB-NS-072A` is `READINESS_REVIEW_REQUIRED` at the current integration baseline. Its canonical consolidation map is maintained in `implementation-plan.md`; producer-distinct PASS makes that documentation packet `DONE`, not source-ready. `072B+` remain `DESIGNING` until their own readiness packets close API/state/diagnostic semantics. WB-NS-040 is a boundary constraint rather than a 072B completion dependency: extension trust/manifest integration stays blocked on WB-NS-040/072F, while a future 072B packet may cover only pure already-authorized declarative descriptor registration and resolution.
 
 Canonical packet gates are maintained in [`implementation-plan.md`](./implementation-plan.md):
 
