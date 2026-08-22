@@ -431,7 +431,10 @@ export function jdwNodeToGenericWidget(node: JsonWidgetNode): GenericWidget {
     };
   }
 
-  const widget: GenericWidget = { type: node.type };
+  const widget: GenericWidget = {
+    type: node.type,
+    ...(node.id !== undefined ? { id: node.id } : {}),
+  };
 
   for (const [key, value] of Object.entries(node.args)) {
     if (key === CONTAINER_CHILDREN_ARG && Array.isArray(value)) {
@@ -458,7 +461,7 @@ export function genericWidgetToJdwNode(widget: GenericWidget): JsonWidgetNode {
   const args: Record<string, unknown> = {};
 
   for (const [key, value] of Object.entries(widget)) {
-    if (key === 'type' || value === undefined) {
+    if (key === 'type' || key === 'id' || value === undefined) {
       continue;
     }
 
@@ -516,7 +519,11 @@ export function genericWidgetToJdwNode(widget: GenericWidget): JsonWidgetNode {
     };
   }
 
-  return { type: widget.type, args };
+  return {
+    type: widget.type,
+    ...(typeof widget.id === 'string' ? { id: widget.id } : {}),
+    args,
+  };
 }
 
 export function formatJsonWidgetData(node: JsonWidgetNode): string {

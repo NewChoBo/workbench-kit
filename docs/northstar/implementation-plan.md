@@ -2281,7 +2281,7 @@ Producer-distinct readiness review confirmed identity/version, public interface,
 
 ## WB-NS-070D - UiDocument command and direct-manipulation authoring
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
 - **Target owner:** `@workbench-kit/jdw`
 - **Implementation scope:** stable node identity, node-index/hierarchy projection, renderer-neutral authoring commands, atomic transactions, undo/redo session state, selection repair, JDW persistence adapter, root exports and backendless tests
 - **Dependencies:** `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`
@@ -2444,6 +2444,8 @@ Existing runtime fields remain source-compatible and are not reinterpreted. A ru
 - performance review rejects repeated full-tree scans inside one command, snapshot mutation and duplicate tree/layout implementations. One O(n) identity/index build and immutable snapshot history are acceptable for this first contract slice; no arbitrary bundle-size cap is added.
 
 The packet is complete when a browser-, Electron- and AI-free consumer can migrate or load one valid JDW source, apply all accepted manual edits through one command path, observe identical results regardless of caller surface, undo/redo transactionally and persist/reload the same stable node/component identities. Exact-source review must reject hidden ID invention, path-owned selection, partial commits, last-writer-wins duplicate identity, renderer-specific state, automatic legacy-document synchronization or a second structural/layout engine.
+
+The source candidate implements the packet under `packages/json-widget/src/ui-authoring/`, changes the existing JDW converters only to preserve ordinary top-level IDs and exports the new backendless contract from `@workbench-kit/jdw`. Exact-source review is required before integration.
 
 ### `WB-NS-070E` ready gate
 
