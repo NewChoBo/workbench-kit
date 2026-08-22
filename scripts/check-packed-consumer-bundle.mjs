@@ -95,6 +95,25 @@ try {
       'exec',
       'tsc',
       '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--noUncheckedIndexedAccess',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      path.join(consumerDir, 'src', 'strict-field-remap.ts'),
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
       'CommonJS',
       '--moduleResolution',
       'Node',
@@ -502,6 +521,22 @@ export const packedDesignSystemRegistry = new DesignSystemPackRegistry();
 
 const registry = new DesignSystemPackRegistry();
 if (registry.snapshot().revision !== 0) process.exit(1);
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'strict-field-remap.ts'),
+    `import { projectValueTransformToNodeType } from '@workbench-kit/field-remap';
+
+export const packedStrictFieldRemapProjection = projectValueTransformToNodeType(
+  {
+    id: 'packed:identity',
+    label: 'Identity',
+    inputTypes: ['string'],
+    outputType: 'string',
+    apply: (value) => value,
+  },
+  { nodeTypeRef: { id: 'packed.identity', version: '1.0.0' } },
+);
 `,
   );
   fs.writeFileSync(
