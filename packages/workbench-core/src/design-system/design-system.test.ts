@@ -155,9 +155,112 @@ describe('DesignSystemPackRegistry', () => {
     expect(registry.snapshot().revision).toBe(0);
     expect(registry.snapshot().packs()).toEqual([]);
   });
+
+  it('quarantines snapshot-safe malformed contribution and pack shapes', () => {
+    const registry = new DesignSystemPackRegistry();
+    registry.register({ contributionId: 'malformed.packs', packs: {} } as never);
+    registry.register({ contributionId: 'malformed.pack', packs: [null] } as never);
+
+    const snapshot = registry.snapshot();
+    expect(snapshot.revision).toBe(2);
+    expect(snapshot.packs()).toEqual([]);
+    expect(lookupCodes(snapshot.diagnostics())).toEqual([
+      'invalid-contribution-shape',
+      'invalid-pack-descriptor',
+    ]);
+    expect(snapshot.lookup({ id: 'neutral.design', version: '1.0.0' })).toEqual({
+      status: 'not-installed',
+      ref: { id: 'neutral.design', version: '1.0.0' },
+    });
+  });
+
+  it('classifies an exact pack from one noncanonical contribution as invalid', () => {
+    const registry = new DesignSystemPackRegistry();
+    registry.register(contribution(' noncanonical ', [pack()]));
+
+    const lookup = registry.snapshot().lookup({ id: 'neutral.design', version: '1.0.0' });
+    expect(lookup.status).toBe('invalid');
+    if (lookup.status !== 'invalid') throw new Error('expected invalid lookup');
+    expect(lookupCodes(lookup.diagnostics)).toEqual(['blank-contribution-id']);
+
+    const result = new DesignSystemResolver().resolve(registry.snapshot(), {
+      state: {
+        pack: { id: 'neutral.design', version: '1.0.0' },
+        theme: {
+          pack: { id: 'neutral.design', version: '1.0.0' },
+          themeId: 'light',
+        },
+      },
+    });
+    expect(lookupCodes(result.diagnostics)).toEqual(['pack-ref-invalid', 'blank-contribution-id']);
+  });
 });
 
 describe('DesignSystemResolver', () => {
+  it('returns diagnostics for malformed request boundaries without executing accessors', () => {
+    const resolver = new DesignSystemResolver();
+    const snapshot = new DesignSystemPackRegistry().snapshot();
+    let getterCalled = false;
+    const accessorState = {} as Record<string, unknown>;
+    Object.defineProperty(accessorState, 'pack', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return { id: 'unsafe.design', version: '1.0.0' };
+      },
+    });
+    const accessorScopeChain: unknown[] = ['panel'];
+    Object.defineProperty(accessorScopeChain, '0', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return 'unsafe';
+      },
+    });
+
+    expect(lookupCodes(resolver.resolve(snapshot, null as never).diagnostics)).toEqual([
+      'invalid-state-shape',
+    ]);
+    expect(lookupCodes(resolver.resolve(snapshot, { state: null } as never).diagnostics)).toEqual([
+      'invalid-state-shape',
+    ]);
+    expect(
+      lookupCodes(resolver.resolve(snapshot, { state: new Date() } as never).diagnostics),
+    ).toEqual(['invalid-state-shape']);
+    expect(
+      lookupCodes(resolver.resolve(snapshot, { state: accessorState } as never).diagnostics),
+    ).toEqual(['invalid-state-shape']);
+    expect(
+      lookupCodes(
+        resolver.resolve(snapshot, {
+          state: {
+            pack: { id: 'neutral.design', version: '1.0.0' },
+            theme: {
+              pack: { id: 'neutral.design', version: '1.0.0' },
+              themeId: 'light',
+            },
+          },
+          scopeChain: { 0: 'panel' },
+        } as never).diagnostics,
+      ),
+    ).toEqual(['invalid-scope-chain']);
+    expect(
+      lookupCodes(
+        resolver.resolve(snapshot, {
+          state: {
+            pack: { id: 'neutral.design', version: '1.0.0' },
+            theme: {
+              pack: { id: 'neutral.design', version: '1.0.0' },
+              themeId: 'light',
+            },
+          },
+          scopeChain: accessorScopeChain,
+        }).diagnostics,
+      ),
+    ).toEqual(['invalid-scope-chain']);
+    expect(getterCalled).toBe(false);
+  });
+
   it('resolves document Theme and root-to-leaf scopes without changing document structure', () => {
     const registry = new DesignSystemPackRegistry();
     registry.register(contribution('builtin.neutral', [pack()]));

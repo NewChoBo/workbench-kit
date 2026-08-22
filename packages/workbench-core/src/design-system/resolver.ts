@@ -1,4 +1,5 @@
 import {
+  UnsupportedDesignSystemSnapshotValueError,
   isCanonicalDesignSystemText,
   isSameDesignSystemPackRef,
   snapshotUiDesignSystemState,
@@ -59,6 +60,59 @@ function failure(diagnostics: readonly DesignSystemDiagnostic[]): DesignSystemRe
   return Object.freeze({ diagnostics: freezeDiagnostics(diagnostics) });
 }
 
+function invalidStateShape(path = 'state'): DesignSystemResolutionResult {
+  return failure([
+    {
+      code: 'invalid-state-shape',
+      message: 'Design System resolution state must be a declarative plain data object.',
+      path,
+    },
+  ]);
+}
+
+function invalidScopeChain(): DesignSystemResolutionResult {
+  return failure([
+    {
+      code: 'invalid-scope-chain',
+      message: 'Design System scopeChain must be a declarative array of scope ids.',
+      path: 'scopeChain',
+    },
+  ]);
+}
+
+function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
+}
+
+function readOwnDataValue(
+  value: Readonly<Record<string, unknown>>,
+  key: string,
+): { readonly ok: true; readonly value: unknown } | { readonly ok: false } {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (descriptor === undefined) return { ok: true, value: undefined };
+  if (!Object.prototype.hasOwnProperty.call(descriptor, 'value')) return { ok: false };
+  return { ok: true, value: descriptor.value };
+}
+
+function snapshotScopeChain(value: unknown): readonly string[] | null {
+  if (value === undefined) return Object.freeze([]);
+  if (!Array.isArray(value)) return null;
+
+  const result: unknown[] = [];
+  for (let index = 0; index < value.length; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
+    if (descriptor === undefined) {
+      result.push(undefined);
+      continue;
+    }
+    if (!Object.prototype.hasOwnProperty.call(descriptor, 'value')) return null;
+    result.push(descriptor.value);
+  }
+  return Object.freeze(result) as readonly string[];
+}
+
 function lookupFailure(
   lookup: Exclude<DesignSystemPackLookupResult, { readonly status: 'resolved' }>,
 ): DesignSystemResolutionResult {
@@ -112,22 +166,28 @@ function lookupFailure(
 }
 
 function validateRootState(state: UiDesignSystemState): readonly DesignSystemDiagnostic[] {
+  const stateRecord =
+    typeof state === 'object' && state !== null
+      ? (state as unknown as Partial<UiDesignSystemState>)
+      : {};
+  const pack = stateRecord.pack as UiDesignSystemState['pack'];
+  const theme = stateRecord.theme as UiDesignSystemState['theme'];
   const diagnostics: DesignSystemDiagnostic[] = [
-    ...validateDesignSystemPackRef(state.pack, 'state.pack'),
-    ...validateDesignSystemThemeRef(state.theme, 'state.theme'),
+    ...validateDesignSystemPackRef(pack, 'state.pack'),
+    ...validateDesignSystemThemeRef(theme, 'state.theme'),
   ];
   if (
-    validateDesignSystemPackRef(state.pack).length === 0 &&
-    validateDesignSystemPackRef(state.theme.pack).length === 0 &&
-    !isSameDesignSystemPackRef(state.pack, state.theme.pack)
+    validateDesignSystemPackRef(pack).length === 0 &&
+    validateDesignSystemPackRef(theme?.pack).length === 0 &&
+    !isSameDesignSystemPackRef(pack, theme.pack)
   ) {
     diagnostics.push({
       code: 'theme-pack-mismatch',
       message: 'Document Theme must belong to the exact document Design System Pack.',
       path: 'state.theme.pack',
-      packId: state.pack.id,
-      requestedVersion: state.pack.version,
-      themeId: state.theme.themeId,
+      packId: pack.id,
+      requestedVersion: pack.version,
+      themeId: theme.themeId,
     });
   }
   return freezeDiagnostics(diagnostics);
@@ -139,14 +199,18 @@ function validateScopeChain(
 ): readonly DesignSystemDiagnostic[] {
   const diagnostics: DesignSystemDiagnostic[] = [];
   const seen = new Set<string>();
+  const pack =
+    typeof state === 'object' && state !== null
+      ? (state as unknown as Partial<UiDesignSystemState>).pack
+      : undefined;
   scopeChain.forEach((scopeId, index) => {
     if (!isCanonicalDesignSystemText(scopeId)) {
       diagnostics.push({
         code: 'noncanonical-scope-id',
         message: 'ThemeScope id must be non-blank and already trimmed.',
         path: `scopeChain[${index}]`,
-        packId: state.pack.id,
-        requestedVersion: state.pack.version,
+        packId: pack?.id,
+        requestedVersion: pack?.version,
         scopeId,
       });
       return;
@@ -156,8 +220,8 @@ function validateScopeChain(
         code: 'duplicate-scope-id',
         message: 'ThemeScope chain must not contain duplicate scope ids.',
         path: `scopeChain[${index}]`,
-        packId: state.pack.id,
-        requestedVersion: state.pack.version,
+        packId: pack?.id,
+        requestedVersion: pack?.version,
         scopeId,
       });
       return;
@@ -172,8 +236,25 @@ export class DesignSystemResolver {
     snapshot: DesignSystemPackRegistrySnapshot,
     request: DesignSystemResolutionRequest,
   ): DesignSystemResolutionResult {
-    const state = snapshotUiDesignSystemState(request.state);
-    const scopeChain = Object.freeze([...(request.scopeChain ?? [])]);
+    if (!isPlainRecord(request)) return invalidStateShape('request');
+    const stateValue = readOwnDataValue(request, 'state');
+    if (!stateValue.ok) return invalidStateShape();
+    const scopeChainValue = readOwnDataValue(request, 'scopeChain');
+    if (!scopeChainValue.ok) return invalidScopeChain();
+
+    let state: UiDesignSystemState;
+    try {
+      state = snapshotUiDesignSystemState(stateValue.value as UiDesignSystemState);
+    } catch (error) {
+      if (error instanceof UnsupportedDesignSystemSnapshotValueError) {
+        return invalidStateShape();
+      }
+      throw error;
+    }
+    if (!isPlainRecord(state)) return invalidStateShape();
+
+    const scopeChain = snapshotScopeChain(scopeChainValue.value);
+    if (scopeChain === null) return invalidScopeChain();
     const inputDiagnostics = [
       ...validateRootState(state),
       ...validateScopeChain(scopeChain, state),

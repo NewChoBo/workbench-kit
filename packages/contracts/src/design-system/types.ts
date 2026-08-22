@@ -58,8 +58,10 @@ export interface DesignSystemPackContribution {
 }
 
 export const DESIGN_SYSTEM_DIAGNOSTIC_CODES = Object.freeze([
+  'invalid-contribution-shape',
   'blank-contribution-id',
   'duplicate-contribution-id',
+  'invalid-pack-descriptor',
   'noncanonical-pack-id',
   'noncanonical-pack-version',
   'noncanonical-provenance',
@@ -77,6 +79,8 @@ export const DESIGN_SYSTEM_DIAGNOSTIC_CODES = Object.freeze([
   'pack-ref-conflicted',
   'theme-pack-mismatch',
   'theme-not-found',
+  'invalid-state-shape',
+  'invalid-scope-chain',
   'noncanonical-scope-id',
   'duplicate-scope-id',
   'invalid-scope-selection',

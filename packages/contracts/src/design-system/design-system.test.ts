@@ -4,6 +4,7 @@ import {
   UnsupportedDesignSystemSnapshotValueError,
   isStructurallyValidUiValueSource,
   snapshotDesignSystemPackContribution,
+  validateDesignSystemPackContribution,
   validateDesignSystemPackDescriptor,
   validateUiDesignSystemState,
   type DesignSystemPackContribution,
@@ -79,6 +80,60 @@ describe('Design System contracts', () => {
       'scope-theme-pack-mismatch',
       'invalid-scope-selection',
     ]);
+  });
+
+  it('reports snapshot-safe malformed plain data instead of throwing', () => {
+    expect(
+      validateDesignSystemPackContribution({
+        contributionId: 'malformed.packs',
+        packs: {},
+      } as never).map((diagnostic) => diagnostic.code),
+    ).toEqual(['invalid-contribution-shape']);
+    expect(
+      validateDesignSystemPackDescriptor(null as never).map((diagnostic) => diagnostic.code),
+    ).toEqual(['invalid-pack-descriptor']);
+    expect(
+      validateUiDesignSystemState({
+        pack: { id: 'neutral.design', version: '1.0.0' },
+        theme: {
+          pack: { id: 'neutral.design', version: '1.0.0' },
+          themeId: 'light',
+        },
+        scopes: { panel: null },
+      } as never).map((diagnostic) => diagnostic.code),
+    ).toEqual(['invalid-scope-selection']);
+  });
+
+  it('never executes accessors supplied to public Design System validators', () => {
+    let getterCalled = false;
+    const accessorContribution = { packs: [] } as Record<string, unknown>;
+    Object.defineProperty(accessorContribution, 'contributionId', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return 'unsafe';
+      },
+    });
+    const accessorDescriptor = pack() as unknown as Record<string, unknown>;
+    Object.defineProperty(accessorDescriptor, 'ref', {
+      enumerable: true,
+      get() {
+        getterCalled = true;
+        return { id: 'unsafe.design', version: '1.0.0' };
+      },
+    });
+
+    expect(
+      validateDesignSystemPackContribution(accessorContribution as never).map(
+        (diagnostic) => diagnostic.code,
+      ),
+    ).toEqual(['invalid-contribution-shape']);
+    expect(
+      validateDesignSystemPackDescriptor(accessorDescriptor as never).map(
+        (diagnostic) => diagnostic.code,
+      ),
+    ).toEqual(['invalid-pack-descriptor']);
+    expect(getterCalled).toBe(false);
   });
 
   it('shares a safe structural UiValueSource guard with JDW', () => {

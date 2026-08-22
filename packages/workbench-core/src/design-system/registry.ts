@@ -44,14 +44,16 @@ export interface DesignSystemPackRegistrySnapshot {
 
 interface Registration {
   readonly key: symbol;
-  readonly contribution: DesignSystemPackContribution;
+  readonly contribution: unknown;
 }
 
 interface IndexedContribution {
-  readonly contribution: DesignSystemPackContribution;
+  readonly contribution: unknown;
+  readonly contributionId?: string;
   readonly diagnostics: readonly DesignSystemDiagnostic[];
   readonly duplicate: boolean;
   readonly index: number;
+  readonly packs: readonly unknown[];
 }
 
 interface IndexedPack {
@@ -65,7 +67,7 @@ interface IndexedPack {
 }
 
 function freezeRef(ref: DesignSystemPackRef): DesignSystemPackRef {
-  return Object.freeze({ id: ref.id, version: ref.version });
+  return Object.freeze({ id: ref?.id, version: ref?.version }) as DesignSystemPackRef;
 }
 
 function freezeDiagnostics(
@@ -84,27 +86,52 @@ function freezeDiagnostics(
 }
 
 function duplicateContributionDiagnostic(
-  contribution: DesignSystemPackContribution,
+  contributionId: string,
   contributionIndex: number,
 ): DesignSystemDiagnostic {
   return Object.freeze({
     code: 'duplicate-contribution-id',
-    message: `Design System contribution id "${contribution.contributionId}" conflicts with another contribution.`,
+    message: `Design System contribution id "${contributionId}" conflicts with another contribution.`,
     path: `contributions[${contributionIndex}].contributionId`,
-    contributionId: contribution.contributionId,
+    contributionId,
   });
 }
 
 function blankContributionDiagnostic(
-  contribution: DesignSystemPackContribution,
+  contributionId: string | undefined,
   contributionIndex: number,
 ): DesignSystemDiagnostic {
   return Object.freeze({
     code: 'blank-contribution-id',
     message: 'Design System contribution id must be non-blank and already trimmed.',
     path: `contributions[${contributionIndex}].contributionId`,
-    contributionId: contribution.contributionId,
+    contributionId,
   });
+}
+
+function invalidContributionShapeDiagnostic(
+  contributionId: string | undefined,
+  contributionIndex: number,
+  path: 'contribution' | 'packs',
+): DesignSystemDiagnostic {
+  return Object.freeze({
+    code: 'invalid-contribution-shape',
+    message:
+      path === 'contribution'
+        ? 'Design System contribution must be a plain data object with a packs array.'
+        : 'Design System contribution packs must be an array.',
+    path:
+      path === 'contribution'
+        ? `contributions[${contributionIndex}]`
+        : `contributions[${contributionIndex}].packs`,
+    contributionId,
+  });
+}
+
+function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  if (typeof value !== 'object' || value === null || Array.isArray(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return prototype === Object.prototype || prototype === null;
 }
 
 function duplicatePackDiagnostic(entry: IndexedPack): DesignSystemDiagnostic {
@@ -112,7 +139,7 @@ function duplicatePackDiagnostic(entry: IndexedPack): DesignSystemDiagnostic {
     code: 'duplicate-pack-ref',
     message: `Design System Pack exact identity ${entry.refKey ?? 'unknown'} conflicts with another definition.`,
     path: `contributions[${entry.contribution.index}].packs[${entry.index}]`,
-    contributionId: entry.contribution.contribution.contributionId,
+    contributionId: entry.contribution.contributionId,
     packId: entry.descriptor.ref.id,
     requestedVersion: entry.descriptor.ref.version,
   });
@@ -120,40 +147,59 @@ function duplicatePackDiagnostic(entry: IndexedPack): DesignSystemDiagnostic {
 
 function buildSnapshot(
   revision: number,
-  contributions: readonly DesignSystemPackContribution[],
+  contributions: readonly unknown[],
 ): DesignSystemPackRegistrySnapshot {
   const contributionCounts = new Map<string, number>();
   for (const contribution of contributions) {
-    if (isCanonicalDesignSystemText(contribution.contributionId)) {
-      contributionCounts.set(
-        contribution.contributionId,
-        (contributionCounts.get(contribution.contributionId) ?? 0) + 1,
-      );
+    const contributionId = isPlainRecord(contribution) ? contribution.contributionId : undefined;
+    if (isCanonicalDesignSystemText(contributionId)) {
+      contributionCounts.set(contributionId, (contributionCounts.get(contributionId) ?? 0) + 1);
     }
   }
 
   const indexedContributions: IndexedContribution[] = contributions.map((contribution, index) => {
-    const canonical = isCanonicalDesignSystemText(contribution.contributionId);
-    const duplicate = canonical && (contributionCounts.get(contribution.contributionId) ?? 0) > 1;
-    const diagnostics = !canonical
-      ? [blankContributionDiagnostic(contribution, index)]
-      : duplicate
-        ? [duplicateContributionDiagnostic(contribution, index)]
-        : [];
-    return { contribution, diagnostics, duplicate, index };
+    if (!isPlainRecord(contribution)) {
+      return {
+        contribution,
+        diagnostics: [invalidContributionShapeDiagnostic(undefined, index, 'contribution')],
+        duplicate: false,
+        index,
+        packs: [],
+      };
+    }
+
+    const contributionId =
+      typeof contribution.contributionId === 'string' ? contribution.contributionId : undefined;
+    const canonical = isCanonicalDesignSystemText(contributionId);
+    const duplicate = canonical && (contributionCounts.get(contributionId) ?? 0) > 1;
+    const diagnostics: DesignSystemDiagnostic[] = [];
+    if (!canonical) diagnostics.push(blankContributionDiagnostic(contributionId, index));
+    if (!Array.isArray(contribution.packs)) {
+      diagnostics.push(invalidContributionShapeDiagnostic(contributionId, index, 'packs'));
+    }
+    if (duplicate) diagnostics.push(duplicateContributionDiagnostic(contributionId, index));
+    return {
+      contribution,
+      contributionId,
+      diagnostics: freezeDiagnostics(diagnostics),
+      duplicate,
+      index,
+      packs: Array.isArray(contribution.packs) ? contribution.packs : [],
+    };
   });
 
   const indexedPacks: IndexedPack[] = indexedContributions.flatMap((contribution) =>
-    contribution.contribution.packs.map((descriptor, index) => {
+    contribution.packs.map((rawDescriptor, index) => {
+      const descriptor = rawDescriptor as DesignSystemPackDescriptor;
       const descriptorDiagnostics = validateDesignSystemPackDescriptor(
         descriptor,
         `contributions[${contribution.index}].packs[${index}]`,
       ).map((diagnostic) => ({
         ...diagnostic,
-        contributionId: contribution.contribution.contributionId,
+        contributionId: contribution.contributionId,
       }));
       const refKey =
-        validateDesignSystemPackRef(descriptor.ref).length === 0
+        isPlainRecord(rawDescriptor) && validateDesignSystemPackRef(descriptor.ref).length === 0
           ? designSystemPackRefKey(descriptor.ref)
           : null;
       return {
