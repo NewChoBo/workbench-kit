@@ -1024,6 +1024,7 @@ Canonical owner {
   -> projection-local UI state is composed separately
   -> editable projection emits transaction(baseRevision, operations[])
   -> owner enters one serialized CAS / critical boundary
+     -> validate non-empty transaction/projection/base IDs and operation batch
      -> reserve transaction ID + normalized operation fingerprint
      -> re-read current canonical revision and semantic input revisions
         -> stale: conflict, no mutation
@@ -1031,7 +1032,8 @@ Canonical owner {
                     -> validate complete canonical command batch
                     -> durable commit once
                        -> applied: one revision advance + one history entry
-                       -> failed: rollback before boundary release
+                       -> commit-failed: proven rollback before boundary release
+                       -> unavailable: fail closed pending reconciliation
   -> all projections re-project from the new canonical revision
 ```
 
@@ -1046,8 +1048,12 @@ commit.
 
 ### Transaction, conflict and merge rules
 
-1. An empty operation list, descriptor/transaction projection-ID mismatch or
-   malformed operation is `rejected` with `invalid-operation`.
+1. For a live owner, empty `transaction.id`, `projectionId`, `baseRevision` or
+   operation list, descriptor/transaction projection-ID mismatch and malformed
+   operations are `rejected` with `invalid-operation` before idempotency
+   reservation or revision comparison. Missing identifiers never become
+   `conflict`. A retained port whose owner is already closed follows the
+   disposal rule below and returns unavailable for every apply request.
 2. Inside one serialized CAS boundary, the owner re-reads and compares the
    opaque `baseRevision` with the current canonical cohort before translation,
    validation and commit. The final durable write is conditional on the same
@@ -1061,11 +1067,13 @@ commit.
    deterministic lossless result. Rebase creates a new explicit transaction
    against the latest revision; it never changes the stale request in place.
 6. Validation/translation rejection and concurrency conflict remain distinct.
-   Async persistence runs before success publication. If it fails, all tentative
-   in-memory state, history and projection work is rolled back before the
-   critical boundary releases. If restoration cannot be proven, the owner
-   enters unavailable/fail-closed state and publishes no new authoritative
-   snapshot.
+   Async persistence runs before success publication. `commit-failed` is valid
+   only when the owner proves that durable persistence is unchanged or that its
+   rollback completed, then restores all tentative in-memory state before the
+   critical boundary releases. If durable outcome or restoration is
+   indeterminate, the result is `unavailable`, not `commit-failed`: the owner
+   enters fail-closed reconciliation-pending state and publishes no projection,
+   history entry, revision or current-authority claim.
 7. `createTransaction` binds an owner-issued ID and the current base revision.
    `applyTransaction` computes a deterministic fingerprint from projection ID,
    base revision and domain-normalized operations, then reserves the ID and
@@ -1082,10 +1090,19 @@ commit.
    monotonic non-reuse guard and return `expired-transaction`; they are never
    treated as fresh mutations.
 10. The public projection port deliberately has no `dispose` method. Its
-    package-internal serialized owner lifecycle stops admission, settles or
-    rolls back every in-flight operation with no unresolved promise, invalidates
-    the owner epoch and disposes retention state. Later calls through a retained
-    port fail unavailable without mutation.
+    package-internal serialized owner lifecycle stops admission, invalidates the
+    owner epoch and disposes retention state only after every in-flight entry
+    settles or enters reconciliation-pending state. Every caller and identical
+    duplicate awaiting an in-flight entry resolves; disposal leaves no pending
+    promise. A retained closed port has exact method behavior:
+    - `getSnapshot()` returns the last successfully published immutable snapshot
+      as historical data only; it makes no post-disposal current-authority claim;
+    - `createTransaction(operations)` returns a non-empty owner-issued
+      closed-epoch transaction based on that last snapshot without reserving
+      retention capacity;
+    - `applyTransaction(...)` resolves `failed/unavailable`, optionally with the
+      last known revision, and performs no validation side effect, persistence,
+      history or projection publication.
 11. Only an applied transaction advances the canonical revision once and adds
     one semantic history entry. Conflict/rejection/failure adds none.
 
@@ -1094,10 +1111,10 @@ Result revisions have one exact meaning:
 - `applied.canonicalRevision` is the newly committed authoritative revision;
 - `conflict.currentRevision` and `rejected.canonicalRevision` are the
   authoritative current revisions at their serialized decision points;
-- `commit-failed.canonicalRevision` is the unchanged authoritative revision
-  after rollback;
-- `unavailable` makes no current-authority claim and may carry only an optional
-  `lastKnownRevision`.
+- `commit-failed.canonicalRevision` is the unchanged authoritative revision only
+  after durable persistence and in-memory rollback are proven;
+- `unavailable` means the owner is fail-closed pending reconciliation, makes no
+  current-authority claim and may carry only an optional `lastKnownRevision`.
 
 Conflict presentation and choices such as overwrite, manual resolution or a
 domain-proven rebase remain domain/host policy; the generic layer does not
@@ -1259,8 +1276,13 @@ At minimum cover:
 - normalized-operation fingerprint equality, ID reservation before the first
   await, identical concurrent duplicate joining, terminal replay, mismatched
   payload rejection and expiry/disposal no-reapply behavior;
-- invalid/unsupported operation, validation rejection and commit/persistence
-  failure with zero mutation;
+- on a live owner, empty transaction ID, projection ID and base revision each
+  return `invalid-operation` before revision comparison and never return
+  `conflict`;
+- invalid/unsupported operation and validation rejection with zero mutation;
+- proven persistence failure returns `commit-failed` only after durable and
+  in-memory rollback; indeterminate persistence returns unavailable with no
+  authoritative publication pending reconciliation;
 - deterministic domain rebase expressed as a new transaction;
 - derived/runtime ports expose no mutation method;
 - selection/filter/draft/viewport/runtime state leaves serialization/history
@@ -1278,6 +1300,9 @@ At minimum cover:
 - the hard 1,024-entry in-flight/terminal limit, terminal eviction,
   all-in-flight `capacity-exceeded`, expired-ID rejection, internal owner-epoch
   disposal and memory retention under repeated transaction IDs;
+- post-owner-disposal `getSnapshot` historical-only behavior,
+  `createTransaction` closed-epoch behavior and `applyTransaction` unavailable
+  behavior, including settlement of every in-flight caller/duplicate;
 - legacy consumer, exact-optional, public-root and packed-consumer compatibility.
 
 ### Repository validation
@@ -1310,8 +1335,12 @@ At minimum cover:
 - revision check, translate, validate, durable commit and publication execute in
   one serialized CAS boundary so concurrent same-base transactions cannot both
   apply;
-- stale, conflict, rejection and failure preserve canonical state, revision,
-  projections, persistence and semantic history;
+- stale, conflict, rejection and `commit-failed` preserve canonical state,
+  revision, projections, persistence and semantic history;
+- `commit-failed` proves durable persistence is unchanged or rolled back before
+  returning; an indeterminate durable outcome is unavailable and fail-closed
+  pending reconciliation with no projection/history/current-authority
+  publication;
 - a successful batch commits once, advances revision once and produces one
   semantic history entry before projections refresh;
 - lossy round-trip edits are rejected and generic automatic merge/LWW/partial
@@ -1331,6 +1360,8 @@ At minimum cover:
   owner disposal cannot replay a mutation;
 - no Field Remap-specific owner/disposal API is exported and the generic public
   port remains free of lifecycle methods;
+- retained-port behavior is deterministic for all three methods and internal
+  owner disposal settles every in-flight caller without publishing new state;
 - source review confirms no accidental public registry/controller growth or
   Electron/native claim.
 
@@ -1348,6 +1379,8 @@ Reject the implementation if:
   canonical success;
 - persistence failure leaves tentative state/history/projection visible or a
   failed rollback is reported as a healthy authoritative revision;
+- an indeterminate durable outcome returns `commit-failed`, publishes a current
+  revision, or proceeds without fail-closed reconciliation;
 - selection, drafts, filters, viewport or runtime state enters document
   serialization by default;
 - local visibility expands a publication contract or exposes internal topology;
@@ -1366,10 +1399,15 @@ Reject the implementation if:
   lost from canonical state, or an ambiguous partial edit is silently applied;
 - duplicate transaction IDs are reserved after an await, compare raw rather
   than domain-normalized operations, or can reapply after cache expiry/disposal;
+- on a live owner, empty transaction/projection/base identifiers reach revision
+  conflict or any mutation path instead of deterministic `invalid-operation`;
 - idempotency retention exceeds 1,024 entries, evicts in-flight work or lacks a
   deterministic capacity-exceeded/expired-ID path;
 - a public projection port exposes disposal or a Field Remap-specific serialized
   owner/lifecycle is exported by this packet;
+- a retained closed port throws/hangs, creates a live transaction, treats its
+  last snapshot as current authority, or leaves any in-flight duplicate
+  unresolved;
 - Electron/native coverage is claimed.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
