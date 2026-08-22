@@ -805,32 +805,572 @@ claims Electron coverage.
 
 ## WB-NS-020 — Projection ownership and round-trip contracts
 
-- **Status:** `DESIGNING`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** `target-architecture.md` § Projection architecture
 - **Ownership:** `GENERIC_KIT`
+- **Current source evidence:** `origin/develop@28abf5fba07893b19e3a203e1579a72152d5e3fe`
+- **Verification layer:** `PURE_WEB / backendless`
+- **Public API impact:** additive projection contracts through the existing
+  `@workbench-kit/contracts` root export
 
 ### Goal
 
 Allow one underlying document/workflow to support full graph, GUI builder, form/inspector, code/schema, preview and simplified end-user presentation without hidden competing sources of truth.
 
-### Target contract
+This packet establishes the common authority and transaction protocol. Domain
+packages still own document schemas, projection values, operations, validation,
+publication policy and any proven rebase logic.
 
-Every projection declares:
+### Current-source boundary
 
-```text
-AUTHORITATIVE_EDITABLE
-ROUND_TRIP_EDITABLE
-DERIVED_READ_ONLY
-RUNTIME_ONLY
+- `FieldRemapDocument` persists only `edges` and optional `operators`; input and
+  output shapes remain owner-supplied state.
+- Field Remap convert nodes project `MappingEdge.transformIds`; they are not a
+  second canonical graph document.
+- Field Remap selection, unfinished drafts, viewport/chrome state and preview
+  results are not semantic document/history state. The preview is already
+  runtime-only and Flow consumes a precomputed snapshot.
+- The current composite Field Remap history is `{ edges, operators }`; partial
+  channel history is deliberately avoided when either durable channel is
+  controlled.
+- `WorkbenchDocumentPatch` is specific to the existing visual
+  `WorkbenchDocument`. It must not be renamed or reused as a universal
+  projection transaction.
+
+### Public contract
+
+Add the following framework-neutral types under
+`packages/contracts/src/projection/` and export them additively from the existing
+`@workbench-kit/contracts` root. Do not add a new package, root service registry
+or React dependency.
+
+```ts
+export type WorkbenchProjectionKind =
+  | 'FULL_GRAPH'
+  | 'GUI_BUILDER'
+  | 'FORM_OR_INSPECTOR'
+  | 'CODE_OR_SCHEMA'
+  | 'PREVIEW'
+  | 'END_USER_PRESENTATION';
+
+export type WorkbenchEditableProjectionKind =
+  'FULL_GRAPH' | 'GUI_BUILDER' | 'FORM_OR_INSPECTOR' | 'CODE_OR_SCHEMA';
+
+export type WorkbenchRuntimeProjectionKind = 'PREVIEW' | 'END_USER_PRESENTATION';
+
+export type WorkbenchEditableProjectionAuthority = 'AUTHORITATIVE_EDITABLE' | 'ROUND_TRIP_EDITABLE';
+
+export type WorkbenchReadOnlyProjectionAuthority = 'DERIVED_READ_ONLY' | 'RUNTIME_ONLY';
+
+export type WorkbenchProjectionAuthority =
+  WorkbenchEditableProjectionAuthority | WorkbenchReadOnlyProjectionAuthority;
+
+export type WorkbenchProjectionRevision = string;
+
+export interface WorkbenchProjectionDescriptorBase {
+  readonly id: string;
+  readonly documentKind: string;
+  readonly projectionVersion: number;
+  readonly kind: WorkbenchProjectionKind;
+}
+
+export interface WorkbenchEditableProjectionDescriptor extends WorkbenchProjectionDescriptorBase {
+  readonly kind: WorkbenchEditableProjectionKind;
+  readonly authority: WorkbenchEditableProjectionAuthority;
+}
+
+export interface WorkbenchDerivedProjectionDescriptor extends WorkbenchProjectionDescriptorBase {
+  readonly authority: 'DERIVED_READ_ONLY';
+}
+
+export interface WorkbenchRuntimeProjectionDescriptor extends WorkbenchProjectionDescriptorBase {
+  readonly kind: WorkbenchRuntimeProjectionKind;
+  readonly authority: 'RUNTIME_ONLY';
+}
+
+export type WorkbenchReadOnlyProjectionDescriptor =
+  WorkbenchDerivedProjectionDescriptor | WorkbenchRuntimeProjectionDescriptor;
+
+export type WorkbenchProjectionDescriptor =
+  WorkbenchEditableProjectionDescriptor | WorkbenchReadOnlyProjectionDescriptor;
+
+export interface WorkbenchProjectionSnapshot<
+  TValue,
+  TDescriptor extends WorkbenchProjectionDescriptor = WorkbenchProjectionDescriptor,
+> {
+  readonly descriptor: TDescriptor;
+  readonly canonicalRevision: WorkbenchProjectionRevision;
+  readonly value: TValue;
+}
+
+export interface WorkbenchProjectionTransaction<TOperation> {
+  readonly id: string;
+  readonly projectionId: string;
+  readonly baseRevision: WorkbenchProjectionRevision;
+  readonly operations: readonly TOperation[];
+}
+
+export type WorkbenchProjectionRejectionCode =
+  'invalid-operation' | 'unsupported-operation' | 'expired-transaction' | 'capacity-exceeded';
+
+export type WorkbenchProjectionFailureCode = 'unavailable' | 'commit-failed';
+
+export type WorkbenchProjectionTransactionResult<TConflict = never> =
+  | {
+      readonly status: 'applied';
+      readonly transactionId: string;
+      readonly canonicalRevision: WorkbenchProjectionRevision;
+    }
+  | {
+      readonly status: 'conflict';
+      readonly transactionId: string;
+      readonly currentRevision: WorkbenchProjectionRevision;
+      readonly conflicts: readonly TConflict[];
+    }
+  | {
+      readonly status: 'rejected';
+      readonly transactionId: string;
+      readonly canonicalRevision: WorkbenchProjectionRevision;
+      readonly code: WorkbenchProjectionRejectionCode;
+    }
+  | {
+      readonly status: 'failed';
+      readonly transactionId: string;
+      readonly code: 'commit-failed';
+      readonly canonicalRevision: WorkbenchProjectionRevision;
+    }
+  | {
+      readonly status: 'failed';
+      readonly transactionId: string;
+      readonly code: 'unavailable';
+      readonly lastKnownRevision?: WorkbenchProjectionRevision | undefined;
+    };
+
+export interface WorkbenchEditableProjectionPort<TValue, TOperation, TConflict = never> {
+  readonly descriptor: WorkbenchEditableProjectionDescriptor;
+  getSnapshot(): WorkbenchProjectionSnapshot<TValue, WorkbenchEditableProjectionDescriptor>;
+  createTransaction(operations: readonly TOperation[]): WorkbenchProjectionTransaction<TOperation>;
+  applyTransaction(
+    transaction: WorkbenchProjectionTransaction<TOperation>,
+  ): Promise<WorkbenchProjectionTransactionResult<TConflict>>;
+}
+
+export interface WorkbenchReadOnlyProjectionPort<TValue> {
+  readonly descriptor: WorkbenchReadOnlyProjectionDescriptor;
+  getSnapshot(): WorkbenchProjectionSnapshot<TValue, WorkbenchReadOnlyProjectionDescriptor>;
+}
+
+export type WorkbenchProjectionPort<TValue, TOperation = never, TConflict = never> =
+  | WorkbenchEditableProjectionPort<TValue, TOperation, TConflict>
+  | WorkbenchReadOnlyProjectionPort<TValue>;
+
+export function isWorkbenchProjectionDescriptor(
+  value: unknown,
+): value is WorkbenchProjectionDescriptor;
 ```
 
-### Design questions
+`id`, `documentKind` and `projectionVersion` are stable portable metadata.
+`WorkbenchProjectionRevision` is an opaque non-empty token: callers compare it
+for equality and never infer ordering, timestamps or document content from it.
+Public result envelopes carry safe structured codes/data, not raw exceptions,
+stack traces, internal paths or the canonical document.
 
-- projection descriptor/API shape;
-- round-trip conflict/transaction model;
-- projection-local state vs canonical document state;
-- how end-user published interfaces hide internal nodes/components;
-- which projection mechanics should be generic vs tool-specific.
+`isWorkbenchProjectionDescriptor` is the only required generic runtime guard in
+this slice and is exported from the same contracts root. It accepts only
+non-empty `id`/`documentKind`, an integer `projectionVersion >= 1`, known kind
+and authority values, and the valid kind/authority matrix below. All other
+combinations return `false` rather than being normalized.
+
+| Projection kind         | `AUTHORITATIVE_EDITABLE` | `ROUND_TRIP_EDITABLE` | `DERIVED_READ_ONLY` | `RUNTIME_ONLY` |
+| ----------------------- | ------------------------ | --------------------- | ------------------- | -------------- |
+| `FULL_GRAPH`            | valid                    | valid                 | valid               | invalid        |
+| `GUI_BUILDER`           | valid                    | valid                 | valid               | invalid        |
+| `FORM_OR_INSPECTOR`     | valid                    | valid                 | valid               | invalid        |
+| `CODE_OR_SCHEMA`        | valid                    | valid                 | valid               | invalid        |
+| `PREVIEW`               | invalid                  | invalid               | valid               | valid          |
+| `END_USER_PRESENTATION` | invalid                  | invalid               | valid               | valid          |
+
+### Authority semantics
+
+- `AUTHORITATIVE_EDITABLE` edits the canonical representation through the same
+  canonical transaction owner used by every other editable surface. One
+  document lineage has one canonical owner.
+- `ROUND_TRIP_EDITABLE` translates projection operations into domain canonical
+  commands. A lossy, ambiguous or unrepresentable edit is
+  `unsupported-operation`; the projection value is never stored as competing
+  durable state.
+- `DERIVED_READ_ONLY` is recomputed from canonical state and exposes no mutation
+  method in its public port.
+- `RUNTIME_ONLY` is execution/session output and also exposes no projection
+  mutation method. A runtime interaction may invoke a separately declared
+  domain command, but that is not projection persistence.
+
+Multiple editable surfaces are allowed only when every accepted edit converges
+on the same revisioned canonical owner. The authority discriminator determines
+the available API; it is not duplicated by a potentially contradictory
+`editable` flag.
+
+### Canonical state and event flow
+
+```text
+Canonical owner {
+  document aggregate,
+  external semantic input revisions,
+  publication contract,
+  revision
+}
+  -> domain projector
+  -> immutable projection snapshot
+  -> projection-local UI state is composed separately
+  -> editable projection emits transaction(baseRevision, operations[])
+  -> owner enters one serialized CAS / critical boundary
+     -> reserve transaction ID + normalized operation fingerprint
+     -> re-read current canonical revision and semantic input revisions
+        -> stale: conflict, no mutation
+        -> current: translate complete operation batch
+                    -> validate complete canonical command batch
+                    -> durable commit once
+                       -> applied: one revision advance + one history entry
+                       -> failed: rollback before boundary release
+  -> all projections re-project from the new canonical revision
+```
+
+The canonical owner supplies the revision and owns persistence/durability.
+Projection ports do not infer a revision from JSON hashes or object identity and
+do not become document stores. Revision comparison, translation, validation,
+durable commit, history/revision publication and projection notification form
+one serialized compare-and-swap boundary per canonical aggregate. A mutex,
+transactional store or equivalent CAS may implement that boundary, but two
+concurrent transactions against the same base revision cannot both pass and
+commit.
+
+### Transaction, conflict and merge rules
+
+1. An empty operation list, descriptor/transaction projection-ID mismatch or
+   malformed operation is `rejected` with `invalid-operation`.
+2. Inside one serialized CAS boundary, the owner re-reads and compares the
+   opaque `baseRevision` with the current canonical cohort before translation,
+   validation and commit. The final durable write is conditional on the same
+   precondition. A mismatch returns `conflict` and creates no mutation,
+   persistence write or history entry.
+3. Translation and validation cover the entire ordered operation batch. Commit
+   is all-or-nothing; partial apply is prohibited.
+4. Generic v1 performs no automatic merge, last-write-wins or whole-document
+   overwrite.
+5. A domain may rebase only when stable IDs and operation semantics prove a
+   deterministic lossless result. Rebase creates a new explicit transaction
+   against the latest revision; it never changes the stale request in place.
+6. Validation/translation rejection and concurrency conflict remain distinct.
+   Async persistence runs before success publication. If it fails, all tentative
+   in-memory state, history and projection work is rolled back before the
+   critical boundary releases. If restoration cannot be proven, the owner
+   enters unavailable/fail-closed state and publishes no new authoritative
+   snapshot.
+7. `createTransaction` binds an owner-issued ID and the current base revision.
+   `applyTransaction` computes a deterministic fingerprint from projection ID,
+   base revision and domain-normalized operations, then reserves the ID and
+   fingerprint synchronously before its first await.
+8. An identical concurrent duplicate joins the same in-flight promise and later
+   receives the same retained terminal result. The same ID with a different
+   normalized fingerprint is `invalid-operation`; it never joins or mutates.
+9. The internal owner has a hard maximum of 1,024 reserved transaction entries
+   across in-flight and retained terminal work; there is no unbounded or
+   duration-only mode. Identical duplicates still join their reserved entry. A
+   new unique ID evicts the oldest terminal entry when possible; if every entry
+   is in flight, it returns `capacity-exceeded` without mutation. Evicted,
+   expired or old-epoch IDs are recognized by the bounded owner-epoch and
+   monotonic non-reuse guard and return `expired-transaction`; they are never
+   treated as fresh mutations.
+10. The public projection port deliberately has no `dispose` method. Its
+    package-internal serialized owner lifecycle stops admission, settles or
+    rolls back every in-flight operation with no unresolved promise, invalidates
+    the owner epoch and disposes retention state. Later calls through a retained
+    port fail unavailable without mutation.
+11. Only an applied transaction advances the canonical revision once and adds
+    one semantic history entry. Conflict/rejection/failure adds none.
+
+Result revisions have one exact meaning:
+
+- `applied.canonicalRevision` is the newly committed authoritative revision;
+- `conflict.currentRevision` and `rejected.canonicalRevision` are the
+  authoritative current revisions at their serialized decision points;
+- `commit-failed.canonicalRevision` is the unchanged authoritative revision
+  after rollback;
+- `unavailable` makes no current-authority claim and may carry only an optional
+  `lastKnownRevision`.
+
+Conflict presentation and choices such as overwrite, manual resolution or a
+domain-proven rebase remain domain/host policy; the generic layer does not
+choose them.
+
+### Projection-local, runtime and published ownership
+
+- Search/filter/collapse, selection, draft edits, viewport, splitter, palette,
+  focus and similar interaction state are projection-local unless a domain
+  deliberately promotes a value through a canonical command.
+- Runtime inputs, progress, outputs, errors and preview snapshots are
+  runtime-only and do not enter document serialization/history by default.
+- A domain canonical aggregate owns its publication contract. The publication
+  contract references stable canonical IDs and changes inside the same revision
+  boundary; it does not copy internal topology into a second document. At
+  minimum its derived public surface preserves stable IDs, permissions,
+  required/optional capabilities, interface version and compatibility metadata.
+- An `END_USER_PRESENTATION` adapter may expose only domain-declared inputs,
+  parameters, commands, events, outputs, errors, permissions, capabilities,
+  version and compatibility metadata.
+  Internal nodes/components, wiring and configuration remain canonical but are
+  absent from the published projection.
+- Projection-local visibility may hide additional items but cannot expand the
+  publication contract or expose an internal entity.
+- Generic contracts do not define `hidden`, node, widget, field or mapping
+  semantics. Stable-ID selection, aliases and publication validation remain
+  domain-specific.
+
+### Generic and domain-specific boundary
+
+Generic public mechanics are limited to descriptor metadata, authority
+discrimination, immutable snapshots, opaque revision preconditions and the
+transaction/result state machine.
+
+Each domain owns:
+
+- its canonical document and revision source;
+- the external semantic-input revision tokens included in that canonical
+  precondition cohort;
+- projection value/schema and operation types;
+- projection-to-command translation and validation;
+- safe conflict details and any deterministic rebase;
+- publication selection/alias/capability rules;
+- persistence and semantic history integration.
+
+React/shell packages own presentation and projection-local interaction state.
+Do not add a universal graph/document/entity abstraction, a global
+`ProjectionRegistry`, a renderer-aware contract or a broad public coordinator.
+Keep concrete controllers/internal helpers unexported until a second independent
+consumer proves shared runtime value beyond the public protocol.
+
+The first adopter is one package-internal Field Remap serialized owner. It
+implements the public protocol for conformance without exporting a Field
+Remap-specific owner, registry, lifecycle or disposal API. The public projection
+port remains lifecycle-neutral; its internal owner and package composition own
+cleanup.
+
+### Field Remap reference conformance
+
+Use the existing Field Remap behavior as the first domain cohort without
+changing its serialized document or public Panel/Flow props:
+
+- canonical semantic aggregate: `{ edges, operators }`;
+- Flow and document JSON: round-trip editable projections;
+- derived source/target browse trees: read-only projections over owner-supplied
+  shapes;
+- preview: runtime-only precomputed snapshot;
+- selection, unfinished transforms, viewport, rail/chrome state and filters:
+  projection-local;
+- convert nodes: projection of edge transform chains, never canonical nodes;
+- editing a visible subset with `includeHidden=false` preserves durable mappings
+  outside that projection;
+- one accepted composite edge/operator transaction creates one semantic history
+  entry; stale/rejected/failed work creates none.
+
+The current independent controlled `edges`/`onEdgesChange` and
+`operators`/`onOperatorsChange` callbacks are source-compatible legacy seams,
+not an atomic or revision-aware owner and therefore not projection-contract
+conformance evidence. The first reference cohort uses one package-internal
+serialized owner for the whole semantic aggregate and commits
+`{ edges, operators }` together. Do not add a public Field Remap full-owner port,
+route one conforming transaction through two callbacks or claim that the legacy
+path is concurrency-safe in this packet.
+
+Owner-supplied `sources` and `targets` participate in mapping validation and
+preview despite remaining outside `FieldRemapDocument`. A conforming owner must
+therefore fold exact opaque source-shape and target-shape revision tokens into
+the same canonical precondition cohort as `{ edges, operators }`; transform
+registry/publication revisions join that cohort when they affect the operation
+or preview. A shape revision change conflicts an open transaction, aborts or
+invalidates an in-flight preview, and requires reprojection. Legacy shapes with
+no exact host revision tokens retain current behavior but are explicitly
+non-conformant.
+
+When `includeHidden=false`, a partial projection omits every combine/split
+operator whose input or output operand resolves to a hidden source/target ID.
+The complete operator and its referenced durable mappings remain unchanged in
+the canonical aggregate. A partial-projection edit that cannot be translated
+without interpreting or replacing an omitted operator is ambiguous and returns
+`unsupported-operation`; it must not delete, rewrite or expose that operator.
+
+Import/export chrome remains separately owned. This packet defines the
+round-trip protocol it may consume but does not decide file-picker placement,
+copy or product messaging. Connection/rewire feedback and surface `readOnly`
+mode likewise remain separate from canonical revision conflict and authority.
+
+### Ordered implementation tasks
+
+1. Add the projection contract module and additive contracts-root exports.
+2. Add and root-export the exact `isWorkbenchProjectionDescriptor` runtime guard
+   shown above; do not rename it or widen its signature. Validate the six-kind by
+   four-authority matrix and reject every invalid combination.
+3. Add a backendless serialized-CAS conformance owner fixture covering snapshot,
+   authority, external semantic-input revisions, concurrent same-base
+   transactions, deterministic idempotency and async commit/rollback behavior.
+4. Implement the first adopter as one package-internal Field Remap serialized
+   owner and map the current document, Flow, browse, preview, local-state and
+   hidden-subset behavior to the contract in focused tests and docs. Do not add
+   a second document store or export a Field Remap owner/coordinator.
+5. Verify the composite edge/operator transaction boundary and history rules
+   through that internal owner. Preserve the two legacy controlled callbacks
+   without using them as conformance evidence.
+6. Add a generic published-interface fixture proving internal topology stays
+   canonical while only declared stable IDs, permissions, capabilities, version
+   and compatibility metadata appear in the end-user projection and local
+   filtering cannot expand it.
+7. Document the generic/domain/shell ownership table and compatibility path.
+8. Run public export, exact-optional, packed-consumer and repository validation
+   from the frozen candidate before source review.
+
+### Compatibility and migration
+
+- Preserve current `WorkbenchDocument`, `WorkbenchDocumentPatch`, Field Remap
+  document/schema/serialization and Panel/Flow APIs.
+- New contracts are additive root exports; legacy consumers need no migration.
+- Do not retrofit runtime/projection-local/publication state into existing
+  serialized documents.
+- A current callback-only surface without a canonical revision port retains its
+  current behavior and is not silently described as round-trip concurrency-safe.
+- Independent legacy Field Remap edge/operator callbacks remain source
+  compatible, but only the package-internal aggregate owner claims atomic
+  projection conformance in this packet.
+- The public generic projection port has no disposal method. Internal owner
+  teardown remains package lifecycle behavior and introduces no public
+  Field Remap lifecycle API.
+- Do not derive hidden revisions from structural hashes or reference identity.
+- No package release or consumer migration is part of the design-readiness
+  document change; source implementation follows this packet separately.
+
+### Focused tests
+
+At minimum cover:
+
+- all projection kinds and four authority modes;
+- editable/read-only port type discrimination;
+- current-base ordered batch, one revision advance and one history entry;
+- two concurrent transactions with the same base cannot both apply; also cover
+  stale base and drift during async persistence;
+- normalized-operation fingerprint equality, ID reservation before the first
+  await, identical concurrent duplicate joining, terminal replay, mismatched
+  payload rejection and expiry/disposal no-reapply behavior;
+- invalid/unsupported operation, validation rejection and commit/persistence
+  failure with zero mutation;
+- deterministic domain rebase expressed as a new transaction;
+- derived/runtime ports expose no mutation method;
+- selection/filter/draft/viewport/runtime state leaves serialization/history
+  unchanged;
+- published projection omits internal topology, preserves stable IDs,
+  permissions, capabilities, version and compatibility metadata, and local
+  filters cannot expand the publication set;
+- Field Remap hidden-mapping preservation, composite edge/operator atomicity,
+  omission of combine/split operators with hidden operands from the partial
+  projection, canonical preservation of those operators and referenced durable
+  mappings, ambiguous-edit rejection, transform-node projection and
+  runtime-preview non-persistence;
+- source/target shape revision drift conflicts transactions, invalidates preview
+  and never lets callback-only legacy state claim conformance;
+- the hard 1,024-entry in-flight/terminal limit, terminal eviction,
+  all-in-flight `capacity-exceeded`, expired-ID rejection, internal owner-epoch
+  disposal and memory retention under repeated transaction IDs;
+- legacy consumer, exact-optional, public-root and packed-consumer compatibility.
+
+### Repository validation
+
+- focused contracts and Field Remap unit/type tests;
+- contracts, field-remap, shell-react and sample typechecks when touched;
+- format, lint, commit-safety, public-export, exact-optional and packed-consumer
+  gates;
+- `validate:static` and `validate:fast` from the exact source candidate;
+- required Chromium evidence only when a later adopter adds or changes a
+  user-visible Story;
+- no Electron/native validation or coverage claim for this packet.
+
+### Performance boundary
+
+- projection and transaction validation remain linear or better in the current
+  canonical aggregate size;
+- one read/apply does not repeat a full traversal of the same canonical cohort;
+- generic mechanics perform no renderer graph rebuild, persistence I/O or
+  unconditional deep clone;
+- use deterministic SMALL/TYPICAL/STRESS traversal-count fixtures before
+  setting a measured time budget; do not invent an unsupported millisecond SLA.
+
+### Acceptance / Done criteria
+
+- the four authority modes are public discriminated contracts and read-only or
+  runtime ports expose no mutation method;
+- every accepted editable projection transaction converges on one canonical
+  revision/transaction owner;
+- revision check, translate, validate, durable commit and publication execute in
+  one serialized CAS boundary so concurrent same-base transactions cannot both
+  apply;
+- stale, conflict, rejection and failure preserve canonical state, revision,
+  projections, persistence and semantic history;
+- a successful batch commits once, advances revision once and produces one
+  semantic history entry before projections refresh;
+- lossy round-trip edits are rejected and generic automatic merge/LWW/partial
+  apply does not exist;
+- projection-local and runtime state is absent from canonical serialization;
+- published projections omit internal entities without creating a competing
+  durable document while preserving stable IDs, permissions, capabilities,
+  version and compatibility metadata;
+- existing public consumers and serialized formats remain compatible;
+- Field Remap conformance proves hidden mapping preservation, transform-node
+  projection, omission and canonical preservation of operators with hidden
+  operands, ambiguous-edit rejection, aggregate revision ownership and runtime
+  preview invalidation;
+- legacy Field Remap callback seams remain compatible but are not reported as
+  atomic/revision conformance;
+- idempotency storage enforces the hard 1,024-entry limit and expiry/internal
+  owner disposal cannot replay a mutation;
+- no Field Remap-specific owner/disposal API is exported and the generic public
+  port remains free of lifecycle methods;
+- source review confirms no accidental public registry/controller growth or
+  Electron/native claim.
+
+### Source-review checklist
+
+Reject the implementation if:
+
+- a projection persists its own competing durable document;
+- React, a renderer or a preview becomes canonical/persistence owner;
+- stale transactions overwrite or merge automatically;
+- revision comparison, translation, validation, async durable commit and
+  publication are split across boundaries that let two same-base transactions
+  both pass;
+- any operation batch partially applies or updates projection/history before
+  canonical success;
+- persistence failure leaves tentative state/history/projection visible or a
+  failed rollback is reported as a healthy authoritative revision;
+- selection, drafts, filters, viewport or runtime state enters document
+  serialization by default;
+- local visibility expands a publication contract or exposes internal topology;
+- a published fixture omits stable IDs, permissions, capabilities, version or
+  compatibility metadata;
+- generic contracts import or encode domain graph, widget, field or mapping
+  entities;
+- `WorkbenchDocumentPatch` is repurposed as a universal transaction;
+- a broad public registry/service/controller is added without independent
+  consumer evidence;
+- public failures expose raw exceptions, internal paths or canonical content;
+- existing Field Remap public APIs or document formats require migration;
+- independent legacy edge/operator callbacks are used as atomic conformance
+  evidence, or source/target shape changes bypass the canonical precondition;
+- an operator with a hidden operand remains visible in a partial projection, is
+  lost from canonical state, or an ambiguous partial edit is silently applied;
+- duplicate transaction IDs are reserved after an await, compare raw rather
+  than domain-normalized operations, or can reapply after cache expiry/disposal;
+- idempotency retention exceeds 1,024 entries, evicts in-flight work or lacks a
+  deterministic capacity-exceeded/expired-ID path;
+- a public projection port exposes disposal or a Field Remap-specific serialized
+  owner/lifecycle is exported by this packet;
+- Electron/native coverage is claimed.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
