@@ -72,7 +72,7 @@ WB-NS-070E responsive variants + tokens/resources
         ↓
 WB-NS-070F provider-neutral generative UI parity
         ↓
-WB-NS-071A graph node type/property-input foundation [READINESS_REVIEW_REQUIRED]
+WB-NS-071A graph node type/property-input foundation [READY_FOR_IMPLEMENTATION]
         ↓
 WB-NS-071B component/node development requirement flow
         ↓
@@ -100,7 +100,7 @@ Backendless/performance + compatibility hardening
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
 
-`WB-NS-070A` established the shared typed property/value-source envelope and `WB-NS-070B` added renderer-neutral layout/style descriptors without moving JDW runtime ownership. `WB-NS-070C` is the next bounded design-review slice. The remaining `WB-NS-070*` / `WB-NS-071*` target slots stay `DESIGNING` until their own packets prevent a parallel schema, layout, document or graph system.
+`WB-NS-070A` established the shared typed property/value-source envelope and `WB-NS-070B` added renderer-neutral layout/style descriptors without moving JDW runtime ownership. `WB-NS-070C` and `WB-NS-070D` are integrated. Each remaining `WB-NS-070*` / `WB-NS-071*` target slot stays `DESIGNING` until its own reviewed packet prevents a parallel schema, layout, document or graph system.
 
 ---
 
@@ -2498,7 +2498,7 @@ optional ComfyUI adapter experiment
 
 ### `WB-NS-071A` bounded readiness packet — typed node descriptors and property-input projection
 
-- **Status:** `READINESS_REVIEW_REQUIRED`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Exact source/API base:** `origin/develop@300ff59b0715bd51253fc8355e6abd591a547771`
 - **Dependencies:** `WB-NS-070A`, `WB-NS-070C` and `WB-NS-070D` `DONE`; `WB-NS-010` remains a separate document/controller/runtime packet
 - **Target owner:** `@workbench-kit/contracts` under a focused graph-authoring module, with one-way compatibility adapters in `@workbench-kit/field-remap`
@@ -2606,17 +2606,19 @@ The immutable graph-specific catalog follows the established 070C conflict polic
 5. provide constant-time exact lookup after one linear construction pass;
 6. perform no rendering, execution, dynamic import, persistence, network I/O or extension activation.
 
-A helper resolves the effective schema of an input from either its standalone `value` or referenced property after successful validation. It does not resolve a runtime value or binding. Generic 071A code may report exact semantic type equality, but conversion and domain-specific compatibility remain adapter/runtime-owned; it must not duplicate Field Remap transform-chain compatibility.
+A helper resolves the effective schema of an input from either its standalone `value` or referenced property after successful validation. It does not resolve a runtime value or binding. 071A exports no cross-type conversion or compatibility classifier. Consumers can compare exact semantic type IDs directly; any permissive, union, conversion or domain-specific compatibility remains adapter/runtime-owned and must not duplicate Field Remap transform-chain compatibility.
 
 #### Field Remap compatibility projection
 
 Add pure adapters under `@workbench-kit/field-remap` only after the contracts land:
 
-- map the existing `FieldDataType` vocabulary to stable `UiValueSchema.type` IDs without changing `arePortsCompatible`, `unknown` permissiveness or transform-chain behavior;
-- project compatible flattened `SourceField` leaves to output-port metadata and `TargetSlot` leaves to input-port metadata while retaining the original field/slot IDs and labels;
-- project `ValueTransformDefinition` metadata to one `NodeTypeDescriptor` with typed input/output and option properties where the projection is lossless;
+- map the existing `FieldDataType` vocabulary exactly as `string -> string`, `number -> number`, `boolean -> boolean`, `date -> date`, `time -> time`, `datetime -> datetime`, `object -> object`, `array -> array` and `unknown -> unknown`; this metadata mapping does not change `arePortsCompatible`, `unknown` permissiveness or transform-chain behavior;
+- project compatible flattened `SourceField` leaves to output-port metadata and `TargetSlot` leaves to input-port metadata while retaining the original field/slot IDs and labels. A supplied field/slot with `children` or `classRef`, or without `dataType`, returns a structured issue instead of a partial port; callers continue to use existing shape/hidden projection before this adapter;
+- project `ValueTransformDefinition` metadata only through a caller-supplied exact `NodeTypeRef`. The adapter never derives a version from the transform ID, package version or a hard-coded constant; an absent or invalid exact identity returns a structured issue and no descriptor;
+- a transform is losslessly projectable only when `inputTypes` contains exactly one `FieldDataType` and `outputType` is present. Missing, empty or multi-valued input metadata and missing output metadata return structured issues and no descriptor. Broader accepted-type unions require a future 070A schema extension and cannot become multiple simultaneous ports, `unknown` or adapter-private union syntax;
+- use fixed port IDs `input` and `output`, mark the standalone input required, and map the one input/output type through the exact table above. Transform option keys become literal-only properties only for `string -> { type: 'string', editor: { id: 'text' } }`, `number -> { type: 'number', editor: { id: 'number' } }` and `boolean -> { type: 'boolean', editor: { id: 'boolean' } }`; `stringMap` and `json` return an unsupported-option issue and fail the whole descriptor projection;
 - never copy `apply`, `TransformContext`, runtime registry state, samples, React Flow positions, drafts, selection or edge ownership into the descriptor;
-- return structured projection issues instead of inventing missing transform input/output types or flattening unsupported nested/class semantics silently.
+- return frozen all-or-nothing projection results. The stable projection issue vocabulary covers at least `missing-field-data-type`, `unsupported-structured-field`, `missing-node-type-identity`, `invalid-node-type-identity`, `unsupported-transform-input-arity`, `missing-transform-output-type` and `unsupported-transform-option-kind`.
 
 `FieldDataType`, shape helpers, `ValueTransformRegistry`, `MappingEdge`, operators and all current public behavior remain the compatibility authority. No existing consumer must adopt `NodeTypeDescriptor` in this packet.
 
@@ -2640,7 +2642,7 @@ Not in scope: graph/node instance documents, edges, positions, selection, histor
 - descriptors: standalone typed inputs, typed outputs, literal-only properties and explicitly binding-enabled property inputs;
 - failures: blank/noncanonical identity, duplicate cross-direction port IDs, invalid nested schemas, missing/duplicate/schema-shadowed property inputs, literal-only property exposure and duplicate catalog identities/contributors;
 - immutability: caller arrays/descriptors remain unmodified and catalog snapshots cannot be mutated through returned references;
-- Field Remap adapters: every current `FieldDataType`, lossless transform option projection, explicit unsupported/missing metadata diagnostics and unchanged `arePortsCompatible`/transform execution behavior;
+- Field Remap adapters: every current `FieldDataType`; compatible leaf ports; one custom single-input/single-output transform with string/number/boolean options; caller-supplied exact identity; current multi-input builtins, absent identity/output metadata, structured/class fields and `stringMap`/`json` options returning the specified issues with no descriptor; unchanged `arePortsCompatible`/transform execution behavior;
 - compatibility: existing contracts, Field Remap, shell-react Flow and packed external consumers compile without adopting the new API; contracts retain no React, JDW, Field Remap or Electron dependency;
 - development loop: focused contracts and Field Remap unit/typecheck only;
 - frozen candidate: repository static, full unit and browser-safe validation once on the same exact SHA;
@@ -2652,7 +2654,7 @@ Descriptor validation/catalog construction must be linear in supplied declaratio
 
 The packet is complete when a browser-, Electron- and AI-free consumer can declare and validate exact node types, derive one property-backed input schema without duplicating it, build an immutable exact-version catalog and project compatible Field Remap metadata without changing Field Remap execution or creating a graph document.
 
-Producer-distinct readiness review must reject a second value-schema/type system, implicit property connectability, duplicated property/socket schemas, runtime or renderer functions in contracts, `@xyflow/react` leakage, transform compatibility/evaluation duplication, a universal component/node registry, last-writer-wins catalog conflicts, a new free-form Field Remap graph document or implementation of `WB-NS-010`/071B/071C scope. Source implementation may begin only after the reviewed readiness successor promotes this exact packet to `READY_FOR_IMPLEMENTATION`.
+Producer-distinct readiness review must reject a second value-schema/type system, implicit property connectability, duplicated property/socket schemas, runtime or renderer functions in contracts, `@xyflow/react` leakage, transform compatibility/evaluation duplication, a universal component/node registry, last-writer-wins catalog conflicts, a new free-form Field Remap graph document or implementation of `WB-NS-010`/071B/071C scope. This successor promotes the packet to `READY_FOR_IMPLEMENTATION`; source implementation may begin only after producer-distinct review passes this exact head and the readiness PR is integrated.
 
 ### ComfyUI discovery
 
