@@ -176,6 +176,20 @@ describe('applyWindowFocusablePolicy', () => {
     expect(calls).toEqual(['focusable', 'skip-taskbar']);
   });
 
+  it('preserves the injected surface receiver for taskbar visibility', () => {
+    const windowSurface = {
+      calls: [] as boolean[],
+      setFocusable: () => undefined,
+      setSkipTaskbar(this: { calls: boolean[] }, skip: boolean) {
+        this.calls.push(skip);
+      },
+    };
+
+    applyWindowFocusablePolicy(windowSurface, { focusable: true, skipTaskbar: true });
+
+    expect(windowSurface.calls).toEqual([true]);
+  });
+
   it('fails before changing focusability when taskbar capability is absent', () => {
     const setFocusable = vi.fn();
 
