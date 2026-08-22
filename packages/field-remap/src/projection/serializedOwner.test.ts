@@ -271,6 +271,42 @@ describe('package-internal Field Remap projection owner', () => {
   });
 
   it.each([
+    ['nested undefined', { nested: undefined }, {}],
+    ['negative zero', -0, 0],
+  ] as const)(
+    'rejects a same-id payload mismatch that differs only by %s',
+    async (_label, firstValue, secondValue) => {
+      const persistence = deferred<FieldRemapPersistenceResult>();
+      const persist = vi.fn((_input: FieldRemapPersistenceInput) => persistence.promise);
+      const owner = createOwner({ persist });
+      const operation = (value: unknown): FieldRemapProjectionOperation => ({
+        type: 'upsert-edge',
+        edge: {
+          id: 'edge-other',
+          sourceFieldId: 'source.other',
+          targetSlotId: 'target.other',
+          transformIds: ['string:trim'],
+          transformOptionSteps: [{ value }],
+        },
+      });
+      const transaction = owner.port.createTransaction([operation(firstValue)]);
+      const first = owner.port.applyTransaction(transaction);
+
+      await expect(
+        owner.port.applyTransaction({
+          ...transaction,
+          operations: [operation(secondValue)],
+        }),
+      ).resolves.toMatchObject({ status: 'rejected', code: 'invalid-operation' });
+      await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+
+      persistence.resolve({ status: 'committed' });
+      await expect(first).resolves.toMatchObject({ status: 'applied' });
+      expect(owner.getHistory()).toHaveLength(1);
+    },
+  );
+
+  it.each([
     ['id', ''],
     ['projectionId', ''],
     ['baseRevision', ''],
@@ -729,10 +765,15 @@ describe('package-internal Field Remap projection owner', () => {
     }
 
     expect(samples.map((sample) => sample.size)).toEqual(['SMALL', 'TYPICAL', 'STRESS']);
-    expect(samples.map((sample) => sample.visitedEntries)).toEqual([65, 801, 4_801]);
     for (const sample of samples) {
-      expect(sample.visitedEntries).toBeLessThan(sample.aggregateEntries * 3);
+      expect(Object.values(sample.stages).every((count) => count > 0)).toBe(true);
+      expect(sample.visitedEntries).toBeLessThan(sample.aggregateEntries * 40);
     }
+    const normalizedCosts = samples.map(
+      (sample) => sample.visitedEntries / sample.aggregateEntries,
+    );
+    expect(normalizedCosts[2]).toBeLessThanOrEqual((normalizedCosts[0] ?? 0) + 2);
+    expect(samples[2]?.visitedEntries).toBeLessThan((samples[1]?.visitedEntries ?? 0) * 7);
   });
 });
 

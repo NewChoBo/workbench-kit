@@ -63,6 +63,13 @@ export interface FieldRemapTraversalSample {
   readonly size: 'SMALL' | 'TYPICAL' | 'STRESS';
   readonly aggregateEntries: number;
   readonly visitedEntries: number;
+  readonly stages: {
+    readonly normalization: number;
+    readonly fingerprint: number;
+    readonly translation: number;
+    readonly freeze: number;
+    readonly reprojection: number;
+  };
 }
 
 export interface CreateFieldRemapProjectionOwnerOptions {
@@ -135,6 +142,51 @@ interface Reservation {
   terminal: boolean;
 }
 
+type TraversalStage = keyof FieldRemapTraversalSample['stages'];
+
+interface TraversalCounter {
+  readonly aggregateEntries: number;
+  readonly stages: Record<TraversalStage, number>;
+}
+
+function createTraversalCounter(aggregateEntries: number): TraversalCounter {
+  return {
+    aggregateEntries,
+    stages: {
+      normalization: 0,
+      fingerprint: 0,
+      translation: 0,
+      freeze: 0,
+      reprojection: 0,
+    },
+  };
+}
+
+function visit(
+  counter: TraversalCounter | undefined,
+  stage: TraversalStage,
+  count: number = 1,
+): void {
+  if (counter) {
+    counter.stages[stage] += count;
+  }
+}
+
+function traversalSample(counter: TraversalCounter): FieldRemapTraversalSample {
+  const visitedEntries = Object.values(counter.stages).reduce((sum, count) => sum + count, 0);
+  return Object.freeze({
+    size:
+      counter.aggregateEntries <= 32
+        ? 'SMALL'
+        : counter.aggregateEntries <= 512
+          ? 'TYPICAL'
+          : 'STRESS',
+    aggregateEntries: counter.aggregateEntries,
+    visitedEntries,
+    stages: Object.freeze({ ...counter.stages }),
+  });
+}
+
 function isStrictToken(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value === value.trim();
 }
@@ -145,7 +197,13 @@ function assertRevision(value: string, label: string): void {
   }
 }
 
-function cloneAndFreeze<T>(value: T, ancestors: Set<object> = new Set()): T {
+function cloneAndFreeze<T>(
+  value: T,
+  ancestors: Set<object> = new Set(),
+  counter?: TraversalCounter,
+  stage: TraversalStage = 'freeze',
+): T {
+  visit(counter, stage);
   if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return value;
   }
@@ -166,7 +224,7 @@ function cloneAndFreeze<T>(value: T, ancestors: Set<object> = new Set()): T {
   }
   ancestors.add(value);
   if (Array.isArray(value)) {
-    const clone = value.map((item) => cloneAndFreeze(item, ancestors));
+    const clone = value.map((item) => cloneAndFreeze(item, ancestors, counter, stage));
     ancestors.delete(value);
     return Object.freeze(clone) as T;
   }
@@ -181,7 +239,7 @@ function cloneAndFreeze<T>(value: T, ancestors: Set<object> = new Set()): T {
       ancestors.delete(value);
       throw new TypeError('Projection payload contains an unsupported record key.');
     }
-    clone[key] = cloneAndFreeze(item, ancestors);
+    clone[key] = cloneAndFreeze(item, ancestors, counter, stage);
   }
   ancestors.delete(value);
   return Object.freeze(clone) as T;
@@ -191,23 +249,45 @@ function normalizeAndFreezeDocument(document: FieldRemapDocument): FieldRemapDoc
   return cloneAndFreeze(normalizeFieldRemapDocument(document));
 }
 
-function freezeOwnedDocument(document: FieldRemapDocument): FieldRemapDocument {
-  return cloneAndFreeze(document);
+function freezeOwnedDocument(
+  document: FieldRemapDocument,
+  counter?: TraversalCounter,
+): FieldRemapDocument {
+  return cloneAndFreeze(document, new Set(), counter, 'freeze');
 }
 
-function stableSerialize(value: unknown): string {
-  if (value === null || typeof value !== 'object') {
-    return JSON.stringify(value) ?? 'undefined';
+function frame(tag: string, payload: string): string {
+  return `${tag}${payload.length}:${payload}`;
+}
+
+function stableSerialize(value: unknown, counter?: TraversalCounter): string {
+  visit(counter, 'fingerprint');
+  if (value === undefined) {
+    return 'u0:';
+  }
+  if (value === null) {
+    return 'n0:';
+  }
+  if (typeof value === 'string') {
+    return frame('s', value);
+  }
+  if (typeof value === 'boolean') {
+    return value ? 'b1:1' : 'b1:0';
+  }
+  if (typeof value === 'number') {
+    return frame('d', Object.is(value, -0) ? '-0' : String(value));
   }
   if (Array.isArray(value)) {
-    return `[${value.map(stableSerialize).join(',')}]`;
+    return frame('a', value.map((entry) => frame('e', stableSerialize(entry, counter))).join(''));
   }
   const record = value as Readonly<Record<string, unknown>>;
-  return `{${Object.keys(record)
-    .filter((key) => record[key] !== undefined)
-    .sort()
-    .map((key) => `${JSON.stringify(key)}:${stableSerialize(record[key])}`)
-    .join(',')}}`;
+  return frame(
+    'o',
+    Object.keys(record)
+      .sort()
+      .map((key) => frame('k', key) + frame('v', stableSerialize(record[key], counter)))
+      .join(''),
+  );
 }
 
 function validTransformIds(value: unknown): value is readonly string[] | undefined {
@@ -290,7 +370,11 @@ function validDocument(document: FieldRemapDocument): boolean {
   );
 }
 
-function normalizeOperation(operation: unknown): NormalizedOperation | null {
+function normalizeOperation(
+  operation: unknown,
+  counter?: TraversalCounter,
+): NormalizedOperation | null {
+  visit(counter, 'normalization');
   if (!operation || typeof operation !== 'object') {
     return null;
   }
@@ -298,27 +382,44 @@ function normalizeOperation(operation: unknown): NormalizedOperation | null {
   const record = operation as Record<string, unknown>;
   switch (record.type) {
     case 'upsert-edge': {
-      const edge = cloneAndFreeze(record.edge);
+      const edge = cloneAndFreeze(record.edge, new Set(), counter, 'normalization');
       if (!validEdge(edge)) {
         return null;
       }
-      return cloneAndFreeze({ type: 'upsert-edge', edge: normalizeMappingEdge(edge) });
+      return cloneAndFreeze(
+        { type: 'upsert-edge', edge: normalizeMappingEdge(edge) },
+        new Set(),
+        counter,
+        'normalization',
+      );
     }
     case 'remove-edge':
       return isStrictToken(record.edgeId)
-        ? cloneAndFreeze({ type: 'remove-edge', edgeId: record.edgeId })
+        ? cloneAndFreeze(
+            { type: 'remove-edge', edgeId: record.edgeId },
+            new Set(),
+            counter,
+            'normalization',
+          )
         : null;
     case 'upsert-operator': {
-      const input = cloneAndFreeze(record.operator);
+      const input = cloneAndFreeze(record.operator, new Set(), counter, 'normalization');
       if (!validOperator(input)) {
         return null;
       }
       const operator = normalizeMappingOperators([input])?.[0];
-      return operator ? cloneAndFreeze({ type: 'upsert-operator', operator }) : null;
+      return operator
+        ? cloneAndFreeze({ type: 'upsert-operator', operator }, new Set(), counter, 'normalization')
+        : null;
     }
     case 'remove-operator':
       return isStrictToken(record.operatorId)
-        ? cloneAndFreeze({ type: 'remove-operator', operatorId: record.operatorId })
+        ? cloneAndFreeze(
+            { type: 'remove-operator', operatorId: record.operatorId },
+            new Set(),
+            counter,
+            'normalization',
+          )
         : null;
     default:
       return null;
@@ -346,13 +447,44 @@ function operatorIsVisible(
   );
 }
 
+function visitShapeTree<T extends { readonly children?: readonly T[] }>(
+  values: readonly T[],
+  counter: TraversalCounter | undefined,
+): void {
+  if (!counter) {
+    return;
+  }
+  for (const value of values) {
+    visit(counter, 'reprojection');
+    if (value.children) {
+      visitShapeTree(value.children, counter);
+    }
+  }
+}
+
+function visitEdgeTree(edges: readonly MappingEdge[], counter: TraversalCounter | undefined): void {
+  if (!counter) {
+    return;
+  }
+  for (const edge of edges) {
+    visit(counter, 'reprojection');
+    if (edge.itemEdges) {
+      visitEdgeTree(edge.itemEdges, counter);
+    }
+  }
+}
+
 function projectValue(
   descriptor: WorkbenchEditableProjectionDescriptor,
   canonicalRevision: string,
   document: FieldRemapDocument,
   semanticInputs: SemanticInputs,
   includeHidden: boolean,
+  counter?: TraversalCounter,
 ): WorkbenchProjectionSnapshot<FieldRemapProjectionValue, WorkbenchEditableProjectionDescriptor> {
+  visitShapeTree(semanticInputs.sources, counter);
+  visitShapeTree(semanticInputs.targets, counter);
+  visitEdgeTree(document.edges, counter);
   const projected = projectShapes({
     sources: semanticInputs.sources,
     targets: semanticInputs.targets,
@@ -361,25 +493,34 @@ function projectValue(
   });
   const sourceIds = collectSourceFieldIds(projected.sources);
   const targetIds = collectTargetSlotIds(projected.targets);
-  const operators = document.operators?.filter((operator) =>
-    operatorIsVisible(operator, sourceIds, targetIds),
-  );
-  const projectedDocument = freezeOwnedDocument({
-    version: 2,
-    edges: projected.edges ?? [],
-    ...(operators && operators.length > 0 ? { operators } : {}),
+  const operators = document.operators?.filter((operator) => {
+    visit(counter, 'reprojection');
+    return operatorIsVisible(operator, sourceIds, targetIds);
   });
-
-  return cloneAndFreeze({
-    descriptor,
-    canonicalRevision,
-    value: {
-      document: projectedDocument,
-      sources: projected.sources,
-      targets: projected.targets,
-      includeHidden,
+  const projectedDocument = freezeOwnedDocument(
+    {
+      version: 2,
+      edges: projected.edges ?? [],
+      ...(operators && operators.length > 0 ? { operators } : {}),
     },
-  });
+    counter,
+  );
+
+  return cloneAndFreeze(
+    {
+      descriptor,
+      canonicalRevision,
+      value: {
+        document: projectedDocument,
+        sources: projected.sources,
+        targets: projected.targets,
+        includeHidden,
+      },
+    },
+    new Set(),
+    counter,
+    'freeze',
+  );
 }
 
 function uniqueIds(values: readonly { readonly id: string }[]): boolean {
@@ -568,12 +709,14 @@ export function createFieldRemapProjectionOwner(
   function hiddenOperatorIds(
     visibleSourceIds: ReadonlySet<string>,
     visibleTargetIds: ReadonlySet<string>,
+    counter?: TraversalCounter,
   ): ReadonlySet<string> {
     if (includeHidden || !document.operators?.length) {
       return new Set();
     }
     const operatorIds = new Set<string>();
     for (const operator of document.operators) {
+      visit(counter, 'translation');
       if (operatorIsVisible(operator, visibleSourceIds, visibleTargetIds)) {
         continue;
       }
@@ -582,20 +725,42 @@ export function createFieldRemapProjectionOwner(
     return operatorIds;
   }
 
-  function applyOperations(operations: readonly NormalizedOperation[]):
+  function applyOperations(
+    operations: readonly NormalizedOperation[],
+    counter?: TraversalCounter,
+  ):
     | { readonly status: 'accepted'; readonly document: FieldRemapDocument }
     | {
         readonly status: 'rejected';
         readonly code: 'invalid-operation' | 'unsupported-operation';
       } {
-    const edgeOrder = document.edges.map((edge) => edge.id);
+    const edgeOrder = document.edges.map((edge) => {
+      visit(counter, 'translation');
+      return edge.id;
+    });
     const edgeIds = new Set(edgeOrder);
-    const edgeById = new Map(document.edges.map((edge) => [edge.id, edge]));
-    const operatorOrder = (document.operators ?? []).map((operator) => operator.id);
-    const operatorIds = new Set(operatorOrder);
-    const operatorById = new Map(
-      (document.operators ?? []).map((operator) => [operator.id, operator]),
+    visit(counter, 'translation', edgeOrder.length);
+    const edgeById = new Map(
+      document.edges.map((edge) => {
+        visit(counter, 'translation');
+        return [edge.id, edge] as const;
+      }),
     );
+    const operatorOrder = (document.operators ?? []).map((operator) => {
+      visit(counter, 'translation');
+      return operator.id;
+    });
+    const operatorIds = new Set(operatorOrder);
+    visit(counter, 'translation', operatorOrder.length);
+    const operatorById = new Map(
+      (document.operators ?? []).map((operator) => {
+        visit(counter, 'translation');
+        return [operator.id, operator] as const;
+      }),
+    );
+    visitShapeTree(semanticInputs.sources, counter);
+    visitShapeTree(semanticInputs.targets, counter);
+    visitEdgeTree(document.edges, counter);
     const visible = projectShapes({
       sources: semanticInputs.sources,
       targets: semanticInputs.targets,
@@ -603,36 +768,25 @@ export function createFieldRemapProjectionOwner(
       options: { includeHidden },
     });
     const visibleSourceIds = collectSourceFieldIds(visible.sources);
+    visitShapeTree(visible.sources, counter);
     const visibleTargetIds = collectTargetSlotIds(visible.targets);
-    const visibleEdgeIds = new Set((visible.edges ?? []).map((edge) => edge.id));
-    const omittedOperatorIds = hiddenOperatorIds(visibleSourceIds, visibleTargetIds);
-    const aggregateEntries =
-      semanticInputs.sources.length +
-      semanticInputs.targets.length +
-      document.edges.length +
-      (document.operators?.length ?? 0) +
-      operations.length;
-    let visitedEntries =
-      semanticInputs.sources.length * 2 +
-      semanticInputs.targets.length * 2 +
-      document.edges.length * 3 +
-      (document.operators?.length ?? 0) * 3;
-    const recordTraversal = (): void => {
-      options.onTraversal?.({
-        size: aggregateEntries <= 32 ? 'SMALL' : aggregateEntries <= 512 ? 'TYPICAL' : 'STRESS',
-        aggregateEntries,
-        visitedEntries,
-      });
-    };
+    visitShapeTree(visible.targets, counter);
+    const visibleEdgeIds = new Set(
+      (visible.edges ?? []).map((edge) => {
+        visit(counter, 'translation');
+        return edge.id;
+      }),
+    );
+    const omittedOperatorIds = hiddenOperatorIds(visibleSourceIds, visibleTargetIds, counter);
     const rejected = (
       code: 'invalid-operation' | 'unsupported-operation',
-    ): { readonly status: 'rejected'; readonly code: typeof code } => {
-      recordTraversal();
-      return { status: 'rejected', code };
-    };
+    ): { readonly status: 'rejected'; readonly code: typeof code } => ({
+      status: 'rejected',
+      code,
+    });
 
     for (const operation of operations) {
-      visitedEntries += 1;
+      visit(counter, 'translation');
       switch (operation.type) {
         case 'upsert-edge': {
           const current = edgeById.get(operation.edge.id);
@@ -691,22 +845,25 @@ export function createFieldRemapProjectionOwner(
     }
 
     const edges = edgeOrder.flatMap((id) => {
+      visit(counter, 'translation');
       const edge = edgeById.get(id);
       return edge ? [edge] : [];
     });
     const operators = operatorOrder.flatMap((id) => {
+      visit(counter, 'translation');
       const operator = operatorById.get(id);
       return operator ? [operator] : [];
     });
-    visitedEntries += edgeOrder.length + operatorOrder.length;
-    recordTraversal();
     return {
       status: 'accepted',
-      document: freezeOwnedDocument({
-        version: 2,
-        edges,
-        ...(operators.length > 0 ? { operators } : {}),
-      }),
+      document: freezeOwnedDocument(
+        {
+          version: 2,
+          edges,
+          ...(operators.length > 0 ? { operators } : {}),
+        },
+        counter,
+      ),
     };
   }
 
@@ -736,23 +893,35 @@ export function createFieldRemapProjectionOwner(
       return immediate(reject(transactionId, 'invalid-operation'));
     }
 
+    const traversal = options.onTraversal
+      ? createTraversalCounter(
+          semanticInputs.sources.length +
+            semanticInputs.targets.length +
+            document.edges.length +
+            (document.operators?.length ?? 0) +
+            candidate.operations.length,
+        )
+      : undefined;
     let normalizedOperations: readonly NormalizedOperation[];
     let fingerprint: string;
     try {
       const normalized: NormalizedOperation[] = [];
       for (const operation of candidate.operations) {
-        const ownedOperation = normalizeOperation(operation);
+        const ownedOperation = normalizeOperation(operation, traversal);
         if (!ownedOperation) {
           return immediate(reject(transactionId, 'invalid-operation'));
         }
         normalized.push(ownedOperation);
       }
       normalizedOperations = Object.freeze(normalized);
-      fingerprint = stableSerialize({
-        projectionId: candidate.projectionId,
-        baseRevision: candidate.baseRevision,
-        operations: normalizedOperations,
-      });
+      fingerprint = stableSerialize(
+        {
+          projectionId: candidate.projectionId,
+          baseRevision: candidate.baseRevision,
+          operations: normalizedOperations,
+        },
+        traversal,
+      );
     } catch {
       return immediate(reject(transactionId, 'invalid-operation'));
     }
@@ -817,7 +986,7 @@ export function createFieldRemapProjectionOwner(
             conflicts: [{ code: 'stale-canonical-revision' }],
           };
         } else {
-          const translated = applyOperations(normalizedOperations);
+          const translated = applyOperations(normalizedOperations, traversal);
           if (translated.status === 'rejected') {
             result = reject(admittedId, translated.code);
           } else {
@@ -855,6 +1024,7 @@ export function createFieldRemapProjectionOwner(
                 translated.document,
                 semanticInputs,
                 includeHidden,
+                traversal,
               );
               document = translated.document;
               revisionSequence += 1;
@@ -893,6 +1063,9 @@ export function createFieldRemapProjectionOwner(
       }
 
       reservation.terminal = true;
+      if (traversal) {
+        options.onTraversal?.(traversalSample(traversal));
+      }
       reservation.resolve(result);
     });
 
