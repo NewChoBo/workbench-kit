@@ -111,6 +111,21 @@ import '@workbench-kit/shell-react/field-remap/view.css';
 for Flow-only embeds and custom bundler setups. The full barrel
 `import { FieldRemapPanel } from '@workbench-kit/shell-react'` stays supported.
 
+### Semantic history ownership
+
+`FieldRemapPanel` keeps a private composite `{ edges, operators }` undo/redo stack only
+when both durable channels are uncontrolled. If either channel is controlled, pass one
+`historyOwner` for the complete composite state; the Panel never creates a partial stack.
+`historyActionsRef` exposes host-chrome actions and
+`onHistoryAvailabilityChange` reports whether those actions are available. Keyboard
+routing remains host-owned.
+
+Only semantic edits coming from the Flow mapper create entries. Hidden mappings are
+reconstructed before an entry is recorded, so undo does not discard filtered state.
+Shape apply or external source/target replacement prunes invalid mappings and resets
+past/future without adding a history entry. Draft placement, selection, viewport, and
+detail-panel state stay outside this history.
+
 ### Flow host chrome hooks
 
 `FieldRemapFlowMapper` (and `FieldRemapPanel` pass-through) accept optional chrome

@@ -104,7 +104,14 @@ export {
   type SampleJdwWidgetPreviewRenderData,
 } from './jdw/document-view-data.js';
 export { SampleFieldRemapDemo, type SampleFieldRemapDemoProps } from './field-remap/demo.js';
-export { FieldRemapPanel, type FieldRemapPanelProps } from './field-remap/panel.js';
+export {
+  FieldRemapPanel,
+  type FieldRemapHistoryActions,
+  type FieldRemapHistoryAvailability,
+  type FieldRemapHistoryOwner,
+  type FieldRemapHistorySnapshot,
+  type FieldRemapPanelProps,
+} from './field-remap/panel.js';
 export {
   FieldRemapFlowMapper,
   type FieldRemapFlowActions,
