@@ -227,6 +227,32 @@ export type {
 export { normalizeServiceFailureMessage } from './result/result';
 export { AbstractWorkspaceFileRepository, isSaveFailure, isSaveSuccess } from './save/save';
 export type {
+  UiPropertyDescriptor,
+  UiPropertyValue,
+  UiValueEditorDescriptor,
+  UiValueSchema,
+  UiValueSource,
+  UiValueSourceKind,
+  UiValueType,
+  WidgetInspectorScalarValue,
+} from './ui-authoring/types';
+export { UI_VALUE_SOURCE_KINDS } from './ui-authoring/types';
+export type {
+  UiLiteralValidator,
+  UiValueSourceReferenceField,
+  UiValueValidationIssue,
+  UiValueValidationIssueCode,
+  ValidateUiPropertyValueOptions,
+} from './ui-authoring/validation';
+export {
+  UI_VALUE_VALIDATION_ISSUE_CODES,
+  isUiValueSourceKind,
+  normalizeUiAllowedSources,
+  validateUiPropertyDescriptor,
+  validateUiPropertyValue,
+} from './ui-authoring/validation';
+export { widgetInspectorFieldToUiPropertyDescriptor } from './ui-authoring/widget-inspector-adapter';
+export type {
   WidgetRendererComponent,
   WidgetRendererEvent,
   WidgetRendererEventKind,
