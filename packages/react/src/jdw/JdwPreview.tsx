@@ -10,12 +10,16 @@ import {
   type LayoutConstraints,
   type JsonWidgetValueMap,
   type JsonWidgetInvalidation,
+  type JsonWidgetListenSchedule,
+  type JsonWidgetListenSchedulerBatch,
+  type JsonWidgetNode,
   type ValidationIssue,
   type WidgetPath,
 } from '@workbench-kit/jdw';
 
 import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/WorkbenchLayout.js';
 import { renderJdwWithLayout } from './cssRenderBackend.js';
+import { useJdwListenScheduler } from './useJdwListenScheduler.js';
 
 const EMPTY_CHANGED_VALUE_PATHS: readonly string[] = [];
 
@@ -29,6 +33,8 @@ export interface JdwPreviewProps {
   strictKnownTypes?: boolean | undefined;
   values?: JsonWidgetValueMap | undefined;
   changedValuePaths?: readonly string[] | undefined;
+  invalidationSchedule?: JsonWidgetListenSchedule | undefined;
+  onInvalidationBatch?: (batch: JsonWidgetListenSchedulerBatch) => void;
   onSelectPath?: ((path: WidgetPath) => void) | undefined;
   /**
    * When set, expand `type: "ref"` before validate/layout so composed documents
@@ -58,9 +64,12 @@ function mergeChangedValuePaths(
   first: readonly string[],
   second: readonly string[],
 ): readonly string[] {
-  return [
-    ...new Set([...first, ...second].map((path) => path.trim()).filter((path) => path.length > 0)),
-  ];
+  return [...new Set([...first, ...second])];
+}
+
+interface JdwPreviewDocumentState {
+  readonly issues: readonly ValidationIssue[];
+  readonly node: JsonWidgetNode | null;
 }
 
 interface JdwPreviewState {
@@ -80,12 +89,16 @@ export function JdwPreview({
   strictKnownTypes = true,
   values,
   changedValuePaths = EMPTY_CHANGED_VALUE_PATHS,
+  invalidationSchedule,
+  onInvalidationBatch,
   onSelectPath,
   documentPath = null,
   loadDocument,
 }: JdwPreviewProps) {
   const previousValuesRef = useRef<JsonWidgetValueMap | undefined>(values);
+  const onInvalidationBatchRef = useRef(onInvalidationBatch);
   const onSelectPathRef = useRef(onSelectPath);
+  onInvalidationBatchRef.current = onInvalidationBatch;
   onSelectPathRef.current = onSelectPath;
 
   const changedValuePathsFromValues = useMemo(
@@ -101,19 +114,17 @@ export function JdwPreview({
     previousValuesRef.current = values;
   }, [values]);
 
-  const previewState = useMemo<JdwPreviewState>(() => {
+  const documentState = useMemo<JdwPreviewDocumentState>(() => {
     const parsed = parseJsonWidgetData(json);
     if (parsed.parseError !== null || parsed.value === null) {
       return {
-        invalidations: [],
         issues: [
           {
             path: 'root',
             message: parsed.parseError ?? 'Invalid JSON widget data.',
           },
         ],
-        renderOutput: null,
-        valid: false,
+        node: null,
       };
     }
 
@@ -125,19 +136,42 @@ export function JdwPreview({
       });
       if (expanded.issues.length > 0 || expanded.value === null) {
         return {
-          invalidations: [],
           issues: expanded.issues.map((issue) => ({
             path: issue.path,
             message: issue.message,
           })),
-          renderOutput: null,
-          valid: false,
+          node: null,
         };
       }
       drawableNode = expanded.value;
     }
 
-    const resolvedNode = resolveJsonWidgetValues(drawableNode, values);
+    return { issues: [], node: drawableNode };
+  }, [documentPath, json, loadDocument]);
+
+  const scheduledBatch = useJdwListenScheduler({
+    root: documentState.node,
+    changedPaths: documentState.node ? activeChangedValuePaths : EMPTY_CHANGED_VALUE_PATHS,
+    ...(invalidationSchedule ? { schedule: invalidationSchedule } : {}),
+  });
+
+  useEffect(() => {
+    if (scheduledBatch) {
+      onInvalidationBatchRef.current?.(scheduledBatch);
+    }
+  }, [scheduledBatch]);
+
+  const previewState = useMemo<JdwPreviewState>(() => {
+    if (documentState.node === null) {
+      return {
+        invalidations: [],
+        issues: documentState.issues,
+        renderOutput: null,
+        valid: false,
+      };
+    }
+
+    const resolvedNode = resolveJsonWidgetValues(documentState.node, values);
     const issues: ValidationIssue[] = [];
     validateJsonWidgetNode(resolvedNode, 'root', issues, {
       registeredTypes: registry?.types(),
@@ -145,7 +179,7 @@ export function JdwPreview({
     });
 
     return {
-      invalidations: collectJsonWidgetInvalidations(drawableNode, activeChangedValuePaths),
+      invalidations: collectJsonWidgetInvalidations(documentState.node, activeChangedValuePaths),
       issues,
       renderOutput:
         issues.length === 0
@@ -161,11 +195,9 @@ export function JdwPreview({
     };
   }, [
     activeChangedValuePaths,
-    documentPath,
+    documentState,
     emptyLabel,
-    json,
     layoutConstraints,
-    loadDocument,
     registry,
     selectedPath,
     strictKnownTypes,

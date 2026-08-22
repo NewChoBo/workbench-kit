@@ -1,6 +1,6 @@
 # JDW JSON → Draw Completion Plan
 
-Updated: 2026-07-12
+Updated: 2026-08-22
 
 Source of truth for completing **pure JDW JSON → drawable widgets** before Spec
 structure or Spec Form work. Status decisions live here; link from
@@ -20,7 +20,7 @@ known type — without depending on Screen Spec or Form chrome.
 | JD-1  | Drawable JSON contract       | Known-type validate→layout smoke; grid `col`/`row` required at rest (`ensureGridChildPlacements`)                                 | **Done** |
 | JD-2  | Asset inputs → drawable JSON | `schema.json` defaults/required + `${}` substitution produce a resolved node ready to layout/draw                                 | **Done** |
 | JD-3  | Text measure contract        | Optional host/registry text metrics; constrained wrapping estimate; no metrics = current behavior                                 | **Done** |
-| JD-4  | Listen invalidation coalesce | Headless batch/coalesce of listen candidates for value-path changes (scheduler contract, no GUI)                                  | **Done** |
+| JD-4  | Listen invalidation delivery | Headless value/change ownership plus scheduled immutable listen batches and a narrow React preview adapter                        | **Done** |
 | JD-5  | Known-type render smoke      | Each profile type renders via `renderJdw` / `JdwPreview` without throw                                                            | **Done** |
 | JD-6  | Document refs (import)       | Expand `type: "ref"` + loader; **reject circular/self refs**; sample `parts` + `composed`; Form/Preview expand before draw        | **Done** |
 
@@ -59,14 +59,20 @@ is the TextPainter analogue ([json-dynamic-widget-reference.md](./json-dynamic-w
 3. Unconstrained maxWidth keeps single-line estimate (prior behavior).
 4. Unit tests cover wrap, maxLines, and registry measure height growth.
 
-## JD-4 acceptance — Done (2026-07-12)
+## JD-4 acceptance — Done (warehouse 2026-07-12; scheduler 2026-08-22)
 
 1. `createJsonWidgetValueWarehouse` owns get/set/patch/replace for a flat+dotted
    value map and accumulates changed paths across a write burst.
 2. `flushInvalidations(root)` runs **one** `collectJsonWidgetInvalidations` pass
    for the pending path set, notifies subscribers, then clears pending paths.
 3. Unit tests cover path get/set, burst coalesce, empty flush, and replace diff.
-4. No React/`JdwPreview` scheduler wiring in this stage (optional later).
+4. `createJsonWidgetListenScheduler` owns only accepted changed-path identities
+   and delivery timing. It resolves the current root at flush, reuses
+   `collectJsonWidgetInvalidations`, and publishes a frozen batch.
+5. `useJdwListenScheduler` applies React frame scheduling; `JdwPreview` exposes
+   the resulting batch without claiming partial DOM rerender optimization.
+6. The scheduler does not duplicate warehouse values, JDW path parsing,
+   persistence, source authority, validation, or a dependency graph.
 
 ## JD-5 acceptance — Done (2026-07-12)
 
@@ -90,7 +96,8 @@ is the TextPainter analogue ([json-dynamic-widget-reference.md](./json-dynamic-w
   packages (`manifest` + `content`).
 - **JD-3:** Do not bake browser font metrics into `@workbench-kit/jdw`. Expose a
   measure hook / options bag; React registry may supply CSS-based estimates.
-- **JD-4:** Done — `createJsonWidgetValueWarehouse` coalesces write bursts into one
-  `collectJsonWidgetInvalidations` flush (no React scheduler yet).
+- **JD-4:** Done — `createJsonWidgetValueWarehouse` owns values/change feed;
+  `createJsonWidgetListenScheduler` owns scheduled listen delivery; the React
+  hook and `JdwPreview` callback expose one coalesced batch per frame.
 - **JD-5:** Done — shared `WORKBENCH_JDW_KNOWN_TYPE_FIXTURES` cover `renderJdw`,
   `renderJdwNode`, and `JdwPreview` smoke for every known type.

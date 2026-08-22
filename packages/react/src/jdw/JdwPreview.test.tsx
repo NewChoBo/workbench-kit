@@ -3,14 +3,22 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
+import {
+  createWidgetRegistry,
+  formatJsonWidgetData,
+  type JsonWidgetListenSchedulerBatch,
+} from '@workbench-kit/jdw';
 
 import { getJdwPreviewInvalidations, JdwPreview } from './JdwPreview.js';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 interface DemoWidget extends WidgetTypeShape {
   type: 'demo:card';
@@ -262,6 +270,58 @@ describe('JdwPreview', () => {
         ?.getAttribute('data-jdw-invalidations'),
     ).toBe('1');
     expect(container.textContent).toContain('New title');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('publishes explicit preview changes as one scheduled batch', async () => {
+    const json = formatJsonWidgetData({
+      type: 'column',
+      listen: ['theme'],
+      args: {
+        children: [
+          {
+            type: 'text',
+            listen: ['title'],
+            args: { text: '${title}' },
+          },
+        ],
+      },
+    });
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          changedValuePaths={['title', 'theme.color', 'title']}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'Scheduled title' }}
+        />,
+      );
+    });
+
+    expect(frames).toHaveLength(1);
+    await act(async () => {
+      frames[0]?.(0);
+    });
+
+    expect(batches).toHaveLength(1);
+    expect(batches[0]?.changedPaths).toEqual(['title', 'theme.color']);
+    expect(batches[0]?.invalidations).toHaveLength(2);
+    expect(container.textContent).toContain('Scheduled title');
 
     await act(async () => {
       root.unmount();

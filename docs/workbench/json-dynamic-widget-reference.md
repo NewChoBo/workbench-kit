@@ -1,6 +1,6 @@
 # json_dynamic_widget Reference (Deep Analysis)
 
-Updated: 2026-07-12
+Updated: 2026-08-22
 
 Upstream: [peiffer-innovations/json_dynamic_widget](https://github.com/peiffer-innovations/json_dynamic_widget)
 (archived read-only as of 2026-02-16). Pub docs:
@@ -45,7 +45,7 @@ layout + `TextPainter` own measurement. The package only rebuilds widgets.
 | Registry builders                    | `WidgetRegistry` + React `createBuiltinJdwRegistry` | **Keep**                                                 |
 | `JsonWidgetData.fromDynamic` + cache | `parseJsonWidgetData` / document model              | **Keep**; avoid re-parse on every preview tick           |
 | `listen` + auto-infer                | Listen binding analysis + unused/missing warnings   | **Keep explicit listen**; auto-infer only as diagnostics |
-| `valueStream`                        | Value-diff paths + `collectJsonWidgetInvalidations` | **Adapt** → JD-4 coalesce helper (no Flutter streams)    |
+| `valueStream`                        | Value warehouse + listen-delivery scheduler         | **Adapt** → explicit changed paths and immutable batches |
 | `${expr}` + functions                | Exact `${path}` + explicit `values` map             | **Defer** full expression/function language              |
 | Arg processors                       | Fixed `${}` resolver                                | **Defer** pluggable processors until needed              |
 | plugin_components                    | Asset `manifest` + `content` + `schema.json`        | **Keep**; JD-2 inputs substitution landed                |
@@ -57,16 +57,19 @@ layout + `TextPainter` own measurement. The package only rebuilds widgets.
 
 ### 3.1 Registry is the value warehouse (JD-4)
 
-Flutter isolates variables per registry (often per page). Preview/`values` today
-are a flat map passed into resolve. Next step is a small headless helper:
+Flutter isolates variables per registry (often per page). Workbench Kit keeps
+that ownership split into existing narrow roles:
 
 - `setValue` / `getValue`
 - diff → changed paths
 - intersect with `listen` → invalidation list
-- optional coalesce window (batch)
+- `createJsonWidgetListenScheduler` → timing, exact-path dedupe, current-root
+  matching, immutable delivery batches
+- `useJdwListenScheduler` → browser frame policy for preview integrations
 
-No need for Dart `Stream`; a pure function + optional subscriber list is enough
-for React `JdwPreview`.
+There is no second value store or Dart-style `Stream`. Hosts explicitly feed
+accepted changed paths into the scheduler; warehouse post-flush subscribers are
+delivery observation, not the scheduler trigger.
 
 ### 3.2 Explicit `listen` is a performance contract
 
@@ -123,7 +126,7 @@ growing Screen Spec until JSON→draw (JD-5) closes.
 | --------- | -------------------------------------------------------------------------------------- |
 | JD-0…JD-2 | Done — wire, contract, asset inputs                                                    |
 | **JD-3**  | Shared wrapped-text estimate + registry `measure` uses maxWidth (TextPainter analogue) |
-| **JD-4**  | Headless value warehouse + listen coalesce (valueStream analogue)                      |
+| **JD-4**  | Value warehouse + headless listen scheduler + narrow React frame adapter               |
 | **JD-5**  | Parse-once / resolve / layout / render smoke per known type                            |
 
 Spec structure / Spec Form stay **after** JD-5. Screen Spec is kit-only; Flutter

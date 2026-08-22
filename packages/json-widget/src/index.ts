@@ -136,6 +136,16 @@ export type {
 
 export { createJsonWidgetValueWarehouse } from './document/value-warehouse.js';
 
+export type {
+  JsonWidgetListenSchedule,
+  JsonWidgetListenScheduler,
+  JsonWidgetListenSchedulerBatch,
+  JsonWidgetListenSchedulerListener,
+  JsonWidgetListenSchedulerOptions,
+} from './jdw/listen-scheduler.js';
+
+export { createJsonWidgetListenScheduler } from './jdw/listen-scheduler.js';
+
 export type { WidgetDocument } from './document/document.js';
 
 export {
