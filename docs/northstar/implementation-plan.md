@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`.
+- **Current integration baseline:** `origin/develop@f96e336e4805a2729f705cdf3d904437188abb93`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -60,9 +60,9 @@ Document + state ownership foundations
         ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
 
-WB-NS-070A typed UI value/property inventory + target contract [SOURCE_REVIEW_REQUIRED]
+WB-NS-070A typed UI value/property inventory + target contract [DONE]
         ↓
-WB-NS-070B selectable layout strategy + typed style constraints
+WB-NS-070B selectable layout strategy + typed style constraints [READY_FOR_IMPLEMENTATION]
         ↓
 WB-NS-070C atomic component/composite descriptor contract
         ↓
@@ -100,7 +100,7 @@ Backendless/performance + compatibility hardening
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
 
-`WB-NS-070A` is the first promoted UI-authoring slice after source/API inventory closed its reuse boundaries. The remaining `WB-NS-070*` / `WB-NS-071*` target slots stay `DESIGNING` until their own bounded packets prevent a parallel schema, layout, document or graph system.
+`WB-NS-070A` established the shared typed property/value-source envelope. `WB-NS-070B` is the next promoted slice after current JDW layout, SplitView, ThemeRegistry and legacy WorkbenchDocument ownership were re-inventoried. The remaining `WB-NS-070*` / `WB-NS-071*` target slots stay `DESIGNING` until their own bounded packets prevent a parallel schema, layout, document or graph system.
 
 ---
 
@@ -1606,8 +1606,9 @@ Close:
 
 ### `WB-NS-070A` bounded packet — typed UI value/property/source contract
 
-- **Status:** `SOURCE_REVIEW_REQUIRED`
-- **Source/API evidence:** `origin/develop@861aac873ed58cc4b60092c4dfddc339c45aa781` with source-bearing parent `e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`
+- **Status:** `DONE`
+- **Current source evidence:** `origin/develop@f96e336e4805a2729f705cdf3d904437188abb93` (candidate `718932da6736e8e52ffeaa93b71d8d2677a7537c`, integrated through PR #322 after exact-head source review and local static/fast/browser validation)
+- **Readiness evidence:** `origin/develop@b7900239b7cdb232bf0c390129f1bfb4d4305113` (readiness packet integrated through PR #321)
 - **Target owner:** `@workbench-kit/contracts` root export
 - **Implementation scope:** `packages/contracts/src/ui-authoring/*` plus root export and focused tests
 
@@ -1761,6 +1762,184 @@ Close:
 - typed sizing/spacing/flex/grid/split/canvas semantics;
 - invalid combination behavior;
 - renderer projection and raw-CSS escape-hatch boundary.
+
+### `WB-NS-070B` bounded packet — layout/style values, strategy descriptors and contextual validation
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Source/API evidence:** `origin/develop@f96e336e4805a2729f705cdf3d904437188abb93`
+- **Dependencies:** `WB-NS-070A` `DONE`
+- **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
+- **Implementation scope:** `packages/contracts/src/ui-authoring/*`, root exports and focused backendless tests
+
+#### Outcome
+
+Add the smallest renderer-neutral contract that can describe a selectable layout strategy, distinguish container-owned from child-owned properties, expose only context-valid Inspector groups and reject invalid typed values/property combinations. It extends the 070A property/value-source envelope; it does not add a second layout calculator, document tree, registry, renderer or command system.
+
+#### Current source/API decisions
+
+| Existing surface                                                                                                              | Decision                     | Reason / follow-up                                                                                                                                                                                                   |
+| ----------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@workbench-kit/jdw` `layoutWidget`, row/column/Grid/Stack calculators, placement normalization and drag/resize patch mapping | `REUSE_AS_RUNTIME_ADAPTER`   | JDW remains the current layout execution and placement owner. 070B descriptors do not calculate rectangles or reinterpret current JSON. A later JDW adapter may project only the supported strategy/property subset. |
+| React `createBuiltinJdwRegistry` schemas and scalar Inspector sections                                                        | `ADAPT_LATER`                | They are the first renderer/editor projection candidate. 070B does not replace registry definitions or widen the current Inspector; 070C attaches semantic component descriptors and owns the migration seam.        |
+| React `SplitView`                                                                                                             | `REFERENCE_INTERACTION_ONLY` | Its horizontal/vertical, pixel/percentage, fixed-track, min/max and divider semantics inform Split descriptors. React state, callbacks and `ReactNode` never enter the canonical contract.                           |
+| `WorkbenchDocument` open `style`/`layout` records and renderer                                                                | `DO_NOT_EXTEND`              | The legacy flat document and CSS-facing strings are compatibility evidence, not the new canonical layout model. 070D decides UiDocument migration and commands.                                                      |
+| `ThemeRegistry`, token CSS and CSS custom properties                                                                          | `REFERENCE_ONLY`             | They remain shell appearance/runtime compatibility paths. 070B values may be wrapped by the 070A `token` source, but token identity/resolution belongs to 072.                                                       |
+| shell/editor layout services                                                                                                  | `OUT_OF_DOMAIN`              | Workbench chrome and editor-group arrangement are not authored component layout strategies.                                                                                                                          |
+
+#### Public semantic contract
+
+070B adds these product-neutral literal families. Exact property ordering is not normative; discriminants and vocabulary are.
+
+```ts
+type UiLengthUnit = 'px' | 'rem' | 'em' | 'vw' | 'vh';
+type UiIntrinsicSizeKeyword = 'auto' | 'min-content' | 'max-content';
+
+type UiDimensionValue =
+  | { kind: 'length'; value: number; unit: UiLengthUnit }
+  | { kind: 'percentage'; value: number }
+  | { kind: 'flex-fraction'; value: number }
+  | { kind: 'intrinsic-size'; value: UiIntrinsicSizeKeyword };
+
+interface UiSpacingValue {
+  kind: 'spacing';
+  top: UiLengthOrPercentageValue;
+  right: UiLengthOrPercentageValue;
+  bottom: UiLengthOrPercentageValue;
+  left: UiLengthOrPercentageValue;
+}
+
+interface UiBorderValue {
+  kind: 'border';
+  width: UiLengthValue;
+  style: 'none' | 'solid' | 'dashed' | 'dotted' | 'double';
+  color: string;
+}
+
+interface UiRadiusValue {
+  kind: 'radius';
+  topLeft: UiLengthOrPercentageValue;
+  topRight: UiLengthOrPercentageValue;
+  bottomRight: UiLengthOrPercentageValue;
+  bottomLeft: UiLengthOrPercentageValue;
+}
+
+interface UiShadowValue {
+  kind: 'shadow';
+  offsetX: UiLengthValue;
+  offsetY: UiLengthValue;
+  blur: UiLengthValue;
+  spread: UiLengthValue;
+  color: string;
+  inset?: boolean;
+}
+```
+
+`UiLengthValue`, `UiPercentageValue`, `UiFlexFractionValue`, `UiIntrinsicSizeValue` and `UiLengthOrPercentageValue` are the named members used above. Finite numeric payloads are mandatory. Fractions are strictly positive; border width, radius and shadow blur are non-negative; percentage remains a numeric percentage rather than renderer text. Intrinsic sizing and flex fractions are distinct from length/percentage so a descriptor can reject them outside Grid/Flex/sizing contexts.
+
+Layout vocabulary and contextual property declarations use:
+
+```ts
+type UiLayoutStrategyKind =
+  'flow' | 'stack' | 'flex' | 'grid' | 'split' | 'overlay' | 'canvas' | (string & {});
+
+type UiLayoutPropertyScope = 'container' | 'child';
+
+type UiLayoutPropertyGroup =
+  | 'sizing'
+  | 'spacing'
+  | 'alignment'
+  | 'flex'
+  | 'grid'
+  | 'split'
+  | 'canvas'
+  | 'typography'
+  | 'appearance'
+  | 'effects'
+  | 'advanced'
+  | (string & {});
+
+interface UiLayoutPropertyDescriptor<TLiteral = unknown> extends UiPropertyDescriptor<TLiteral> {
+  scope: UiLayoutPropertyScope;
+  group: UiLayoutPropertyGroup;
+  strategyKinds: readonly UiLayoutStrategyKind[];
+}
+
+interface UiLayoutStrategyDescriptor {
+  id: string;
+  kind: UiLayoutStrategyKind;
+  label?: string;
+  supportedContainerProperties: readonly string[];
+  supportedChildProperties: readonly string[];
+}
+```
+
+The built-in strategy-kind vocabulary carries these semantics without defining a built-in global registry:
+
+| Kind      | Container semantics                                                                                      | Child semantics                                                          |
+| --------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------ |
+| `flow`    | ordered block/inline flow, sizing and spacing                                                            | size, margin and alignment permitted by the descriptor                   |
+| `stack`   | one-axis ordered layout; direction/alignment/gap are explicit properties                                 | grow/shrink/basis/order/self-alignment only when declared                |
+| `flex`    | row/column, wrap, gap, main/cross alignment                                                              | grow, shrink, basis, order and self-alignment                            |
+| `grid`    | typed track lists of length/percentage/fraction/intrinsic tracks plus gaps/alignment                     | row/column line and positive span placement                              |
+| `split`   | horizontal/vertical tracks, primary/secondary fixed policy, typed size/min/max and collapse/resize flags | primary/secondary role only; React nodes/callbacks are excluded          |
+| `overlay` | layered alignment/inset context                                                                          | typed insets/anchor/z-order                                              |
+| `canvas`  | explicit free-placement coordinate space                                                                 | typed x/y/width/height, anchor, integer z-order and optional constraints |
+
+Row/column is represented as a typed direction property of `stack` or `flex`, not a separate universal strategy engine. Grid track lists, positive line/span placement, Split track policy, Canvas coordinates and Flex grow/shrink/basis are expressed by ordinary `UiLayoutPropertyDescriptor`s whose semantic `value.type`, constraints and literal validator close their exact domain. 070B exports named supporting literal types for Grid track lists/placement, Flex child sizing, Split track sizing/policy and Canvas placement; it does not prescribe renderer syntax.
+
+#### Pure validation and Inspector projection
+
+070B exports frozen built-in vocabularies and guards plus pure functions with structured stable issue codes:
+
+```ts
+validateUiDimensionValue(value, options?)
+validateUiSpacingValue(value, options?)
+validateUiBorderValue(value)
+validateUiRadiusValue(value)
+validateUiShadowValue(value)
+validateUiLayoutStrategyDescriptor(strategy, properties)
+resolveUiLayoutInspectorGroups(strategy, properties, scope)
+```
+
+Dimension options explicitly select allowed member kinds and whether negative numeric values are permitted. Strategy validation rejects blank IDs/kinds/groups, duplicate or unknown property IDs, a property listed under the wrong scope, and a property whose `strategyKinds` does not include the strategy kind. Grid lines/spans and Canvas z-order must be integers; line/span values are positive where required. Split min/max combinations reject `min > max` only when comparable literal kinds/units are equal; cross-unit ordering remains renderer/measurement validation rather than guessed conversion.
+
+`resolveUiLayoutInspectorGroups` first validates the supplied strategy/property set. On any issue it returns no groups plus those issues. Otherwise it preserves strategy property order, groups properties by their declared group, and returns only the requested `container` or `child` scope. It is a projection, not a mutable Inspector registry.
+
+070B validators compose with `validateUiPropertyValue` as caller literal validators. A 070A `token`/`resource`/`binding`/`expression` reference is structurally checked by 070A and resolved later by its named owner; 070B never evaluates it.
+
+#### Renderer projection and raw escape boundary
+
+Typed values and strategy/property IDs are canonical inputs. Web/JDW/native adapters may project supported values to CSS or runtime layout properties, but no CSS text, `React.CSSProperties`, DOM type or native renderer object enters `@workbench-kit/contracts`.
+
+070B intentionally exports no raw-CSS payload and no universal renderer registry. A future host-opt-in escape hatch must be renderer-qualified, separately persisted from portable typed properties, sanitized by that renderer, visibly non-portable and unable to override typed values silently. Raw CSS/JSS/JSX strings are therefore rejected as evidence for 070B acceptance.
+
+#### Ordered implementation tasks
+
+1. Add the typed dimension, spacing, border, radius, shadow and layout-specific supporting literal contracts under the existing `ui-authoring` module.
+2. Add frozen strategy/scope/group vocabularies and guards without adding a registry or package.
+3. Add strategy/property descriptors and pure typed-value, contextual-combination and Inspector-group validation/projection.
+4. Export only through the documented `@workbench-kit/contracts` root.
+5. Add focused tests for every literal family, invalid numeric/domain edge, each strategy family, scope mismatch, unknown/duplicate property IDs, contextual filtering and stable ordering.
+6. Add a public compile-time fixture proving a consumer can describe Grid, Split and Canvas properties and wrap their values in the 070A source envelope without React/JDW/Electron imports.
+7. Run focused contracts tests/typecheck during development; freeze one candidate before repository static/fast/browser validation.
+
+#### Scope, compatibility and cleanup
+
+In scope: contracts, pure guards/validation/group projection, root exports and backendless tests.
+
+Not in scope: JDW calculation changes, current registry/Inspector rewiring, React editors, renderer projection code, UiDocument/commands/history, component registry, responsive variants, token/resource resolution, graph nodes, a global strategy registry, raw CSS, Electron/native or product policy.
+
+No current public layout or widget contract is removed or reinterpreted. JDW numeric row/column/Grid/Stack behavior, `SplitView`, `ThemeRegistry`, scalar Inspector and legacy WorkbenchDocument remain compatible. 070C/070D must name one-way adapters and removal triggers before any migration; 070B itself adds no compatibility shim requiring cleanup.
+
+#### Validation and acceptance
+
+- focused: new contracts unit tests plus contracts typecheck/lint/format;
+- static/fast: repository public-export, type/lint/format, unit and packed-consumer gates once on the frozen candidate;
+- browser: existing browser-safe repository gate once on the same candidate;
+- Electron/native: not required because 070B changes no native boundary;
+- performance: strategy validation and group resolution must be deterministic and linear in supplied strategies/properties; no millisecond SLA is justified for this contract-only slice.
+
+The packet is complete when a browser- and Electron-free consumer can declare context-valid Grid/Split/Canvas/Flex properties, validate typed values and derive ordered container/child Inspector groups without importing or duplicating JDW layout mechanics. Source review must reject a parallel calculator/tree/registry, CSS/native/React types in contracts, silent invalid combinations, executable renderer strings, token/binding evaluation, or changes to existing JDW/runtime semantics.
 
 ### `WB-NS-070C` ready gate
 
