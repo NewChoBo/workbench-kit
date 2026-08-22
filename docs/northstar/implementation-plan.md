@@ -100,7 +100,7 @@ Backendless/performance + compatibility hardening
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
 
-UI packet IDs `WB-NS-070*` / `WB-NS-071*` are canonical target slots but remain `DESIGNING` until source/API inventory proves reuse boundaries and prevents a parallel schema/layout system.
+`WB-NS-070A` is the first promoted UI-authoring slice after source/API inventory closed its reuse boundaries. The remaining `WB-NS-070*` / `WB-NS-071*` target slots stay `DESIGNING` until their own bounded packets prevent a parallel schema, layout, document or graph system.
 
 ---
 
@@ -1603,6 +1603,153 @@ Close:
 - renderer-neutral unit/value boundaries;
 - validation/editor metadata ownership;
 - public vs internal API placement.
+
+### `WB-NS-070A` bounded packet — typed UI value/property/source contract
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Source/API evidence:** `origin/develop@861aac873ed58cc4b60092c4dfddc339c45aa781` with source-bearing parent `e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`
+- **Target owner:** `@workbench-kit/contracts` root export
+- **Implementation scope:** `packages/contracts/src/ui-authoring/*` plus root export and focused tests
+
+#### Outcome
+
+Publish one renderer-neutral contract for typed property descriptors and their allowed value sources. The packet establishes the semantic boundary used later by layout/style, component, UiDocument and graph-node authoring without adding a renderer, registry, binding evaluator or second transform engine.
+
+#### Current source/API decisions
+
+| Existing surface                                                                                         | Decision                 | Reason / follow-up                                                                                                                                                                                                                                                      |
+| -------------------------------------------------------------------------------------------------------- | ------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `WidgetTypeDefinition.schema` + `WidgetInspectorField`                                                   | `ADAPT_IN_070A`          | 070A adds a pure, lossless scalar-field projection into `UiPropertyDescriptor` while preserving every existing field signature. `WB-NS-070C` later owns attaching descriptors to component/catalog definitions; 070A does not widen the current Inspector.              |
+| `GenericWidget` + `WidgetPatch` + JDW layout mapping                                                     | `REUSE_LATER`            | JDW already owns one editable WidgetDocument, placement/reparent/reorder patches and Stack/row/column/Grid layout mechanics. `WB-NS-070B`/`070D` must delegate or adapt those mechanics rather than create a parallel tree/layout engine.                               |
+| Field Remap `FieldDataType`, `SourceField`, `TargetSlot`, `FieldRemapDocument`, `ValueTransformRegistry` | `REUSE_BY_REFERENCE`     | Field Remap remains the typed port, mapping and transform owner. A UI `binding` source stores an opaque `bindingId`; evaluation and transform chains stay behind Field Remap/host adapters. `@workbench-kit/contracts` must not depend on `@workbench-kit/field-remap`. |
+| Settings `WorkbenchSchemaFormSettingSpec` / `SchemaForm`                                                 | `ADAPT_LATER`            | These are React form projections with `ReactNode` labels and scalar editor values. `WB-NS-030` may adapt semantic descriptors to them; they are not canonical schema ownership.                                                                                         |
+| `WorkbenchDocument` / patch history                                                                      | `DO_NOT_EXTEND_IN_070A`  | The current flat page-node model and open `style`/`layout` records are not the target UiDocument tree/transaction contract. `WB-NS-070D` decides compatibility and migration.                                                                                           |
+| `CommandService`, workspace transactions, browser JSON state                                             | `REUSE_PRIMITIVES_LATER` | They establish command registration, atomic mutation and version-envelope patterns, but none currently owns UiDocument structural transactions.                                                                                                                         |
+| Theme registry / token CSS                                                                               | `REFERENCE_ONLY`         | 070A stores stable `tokenId`; token resolution, pack identity, provenance and migration remain `WB-NS-072`.                                                                                                                                                             |
+| Workbench layout service / React `SplitView`                                                             | `OUT_OF_DOMAIN`          | They own shell chrome and rendered split-pane behavior, not canonical authored component layout. `WB-NS-070B` may reuse interaction semantics through an adapter only.                                                                                                  |
+
+#### Public contract
+
+The implementation packet must expose the following semantic shape from `@workbench-kit/contracts` (exact property ordering is not normative):
+
+```ts
+type UiValueType = 'string' | 'number' | 'boolean' | 'color' | 'enum' | (string & {});
+
+type UiValueSourceKind = 'literal' | 'token' | 'resource' | 'binding' | 'expression';
+
+interface UiValueSchema<TLiteral = unknown> {
+  type: UiValueType;
+  defaultValue?: TLiteral;
+  constraints?: Readonly<Record<string, unknown>>;
+  editor?: { id: string; metadata?: Readonly<Record<string, unknown>> };
+  allowedSources?: readonly UiValueSourceKind[];
+}
+
+interface UiPropertyDescriptor<TLiteral = unknown> {
+  id: string;
+  label?: string;
+  description?: string;
+  required?: boolean;
+  value: UiValueSchema<TLiteral>;
+}
+
+type UiValueSource<TLiteral = unknown> =
+  | { kind: 'literal'; value: TLiteral }
+  | { kind: 'token'; tokenId: string }
+  | { kind: 'resource'; resourceId: string }
+  | { kind: 'binding'; bindingId: string }
+  | { kind: 'expression'; expressionId: string };
+
+type UiPropertyValue<TLiteral = unknown> = UiValueSource<TLiteral>;
+
+type WidgetInspectorScalarValue = string | number | boolean;
+
+function widgetInspectorFieldToUiPropertyDescriptor(
+  field: WidgetInspectorField,
+): UiPropertyDescriptor<WidgetInspectorScalarValue>;
+```
+
+The contract also owns:
+
+- a frozen `UI_VALUE_SOURCE_KINDS` vocabulary and source-kind guard;
+- normalization of `allowedSources` (`undefined` means literal-only, duplicates removed, declaration order retained);
+- structural validation that rejects blank property/type IDs, disallowed source kinds and blank token/resource/binding/expression IDs;
+- structured validation issues with stable codes and property/source context;
+- an optional caller-supplied literal validator. Semantic literal validation beyond the existing scalar compatibility set remains owned by the declaring schema/domain packet.
+- a pure `WidgetInspectorField` compatibility adapter that retains `prop`, `label`, field kind and all scalar field metadata while projecting the field to a literal-only `UiPropertyDescriptor`.
+
+The compatibility adapter uses this fixed projection:
+
+| `WidgetInspectorField.kind` | `UiValueSchema.type` | Preserved metadata                                  |
+| --------------------------- | -------------------- | --------------------------------------------------- |
+| `text`                      | `string`             | `placeholder`                                       |
+| `color`                     | `color`              | `placeholder`                                       |
+| `number`                    | `number`             | `min`, `max`, `step`                                |
+| `select`                    | `enum`               | ordered `{ label, value }` options                  |
+| `boolean`                   | `boolean`            | field kind, `prop` and `label` through the envelope |
+
+`prop` becomes the descriptor `id`, `label` remains the descriptor label, the original field kind is retained as the editor id, and optional field data is retained in readonly constraint/editor metadata. The adapter neither mutates `WidgetInspectorField` nor attaches the result to `WidgetTypeDefinition`; component/catalog attachment remains `WB-NS-070C`.
+
+#### Renderer-neutral boundary
+
+- 070A freezes only the domain-neutral value-source envelope and the existing Inspector scalar compatibility set: string, number, boolean, color and enum-style values.
+- Concrete dimension/layout vocabulary and meaning—including length units, percentage, flex fractions, intrinsic sizing, spacing, grid/flex values and invalid combinations—belong exclusively to `WB-NS-070B`.
+- A later packet may reuse the generic `number` carrier while declaring its own stable semantic type id and literal validator; 070A does not define layout unit names or renderer syntax.
+- Style-semantic literal families such as spacing, border, radius and shadow are completed by `WB-NS-070B`; 070A must not pre-empt their exact renderer-neutral shapes.
+- `expressionId` references a host/registry-owned expression definition. Inline executable text, JSX, HTML, CSS or script is not part of this contract.
+
+#### State, flow and ownership
+
+```text
+declaring component/layout/node schema
+  -> UiPropertyDescriptor + allowed source kinds
+  -> Inspector/Canvas/graph adapter selects UiValueSource
+  -> structural contract validation
+  -> later UiDocument command/transaction
+  -> renderer/resource/token/binding/expression resolver adapters
+```
+
+The canonical property value is the discriminated `UiValueSource`. Inspector widgets, graph sockets and renderer projections are derived views. Reference resolution is deliberately outside 070A:
+
+- token/resource IDs: `WB-NS-072` registries/resolver;
+- binding IDs and transforms: Field Remap/host binding adapter;
+- expression IDs and execution policy: future trusted expression registry/adapter;
+- persistence and undo: `WB-NS-070D`.
+
+#### Ordered implementation tasks
+
+1. Add the renderer-neutral types, constants and validation issue codes under `packages/contracts/src/ui-authoring/`.
+2. Implement source-kind normalization/guards and structural validation as pure dependency-free functions.
+3. Add the pure `WidgetInspectorField` scalar compatibility adapter without changing existing widget contracts or component registry behavior.
+4. Export only through the documented `@workbench-kit/contracts` root; do not add an internal-source import path or a new package.
+5. Add focused unit tests for every source variant, default literal-only behavior, duplicate normalization, blank references, caller literal validation and lossless mapping of every existing Inspector scalar field kind.
+6. Add a compile-time/public-export fixture proving a consumer can declare a bindable/tokenizable property and adapt an existing Inspector field without React, JDW, Field Remap or Electron imports.
+7. Run focused contracts tests/typecheck during development; freeze one candidate before repository static/fast/browser validation.
+
+#### Scope and non-scope
+
+In scope: product-neutral types, pure normalization/validation, public exports and backendless evidence.
+
+Not in scope: FieldSchemaRegistry, React editors, layout descriptors, component registry, UiDocument tree/commands, graph renderer/runtime, token/resource resolution, binding/expression evaluation, design-system packs, generative UI, arbitrary CSS, Electron/native code or consumer-product policy.
+
+#### Compatibility and cleanup
+
+- No existing public contract is removed or reinterpreted in 070A.
+- Existing `WidgetInspectorField` signatures remain supported; 070A adds only the one-way scalar compatibility projection defined above. Settings forms and Field Remap types remain supported and receive no permanent duplicate implementation.
+- Later adapters must be one-way projections from the new semantic contract into existing renderer/domain surfaces; they may be removed only after named consumers migrate.
+- The older flat `WorkbenchDocument` is neither declared canonical nor deleted by this packet; `WB-NS-070D` owns that decision with migration evidence.
+
+#### Validation
+
+- focused: contracts unit tests covering value-source validation and Inspector scalar projection, plus contracts typecheck;
+- static/fast: repository format/lint/type/public-export/packed-consumer gates on the frozen exact candidate;
+- browser: existing browser-safe repository gate once on the same candidate, even though 070A has no renderer surface;
+- Electron/native: not required because no native boundary changes;
+- performance: no runtime hot path or new evaluator is introduced, so no packet-specific budget is material. The validator must remain linear in the declared source-kind list.
+
+#### Acceptance and source review
+
+The packet is complete when a browser- and Electron-free consumer can declare a property, enumerate its permitted source kinds, store one discriminated source, and receive stable structural diagnostics without importing a renderer or transform engine. Review must confirm no second schema/transform/layout/document engine, no inline executable expression/CSS payload, no reverse dependency from contracts to Field Remap/JDW/React, and no unresolved public API ownership decision.
 
 ### `WB-NS-070B` ready gate
 
