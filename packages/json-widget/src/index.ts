@@ -144,6 +144,56 @@ export {
   formatWidgetDocumentJson,
 } from './document/document.js';
 
+export type {
+  ApplyUiDocumentCommandResult,
+  CreateUiDocumentResult,
+  MigrateWidgetDocumentOptions,
+  MigrateWidgetDocumentResult,
+  UiAuthoringSessionCommandResult,
+  UiAuthoringSessionState,
+  UiDocument,
+  UiDocumentCommand,
+  UiDocumentCommandIssue,
+  UiDocumentCommandIssueCode,
+  UiDocumentHierarchyEntry,
+  UiDocumentIssue,
+  UiDocumentIssueCode,
+  UiDocumentMigrationContext,
+  UiDocumentMigrationFailure,
+  UiDocumentMigrationIdentity,
+  UiDocumentMigrationResolver,
+  UiDocumentNode,
+  UiDocumentNodeAuthoring,
+  UiDocumentTransaction,
+  UiDocumentTransactionRecord,
+} from './ui-authoring/types.js';
+export {
+  UI_DOCUMENT_AUTHORING_ARG,
+  UI_DOCUMENT_COMMAND_ISSUE_CODES,
+  UI_DOCUMENT_ISSUE_CODES,
+} from './ui-authoring/types.js';
+export {
+  createUiDocument,
+  findUiDocumentNodePath,
+  formatUiDocument,
+  isStructurallyValidUiValueSource,
+  listUiDocumentHierarchy,
+  projectUiDocumentSelectionPaths,
+  readUiDocumentNodeAuthoring,
+  validateUiDocumentRoot,
+  validateUiDocumentWrapperIdentity,
+} from './ui-authoring/document.js';
+export { applyUiDocumentCommand } from './ui-authoring/commands.js';
+export {
+  applyUiAuthoringSessionCommand,
+  createUiAuthoringSession,
+  normalizeUiDocumentSelection,
+  redoUiAuthoringSession,
+  selectUiDocumentNodes,
+  undoUiAuthoringSession,
+} from './ui-authoring/session.js';
+export { migrateWidgetDocumentToUiDocument } from './ui-authoring/migration.js';
+
 export {
   createJdwDocumentJsonSchema,
   createWidgetJsonSchema,
