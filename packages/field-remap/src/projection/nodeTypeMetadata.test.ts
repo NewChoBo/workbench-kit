@@ -81,6 +81,17 @@ describe('Field Remap node metadata projection', () => {
       port: null,
       issues: [{ code: 'unsupported-structured-field' }],
     });
+    expect(
+      projectSourceFieldToNodeOutputPort({
+        id: 'explicit-empty-group',
+        label: 'Explicit empty group',
+        dataType: 'object',
+        children: [],
+      }),
+    ).toMatchObject({
+      port: null,
+      issues: [{ code: 'unsupported-structured-field' }],
+    });
   });
 
   it('projects one exact single-type transform without executing it', () => {

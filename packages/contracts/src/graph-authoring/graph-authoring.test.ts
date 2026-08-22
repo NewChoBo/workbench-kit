@@ -55,6 +55,7 @@ describe('graph node type descriptors', () => {
         { id: 'literal-only', value: { type: 'string' } },
         { id: 'bound', value: { type: 'number', allowedSources: ['literal', 'binding'] } },
         { id: 'bound', value: { type: 'number' } },
+        { id: ' padded ', value: { type: 'string' } },
       ],
       inputs: [
         { id: 'same', propertyId: 'literal-only' },
@@ -77,6 +78,7 @@ describe('graph node type descriptors', () => {
         'duplicate-design-tag',
         'blank-design-tag',
         'duplicate-property-id',
+        'noncanonical-property-id',
         'property-input-not-binding-enabled',
         'property-input-schema-shadow',
         'duplicate-property-input',
@@ -140,5 +142,28 @@ describe('graph node type catalog', () => {
     expect(
       resolution.issues.filter((issue) => issue.code === 'duplicate-node-type-ref'),
     ).toHaveLength(2);
+  });
+
+  it('rejects mutable non-plain values instead of leaking caller-owned metadata', () => {
+    const descriptor = nodeType('workbench.mutable-metadata');
+    const mutableDate = new Date('2026-08-23T00:00:00.000Z');
+    (descriptor.properties![0]!.value as { constraints?: Record<string, unknown> }).constraints = {
+      mutableDate,
+    };
+
+    expect(validateNodeTypeDescriptor(descriptor)).toEqual([
+      expect.objectContaining({
+        code: 'unsupported-descriptor-value',
+        path: '$["properties"][0]["value"]["constraints"]["mutableDate"]',
+      }),
+    ]);
+
+    const resolution = resolveNodeTypeCatalog([
+      { contributorId: 'mutable', nodeTypes: [descriptor] },
+    ]);
+    expect(resolution.catalog.nodeTypes()).toEqual([]);
+    expect(resolution.issues).toEqual([
+      expect.objectContaining({ code: 'unsupported-descriptor-value' }),
+    ]);
   });
 });

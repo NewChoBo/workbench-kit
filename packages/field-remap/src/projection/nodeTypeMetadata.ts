@@ -91,7 +91,7 @@ function validateLeafField(
       fieldId: field.id,
     });
   }
-  if ((field.children?.length ?? 0) > 0 || field.classRef !== undefined) {
+  if (field.children !== undefined || field.classRef !== undefined) {
     issues.push({
       code: 'unsupported-structured-field',
       message: 'Structured Field Remap fields require a later explicit graph projection.',

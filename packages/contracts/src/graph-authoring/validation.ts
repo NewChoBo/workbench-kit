@@ -4,6 +4,7 @@ import {
 } from '../ui-authoring/validation';
 import type { UiValueValidationIssueCode } from '../ui-authoring/validation';
 import type { UiPropertyDescriptor, UiValueSchema } from '../ui-authoring/types';
+import { cloneAndFreezeNodeTypeSnapshot, UnsupportedNodeTypeSnapshotValueError } from './snapshot';
 import type { NodeInputPortDescriptor, NodeTypeDescriptor, NodeTypeRef } from './types';
 
 export const NODE_TYPE_VALIDATION_ISSUE_CODES = Object.freeze([
@@ -13,6 +14,7 @@ export const NODE_TYPE_VALIDATION_ISSUE_CODES = Object.freeze([
   'blank-design-tag',
   'duplicate-design-tag',
   'invalid-property',
+  'noncanonical-property-id',
   'duplicate-property-id',
   'blank-port-id',
   'blank-port-label',
@@ -28,6 +30,7 @@ export const NODE_TYPE_VALIDATION_ISSUE_CODES = Object.freeze([
   'blank-contributor-id',
   'duplicate-contributor-id',
   'duplicate-node-type-ref',
+  'unsupported-descriptor-value',
 ] as const);
 
 export type NodeTypeValidationIssueCode = (typeof NODE_TYPE_VALIDATION_ISSUE_CODES)[number];
@@ -200,6 +203,20 @@ export function validateNodeTypeDescriptor(
         }),
       );
     }
+    if (
+      typeof property.id === 'string' &&
+      property.id.length > 0 &&
+      property.id !== property.id.trim()
+    ) {
+      issues.push(
+        createIssue(descriptor, {
+          code: 'noncanonical-property-id',
+          message: 'Node property id must be already trimmed.',
+          path: `properties[${index}].id`,
+          propertyId: property.id,
+        }),
+      );
+    }
     if (isCanonicalNodeTypeText(property.id)) {
       if (properties.has(property.id)) {
         issues.push(
@@ -346,6 +363,22 @@ export function validateNodeTypeDescriptor(
       'Node type capability',
     ),
   );
+
+  try {
+    cloneAndFreezeNodeTypeSnapshot(descriptor);
+  } catch (error) {
+    if (error instanceof UnsupportedNodeTypeSnapshotValueError) {
+      issues.push(
+        createIssue(descriptor, {
+          code: 'unsupported-descriptor-value',
+          message: error.message,
+          path: error.path,
+        }),
+      );
+    } else {
+      throw error;
+    }
+  }
 
   return Object.freeze(issues.map((issue) => Object.freeze(issue)));
 }

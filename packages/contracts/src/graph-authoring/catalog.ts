@@ -1,4 +1,5 @@
 import type { NodeTypeCatalogContribution, NodeTypeDescriptor, NodeTypeRef } from './types';
+import { cloneAndFreezeNodeTypeSnapshot } from './snapshot';
 import {
   isCanonicalNodeTypeText,
   nodeTypeRefKey,
@@ -29,35 +30,6 @@ interface IndexedContribution {
   readonly conflictIssue: NodeTypeValidationIssue | null;
   readonly eligible: boolean;
   readonly descriptors: readonly IndexedDescriptor[];
-}
-
-function cloneAndFreeze<T>(value: T, seen = new Map<object, unknown>()): T {
-  if (typeof value !== 'object' || value === null) return value;
-  const prior = seen.get(value);
-  if (prior !== undefined) return prior as T;
-
-  if (Array.isArray(value)) {
-    const clone: unknown[] = [];
-    seen.set(value, clone);
-    clone.push(...value.map((item) => cloneAndFreeze(item, seen)));
-    return Object.freeze(clone) as T;
-  }
-
-  if (Object.getPrototypeOf(value) !== Object.prototype && Object.getPrototypeOf(value) !== null) {
-    return value;
-  }
-
-  const clone: Record<string, unknown> = {};
-  seen.set(value, clone);
-  for (const [key, nested] of Object.entries(value)) {
-    Object.defineProperty(clone, key, {
-      configurable: false,
-      enumerable: true,
-      value: cloneAndFreeze(nested, seen),
-      writable: false,
-    });
-  }
-  return Object.freeze(clone) as T;
 }
 
 function prefixIssue(
@@ -163,7 +135,7 @@ export function resolveNodeTypeCatalog(
         contribution.eligible && entry.refKey !== null && (refCounts.get(entry.refKey) ?? 0) > 1;
       if (duplicate) issues.push(duplicateNodeTypeIssue(entry));
       if (contribution.eligible && entry.issues.length === 0 && !duplicate) {
-        nodeTypes.push(cloneAndFreeze(entry.descriptor));
+        nodeTypes.push(cloneAndFreezeNodeTypeSnapshot(entry.descriptor));
       }
     }
   }
