@@ -186,7 +186,11 @@ describe('package-internal Field Remap projection owner', () => {
   });
 
   it('commits edge and operator changes atomically with one persistence write and history entry', async () => {
-    const persist = vi.fn(async (_input: FieldRemapPersistenceInput) => {
+    const persist = vi.fn(async (input: FieldRemapPersistenceInput) => {
+      expect(input.signal.aborted).toBe(false);
+      expect(input.isCommitFenceCurrent()).toBe(true);
+      expect(input.expectedRevision).toContain(input.ownerEpoch);
+      expect(input.nextRevision).toContain(input.ownerEpoch);
       return { status: 'committed' } as const;
     });
     const owner = createOwner({ includeHidden: true, persist });
@@ -668,6 +672,58 @@ describe('package-internal Field Remap projection owner', () => {
     expect(owner.isReconciliationPending()).toBe(true);
     expect(owner.getHistory()).toHaveLength(0);
   });
+
+  it.each(['timeout', 'dispose'] as const)(
+    'keeps a delayed durable store unchanged after %s aborts the commit fence',
+    async (abortMode) => {
+      const releasePersistence = deferred<void>();
+      const persistenceSettled = deferred<void>();
+      let durableOwnerEpoch: string | undefined;
+      let durableRevision = '';
+      let durableDocument: FieldRemapDocument = baseDocument;
+      const persist = vi.fn(async (input: FieldRemapPersistenceInput) => {
+        await releasePersistence.promise;
+        try {
+          if (
+            input.signal.aborted ||
+            !input.isCommitFenceCurrent() ||
+            durableRevision !== input.expectedRevision ||
+            (durableOwnerEpoch !== undefined && durableOwnerEpoch !== input.ownerEpoch)
+          ) {
+            return { status: 'rolled-back' } as const;
+          }
+          durableOwnerEpoch = input.ownerEpoch;
+          durableRevision = input.nextRevision;
+          durableDocument = input.nextDocument;
+          return { status: 'committed' } as const;
+        } finally {
+          persistenceSettled.resolve(undefined);
+        }
+      });
+      const owner = createOwner({ persist, persistTimeoutMs: 10 });
+      const initialSnapshot = owner.port.getSnapshot();
+      durableRevision = initialSnapshot.canonicalRevision;
+      const resultPromise = owner.port.applyTransaction(
+        owner.port.createTransaction([upsertOtherEdge()]),
+      );
+      await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+
+      const disposePromise = abortMode === 'dispose' ? owner.dispose() : undefined;
+      await expect(resultPromise).resolves.toMatchObject({ status: 'failed', code: 'unavailable' });
+      await disposePromise;
+
+      const input = persist.mock.calls[0]?.[0];
+      expect(input?.signal.aborted).toBe(true);
+      expect(input?.isCommitFenceCurrent()).toBe(false);
+      releasePersistence.resolve(undefined);
+      await persistenceSettled.promise;
+
+      expect(durableRevision).toBe(initialSnapshot.canonicalRevision);
+      expect(durableOwnerEpoch).toBeUndefined();
+      expect(durableDocument).toBe(baseDocument);
+      expect(owner.getHistory()).toHaveLength(0);
+    },
+  );
 
   it('keeps invalid operation batches atomic with no persistence or history', async () => {
     const persist = vi.fn(async () => ({ status: 'committed' }) as const);
