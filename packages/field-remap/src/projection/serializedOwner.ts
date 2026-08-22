@@ -6,8 +6,12 @@ import type {
   WorkbenchProjectionTransactionResult,
 } from '@workbench-kit/contracts';
 import { normalizeFieldRemapDocument } from '../domain/document/fieldRemapDocument.js';
-import { normalizeMappingEdge } from '../domain/document/mappingEdge.js';
-import { normalizeMappingOperators } from '../domain/mapping/mappingOperators.js';
+import { MAX_TRANSFORM_CHAIN, normalizeMappingEdge } from '../domain/document/mappingEdge.js';
+import {
+  MAX_MAPPING_FAN_IN,
+  MAX_MAPPING_FAN_OUT,
+  normalizeMappingOperators,
+} from '../domain/mapping/mappingOperators.js';
 import { collectSourceFieldIds, collectTargetSlotIds } from '../domain/shapes/shapeEdit.js';
 import { projectShapes } from '../domain/shapes/projectShapes.js';
 import type {
@@ -19,6 +23,10 @@ import type {
 } from '../domain/types.js';
 
 const MAX_TRANSACTION_ENTRIES = 1_024;
+const MAX_TRANSACTION_OPERATIONS = 256;
+const MAX_HISTORY_ENTRIES = 256;
+const DEFAULT_PERSIST_TIMEOUT_MS = 5_000;
+const MAX_PERSIST_TIMEOUT_MS = 60_000;
 let fallbackOwnerEpoch = 0;
 
 export type FieldRemapProjectionOperation =
@@ -48,6 +56,13 @@ export interface FieldRemapPersistenceInput {
   readonly nextDocument: FieldRemapDocument;
   readonly expectedRevision: string;
   readonly nextRevision: string;
+  readonly signal: AbortSignal;
+}
+
+export interface FieldRemapTraversalSample {
+  readonly size: 'SMALL' | 'TYPICAL' | 'STRESS';
+  readonly aggregateEntries: number;
+  readonly visitedEntries: number;
 }
 
 export interface CreateFieldRemapProjectionOwnerOptions {
@@ -61,6 +76,8 @@ export interface CreateFieldRemapProjectionOwnerOptions {
   readonly publicationRevision?: string;
   readonly includeHidden?: boolean;
   readonly maxTransactionEntries?: number;
+  readonly persistTimeoutMs?: number;
+  readonly onTraversal?: (sample: FieldRemapTraversalSample) => void;
   readonly persist?: (input: FieldRemapPersistenceInput) => Promise<FieldRemapPersistenceResult>;
 }
 
@@ -118,36 +135,64 @@ interface Reservation {
   terminal: boolean;
 }
 
-function nonEmpty(value: string): boolean {
-  return value.trim().length > 0;
+function isStrictToken(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value === value.trim();
 }
 
 function assertRevision(value: string, label: string): void {
-  if (!nonEmpty(value)) {
-    throw new TypeError(`${label} must be a non-empty opaque revision.`);
+  if (!isStrictToken(value)) {
+    throw new TypeError(`${label} must be a trimmed, non-empty opaque revision.`);
   }
 }
 
-function cloneAndFreeze<T>(value: T): T {
-  if (value === null || typeof value !== 'object') {
+function cloneAndFreeze<T>(value: T, ancestors: Set<object> = new Set()): T {
+  if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return value;
   }
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value)) {
+      throw new TypeError('Projection payload numbers must be finite.');
+    }
+    return value;
+  }
+  if (value === undefined) {
+    return value;
+  }
+  if (typeof value !== 'object') {
+    throw new TypeError('Projection payload contains an unsupported value.');
+  }
+  if (ancestors.has(value)) {
+    throw new TypeError('Projection payload must be acyclic.');
+  }
+  ancestors.add(value);
   if (Array.isArray(value)) {
-    return Object.freeze(value.map((item) => cloneAndFreeze(item))) as T;
+    const clone = value.map((item) => cloneAndFreeze(item, ancestors));
+    ancestors.delete(value);
+    return Object.freeze(clone) as T;
   }
   const prototype = Object.getPrototypeOf(value);
   if (prototype !== Object.prototype && prototype !== null) {
-    return value;
+    ancestors.delete(value);
+    throw new TypeError('Projection payload objects must be plain records.');
   }
   const clone: Record<string, unknown> = {};
   for (const [key, item] of Object.entries(value)) {
-    clone[key] = cloneAndFreeze(item);
+    if (key === '__proto__' || key === 'prototype' || key === 'constructor') {
+      ancestors.delete(value);
+      throw new TypeError('Projection payload contains an unsupported record key.');
+    }
+    clone[key] = cloneAndFreeze(item, ancestors);
   }
+  ancestors.delete(value);
   return Object.freeze(clone) as T;
 }
 
-function freezeDocument(document: FieldRemapDocument): FieldRemapDocument {
+function normalizeAndFreezeDocument(document: FieldRemapDocument): FieldRemapDocument {
   return cloneAndFreeze(normalizeFieldRemapDocument(document));
+}
+
+function freezeOwnedDocument(document: FieldRemapDocument): FieldRemapDocument {
+  return cloneAndFreeze(document);
 }
 
 function stableSerialize(value: unknown): string {
@@ -165,35 +210,115 @@ function stableSerialize(value: unknown): string {
     .join(',')}}`;
 }
 
-function normalizeOperation(operation: FieldRemapProjectionOperation): NormalizedOperation | null {
+function validTransformIds(value: unknown): value is readonly string[] | undefined {
+  return (
+    value === undefined ||
+    (Array.isArray(value) &&
+      value.length <= MAX_TRANSFORM_CHAIN &&
+      value.every((id) => isStrictToken(id)))
+  );
+}
+
+function validOptionSteps(value: unknown, transformCount: number): boolean {
+  return value === undefined || (Array.isArray(value) && value.length <= transformCount);
+}
+
+function validEdge(value: unknown, depth: number = 0): value is MappingEdge {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  const edge = value as Partial<MappingEdge>;
+  if (
+    !isStrictToken(edge.id) ||
+    !isStrictToken(edge.sourceFieldId) ||
+    !isStrictToken(edge.targetSlotId) ||
+    !validTransformIds(edge.transformIds) ||
+    !validTransformIds(edge.itemTransformIds) ||
+    !validOptionSteps(edge.transformOptionSteps, edge.transformIds?.length ?? 0) ||
+    !validOptionSteps(edge.itemTransformOptionSteps, edge.itemTransformIds?.length ?? 0) ||
+    (edge.itemSourcePath !== undefined && !isStrictToken(edge.itemSourcePath))
+  ) {
+    return false;
+  }
+  if (edge.itemEdges === undefined) {
+    return true;
+  }
+  return (
+    depth === 0 &&
+    Array.isArray(edge.itemEdges) &&
+    edge.itemEdges.every((child) => validEdge(child, depth + 1))
+  );
+}
+
+function validOperator(value: unknown): value is MappingOperator {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return false;
+  }
+  const operator = value as Partial<MappingOperator>;
+  if (!isStrictToken(operator.id) || !validTransformIds(operator.transformIds)) {
+    return false;
+  }
+  if (operator.kind === 'combine') {
+    return (
+      Array.isArray(operator.inputFieldIds) &&
+      operator.inputFieldIds.length >= 2 &&
+      operator.inputFieldIds.length <= MAX_MAPPING_FAN_IN &&
+      operator.inputFieldIds.every((id) => isStrictToken(id)) &&
+      isStrictToken(operator.outputSlotId)
+    );
+  }
+  return (
+    operator.kind === 'split' &&
+    isStrictToken(operator.inputFieldId) &&
+    Array.isArray(operator.outputSlotIds) &&
+    operator.outputSlotIds.length >= 2 &&
+    operator.outputSlotIds.length <= MAX_MAPPING_FAN_OUT &&
+    operator.outputSlotIds.every((id) => isStrictToken(id))
+  );
+}
+
+function validDocument(document: FieldRemapDocument): boolean {
+  return (
+    document.version === 2 &&
+    Array.isArray(document.edges) &&
+    document.edges.every((edge) => validEdge(edge)) &&
+    (document.operators === undefined ||
+      (Array.isArray(document.operators) &&
+        document.operators.every((operator) => validOperator(operator)))) &&
+    uniqueIds(document.edges) &&
+    uniqueIds(document.operators ?? [])
+  );
+}
+
+function normalizeOperation(operation: unknown): NormalizedOperation | null {
   if (!operation || typeof operation !== 'object') {
     return null;
   }
 
-  switch (operation.type) {
+  const record = operation as Record<string, unknown>;
+  switch (record.type) {
     case 'upsert-edge': {
-      const edge = operation.edge;
-      if (
-        !edge ||
-        !nonEmpty(edge.id) ||
-        !nonEmpty(edge.sourceFieldId) ||
-        !nonEmpty(edge.targetSlotId)
-      ) {
+      const edge = cloneAndFreeze(record.edge);
+      if (!validEdge(edge)) {
         return null;
       }
-      return { type: 'upsert-edge', edge: normalizeMappingEdge(edge) };
+      return cloneAndFreeze({ type: 'upsert-edge', edge: normalizeMappingEdge(edge) });
     }
     case 'remove-edge':
-      return nonEmpty(operation.edgeId)
-        ? { type: 'remove-edge', edgeId: operation.edgeId.trim() }
+      return isStrictToken(record.edgeId)
+        ? cloneAndFreeze({ type: 'remove-edge', edgeId: record.edgeId })
         : null;
     case 'upsert-operator': {
-      const operator = normalizeMappingOperators([operation.operator])?.[0];
-      return operator ? { type: 'upsert-operator', operator } : null;
+      const input = cloneAndFreeze(record.operator);
+      if (!validOperator(input)) {
+        return null;
+      }
+      const operator = normalizeMappingOperators([input])?.[0];
+      return operator ? cloneAndFreeze({ type: 'upsert-operator', operator }) : null;
     }
     case 'remove-operator':
-      return nonEmpty(operation.operatorId)
-        ? { type: 'remove-operator', operatorId: operation.operatorId.trim() }
+      return isStrictToken(record.operatorId)
+        ? cloneAndFreeze({ type: 'remove-operator', operatorId: record.operatorId })
         : null;
     default:
       return null;
@@ -239,7 +364,7 @@ function projectValue(
   const operators = document.operators?.filter((operator) =>
     operatorIsVisible(operator, sourceIds, targetIds),
   );
-  const projectedDocument = freezeDocument({
+  const projectedDocument = freezeOwnedDocument({
     version: 2,
     edges: projected.edges ?? [],
     ...(operators && operators.length > 0 ? { operators } : {}),
@@ -276,8 +401,8 @@ function createOwnerEpoch(): string {
 export function createFieldRemapProjectionOwner(
   options: CreateFieldRemapProjectionOwnerOptions,
 ): FieldRemapProjectionOwner {
-  if (!nonEmpty(options.id)) {
-    throw new TypeError('id must be non-empty.');
+  if (!isStrictToken(options.id)) {
+    throw new TypeError('id must be trimmed and non-empty.');
   }
   assertRevision(options.sourceShapeRevision, 'sourceShapeRevision');
   assertRevision(options.targetShapeRevision, 'targetShapeRevision');
@@ -288,12 +413,12 @@ export function createFieldRemapProjectionOwner(
     assertRevision(options.publicationRevision, 'publicationRevision');
   }
 
-  const ownerToken = options.id.trim().replace(/[^a-zA-Z0-9_-]/g, '-') || 'owner';
+  const ownerToken = options.id.replace(/[^a-zA-Z0-9_-]/g, '-') || 'owner';
   const ownerTransactionPrefix = `field-remap-${ownerToken}-`;
   const ownerEpoch = createOwnerEpoch();
   const transactionPrefix = `${ownerTransactionPrefix}${ownerEpoch}-`;
   const descriptor = Object.freeze({
-    id: options.id.trim(),
+    id: options.id,
     documentKind: 'workbench.field-remap',
     projectionVersion: 1,
     kind: 'GUI_BUILDER',
@@ -303,13 +428,22 @@ export function createFieldRemapProjectionOwner(
   const maxEntries = Number.isFinite(requestedMaxEntries)
     ? Math.min(MAX_TRANSACTION_ENTRIES, Math.max(1, Math.trunc(requestedMaxEntries)))
     : MAX_TRANSACTION_ENTRIES;
+  const persistTimeoutMs = options.persistTimeoutMs ?? DEFAULT_PERSIST_TIMEOUT_MS;
+  if (
+    !Number.isInteger(persistTimeoutMs) ||
+    persistTimeoutMs < 1 ||
+    persistTimeoutMs > MAX_PERSIST_TIMEOUT_MS
+  ) {
+    throw new TypeError(`persistTimeoutMs must be an integer from 1 to ${MAX_PERSIST_TIMEOUT_MS}.`);
+  }
   const persist = options.persist ?? (async () => ({ status: 'committed' }) as const);
   const includeHidden = options.includeHidden === true;
 
-  let document = freezeDocument(options.document);
-  if (!uniqueIds(document.edges) || !uniqueIds(document.operators ?? [])) {
-    throw new TypeError('Field Remap canonical edge and operator ids must be unique.');
+  const ownedInitialDocument = cloneAndFreeze(options.document);
+  if (!validDocument(ownedInitialDocument)) {
+    throw new TypeError('Field Remap canonical document is malformed or exceeds owner limits.');
   }
+  let document = normalizeAndFreezeDocument(ownedInitialDocument);
   let semanticInputs: SemanticInputs = {
     sources: cloneAndFreeze([...options.sources]),
     targets: cloneAndFreeze([...options.targets]),
@@ -325,6 +459,7 @@ export function createFieldRemapProjectionOwner(
   let reconciliationPending = false;
   let queue: Promise<void> = Promise.resolve();
   let disposePromise: Promise<void> | undefined;
+  let activePersistenceAbort: AbortController | undefined;
   const history: FieldRemapSemanticHistoryEntry[] = [];
   const reservations = new Map<string, Reservation>();
 
@@ -335,6 +470,41 @@ export function createFieldRemapProjectionOwner(
     const run = queue.then(task, task);
     queue = run.catch(() => undefined);
     return run;
+  }
+
+  function isPersistenceResult(value: unknown): value is FieldRemapPersistenceResult {
+    if (!value || typeof value !== 'object') {
+      return false;
+    }
+    const status = (value as { readonly status?: unknown }).status;
+    return status === 'committed' || status === 'rolled-back' || status === 'indeterminate';
+  }
+
+  async function runPersistence(
+    input: Omit<FieldRemapPersistenceInput, 'signal'>,
+  ): Promise<FieldRemapPersistenceResult> {
+    const controller = new AbortController();
+    activePersistenceAbort = controller;
+    const aborted = new Promise<FieldRemapPersistenceResult>((resolve) => {
+      controller.signal.addEventListener('abort', () => resolve({ status: 'indeterminate' }), {
+        once: true,
+      });
+    });
+    const pending: Promise<FieldRemapPersistenceResult> = Promise.resolve()
+      .then(() => persist({ ...input, signal: controller.signal }))
+      .then((result): FieldRemapPersistenceResult =>
+        isPersistenceResult(result) ? result : { status: 'indeterminate' },
+      )
+      .catch((): FieldRemapPersistenceResult => ({ status: 'indeterminate' }));
+    const timeout = setTimeout(() => controller.abort(), persistTimeoutMs);
+    try {
+      return await Promise.race([pending, aborted]);
+    } finally {
+      clearTimeout(timeout);
+      if (activePersistenceAbort === controller) {
+        activePersistenceAbort = undefined;
+      }
+    }
   }
 
   function issueTransactionId(epoch: 'live' | 'closed'): string {
@@ -395,30 +565,21 @@ export function createFieldRemapProjectionOwner(
     return false;
   }
 
-  function hiddenOperatorOperands(
+  function hiddenOperatorIds(
     visibleSourceIds: ReadonlySet<string>,
     visibleTargetIds: ReadonlySet<string>,
-  ): {
-    readonly sourceIds: ReadonlySet<string>;
-    readonly targetIds: ReadonlySet<string>;
-    readonly operatorIds: ReadonlySet<string>;
-  } {
+  ): ReadonlySet<string> {
     if (includeHidden || !document.operators?.length) {
-      return { sourceIds: new Set(), targetIds: new Set(), operatorIds: new Set() };
+      return new Set();
     }
-    const sourceIds = new Set<string>();
-    const targetIds = new Set<string>();
     const operatorIds = new Set<string>();
     for (const operator of document.operators) {
       if (operatorIsVisible(operator, visibleSourceIds, visibleTargetIds)) {
         continue;
       }
       operatorIds.add(operator.id);
-      const operands = operatorOperandIds(operator);
-      operands.sources.forEach((id) => sourceIds.add(id));
-      operands.targets.forEach((id) => targetIds.add(id));
     }
-    return { sourceIds, targetIds, operatorIds };
+    return operatorIds;
   }
 
   function applyOperations(operations: readonly NormalizedOperation[]):
@@ -438,28 +599,49 @@ export function createFieldRemapProjectionOwner(
     const visible = projectShapes({
       sources: semanticInputs.sources,
       targets: semanticInputs.targets,
+      edges: document.edges,
       options: { includeHidden },
     });
     const visibleSourceIds = collectSourceFieldIds(visible.sources);
     const visibleTargetIds = collectTargetSlotIds(visible.targets);
-    const protectedOperands = hiddenOperatorOperands(visibleSourceIds, visibleTargetIds);
+    const visibleEdgeIds = new Set((visible.edges ?? []).map((edge) => edge.id));
+    const omittedOperatorIds = hiddenOperatorIds(visibleSourceIds, visibleTargetIds);
+    const aggregateEntries =
+      semanticInputs.sources.length +
+      semanticInputs.targets.length +
+      document.edges.length +
+      (document.operators?.length ?? 0) +
+      operations.length;
+    let visitedEntries =
+      semanticInputs.sources.length * 2 +
+      semanticInputs.targets.length * 2 +
+      document.edges.length * 3 +
+      (document.operators?.length ?? 0) * 3;
+    const recordTraversal = (): void => {
+      options.onTraversal?.({
+        size: aggregateEntries <= 32 ? 'SMALL' : aggregateEntries <= 512 ? 'TYPICAL' : 'STRESS',
+        aggregateEntries,
+        visitedEntries,
+      });
+    };
+    const rejected = (
+      code: 'invalid-operation' | 'unsupported-operation',
+    ): { readonly status: 'rejected'; readonly code: typeof code } => {
+      recordTraversal();
+      return { status: 'rejected', code };
+    };
 
     for (const operation of operations) {
+      visitedEntries += 1;
       switch (operation.type) {
         case 'upsert-edge': {
           const current = edgeById.get(operation.edge.id);
-          const touchesOmittedOperator =
-            protectedOperands.sourceIds.has(operation.edge.sourceFieldId) ||
-            protectedOperands.targetIds.has(operation.edge.targetSlotId) ||
-            (current !== undefined &&
-              (protectedOperands.sourceIds.has(current.sourceFieldId) ||
-                protectedOperands.targetIds.has(current.targetSlotId)));
           if (
             !visibleSourceIds.has(operation.edge.sourceFieldId) ||
             !visibleTargetIds.has(operation.edge.targetSlotId) ||
-            touchesOmittedOperator
+            (current !== undefined && !visibleEdgeIds.has(current.id))
           ) {
-            return { status: 'rejected', code: 'unsupported-operation' };
+            return rejected('unsupported-operation');
           }
           if (!edgeIds.has(operation.edge.id)) {
             edgeIds.add(operation.edge.id);
@@ -471,15 +653,10 @@ export function createFieldRemapProjectionOwner(
         case 'remove-edge': {
           const current = edgeById.get(operation.edgeId);
           if (!current) {
-            return { status: 'rejected', code: 'invalid-operation' };
+            return rejected('invalid-operation');
           }
-          if (
-            !visibleSourceIds.has(current.sourceFieldId) ||
-            !visibleTargetIds.has(current.targetSlotId) ||
-            protectedOperands.sourceIds.has(current.sourceFieldId) ||
-            protectedOperands.targetIds.has(current.targetSlotId)
-          ) {
-            return { status: 'rejected', code: 'unsupported-operation' };
+          if (!visibleEdgeIds.has(current.id)) {
+            return rejected('unsupported-operation');
           }
           edgeById.delete(operation.edgeId);
           break;
@@ -487,11 +664,11 @@ export function createFieldRemapProjectionOwner(
         case 'upsert-operator': {
           const current = operatorById.get(operation.operator.id);
           if (
-            protectedOperands.operatorIds.has(operation.operator.id) ||
-            (current !== undefined && protectedOperands.operatorIds.has(current.id)) ||
+            omittedOperatorIds.has(operation.operator.id) ||
+            (current !== undefined && omittedOperatorIds.has(current.id)) ||
             !operatorIsVisible(operation.operator, visibleSourceIds, visibleTargetIds)
           ) {
-            return { status: 'rejected', code: 'unsupported-operation' };
+            return rejected('unsupported-operation');
           }
           if (!operatorIds.has(operation.operator.id)) {
             operatorIds.add(operation.operator.id);
@@ -502,10 +679,10 @@ export function createFieldRemapProjectionOwner(
         }
         case 'remove-operator': {
           if (!operatorById.has(operation.operatorId)) {
-            return { status: 'rejected', code: 'invalid-operation' };
+            return rejected('invalid-operation');
           }
-          if (protectedOperands.operatorIds.has(operation.operatorId)) {
-            return { status: 'rejected', code: 'unsupported-operation' };
+          if (omittedOperatorIds.has(operation.operatorId)) {
+            return rejected('unsupported-operation');
           }
           operatorById.delete(operation.operatorId);
           break;
@@ -521,12 +698,11 @@ export function createFieldRemapProjectionOwner(
       const operator = operatorById.get(id);
       return operator ? [operator] : [];
     });
-    if (!uniqueIds(edges) || !uniqueIds(operators)) {
-      return { status: 'rejected', code: 'invalid-operation' };
-    }
+    visitedEntries += edgeOrder.length + operatorOrder.length;
+    recordTraversal();
     return {
       status: 'accepted',
-      document: freezeDocument({
+      document: freezeOwnedDocument({
         version: 2,
         edges,
         ...(operators.length > 0 ? { operators } : {}),
@@ -537,63 +713,78 @@ export function createFieldRemapProjectionOwner(
   function applyTransaction(
     transaction: WorkbenchProjectionTransaction<FieldRemapProjectionOperation>,
   ): Promise<WorkbenchProjectionTransactionResult<FieldRemapProjectionConflict>> {
+    const candidate = transaction as Partial<
+      WorkbenchProjectionTransaction<FieldRemapProjectionOperation>
+    > | null;
+    const transactionId = candidate && typeof candidate.id === 'string' ? candidate.id : '';
     if (closed) {
-      return immediate(unavailable(transaction.id));
+      return immediate(unavailable(transactionId));
     }
     if (reconciliationPending) {
-      return immediate(unavailable(transaction.id));
+      return immediate(unavailable(transactionId));
     }
     if (
-      !nonEmpty(transaction.id) ||
-      !nonEmpty(transaction.projectionId) ||
-      !nonEmpty(transaction.baseRevision) ||
-      transaction.projectionId !== descriptor.id ||
-      !Array.isArray(transaction.operations) ||
-      transaction.operations.length === 0
+      !candidate ||
+      !isStrictToken(candidate.id) ||
+      !isStrictToken(candidate.projectionId) ||
+      !isStrictToken(candidate.baseRevision) ||
+      candidate.projectionId !== descriptor.id ||
+      !Array.isArray(candidate.operations) ||
+      candidate.operations.length === 0 ||
+      candidate.operations.length > MAX_TRANSACTION_OPERATIONS
     ) {
-      return immediate(reject(transaction.id, 'invalid-operation'));
+      return immediate(reject(transactionId, 'invalid-operation'));
     }
 
-    const normalizedOperations: NormalizedOperation[] = [];
-    for (const operation of transaction.operations) {
-      const normalized = normalizeOperation(operation);
-      if (!normalized) {
-        return immediate(reject(transaction.id, 'invalid-operation'));
+    let normalizedOperations: readonly NormalizedOperation[];
+    let fingerprint: string;
+    try {
+      const normalized: NormalizedOperation[] = [];
+      for (const operation of candidate.operations) {
+        const ownedOperation = normalizeOperation(operation);
+        if (!ownedOperation) {
+          return immediate(reject(transactionId, 'invalid-operation'));
+        }
+        normalized.push(ownedOperation);
       }
-      normalizedOperations.push(normalized);
+      normalizedOperations = Object.freeze(normalized);
+      fingerprint = stableSerialize({
+        projectionId: candidate.projectionId,
+        baseRevision: candidate.baseRevision,
+        operations: normalizedOperations,
+      });
+    } catch {
+      return immediate(reject(transactionId, 'invalid-operation'));
     }
+    const admittedId = candidate.id;
+    const admittedBaseRevision = candidate.baseRevision;
 
-    const fingerprint = stableSerialize({
-      projectionId: transaction.projectionId,
-      baseRevision: transaction.baseRevision,
-      operations: normalizedOperations,
-    });
-    const retained = reservations.get(transaction.id);
+    const retained = reservations.get(admittedId);
     if (retained) {
       return retained.fingerprint === fingerprint
         ? retained.promise
-        : immediate(reject(transaction.id, 'invalid-operation'));
+        : immediate(reject(admittedId, 'invalid-operation'));
     }
 
-    const sequence = transactionSequenceOf(transaction.id);
+    const sequence = transactionSequenceOf(admittedId);
     if (sequence === null) {
       return immediate(
         reject(
-          transaction.id,
-          transaction.id.startsWith(ownerTransactionPrefix) && /-live-\d+$/.test(transaction.id)
+          admittedId,
+          admittedId.startsWith(ownerTransactionPrefix) && /-live-\d+$/.test(admittedId)
             ? 'expired-transaction'
             : 'invalid-operation',
         ),
       );
     }
     if (sequence <= expiredThrough) {
-      return immediate(reject(transaction.id, 'expired-transaction'));
+      return immediate(reject(admittedId, 'expired-transaction'));
     }
     while (reservations.size >= maxEntries && evictTerminalReservation()) {
       // Keep evicting terminal work until one slot is available.
     }
     if (reservations.size >= maxEntries) {
-      return immediate(reject(transaction.id, 'capacity-exceeded'));
+      return immediate(reject(admittedId, 'capacity-exceeded'));
     }
 
     let settle!: (
@@ -611,39 +802,53 @@ export function createFieldRemapProjectionOwner(
       resolve: settle,
       terminal: false,
     };
-    reservations.set(transaction.id, reservation);
+    reservations.set(admittedId, reservation);
 
     void enqueue(async () => {
       let result: WorkbenchProjectionTransactionResult<FieldRemapProjectionConflict>;
       try {
-        if (reconciliationPending) {
-          result = unavailable(transaction.id);
-        } else if (transaction.baseRevision !== revision()) {
+        if (closed || reconciliationPending) {
+          result = unavailable(admittedId);
+        } else if (admittedBaseRevision !== revision()) {
           result = {
             status: 'conflict',
-            transactionId: transaction.id,
+            transactionId: admittedId,
             currentRevision: revision(),
             conflicts: [{ code: 'stale-canonical-revision' }],
           };
         } else {
           const translated = applyOperations(normalizedOperations);
           if (translated.status === 'rejected') {
-            result = reject(transaction.id, translated.code);
+            result = reject(admittedId, translated.code);
           } else {
+            const expectedRevision = revision();
             const nextRevision = `${ownerToken}:${ownerEpoch}:revision:${revisionSequence + 1}`;
-            let persistenceResult: FieldRemapPersistenceResult;
-            try {
-              persistenceResult = await persist({
-                previousDocument: document,
-                nextDocument: translated.document,
-                expectedRevision: revision(),
-                nextRevision,
-              });
-            } catch {
-              persistenceResult = { status: 'indeterminate' };
-            }
+            const persistenceResult = await runPersistence({
+              previousDocument: document,
+              nextDocument: translated.document,
+              expectedRevision,
+              nextRevision,
+            });
+            const semanticRevisionDrifted = revision() !== expectedRevision;
 
-            if (persistenceResult.status === 'committed') {
+            if (closed) {
+              if (persistenceResult.status !== 'rolled-back') {
+                reconciliationPending = true;
+              }
+              result = unavailable(admittedId);
+            } else if (semanticRevisionDrifted) {
+              if (persistenceResult.status === 'rolled-back') {
+                result = {
+                  status: 'conflict',
+                  transactionId: admittedId,
+                  currentRevision: revision(),
+                  conflicts: [{ code: 'stale-canonical-revision' }],
+                };
+              } else {
+                reconciliationPending = true;
+                result = unavailable(admittedId);
+              }
+            } else if (persistenceResult.status === 'committed') {
               const nextSnapshot = projectValue(
                 descriptor,
                 nextRevision,
@@ -656,32 +861,35 @@ export function createFieldRemapProjectionOwner(
               snapshot = nextSnapshot;
               history.push(
                 Object.freeze({
-                  transactionId: transaction.id,
+                  transactionId: admittedId,
                   canonicalRevision: revision(),
                   document,
                 }),
               );
+              if (history.length > MAX_HISTORY_ENTRIES) {
+                history.shift();
+              }
               result = {
                 status: 'applied',
-                transactionId: transaction.id,
+                transactionId: admittedId,
                 canonicalRevision: revision(),
               };
             } else if (persistenceResult.status === 'rolled-back') {
               result = {
                 status: 'failed',
-                transactionId: transaction.id,
+                transactionId: admittedId,
                 code: 'commit-failed',
                 canonicalRevision: revision(),
               };
             } else {
               reconciliationPending = true;
-              result = unavailable(transaction.id);
+              result = unavailable(admittedId);
             }
           }
         }
       } catch {
         reconciliationPending = true;
-        result = unavailable(transaction.id);
+        result = unavailable(admittedId);
       }
 
       reservation.terminal = true;
@@ -721,38 +929,38 @@ export function createFieldRemapProjectionOwner(
       if (input.publicationRevision !== undefined) {
         assertRevision(input.publicationRevision, 'publicationRevision');
       }
-      return enqueue(() => {
-        if (closed || reconciliationPending) {
-          return;
-        }
-        const next: SemanticInputs = {
-          sources: cloneAndFreeze([...input.sources]),
-          targets: cloneAndFreeze([...input.targets]),
-          sourceShapeRevision: input.sourceShapeRevision,
-          targetShapeRevision: input.targetShapeRevision,
-          transformRevision: input.transformRevision ?? semanticInputs.transformRevision,
-          publicationRevision: input.publicationRevision ?? semanticInputs.publicationRevision,
-        };
-        if (
-          next.sourceShapeRevision === semanticInputs.sourceShapeRevision &&
-          next.targetShapeRevision === semanticInputs.targetShapeRevision &&
-          next.transformRevision === semanticInputs.transformRevision &&
-          next.publicationRevision === semanticInputs.publicationRevision
-        ) {
-          return;
-        }
-        const nextRevision = `${ownerToken}:${ownerEpoch}:revision:${revisionSequence + 1}`;
-        const nextSnapshot = projectValue(descriptor, nextRevision, document, next, includeHidden);
-        semanticInputs = next;
-        revisionSequence += 1;
-        snapshot = nextSnapshot;
-      });
+      if (closed || reconciliationPending) {
+        return Promise.resolve();
+      }
+      const next: SemanticInputs = {
+        sources: cloneAndFreeze([...input.sources]),
+        targets: cloneAndFreeze([...input.targets]),
+        sourceShapeRevision: input.sourceShapeRevision,
+        targetShapeRevision: input.targetShapeRevision,
+        transformRevision: input.transformRevision ?? semanticInputs.transformRevision,
+        publicationRevision: input.publicationRevision ?? semanticInputs.publicationRevision,
+      };
+      if (
+        next.sourceShapeRevision === semanticInputs.sourceShapeRevision &&
+        next.targetShapeRevision === semanticInputs.targetShapeRevision &&
+        next.transformRevision === semanticInputs.transformRevision &&
+        next.publicationRevision === semanticInputs.publicationRevision
+      ) {
+        return Promise.resolve();
+      }
+      const nextRevision = `${ownerToken}:${ownerEpoch}:revision:${revisionSequence + 1}`;
+      const nextSnapshot = projectValue(descriptor, nextRevision, document, next, includeHidden);
+      semanticInputs = next;
+      revisionSequence += 1;
+      snapshot = nextSnapshot;
+      return Promise.resolve();
     },
     dispose: () => {
       if (disposePromise) {
         return disposePromise;
       }
       closed = true;
+      activePersistenceAbort?.abort();
       disposePromise = queue.then(() => {
         reservations.clear();
       });

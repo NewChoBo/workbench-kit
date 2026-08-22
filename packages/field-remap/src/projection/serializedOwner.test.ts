@@ -6,6 +6,7 @@ import {
   type FieldRemapPersistenceInput,
   type FieldRemapPersistenceResult,
   type FieldRemapProjectionOperation,
+  type FieldRemapTraversalSample,
 } from './serializedOwner.js';
 
 const sources: readonly SourceField[] = [
@@ -107,7 +108,7 @@ describe('package-internal Field Remap projection owner', () => {
     const owner = createOwner();
     const before = owner.port.getSnapshot().canonicalRevision;
     const result = await owner.port.applyTransaction(
-      owner.port.createTransaction([upsertOtherEdge([' string:trim ', 'identity'])]),
+      owner.port.createTransaction([upsertOtherEdge(['string:trim', 'identity'])]),
     );
 
     expect(result).toMatchObject({ status: 'applied' });
@@ -123,7 +124,7 @@ describe('package-internal Field Remap projection owner', () => {
     expect(owner.getHistory()).toHaveLength(1);
   });
 
-  it('rejects ambiguous partial edits touching an omitted operator', async () => {
+  it('allows an edge edit that only shares an operand with an omitted operator', async () => {
     const owner = createOwner();
     const transaction = owner.port.createTransaction([
       {
@@ -137,11 +138,51 @@ describe('package-internal Field Remap projection owner', () => {
     ]);
 
     await expect(owner.port.applyTransaction(transaction)).resolves.toMatchObject({
+      status: 'applied',
+    });
+    expect(owner.getCanonicalDocument().operators).toEqual(baseDocument.operators);
+    expect(owner.getHistory()).toHaveLength(1);
+  });
+
+  it('rejects replacing an omitted hidden edge id and preserves canonical state', async () => {
+    const owner = createOwner();
+    const transaction = owner.port.createTransaction([
+      {
+        type: 'upsert-edge',
+        edge: {
+          id: 'edge-hidden',
+          sourceFieldId: 'source.other',
+          targetSlotId: 'target.other',
+        },
+      },
+    ]);
+
+    await expect(owner.port.applyTransaction(transaction)).resolves.toMatchObject({
       status: 'rejected',
       code: 'unsupported-operation',
     });
     expect(owner.getCanonicalDocument()).toEqual(baseDocument);
-    expect(owner.getHistory()).toHaveLength(0);
+  });
+
+  it('rejects replacing an omitted operator that requires hidden interpretation', async () => {
+    const owner = createOwner();
+    const transaction = owner.port.createTransaction([
+      {
+        type: 'upsert-operator',
+        operator: {
+          kind: 'split',
+          id: 'operator-hidden',
+          inputFieldId: 'source.other',
+          outputSlotIds: ['target.visible', 'target.other'],
+        },
+      },
+    ]);
+
+    await expect(owner.port.applyTransaction(transaction)).resolves.toMatchObject({
+      status: 'rejected',
+      code: 'unsupported-operation',
+    });
+    expect(owner.getCanonicalDocument()).toEqual(baseDocument);
   });
 
   it('commits edge and operator changes atomically with one persistence write and history entry', async () => {
@@ -198,9 +239,11 @@ describe('package-internal Field Remap projection owner', () => {
 
   it('reserves normalized duplicates before persistence and replays one terminal result', async () => {
     const persistence = deferred<FieldRemapPersistenceResult>();
-    const persist = vi.fn(() => persistence.promise);
+    const persist = vi.fn((_input: FieldRemapPersistenceInput) => persistence.promise);
     const owner = createOwner({ persist });
-    const transaction = owner.port.createTransaction([upsertOtherEdge([' string:trim '])]);
+    const transaction = owner.port.createTransaction([
+      upsertOtherEdge(['string:trim', 'identity']),
+    ]);
     const equivalent: typeof transaction = {
       ...transaction,
       operations: [upsertOtherEdge(['string:trim'])],
@@ -249,6 +292,107 @@ describe('package-internal Field Remap projection owner', () => {
     expect(owner.getHistory()).toHaveLength(0);
   });
 
+  it('rejects untrimmed ids, over-limit batches, and transform/operator bounds in envelopes', async () => {
+    const persist = vi.fn(async () => ({ status: 'committed' }) as const);
+    const owner = createOwner({ includeHidden: true, persist });
+    const untrimmed = owner.port.createTransaction([
+      { type: 'remove-edge', edgeId: ' edge-visible ' },
+    ]);
+    const oversizedBatch = owner.port.createTransaction(
+      Array.from({ length: 257 }, () => ({
+        type: 'remove-edge' as const,
+        edgeId: 'edge-visible',
+      })),
+    );
+    const oversizedTransform = owner.port.createTransaction([
+      upsertOtherEdge(['one', 'two', 'three', 'four']),
+    ]);
+    const oversizedOperator = owner.port.createTransaction([
+      {
+        type: 'upsert-operator',
+        operator: {
+          kind: 'combine',
+          id: 'operator-over-limit',
+          inputFieldIds: Array.from({ length: 9 }, (_, index) => `source.${index}`),
+          outputSlotId: 'target.visible',
+        },
+      },
+    ]);
+
+    for (const transaction of [untrimmed, oversizedBatch, oversizedTransform, oversizedOperator]) {
+      await expect(owner.port.applyTransaction(transaction)).resolves.toMatchObject({
+        status: 'rejected',
+        code: 'invalid-operation',
+      });
+    }
+    expect(persist).not.toHaveBeenCalled();
+  });
+
+  it('contains cyclic and unsupported payloads as invalid-operation results', async () => {
+    const owner = createOwner({ includeHidden: true });
+    const cyclicOptions: Record<string, unknown> = {};
+    cyclicOptions.self = cyclicOptions;
+    const cyclic = owner.port.createTransaction([
+      {
+        type: 'upsert-edge',
+        edge: {
+          id: 'edge-cycle',
+          sourceFieldId: 'source.other',
+          targetSlotId: 'target.other',
+          transformIds: ['string:trim'],
+          transformOptionSteps: [cyclicOptions],
+        },
+      },
+    ]);
+    const unsupported = owner.port.createTransaction([
+      {
+        type: 'upsert-edge',
+        edge: {
+          id: 'edge-function',
+          sourceFieldId: 'source.other',
+          targetSlotId: 'target.other',
+          transformIds: ['string:trim'],
+          transformOptionSteps: [{ callback: () => undefined }],
+        },
+      },
+    ] as unknown as readonly FieldRemapProjectionOperation[]);
+
+    await expect(owner.port.applyTransaction(cyclic)).resolves.toMatchObject({
+      status: 'rejected',
+      code: 'invalid-operation',
+    });
+    await expect(owner.port.applyTransaction(unsupported)).resolves.toMatchObject({
+      status: 'rejected',
+      code: 'invalid-operation',
+    });
+  });
+
+  it('owns and freezes the admitted payload before fingerprinting or queued persistence', async () => {
+    const persistence = deferred<FieldRemapPersistenceResult>();
+    const persist = vi.fn((_input: FieldRemapPersistenceInput) => persistence.promise);
+    const owner = createOwner({ includeHidden: true, persist });
+    const mutableEdge = {
+      id: 'edge-owned',
+      sourceFieldId: 'source.other',
+      targetSlotId: 'target.other',
+      transformIds: ['string:trim'],
+    };
+    const transaction = owner.port.createTransaction([{ type: 'upsert-edge', edge: mutableEdge }]);
+    const result = owner.port.applyTransaction(transaction);
+    mutableEdge.targetSlotId = 'target.visible';
+    mutableEdge.transformIds = ['string:upper'];
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+
+    const persisted = persist.mock.calls[0]?.[0].nextDocument;
+    expect(persisted?.edges.find((edge) => edge.id === 'edge-owned')).toMatchObject({
+      targetSlotId: 'target.other',
+      transformIds: ['string:trim'],
+    });
+    expect(Object.isFrozen(persisted?.edges.find((edge) => edge.id === 'edge-owned'))).toBe(true);
+    persistence.resolve({ status: 'committed' });
+    await expect(result).resolves.toMatchObject({ status: 'applied' });
+  });
+
   it('distinguishes proven rollback from indeterminate persistence', async () => {
     const rolledBackOwner = createOwner({
       persist: async () => ({ status: 'rolled-back' }),
@@ -291,7 +435,7 @@ describe('package-internal Field Remap projection owner', () => {
     const staleTransaction = owner.port.createTransaction([upsertOtherEdge()]);
     const preview = owner.createPreviewTicket();
 
-    await owner.replaceSemanticInputs({
+    const replacement = owner.replaceSemanticInputs({
       sources,
       targets,
       sourceShapeRevision: 'source:2',
@@ -301,29 +445,41 @@ describe('package-internal Field Remap projection owner', () => {
     });
 
     expect(owner.isPreviewTicketCurrent(preview)).toBe(false);
+    expect(owner.port.getSnapshot().canonicalRevision).not.toBe(staleTransaction.baseRevision);
+    await replacement;
     await expect(owner.port.applyTransaction(staleTransaction)).resolves.toMatchObject({
       status: 'conflict',
     });
     expect(owner.getHistory()).toHaveLength(0);
   });
 
-  it('keeps semantic input changes behind an in-flight persistence boundary', async () => {
+  it('publishes semantic input revisions immediately and conflicts pending old transactions', async () => {
     const persistence = deferred<FieldRemapPersistenceResult>();
-    const owner = createOwner({ persist: () => persistence.promise });
-    const transaction = owner.port.createTransaction([upsertOtherEdge()]);
-    const apply = owner.port.applyTransaction(transaction);
-    const replace = owner.replaceSemanticInputs({
+    const persist = vi.fn(() => persistence.promise);
+    const owner = createOwner({ persist });
+    const firstTransaction = owner.port.createTransaction([upsertOtherEdge()]);
+    const pendingTransaction = owner.port.createTransaction([
+      { type: 'remove-edge', edgeId: 'edge-visible' },
+    ]);
+    const preview = owner.createPreviewTicket();
+    const first = owner.port.applyTransaction(firstTransaction);
+    const pending = owner.port.applyTransaction(pendingTransaction);
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
+
+    const replacement = owner.replaceSemanticInputs({
       sources,
       targets,
       sourceShapeRevision: 'source:2',
       targetShapeRevision: 'target:1',
     });
 
-    persistence.resolve({ status: 'committed' });
-    await expect(apply).resolves.toMatchObject({ status: 'applied' });
-    await replace;
-    expect(owner.port.getSnapshot().canonicalRevision).not.toBe(transaction.baseRevision);
-    expect(owner.getHistory()).toHaveLength(1);
+    expect(owner.isPreviewTicketCurrent(preview)).toBe(false);
+    expect(owner.port.getSnapshot().canonicalRevision).not.toBe(firstTransaction.baseRevision);
+    await replacement;
+    persistence.resolve({ status: 'rolled-back' });
+    await expect(first).resolves.toMatchObject({ status: 'conflict' });
+    await expect(pending).resolves.toMatchObject({ status: 'conflict' });
+    expect(owner.getHistory()).toHaveLength(0);
   });
 
   it('evicts terminal entries, rejects expired replays, and caps all-in-flight work', async () => {
@@ -424,21 +580,24 @@ describe('package-internal Field Remap projection owner', () => {
     expect(replacement.getHistory()).toHaveLength(0);
   });
 
-  it('settles in-flight duplicates before disposal and leaves a deterministic retained port', async () => {
-    const persistence = deferred<FieldRemapPersistenceResult>();
-    const owner = createOwner({ persist: () => persistence.promise });
+  it('aborts a never-settling persistence task so disposal and all duplicates resolve', async () => {
+    const persist = vi.fn(
+      (_input: FieldRemapPersistenceInput) => new Promise<FieldRemapPersistenceResult>(() => {}),
+    );
+    const owner = createOwner({ persist, persistTimeoutMs: 1_000 });
     const transaction = owner.port.createTransaction([upsertOtherEdge()]);
     const snapshot = owner.port.getSnapshot();
     const first = owner.port.applyTransaction(transaction);
     const duplicate = owner.port.applyTransaction(transaction);
+    await vi.waitFor(() => expect(persist).toHaveBeenCalledTimes(1));
     const disposal = owner.dispose();
 
-    persistence.resolve({ status: 'committed' });
     await expect(Promise.all([first, duplicate])).resolves.toEqual([
-      expect.objectContaining({ status: 'applied' }),
-      expect.objectContaining({ status: 'applied' }),
+      expect.objectContaining({ status: 'failed', code: 'unavailable' }),
+      expect.objectContaining({ status: 'failed', code: 'unavailable' }),
     ]);
     await disposal;
+    expect(persist.mock.calls[0]?.[0].signal.aborted).toBe(true);
     expect(owner.getRetentionSize()).toBe(0);
     expect(owner.isPreviewTicketCurrent({ canonicalRevision: snapshot.canonicalRevision })).toBe(
       false,
@@ -446,7 +605,7 @@ describe('package-internal Field Remap projection owner', () => {
 
     const historical = owner.port.getSnapshot();
     const closedTransaction = owner.port.createTransaction([upsertOtherEdge()]);
-    expect(historical.canonicalRevision).not.toBe(snapshot.canonicalRevision);
+    expect(historical).toBe(snapshot);
     expect(closedTransaction.id).toContain('-closed-');
     expect(closedTransaction.baseRevision).toBe(historical.canonicalRevision);
     await expect(owner.port.applyTransaction(closedTransaction)).resolves.toEqual({
@@ -455,6 +614,23 @@ describe('package-internal Field Remap projection owner', () => {
       code: 'unavailable',
       lastKnownRevision: historical.canonicalRevision,
     });
+  });
+
+  it('times out a never-settling persistence task without leaving callers pending', async () => {
+    const owner = createOwner({
+      persistTimeoutMs: 10,
+      persist: () => new Promise<FieldRemapPersistenceResult>(() => {}),
+    });
+    const transaction = owner.port.createTransaction([upsertOtherEdge()]);
+    const first = owner.port.applyTransaction(transaction);
+    const duplicate = owner.port.applyTransaction(transaction);
+
+    await expect(Promise.all([first, duplicate])).resolves.toEqual([
+      expect.objectContaining({ status: 'failed', code: 'unavailable' }),
+      expect.objectContaining({ status: 'failed', code: 'unavailable' }),
+    ]);
+    expect(owner.isReconciliationPending()).toBe(true);
+    expect(owner.getHistory()).toHaveLength(0);
   });
 
   it('keeps invalid operation batches atomic with no persistence or history', async () => {
@@ -487,6 +663,76 @@ describe('package-internal Field Remap projection owner', () => {
       status: 'applied',
     });
     expect(owner.getHistory()).toHaveLength(2);
+  });
+
+  it('bounds retained semantic history while canonical revisions continue advancing', async () => {
+    const owner = createOwner({ includeHidden: true });
+    for (let index = 0; index < 300; index += 1) {
+      await owner.port.applyTransaction(
+        owner.port.createTransaction([
+          {
+            type: 'upsert-edge',
+            edge: {
+              id: 'edge-history',
+              sourceFieldId: 'source.other',
+              targetSlotId: index % 2 === 0 ? 'target.other' : 'target.visible',
+            },
+          },
+        ]),
+      );
+    }
+
+    const history = owner.getHistory();
+    expect(history).toHaveLength(256);
+    expect(history[0]?.canonicalRevision).toContain(':revision:45');
+    expect(history[history.length - 1]?.canonicalRevision).toContain(':revision:300');
+  });
+
+  it('keeps SMALL/TYPICAL/STRESS reference traversals proportional to aggregate size', async () => {
+    const samples: FieldRemapTraversalSample[] = [];
+    for (const count of [8, 100, 600]) {
+      const fixtureSources = Array.from({ length: count }, (_, index) => ({
+        id: `source.${index}`,
+        label: `Source ${index}`,
+      }));
+      const fixtureTargets = Array.from({ length: count }, (_, index) => ({
+        id: `target.${index}`,
+        label: `Target ${index}`,
+      }));
+      const fixtureEdges = Array.from({ length: count }, (_, index) => ({
+        id: `edge.${index}`,
+        sourceFieldId: `source.${index}`,
+        targetSlotId: `target.${index}`,
+      }));
+      const owner = createFieldRemapProjectionOwner({
+        id: `traversal-${count}`,
+        document: { version: 2, edges: fixtureEdges },
+        sources: fixtureSources,
+        targets: fixtureTargets,
+        sourceShapeRevision: 'source:1',
+        targetShapeRevision: 'target:1',
+        onTraversal: (sample) => samples.push(sample),
+      });
+
+      await owner.port.applyTransaction(
+        owner.port.createTransaction([
+          {
+            type: 'upsert-edge',
+            edge: {
+              id: 'edge.0',
+              sourceFieldId: 'source.0',
+              targetSlotId: 'target.0',
+            },
+          },
+        ]),
+      );
+    }
+
+    expect(samples.map((sample) => sample.size)).toEqual(['SMALL', 'TYPICAL', 'STRESS']);
+    expect(samples.map((sample) => sample.visitedEntries)).toEqual([65, 801, 4_801]);
+    for (const sample of samples) {
+      expect(sample.visitedEntries).toBeLessThan(sample.aggregateEntries * 3);
+    }
   });
 });
 
