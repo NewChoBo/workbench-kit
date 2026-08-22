@@ -44,7 +44,7 @@ export function applyWindowFocusablePolicy(
 
   windowSurface.setFocusable(input.focusable);
   if (input.skipTaskbar !== undefined) {
-    setSkipTaskbar!(input.skipTaskbar);
+    windowSurface.setSkipTaskbar!(input.skipTaskbar);
   }
 }
 
