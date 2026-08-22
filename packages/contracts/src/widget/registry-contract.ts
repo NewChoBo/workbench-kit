@@ -1,3 +1,5 @@
+import type { UiComponentDescriptor } from '../ui-authoring/component-types';
+
 /**
  * UI-agnostic widget registry boundary for JSON layout composition.
  * Implementations (e.g. json-widget-tree) provide concrete build/render types.
@@ -83,6 +85,8 @@ export interface WidgetTypeDefinition<
   readonly capabilities?: readonly string[];
   readonly hostTag?: WidgetHostTag;
   readonly measure?: WidgetMeasureFunction;
+  /** Optional renderer-neutral authoring metadata; build/runtime ownership stays here. */
+  readonly componentDescriptor?: UiComponentDescriptor;
 }
 
 export function isWidgetHostTag(value: unknown): value is WidgetHostTag {

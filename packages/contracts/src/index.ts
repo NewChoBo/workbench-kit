@@ -338,6 +338,50 @@ export type {
 } from './ui-authoring/layout-inspector';
 export { resolveUiLayoutInspectorGroups } from './ui-authoring/layout-inspector';
 export type {
+  UiAtomicComponentDescriptor,
+  UiBindingDirection,
+  UiChildSlotCardinality,
+  UiComponentAccessibilityDescriptor,
+  UiComponentBindingDescriptor,
+  UiComponentCatalogContribution,
+  UiComponentDescriptor,
+  UiComponentDescriptorBase,
+  UiComponentDesignTimeMetadata,
+  UiComponentEventDescriptor,
+  UiComponentKind,
+  UiComponentLayoutSupport,
+  UiComponentRef,
+  UiComponentChildSlotDescriptor,
+  UiCompositeComponentDescriptor,
+} from './ui-authoring/component-types';
+export {
+  UI_BINDING_DIRECTIONS,
+  UI_CHILD_SLOT_CARDINALITIES,
+  UI_COMPONENT_KINDS,
+  isUiBindingDirection,
+  isUiChildSlotCardinality,
+  isUiComponentKind,
+} from './ui-authoring/component-types';
+export type {
+  UiComponentValidationIssue,
+  UiComponentValidationIssueCode,
+} from './ui-authoring/component-validation';
+export {
+  UI_COMPONENT_VALIDATION_ISSUE_CODES,
+  isUiComponentValidationIssueCode,
+  uiComponentRefKey,
+  validateUiComponentDescriptor,
+} from './ui-authoring/component-validation';
+export type {
+  UiComponentCatalogContract,
+  UiComponentCatalogResolution,
+} from './ui-authoring/component-catalog';
+export { resolveUiComponentCatalog } from './ui-authoring/component-catalog';
+export {
+  uiComponentContributionFromWidgetAssetCatalog,
+  uiComponentContributionFromWidgetRegistry,
+} from './ui-authoring/component-adapters';
+export type {
   WidgetRendererComponent,
   WidgetRendererEvent,
   WidgetRendererEventKind,
