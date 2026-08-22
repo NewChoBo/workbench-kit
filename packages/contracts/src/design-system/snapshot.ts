@@ -27,3 +27,7 @@ export function snapshotDesignSystemPackContribution(
 export function snapshotUiDesignSystemState(state: UiDesignSystemState): UiDesignSystemState {
   return cloneDesignSystemSnapshot(state);
 }
+
+export function snapshotDesignSystemResolutionInput<T>(input: T): T {
+  return cloneDesignSystemSnapshot(input);
+}

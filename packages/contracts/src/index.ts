@@ -254,6 +254,9 @@ export {
 } from './ui-authoring/validation';
 export { widgetInspectorFieldToUiPropertyDescriptor } from './ui-authoring/widget-inspector-adapter';
 export type {
+  DesignSystemComponentRoleMapping,
+  DesignSystemComponentRoleRef,
+  DesignSystemComponentRoleRequirements,
   DesignSystemContributionProvenance,
   DesignSystemContributionSource,
   DesignSystemDiagnostic,
@@ -261,15 +264,31 @@ export type {
   DesignSystemPackContribution,
   DesignSystemPackDescriptor,
   DesignSystemPackRef,
+  DesignSystemRequiredBindingCapability,
+  DesignSystemRequiredChildSlotCapability,
+  DesignSystemRequiredEventCapability,
+  DesignSystemRequiredPropertyCapability,
+  DesignSystemResourceDescriptor,
+  DesignSystemResourceLoadingRequirement,
+  DesignSystemResourceTrustRequirement,
+  DesignSystemResourceValueSchema,
   DesignSystemThemeDescriptor,
   DesignSystemThemeRef,
   DesignSystemThemeScopeSelection,
+  DesignSystemTokenDescriptor,
+  DesignSystemTokenValueSchema,
   UiDesignSystemState,
 } from './design-system/types';
 export {
   DESIGN_SYSTEM_CONTRIBUTION_SOURCES,
   DESIGN_SYSTEM_DIAGNOSTIC_CODES,
+  DESIGN_SYSTEM_RESOURCE_LOADING_REQUIREMENTS,
+  DESIGN_SYSTEM_RESOURCE_TRUST_REQUIREMENTS,
 } from './design-system/types';
+export {
+  designSystemComponentRoleRefKey,
+  isSameDesignSystemComponentRoleRequirements,
+} from './design-system/descriptor-validation';
 export {
   designSystemPackRefKey,
   isCanonicalDesignSystemText,
@@ -285,6 +304,7 @@ export {
 export {
   UnsupportedDesignSystemSnapshotValueError,
   snapshotDesignSystemPackContribution,
+  snapshotDesignSystemResolutionInput,
   snapshotUiDesignSystemState,
 } from './design-system/snapshot';
 export type {
