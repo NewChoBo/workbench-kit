@@ -100,7 +100,7 @@ Backendless/performance + compatibility hardening
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
 
-UI packet IDs `WB-NS-070*` / `WB-NS-071*` are canonical target slots but remain `DESIGNING` until source/API inventory proves reuse boundaries and prevents a parallel schema/layout system.
+`WB-NS-070A` is the first promoted UI-authoring slice after source/API inventory closed its reuse boundaries. The remaining `WB-NS-070*` / `WB-NS-071*` target slots stay `DESIGNING` until their own bounded packets prevent a parallel schema, layout, document or graph system.
 
 ---
 
@@ -1606,7 +1606,7 @@ Close:
 
 ### `WB-NS-070A` bounded packet — typed UI value/property/source contract
 
-- **Status:** `DESIGNING` (`READY_FOR_REVIEW` candidate; producer-distinct review is still required before promotion)
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Source/API evidence:** `origin/develop@861aac873ed58cc4b60092c4dfddc339c45aa781` with source-bearing parent `e9b0d21e05af9b99415ff617d37d5e9bfd52c03c`
 - **Target owner:** `@workbench-kit/contracts` root export
 - **Implementation scope:** `packages/contracts/src/ui-authoring/*` plus root export and focused tests
