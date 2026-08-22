@@ -1,3 +1,4 @@
+import type { UiCompositeComponentDescriptor } from '../ui-authoring/component-types';
 import type { WidgetTypeShape } from './registry-contract';
 
 export type WidgetPlacementAssetCategory = 'content' | 'layout' | 'template' | (string & {});
@@ -25,6 +26,8 @@ export interface WidgetPlacementAsset<W extends WidgetTypeShape = WidgetTypeShap
   readonly inputsSchema?: Record<string, unknown>;
   /** Parsed JDW subtree from `content.json`. */
   readonly content: W;
+  /** Optional renderer-neutral public interface for this concrete composite asset. */
+  readonly componentDescriptor?: UiCompositeComponentDescriptor;
 }
 
 export interface WidgetAssetCatalogContract {

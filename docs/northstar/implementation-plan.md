@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@6ae4fc83b5a13db483855cdde4e64b9ad0964d67`.
+- **Current integration baseline:** `origin/develop@7b1ba747e709d1b10151bdae585d7c60ea41e318`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -64,7 +64,7 @@ WB-NS-070A typed UI value/property inventory + target contract [DONE]
         ↓
 WB-NS-070B selectable layout strategy + typed style constraints [DONE]
         ↓
-WB-NS-070C atomic component/composite descriptor contract [READY_FOR_IMPLEMENTATION; SUCCESSOR REVIEW PENDING]
+WB-NS-070C atomic component/composite descriptor contract [SOURCE_REVIEW_REQUIRED]
         ↓
 WB-NS-070D UiDocument command + direct-manipulation authoring
         ↓
@@ -2100,15 +2100,15 @@ The packet is complete when a browser- and Electron-free consumer can declare co
 
 #### `WB-NS-070C` bounded packet — atomic/composite descriptors and immutable catalog projection
 
-- **Status:** `READY_FOR_IMPLEMENTATION` — successor promotion claim requires producer-distinct review before source work
-- **Source/API evidence:** `origin/develop@6ae4fc83b5a13db483855cdde4e64b9ad0964d67`
+- **Status:** `SOURCE_REVIEW_REQUIRED`
+- **Source/API evidence:** source-bearing parent `origin/develop@7b1ba747e709d1b10151bdae585d7c60ea41e318`; readiness successor `2c8e81db3f972b3dd0e085af128a7981e6b0bf23` reviewed `PASS / P0 none / P1 none / P2 none` and integrated through PR #325
 - **Dependencies:** `WB-NS-070A` and `WB-NS-070B` `DONE`
 - **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
 - **Implementation scope:** component descriptor types, pure structural/cross-reference validation, deterministic immutable catalog projection, source-compatible registry/asset metadata attachment, root exports and focused backendless tests
 
 ##### Outcome
 
-Add one renderer-neutral description of atomic and composite components so Palette, Inspector, Canvas and later graph/design-system adapters can share exact component identity, public properties, events, binding slots, layout support, accessibility metadata and design-time presentation. A composite exposes the same public interface as an atomic component while its internal composition remains behind an opaque stable reference until `WB-NS-070D` owns the canonical `UiDocument` tree and commands.
+The source candidate adds one renderer-neutral description of atomic and composite components so Palette, Inspector, Canvas and later graph/design-system adapters can share exact component identity, public properties, events, binding slots, layout support, accessibility metadata and design-time presentation. A composite exposes the same public interface as an atomic component while its internal composition remains behind an opaque stable reference until `WB-NS-070D` owns the canonical `UiDocument` tree and commands.
 
 070C does not render, materialize, execute, persist or migrate a component. It does not replace the current JDW widget registry or widget asset catalog.
 
@@ -2257,7 +2257,7 @@ When a duplicate `contributorId` exists, every contribution carrying that ID is 
 
 In scope: renderer-neutral types, stable issue codes, pure structural/cross-reference validation, immutable catalog projection, optional compatibility attachments/adapters and backendless tests.
 
-Not in scope: React components, render/build handlers, JDW layout or content materialization, node identity/tree/commands/history, component instance state, asset manifest persistence changes, automatic JSON Schema conversion, value/binding/expression resolution, Field Remap transforms, responsive variants, tokens/resources/themes, extension activation, dynamic imports, version ranges/migrations, arbitrary CSS/JSX/HTML/script, Electron/native or TilePaper product policy.
+Not in scope: React components, render/build handlers, JDW layout or content materialization, node identity/tree/commands/history, component instance state, asset manifest persistence changes, automatic JSON Schema conversion, value/binding/expression resolution, Field Remap transforms, responsive variants, tokens/resources/themes, extension activation, dynamic imports, version ranges/migrations, arbitrary CSS/JSX/HTML/script, Electron/native or host/product-specific policy.
 
 ##### Focused and final validation
 
@@ -2277,7 +2277,7 @@ Descriptor validation and catalog construction must be linear in total supplied 
 
 The packet is complete when a browser- and Electron-free consumer can declare and validate atomic/container/composite public interfaces, contribute them from existing registry/asset compatibility surfaces, construct a deterministic immutable catalog and perform exact identity lookup without a renderer, document tree or evaluator.
 
-Producer-distinct design review must confirm the packet closes identity/version, public interface, layout/accessibility cross-references, contribution conflict semantics and composite opacity before status becomes `READY_FOR_IMPLEMENTATION`. Source review must reject lossy automatic schema inference, last-writer-wins component replacement, inline composite trees or executable renderer strings, mutation, implicit latest-version selection, a second runtime registry/catalog, or any change to existing JDW build/content behavior.
+Producer-distinct readiness review confirmed identity/version, public interface, layout/accessibility cross-references, contribution conflict semantics and composite opacity on exact successor `2c8e81db3f972b3dd0e085af128a7981e6b0bf23`. Exact-source review must now reject lossy automatic schema inference, last-writer-wins component replacement, inline composite trees or executable renderer strings, mutation, implicit latest-version selection, a second runtime registry/catalog, or any change to existing JDW build/content behavior.
 
 ### `WB-NS-070D` ready gate
 
