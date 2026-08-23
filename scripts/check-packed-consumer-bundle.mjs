@@ -23,7 +23,9 @@ const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
   focusedOverlayCssGzipBytes: 11_500,
-  initialGzipBytes: 240_000,
+  // The exact pre-modal baseline consumed 240,000 bytes; opt-in modal metadata adds 399 bytes
+  // while the 4 KB modal implementation remains outside the initial chunk.
+  initialGzipBytes: 240_500,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.

@@ -1,6 +1,6 @@
 import { createContext, useContext, type ReactNode } from 'react';
 
-const WorkbenchOverlaysContext = createContext<HTMLElement | null>(null);
+const WorkbenchOverlaysContext = createContext<HTMLElement | null | undefined>(undefined);
 
 export function WorkbenchOverlaysProvider({
   children,
@@ -16,6 +16,6 @@ export function WorkbenchOverlaysProvider({
   );
 }
 
-export function useWorkbenchOverlaysContainer(): HTMLElement | null {
+export function useWorkbenchOverlaysContainer(): HTMLElement | null | undefined {
   return useContext(WorkbenchOverlaysContext);
 }

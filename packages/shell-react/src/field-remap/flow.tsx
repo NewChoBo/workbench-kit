@@ -1,5 +1,7 @@
 import {
   Children,
+  lazy,
+  Suspense,
   useCallback,
   useEffect,
   useImperativeHandle,
@@ -31,7 +33,6 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
-import { Modal } from '@workbench-kit/react/modal';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
@@ -90,9 +91,15 @@ import {
   type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
-import { FieldRemapPreviewRail, type FieldRemapPreviewState } from './preview.js';
 import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
+import { FieldRemapPreviewRail, type FieldRemapPreviewState } from './preview.js';
 import './view.css';
+
+const loadFieldRemapModalDetail = async () => {
+  const module = await import('./modal-detail.js');
+  return { default: module.FieldRemapModalDetail };
+};
+const FieldRemapModalDetail = lazy(loadFieldRemapModalDetail);
 
 function TypeBadge({ dataType }: { readonly dataType?: string }): JSX.Element | null {
   if (dataType !== 'object' && dataType !== 'array') {
@@ -588,6 +595,9 @@ function FieldRemapFlowCanvas({
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
+  const setSelectionRef = useRef(setSelection);
+  setSelectionRef.current = setSelection;
+  const closeModalDetail = useCallback(() => setSelectionRef.current(null), []);
   const previewVisible = showPreview && preview !== undefined && preview.status !== 'unavailable';
   const detailVisible = emptyDetail === 'hint' || selection !== null;
   const sideRailVisible = previewVisible || (detailPresentation === 'rail' && detailVisible);
@@ -601,6 +611,12 @@ function FieldRemapFlowCanvas({
     return first?.id ?? '';
   });
   const transformRegistrySignature = createTransformRegistrySignature(transforms);
+
+  useEffect(() => {
+    if (detailPresentation === 'modal') {
+      void loadFieldRemapModalDetail().catch(() => undefined);
+    }
+  }, [detailPresentation]);
 
   useEffect(() => {
     if (!restoreMapperFocusRef.current || selection !== null || drafts.length > 0) {
@@ -994,6 +1010,7 @@ function FieldRemapFlowCanvas({
           '.workbench-field-remap-flow__canvas-detail-split > [role="separator"]',
         );
         restoreMapperFocusRef.current =
+          detailPresentation === 'rail' &&
           emptyDetail === 'collapse' &&
           focused instanceof Element &&
           (detail?.contains(focused) === true ||
@@ -1065,6 +1082,7 @@ function FieldRemapFlowCanvas({
     },
     [
       drafts,
+      detailPresentation,
       edges,
       emptyDetail,
       onEdgesChange,
@@ -1353,18 +1371,15 @@ function FieldRemapFlowCanvas({
       </FieldRemapSplitWorkspace>
 
       {detailPresentation === 'modal' && selection !== null ? (
-        <Modal
-          bodyClassName="workbench-field-remap-detail-modal__body"
-          bodyPadding="none"
-          bodyScroll="auto"
-          className="workbench-field-remap-detail-modal"
-          closeLabel={chromeLabels.closeDetailModal ?? 'Close details'}
-          closeOnEscape={false}
-          title={chromeLabels.detailModalTitle ?? 'Mapping details'}
-          onClose={() => setSelection(null)}
-        >
-          {detailPanel}
-        </Modal>
+        <Suspense fallback={null}>
+          <FieldRemapModalDetail
+            closeLabel={chromeLabels.closeDetailModal ?? 'Close details'}
+            title={chromeLabels.detailModalTitle ?? 'Mapping details'}
+            onClose={closeModalDetail}
+          >
+            {detailPanel}
+          </FieldRemapModalDetail>
+        </Suspense>
       ) : null}
 
       {showBindingsList ? (
