@@ -768,6 +768,51 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(document.activeElement).toBe(mapper);
   });
 
+  it('restores focus when a focused convert editor is removed by Escape', async () => {
+    await renderMapper({ chrome: 'embed', showBindingsList: true });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const selectEdge = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    await act(async () => selectEdge.click());
+    const selectStep = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-detail-step-0"]',
+    )!;
+    await act(async () => selectStep.click());
+
+    const stepEditor = container!.querySelector<HTMLSelectElement>(
+      '[data-testid="field-remap-step-id"]',
+    )!;
+    stepEditor.focus();
+    const event = await pressKey(stepEditor, 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeNull();
+    expect(document.activeElement).toBe(mapper);
+  });
+
+  it('respects Escape already consumed by a nested editor', async () => {
+    await renderMapper({ showBindingsList: true });
+    const selectEdge = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    await act(async () => selectEdge.click());
+    const search = container!.querySelector<HTMLInputElement>('input[type="search"]')!;
+    await act(async () => {
+      const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      valueSetter?.call(search, 'trim');
+      search.dispatchEvent(new Event('input', { bubbles: true }));
+    });
+    search.focus();
+
+    const event = await pressKey(search, 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(search.value).toBe('');
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expect(document.activeElement).toBe(search);
+  });
+
   it('does not move focus when Escape collapses detail outside the focused chrome', async () => {
     await renderMapper({ chrome: 'embed', showBindingsList: true });
     const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;

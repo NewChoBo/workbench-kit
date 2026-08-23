@@ -368,6 +368,16 @@ export const EmbedCollapsedDetail: Story = {
     await waitFor(() =>
       expect(document.activeElement).toBe(canvas.getByTestId('field-remap-mapper')),
     );
+
+    await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
+    await userEvent.click(canvas.getByTestId('field-remap-detail-step-0'));
+    const stepEditor = canvas.getByTestId('field-remap-step-id');
+    stepEditor.focus();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(canvas.queryByTestId('field-remap-convert-note')).toBeNull());
+    await waitFor(() =>
+      expect(document.activeElement).toBe(canvas.getByTestId('field-remap-mapper')),
+    );
   },
 };
 

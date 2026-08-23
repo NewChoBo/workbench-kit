@@ -878,12 +878,14 @@ function FieldRemapFlowCanvas({
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key === 'Escape') {
-        if (selection === null && drafts.length === 0) {
+        if (event.defaultPrevented || (selection === null && drafts.length === 0)) {
           return;
         }
         const mapper = mapperRef.current;
         const focused = mapper?.ownerDocument.activeElement;
-        const detail = mapper?.querySelector<HTMLElement>('[data-testid="field-remap-detail"]');
+        const detail = mapper?.querySelector<HTMLElement>(
+          '[data-testid="field-remap-detail"], [data-testid="field-remap-convert-note"]',
+        );
         const detailSeparator = mapper?.querySelector<HTMLElement>(
           '.workbench-field-remap-flow__canvas-detail-split > [role="separator"]',
         );
