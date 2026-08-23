@@ -10,6 +10,8 @@ import {
   isLightThemePresetId,
   resolveActiveThemePreset,
   resolveWorkbenchThemeProviderAttributes,
+  type WorkbenchColorSchemePreference,
+  type WorkbenchThemePresetOption,
   WORKBENCH_COLOR_SCHEME_OPTIONS,
 } from './themePresets';
 
@@ -47,7 +49,9 @@ describe('themePresets', () => {
   });
 
   it('exposes color scheme options', () => {
-    expect(WORKBENCH_COLOR_SCHEME_OPTIONS.map((option) => option.id)).toEqual([
+    const mutableCompatibilityOptions: WorkbenchThemePresetOption<WorkbenchColorSchemePreference>[] =
+      WORKBENCH_COLOR_SCHEME_OPTIONS;
+    expect(mutableCompatibilityOptions.map((option) => option.id)).toEqual([
       'system',
       'light',
       'dark',

@@ -26,7 +26,9 @@ primitive → semantic → flat → shell color aliases). Color preset overrides
 
 TypeScript registries:
 
-- Color: `LIGHT_THEME_PRESET_MANIFEST` / `DARK_THEME_PRESET_MANIFEST` in `themePresets.ts`
+- Color: framework-neutral `LIGHT_THEME_PRESET_MANIFEST` /
+  `DARK_THEME_PRESET_MANIFEST` from `@workbench-kit/contracts/theme-presets` (compatibly re-exported by
+  `@workbench-kit/react/workbench/themePresets`)
 - Layout: `SHELL_PRESET_MANIFEST` in `shellPresets.ts`
 
 UI copy (labels/descriptions): `appearanceLabels.ts` — shared by shell settings and hosts.
@@ -83,7 +85,7 @@ packages/tokens/src/
     airy.css               # comfortable layout
 
 packages/react/src/workbench/
-  themePresets.ts            # color preset manifest + apply helpers
+  themePresets.ts            # contracts-owned color manifest re-exports + apply helpers
   shellPresets.ts              # layout preset manifest + apply helpers
   appearanceLabels.ts          # VS Code-aligned Settings copy
 ```
@@ -91,7 +93,8 @@ packages/react/src/workbench/
 **Rules**
 
 - Add a **color** preset: create `themes/{light|dark}/{id}.css`, add `@import` in
-  `theme-presets.css`, add one row to the matching manifest in `themePresets.ts`.
+  `theme-presets.css`, add one row to the matching framework-neutral manifest in
+  `@workbench-kit/contracts/theme-presets`.
 - Add a **layout** preset: create `shell/{id}.css`, add `@import` in `shell-presets.css`,
   add one row to `SHELL_PRESET_MANIFEST` in `shellPresets.ts`.
 - Do not add preset blocks back into a monolithic CSS file.
@@ -339,13 +342,15 @@ and extension contributions. Reference: `examples/workbench-sample/src/host-them
 
 1. Extract each `[data-theme=…][data-theme-preset=…]` block into `themes/{light|dark}/{id}.css`.
 2. Replace monolith body with `@import` index (keep `theme-presets.css` as public export path).
-3. Extend `themePresets.ts` manifests; types derive from manifest ids.
+3. Extend the contracts-owned manifests; React compatibility types derive from those ids.
 4. No host breaking change: preset ids unchanged; new ids are additive.
 5. Re-run Storybook Appearance play baseline; sample storage uses `isLightThemePresetId` /
    `isDarkThemePresetId` for forward-compatible validation.
 
 ## Agent coordination
 
+- **Framework-neutral hosts:** import built-in color manifests from
+  `@workbench-kit/contracts/theme-presets`.
 - **Appearance / Storybook:** import options from `themePresets.ts` / `shellPresets.ts` only.
 - **Settings UI:** import labels from `appearanceLabels.ts` — do not duplicate VS Code copy.
 - **Sample apps:** `workbench-sample` appearance storage validates via type guards.
