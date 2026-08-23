@@ -23,9 +23,10 @@ const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
   focusedOverlayCssGzipBytes: 11_500,
-  // The exact post-modal baseline consumed 240,432 bytes. Shared read-only Field Remap guards add
-  // 229 bytes without a new static dependency or CSS surface; retain deliberate repair headroom.
-  initialGzipBytes: 240_800,
+  // The exact post-modal baseline consumed 240,432 bytes. Complete read-only Field Remap guards,
+  // localized inspection copy, and keyboard node/edge selection add 411 bytes without a new static
+  // dependency or CSS surface; retain deliberate repair headroom.
+  initialGzipBytes: 241_000,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.

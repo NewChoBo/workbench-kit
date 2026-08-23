@@ -8,7 +8,12 @@ import {
   type SourceField,
   type TargetSlot,
 } from '@workbench-kit/field-remap';
-import type { Connection, FinalConnectionState } from '@xyflow/react';
+import type {
+  Connection,
+  Edge,
+  FinalConnectionState,
+  OnSelectionChangeParams,
+} from '@xyflow/react';
 
 const flowHarness = vi.hoisted(() => ({
   props: null as CapturedReactFlowProps | null,
@@ -21,6 +26,9 @@ interface CapturedReactFlowProps {
   readonly onConnectStart: () => void;
   readonly onConnectEnd: (event: MouseEvent, state: FinalConnectionState) => void;
   readonly onEdgesDelete?: ((edges: readonly unknown[]) => void) | undefined;
+  readonly onEdgeClick?: ((event: MouseEvent, edge: Edge) => void) | undefined;
+  readonly onSelectionChange?: ((selection: OnSelectionChangeParams) => void) | undefined;
+  readonly nodes?: readonly { readonly draggable?: boolean | undefined }[] | undefined;
   readonly nodesDraggable?: boolean | undefined;
   readonly nodesConnectable?: boolean | undefined;
   readonly edgesReconnectable?: boolean | undefined;
@@ -178,9 +186,11 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
   it('disables connection and deletion entry points at the React Flow boundary in read-only mode', async () => {
     const onEdgesChange = vi.fn();
     const onConnectionFeedback = vi.fn();
-    await renderFlow({ readOnly: true, onEdgesChange, onConnectionFeedback });
+    const onSelectionChange = vi.fn();
+    await renderFlow({ readOnly: true, onEdgesChange, onConnectionFeedback, onSelectionChange });
 
     expect(flowHarness.props?.nodesDraggable).toBe(false);
+    expect(flowHarness.props?.nodes?.every((node) => node.draggable === undefined)).toBe(true);
     expect(flowHarness.props?.nodesConnectable).toBe(false);
     expect(flowHarness.props?.edgesReconnectable).toBe(false);
     expect(flowHarness.props?.onConnect).toBeUndefined();
@@ -197,6 +207,41 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     ).toBe(false);
     expect(onEdgesChange).not.toHaveBeenCalled();
     expect(onConnectionFeedback).not.toHaveBeenCalled();
+
+    expect(flowHarness.props?.onEdgeClick).toBeUndefined();
+    flowHarness.props?.onSelectionChange?.({
+      nodes: [],
+      edges: [
+        {
+          id: 'fe:edge:name:direct',
+          source: 'obj:source',
+          target: 'obj:target',
+          data: { mappingEdgeId: 'edge:name', segment: 'direct' },
+        },
+      ],
+    });
+    expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'edge:name' });
+
+    onSelectionChange.mockClear();
+    flowHarness.props?.onSelectionChange?.({
+      nodes: [
+        {
+          id: 'xf:edge:name:0',
+          position: { x: 0, y: 0 },
+          data: {
+            kind: 'transform',
+            mappingEdgeId: 'edge:name',
+            stepIndex: 0,
+          },
+        },
+      ],
+      edges: [],
+    });
+    expect(onSelectionChange).toHaveBeenCalledWith({
+      kind: 'transformStep',
+      edgeId: 'edge:name',
+      stepIndex: 0,
+    });
   });
 
   it('reports a concrete same-direction drop but keeps handle-less cancellation silent', async () => {

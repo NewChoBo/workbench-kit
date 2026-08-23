@@ -972,6 +972,29 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(onEdgesChange).not.toHaveBeenCalled();
   });
 
+  it('uses inspection copy for an empty read-only detail rail', async () => {
+    await renderMapper({ readOnly: true });
+
+    const detail = container!.querySelector('[data-testid="field-remap-detail"]');
+    expect(detail?.textContent).toContain('Inspect mappings');
+    expect(detail?.textContent).toContain('Select a mapping to inspect its details.');
+    expect(detail?.textContent).not.toContain('Convert palette');
+  });
+
+  it('resolves read-only inspection copy through host labels', async () => {
+    await renderMapper({
+      readOnly: true,
+      labels: {
+        readOnlyEmptyDetailTitle: 'Review mappings',
+        readOnlyEmptyDetailDescription: 'Choose a mapping to review.',
+      },
+    });
+
+    const detail = container!.querySelector('[data-testid="field-remap-detail"]');
+    expect(detail?.textContent).toContain('Review mappings');
+    expect(detail?.textContent).toContain('Choose a mapping to review.');
+  });
+
   it('renders operator state for inspection without operator authoring controls', async () => {
     const sample = getFieldRemapSample('nm-combine-split');
     const sources = sourceFieldsFromPlainObject(sample.source, {
@@ -1000,10 +1023,16 @@ describe('FieldRemapFlowMapper host chrome', () => {
       container!.querySelector('[data-testid="field-remap-detail-delete-operator"]'),
     ).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-operator-add-input"]')).toBeNull();
-    expect(
-      container!.querySelector<HTMLSelectElement>('[data-testid="field-remap-operator-output"]')
-        ?.disabled,
-    ).toBe(true);
+    const operatorOutput = container!.querySelector<HTMLSelectElement>(
+      '[data-testid="field-remap-operator-output"]',
+    )!;
+    expect(operatorOutput.disabled).toBe(true);
+
+    await act(async () => {
+      operatorOutput.value = 'b.city';
+      operatorOutput.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(onOperatorsChange).not.toHaveBeenCalled();
 
     const operatorNode = container!.querySelector('[data-testid="field-remap-op-op-name"]')!;
     await act(async () => {

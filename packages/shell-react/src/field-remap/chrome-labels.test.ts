@@ -13,21 +13,28 @@ describe('resolveFieldRemapChromeLabels', () => {
       addCombine: 'Create join',
       previewTitle: 'Live result',
       detailModalTitle: 'Edit mapping',
+      readOnlyEmptyDetailTitle: 'Review mappings',
     });
     expect(labels.bindingsTitle).toBe('Field maps');
     expect(labels.addCombine).toBe('Create join');
     expect(labels.previewTitle).toBe('Live result');
     expect(labels.detailModalTitle).toBe('Edit mapping');
+    expect(labels.readOnlyEmptyDetailTitle).toBe('Review mappings');
     expect(labels.convertPaletteTitle).toBe(defaultFieldRemapChromeLabels.convertPaletteTitle);
     expect(labels.previewLoading).toBe(defaultFieldRemapChromeLabels.previewLoading);
   });
 
   it('uses t() fallback when label prop is omitted', () => {
     const t = vi.fn((key: string, fallback: string) =>
-      key === 'fieldRemap.bindingsTitle' ? 'Mappings' : fallback,
+      key === 'fieldRemap.bindingsTitle'
+        ? 'Mappings'
+        : key === 'fieldRemap.readOnlyEmptyDetailTitle'
+          ? 'Inspect translated mappings'
+          : fallback,
     );
     const labels = resolveFieldRemapChromeLabels(undefined, t);
     expect(labels.bindingsTitle).toBe('Mappings');
+    expect(labels.readOnlyEmptyDetailTitle).toBe('Inspect translated mappings');
     expect(t).toHaveBeenCalledWith('fieldRemap.bindingsTitle', 'Bindings');
   });
 

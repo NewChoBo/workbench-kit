@@ -31,6 +31,7 @@ import {
   type FinalConnectionState,
   type Node,
   type NodeProps,
+  type OnSelectionChangeParams,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
@@ -1155,6 +1156,33 @@ function FieldRemapFlowCanvas({
     [onEdgeContextMenu, selection],
   );
 
+  const handleFlowSelectionChange = useCallback(
+    ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
+      const nodeData = selectedNodes[0]?.data as FieldRemapFlowNodeData | undefined;
+      if (readOnly && nodeData?.kind === 'transform') {
+        setSelection({
+          kind: 'transformStep',
+          edgeId: nodeData.mappingEdgeId,
+          stepIndex: nodeData.stepIndex,
+        });
+        return;
+      }
+      if (
+        readOnly &&
+        (nodeData?.kind === 'combine-operator' || nodeData?.kind === 'split-operator')
+      ) {
+        setSelection({ kind: 'operator', operatorId: nodeData.operatorId });
+        return;
+      }
+      const mappingEdgeId = (selectedEdges[0]?.data as FieldRemapFlowEdgeData | undefined)
+        ?.mappingEdgeId;
+      if (mappingEdgeId) {
+        setSelection({ kind: 'edge', edgeId: mappingEdgeId });
+      }
+    },
+    [readOnly, setSelection],
+  );
+
   const detailPanel = detailVisible ? (
     <FieldRemapDetailPanel
       selection={selection}
@@ -1171,8 +1199,12 @@ function FieldRemapFlowCanvas({
       }}
       operators={operators}
       onOperatorsChange={onOperatorsChange}
-      emptyDetailTitle={chromeLabels.emptyDetailTitle}
-      emptyDetailDescription={chromeLabels.emptyDetailDescription}
+      emptyDetailTitle={
+        readOnly ? chromeLabels.readOnlyEmptyDetailTitle : chromeLabels.emptyDetailTitle
+      }
+      emptyDetailDescription={
+        readOnly ? chromeLabels.readOnlyEmptyDetailDescription : chromeLabels.emptyDetailDescription
+      }
     />
   ) : null;
 
@@ -1273,7 +1305,8 @@ function FieldRemapFlowCanvas({
             onConnectStart={readOnly ? undefined : onConnectStart}
             onConnectEnd={readOnly ? undefined : onConnectEnd}
             onEdgesDelete={readOnly ? undefined : onEdgesDelete}
-            onNodeClick={onNodeClick}
+            onNodeClick={readOnly ? undefined : onNodeClick}
+            onSelectionChange={handleFlowSelectionChange}
             onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}
             onNodeContextMenu={onNodeContextMenu ? handleNodeContextMenu : undefined}
             onEdgeContextMenu={onEdgeContextMenu ? handleEdgeContextMenu : undefined}

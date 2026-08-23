@@ -111,6 +111,12 @@ export function FieldRemapDetailPanel({
   const [pendingOperatorSlotId, setPendingOperatorSlotId] = useState('');
   const flatSources = useMemo(() => flattenSourceFields(sources), [sources]);
   const flatTargets = useMemo(() => flattenTargetSlots(targets), [targets]);
+  const commitOperators = (next: readonly MappingOperator[]) => {
+    if (readOnly) {
+      return;
+    }
+    onOperatorsChange?.(next);
+  };
 
   if (!selection) {
     return (
@@ -207,7 +213,7 @@ export function FieldRemapDetailPanel({
               type="button"
               data-testid="field-remap-detail-delete-operator"
               onClick={() => {
-                onOperatorsChange?.(removeMappingOperator(operators, operator.id));
+                commitOperators(removeMappingOperator(operators, operator.id));
                 onSelectionChange(null);
               }}
             >
@@ -227,7 +233,7 @@ export function FieldRemapDetailPanel({
                       compact
                       type="button"
                       onClick={() =>
-                        onOperatorsChange?.(
+                        commitOperators(
                           updateMappingOperator(operators, operator.id, (current) =>
                             removeOperatorInput(current, fieldId),
                           ),
@@ -264,7 +270,7 @@ export function FieldRemapDetailPanel({
                   disabled={!pendingOperatorFieldId}
                   onClick={() => {
                     if (!pendingOperatorFieldId) return;
-                    onOperatorsChange?.(
+                    commitOperators(
                       updateMappingOperator(operators, operator.id, (current) =>
                         bindOperatorInput(current, pendingOperatorFieldId),
                       ),
@@ -285,7 +291,7 @@ export function FieldRemapDetailPanel({
                   disabled={readOnly}
                   onChange={(event) => {
                     const slotId = event.target.value;
-                    onOperatorsChange?.(
+                    commitOperators(
                       updateMappingOperator(operators, operator.id, (current) =>
                         slotId
                           ? bindOperatorOutput(current, slotId)
@@ -315,7 +321,7 @@ export function FieldRemapDetailPanel({
                   disabled={readOnly}
                   onChange={(event) => {
                     const fieldId = event.target.value;
-                    onOperatorsChange?.(
+                    commitOperators(
                       updateMappingOperator(operators, operator.id, (current) =>
                         fieldId
                           ? bindOperatorInput(current, fieldId)
@@ -343,7 +349,7 @@ export function FieldRemapDetailPanel({
                       compact
                       type="button"
                       onClick={() =>
-                        onOperatorsChange?.(
+                        commitOperators(
                           updateMappingOperator(operators, operator.id, (current) =>
                             removeOperatorOutput(current, slotId),
                           ),
@@ -380,7 +386,7 @@ export function FieldRemapDetailPanel({
                   disabled={!pendingOperatorSlotId}
                   onClick={() => {
                     if (!pendingOperatorSlotId) return;
-                    onOperatorsChange?.(
+                    commitOperators(
                       updateMappingOperator(operators, operator.id, (current) =>
                         bindOperatorOutput(current, pendingOperatorSlotId),
                       ),
