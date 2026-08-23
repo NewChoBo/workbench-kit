@@ -34,11 +34,12 @@ export interface WorkbenchThemePresetOption<TId extends string = string> {
   readonly label: string;
 }
 
-export const WORKBENCH_COLOR_SCHEME_OPTIONS = [
-  { id: 'system', label: 'System' },
-  { id: 'light', label: 'Light' },
-  { id: 'dark', label: 'Dark' },
-] as const satisfies readonly WorkbenchThemePresetOption<WorkbenchColorSchemePreference>[];
+export const WORKBENCH_COLOR_SCHEME_OPTIONS: WorkbenchThemePresetOption<WorkbenchColorSchemePreference>[] =
+  [
+    { id: 'system', label: 'System' },
+    { id: 'light', label: 'Light' },
+    { id: 'dark', label: 'Dark' },
+  ];
 
 export const LIGHT_THEME_PRESET_OPTIONS = LIGHT_THEME_PRESET_MANIFEST.map((entry) => ({
   id: entry.id,
