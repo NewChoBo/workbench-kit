@@ -221,7 +221,6 @@ export function mappingToFlowGraph(input: {
         schemaRole: 'Source schema',
         ports: sourcePorts,
       },
-      draggable: true,
     },
     {
       id: TARGET_OBJECT_NODE_ID,
@@ -233,7 +232,6 @@ export function mappingToFlowGraph(input: {
         schemaRole: 'Target schema',
         ports: targetPorts,
       },
-      draggable: true,
     },
   ];
 
@@ -272,7 +270,6 @@ export function mappingToFlowGraph(input: {
           transformId,
           label: definition?.label ?? transformId,
         },
-        draggable: true,
       });
     });
 
@@ -327,7 +324,6 @@ export function mappingToFlowGraph(input: {
         sourceFieldId: draft.sourceFieldId,
         targetSlotId: draft.targetSlotId,
       },
-      draggable: true,
     });
 
     if (draft.sourceFieldId) {
@@ -372,7 +368,6 @@ export function mappingToFlowGraph(input: {
           inputFieldIds: operator.inputFieldIds,
           outputSlotId: operator.outputSlotId,
         },
-        draggable: true,
       });
       for (const fieldId of operator.inputFieldIds) {
         flowEdges.push({
@@ -410,7 +405,6 @@ export function mappingToFlowGraph(input: {
         inputFieldId: operator.inputFieldId,
         outputSlotIds: operator.outputSlotIds,
       },
-      draggable: true,
     });
     if (operator.inputFieldId) {
       flowEdges.push({

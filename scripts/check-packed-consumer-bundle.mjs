@@ -23,9 +23,10 @@ const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
   focusedOverlayCssGzipBytes: 11_500,
-  // The exact pre-modal baseline consumed 240,000 bytes; opt-in modal metadata adds 399 bytes
-  // while the 4 KB modal implementation remains outside the initial chunk.
-  initialGzipBytes: 240_500,
+  // The exact post-modal baseline consumed 240,432 bytes. Complete read-only Field Remap guards,
+  // localized inspection copy, and keyboard node/edge selection add 411 bytes without a new static
+  // dependency or CSS surface; retain deliberate repair headroom.
+  initialGzipBytes: 241_000,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.
@@ -392,8 +393,8 @@ const packedFieldRemapPreview: FieldRemapPreviewState = {
 const packedFieldRemapRootPreview: FieldRemapRootPreviewState = packedFieldRemapPreview;
 const packedFieldRemapPreviewProps: Pick<
   FieldRemapFlowMapperProps,
-  'preview' | 'showPreview'
-> = { preview: packedFieldRemapPreview };
+  'preview' | 'readOnly' | 'showPreview'
+> = { preview: packedFieldRemapPreview, readOnly: true };
 async function verifyPackedGraphAuthoring(): Promise<{
   descriptor: NodeTypeDescriptor;
   transform: ValueTransformDefinition;

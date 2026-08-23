@@ -60,6 +60,10 @@ const meta = {
       description: 'Shows selection detail in the resizable rail or shared Modal.',
       options: ['rail', 'modal'],
     },
+    readOnly: {
+      control: 'boolean',
+      description: 'Keeps inspection and viewport controls while disabling authoring.',
+    },
     showHostChromeDemo: { control: 'boolean', description: 'Shows host-owned editor actions.' },
     ioChrome: {
       control: 'select',
@@ -135,6 +139,71 @@ export const NestedAB: Story = {
     await userEvent.click(canvas.getByTestId('field-remap-palette-item-string:upper'));
     await userEvent.click(canvas.getByTestId('field-remap-place-draft'));
     await expect(canvas.getByTestId('field-remap-detail-draft-id')).toBeVisible();
+  },
+};
+
+export const ReadOnly: Story = {
+  name: 'Read-only inspection',
+  args: { sampleId: 'nested-ab', readOnly: true, ioChrome: 'edit' },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-demo')).toHaveAttribute('data-read-only', 'true');
+    await expect(canvas.getByTestId('field-remap-io-browse')).toBeVisible();
+    await expect(canvas.queryByTestId('field-remap-shape-io-source')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-convert-palette')).toBeNull();
+    await expect(canvas.getByTestId('field-remap-detail')).toHaveTextContent('Inspect mappings');
+    await expect(canvas.getByTestId('field-remap-detail')).not.toHaveTextContent('Convert palette');
+    await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
+    await expect(canvas.getByTestId('field-remap-detail-binding')).toBeVisible();
+    await expect(canvas.queryByTestId('field-remap-add-node-e-name')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-remove-edge-e-name')).toBeNull();
+    await userEvent.click(canvas.getByTestId('field-remap-detail-step-0'));
+    await expect(canvas.getByTestId('field-remap-step-id')).toBeDisabled();
+    await expect(canvas.queryByTestId('field-remap-convert-note-remove')).toBeNull();
+  },
+};
+
+export const ReadOnlyEmbed: Story = {
+  name: 'Read-only embed inspection',
+  args: {
+    sampleId: 'nested-ab',
+    readOnly: true,
+    chrome: 'embed',
+    emptyDetail: 'collapse',
+    showBindingsList: false,
+    ioChrome: 'none',
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByTestId('field-remap-detail')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-edges')).toBeNull();
+    const transformNode = await waitFor(() => {
+      const node = canvasElement.querySelector<HTMLElement>(
+        '.react-flow__node[data-id="xf:e-name:0"]',
+      );
+      expect(node).toBeTruthy();
+      return node!;
+    });
+    transformNode.focus();
+    await expect(transformNode).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-step-id')).toBeDisabled();
+    const directEdge = await waitFor(() => {
+      const edge = canvasElement.querySelector<SVGGElement>(
+        '.react-flow__edge[data-id="fe:e-country:direct"]',
+      );
+      expect(edge).toBeTruthy();
+      return edge!;
+    });
+    directEdge.focus();
+    await expect(directEdge).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(canvas.getByTestId('field-remap-detail-binding')).toHaveTextContent(
+      'a.profile.country → b.location.country',
+    );
   },
 };
 

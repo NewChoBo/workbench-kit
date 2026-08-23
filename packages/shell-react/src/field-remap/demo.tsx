@@ -26,6 +26,7 @@ export interface SampleFieldRemapDemoProps {
   readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   readonly emptyDetail?: FieldRemapFlowMapperProps['emptyDetail'];
   readonly detailPresentation?: FieldRemapFlowMapperProps['detailPresentation'];
+  readonly readOnly?: FieldRemapFlowMapperProps['readOnly'];
   /** When true, show host-chrome demo controls (history + fit view). */
   readonly showHostChromeDemo?: boolean | undefined;
   /** Prefer `browse` for I/O class/field inspection demos. */
@@ -48,6 +49,7 @@ export function SampleFieldRemapDemo({
   showConvertPalette,
   emptyDetail,
   detailPresentation,
+  readOnly,
   showHostChromeDemo = false,
   ioChrome,
   browseSeedShapes = false,
@@ -91,7 +93,7 @@ export function SampleFieldRemapDemo({
             compact
             type="button"
             data-testid="field-remap-undo"
-            disabled={!historyAvailability.canUndo}
+            disabled={readOnly || !historyAvailability.canUndo}
             onClick={() => historyActionsRef.current?.undo()}
           >
             Undo
@@ -100,7 +102,7 @@ export function SampleFieldRemapDemo({
             compact
             type="button"
             data-testid="field-remap-redo"
-            disabled={!historyAvailability.canRedo}
+            disabled={readOnly || !historyAvailability.canRedo}
             onClick={() => historyActionsRef.current?.redo()}
           >
             Redo
@@ -122,6 +124,7 @@ export function SampleFieldRemapDemo({
         showConvertPalette={showConvertPalette}
         emptyDetail={emptyDetail}
         detailPresentation={detailPresentation}
+        readOnly={readOnly}
         onShowMinimapChange={setShowMinimap}
         ioChrome={ioChrome}
         editableShapes={ioChrome === 'browse' ? false : undefined}

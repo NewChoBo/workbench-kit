@@ -37,6 +37,9 @@ export interface FieldRemapChromeLabels {
   readonly hideHiddenFields: string;
   readonly emptyDetailTitle: string;
   readonly emptyDetailDescription: string;
+  /** Additive inspection-only empty-detail copy. Omitted hosts use the English defaults. */
+  readonly readOnlyEmptyDetailTitle?: string;
+  readonly readOnlyEmptyDetailDescription?: string;
   /** Additive selection-detail Modal copy. Omitted legacy label objects use English defaults. */
   readonly detailModalTitle?: string;
   readonly closeDetailModal?: string;
@@ -79,6 +82,8 @@ export const defaultFieldRemapChromeLabels = {
   emptyDetailTitle: 'Start with a convert',
   emptyDetailDescription:
     'Use the Convert palette to place a convert, then wire source → draft → target. Or select an existing binding / convert note on the canvas.',
+  readOnlyEmptyDetailTitle: 'Inspect mappings',
+  readOnlyEmptyDetailDescription: 'Select a mapping to inspect its details.',
   detailModalTitle: 'Mapping details',
   closeDetailModal: 'Close details',
   previewTitle: 'Sample preview',
@@ -119,6 +124,8 @@ export const fieldRemapChromeLabelKeys = {
   hideHiddenFields: 'fieldRemap.hideHiddenFields',
   emptyDetailTitle: 'fieldRemap.emptyDetailTitle',
   emptyDetailDescription: 'fieldRemap.emptyDetailDescription',
+  readOnlyEmptyDetailTitle: 'fieldRemap.readOnlyEmptyDetailTitle',
+  readOnlyEmptyDetailDescription: 'fieldRemap.readOnlyEmptyDetailDescription',
   detailModalTitle: 'fieldRemap.detailModalTitle',
   closeDetailModal: 'fieldRemap.closeDetailModal',
   previewTitle: 'fieldRemap.previewTitle',
@@ -169,6 +176,8 @@ export function resolveFieldRemapChromeLabels(
     hideHiddenFields: resolve('hideHiddenFields'),
     emptyDetailTitle: resolve('emptyDetailTitle'),
     emptyDetailDescription: resolve('emptyDetailDescription'),
+    readOnlyEmptyDetailTitle: resolve('readOnlyEmptyDetailTitle'),
+    readOnlyEmptyDetailDescription: resolve('readOnlyEmptyDetailDescription'),
     detailModalTitle: resolve('detailModalTitle'),
     closeDetailModal: resolve('closeDetailModal'),
     previewTitle: resolve('previewTitle'),

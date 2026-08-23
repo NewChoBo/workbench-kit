@@ -28,6 +28,7 @@ export interface ConvertNoteEditorProps {
   readonly onEdgesChange: (edges: readonly MappingEdge[]) => void;
   readonly edges: readonly MappingEdge[];
   readonly onSelectionChange: (next: FieldRemapSelection) => void;
+  readonly readOnly?: boolean | undefined;
 }
 
 /**
@@ -43,6 +44,7 @@ export function ConvertNoteEditor({
   edges,
   onEdgesChange,
   onSelectionChange,
+  readOnly = false,
 }: ConvertNoteEditorProps): JSX.Element | null {
   const chain = edge.transformIds ?? [];
   const transformId = chain[stepIndex];
@@ -77,7 +79,7 @@ export function ConvertNoteEditor({
   const stepLabel = definition?.label ?? transformId;
 
   const applyEdge = (next: MappingEdge | null) => {
-    if (!next) {
+    if (readOnly || !next) {
       return;
     }
     onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
@@ -135,6 +137,7 @@ export function ConvertNoteEditor({
             aria-label="Convert transform id"
             data-testid="field-remap-step-id"
             value={transformId}
+            disabled={readOnly}
             onChange={(event) => {
               applyEdge(
                 setTransformStepIdOnEdge(edge, stepIndex, event.target.value, {
@@ -165,35 +168,38 @@ export function ConvertNoteEditor({
         <TransformOptionsEditor
           fields={optionFields}
           value={optionValue}
+          disabled={readOnly}
           onChange={(nextOptions) => {
             applyEdge(replaceTransformStepOptionsOnEdge(edge, stepIndex, nextOptions));
           }}
         />
       </section>
 
-      <div className="workbench-field-remap-convert-note__footer">
-        <Button
-          compact
-          type="button"
-          data-testid="field-remap-convert-note-remove"
-          onClick={() => {
-            const next = removeTransformStepFromEdge(edge, stepIndex);
-            applyEdge(next);
-            const nextLen = next.transformIds?.length ?? 0;
-            if (nextLen === 0) {
-              onSelectionChange({ kind: 'edge', edgeId: edge.id });
-            } else {
-              onSelectionChange({
-                kind: 'transformStep',
-                edgeId: edge.id,
-                stepIndex: Math.min(stepIndex, nextLen - 1),
-              });
-            }
-          }}
-        >
-          Remove convert
-        </Button>
-      </div>
+      {!readOnly ? (
+        <div className="workbench-field-remap-convert-note__footer">
+          <Button
+            compact
+            type="button"
+            data-testid="field-remap-convert-note-remove"
+            onClick={() => {
+              const next = removeTransformStepFromEdge(edge, stepIndex);
+              applyEdge(next);
+              const nextLen = next.transformIds?.length ?? 0;
+              if (nextLen === 0) {
+                onSelectionChange({ kind: 'edge', edgeId: edge.id });
+              } else {
+                onSelectionChange({
+                  kind: 'transformStep',
+                  edgeId: edge.id,
+                  stepIndex: Math.min(stepIndex, nextLen - 1),
+                });
+              }
+            }}
+          >
+            Remove convert
+          </Button>
+        </div>
+      ) : null}
     </aside>
   );
 }

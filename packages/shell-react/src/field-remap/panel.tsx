@@ -82,6 +82,8 @@ export interface FieldRemapPanelProps {
   readonly sample?: FieldRemapSampleId | FieldRemapSampleDefinition | undefined;
   /** Optional host-owned transform registry (defaults to builtins + JSONata). */
   readonly transforms?: ValueTransformRegistry | undefined;
+  /** View-only authoring guard forwarded to Flow; this is not an authorization boundary. */
+  readonly readOnly?: boolean | undefined;
   /**
    * When true (default), show paste-JSON / type editors for host-owned shapes.
    * Prefer {@link FieldRemapPanelProps.ioChrome} for browse-first hosts; when
@@ -252,6 +254,7 @@ function createFieldRemapPreviewSignature(): (value: unknown) => string {
 export function FieldRemapPanel({
   sample: sampleProp,
   transforms: transformsProp,
+  readOnly = false,
   editableShapes = true,
   ioChrome: ioChromeProp,
   includeHidden: includeHiddenProp,
@@ -286,7 +289,8 @@ export function FieldRemapPanel({
   labels,
   t,
 }: FieldRemapPanelProps): JSX.Element {
-  const ioChrome = resolveFieldRemapIoChrome(ioChromeProp, editableShapes);
+  const configuredIoChrome = resolveFieldRemapIoChrome(ioChromeProp, editableShapes);
+  const ioChrome = readOnly && configuredIoChrome === 'edit' ? 'browse' : configuredIoChrome;
   const [uncontrolledIncludeHidden, setUncontrolledIncludeHidden] = useState(false);
   const includeHiddenControlled = includeHiddenProp !== undefined;
   const includeHidden = includeHiddenControlled ? includeHiddenProp : uncontrolledIncludeHidden;
@@ -508,6 +512,9 @@ export function FieldRemapPanel({
   };
 
   const handleHistoryKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (readOnly) {
+      return;
+    }
     if (
       event.defaultPrevented ||
       event.altKey ||
@@ -680,6 +687,7 @@ export function FieldRemapPanel({
       data-testid="field-remap-demo"
       data-sample-id={sample.id}
       data-edges-mode={edgesControlled ? 'controlled' : 'uncontrolled'}
+      data-read-only={readOnly ? 'true' : 'false'}
       onKeyDown={handleHistoryKeyDown}
     >
       <header className="workbench-field-remap-demo__header">
@@ -728,6 +736,7 @@ export function FieldRemapPanel({
       ) : null}
 
       <FieldRemapFlowMapper
+        readOnly={readOnly}
         sources={flowSources}
         targets={flowTargets}
         edges={flowEdges}
