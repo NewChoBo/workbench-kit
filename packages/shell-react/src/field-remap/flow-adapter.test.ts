@@ -114,6 +114,36 @@ describe('field-remap-flow-adapter', () => {
     expect(edge?.targetSlotId).toBe('b.name');
   });
 
+  it('preserves every existing edge field when a direct target is rewired', () => {
+    const existing: MappingEdge = {
+      id: 'edge:array',
+      sourceFieldId: 'a.tags',
+      targetSlotId: 'b.labels',
+      transformIds: ['array:first'],
+      transformOptionSteps: [{ fallback: 'none' }],
+      itemSourcePath: 'name',
+      itemTransformIds: ['string:trim'],
+      itemTransformOptionSteps: [{ trimMode: 'both' }],
+      itemEdges: [
+        {
+          id: 'edge:item-title',
+          sourceFieldId: 'a.tags.item.name',
+          targetSlotId: 'b.labels.item.title',
+        },
+      ],
+    };
+
+    expect(
+      connectionToMappingEdge({
+        sourceNodeId: SOURCE_OBJECT_NODE_ID,
+        targetNodeId: TARGET_OBJECT_NODE_ID,
+        sourceHandle: 'a.user_name',
+        targetHandle: 'b.labels',
+        existing: [existing],
+      }),
+    ).toEqual({ ...existing, sourceFieldId: 'a.user_name' });
+  });
+
   it('allows object↔object connects and rejects incomplete handles', () => {
     expect(
       isValidFieldRemapFlowConnection({

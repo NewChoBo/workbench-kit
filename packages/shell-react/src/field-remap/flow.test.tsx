@@ -210,13 +210,13 @@ describe('FieldRemapFlowMapper host chrome', () => {
     ];
 
     await renderMapper({ sources, targets, edges });
-    const status = container!.querySelector('[data-testid="field-remap-conflicts"]');
+    const status = container!.querySelector('[role="status"]');
     expect(status?.getAttribute('role')).toBe('status');
     expect(status?.textContent).toContain('source:profile / source:profile.name');
-    expect(container!.querySelectorAll('[data-testid="field-remap-conflicts"]')).toHaveLength(1);
+    expect(container!.querySelectorAll('[role="status"]')).toHaveLength(1);
 
     await rerenderMapper({ sources, targets, edges, parentChildConflicts: [] });
-    expect(container!.querySelector('[data-testid="field-remap-conflicts"]')).toBeNull();
+    expect(container!.querySelector('[role="status"]')).toBeNull();
   });
 
   it('uses the latest operator callback, data, and selection after a controlled rerender', async () => {

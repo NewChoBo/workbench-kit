@@ -569,9 +569,9 @@ describe('FieldRemapPanel', () => {
     expect(
       container.querySelector('[data-testid="field-remap-lane-edge:hidden-child"]'),
     ).toBeNull();
-    const status = container.querySelector('[data-testid="field-remap-conflicts"]');
+    const status = container.querySelector('[role="status"]');
     expect(status?.textContent).toContain('a.profile / a.profile.internal_id');
-    expect(container.querySelectorAll('[data-testid="field-remap-conflicts"]')).toHaveLength(1);
+    expect(container.querySelectorAll('[role="status"]')).toHaveLength(1);
   });
 
   it('keeps draft placement outside semantic history', async () => {

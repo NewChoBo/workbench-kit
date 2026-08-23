@@ -492,17 +492,21 @@ function rejectConnection(
 }
 
 function acceptOrRewire(impactedEdgeIds: readonly string[]): FieldRemapFlowConnectionEvaluation {
-  const uniqueIds = [...new Set(impactedEdgeIds)];
-  return uniqueIds.length > 0
-    ? { status: 'rewire', impactedEdgeIds: uniqueIds }
-    : acceptedConnection;
+  return impactedEdgeIds.length > 0 ? { status: 'rewire', impactedEdgeIds } : acceptedConnection;
 }
 
-function hasTransformDefinitions(
-  transforms: ValueTransformRegistry,
+function evaluatePortCompatibility(
+  context: Pick<IsValidFieldRemapFlowConnectionContext, 'transforms'>,
+  sourceType: SourceField['dataType'],
+  targetType: TargetSlot['dataType'],
   transformIds: readonly string[],
-): boolean {
-  return transformIds.every((transformId) => transforms.get(transformId) !== undefined);
+): FieldRemapFlowConnectionEvaluation | undefined {
+  if (!transformIds.every((transformId) => context.transforms.get(transformId) !== undefined)) {
+    return rejectConnection('missing-transform-definition');
+  }
+  return arePortsCompatible({ sourceType, targetType, transformIds, registry: context.transforms })
+    ? undefined
+    : rejectConnection('incompatible-port-types');
 }
 
 function targetRewireEdgeIds(
@@ -580,24 +584,20 @@ export function evaluateFieldRemapFlowConnection(
     if (!sourceField) {
       return rejectConnection('missing-port-endpoint');
     }
-    if (!context.transforms.get(draft.transformId)) {
-      return rejectConnection('missing-transform-definition');
-    }
     const targetSlot = draft.targetSlotId
       ? findTargetSlot(context.targets, draft.targetSlotId)
       : undefined;
     if (draft.targetSlotId && !targetSlot) {
       return rejectConnection('missing-draft-endpoint');
     }
-    if (
-      !arePortsCompatible({
-        sourceType: sourceField.dataType,
-        targetType: targetSlot?.dataType ?? 'unknown',
-        transformIds: [draft.transformId],
-        registry: context.transforms,
-      })
-    ) {
-      return rejectConnection('incompatible-port-types');
+    const rejection = evaluatePortCompatibility(
+      context,
+      sourceField.dataType,
+      targetSlot?.dataType ?? 'unknown',
+      [draft.transformId],
+    );
+    if (rejection) {
+      return rejection;
     }
     return acceptOrRewire(
       draft.targetSlotId ? targetRewireEdgeIds(context.edges, draft.targetSlotId) : [],
@@ -626,18 +626,14 @@ export function evaluateFieldRemapFlowConnection(
     if (draft.sourceFieldId && !sourceField) {
       return rejectConnection('missing-draft-endpoint');
     }
-    if (!context.transforms.get(draft.transformId)) {
-      return rejectConnection('missing-transform-definition');
-    }
-    if (
-      !arePortsCompatible({
-        sourceType: sourceField?.dataType,
-        targetType: targetSlot.dataType,
-        transformIds: [draft.transformId],
-        registry: context.transforms,
-      })
-    ) {
-      return rejectConnection('incompatible-port-types');
+    const rejection = evaluatePortCompatibility(
+      context,
+      sourceField?.dataType,
+      targetSlot.dataType,
+      [draft.transformId],
+    );
+    if (rejection) {
+      return rejection;
     }
     return acceptOrRewire(targetRewireEdgeIds(context.edges, connection.targetHandle));
   }
@@ -667,17 +663,14 @@ export function evaluateFieldRemapFlowConnection(
       return rejectConnection('missing-port-endpoint');
     }
     const retainedChain = chain.slice(xfTarget.stepIndex);
-    if (!hasTransformDefinitions(context.transforms, retainedChain)) {
-      return rejectConnection('missing-transform-definition');
-    }
-    return arePortsCompatible({
-      sourceType: sourceField?.dataType,
-      targetType: targetSlot.dataType,
-      transformIds: retainedChain,
-      registry: context.transforms,
-    })
-      ? acceptedConnection
-      : rejectConnection('incompatible-port-types');
+    return (
+      evaluatePortCompatibility(
+        context,
+        sourceField.dataType,
+        targetSlot.dataType,
+        retainedChain,
+      ) ?? acceptedConnection
+    );
   }
 
   if (source === SOURCE_OBJECT_NODE_ID && xfTarget) {
@@ -702,18 +695,14 @@ export function evaluateFieldRemapFlowConnection(
       return rejectConnection('missing-port-endpoint');
     }
     const retainedChain = chain.slice(0, xfSource.stepIndex + 1);
-    if (!hasTransformDefinitions(context.transforms, retainedChain)) {
-      return rejectConnection('missing-transform-definition');
-    }
-    if (
-      !arePortsCompatible({
-        sourceType: sourceField.dataType,
-        targetType: targetSlot.dataType,
-        transformIds: retainedChain,
-        registry: context.transforms,
-      })
-    ) {
-      return rejectConnection('incompatible-port-types');
+    const rejection = evaluatePortCompatibility(
+      context,
+      sourceField.dataType,
+      targetSlot.dataType,
+      retainedChain,
+    );
+    if (rejection) {
+      return rejection;
     }
     return acceptOrRewire(targetRewireEdgeIds(context.edges, connection.targetHandle, edge.id));
   }
@@ -751,18 +740,14 @@ export function evaluateFieldRemapFlowConnection(
     if (!sourceField || !targetSlot) {
       return rejectConnection('missing-port-endpoint');
     }
-    if (!hasTransformDefinitions(context.transforms, merged)) {
-      return rejectConnection('missing-transform-definition');
-    }
-    if (
-      !arePortsCompatible({
-        sourceType: sourceField.dataType,
-        targetType: targetSlot.dataType,
-        transformIds: merged,
-        registry: context.transforms,
-      })
-    ) {
-      return rejectConnection('incompatible-port-types');
+    const rejection = evaluatePortCompatibility(
+      context,
+      sourceField.dataType,
+      targetSlot.dataType,
+      merged,
+    );
+    if (rejection) {
+      return rejection;
     }
     return acceptOrRewire([edgeA.id]);
   }
@@ -794,18 +779,14 @@ export function evaluateFieldRemapFlowConnection(
   }
   const existing = context.edges.find((edge) => edge.targetSlotId === targetSlotId);
   const retainedChain = existing?.transformIds ?? [];
-  if (!hasTransformDefinitions(context.transforms, retainedChain)) {
-    return rejectConnection('missing-transform-definition');
-  }
-  if (
-    !arePortsCompatible({
-      sourceType: sourceField?.dataType,
-      targetType: targetSlot.dataType,
-      transformIds: retainedChain,
-      registry: context.transforms,
-    })
-  ) {
-    return rejectConnection('incompatible-port-types');
+  const rejection = evaluatePortCompatibility(
+    context,
+    sourceField.dataType,
+    targetSlot.dataType,
+    retainedChain,
+  );
+  if (rejection) {
+    return rejection;
   }
   return acceptOrRewire(targetRewireEdgeIds(context.edges, targetSlotId));
 }
@@ -844,16 +825,13 @@ export function connectionToMappingEdge(input: {
   }
 
   const existing = input.existing.find((edge) => edge.targetSlotId === targetSlotId);
+  if (existing) {
+    return { ...existing, sourceFieldId, targetSlotId };
+  }
   return {
-    id: existing?.id ?? `e-${sourceFieldId}-${targetSlotId}-${Date.now()}`,
+    id: `e-${sourceFieldId}-${targetSlotId}-${Date.now()}`,
     sourceFieldId,
     targetSlotId,
-    ...(existing?.transformIds ? { transformIds: existing.transformIds } : {}),
-    ...(existing?.transformOptionSteps
-      ? { transformOptionSteps: existing.transformOptionSteps }
-      : {}),
-    ...(existing?.itemSourcePath ? { itemSourcePath: existing.itemSourcePath } : {}),
-    ...(existing?.itemEdges ? { itemEdges: existing.itemEdges } : {}),
   };
 }
 

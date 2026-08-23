@@ -153,7 +153,7 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     expect(flowHarness.props?.isValidConnection(connection)).toBe(false);
     expect(flowHarness.props?.isValidConnection(connection)).toBe(false);
     expect(onConnectionFeedback).not.toHaveBeenCalled();
-    expect(container!.querySelector('[data-testid="field-remap-connection-feedback"]')).toBeNull();
+    expect(container!.querySelector('[role="status"]')).toBeNull();
 
     await act(async () => {
       flowHarness.props?.onConnectStart();
@@ -164,14 +164,54 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
 
     expect(onConnectionFeedback).toHaveBeenCalledOnce();
     expect(onConnectionFeedback).toHaveBeenCalledWith({
-      kind: 'rejected',
       reason: 'incompatible-port-types',
     });
-    expect(
-      container!
-        .querySelector('[data-testid="field-remap-connection-feedback"]')
-        ?.getAttribute('data-reason'),
-    ).toBe('incompatible-port-types');
+    expect(container!.querySelector('[role="status"]')?.textContent).toContain(
+      'incompatible-port-types',
+    );
+  });
+
+  it('reports a concrete same-direction drop but keeps handle-less cancellation silent', async () => {
+    const onConnectionFeedback = vi.fn();
+    await renderFlow({ onConnectionFeedback });
+    const unsupported: Connection = {
+      source: 'obj:source',
+      sourceHandle: 'src.name',
+      target: 'obj:source',
+      targetHandle: 'src.other',
+    };
+    const concreteState = finalState(unsupported, false) as unknown as {
+      fromHandle: { type: 'source' | 'target' };
+      toHandle: { type: 'source' | 'target' } | null;
+      toNode: unknown;
+    };
+    concreteState.toHandle!.type = 'source';
+
+    await act(async () => {
+      flowHarness.props?.onConnectStart();
+      flowHarness.props?.onConnectEnd(
+        new MouseEvent('pointerup'),
+        concreteState as unknown as FinalConnectionState,
+      );
+      await Promise.resolve();
+    });
+    expect(onConnectionFeedback).toHaveBeenCalledOnce();
+    expect(onConnectionFeedback).toHaveBeenCalledWith({
+      reason: 'unsupported-topology',
+    });
+
+    concreteState.toHandle = null;
+    concreteState.toNode = null;
+    await act(async () => {
+      flowHarness.props?.onConnectStart();
+      flowHarness.props?.onConnectEnd(
+        new MouseEvent('pointerup'),
+        concreteState as unknown as FinalConnectionState,
+      );
+      await Promise.resolve();
+    });
+    expect(onConnectionFeedback).toHaveBeenCalledOnce();
+    expect(container!.querySelector('[role="status"]')).toBeNull();
   });
 
   it('rejects a synchronous rewire without mutating prior edges and replaces by default', async () => {
@@ -197,7 +237,6 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     expect(rejectEdgesChange).not.toHaveBeenCalled();
     expect(rejectFeedback).toHaveBeenCalledOnce();
     expect(rejectFeedback).toHaveBeenCalledWith({
-      kind: 'rejected',
       reason: 'rewire-policy-rejected',
       impactedEdgeIds: ['edge:name'],
     });

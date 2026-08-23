@@ -424,7 +424,6 @@ export type FieldRemapConnectionFeedbackReason =
   FieldRemapFlowConnectionRejectionReason | 'rewire-policy-rejected';
 
 export interface FieldRemapConnectionFeedback {
-  readonly kind: 'rejected';
   readonly reason: FieldRemapConnectionFeedbackReason;
   readonly impactedEdgeIds?: readonly string[];
 }
@@ -433,40 +432,13 @@ function connectionFromFinalState(state: FinalConnectionState): Connection | nul
   if (!state.fromNode || !state.fromHandle || !state.toNode || !state.toHandle) {
     return null;
   }
-  if (state.fromHandle.type === 'source' && state.toHandle.type === 'target') {
-    return {
-      source: state.fromNode.id,
-      sourceHandle: state.fromHandle.id ?? null,
-      target: state.toNode.id,
-      targetHandle: state.toHandle.id ?? null,
-    };
-  }
-  if (state.fromHandle.type === 'target' && state.toHandle.type === 'source') {
-    return {
-      source: state.toNode.id,
-      sourceHandle: state.toHandle.id ?? null,
-      target: state.fromNode.id,
-      targetHandle: state.fromHandle.id ?? null,
-    };
-  }
-  return null;
-}
-
-function describeConnectionFeedback(reason: FieldRemapConnectionFeedbackReason): string {
-  const descriptions: Record<FieldRemapConnectionFeedbackReason, string> = {
-    'incomplete-connection': 'Choose both concrete handles',
-    'unsupported-topology': 'This connection topology is unsupported',
-    'missing-port-endpoint': 'A source or target port is no longer available',
-    'missing-draft-endpoint': 'The draft endpoint is no longer available',
-    'missing-transform-edge': 'The transform binding is no longer available',
-    'missing-transform-step': 'The transform step is no longer available',
-    'missing-transform-definition': 'A required transform is no longer available',
-    'same-edge-transform-splice': 'A transform chain cannot be spliced into itself',
-    'transform-chain-limit': 'The combined transform chain is too long',
-    'incompatible-port-types': 'The known source and target types are incompatible',
-    'rewire-policy-rejected': 'Rewiring is disabled for this Flow',
+  const reversed = state.fromHandle.type === 'target';
+  return {
+    source: (reversed ? state.toNode : state.fromNode).id,
+    sourceHandle: (reversed ? state.toHandle : state.fromHandle).id ?? null,
+    target: (reversed ? state.fromNode : state.toNode).id,
+    targetHandle: (reversed ? state.fromHandle : state.toHandle).id ?? null,
   };
-  return `Connection rejected: ${descriptions[reason]}`;
 }
 
 interface FieldRemapSplitWorkspaceProps {
@@ -767,7 +739,7 @@ function FieldRemapFlowCanvas({
       }
       const evaluation = evaluateFieldRemapFlowConnection(connection, connectionContext);
       if (evaluation.status === 'rejected') {
-        publishConnectionFeedback({ kind: 'rejected', reason: evaluation.reason });
+        publishConnectionFeedback({ reason: evaluation.reason });
       }
     },
     [connectionContext, publishConnectionFeedback],
@@ -785,7 +757,6 @@ function FieldRemapFlowCanvas({
       if (evaluation.status === 'rewire' && rewirePolicy === 'reject') {
         connectionAttemptCompletedRef.current = true;
         publishConnectionFeedback({
-          kind: 'rejected',
           reason: 'rewire-policy-rejected',
           impactedEdgeIds: evaluation.impactedEdgeIds,
         });
@@ -1141,22 +1112,13 @@ function FieldRemapFlowCanvas({
       ) : null}
 
       {connectionFeedback ? (
-        <p
-          className="workbench-field-remap-demo__warn"
-          data-reason={connectionFeedback.reason}
-          data-testid="field-remap-connection-feedback"
-          role="status"
-        >
-          {describeConnectionFeedback(connectionFeedback.reason)}
+        <p className="workbench-field-remap-demo__warn" role="status">
+          {connectionFeedback.reason}
         </p>
       ) : null}
 
       {conflicts.length > 0 ? (
-        <p
-          className="workbench-field-remap-demo__warn"
-          data-testid="field-remap-conflicts"
-          role="status"
-        >
+        <p className="workbench-field-remap-demo__warn" role="status">
           Warning: parent and child fields are both mapped (
           {conflicts.map((item) => `${item.parentId} / ${item.childId}`).join('; ')}). Prefer one
           level.
