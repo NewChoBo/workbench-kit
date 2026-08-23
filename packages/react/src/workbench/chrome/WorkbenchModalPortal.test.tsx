@@ -1,11 +1,12 @@
 /** @vitest-environment jsdom */
 
-import { act } from 'react';
+import { act, type CSSProperties } from 'react';
 import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 
 import { WorkbenchDialogFrame } from '../management/WorkbenchDialogFrame';
 import { WorkbenchShell } from '../shell/WorkbenchShell';
+import { WorkbenchModalPortal } from './WorkbenchModalPortal';
 
 class ResizeObserverMock {
   disconnect() {}
@@ -22,6 +23,78 @@ const testGlobal = globalThis as typeof globalThis & {
 testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('WorkbenchModalPortal', () => {
+  it('falls back to document.body outside a WorkbenchShell', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchModalPortal>
+          <div data-testid="standalone-modal">Standalone modal</div>
+        </WorkbenchModalPortal>,
+      );
+    });
+
+    const modal = document.body.querySelector('[data-testid="standalone-modal"]');
+    expect(modal).not.toBeNull();
+    expect(modal?.parentElement).toBe(document.body);
+    expect(container.contains(modal)).toBe(false);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('preserves scoped theme attributes and token overrides in the body fallback', async () => {
+    const container = document.createElement('div');
+    const stylesheet = document.createElement('style');
+    stylesheet.textContent = '.portal-token-scope { --color-fg: rgb(24, 24, 27); }';
+    document.head.append(stylesheet);
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <div
+          data-theme="light"
+          data-theme-preset="light-plus"
+          data-shell-preset="compact"
+          style={{ '--color-bg': 'rgb(250, 250, 250)' } as CSSProperties}
+        >
+          <div
+            className="portal-token-scope"
+            data-theme="dark"
+            data-theme-preference="system"
+            data-workbench-platform="darwin"
+          >
+            <WorkbenchModalPortal>
+              <div data-testid="themed-standalone-modal">Themed standalone modal</div>
+            </WorkbenchModalPortal>
+          </div>
+        </div>,
+      );
+    });
+
+    const modal = document.body.querySelector('[data-testid="themed-standalone-modal"]');
+    const themeHost = modal?.closest<HTMLElement>('[data-workbench-modal-portal-theme="true"]');
+    expect(themeHost?.parentElement).toBe(document.body);
+    expect(themeHost?.dataset.theme).toBe('dark');
+    expect(themeHost?.dataset.themePreset).toBe('light-plus');
+    expect(themeHost?.dataset.shellPreset).toBe('compact');
+    expect(themeHost?.dataset.themePreference).toBe('system');
+    expect(themeHost?.dataset.workbenchPlatform).toBe('darwin');
+    expect(themeHost?.style.getPropertyValue('--color-bg')).toBe('rgb(250, 250, 250)');
+    expect(themeHost?.style.getPropertyValue('--color-fg')).toBe('rgb(24,24,27)');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+    stylesheet.remove();
+  });
+
   it('portals dialog chrome into ide-workbench-overlays below the root title bar', async () => {
     const container = document.createElement('div');
     document.body.append(container);

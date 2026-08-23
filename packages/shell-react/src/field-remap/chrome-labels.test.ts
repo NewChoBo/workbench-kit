@@ -12,10 +12,12 @@ describe('resolveFieldRemapChromeLabels', () => {
       bindingsTitle: 'Field maps',
       addCombine: 'Create join',
       previewTitle: 'Live result',
+      detailModalTitle: 'Edit mapping',
     });
     expect(labels.bindingsTitle).toBe('Field maps');
     expect(labels.addCombine).toBe('Create join');
     expect(labels.previewTitle).toBe('Live result');
+    expect(labels.detailModalTitle).toBe('Edit mapping');
     expect(labels.convertPaletteTitle).toBe(defaultFieldRemapChromeLabels.convertPaletteTitle);
     expect(labels.previewLoading).toBe(defaultFieldRemapChromeLabels.previewLoading);
   });

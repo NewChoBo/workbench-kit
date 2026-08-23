@@ -33,6 +33,7 @@
     "./workbench/bootstrap": "./src/workbench/bootstrap/index.ts",
     "./workbench/chat": "./src/workbench/chat/index.ts",
     "./workbench/management": "./src/workbench/management/index.ts",
+    "./workbench/modal-portal": "./src/workbench/chrome/WorkbenchModalPortal.tsx",
     "./workbench/settings": "./src/workbench/settings/index.ts",
     "./workbench": "./src/workbench/index.ts",
     "./workbench/activityBarOrder": "./src/workbench/shell/activityBarOrder.ts",

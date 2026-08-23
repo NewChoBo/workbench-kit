@@ -55,6 +55,11 @@ const meta = {
       description: 'Keeps the empty detail hint or collapses its rail until selection.',
       options: ['hint', 'collapse'],
     },
+    detailPresentation: {
+      control: 'inline-radio',
+      description: 'Shows selection detail in the resizable rail or shared Modal.',
+      options: ['rail', 'modal'],
+    },
     showHostChromeDemo: { control: 'boolean', description: 'Shows host-owned editor actions.' },
     ioChrome: {
       control: 'select',
@@ -411,6 +416,60 @@ export const EmbedChrome: Story = {
     await expect(canvasElement.querySelector('.react-flow__viewport')).toBe(viewport);
     expect(viewport!.style.transform).toBe(viewportTransform);
     await expectCanvasFillsPane(flow, canvasPane!);
+  },
+};
+
+export const ModalDetail: Story = {
+  name: 'Modal detail',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    detailPresentation: 'modal',
+    emptyDetail: 'collapse',
+    showBindingsList: true,
+    showConvertPalette: false,
+    showMinimap: false,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    const selectEdge = canvas.getByTestId('field-remap-select-edge-e-name');
+    selectEdge.focus();
+    await userEvent.click(selectEdge);
+
+    const dialog = await body.findByRole('dialog', { name: 'Mapping details' });
+    await expect(dialog).toBeVisible();
+    await expect(within(dialog).getByTestId('field-remap-detail')).toBeVisible();
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
+    ).toBeNull();
+    const overlay = dialog.closest<HTMLElement>('.ui-modal-overlay');
+    await waitFor(() => {
+      const overlayBounds = overlay!.getBoundingClientRect();
+      const dialogBounds = dialog.getBoundingClientRect();
+      expect(Math.abs(overlayBounds.width - window.innerWidth)).toBeLessThanOrEqual(1);
+      expect(Math.abs(overlayBounds.height - window.innerHeight)).toBeLessThanOrEqual(1);
+      expect(dialogBounds.left).toBeGreaterThanOrEqual(overlayBounds.left);
+      expect(dialogBounds.top).toBeGreaterThanOrEqual(overlayBounds.top);
+      expect(dialogBounds.right).toBeLessThanOrEqual(overlayBounds.right);
+      expect(dialogBounds.bottom).toBeLessThanOrEqual(overlayBounds.bottom);
+    });
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    await userEvent.tab({ shift: true });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close details' }));
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(selectEdge).toHaveFocus());
+
+    await userEvent.click(selectEdge);
+    const reopenedDialog = await body.findByRole('dialog', { name: 'Mapping details' });
+    await expect(reopenedDialog).toBeVisible();
+    await waitFor(() => expect(reopenedDialog.contains(document.activeElement)).toBe(true));
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(selectEdge).toHaveFocus());
   },
 };
 

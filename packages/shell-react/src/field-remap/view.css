@@ -797,6 +797,15 @@
   overflow: auto;
 }
 
+.workbench-field-remap-detail-modal .workbench-field-remap-detail,
+.workbench-field-remap-detail-modal .workbench-field-remap-convert-note {
+  min-height: 0;
+  max-height: none;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+
 .workbench-field-remap-preview {
   display: flex;
   flex-direction: column;
