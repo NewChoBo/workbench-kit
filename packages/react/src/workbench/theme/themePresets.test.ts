@@ -58,6 +58,22 @@ describe('themePresets', () => {
     ]);
   });
 
+  it('preserves custom theme preferences and writable option fields', () => {
+    const customPreference: WorkbenchColorSchemePreference = 'contributed.theme';
+    const mutableOption: WorkbenchThemePresetOption<WorkbenchColorSchemePreference> = {
+      id: customPreference,
+      label: 'Contributed theme',
+    };
+
+    mutableOption.id = 'system';
+    mutableOption.label = 'System theme';
+
+    expect(mutableOption).toEqual({
+      id: 'system',
+      label: 'System theme',
+    });
+  });
+
   it('resolves WorkbenchThemeProvider attributes from resolved theme and preset selection', () => {
     expect(
       resolveWorkbenchThemeProviderAttributes({
