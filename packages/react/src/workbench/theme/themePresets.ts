@@ -14,7 +14,7 @@ import {
   type WorkbenchColorSchemePreference,
   type WorkbenchThemePresetManifestEntry,
   type WorkbenchThemePresetOption,
-} from '@workbench-kit/contracts';
+} from '@workbench-kit/contracts/theme-presets';
 
 import { resolveWorkbenchTheme, type ResolvedWorkbenchTheme } from './theme';
 import { applyWorkbenchShellAttributes } from '../shell/shellPresets';

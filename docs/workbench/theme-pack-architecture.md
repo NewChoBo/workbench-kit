@@ -27,7 +27,7 @@ primitive → semantic → flat → shell color aliases). Color preset overrides
 TypeScript registries:
 
 - Color: framework-neutral `LIGHT_THEME_PRESET_MANIFEST` /
-  `DARK_THEME_PRESET_MANIFEST` from `@workbench-kit/contracts` (compatibly re-exported by
+  `DARK_THEME_PRESET_MANIFEST` from `@workbench-kit/contracts/theme-presets` (compatibly re-exported by
   `@workbench-kit/react/workbench/themePresets`)
 - Layout: `SHELL_PRESET_MANIFEST` in `shellPresets.ts`
 
@@ -94,7 +94,7 @@ packages/react/src/workbench/
 
 - Add a **color** preset: create `themes/{light|dark}/{id}.css`, add `@import` in
   `theme-presets.css`, add one row to the matching framework-neutral manifest in
-  `@workbench-kit/contracts`.
+  `@workbench-kit/contracts/theme-presets`.
 - Add a **layout** preset: create `shell/{id}.css`, add `@import` in `shell-presets.css`,
   add one row to `SHELL_PRESET_MANIFEST` in `shellPresets.ts`.
 - Do not add preset blocks back into a monolithic CSS file.
@@ -349,7 +349,8 @@ and extension contributions. Reference: `examples/workbench-sample/src/host-them
 
 ## Agent coordination
 
-- **Framework-neutral hosts:** import built-in color manifests from `@workbench-kit/contracts`.
+- **Framework-neutral hosts:** import built-in color manifests from
+  `@workbench-kit/contracts/theme-presets`.
 - **Appearance / Storybook:** import options from `themePresets.ts` / `shellPresets.ts` only.
 - **Settings UI:** import labels from `appearanceLabels.ts` — do not duplicate VS Code copy.
 - **Sample apps:** `workbench-sample` appearance storage validates via type guards.

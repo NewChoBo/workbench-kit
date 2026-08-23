@@ -313,25 +313,6 @@ export {
   snapshotDesignSystemResolutionInput,
   snapshotUiDesignSystemState,
 } from './design-system/snapshot';
-export {
-  DARK_THEME_PRESET_MANIFEST,
-  DARK_THEME_PRESET_OPTIONS,
-  DEFAULT_DARK_THEME_PRESET,
-  DEFAULT_LIGHT_THEME_PRESET,
-  LIGHT_THEME_PRESET_MANIFEST,
-  LIGHT_THEME_PRESET_OPTIONS,
-  WORKBENCH_COLOR_SCHEME_OPTIONS,
-  isDarkThemePresetId,
-  isLightThemePresetId,
-} from './design-system/builtin-theme-presets';
-export type {
-  DarkThemePresetId,
-  LightThemePresetId,
-  ThemePresetId,
-  WorkbenchColorSchemePreference,
-  WorkbenchThemePresetManifestEntry,
-  WorkbenchThemePresetOption,
-} from './design-system/builtin-theme-presets';
 export type {
   UiBorderStyle,
   UiBorderValue,
