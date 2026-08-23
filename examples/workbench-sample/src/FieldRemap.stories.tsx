@@ -403,7 +403,12 @@ export const IoBrowseChrome: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const ioBrowse = within(canvas.getByTestId('field-remap-io-browse'));
+    const ioBrowseElement = canvas.getByTestId('field-remap-io-browse');
     await expect(ioBrowse.getByText('PersonProfile@1')).toBeVisible();
+    await expect(ioBrowseElement.querySelector('.ui-sidebar-row')).toBeTruthy();
+    await expect(ioBrowseElement.querySelector('ul ul')).toBeTruthy();
+    await expect(ioBrowseElement.querySelector('button, [tabindex]')).toBeNull();
+    await expect(ioBrowseElement.querySelector('[role="tree"], [role="treeitem"]')).toBeNull();
     // Browse rows render `path` (e.g. profile.internal_id), not bare label text.
     await expect(ioBrowse.queryByText('profile.internal_id')).toBeNull();
     await userEvent.click(canvas.getByLabelText('Show hidden fields'));

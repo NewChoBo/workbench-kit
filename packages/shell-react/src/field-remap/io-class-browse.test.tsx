@@ -55,6 +55,20 @@ describe('FieldRemapIoClassBrowse', () => {
           dataType: 'string',
           hidden: true,
         },
+        {
+          id: 'a.user.address',
+          label: 'address',
+          path: 'user.address',
+          dataType: 'object',
+          children: [
+            {
+              id: 'a.user.address.city',
+              label: 'city',
+              path: 'user.address.city',
+              dataType: 'string',
+            },
+          ],
+        },
       ],
     },
   ];
@@ -71,6 +85,26 @@ describe('FieldRemapIoClassBrowse', () => {
     expect(container?.textContent).toContain('User@1');
     expect(container?.textContent).toContain('user.name');
     expect(container?.textContent).not.toContain('user.secret');
+    expect(container?.querySelectorAll('.ui-sidebar-row').length).toBeGreaterThan(0);
+    expect(container?.querySelectorAll('.ui-badge[data-variant="muted"]').length).toBeGreaterThan(
+      0,
+    );
+  });
+
+  it('keeps shallow and nested browse content static and list-semantic', () => {
+    mount(<FieldRemapIoClassBrowse sources={sources} targets={targets} />);
+    const browse = container?.querySelector('[data-testid="field-remap-io-browse"]');
+    const sourceSection = browse?.querySelector('section[aria-label="Inputs"]');
+    const sourcePort = sourceSection?.querySelector(':scope > ul > li');
+    const nestedLists = sourcePort?.querySelectorAll('ul ul');
+
+    expect(sourcePort?.textContent).toContain('user.name');
+    expect(sourcePort?.textContent).toContain('user.address.city');
+    expect(nestedLists?.length).toBeGreaterThan(0);
+    expect(sourcePort?.querySelectorAll('ul').length).toBeGreaterThan(0);
+    expect(browse?.querySelector('button')).toBeNull();
+    expect(browse?.querySelector('[tabindex]')).toBeNull();
+    expect(browse?.querySelector('[role="tree"], [role="treeitem"]')).toBeNull();
   });
 
   it('shows hidden badges when includeHidden is true', () => {
@@ -92,5 +126,25 @@ describe('FieldRemapIoClassBrowse', () => {
     expect(container?.textContent).toContain('Internal');
     expect(container?.textContent).not.toContain('Hidden');
     expect(container?.querySelector('[title="Class reference"]')).toBeTruthy();
+  });
+
+  it('uses host titles and empty copy without adding interaction chrome', () => {
+    mount(
+      <FieldRemapIoClassBrowse
+        emptyLabel="Nothing declared"
+        sources={[]}
+        sourcesTitle="Incoming"
+        targets={[]}
+        targetsTitle="Outgoing"
+      />,
+    );
+
+    expect(container?.querySelector('section[aria-label="Incoming"]')?.textContent).toContain(
+      'Nothing declared',
+    );
+    expect(container?.querySelector('section[aria-label="Outgoing"]')?.textContent).toContain(
+      'Nothing declared',
+    );
+    expect(container?.querySelector('button, [tabindex]')).toBeNull();
   });
 });
