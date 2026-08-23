@@ -3,6 +3,13 @@
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
   "type": "module",
+  "typesVersions": {
+    "*": {
+      "theme-presets": [
+        "dist/theme-presets.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "tsup",
     "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
@@ -14,6 +21,12 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "default": "./dist/index.js"
+    },
+    "./theme-presets": {
+      "types": "./dist/theme-presets.d.ts",
+      "import": "./dist/theme-presets.js",
+      "require": "./dist/theme-presets.cjs",
+      "default": "./dist/theme-presets.js"
     }
   },
   "main": "./dist/index.cjs",
