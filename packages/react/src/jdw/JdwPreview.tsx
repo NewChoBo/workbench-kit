@@ -141,11 +141,9 @@ export function JdwPreview({
     const previousExplicitChange = previousExplicitChangeRef.current;
     const hasExplicitVersion = changedValuePathsVersion !== undefined;
     const explicitPathsChanged = previousExplicitChange.initialized
-      ? hasExplicitVersion
-        ? !previousExplicitChange.hasVersion ||
-          !Object.is(previousExplicitChange.version, changedValuePathsVersion)
-        : previousExplicitChange.hasVersion ||
-          !areSameChangedValuePaths(previousExplicitChange.paths, changedValuePaths)
+      ? previousExplicitChange.hasVersion !== hasExplicitVersion ||
+        !areSameChangedValuePaths(previousExplicitChange.paths, changedValuePaths) ||
+        (hasExplicitVersion && !Object.is(previousExplicitChange.version, changedValuePathsVersion))
       : changedValuePaths.length > 0;
     const inferredChangedPaths = collectJsonWidgetChangedValuePaths(
       previousValuesRef.current,

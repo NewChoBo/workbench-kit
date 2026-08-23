@@ -329,6 +329,70 @@ describe('JdwPreview', () => {
     container.remove();
   });
 
+  it('publishes a changed explicit path set without requiring a new version', async () => {
+    const json = formatJsonWidgetData({
+      type: 'column',
+      listen: ['theme'],
+      args: {
+        children: [
+          {
+            type: 'text',
+            listen: ['title'],
+            args: { text: '${title}' },
+          },
+        ],
+      },
+    });
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const scheduled: Array<() => void> = [];
+    const schedule = (flush: () => void) => {
+      scheduled.push(flush);
+      return () => undefined;
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          changedValuePaths={['title']}
+          changedValuePathsVersion={1}
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+        />,
+      );
+    });
+    await act(async () => {
+      scheduled[0]?.();
+    });
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          changedValuePaths={['theme.color']}
+          changedValuePathsVersion={1}
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+        />,
+      );
+    });
+
+    expect(scheduled).toHaveLength(2);
+    await act(async () => {
+      scheduled[1]?.();
+    });
+
+    expect(batches.map((batch) => batch.changedPaths)).toEqual([['title'], ['theme.color']]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('publishes repeated inferred paths as independent value-change batches', async () => {
     const json = formatJsonWidgetData({
       type: 'text',
