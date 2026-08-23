@@ -187,6 +187,81 @@ describe('useJdwListenScheduler', () => {
     });
   });
 
+  it('keeps pending paths stable when the schedule delegate identity changes', async () => {
+    const firstScheduled: Array<() => void> = [];
+    const secondScheduled: Array<() => void> = [];
+    const firstSchedule: JsonWidgetListenSchedule = (flush) => {
+      firstScheduled.push(flush);
+      return () => undefined;
+    };
+    const secondSchedule: JsonWidgetListenSchedule = (flush) => {
+      secondScheduled.push(flush);
+      return () => undefined;
+    };
+    const rootNode: JsonWidgetNode = {
+      type: 'text',
+      listen: ['title'],
+      args: { text: '${title}' },
+    };
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const container = document.createElement('div');
+    containers.push(container);
+    document.body.append(container);
+    const reactRoot = createRoot(container);
+
+    function Harness({
+      changeVersion,
+      schedule,
+    }: {
+      readonly changeVersion: number;
+      readonly schedule: JsonWidgetListenSchedule;
+    }) {
+      const batch = useJdwListenScheduler({
+        root: rootNode,
+        changedPaths: ['title'],
+        changeVersion,
+        schedule,
+      });
+      useEffect(() => {
+        if (batch) {
+          batches.push(batch);
+        }
+      }, [batch]);
+      return null;
+    }
+
+    await act(async () => {
+      reactRoot.render(<Harness changeVersion={1} schedule={firstSchedule} />);
+    });
+    expect(firstScheduled).toHaveLength(1);
+
+    await act(async () => {
+      reactRoot.render(<Harness changeVersion={1} schedule={secondSchedule} />);
+    });
+
+    expect(firstScheduled).toHaveLength(1);
+    expect(secondScheduled).toHaveLength(0);
+
+    await act(async () => {
+      firstScheduled[0]?.();
+    });
+    expect(batches.map((batch) => batch.changedPaths)).toEqual([['title']]);
+
+    await act(async () => {
+      reactRoot.render(<Harness changeVersion={2} schedule={secondSchedule} />);
+    });
+    expect(secondScheduled).toHaveLength(1);
+
+    await act(async () => {
+      secondScheduled[0]?.();
+    });
+    expect(batches.map((batch) => batch.changedPaths)).toEqual([['title'], ['title']]);
+
+    await act(async () => {
+      reactRoot.unmount();
+    });
+  });
+
   it('cancels a pending hook delivery when the subscriber unmounts', async () => {
     const scheduled: Array<() => void> = [];
     const schedule: JsonWidgetListenSchedule = (flush) => {

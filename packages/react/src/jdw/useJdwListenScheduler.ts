@@ -43,14 +43,15 @@ export function useJdwListenScheduler({
   rootRef.current = root;
   const changedPathsRef = useRef(changedPaths);
   changedPathsRef.current = changedPaths;
+  const scheduleRef = useRef(schedule ?? schedulePreviewFrame);
+  scheduleRef.current = schedule ?? schedulePreviewFrame;
   const schedulerRef = useRef<JsonWidgetListenScheduler | null>(null);
   const [batch, setBatch] = useState<JsonWidgetListenSchedulerBatch | null>(null);
-  const effectiveSchedule = schedule ?? schedulePreviewFrame;
 
   useEffect(() => {
     const scheduler = createJsonWidgetListenScheduler({
       getRoot: () => rootRef.current,
-      schedule: effectiveSchedule,
+      schedule: (flush) => scheduleRef.current(flush),
     });
     schedulerRef.current = scheduler;
     const unsubscribe = scheduler.subscribe(setBatch);
@@ -61,7 +62,7 @@ export function useJdwListenScheduler({
       unsubscribe();
       scheduler.dispose();
     };
-  }, [effectiveSchedule]);
+  }, []);
 
   useEffect(() => {
     const scheduler = schedulerRef.current;
@@ -71,7 +72,7 @@ export function useJdwListenScheduler({
     for (const path of changedPathsRef.current) {
       scheduler.notify(path);
     }
-  }, [changeVersion, effectiveSchedule]);
+  }, [changeVersion]);
 
   return batch;
 }
