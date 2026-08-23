@@ -1,5 +1,12 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
+import {
+  createBuiltinValueTransformRegistry,
+  type MappingEdge,
+  type SourceField,
+  type TargetSlot,
+} from '@workbench-kit/field-remap';
+import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
 
 import { FieldRemapDemo } from './FieldRemapDemo';
 
@@ -73,6 +80,35 @@ async function expectCanvasFillsPane(flow: HTMLElement, pane: HTMLElement): Prom
   });
 }
 
+const rewireSources: readonly SourceField[] = [
+  { id: 'src.name', label: 'Current name', dataType: 'string' },
+  { id: 'src.other', label: 'Other name', dataType: 'string' },
+];
+const rewireTargets: readonly TargetSlot[] = [
+  { id: 'tgt.name', label: 'Name', dataType: 'string' },
+];
+const rewireEdges: readonly MappingEdge[] = [
+  { id: 'edge:name', sourceFieldId: 'src.name', targetSlotId: 'tgt.name' },
+];
+const rewireTransforms = createBuiltinValueTransformRegistry();
+
+function RewireRejectDemo() {
+  return (
+    <FieldRemapFlowMapper
+      sources={rewireSources}
+      targets={rewireTargets}
+      edges={rewireEdges}
+      transforms={rewireTransforms}
+      rewirePolicy="reject"
+      showConvertPalette={false}
+      showMinimap={false}
+      onEdgesChange={() => {
+        throw new Error('Rejected rewire mutated durable edges');
+      }}
+    />
+  );
+}
+
 export const NestedAB: Story = {
   name: 'A → B',
   args: { sampleId: 'nested-ab' },
@@ -94,6 +130,110 @@ export const NestedAB: Story = {
     await userEvent.click(canvas.getByTestId('field-remap-palette-item-string:upper'));
     await userEvent.click(canvas.getByTestId('field-remap-place-draft'));
     await expect(canvas.getByTestId('field-remap-detail-draft-id')).toBeVisible();
+  },
+};
+
+export const ConnectionRejectFeedback: Story = {
+  name: 'Connection reject feedback',
+  args: { sampleId: 'nested-ab' },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const sourceHandle = canvasElement.querySelector<HTMLElement>(
+      '.react-flow__handle.source[data-nodeid="obj:source"][data-handleid="a.user_name"]',
+    );
+    const targetHandle = canvasElement.querySelector<HTMLElement>(
+      '.react-flow__handle.target[data-nodeid="obj:target"][data-handleid="b.labels"]',
+    );
+    await expect(sourceHandle).toBeVisible();
+    await expect(targetHandle).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-lane-e-tags')).toBeVisible();
+
+    const sourceRect = sourceHandle!.getBoundingClientRect();
+    const targetRect = targetHandle!.getBoundingClientRect();
+    await userEvent.pointer([
+      {
+        keys: '[MouseLeft>]',
+        target: sourceHandle!,
+        coords: {
+          clientX: sourceRect.x + sourceRect.width / 2,
+          clientY: sourceRect.y + sourceRect.height / 2,
+        },
+      },
+      {
+        target: targetHandle!,
+        coords: {
+          clientX: targetRect.x + targetRect.width / 2,
+          clientY: targetRect.y + targetRect.height / 2,
+        },
+      },
+      {
+        keys: '[/MouseLeft]',
+        target: targetHandle!,
+        coords: {
+          clientX: targetRect.x + targetRect.width / 2,
+          clientY: targetRect.y + targetRect.height / 2,
+        },
+      },
+    ]);
+
+    const feedback = await canvas.findByText('incompatible-port-types');
+    await expect(feedback).toHaveAttribute('role', 'status');
+    await expect(canvas.getAllByText('incompatible-port-types')).toHaveLength(1);
+    await expect(canvas.getByTestId('field-remap-lane-e-tags')).toBeVisible();
+  },
+};
+
+export const RewireRejectFeedback: Story = {
+  name: 'Rewire reject feedback',
+  args: { sampleId: 'nested-ab' },
+  render: () => <RewireRejectDemo />,
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const sourceHandle = canvasElement.querySelector<HTMLElement>(
+      '.react-flow__handle.source[data-nodeid="obj:source"][data-handleid="src.other"]',
+    );
+    const targetHandle = canvasElement.querySelector<HTMLElement>(
+      '.react-flow__handle.target[data-nodeid="obj:target"][data-handleid="tgt.name"]',
+    );
+    const originalLane = canvas.getByTestId('field-remap-lane-edge:name');
+    await expect(sourceHandle).toBeVisible();
+    await expect(targetHandle).toBeVisible();
+    await expect(originalLane).toHaveTextContent('src.name → tgt.name');
+
+    const sourceRect = sourceHandle!.getBoundingClientRect();
+    const targetRect = targetHandle!.getBoundingClientRect();
+    await userEvent.pointer([
+      {
+        keys: '[MouseLeft>]',
+        target: sourceHandle!,
+        coords: {
+          clientX: sourceRect.x + sourceRect.width / 2,
+          clientY: sourceRect.y + sourceRect.height / 2,
+        },
+      },
+      {
+        target: targetHandle!,
+        coords: {
+          clientX: targetRect.x + targetRect.width / 2,
+          clientY: targetRect.y + targetRect.height / 2,
+        },
+      },
+      {
+        keys: '[/MouseLeft]',
+        target: targetHandle!,
+        coords: {
+          clientX: targetRect.x + targetRect.width / 2,
+          clientY: targetRect.y + targetRect.height / 2,
+        },
+      },
+    ]);
+
+    const feedback = await canvas.findByText('rewire-policy-rejected');
+    await expect(feedback).toHaveAttribute('role', 'status');
+    await expect(canvas.getAllByText('rewire-policy-rejected')).toHaveLength(1);
+    await expect(originalLane).toHaveTextContent('src.name → tgt.name');
   },
 };
 

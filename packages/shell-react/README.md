@@ -151,6 +151,13 @@ hooks so hosts avoid CSS/DOM workarounds:
 | `flowActionsRef`                                                | `{ fitView(options?) }` using the same defaults as Controls fit-view.                                 |
 | `labels` / `t`                                                  | Override edge-list / Convert palette chrome (e.g. “Field maps”).                                      |
 | `ioChrome` (Panel)                                              | `'browse' \| 'edit' \| 'none'` — prefer browse for inspect-only I/O.                                  |
+| `rewirePolicy` (Flow)                                           | `'replace'` by default; `'reject'` preserves prior edges and reports impacted edge IDs.               |
+| `onConnectionFeedback` (Flow)                                   | Receives one structured result at connection-attempt completion; hover validation stays silent.       |
+| `parentChildConflicts` (Flow)                                   | Optional authoritative conflict projection; `undefined` derives from the supplied Flow inputs.        |
+
+Rejected attempts render one compact `role="status"` message. Standalone Flow embeds derive
+parent/child conflicts with the domain detector; Panel computes the same conflicts from full shapes
+before hidden-field projection and supplies that authoritative result, so it renders only once.
 
 ```tsx
 const flowActionsRef = useRef<FieldRemapFlowActions | null>(null);

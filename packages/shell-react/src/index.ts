@@ -114,6 +114,8 @@ export {
 } from './field-remap/panel.js';
 export {
   FieldRemapFlowMapper,
+  type FieldRemapConnectionFeedback,
+  type FieldRemapConnectionFeedbackReason,
   type FieldRemapFlowActions,
   type FieldRemapFlowMapperProps,
 } from './field-remap/flow.js';

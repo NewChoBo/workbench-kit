@@ -26,6 +26,7 @@ import {
   useReactFlow,
   type Connection,
   type Edge,
+  type FinalConnectionState,
   type Node,
   type NodeProps,
 } from '@xyflow/react';
@@ -34,6 +35,8 @@ import { Badge, IconButton } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
   MAX_TRANSFORM_CHAIN,
+  findParentChildMappingConflicts,
+  type MappingConflict,
   type MappingEdge,
   type MappingOperator,
   type SourceField,
@@ -50,6 +53,7 @@ import {
 import { FieldRemapDetailPanel } from './detail-panel.js';
 import {
   applyFieldRemapFlowConnection,
+  evaluateFieldRemapFlowConnection,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
   parseDraftTransformNodeId,
@@ -57,6 +61,7 @@ import {
   type FieldRemapCombineOperatorNodeData,
   type FieldRemapDraftTransformNodeData,
   type FieldRemapFlowEdgeData,
+  type FieldRemapFlowConnectionRejectionReason,
   type FieldRemapFlowNodeData,
   type FieldRemapSourceObjectNodeData,
   type FieldRemapSplitOperatorNodeData,
@@ -328,6 +333,16 @@ export interface FieldRemapFlowMapperProps {
   readonly edges: readonly MappingEdge[];
   readonly transforms: ValueTransformRegistry;
   readonly onEdgesChange: (edges: readonly MappingEdge[]) => void;
+  /** Existing target/donor edges are replaced by default; `reject` preserves them unchanged. */
+  readonly rewirePolicy?: 'replace' | 'reject' | undefined;
+  /** Structured completed-attempt feedback; hover validation never invokes this callback. */
+  readonly onConnectionFeedback?:
+    ((feedback: FieldRemapConnectionFeedback | null) => void) | undefined;
+  /**
+   * Authoritative parent/child conflict projection. `undefined` derives from supplied Flow inputs;
+   * an explicit empty array suppresses fallback derivation.
+   */
+  readonly parentChildConflicts?: readonly MappingConflict[] | undefined;
   /**
    * `card` preserves the demo chrome. `embed` omits the flow hint and binding list;
    * explicit `show*` props below take precedence.
@@ -403,6 +418,27 @@ export interface FieldRemapFlowMapperProps {
   readonly labels?: Partial<FieldRemapChromeLabels> | undefined;
   /** Optional `t(key, fallback)` injection; `labels` wins when both are set. */
   readonly t?: FieldRemapTranslate | undefined;
+}
+
+export type FieldRemapConnectionFeedbackReason =
+  FieldRemapFlowConnectionRejectionReason | 'rewire-policy-rejected';
+
+export interface FieldRemapConnectionFeedback {
+  readonly reason: FieldRemapConnectionFeedbackReason;
+  readonly impactedEdgeIds?: readonly string[];
+}
+
+function connectionFromFinalState(state: FinalConnectionState): Connection | null {
+  if (!state.fromNode || !state.fromHandle || !state.toNode || !state.toHandle) {
+    return null;
+  }
+  const reversed = state.fromHandle.type === 'target';
+  return {
+    source: (reversed ? state.toNode : state.fromNode).id,
+    sourceHandle: (reversed ? state.toHandle : state.fromHandle).id ?? null,
+    target: (reversed ? state.fromNode : state.toNode).id,
+    targetHandle: (reversed ? state.fromHandle : state.toHandle).id ?? null,
+  };
 }
 
 interface FieldRemapSplitWorkspaceProps {
@@ -503,6 +539,9 @@ function FieldRemapFlowCanvas({
   edges,
   transforms,
   onEdgesChange,
+  rewirePolicy = 'replace',
+  onConnectionFeedback,
+  parentChildConflicts,
   chrome = 'card',
   emptyDetail: emptyDetailProp,
   showFlowHint: showFlowHintProp,
@@ -542,6 +581,10 @@ function FieldRemapFlowCanvas({
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
   const previewVisible = showPreview && preview !== undefined && preview.status !== 'unavailable';
   const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
+  const [connectionFeedback, setConnectionFeedback] = useState<FieldRemapConnectionFeedback | null>(
+    null,
+  );
+  const connectionAttemptCompletedRef = useRef(false);
   const [placeTransformId, setPlaceTransformId] = useState(() => {
     const first = transforms.list().find((definition) => definition.id !== 'identity');
     return first?.id ?? '';
@@ -659,10 +702,47 @@ function FieldRemapFlowCanvas({
     [sources, targets, edges, transforms, drafts, operators],
   );
 
+  const conflicts = useMemo(
+    () => parentChildConflicts ?? findParentChildMappingConflicts(edges, sources, targets),
+    [edges, parentChildConflicts, sources, targets],
+  );
+
+  const publishConnectionFeedback = useCallback(
+    (feedback: FieldRemapConnectionFeedback | null) => {
+      setConnectionFeedback(feedback);
+      onConnectionFeedback?.(feedback);
+    },
+    [onConnectionFeedback],
+  );
+
   const isValidConnection = useCallback(
     (connection: Connection | Edge) =>
       isValidFieldRemapFlowConnection(connection, connectionContext),
     [connectionContext],
+  );
+
+  const onConnectStart = useCallback(() => {
+    // Clearing at attempt start lets an identical later rejection be announced once at completion.
+    connectionAttemptCompletedRef.current = false;
+    setConnectionFeedback(null);
+  }, []);
+
+  const onConnectEnd = useCallback(
+    (_event: globalThis.MouseEvent | TouchEvent, state: FinalConnectionState) => {
+      if (connectionAttemptCompletedRef.current) {
+        return;
+      }
+      connectionAttemptCompletedRef.current = true;
+      const connection = connectionFromFinalState(state);
+      if (!connection) {
+        return;
+      }
+      const evaluation = evaluateFieldRemapFlowConnection(connection, connectionContext);
+      if (evaluation.status === 'rejected') {
+        publishConnectionFeedback({ reason: evaluation.reason });
+      }
+    },
+    [connectionContext, publishConnectionFeedback],
   );
 
   const onConnect = useCallback(
@@ -670,9 +750,20 @@ function FieldRemapFlowCanvas({
       if (!connection.source || !connection.target) {
         return;
       }
-      if (!isValidFieldRemapFlowConnection(connection, connectionContext)) {
+      const evaluation = evaluateFieldRemapFlowConnection(connection, connectionContext);
+      if (evaluation.status === 'rejected') {
         return;
       }
+      if (evaluation.status === 'rewire' && rewirePolicy === 'reject') {
+        connectionAttemptCompletedRef.current = true;
+        publishConnectionFeedback({
+          reason: 'rewire-policy-rejected',
+          impactedEdgeIds: evaluation.impactedEdgeIds,
+        });
+        return;
+      }
+      connectionAttemptCompletedRef.current = true;
+      publishConnectionFeedback(null);
 
       const draftAsTarget = parseDraftTransformNodeId(connection.target);
       if (draftAsTarget && connection.sourceHandle) {
@@ -785,6 +876,8 @@ function FieldRemapFlowCanvas({
       onEdgesChange,
       onOperatorsChange,
       operators,
+      publishConnectionFeedback,
+      rewirePolicy,
       setSelection,
       sources,
       targets,
@@ -1018,6 +1111,20 @@ function FieldRemapFlowCanvas({
         </p>
       ) : null}
 
+      {connectionFeedback ? (
+        <p className="workbench-field-remap-demo__warn" role="status">
+          {connectionFeedback.reason}
+        </p>
+      ) : null}
+
+      {conflicts.length > 0 ? (
+        <p className="workbench-field-remap-demo__warn" role="status">
+          Warning: parent and child fields are both mapped (
+          {conflicts.map((item) => `${item.parentId} / ${item.childId}`).join('; ')}). Prefer one
+          level.
+        </p>
+      ) : null}
+
       <FieldRemapSplitWorkspace
         layout={workspaceLayout}
         showConvertPalette={showConvertPalette}
@@ -1070,6 +1177,8 @@ function FieldRemapFlowCanvas({
             onNodesChange={onNodesChange}
             onEdgesChange={onFlowEdgesChange}
             onConnect={onConnect}
+            onConnectStart={onConnectStart}
+            onConnectEnd={onConnectEnd}
             onEdgesDelete={onEdgesDelete}
             onNodeClick={onNodeClick}
             onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}

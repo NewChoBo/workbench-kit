@@ -532,6 +532,48 @@ describe('FieldRemapPanel', () => {
     );
   });
 
+  it('preserves full-shape parent/child conflict evidence when the conflicting child is hidden', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const sample = getFieldRemapSample('nested-ab');
+    const browseShapes = getFieldRemapBrowseDemoShapes();
+    const edges: readonly MappingEdge[] = [
+      {
+        id: 'edge:profile',
+        sourceFieldId: 'a.profile',
+        targetSlotId: 'b.location',
+      },
+      {
+        id: 'edge:hidden-child',
+        sourceFieldId: 'a.profile.internal_id',
+        targetSlotId: 'b.name',
+      },
+    ];
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample={sample}
+          editableShapes={false}
+          includeHidden={false}
+          sources={browseShapes.sources}
+          targets={browseShapes.targets}
+          edges={edges}
+          onEdgesChange={() => {}}
+        />,
+      );
+    });
+    await settle();
+
+    expect(
+      container.querySelector('[data-testid="field-remap-lane-edge:hidden-child"]'),
+    ).toBeNull();
+    const status = container.querySelector('[role="status"]');
+    expect(status?.textContent).toContain('a.profile / a.profile.internal_id');
+    expect(container.querySelectorAll('[role="status"]')).toHaveLength(1);
+  });
+
   it('keeps draft placement outside semantic history', async () => {
     container = document.createElement('div');
     document.body.append(container);

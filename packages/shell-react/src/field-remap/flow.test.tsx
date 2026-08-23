@@ -183,6 +183,42 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(container!.textContent).not.toContain('Original transform');
   });
 
+  it('owns one parent/child conflict status for standalone Flow and honors an explicit empty override', async () => {
+    const sources: readonly SourceField[] = [
+      {
+        id: 'source:profile',
+        label: 'Profile',
+        dataType: 'object',
+        children: [{ id: 'source:profile.name', label: 'Name', dataType: 'string' }],
+      },
+    ];
+    const targets: readonly TargetSlot[] = [
+      { id: 'target:profile', label: 'Profile', dataType: 'object' },
+      { id: 'target:name', label: 'Name', dataType: 'string' },
+    ];
+    const edges: readonly MappingEdge[] = [
+      {
+        id: 'edge:profile',
+        sourceFieldId: 'source:profile',
+        targetSlotId: 'target:profile',
+      },
+      {
+        id: 'edge:name',
+        sourceFieldId: 'source:profile.name',
+        targetSlotId: 'target:name',
+      },
+    ];
+
+    await renderMapper({ sources, targets, edges });
+    const status = container!.querySelector('[role="status"]');
+    expect(status?.getAttribute('role')).toBe('status');
+    expect(status?.textContent).toContain('source:profile / source:profile.name');
+    expect(container!.querySelectorAll('[role="status"]')).toHaveLength(1);
+
+    await rerenderMapper({ sources, targets, edges, parentChildConflicts: [] });
+    expect(container!.querySelector('[role="status"]')).toBeNull();
+  });
+
   it('uses the latest operator callback, data, and selection after a controlled rerender', async () => {
     const sources: readonly SourceField[] = [
       { id: 'source:first', label: 'First', dataType: 'string' },

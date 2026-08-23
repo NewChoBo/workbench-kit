@@ -729,6 +729,7 @@ export function FieldRemapPanel({
         sources={flowSources}
         targets={flowTargets}
         edges={flowEdges}
+        parentChildConflicts={conflicts}
         transforms={registry}
         onEdgesChange={commitFlowEdges}
         operators={operators}
@@ -754,18 +755,6 @@ export function FieldRemapPanel({
         labels={labels}
         t={t}
       />
-
-      {conflicts.length > 0 ? (
-        <p
-          className="workbench-field-remap-demo__warn"
-          role="status"
-          data-testid="field-remap-conflicts"
-        >
-          Warning: parent and child fields are both mapped (
-          {conflicts.map((item) => `${item.parentId} / ${item.childId}`).join('; ')}). Prefer one
-          level.
-        </p>
-      ) : null}
 
       {preview.status === 'error' ? (
         <p className="workbench-field-remap-demo__error" role="alert">
