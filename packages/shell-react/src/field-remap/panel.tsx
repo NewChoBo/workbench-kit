@@ -138,6 +138,7 @@ export interface FieldRemapPanelProps {
   readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
   readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   readonly emptyDetail?: FieldRemapFlowMapperProps['emptyDetail'];
+  readonly detailPresentation?: FieldRemapFlowMapperProps['detailPresentation'];
   /** Show the controller-owned preview snapshot in the nested Flow rail. */
   readonly showFlowPreview?: boolean;
   /** Forwarded to {@link FieldRemapFlowMapper} Controls MiniMap toggle. */
@@ -275,6 +276,7 @@ export function FieldRemapPanel({
   showBindingsList,
   showConvertPalette,
   emptyDetail,
+  detailPresentation,
   showFlowPreview,
   onShowMinimapChange,
   onPaneContextMenu,
@@ -744,6 +746,7 @@ export function FieldRemapPanel({
         showBindingsList={showBindingsList}
         showConvertPalette={showConvertPalette}
         emptyDetail={emptyDetail}
+        detailPresentation={detailPresentation}
         {...(showFlowPreview ? { preview, showPreview: true } : {})}
         onShowMinimapChange={onShowMinimapChange}
         includeHidden={includeHidden}

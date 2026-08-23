@@ -94,6 +94,25 @@ describe('FieldRemapPanel', () => {
     expect(output.name).toBe('Ada Lovelace');
   });
 
+  it('forwards detail presentation to the Flow mapper', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel sample="nested-ab" editableShapes={false} detailPresentation="modal" />,
+      );
+      await Promise.resolve();
+    });
+
+    expect(
+      container
+        .querySelector('[data-testid="field-remap-mapper"]')
+        ?.getAttribute('data-detail-presentation'),
+    ).toBe('modal');
+  });
+
   it('keeps one live preview owner across StrictMode and aborts it after real unmount', async () => {
     container = document.createElement('div');
     document.body.append(container);

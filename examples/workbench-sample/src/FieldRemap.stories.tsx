@@ -55,6 +55,11 @@ const meta = {
       description: 'Keeps the empty detail hint or collapses its rail until selection.',
       options: ['hint', 'collapse'],
     },
+    detailPresentation: {
+      control: 'inline-radio',
+      description: 'Shows selection detail in the resizable rail or shared Modal.',
+      options: ['rail', 'modal'],
+    },
     showHostChromeDemo: { control: 'boolean', description: 'Shows host-owned editor actions.' },
     ioChrome: {
       control: 'select',
@@ -411,6 +416,47 @@ export const EmbedChrome: Story = {
     await expect(canvasElement.querySelector('.react-flow__viewport')).toBe(viewport);
     expect(viewport!.style.transform).toBe(viewportTransform);
     await expectCanvasFillsPane(flow, canvasPane!);
+  },
+};
+
+export const ModalDetail: Story = {
+  name: 'Modal detail',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    detailPresentation: 'modal',
+    emptyDetail: 'collapse',
+    showBindingsList: true,
+    showConvertPalette: false,
+    showMinimap: false,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const mapper = canvas.getByTestId('field-remap-mapper');
+    const selectEdge = canvas.getByTestId('field-remap-select-edge-e-name');
+    selectEdge.focus();
+    await userEvent.click(selectEdge);
+
+    const dialog = await canvas.findByRole('dialog', { name: 'Mapping details' });
+    await expect(dialog).toBeVisible();
+    await expect(within(dialog).getByTestId('field-remap-detail')).toBeVisible();
+    await expect(
+      canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
+    ).toBeNull();
+    await waitFor(() => expect(dialog.contains(document.activeElement)).toBe(true));
+    await userEvent.tab({ shift: true });
+    expect(dialog.contains(document.activeElement)).toBe(true);
+
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close details' }));
+    await waitFor(() => expect(canvas.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(selectEdge).toHaveFocus());
+
+    await userEvent.click(selectEdge);
+    await expect(await canvas.findByRole('dialog', { name: 'Mapping details' })).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(canvas.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(mapper).toHaveFocus());
   },
 };
 

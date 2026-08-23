@@ -31,6 +31,7 @@ import {
   type NodeProps,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { Modal } from '@workbench-kit/react/modal';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
 import { SplitView } from '@workbench-kit/react/workbench/split-view';
 import {
@@ -350,6 +351,8 @@ export interface FieldRemapFlowMapperProps {
   readonly chrome?: 'card' | 'embed' | undefined;
   /** Show the empty-selection detail hint, or collapse that rail until a selection exists. */
   readonly emptyDetail?: 'hint' | 'collapse' | undefined;
+  /** Render selection detail in the resizable rail (default) or the shared workbench Modal. */
+  readonly detailPresentation?: 'rail' | 'modal' | undefined;
   /** Show the convert-first hint. Defaults to true for `card`, false for `embed`. */
   readonly showFlowHint?: boolean | undefined;
   /** Show the bottom binding list. Defaults to true for `card`, false for `embed`. */
@@ -444,6 +447,7 @@ function connectionFromFinalState(state: FinalConnectionState): Connection | nul
 interface FieldRemapSplitWorkspaceProps {
   readonly children: ReactNode;
   readonly layout: 'wide' | 'medium' | 'narrow';
+  readonly reserveHiddenDetailSplit: boolean;
   readonly showConvertPalette: boolean;
   readonly showDetail: boolean;
   readonly surface: 'binding' | 'convert-note' | 'draft-convert' | 'operator';
@@ -457,6 +461,7 @@ interface FieldRemapSplitWorkspaceProps {
 function FieldRemapSplitWorkspace({
   children,
   layout,
+  reserveHiddenDetailSplit,
   showConvertPalette,
   showDetail,
   surface,
@@ -475,26 +480,29 @@ function FieldRemapSplitWorkspace({
   });
   const paletteSizePx = paletteSizeByLayout[layout];
   const detailSizePx = detailSizeByLayout[layout];
-  const canvasWithDetail = (
-    <SplitView
-      className={
-        showDetail
-          ? 'workbench-field-remap-flow__canvas-detail-split'
-          : 'workbench-field-remap-flow__canvas-detail-split ui-workbench-split-view--secondary-collapsed'
-      }
-      layoutMode="secondary-fixed"
-      maxSecondarySizePx={isNarrow ? 320 : 480}
-      minPrimarySizePx={isNarrow ? 200 : 280}
-      minSecondarySizePx={isNarrow ? 160 : 256}
-      onSecondarySizePxChange={(nextSize) => {
-        setDetailSizeByLayout((current) => ({ ...current, [layout]: nextSize }));
-      }}
-      orientation={isNarrow ? 'vertical' : 'horizontal'}
-      primary={canvas}
-      secondary={detail}
-      secondarySizePx={detailSizePx}
-    />
-  );
+  const canvasWithDetail =
+    showDetail || reserveHiddenDetailSplit ? (
+      <SplitView
+        className={
+          showDetail
+            ? 'workbench-field-remap-flow__canvas-detail-split'
+            : 'workbench-field-remap-flow__canvas-detail-split ui-workbench-split-view--secondary-collapsed'
+        }
+        layoutMode="secondary-fixed"
+        maxSecondarySizePx={isNarrow ? 320 : 480}
+        minPrimarySizePx={isNarrow ? 200 : 280}
+        minSecondarySizePx={isNarrow ? 160 : 256}
+        onSecondarySizePxChange={(nextSize) => {
+          setDetailSizeByLayout((current) => ({ ...current, [layout]: nextSize }));
+        }}
+        orientation={isNarrow ? 'vertical' : 'horizontal'}
+        primary={canvas}
+        secondary={detail}
+        secondarySizePx={detailSizePx}
+      />
+    ) : (
+      canvas
+    );
 
   const content = (
     <SplitView
@@ -544,6 +552,7 @@ function FieldRemapFlowCanvas({
   parentChildConflicts,
   chrome = 'card',
   emptyDetail: emptyDetailProp,
+  detailPresentation = 'rail',
   showFlowHint: showFlowHintProp,
   showBindingsList: showBindingsListProp,
   showConvertPalette = true,
@@ -580,6 +589,8 @@ function FieldRemapFlowCanvas({
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
   const setSelection = onSelectionChangeProp ?? setInternalSelection;
   const previewVisible = showPreview && preview !== undefined && preview.status !== 'unavailable';
+  const detailVisible = emptyDetail === 'hint' || selection !== null;
+  const sideRailVisible = previewVisible || (detailPresentation === 'rail' && detailVisible);
   const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
   const [connectionFeedback, setConnectionFeedback] = useState<FieldRemapConnectionFeedback | null>(
     null,
@@ -1086,6 +1097,26 @@ function FieldRemapFlowCanvas({
     [onEdgeContextMenu, selection],
   );
 
+  const detailPanel = detailVisible ? (
+    <FieldRemapDetailPanel
+      selection={selection}
+      edges={edges}
+      sources={sources}
+      targets={targets}
+      transforms={transforms}
+      onEdgesChange={onEdgesChange}
+      onSelectionChange={setSelection}
+      drafts={drafts}
+      onDiscardDraft={(localId) => {
+        setDrafts((current) => current.filter((item) => item.localId !== localId));
+      }}
+      operators={operators}
+      onOperatorsChange={onOperatorsChange}
+      emptyDetailTitle={chromeLabels.emptyDetailTitle}
+      emptyDetailDescription={chromeLabels.emptyDetailDescription}
+    />
+  ) : null;
+
   return (
     <div
       ref={mapperRef}
@@ -1096,6 +1127,7 @@ function FieldRemapFlowCanvas({
       data-bindings-list={showBindingsList ? 'on' : 'off'}
       data-convert-palette={showConvertPalette ? 'on' : 'off'}
       data-empty-detail={emptyDetail}
+      data-detail-presentation={detailPresentation}
       data-minimap={showMinimap ? 'on' : 'off'}
       data-hidden-fields={includeHidden ? 'on' : 'off'}
       data-preview={previewVisible ? 'on' : 'off'}
@@ -1127,8 +1159,9 @@ function FieldRemapFlowCanvas({
 
       <FieldRemapSplitWorkspace
         layout={workspaceLayout}
+        reserveHiddenDetailSplit={detailPresentation === 'rail'}
         showConvertPalette={showConvertPalette}
-        showDetail={emptyDetail === 'hint' || selection !== null || previewVisible}
+        showDetail={sideRailVisible}
         surface={
           selection?.kind === 'transformStep'
             ? 'convert-note'
@@ -1302,25 +1335,7 @@ function FieldRemapFlowCanvas({
         </div>
 
         <div className="workbench-field-remap-flow__side-rail">
-          {emptyDetail === 'hint' || selection !== null ? (
-            <FieldRemapDetailPanel
-              selection={selection}
-              edges={edges}
-              sources={sources}
-              targets={targets}
-              transforms={transforms}
-              onEdgesChange={onEdgesChange}
-              onSelectionChange={setSelection}
-              drafts={drafts}
-              onDiscardDraft={(localId) => {
-                setDrafts((current) => current.filter((item) => item.localId !== localId));
-              }}
-              operators={operators}
-              onOperatorsChange={onOperatorsChange}
-              emptyDetailTitle={chromeLabels.emptyDetailTitle}
-              emptyDetailDescription={chromeLabels.emptyDetailDescription}
-            />
-          ) : null}
+          {detailPresentation === 'rail' ? detailPanel : null}
           {previewVisible && preview ? (
             <FieldRemapPreviewRail
               preview={preview}
@@ -1336,6 +1351,21 @@ function FieldRemapFlowCanvas({
           ) : null}
         </div>
       </FieldRemapSplitWorkspace>
+
+      {detailPresentation === 'modal' && selection !== null ? (
+        <Modal
+          bodyClassName="workbench-field-remap-detail-modal__body"
+          bodyPadding="none"
+          bodyScroll="auto"
+          className="workbench-field-remap-detail-modal"
+          closeLabel={chromeLabels.closeDetailModal ?? 'Close details'}
+          closeOnEscape={false}
+          title={chromeLabels.detailModalTitle ?? 'Mapping details'}
+          onClose={() => setSelection(null)}
+        >
+          {detailPanel}
+        </Modal>
+      ) : null}
 
       {showBindingsList ? (
         <div className="workbench-field-remap-flow__bindings" data-testid="field-remap-edges">

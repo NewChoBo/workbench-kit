@@ -25,6 +25,7 @@ export interface SampleFieldRemapDemoProps {
   readonly showBindingsList?: FieldRemapFlowMapperProps['showBindingsList'];
   readonly showConvertPalette?: FieldRemapFlowMapperProps['showConvertPalette'];
   readonly emptyDetail?: FieldRemapFlowMapperProps['emptyDetail'];
+  readonly detailPresentation?: FieldRemapFlowMapperProps['detailPresentation'];
   /** When true, show host-chrome demo controls (history + fit view). */
   readonly showHostChromeDemo?: boolean | undefined;
   /** Prefer `browse` for I/O class/field inspection demos. */
@@ -46,6 +47,7 @@ export function SampleFieldRemapDemo({
   showBindingsList,
   showConvertPalette,
   emptyDetail,
+  detailPresentation,
   showHostChromeDemo = false,
   ioChrome,
   browseSeedShapes = false,
@@ -119,6 +121,7 @@ export function SampleFieldRemapDemo({
         showBindingsList={showBindingsList}
         showConvertPalette={showConvertPalette}
         emptyDetail={emptyDetail}
+        detailPresentation={detailPresentation}
         onShowMinimapChange={setShowMinimap}
         ioChrome={ioChrome}
         editableShapes={ioChrome === 'browse' ? false : undefined}

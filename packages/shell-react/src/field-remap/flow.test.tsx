@@ -489,6 +489,117 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(getActiveSeparators()).toHaveLength(1);
   });
 
+  it('renders selection detail in the shared Modal without reserving the detail split', async () => {
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      chrome: 'embed',
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+    });
+
+    const mapper = container!.querySelector('[data-testid="field-remap-mapper"]');
+    const dialog = container!.querySelector<HTMLElement>('[role="dialog"]');
+    const sideRail = container!.querySelector('.workbench-field-remap-flow__side-rail');
+    expect(mapper?.getAttribute('data-detail-presentation')).toBe('modal');
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    expect(dialog?.textContent).toContain('Binding');
+    expect(dialog?.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expect(sideRail).toBeNull();
+    expect(container!.querySelector('.workbench-field-remap-flow__canvas-detail-split')).toBeNull();
+    expect(getActiveSeparators()).toHaveLength(1);
+
+    await rerenderMapper({
+      chrome: 'embed',
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      selection: { kind: 'transformStep', edgeId: 'e-title', stepIndex: 0 },
+      onSelectionChange,
+    });
+    expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeTruthy();
+
+    await rerenderMapper({
+      chrome: 'embed',
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      selection: { kind: 'draft', localId: 'draft:modal' },
+      onSelectionChange,
+    });
+    expect(container!.querySelector('[data-testid="field-remap-detail-draft-id"]')).toBeTruthy();
+
+    await rerenderMapper({
+      chrome: 'embed',
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      selection: { kind: 'operator', operatorId: 'operator:modal' },
+      onSelectionChange,
+    });
+    expect(container!.querySelector('[data-testid="field-remap-detail-operator-id"]')).toBeTruthy();
+
+    await rerenderMapper({
+      chrome: 'embed',
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+    });
+
+    const overlay = container!.querySelector<HTMLElement>('.ui-modal-overlay');
+    await act(async () => overlay!.click());
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(onSelectionChange).toHaveBeenLastCalledWith(null);
+    expect(container!.querySelector('[role="dialog"]')).toBeTruthy();
+
+    await rerenderMapper({
+      chrome: 'embed',
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      selection: null,
+      onSelectionChange,
+    });
+    expect(container!.querySelector('[role="dialog"]')).toBeNull();
+  });
+
+  it('keeps preview in its rail while modal detail uses the same selection authority', async () => {
+    const ready = {
+      status: 'ready' as const,
+      result: { output: { ready: true }, slots: [] },
+    };
+    await renderMapper({
+      chrome: 'embed',
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      preview: ready,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      showConvertPalette: false,
+    });
+
+    const dialog = container!.querySelector('[role="dialog"]');
+    const sideRail = container!.querySelector('.workbench-field-remap-flow__side-rail');
+    expect(dialog?.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expect(sideRail?.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
+    expect(sideRail?.querySelector('[data-testid="field-remap-preview"]')).toBeTruthy();
+    expect(getActiveSeparators()).toHaveLength(1);
+  });
+
+  it('defers modal Escape to the mapper keyboard owner', async () => {
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      detailPresentation: 'modal',
+      emptyDetail: 'collapse',
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+    });
+
+    const dialog = container!.querySelector<HTMLElement>('[role="dialog"]')!;
+    const event = await pressKey(dialog, 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onSelectionChange).toHaveBeenCalledTimes(1);
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+  });
+
   it('fills the workspace through collapsed split panes when optional rails are unmounted', async () => {
     await renderMapper({
       chrome: 'embed',

@@ -37,6 +37,9 @@ export interface FieldRemapChromeLabels {
   readonly hideHiddenFields: string;
   readonly emptyDetailTitle: string;
   readonly emptyDetailDescription: string;
+  /** Additive selection-detail Modal copy. Omitted legacy label objects use English defaults. */
+  readonly detailModalTitle?: string;
+  readonly closeDetailModal?: string;
   /** Additive Flow preview copy. Omitted legacy label objects use English defaults. */
   readonly previewTitle?: string;
   readonly previewLoading?: string;
@@ -76,6 +79,8 @@ export const defaultFieldRemapChromeLabels = {
   emptyDetailTitle: 'Start with a convert',
   emptyDetailDescription:
     'Use the Convert palette to place a convert, then wire source → draft → target. Or select an existing binding / convert note on the canvas.',
+  detailModalTitle: 'Mapping details',
+  closeDetailModal: 'Close details',
   previewTitle: 'Sample preview',
   previewLoading: 'Updating preview…',
   previewError: 'Preview failed',
@@ -114,6 +119,8 @@ export const fieldRemapChromeLabelKeys = {
   hideHiddenFields: 'fieldRemap.hideHiddenFields',
   emptyDetailTitle: 'fieldRemap.emptyDetailTitle',
   emptyDetailDescription: 'fieldRemap.emptyDetailDescription',
+  detailModalTitle: 'fieldRemap.detailModalTitle',
+  closeDetailModal: 'fieldRemap.closeDetailModal',
   previewTitle: 'fieldRemap.previewTitle',
   previewLoading: 'fieldRemap.previewLoading',
   previewError: 'fieldRemap.previewError',
@@ -162,6 +169,8 @@ export function resolveFieldRemapChromeLabels(
     hideHiddenFields: resolve('hideHiddenFields'),
     emptyDetailTitle: resolve('emptyDetailTitle'),
     emptyDetailDescription: resolve('emptyDetailDescription'),
+    detailModalTitle: resolve('detailModalTitle'),
+    closeDetailModal: resolve('closeDetailModal'),
     previewTitle: resolve('previewTitle'),
     previewLoading: resolve('previewLoading'),
     previewError: resolve('previewError'),
