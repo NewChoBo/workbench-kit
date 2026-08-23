@@ -117,8 +117,19 @@ for Flow-only embeds and custom bundler setups. The full barrel
 when both durable channels are uncontrolled. If either channel is controlled, pass one
 `historyOwner` for the complete composite state; the Panel never creates a partial stack.
 `historyActionsRef` exposes host-chrome actions and
-`onHistoryAvailabilityChange` reports whether those actions are available. Keyboard
-routing remains host-owned.
+`onHistoryAvailabilityChange` reports whether those actions are available. The Panel routes
+available undo/redo chords through that same owner; direct `FieldRemapFlowMapper` consumers
+remain responsible for host-owned history routing.
+
+| Surface | Shortcut                     | Behavior                                                                                                                                     |
+| ------- | ---------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Flow    | `Escape`                     | Clears the active selection and unfinished drafts. If collapsed detail chrome owned focus, focus moves to the programmatic-only mapper root. |
+| Flow    | `Delete` / `Backspace`       | Removes the eligible selected edge, convert step, operator, or draft through the existing mutation path.                                     |
+| Panel   | `Ctrl/Cmd+Z`                 | Invokes the existing composite history owner's available undo action.                                                                        |
+| Panel   | `Ctrl/Cmd+Shift+Z`, `Ctrl+Y` | Invokes the existing composite history owner's available redo action.                                                                        |
+
+Editable inputs, textareas, selects, contenteditable elements, and transform option editors
+retain their native key behavior. Unavailable or read-only actions leave the event unconsumed.
 
 Only semantic edits coming from the Flow mapper create entries. Hidden mappings are
 reconstructed before an entry is recorded, so undo does not discard filtered state.

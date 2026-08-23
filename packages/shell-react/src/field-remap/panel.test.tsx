@@ -34,6 +34,24 @@ async function settle(): Promise<void> {
   });
 }
 
+async function pressKey(
+  target: Element,
+  key: string,
+  init: KeyboardEventInit = {},
+): Promise<KeyboardEvent> {
+  const event = new KeyboardEvent('keydown', {
+    bubbles: true,
+    cancelable: true,
+    key,
+    ...init,
+  });
+  await act(async () => {
+    target.dispatchEvent(event);
+    await Promise.resolve();
+  });
+  return event;
+}
+
 describe('FieldRemapPanel', () => {
   let container: HTMLDivElement | undefined;
   let root: Root | undefined;
@@ -387,6 +405,92 @@ describe('FieldRemapPanel', () => {
 
     await act(async () => historyActionsRef.current?.redo());
     expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
+  });
+
+  it('routes available Panel history shortcuts and leaves unavailable actions unconsumed', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(<FieldRemapPanel sample="nested-ab" editableShapes={false} />);
+    });
+
+    const mapper = container.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const unavailable = await pressKey(mapper, 'z', { ctrlKey: true });
+    expect(unavailable.defaultPrevented).toBe(false);
+
+    await clickTestId(container, 'field-remap-remove-edge-e-name');
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
+
+    const undoEvent = await pressKey(mapper, 'z', { metaKey: true });
+    expect(undoEvent.defaultPrevented).toBe(true);
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeTruthy();
+
+    const redoEvent = await pressKey(mapper, 'z', { ctrlKey: true, shiftKey: true });
+    expect(redoEvent.defaultPrevented).toBe(true);
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
+
+    await pressKey(mapper, 'z', { ctrlKey: true });
+    const ctrlYEvent = await pressKey(mapper, 'y', { ctrlKey: true });
+    expect(ctrlYEvent.defaultPrevented).toBe(true);
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
+  });
+
+  it('does not capture Panel history chords from editable Flow controls', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+
+    await act(async () => {
+      root!.render(<FieldRemapPanel sample="nested-ab" editableShapes={false} />);
+    });
+
+    await clickTestId(container, 'field-remap-remove-edge-e-name');
+    const search = container.querySelector<HTMLInputElement>('input[type="search"]')!;
+    const event = await pressKey(search, 'z', { ctrlKey: true });
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
+  });
+
+  it('routes mixed controlled history shortcuts through the supplied composite owner', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const sample = getFieldRemapSample('nested-ab');
+    const onEdgesChange = vi.fn();
+    const undo = vi.fn(() => ({
+      edges: sample.edges,
+      operators: sample.operators ?? [],
+    }));
+    const owner: FieldRemapHistoryOwner = {
+      canUndo: true,
+      canRedo: false,
+      record: vi.fn(),
+      reset: vi.fn(),
+      undo,
+      redo: vi.fn(),
+    };
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample={sample}
+          editableShapes={false}
+          edges={[]}
+          onEdgesChange={onEdgesChange}
+          historyOwner={owner}
+        />,
+      );
+    });
+
+    const mapper = container.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const event = await pressKey(mapper, 'z', { ctrlKey: true });
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(undo).toHaveBeenCalledOnce();
+    expect(onEdgesChange).toHaveBeenCalledWith(sample.edges);
   });
 
   it('records the full hidden-edge projection before an edit', async () => {

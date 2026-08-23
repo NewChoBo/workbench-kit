@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type JSX,
+  type KeyboardEvent,
   type Ref,
 } from 'react';
 import {
@@ -50,6 +51,7 @@ import {
 } from './shape-io-editor.js';
 import { createFieldRemapPreviewController } from './preview-controller.js';
 import type { FieldRemapPreviewState } from './preview.js';
+import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
 import './view.css';
 
 export type { FieldRemapHistorySnapshot } from './history.js';
@@ -112,7 +114,7 @@ export interface FieldRemapPanelProps {
    * channel is controlled, the Panel never creates a partial private history.
    */
   readonly historyOwner?: FieldRemapHistoryOwner | undefined;
-  /** Imperative semantic undo/redo actions for host chrome. Keyboard routing remains host-owned. */
+  /** Imperative semantic undo/redo actions for host chrome. */
   readonly historyActionsRef?: Ref<FieldRemapHistoryActions | null> | undefined;
   /** Reports the active history owner's current undo/redo availability. */
   readonly onHistoryAvailabilityChange?:
@@ -503,6 +505,38 @@ export function FieldRemapPanel({
       : (historyOwner?.canRedo ?? false),
   };
 
+  const handleHistoryKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (
+      event.defaultPrevented ||
+      event.altKey ||
+      (!event.ctrlKey && !event.metaKey) ||
+      isFieldRemapEditableShortcutTarget(event.target)
+    ) {
+      return;
+    }
+
+    const key = event.key.toLowerCase();
+    const requestsUndo = key === 'z' && !event.shiftKey;
+    const requestsRedo =
+      (key === 'z' && event.shiftKey) ||
+      (key === 'y' && event.ctrlKey && !event.metaKey && !event.shiftKey);
+    if (
+      (!requestsUndo && !requestsRedo) ||
+      (requestsUndo && !historyAvailability.canUndo) ||
+      (requestsRedo && !historyAvailability.canRedo)
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    if (requestsUndo) {
+      undo();
+    } else {
+      redo();
+    }
+  };
+
   useImperativeHandle(historyActionsRef, () => ({ ...historyAvailability, undo, redo }), [
     historyAvailability.canRedo,
     historyAvailability.canUndo,
@@ -644,6 +678,7 @@ export function FieldRemapPanel({
       data-testid="field-remap-demo"
       data-sample-id={sample.id}
       data-edges-mode={edgesControlled ? 'controlled' : 'uncontrolled'}
+      onKeyDown={handleHistoryKeyDown}
     >
       <header className="workbench-field-remap-demo__header">
         <h2 className="workbench-field-remap-demo__title">{sample.title}</h2>

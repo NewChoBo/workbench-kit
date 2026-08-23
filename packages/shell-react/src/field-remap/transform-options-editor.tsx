@@ -225,7 +225,11 @@ export function TransformOptionsEditor({
   };
 
   return (
-    <div className="workbench-field-remap-options" data-testid={`${testIdPrefix}-editor`}>
+    <div
+      className="workbench-field-remap-options"
+      data-field-remap-shortcuts="ignore"
+      data-testid={`${testIdPrefix}-editor`}
+    >
       {fields.map((field) => {
         const controlId = `${baseId}-${field.key}`;
         const testId = `${testIdPrefix}-${field.key}`;
