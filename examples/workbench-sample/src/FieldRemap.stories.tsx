@@ -230,8 +230,6 @@ export const EmbedChrome: Story = {
     const viewport = canvasElement.querySelector<HTMLElement>('.react-flow__viewport');
     await expect(canvasPane).toBeTruthy();
     await expect(viewport).toBeTruthy();
-    await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
-    const viewportTransform = viewport!.style.transform;
 
     await expect(canvas.getByTestId('field-remap-mapper')).toHaveAttribute('data-chrome', 'embed');
     await expect(workspace).toHaveAttribute('data-layout', 'wide');
@@ -250,6 +248,8 @@ export const EmbedChrome: Story = {
       expect(Math.abs(flowRect.height - workspaceRect.height)).toBeLessThanOrEqual(1);
     });
     await expectCanvasFillsPane(flow, canvasPane!);
+    await waitFor(() => expect(viewport!.style.transform).not.toBe('translate(0px, 0px) scale(1)'));
+    const viewportTransform = viewport!.style.transform;
     expect(
       canvasElement
         .querySelector('.workbench-field-remap-flow__palette-split')
