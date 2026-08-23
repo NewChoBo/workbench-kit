@@ -3240,11 +3240,16 @@ Producer-distinct exact-successor review rejected a second value/property/compon
 
 ## WB-NS-072D - Explicit pack migration planner and transaction
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 11-16
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072B`, `WB-NS-072C` (`DONE`)
 - **Exact source/API baseline:** `origin/develop@6c91d6171e99b047285fa9624a7120a1b1b10a58`
+- **Integrated implementation:** PR #337 / reviewed successor
+  `6c4cf17d093059226c98ae323e584e13b51a051d` / merge
+  `94dbd8230dacd2dd610b19e9f4ccbf58ae864bbc`
+- **Completion evidence:** exact-head CI run `32600559144` succeeded; producer-distinct source
+  review returned `PASS / P0 none / P1 none / P2 none`
 - **Implementation packages:** shared declarative contract in `@workbench-kit/contracts`; pure planner/finalizer in `@workbench-kit/workbench-core/design-system`; canonical persistence and one-transaction apply adapter in `@workbench-kit/jdw`
 
 ### Goal
@@ -3568,6 +3573,11 @@ component matcher, token resolver or history stack; inferred latest/default/them
 resource substitution; label/CSS/path/media-type heuristics; partial multi-revision apply; hidden
 renderer state; executable resources; React/DOM/CSS; extension trust/activation; Electron/native;
 product defaults or a new global service locator.
+
+The integrated implementation preserves those boundaries and provides the frozen projection,
+planner/finalizer, exact stale/choice validation and single JDW transaction path. Its accepted
+successor is present in both `origin/develop` and `origin/main`; no follow-up source repair or
+rollback remains for this packet.
 
 ## WB-NS-072E - Canvas, Inspector, and provenance integration
 
