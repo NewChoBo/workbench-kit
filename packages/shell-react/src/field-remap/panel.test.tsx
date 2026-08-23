@@ -373,6 +373,74 @@ describe('FieldRemapPanel', () => {
     expect(container.querySelector('[data-testid="field-remap-shapes"]')).toBeNull();
   });
 
+  it('forces edit I/O chrome to browse and leaves history shortcuts unconsumed in read-only mode', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const undo = vi.fn();
+    const onSourcesChange = vi.fn();
+    const onTargetsChange = vi.fn();
+    const browseShapes = getFieldRemapBrowseDemoShapes();
+    const historyOwner: FieldRemapHistoryOwner = {
+      canUndo: true,
+      canRedo: false,
+      record: vi.fn(),
+      reset: vi.fn(),
+      undo,
+      redo: vi.fn(),
+    };
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample="nested-ab"
+          readOnly
+          editableShapes
+          ioChrome="edit"
+          historyOwner={historyOwner}
+          sources={browseShapes.sources}
+          targets={browseShapes.targets}
+          onSourcesChange={onSourcesChange}
+          onTargetsChange={onTargetsChange}
+        />,
+      );
+    });
+
+    const panel = container.querySelector<HTMLElement>('[data-testid="field-remap-demo"]')!;
+    const mapper = container.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    expect(panel.getAttribute('data-read-only')).toBe('true');
+    expect(container.querySelector('[data-testid="field-remap-io-browse"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="field-remap-shapes"]')).toBeNull();
+    expect(mapper.getAttribute('data-read-only')).toBe('true');
+    expect(container.textContent).toContain('PersonProfile@1');
+
+    const updatedSources = browseShapes.sources.map((source, index) =>
+      index === 0 ? { ...source, classRef: { id: 'UpdatedProfile', version: 2 } } : source,
+    );
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample="nested-ab"
+          readOnly
+          editableShapes
+          ioChrome="edit"
+          historyOwner={historyOwner}
+          sources={updatedSources}
+          targets={browseShapes.targets}
+          onSourcesChange={onSourcesChange}
+          onTargetsChange={onTargetsChange}
+        />,
+      );
+    });
+    expect(container.textContent).toContain('UpdatedProfile@2');
+    expect(onSourcesChange).not.toHaveBeenCalled();
+    expect(onTargetsChange).not.toHaveBeenCalled();
+
+    const event = await pressKey(mapper, 'z', { ctrlKey: true });
+    expect(event.defaultPrevented).toBe(false);
+    expect(undo).not.toHaveBeenCalled();
+  });
+
   it('forwards embed chrome and explicit Flow visibility overrides', async () => {
     container = document.createElement('div');
     document.body.append(container);

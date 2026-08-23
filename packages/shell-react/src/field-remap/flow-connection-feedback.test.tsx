@@ -20,6 +20,10 @@ interface CapturedReactFlowProps {
   readonly onConnect: (connection: Connection) => void;
   readonly onConnectStart: () => void;
   readonly onConnectEnd: (event: MouseEvent, state: FinalConnectionState) => void;
+  readonly onEdgesDelete?: ((edges: readonly unknown[]) => void) | undefined;
+  readonly nodesDraggable?: boolean | undefined;
+  readonly nodesConnectable?: boolean | undefined;
+  readonly edgesReconnectable?: boolean | undefined;
 }
 
 vi.mock('@xyflow/react', async () => {
@@ -169,6 +173,30 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     expect(container!.querySelector('[role="status"]')?.textContent).toContain(
       'incompatible-port-types',
     );
+  });
+
+  it('disables connection and deletion entry points at the React Flow boundary in read-only mode', async () => {
+    const onEdgesChange = vi.fn();
+    const onConnectionFeedback = vi.fn();
+    await renderFlow({ readOnly: true, onEdgesChange, onConnectionFeedback });
+
+    expect(flowHarness.props?.nodesDraggable).toBe(false);
+    expect(flowHarness.props?.nodesConnectable).toBe(false);
+    expect(flowHarness.props?.edgesReconnectable).toBe(false);
+    expect(flowHarness.props?.onConnect).toBeUndefined();
+    expect(flowHarness.props?.onConnectStart).toBeUndefined();
+    expect(flowHarness.props?.onConnectEnd).toBeUndefined();
+    expect(flowHarness.props?.onEdgesDelete).toBeUndefined();
+    expect(
+      flowHarness.props?.isValidConnection({
+        source: 'obj:source',
+        sourceHandle: 'src.other',
+        target: 'obj:target',
+        targetHandle: 'tgt.name',
+      }),
+    ).toBe(false);
+    expect(onEdgesChange).not.toHaveBeenCalled();
+    expect(onConnectionFeedback).not.toHaveBeenCalled();
   });
 
   it('reports a concrete same-direction drop but keeps handle-less cancellation silent', async () => {

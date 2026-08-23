@@ -369,6 +369,11 @@ export interface FieldRemapFlowMapperProps {
    * the workspace expands without leaving an empty grid track.
    */
   readonly showConvertPalette?: boolean | undefined;
+  /**
+   * View-only authoring guard. Existing mappings remain inspectable, while durable mutations and
+   * mapper-local drafts are disabled. This is not an authorization boundary.
+   */
+  readonly readOnly?: boolean | undefined;
   /** Document v2 n→m operators (display + authoring when onOperatorsChange is set). */
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
@@ -563,6 +568,7 @@ function FieldRemapFlowCanvas({
   showFlowHint: showFlowHintProp,
   showBindingsList: showBindingsListProp,
   showConvertPalette = true,
+  readOnly = false,
   operators = [],
   onOperatorsChange,
   sourceTitle,
@@ -586,8 +592,9 @@ function FieldRemapFlowCanvas({
     () => resolveFieldRemapChromeLabels(labelOverrides, t),
     [labelOverrides, t],
   );
-  const showFlowHint = showFlowHintProp ?? chrome !== 'embed';
+  const showFlowHint = !readOnly && (showFlowHintProp ?? chrome !== 'embed');
   const showBindingsList = showBindingsListProp ?? chrome !== 'embed';
+  const showAuthoringPalette = showConvertPalette && !readOnly;
   const emptyDetail = emptyDetailProp ?? (chrome === 'embed' ? 'collapse' : 'hint');
   const mapperRef = useRef<HTMLDivElement>(null);
   const restoreMapperFocusRef = useRef(false);
@@ -617,6 +624,18 @@ function FieldRemapFlowCanvas({
       void loadFieldRemapModalDetail().catch(() => undefined);
     }
   }, [detailPresentation]);
+
+  useEffect(() => {
+    if (!readOnly) {
+      return;
+    }
+    setDrafts([]);
+    setConnectionFeedback(null);
+    connectionAttemptCompletedRef.current = false;
+    if (selectionProp === undefined) {
+      setInternalSelection((current) => (current?.kind === 'draft' ? null : current));
+    }
+  }, [readOnly, selectionProp]);
 
   useEffect(() => {
     if (!restoreMapperFocusRef.current || selection !== null || drafts.length > 0) {
@@ -744,18 +763,24 @@ function FieldRemapFlowCanvas({
 
   const isValidConnection = useCallback(
     (connection: Connection | Edge) =>
-      isValidFieldRemapFlowConnection(connection, connectionContext),
-    [connectionContext],
+      !readOnly && isValidFieldRemapFlowConnection(connection, connectionContext),
+    [connectionContext, readOnly],
   );
 
   const onConnectStart = useCallback(() => {
+    if (readOnly) {
+      return;
+    }
     // Clearing at attempt start lets an identical later rejection be announced once at completion.
     connectionAttemptCompletedRef.current = false;
     setConnectionFeedback(null);
-  }, []);
+  }, [readOnly]);
 
   const onConnectEnd = useCallback(
     (_event: globalThis.MouseEvent | TouchEvent, state: FinalConnectionState) => {
+      if (readOnly) {
+        return;
+      }
       if (connectionAttemptCompletedRef.current) {
         return;
       }
@@ -769,11 +794,14 @@ function FieldRemapFlowCanvas({
         publishConnectionFeedback({ reason: evaluation.reason });
       }
     },
-    [connectionContext, publishConnectionFeedback],
+    [connectionContext, publishConnectionFeedback, readOnly],
   );
 
   const onConnect = useCallback(
     (connection: Connection) => {
+      if (readOnly) {
+        return;
+      }
       if (!connection.source || !connection.target) {
         return;
       }
@@ -904,6 +932,7 @@ function FieldRemapFlowCanvas({
       onOperatorsChange,
       operators,
       publishConnectionFeedback,
+      readOnly,
       rewirePolicy,
       setSelection,
       sources,
@@ -914,6 +943,9 @@ function FieldRemapFlowCanvas({
 
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
+      if (readOnly) {
+        return;
+      }
       const mappingIds = new Set(
         deleted
           .map((edge) => {
@@ -934,17 +966,20 @@ function FieldRemapFlowCanvas({
         setSelection(null);
       }
     },
-    [edges, onEdgesChange, selection, setSelection],
+    [edges, onEdgesChange, readOnly, selection, setSelection],
   );
 
   const placeDraft = useCallback(
     (transformId: string) => {
+      if (readOnly) {
+        return;
+      }
       const draft = createDraftTransform(transformId);
       setDrafts((current) => [...current, draft]);
       setSelection({ kind: 'draft', localId: draft.localId });
       setPlaceTransformId(transformId);
     },
-    [setSelection],
+    [readOnly, setSelection],
   );
 
   const onNodeClick = useCallback(
@@ -955,7 +990,7 @@ function FieldRemapFlowCanvas({
         return;
       }
       if (data.kind === 'combine-operator' || data.kind === 'split-operator') {
-        if (event.altKey && onOperatorsChange) {
+        if (!readOnly && event.altKey && onOperatorsChange) {
           onOperatorsChange(removeMappingOperator(operators, data.operatorId));
           if (selection?.kind === 'operator' && selection.operatorId === data.operatorId) {
             setSelection(null);
@@ -968,7 +1003,7 @@ function FieldRemapFlowCanvas({
       if (data.kind !== 'transform') {
         return;
       }
-      if (event.altKey) {
+      if (!readOnly && event.altKey) {
         const edge = edges.find((item) => item.id === data.mappingEdgeId);
         if (!edge) {
           return;
@@ -992,7 +1027,7 @@ function FieldRemapFlowCanvas({
         stepIndex: data.stepIndex,
       });
     },
-    [edges, onEdgesChange, onOperatorsChange, operators, selection, setSelection],
+    [edges, onEdgesChange, onOperatorsChange, operators, readOnly, selection, setSelection],
   );
 
   const onKeyDown = useCallback(
@@ -1019,6 +1054,10 @@ function FieldRemapFlowCanvas({
         event.stopPropagation();
         setSelection(null);
         setDrafts([]);
+        return;
+      }
+
+      if (readOnly) {
         return;
       }
 
@@ -1089,6 +1128,7 @@ function FieldRemapFlowCanvas({
       onOperatorsChange,
       operators,
       previewVisible,
+      readOnly,
       selection,
       setSelection,
     ],
@@ -1122,6 +1162,7 @@ function FieldRemapFlowCanvas({
       sources={sources}
       targets={targets}
       transforms={transforms}
+      readOnly={readOnly}
       onEdgesChange={onEdgesChange}
       onSelectionChange={setSelection}
       drafts={drafts}
@@ -1143,7 +1184,8 @@ function FieldRemapFlowCanvas({
       data-chrome={chrome}
       data-flow-hint={showFlowHint ? 'on' : 'off'}
       data-bindings-list={showBindingsList ? 'on' : 'off'}
-      data-convert-palette={showConvertPalette ? 'on' : 'off'}
+      data-convert-palette={showAuthoringPalette ? 'on' : 'off'}
+      data-read-only={readOnly ? 'true' : 'false'}
       data-empty-detail={emptyDetail}
       data-detail-presentation={detailPresentation}
       data-minimap={showMinimap ? 'on' : 'off'}
@@ -1178,7 +1220,7 @@ function FieldRemapFlowCanvas({
       <FieldRemapSplitWorkspace
         layout={workspaceLayout}
         reserveHiddenDetailSplit={detailPresentation === 'rail'}
-        showConvertPalette={showConvertPalette}
+        showConvertPalette={showAuthoringPalette}
         showDetail={sideRailVisible}
         surface={
           selection?.kind === 'transformStep'
@@ -1191,7 +1233,7 @@ function FieldRemapFlowCanvas({
         }
       >
         <>
-          {showConvertPalette ? (
+          {showAuthoringPalette ? (
             <FieldRemapConvertPalette
               transforms={transforms}
               selectedTransformId={placeTransformId}
@@ -1227,15 +1269,18 @@ function FieldRemapFlowCanvas({
             nodeTypes={nodeTypes}
             onNodesChange={onNodesChange}
             onEdgesChange={onFlowEdgesChange}
-            onConnect={onConnect}
-            onConnectStart={onConnectStart}
-            onConnectEnd={onConnectEnd}
-            onEdgesDelete={onEdgesDelete}
+            onConnect={readOnly ? undefined : onConnect}
+            onConnectStart={readOnly ? undefined : onConnectStart}
+            onConnectEnd={readOnly ? undefined : onConnectEnd}
+            onEdgesDelete={readOnly ? undefined : onEdgesDelete}
             onNodeClick={onNodeClick}
             onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}
             onNodeContextMenu={onNodeContextMenu ? handleNodeContextMenu : undefined}
             onEdgeContextMenu={onEdgeContextMenu ? handleEdgeContextMenu : undefined}
             isValidConnection={isValidConnection}
+            nodesDraggable={!readOnly}
+            nodesConnectable={!readOnly}
+            edgesReconnectable={!readOnly}
             deleteKeyCode={null}
             fitView
             fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}
@@ -1423,70 +1468,72 @@ function FieldRemapFlowCanvas({
                       {edge.itemEdges ? ` · ${edge.itemEdges.length} item fields` : ''}
                     </code>
                   </button>
-                  <span className="workbench-field-remap-mapper__edge-actions">
-                    {(edge.transformIds?.length ?? 0) < MAX_TRANSFORM_CHAIN && defaultAddId ? (
+                  {!readOnly ? (
+                    <span className="workbench-field-remap-mapper__edge-actions">
+                      {(edge.transformIds?.length ?? 0) < MAX_TRANSFORM_CHAIN && defaultAddId ? (
+                        <IconButton
+                          compact
+                          type="button"
+                          data-testid={`field-remap-add-node-${edge.id}`}
+                          icon="codicon-add"
+                          label={chromeLabels.addTransform}
+                          onClick={() => {
+                            const next = addTransformStepToEdge(edge, defaultAddId, {
+                              registry: transforms,
+                              sourceType: portTypes.sourceType,
+                              targetType: portTypes.targetType,
+                            });
+                            if (!next) {
+                              return;
+                            }
+                            onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
+                            setSelection({
+                              kind: 'transformStep',
+                              edgeId: edge.id,
+                              stepIndex: (next.transformIds?.length ?? 1) - 1,
+                            });
+                          }}
+                        />
+                      ) : null}
+                      {listContext ? (
+                        <IconButton
+                          compact
+                          type="button"
+                          data-testid={`field-remap-edit-items-${edge.id}`}
+                          icon="codicon-edit"
+                          label={chromeLabels.editItems}
+                          onClick={() => {
+                            if (!edge.itemEdges) {
+                              onEdgesChange(
+                                edges.map((item) =>
+                                  item.id === edge.id ? enableListContextOnEdge(item) : item,
+                                ),
+                              );
+                            }
+                            setSelection({ kind: 'edge', edgeId: edge.id });
+                          }}
+                        />
+                      ) : null}
                       <IconButton
                         compact
                         type="button"
-                        data-testid={`field-remap-add-node-${edge.id}`}
-                        icon="codicon-add"
-                        label={chromeLabels.addTransform}
+                        data-testid={`field-remap-remove-edge-${edge.id}`}
+                        icon="codicon-trash"
+                        label={chromeLabels.removeBinding}
+                        variant="danger"
                         onClick={() => {
-                          const next = addTransformStepToEdge(edge, defaultAddId, {
-                            registry: transforms,
-                            sourceType: portTypes.sourceType,
-                            targetType: portTypes.targetType,
-                          });
-                          if (!next) {
-                            return;
+                          onEdgesChange(edges.filter((item) => item.id !== edge.id));
+                          if (
+                            selection &&
+                            (selection.kind === 'edge' || selection.kind === 'transformStep') &&
+                            selection.edgeId === edge.id
+                          ) {
+                            setSelection(null);
                           }
-                          onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
-                          setSelection({
-                            kind: 'transformStep',
-                            edgeId: edge.id,
-                            stepIndex: (next.transformIds?.length ?? 1) - 1,
-                          });
                         }}
                       />
-                    ) : null}
-                    {listContext ? (
-                      <IconButton
-                        compact
-                        type="button"
-                        data-testid={`field-remap-edit-items-${edge.id}`}
-                        icon="codicon-edit"
-                        label={chromeLabels.editItems}
-                        onClick={() => {
-                          if (!edge.itemEdges) {
-                            onEdgesChange(
-                              edges.map((item) =>
-                                item.id === edge.id ? enableListContextOnEdge(item) : item,
-                              ),
-                            );
-                          }
-                          setSelection({ kind: 'edge', edgeId: edge.id });
-                        }}
-                      />
-                    ) : null}
-                    <IconButton
-                      compact
-                      type="button"
-                      data-testid={`field-remap-remove-edge-${edge.id}`}
-                      icon="codicon-trash"
-                      label={chromeLabels.removeBinding}
-                      variant="danger"
-                      onClick={() => {
-                        onEdgesChange(edges.filter((item) => item.id !== edge.id));
-                        if (
-                          selection &&
-                          (selection.kind === 'edge' || selection.kind === 'transformStep') &&
-                          selection.edgeId === edge.id
-                        ) {
-                          setSelection(null);
-                        }
-                      }}
-                    />
-                  </span>
+                    </span>
+                  ) : null}
                 </li>
               );
             })}

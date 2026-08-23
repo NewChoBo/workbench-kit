@@ -860,6 +860,184 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(onIncludeHiddenChange).toHaveBeenCalledWith(true);
   });
 
+  it('keeps inspection and controlled updates while suppressing every visible authoring path', async () => {
+    const sample = getFieldRemapSample('nested-ab');
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    const onIncludeHiddenChange = vi.fn();
+    const onPaneContextMenu = vi.fn();
+    const flowActionsRef = createRef<FieldRemapFlowActions | null>();
+    await renderMapper({
+      readOnly: true,
+      showConvertPalette: true,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onEdgesChange,
+      onSelectionChange,
+      onIncludeHiddenChange,
+      onPaneContextMenu,
+      flowActionsRef,
+      preview: {
+        status: 'ready',
+        result: {
+          output: { inspected: true },
+          slots: [{ edgeId: 'e-name', targetSlotId: 'b.name', path: 'name', value: 'inspected' }],
+        },
+      },
+    });
+
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    expect(mapper.getAttribute('data-read-only')).toBe('true');
+    expect(mapper.getAttribute('data-convert-palette')).toBe('off');
+    expect(container!.querySelector('[data-testid="field-remap-convert-palette"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-detail-binding"]')).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-add-node-e-name"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-edit-items-e-tags"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-remove-edge-e-name"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-transform-palette"]')).toBeNull();
+    expect(container!.querySelector('.react-flow__minimap')).toBeTruthy();
+    expect(
+      container!.querySelector('[data-testid="field-remap-preview-value"]')?.textContent,
+    ).toContain('inspected');
+    expect(() => flowActionsRef.current?.fitView()).not.toThrow();
+
+    await act(async () => {
+      container!
+        .querySelector<HTMLButtonElement>('[data-testid="field-remap-toggle-hidden-fields"]')!
+        .click();
+    });
+    expect(onIncludeHiddenChange).toHaveBeenCalledWith(true);
+
+    const pane =
+      container!.querySelector('.react-flow__pane') ??
+      container!.querySelector('[data-testid="field-remap-flow"]');
+    await act(async () => {
+      pane!.dispatchEvent(new MouseEvent('contextmenu', { bubbles: true, cancelable: true }));
+    });
+    expect(onPaneContextMenu).toHaveBeenCalledWith(expect.anything(), {
+      selection: { kind: 'edge', edgeId: 'e-name' },
+    });
+
+    const deleteEvent = await pressKey(mapper, 'Delete');
+    expect(deleteEvent.defaultPrevented).toBe(false);
+    expect(onEdgesChange).not.toHaveBeenCalled();
+    expect(onSelectionChange).not.toHaveBeenCalled();
+
+    await act(async () => {
+      container!
+        .querySelector<HTMLButtonElement>('[data-testid="field-remap-select-edge-e-tags"]')!
+        .click();
+    });
+    expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'e-tags' });
+
+    onSelectionChange.mockClear();
+    await rerenderMapper({
+      readOnly: true,
+      selection: { kind: 'edge', edgeId: 'e-tags' },
+      onEdgesChange,
+      onSelectionChange,
+    });
+    expect(container!.querySelector('[data-testid="field-remap-list-context"]')).toBeTruthy();
+    expect(
+      container!.querySelector('[data-testid="field-remap-item-edge-e-tag-title"]'),
+    ).toBeTruthy();
+    expect(container!.querySelector('[data-testid="field-remap-item-source"]')).toBeNull();
+    expect(
+      container!.querySelector('[data-testid="field-remap-item-edge-e-tag-title"] button'),
+    ).toBeNull();
+
+    const updatedEdges = sample.edges.map((edge) =>
+      edge.id === 'e-title' ? { ...edge, transformIds: ['string:upper'] } : edge,
+    );
+    await rerenderMapper({
+      readOnly: true,
+      edges: updatedEdges,
+      selection: { kind: 'transformStep', edgeId: 'e-title', stepIndex: 0 },
+      onEdgesChange,
+      onSelectionChange,
+    });
+
+    expect(container!.querySelector('[data-testid="field-remap-step-id"]')).toHaveProperty(
+      'disabled',
+      true,
+    );
+    expect(container!.querySelector('[data-testid="field-remap-convert-note-remove"]')).toBeNull();
+    expect(
+      container!.querySelector('[data-testid="field-remap-lane-e-title"]')?.textContent,
+    ).toContain('string:upper');
+
+    onSelectionChange.mockClear();
+    const escapeEvent = await pressKey(mapper, 'Escape');
+    expect(escapeEvent.defaultPrevented).toBe(true);
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+    expect(onEdgesChange).not.toHaveBeenCalled();
+  });
+
+  it('renders operator state for inspection without operator authoring controls', async () => {
+    const sample = getFieldRemapSample('nm-combine-split');
+    const sources = sourceFieldsFromPlainObject(sample.source, {
+      idPrefix: sample.sourceIdPrefix,
+    });
+    const targets = targetSlotsFromPlainObject(sample.targetShape, {
+      idPrefix: sample.targetIdPrefix,
+    });
+    const onOperatorsChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      readOnly: true,
+      sources,
+      targets,
+      edges: [],
+      operators: sample.operators,
+      onOperatorsChange,
+      selection: { kind: 'operator', operatorId: 'op-name' },
+      onSelectionChange,
+    });
+
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail-operator-id"]')?.textContent,
+    ).toBe('op-name');
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail-delete-operator"]'),
+    ).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-operator-add-input"]')).toBeNull();
+    expect(
+      container!.querySelector<HTMLSelectElement>('[data-testid="field-remap-operator-output"]')
+        ?.disabled,
+    ).toBe(true);
+
+    const operatorNode = container!.querySelector('[data-testid="field-remap-op-op-name"]')!;
+    await act(async () => {
+      operatorNode.dispatchEvent(new MouseEvent('click', { bubbles: true, altKey: true }));
+    });
+    expect(onOperatorsChange).not.toHaveBeenCalled();
+    expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'operator', operatorId: 'op-name' });
+
+    const updatedOperators = sample.operators?.map((operator) =>
+      operator.id === 'op-name' && operator.kind === 'combine'
+        ? { ...operator, outputSlotId: 'b.city' }
+        : operator,
+    );
+    await rerenderMapper({
+      readOnly: true,
+      sources,
+      targets,
+      edges: [],
+      operators: updatedOperators,
+      onOperatorsChange,
+      selection: { kind: 'operator', operatorId: 'op-name' },
+      onSelectionChange,
+    });
+    expect(
+      container!.querySelector<HTMLSelectElement>('[data-testid="field-remap-operator-output"]')
+        ?.value,
+    ).toBe('b.city');
+
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const event = await pressKey(mapper, 'Backspace');
+    expect(event.defaultPrevented).toBe(false);
+    expect(onOperatorsChange).not.toHaveBeenCalled();
+  });
+
   it('routes Delete through the selected edge mutation path', async () => {
     const onEdgesChange = vi.fn();
     const onSelectionChange = vi.fn();
