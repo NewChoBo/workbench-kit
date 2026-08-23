@@ -11,12 +11,11 @@ import {
   type DarkThemePresetId,
   type LightThemePresetId,
   type ThemePresetId,
-  type WorkbenchColorSchemePreference,
   type WorkbenchThemePresetManifestEntry,
-  type WorkbenchThemePresetOption,
 } from '@workbench-kit/contracts/theme-presets';
 
 import { resolveWorkbenchTheme, type ResolvedWorkbenchTheme } from './theme';
+import type { WorkbenchTheme } from '../shell/standalone';
 import { applyWorkbenchShellAttributes } from '../shell/shellPresets';
 
 export {
@@ -34,10 +33,17 @@ export type {
   DarkThemePresetId,
   LightThemePresetId,
   ThemePresetId,
-  WorkbenchColorSchemePreference,
   WorkbenchThemePresetManifestEntry,
-  WorkbenchThemePresetOption,
 };
+
+/** React compatibility surface: built-in modes plus contributed theme ids. */
+export type WorkbenchColorSchemePreference = 'system' | WorkbenchTheme;
+
+/** React compatibility surface retained as writable for existing consumers. */
+export interface WorkbenchThemePresetOption<TId extends string = string> {
+  id: TId;
+  label: string;
+}
 
 export interface WorkbenchThemePresetSelection {
   /** A built-in preset id, or a contributed theme id with a matching `mode`. */
