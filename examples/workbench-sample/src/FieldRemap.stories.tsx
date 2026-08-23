@@ -365,6 +365,9 @@ export const EmbedCollapsedDetail: Story = {
     await expect(
       canvasElement.querySelector('.workbench-field-remap-flow__canvas-detail-split'),
     ).toHaveClass('ui-workbench-split-view--secondary-collapsed');
+    await waitFor(() =>
+      expect(document.activeElement).toBe(canvas.getByTestId('field-remap-mapper')),
+    );
   },
 };
 

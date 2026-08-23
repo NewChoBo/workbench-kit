@@ -85,6 +85,7 @@ import {
   type FieldRemapSelection,
 } from './flow-ops.js';
 import { FieldRemapPreviewRail, type FieldRemapPreviewState } from './preview.js';
+import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
 import './view.css';
 
 function TypeBadge({ dataType }: { readonly dataType?: string }): JSX.Element | null {
@@ -534,6 +535,7 @@ function FieldRemapFlowCanvas({
   const showBindingsList = showBindingsListProp ?? chrome !== 'embed';
   const emptyDetail = emptyDetailProp ?? (chrome === 'embed' ? 'collapse' : 'hint');
   const mapperRef = useRef<HTMLDivElement>(null);
+  const restoreMapperFocusRef = useRef(false);
   const [workspaceLayout, setWorkspaceLayout] = useState<'wide' | 'medium' | 'narrow'>('wide');
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const selection = selectionProp !== undefined ? selectionProp : internalSelection;
@@ -545,6 +547,14 @@ function FieldRemapFlowCanvas({
     return first?.id ?? '';
   });
   const transformRegistrySignature = createTransformRegistrySignature(transforms);
+
+  useEffect(() => {
+    if (!restoreMapperFocusRef.current || selection !== null || drafts.length > 0) {
+      return;
+    }
+    restoreMapperFocusRef.current = false;
+    mapperRef.current?.focus({ preventScroll: true });
+  }, [drafts.length, selection]);
 
   useEffect(() => {
     const element = mapperRef.current;
@@ -868,11 +878,96 @@ function FieldRemapFlowCanvas({
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
       if (event.key === 'Escape') {
+        if (selection === null && drafts.length === 0) {
+          return;
+        }
+        const mapper = mapperRef.current;
+        const focused = mapper?.ownerDocument.activeElement;
+        const detail = mapper?.querySelector<HTMLElement>('[data-testid="field-remap-detail"]');
+        const detailSeparator = mapper?.querySelector<HTMLElement>(
+          '.workbench-field-remap-flow__canvas-detail-split > [role="separator"]',
+        );
+        restoreMapperFocusRef.current =
+          emptyDetail === 'collapse' &&
+          focused instanceof Element &&
+          (detail?.contains(focused) === true ||
+            (!previewVisible && detailSeparator?.contains(focused) === true));
+        event.preventDefault();
+        event.stopPropagation();
         setSelection(null);
         setDrafts([]);
+        return;
+      }
+
+      if (
+        (event.key !== 'Delete' && event.key !== 'Backspace') ||
+        event.ctrlKey ||
+        event.metaKey ||
+        event.altKey ||
+        event.defaultPrevented ||
+        isFieldRemapEditableShortcutTarget(event.target) ||
+        selection === null
+      ) {
+        return;
+      }
+
+      let consumed = false;
+      if (selection.kind === 'edge') {
+        if (edges.some((edge) => edge.id === selection.edgeId)) {
+          onEdgesChange(edges.filter((edge) => edge.id !== selection.edgeId));
+          setSelection(null);
+          consumed = true;
+        }
+      } else if (selection.kind === 'transformStep') {
+        const edge = edges.find((item) => item.id === selection.edgeId);
+        const stepCount = edge?.transformIds?.length ?? 0;
+        if (edge && selection.stepIndex >= 0 && selection.stepIndex < stepCount) {
+          const next = removeTransformStepFromEdge(edge, selection.stepIndex);
+          onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
+          setSelection(
+            (next.transformIds?.length ?? 0) > 0
+              ? {
+                  kind: 'transformStep',
+                  edgeId: edge.id,
+                  stepIndex: Math.min(selection.stepIndex, (next.transformIds?.length ?? 1) - 1),
+                }
+              : { kind: 'edge', edgeId: edge.id },
+          );
+          consumed = true;
+        }
+      } else if (selection.kind === 'operator') {
+        if (
+          onOperatorsChange &&
+          operators.some((operator) => operator.id === selection.operatorId)
+        ) {
+          onOperatorsChange(removeMappingOperator(operators, selection.operatorId));
+          setSelection(null);
+          consumed = true;
+        }
+      } else if (selection.kind === 'draft') {
+        if (drafts.some((draft) => draft.localId === selection.localId)) {
+          setDrafts((current) => current.filter((draft) => draft.localId !== selection.localId));
+          setSelection(null);
+          consumed = true;
+        }
+      }
+
+      if (consumed) {
+        event.preventDefault();
+        event.stopPropagation();
       }
     },
-    [setSelection],
+    [
+      drafts,
+      edges,
+      emptyDetail,
+      onEdgesChange,
+      onOperatorsChange,
+      operators,
+      previewVisible,
+      selection,
+      setSelection,
+    ],
   );
 
   const handlePaneContextMenu = useCallback(
@@ -909,6 +1004,7 @@ function FieldRemapFlowCanvas({
       data-minimap={showMinimap ? 'on' : 'off'}
       data-hidden-fields={includeHidden ? 'on' : 'off'}
       data-preview={previewVisible ? 'on' : 'off'}
+      tabIndex={-1}
       onKeyDown={onKeyDown}
     >
       {showFlowHint ? (
@@ -978,6 +1074,7 @@ function FieldRemapFlowCanvas({
             onNodeContextMenu={onNodeContextMenu ? handleNodeContextMenu : undefined}
             onEdgeContextMenu={onEdgeContextMenu ? handleEdgeContextMenu : undefined}
             isValidConnection={isValidConnection}
+            deleteKeyCode={null}
             fitView
             fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}
             proOptions={{ hideAttribution: true }}

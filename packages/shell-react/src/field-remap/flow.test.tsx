@@ -83,6 +83,24 @@ describe('FieldRemapFlowMapper host chrome', () => {
     );
   }
 
+  async function pressKey(
+    target: Element,
+    key: string,
+    init: KeyboardEventInit = {},
+  ): Promise<KeyboardEvent> {
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key,
+      ...init,
+    });
+    await act(async () => {
+      target.dispatchEvent(event);
+      await Promise.resolve();
+    });
+    return event;
+  }
+
   it('resyncs controlled node content when render metadata changes without topology changes', async () => {
     const sources: readonly SourceField[] = [
       { id: 'source:name', label: 'Original source field', dataType: 'string' },
@@ -608,5 +626,164 @@ describe('FieldRemapFlowMapper host chrome', () => {
     });
 
     expect(onIncludeHiddenChange).toHaveBeenCalledWith(true);
+  });
+
+  it('routes Delete through the selected edge mutation path', async () => {
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+      onEdgesChange,
+    });
+
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const event = await pressKey(mapper, 'Delete');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onEdgesChange).toHaveBeenCalledOnce();
+    expect(onEdgesChange.mock.lastCall?.[0].some((edge: MappingEdge) => edge.id === 'e-name')).toBe(
+      false,
+    );
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+  });
+
+  it('routes Backspace through transform-step removal and preserves a valid selection', async () => {
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'transformStep', edgeId: 'e-title', stepIndex: 0 },
+      onSelectionChange,
+      onEdgesChange,
+    });
+
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const event = await pressKey(mapper, 'Backspace');
+    const nextEdges = onEdgesChange.mock.lastCall?.[0] as readonly MappingEdge[];
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(nextEdges.find((edge) => edge.id === 'e-title')?.transformIds).toEqual(['string:upper']);
+    expect(onSelectionChange).toHaveBeenCalledWith({
+      kind: 'transformStep',
+      edgeId: 'e-title',
+      stepIndex: 0,
+    });
+  });
+
+  it('deletes authorable operators and leaves read-only operators unconsumed', async () => {
+    const sample = getFieldRemapSample('nm-combine-split');
+    const sources = sourceFieldsFromPlainObject(sample.source, {
+      idPrefix: sample.sourceIdPrefix,
+    });
+    const targets = targetSlotsFromPlainObject(sample.targetShape, {
+      idPrefix: sample.targetIdPrefix,
+    });
+    const onOperatorsChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      sources,
+      targets,
+      edges: [],
+      operators: sample.operators,
+      onOperatorsChange,
+      selection: { kind: 'operator', operatorId: 'op-name' },
+      onSelectionChange,
+    });
+
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const consumed = await pressKey(mapper, 'Delete');
+    expect(consumed.defaultPrevented).toBe(true);
+    expect(onOperatorsChange).toHaveBeenCalledWith([sample.operators?.[1]]);
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+
+    onOperatorsChange.mockClear();
+    onSelectionChange.mockClear();
+    await rerenderMapper({
+      sources,
+      targets,
+      edges: [],
+      operators: sample.operators,
+      selection: { kind: 'operator', operatorId: 'op-name' },
+      onSelectionChange,
+    });
+    const unconsumed = await pressKey(mapper, 'Backspace');
+    expect(unconsumed.defaultPrevented).toBe(false);
+    expect(onOperatorsChange).not.toHaveBeenCalled();
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('removes mapper-local drafts without creating a durable mutation path', async () => {
+    await renderMapper();
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const placeDraft = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-place-draft"]',
+    )!;
+    await act(async () => placeDraft.click());
+    expect(container!.querySelector('[data-testid="field-remap-detail-draft-id"]')).toBeTruthy();
+
+    const event = await pressKey(mapper, 'Delete');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(container!.querySelector('[data-testid="field-remap-detail-draft-id"]')).toBeNull();
+  });
+
+  it('preserves native Delete behavior for editable and transform-option surfaces', async () => {
+    const onEdgesChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'transformStep', edgeId: 'e-tag-line', stepIndex: 0 },
+      onSelectionChange: () => undefined,
+      onEdgesChange,
+    });
+
+    const search = container!.querySelector<HTMLInputElement>('input[type="search"]')!;
+    const searchEvent = await pressKey(search, 'Delete');
+    expect(searchEvent.defaultPrevented).toBe(false);
+    expect(onEdgesChange).not.toHaveBeenCalled();
+
+    const options = container!.querySelector<HTMLElement>('[data-field-remap-shortcuts="ignore"]')!;
+    const optionsEvent = await pressKey(options, 'Backspace');
+    expect(optionsEvent.defaultPrevented).toBe(false);
+    expect(onEdgesChange).not.toHaveBeenCalled();
+  });
+
+  it('restores focus to the non-tab-stop mapper root after focused detail chrome collapses', async () => {
+    await renderMapper({ chrome: 'embed', showBindingsList: true });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const selectEdge = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    await act(async () => selectEdge.click());
+
+    const separator = container!.querySelector<HTMLElement>(
+      '.workbench-field-remap-flow__canvas-detail-split > [role="separator"]',
+    )!;
+    separator.focus();
+    expect(document.activeElement).toBe(separator);
+
+    const event = await pressKey(separator, 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
+    expect(mapper.tabIndex).toBe(-1);
+    expect(document.activeElement).toBe(mapper);
+  });
+
+  it('does not move focus when Escape collapses detail outside the focused chrome', async () => {
+    await renderMapper({ chrome: 'embed', showBindingsList: true });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const selectEdge = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    await act(async () => selectEdge.click());
+    selectEdge.focus();
+
+    const event = await pressKey(selectEdge, 'Escape');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
+    expect(document.activeElement).toBe(selectEdge);
+
+    const unconsumed = await pressKey(mapper, 'Escape');
+    expect(unconsumed.defaultPrevented).toBe(false);
   });
 });
