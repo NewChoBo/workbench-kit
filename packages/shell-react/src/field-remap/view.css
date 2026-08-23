@@ -1431,15 +1431,9 @@
   --ui-sidebar-row-block-padding: var(--shell-spacing-side-bar-block);
   --ui-sidebar-tree-indent-step: 10px;
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(22rem, 100%), 1fr));
   gap: var(--shell-spacing-block);
   width: 100%;
-}
-
-@media (max-width: 800px) {
-  .workbench-field-remap-io-browse {
-    grid-template-columns: 1fr;
-  }
 }
 
 .workbench-field-remap-io-browse__toggle {
