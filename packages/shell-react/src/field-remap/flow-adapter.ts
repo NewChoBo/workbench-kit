@@ -443,12 +443,77 @@ export function mappingToFlowGraph(input: {
  * Optional field/slot lookup for type-gated connects.
  * When omitted, only the topology allowlist is applied (tests / callers without shapes).
  */
+export type FieldRemapFlowConnectionInput = {
+  readonly source: string | null | undefined;
+  readonly target: string | null | undefined;
+  readonly sourceHandle?: string | null;
+  readonly targetHandle?: string | null;
+};
+
 export type IsValidFieldRemapFlowConnectionContext = {
   readonly sources: readonly SourceField[];
   readonly targets: readonly TargetSlot[];
   readonly edges: readonly MappingEdge[];
   readonly transforms: ValueTransformRegistry;
+  readonly drafts?: readonly {
+    readonly localId: string;
+    readonly transformId: string;
+    readonly sourceFieldId?: string;
+    readonly targetSlotId?: string;
+  }[];
 };
+
+export type FieldRemapFlowConnectionRejectionReason =
+  | 'incomplete-connection'
+  | 'unsupported-topology'
+  | 'missing-port-endpoint'
+  | 'missing-draft-endpoint'
+  | 'missing-transform-edge'
+  | 'missing-transform-step'
+  | 'missing-transform-definition'
+  | 'same-edge-transform-splice'
+  | 'transform-chain-limit'
+  | 'incompatible-port-types';
+
+export type FieldRemapFlowConnectionEvaluation =
+  | { readonly status: 'accepted' }
+  | { readonly status: 'rewire'; readonly impactedEdgeIds: readonly string[] }
+  | {
+      readonly status: 'rejected';
+      readonly reason: FieldRemapFlowConnectionRejectionReason;
+    };
+
+const acceptedConnection = { status: 'accepted' } as const;
+
+function rejectConnection(
+  reason: FieldRemapFlowConnectionRejectionReason,
+): FieldRemapFlowConnectionEvaluation {
+  return { status: 'rejected', reason };
+}
+
+function acceptOrRewire(impactedEdgeIds: readonly string[]): FieldRemapFlowConnectionEvaluation {
+  const uniqueIds = [...new Set(impactedEdgeIds)];
+  return uniqueIds.length > 0
+    ? { status: 'rewire', impactedEdgeIds: uniqueIds }
+    : acceptedConnection;
+}
+
+function hasTransformDefinitions(
+  transforms: ValueTransformRegistry,
+  transformIds: readonly string[],
+): boolean {
+  return transformIds.every((transformId) => transforms.get(transformId) !== undefined);
+}
+
+function targetRewireEdgeIds(
+  edges: readonly MappingEdge[],
+  targetSlotId: string,
+  excludedEdgeId?: string,
+): string[] {
+  return edges
+    .filter((edge) => edge.targetSlotId === targetSlotId && edge.id !== excludedEdgeId)
+    .map((edge) => edge.id);
+}
 
 function resolveConnectionPortIds(connection: {
   readonly source: string | null | undefined;
@@ -490,26 +555,14 @@ function resolveConnectionPortIds(connection: {
  * mismatches (including transform-mediated chains on an existing target edge)
  * are rejected.
  */
-export function isValidFieldRemapFlowConnection(
-  connection: {
-    readonly source: string | null | undefined;
-    readonly target: string | null | undefined;
-    readonly sourceHandle?: string | null;
-    readonly targetHandle?: string | null;
-  },
-  context?: IsValidFieldRemapFlowConnectionContext & {
-    readonly drafts?: readonly {
-      readonly localId: string;
-      readonly transformId: string;
-      readonly sourceFieldId?: string;
-      readonly targetSlotId?: string;
-    }[];
-  },
-): boolean {
+export function evaluateFieldRemapFlowConnection(
+  connection: FieldRemapFlowConnectionInput,
+  context?: IsValidFieldRemapFlowConnectionContext,
+): FieldRemapFlowConnectionEvaluation {
   const source = connection.source;
   const target = connection.target;
   if (!source || !target) {
-    return false;
+    return rejectConnection('incomplete-connection');
   }
 
   const draftTargetId = parseDraftTransformNodeId(target);
@@ -517,39 +570,80 @@ export function isValidFieldRemapFlowConnection(
 
   if (source === SOURCE_OBJECT_NODE_ID && draftTargetId && connection.sourceHandle) {
     if (!context) {
-      return true;
+      return acceptedConnection;
     }
     const draft = context.drafts?.find((item) => item.localId === draftTargetId);
     if (!draft) {
-      return false;
+      return rejectConnection('missing-draft-endpoint');
     }
     const sourceField = findSourceField(context.sources, connection.sourceHandle);
-    return arePortsCompatible({
-      sourceType: sourceField?.dataType,
-      targetType: 'unknown',
-      transformIds: [draft.transformId],
-      registry: context.transforms,
-    });
+    if (!sourceField) {
+      return rejectConnection('missing-port-endpoint');
+    }
+    if (!context.transforms.get(draft.transformId)) {
+      return rejectConnection('missing-transform-definition');
+    }
+    const targetSlot = draft.targetSlotId
+      ? findTargetSlot(context.targets, draft.targetSlotId)
+      : undefined;
+    if (draft.targetSlotId && !targetSlot) {
+      return rejectConnection('missing-draft-endpoint');
+    }
+    if (
+      !arePortsCompatible({
+        sourceType: sourceField.dataType,
+        targetType: targetSlot?.dataType ?? 'unknown',
+        transformIds: [draft.transformId],
+        registry: context.transforms,
+      })
+    ) {
+      return rejectConnection('incompatible-port-types');
+    }
+    return acceptOrRewire(
+      draft.targetSlotId ? targetRewireEdgeIds(context.edges, draft.targetSlotId) : [],
+    );
+  }
+
+  if (source === SOURCE_OBJECT_NODE_ID && draftTargetId) {
+    return rejectConnection('incomplete-connection');
   }
 
   if (draftSourceId && target === TARGET_OBJECT_NODE_ID && connection.targetHandle) {
     if (!context) {
-      return true;
+      return acceptedConnection;
     }
     const draft = context.drafts?.find((item) => item.localId === draftSourceId);
     if (!draft) {
-      return false;
+      return rejectConnection('missing-draft-endpoint');
     }
-    const sourceType = draft.sourceFieldId
-      ? findSourceField(context.sources, draft.sourceFieldId)?.dataType
-      : undefined;
     const targetSlot = findTargetSlot(context.targets, connection.targetHandle);
-    return arePortsCompatible({
-      sourceType,
-      targetType: targetSlot?.dataType,
-      transformIds: [draft.transformId],
-      registry: context.transforms,
-    });
+    if (!targetSlot) {
+      return rejectConnection('missing-port-endpoint');
+    }
+    const sourceField = draft.sourceFieldId
+      ? findSourceField(context.sources, draft.sourceFieldId)
+      : undefined;
+    if (draft.sourceFieldId && !sourceField) {
+      return rejectConnection('missing-draft-endpoint');
+    }
+    if (!context.transforms.get(draft.transformId)) {
+      return rejectConnection('missing-transform-definition');
+    }
+    if (
+      !arePortsCompatible({
+        sourceType: sourceField?.dataType,
+        targetType: targetSlot.dataType,
+        transformIds: [draft.transformId],
+        registry: context.transforms,
+      })
+    ) {
+      return rejectConnection('incompatible-port-types');
+    }
+    return acceptOrRewire(targetRewireEdgeIds(context.edges, connection.targetHandle));
+  }
+
+  if (draftSourceId && target === TARGET_OBJECT_NODE_ID) {
+    return rejectConnection('incomplete-connection');
   }
 
   const xfTarget = parseTransformNodeId(target);
@@ -557,80 +651,120 @@ export function isValidFieldRemapFlowConnection(
 
   if (source === SOURCE_OBJECT_NODE_ID && xfTarget && connection.sourceHandle) {
     if (!context) {
-      return true;
+      return acceptedConnection;
     }
     const edge = context.edges.find((item) => item.id === xfTarget.mappingEdgeId);
     if (!edge) {
-      return false;
+      return rejectConnection('missing-transform-edge');
     }
     const chain = edge.transformIds ?? [];
     if (xfTarget.stepIndex >= chain.length) {
-      return false;
+      return rejectConnection('missing-transform-step');
     }
     const sourceField = findSourceField(context.sources, connection.sourceHandle);
     const targetSlot = findTargetSlot(context.targets, edge.targetSlotId);
+    if (!sourceField || !targetSlot) {
+      return rejectConnection('missing-port-endpoint');
+    }
+    const retainedChain = chain.slice(xfTarget.stepIndex);
+    if (!hasTransformDefinitions(context.transforms, retainedChain)) {
+      return rejectConnection('missing-transform-definition');
+    }
     return arePortsCompatible({
       sourceType: sourceField?.dataType,
-      targetType: targetSlot?.dataType,
-      transformIds: chain.slice(xfTarget.stepIndex),
+      targetType: targetSlot.dataType,
+      transformIds: retainedChain,
       registry: context.transforms,
-    });
+    })
+      ? acceptedConnection
+      : rejectConnection('incompatible-port-types');
+  }
+
+  if (source === SOURCE_OBJECT_NODE_ID && xfTarget) {
+    return rejectConnection('incomplete-connection');
   }
 
   if (xfSource && target === TARGET_OBJECT_NODE_ID && connection.targetHandle) {
     if (!context) {
-      return true;
+      return acceptedConnection;
     }
     const edge = context.edges.find((item) => item.id === xfSource.mappingEdgeId);
     if (!edge) {
-      return false;
+      return rejectConnection('missing-transform-edge');
     }
     const chain = edge.transformIds ?? [];
     if (xfSource.stepIndex >= chain.length) {
-      return false;
+      return rejectConnection('missing-transform-step');
     }
     const sourceField = findSourceField(context.sources, edge.sourceFieldId);
     const targetSlot = findTargetSlot(context.targets, connection.targetHandle);
-    return arePortsCompatible({
-      sourceType: sourceField?.dataType,
-      targetType: targetSlot?.dataType,
-      transformIds: chain.slice(0, xfSource.stepIndex + 1),
-      registry: context.transforms,
-    });
+    if (!sourceField || !targetSlot) {
+      return rejectConnection('missing-port-endpoint');
+    }
+    const retainedChain = chain.slice(0, xfSource.stepIndex + 1);
+    if (!hasTransformDefinitions(context.transforms, retainedChain)) {
+      return rejectConnection('missing-transform-definition');
+    }
+    if (
+      !arePortsCompatible({
+        sourceType: sourceField.dataType,
+        targetType: targetSlot.dataType,
+        transformIds: retainedChain,
+        registry: context.transforms,
+      })
+    ) {
+      return rejectConnection('incompatible-port-types');
+    }
+    return acceptOrRewire(targetRewireEdgeIds(context.edges, connection.targetHandle, edge.id));
+  }
+
+  if (xfSource && target === TARGET_OBJECT_NODE_ID) {
+    return rejectConnection('incomplete-connection');
   }
 
   if (xfSource && xfTarget) {
     if (xfSource.mappingEdgeId === xfTarget.mappingEdgeId) {
-      return false;
+      return rejectConnection('same-edge-transform-splice');
     }
     if (!context) {
-      return true;
+      return acceptedConnection;
     }
     const edgeA = context.edges.find((item) => item.id === xfSource.mappingEdgeId);
     const edgeB = context.edges.find((item) => item.id === xfTarget.mappingEdgeId);
     if (!edgeA || !edgeB) {
-      return false;
+      return rejectConnection('missing-transform-edge');
     }
     const chainA = edgeA.transformIds ?? [];
     const chainB = edgeB.transformIds ?? [];
     if (xfSource.stepIndex >= chainA.length || xfTarget.stepIndex >= chainB.length) {
-      return false;
+      return rejectConnection('missing-transform-step');
     }
     const merged = [
       ...chainA.slice(0, xfSource.stepIndex + 1),
       ...chainB.slice(xfTarget.stepIndex),
     ];
     if (merged.length === 0 || merged.length > MAX_TRANSFORM_CHAIN) {
-      return false;
+      return rejectConnection('transform-chain-limit');
     }
     const sourceField = findSourceField(context.sources, edgeA.sourceFieldId);
     const targetSlot = findTargetSlot(context.targets, edgeB.targetSlotId);
-    return arePortsCompatible({
-      sourceType: sourceField?.dataType,
-      targetType: targetSlot?.dataType,
-      transformIds: merged,
-      registry: context.transforms,
-    });
+    if (!sourceField || !targetSlot) {
+      return rejectConnection('missing-port-endpoint');
+    }
+    if (!hasTransformDefinitions(context.transforms, merged)) {
+      return rejectConnection('missing-transform-definition');
+    }
+    if (
+      !arePortsCompatible({
+        sourceType: sourceField.dataType,
+        targetType: targetSlot.dataType,
+        transformIds: merged,
+        registry: context.transforms,
+      })
+    ) {
+      return rejectConnection('incompatible-port-types');
+    }
+    return acceptOrRewire([edgeA.id]);
   }
 
   const topologyOk =
@@ -639,28 +773,48 @@ export function isValidFieldRemapFlowConnection(
     Boolean(connection.sourceHandle && connection.targetHandle);
 
   if (!topologyOk) {
-    return false;
+    return source === SOURCE_OBJECT_NODE_ID && target === TARGET_OBJECT_NODE_ID
+      ? rejectConnection('incomplete-connection')
+      : rejectConnection('unsupported-topology');
   }
 
   if (!context) {
-    return true;
+    return acceptedConnection;
   }
 
   const { sourceFieldId, targetSlotId } = resolveConnectionPortIds(connection);
   if (!sourceFieldId || !targetSlotId) {
-    return false;
+    return rejectConnection('incomplete-connection');
   }
 
   const sourceField = findSourceField(context.sources, sourceFieldId);
   const targetSlot = findTargetSlot(context.targets, targetSlotId);
+  if (!sourceField || !targetSlot) {
+    return rejectConnection('missing-port-endpoint');
+  }
   const existing = context.edges.find((edge) => edge.targetSlotId === targetSlotId);
+  const retainedChain = existing?.transformIds ?? [];
+  if (!hasTransformDefinitions(context.transforms, retainedChain)) {
+    return rejectConnection('missing-transform-definition');
+  }
+  if (
+    !arePortsCompatible({
+      sourceType: sourceField?.dataType,
+      targetType: targetSlot.dataType,
+      transformIds: retainedChain,
+      registry: context.transforms,
+    })
+  ) {
+    return rejectConnection('incompatible-port-types');
+  }
+  return acceptOrRewire(targetRewireEdgeIds(context.edges, targetSlotId));
+}
 
-  return arePortsCompatible({
-    sourceType: sourceField?.dataType,
-    targetType: targetSlot?.dataType,
-    transformIds: existing?.transformIds,
-    registry: context.transforms,
-  });
+export function isValidFieldRemapFlowConnection(
+  connection: FieldRemapFlowConnectionInput,
+  context?: IsValidFieldRemapFlowConnectionContext,
+): boolean {
+  return evaluateFieldRemapFlowConnection(connection, context).status !== 'rejected';
 }
 
 /** Result of a persisted (non-draft) Flow connect that updates mapping edges. */

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  MAX_TRANSFORM_CHAIN,
   createBuiltinValueTransformRegistry,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
@@ -10,6 +11,7 @@ import {
   applyFieldRemapFlowConnection,
   connectionToMappingEdge,
   draftTransformNodeId,
+  evaluateFieldRemapFlowConnection,
   isSchemaColumnFieldId,
   isValidFieldRemapFlowConnection,
   mappingToFlowGraph,
@@ -135,6 +137,215 @@ describe('field-remap-flow-adapter', () => {
       mappingEdgeId: 'e-title',
       stepIndex: 1,
     });
+  });
+
+  it('classifies completed connection attempts without changing the boolean compatibility API', () => {
+    const typedSources = [
+      { id: 'src.name', label: 'name', dataType: 'string' as const },
+      { id: 'src.count', label: 'count', dataType: 'number' as const },
+      { id: 'src.loose', label: 'loose' },
+    ];
+    const typedTargets = [
+      { id: 'tgt.name', label: 'name', dataType: 'string' as const },
+      { id: 'tgt.count', label: 'count', dataType: 'number' as const },
+    ];
+    const existing: MappingEdge[] = [
+      { id: 'edge:name', sourceFieldId: 'src.name', targetSlotId: 'tgt.name' },
+    ];
+    const context = { sources: typedSources, targets: typedTargets, edges: existing, transforms };
+
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.count',
+          targetHandle: 'tgt.name',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'incompatible-port-types' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.missing',
+          targetHandle: 'tgt.name',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'missing-port-endpoint' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: SOURCE_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+          targetHandle: 'src.count',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'unsupported-topology' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'incomplete-connection' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.loose',
+          targetHandle: 'tgt.count',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'accepted' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+          targetHandle: 'tgt.name',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rewire', impactedEdgeIds: ['edge:name'] });
+    expect(
+      isValidFieldRemapFlowConnection(
+        {
+          source: SOURCE_OBJECT_NODE_ID,
+          target: TARGET_OBJECT_NODE_ID,
+          sourceHandle: 'src.name',
+          targetHandle: 'tgt.name',
+        },
+        context,
+      ),
+    ).toBe(true);
+  });
+
+  it('distinguishes stale draft/transform endpoints, self-splice, and chain-limit failures', () => {
+    const baseEdge: MappingEdge = {
+      id: 'edge:base',
+      sourceFieldId: 'a.user_name',
+      targetSlotId: 'b.name',
+      transformIds: ['string:trim'],
+    };
+    const context = { sources, targets, edges: [baseEdge], transforms };
+
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: draftTransformNodeId('missing'),
+          target: TARGET_OBJECT_NODE_ID,
+          targetHandle: 'b.name',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'missing-draft-endpoint' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: transformNodeId('missing', 0),
+          target: TARGET_OBJECT_NODE_ID,
+          targetHandle: 'b.name',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'missing-transform-edge' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: transformNodeId(baseEdge.id, 4),
+          target: TARGET_OBJECT_NODE_ID,
+          targetHandle: 'b.name',
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'missing-transform-step' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: transformNodeId('edge:undefined-transform', 0),
+          target: TARGET_OBJECT_NODE_ID,
+          targetHandle: 'b.name',
+        },
+        {
+          ...context,
+          edges: [
+            {
+              ...baseEdge,
+              id: 'edge:undefined-transform',
+              transformIds: ['transform:not-registered'],
+            },
+          ],
+        },
+      ),
+    ).toEqual({ status: 'rejected', reason: 'missing-transform-definition' });
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: transformNodeId(baseEdge.id, 0),
+          target: transformNodeId(baseEdge.id, 0),
+        },
+        context,
+      ),
+    ).toEqual({ status: 'rejected', reason: 'same-edge-transform-splice' });
+
+    const edgeA: MappingEdge = {
+      ...baseEdge,
+      id: 'edge:a',
+      transformIds: Array.from({ length: MAX_TRANSFORM_CHAIN }, () => 'string:trim'),
+    };
+    const edgeB: MappingEdge = {
+      ...baseEdge,
+      id: 'edge:b',
+      targetSlotId: 'b.title',
+      transformIds: ['string:trim'],
+    };
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: transformNodeId(edgeA.id, MAX_TRANSFORM_CHAIN - 1),
+          target: transformNodeId(edgeB.id, 0),
+        },
+        { ...context, edges: [edgeA, edgeB] },
+      ),
+    ).toEqual({ status: 'rejected', reason: 'transform-chain-limit' });
+  });
+
+  it('reports every edge that a persisted rewire would remove before mutation', () => {
+    const edges: MappingEdge[] = [
+      {
+        id: 'edge:donor',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.name',
+        transformIds: ['string:trim'],
+      },
+      {
+        id: 'edge:target',
+        sourceFieldId: 'a.profile.city',
+        targetSlotId: 'b.title',
+        transformIds: ['string:upper'],
+      },
+    ];
+    expect(
+      evaluateFieldRemapFlowConnection(
+        {
+          source: transformNodeId('edge:donor', 0),
+          target: transformNodeId('edge:target', 0),
+        },
+        { sources, targets, edges, transforms },
+      ),
+    ).toEqual({ status: 'rewire', impactedEdgeIds: ['edge:donor'] });
   });
 
   it('splices / appends persisted xf connects into MappingEdge updates', () => {

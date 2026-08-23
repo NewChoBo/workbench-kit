@@ -97,6 +97,57 @@ export const NestedAB: Story = {
   },
 };
 
+export const ConnectionRejectFeedback: Story = {
+  name: 'Connection reject feedback',
+  args: { sampleId: 'nested-ab' },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const sourceHandle = canvasElement.querySelector<HTMLElement>(
+      '.react-flow__handle.source[data-nodeid="obj:source"][data-handleid="a.user_name"]',
+    );
+    const targetHandle = canvasElement.querySelector<HTMLElement>(
+      '.react-flow__handle.target[data-nodeid="obj:target"][data-handleid="b.labels"]',
+    );
+    await expect(sourceHandle).toBeVisible();
+    await expect(targetHandle).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-lane-e-tags')).toBeVisible();
+
+    const sourceRect = sourceHandle!.getBoundingClientRect();
+    const targetRect = targetHandle!.getBoundingClientRect();
+    await userEvent.pointer([
+      {
+        keys: '[MouseLeft>]',
+        target: sourceHandle!,
+        coords: {
+          clientX: sourceRect.x + sourceRect.width / 2,
+          clientY: sourceRect.y + sourceRect.height / 2,
+        },
+      },
+      {
+        target: targetHandle!,
+        coords: {
+          clientX: targetRect.x + targetRect.width / 2,
+          clientY: targetRect.y + targetRect.height / 2,
+        },
+      },
+      {
+        keys: '[/MouseLeft]',
+        target: targetHandle!,
+        coords: {
+          clientX: targetRect.x + targetRect.width / 2,
+          clientY: targetRect.y + targetRect.height / 2,
+        },
+      },
+    ]);
+
+    const feedback = await canvas.findByTestId('field-remap-connection-feedback');
+    await expect(feedback).toHaveAttribute('data-reason', 'incompatible-port-types');
+    await expect(canvas.getAllByTestId('field-remap-connection-feedback')).toHaveLength(1);
+    await expect(canvas.getByTestId('field-remap-lane-e-tags')).toBeVisible();
+  },
+};
+
 export const ConvertPaletteFilterKeyboard: Story = {
   name: 'Convert palette filter / keyboard',
   args: { sampleId: 'nested-ab' },

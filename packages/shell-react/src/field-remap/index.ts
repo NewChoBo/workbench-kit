@@ -16,6 +16,8 @@ export {
 } from './panel.js';
 export {
   FieldRemapFlowMapper,
+  type FieldRemapConnectionFeedback,
+  type FieldRemapConnectionFeedbackReason,
   type FieldRemapFlowActions,
   type FieldRemapFlowMapperProps,
 } from './flow.js';
