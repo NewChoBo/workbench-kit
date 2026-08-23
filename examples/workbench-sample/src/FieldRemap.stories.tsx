@@ -6,7 +6,11 @@ import {
   type SourceField,
   type TargetSlot,
 } from '@workbench-kit/field-remap';
-import { FieldRemapFlowMapper } from '@workbench-kit/shell-react/field-remap';
+import {
+  FieldRemapFlowMapper,
+  FieldRemapIoClassBrowse,
+  getFieldRemapBrowseDemoShapes,
+} from '@workbench-kit/shell-react/field-remap';
 
 import { FieldRemapDemo } from './FieldRemapDemo';
 
@@ -403,7 +407,12 @@ export const IoBrowseChrome: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
     const ioBrowse = within(canvas.getByTestId('field-remap-io-browse'));
+    const ioBrowseElement = canvas.getByTestId('field-remap-io-browse');
     await expect(ioBrowse.getByText('PersonProfile@1')).toBeVisible();
+    await expect(ioBrowseElement.querySelector('.ui-sidebar-row')).toBeTruthy();
+    await expect(ioBrowseElement.querySelector('ul ul')).toBeTruthy();
+    await expect(ioBrowseElement.querySelector('button, [tabindex]')).toBeNull();
+    await expect(ioBrowseElement.querySelector('[role="tree"], [role="treeitem"]')).toBeNull();
     // Browse rows render `path` (e.g. profile.internal_id), not bare label text.
     await expect(ioBrowse.queryByText('profile.internal_id')).toBeNull();
     await userEvent.click(canvas.getByLabelText('Show hidden fields'));
@@ -413,6 +422,38 @@ export const IoBrowseChrome: Story = {
       '.workbench-field-remap-flow__bindings > h4',
     );
     await expect(bindingsHeading).toHaveTextContent('Field maps');
+  },
+};
+
+const narrowIoBrowseShapes = getFieldRemapBrowseDemoShapes();
+
+export const IoBrowseNarrowHost: Story = {
+  name: 'I/O browse narrow host',
+  args: { sampleId: 'nested-ab' },
+  render: () => (
+    <div style={{ inlineSize: '34rem', maxInlineSize: '100%' }}>
+      <FieldRemapIoClassBrowse
+        includeHidden
+        sources={narrowIoBrowseShapes.sources}
+        targets={narrowIoBrowseShapes.targets}
+      />
+    </div>
+  ),
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const ioBrowse = canvas.getByTestId('field-remap-io-browse');
+    const sections = Array.from(ioBrowse.querySelectorAll('section'));
+
+    await expect(ioBrowse.querySelector('ul ul')).toBeTruthy();
+    await expect(ioBrowse.querySelector('button, [tabindex]')).toBeNull();
+    await waitFor(() => {
+      expect(sections).toHaveLength(2);
+      const sourcesRect = sections[0]!.getBoundingClientRect();
+      const targetsRect = sections[1]!.getBoundingClientRect();
+      expect(Math.abs(sourcesRect.left - targetsRect.left)).toBeLessThanOrEqual(1);
+      expect(targetsRect.top).toBeGreaterThan(sourcesRect.top);
+    });
   },
 };
 

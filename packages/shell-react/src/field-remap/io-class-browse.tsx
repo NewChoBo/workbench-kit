@@ -5,6 +5,8 @@ import {
   type SourceField,
   type TargetSlot,
 } from '@workbench-kit/field-remap';
+import { SideBarRow } from '@workbench-kit/react/layout';
+import { Badge } from '@workbench-kit/react/primitives';
 
 export type FieldRemapIoChrome = 'browse' | 'edit' | 'none';
 
@@ -56,25 +58,30 @@ function FieldTree({
     <ul className="workbench-field-remap-io-browse__fields">
       {nodes.map((node) => (
         <li key={node.id}>
-          <div className="workbench-field-remap-io-browse__row">
+          <SideBarRow className="workbench-field-remap-io-browse__row" data-static="true">
             <code className="workbench-field-remap-io-browse__path">{node.path ?? node.label}</code>
             <span className="workbench-field-remap-io-browse__meta">
               {node.dataType ? <span>{node.dataType}</span> : null}
               {node.classRef ? (
-                <span
+                <Badge
                   className="workbench-field-remap-io-browse__badge"
                   title={labels?.classRefTitle ?? 'classRef'}
+                  variant="muted"
                 >
                   {formatClassRef(node.classRef)}
-                </span>
+                </Badge>
               ) : null}
               {node.hidden === true ? (
-                <span className="workbench-field-remap-io-browse__badge" title="hidden">
+                <Badge
+                  className="workbench-field-remap-io-browse__badge"
+                  title="hidden"
+                  variant="muted"
+                >
                   {labels?.hiddenBadge ?? 'Hidden'}
-                </span>
+                </Badge>
               ) : null}
             </span>
-          </div>
+          </SideBarRow>
           {node.children?.length ? (
             <FieldTree emptyLabel={emptyLabel} labels={labels} nodes={node.children} />
           ) : null}
@@ -101,22 +108,27 @@ function PortSection({
       {nodes.length === 0 ? (
         <p className="workbench-field-remap-io-browse__empty">{emptyLabel}</p>
       ) : (
-        nodes.map((node) => (
-          <div className="workbench-field-remap-io-browse__port" key={node.id}>
-            <p className="workbench-field-remap-io-browse__port-title">
-              <span className="workbench-field-remap-io-browse__port-id">{node.label}</span>
-              <span className="workbench-field-remap-io-browse__port-meta">
-                {node.classRef ? formatClassRef(node.classRef) : node.id}
-                {node.hidden === true ? ` · ${labels?.hiddenBadge ?? 'Hidden'}` : ''}
-              </span>
-            </p>
-            <FieldTree
-              emptyLabel={emptyLabel}
-              labels={labels}
-              nodes={node.children?.length ? node.children : [node]}
-            />
-          </div>
-        ))
+        <ul className="workbench-field-remap-io-browse__ports">
+          {nodes.map((node) => (
+            <li className="workbench-field-remap-io-browse__port" key={node.id}>
+              <SideBarRow
+                className="workbench-field-remap-io-browse__port-title"
+                data-static="true"
+              >
+                <span className="workbench-field-remap-io-browse__port-id">{node.label}</span>
+                <span className="workbench-field-remap-io-browse__port-meta">
+                  {node.classRef ? formatClassRef(node.classRef) : node.id}
+                  {node.hidden === true ? ` · ${labels?.hiddenBadge ?? 'Hidden'}` : ''}
+                </span>
+              </SideBarRow>
+              <FieldTree
+                emptyLabel={emptyLabel}
+                labels={labels}
+                nodes={node.children?.length ? node.children : [node]}
+              />
+            </li>
+          ))}
+        </ul>
       )}
     </section>
   );
