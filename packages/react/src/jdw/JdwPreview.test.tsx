@@ -3,14 +3,22 @@
 import { act } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import type { WidgetTypeShape } from '@workbench-kit/contracts';
-import { createWidgetRegistry, formatJsonWidgetData } from '@workbench-kit/jdw';
+import {
+  createWidgetRegistry,
+  formatJsonWidgetData,
+  type JsonWidgetListenSchedulerBatch,
+} from '@workbench-kit/jdw';
 
 import { getJdwPreviewInvalidations, JdwPreview } from './JdwPreview.js';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
 
 interface DemoWidget extends WidgetTypeShape {
   type: 'demo:card';
@@ -262,6 +270,187 @@ describe('JdwPreview', () => {
         ?.getAttribute('data-jdw-invalidations'),
     ).toBe('1');
     expect(container.textContent).toContain('New title');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('publishes explicit preview changes as one scheduled batch', async () => {
+    const json = formatJsonWidgetData({
+      type: 'column',
+      listen: ['theme'],
+      args: {
+        children: [
+          {
+            type: 'text',
+            listen: ['title'],
+            args: { text: '${title}' },
+          },
+        ],
+      },
+    });
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const frames: FrameRequestCallback[] = [];
+    vi.stubGlobal('requestAnimationFrame', (callback: FrameRequestCallback) => {
+      frames.push(callback);
+      return frames.length;
+    });
+    vi.stubGlobal('cancelAnimationFrame', vi.fn());
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          changedValuePaths={['title', 'theme.color', 'title']}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'Scheduled title' }}
+        />,
+      );
+    });
+
+    expect(frames).toHaveLength(1);
+    await act(async () => {
+      frames[0]?.(0);
+    });
+
+    expect(batches).toHaveLength(1);
+    expect(batches[0]?.changedPaths).toEqual(['title', 'theme.color']);
+    expect(batches[0]?.invalidations).toHaveLength(2);
+    expect(container.textContent).toContain('Scheduled title');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('publishes a changed explicit path set without requiring a new version', async () => {
+    const json = formatJsonWidgetData({
+      type: 'column',
+      listen: ['theme'],
+      args: {
+        children: [
+          {
+            type: 'text',
+            listen: ['title'],
+            args: { text: '${title}' },
+          },
+        ],
+      },
+    });
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const scheduled: Array<() => void> = [];
+    const schedule = (flush: () => void) => {
+      scheduled.push(flush);
+      return () => undefined;
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          changedValuePaths={['title']}
+          changedValuePathsVersion={1}
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+        />,
+      );
+    });
+    await act(async () => {
+      scheduled[0]?.();
+    });
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          changedValuePaths={['theme.color']}
+          changedValuePathsVersion={1}
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+        />,
+      );
+    });
+
+    expect(scheduled).toHaveLength(2);
+    await act(async () => {
+      scheduled[1]?.();
+    });
+
+    expect(batches.map((batch) => batch.changedPaths)).toEqual([['title'], ['theme.color']]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('publishes repeated inferred paths as independent value-change batches', async () => {
+    const json = formatJsonWidgetData({
+      type: 'text',
+      listen: ['title'],
+      args: { text: '${title}' },
+    });
+    const batches: JsonWidgetListenSchedulerBatch[] = [];
+    const scheduled: Array<() => void> = [];
+    const schedule = (flush: () => void) => {
+      scheduled.push(flush);
+      return () => undefined;
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'First title' }}
+        />,
+      );
+    });
+    expect(scheduled).toHaveLength(0);
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'Second title' }}
+        />,
+      );
+    });
+    await act(async () => {
+      scheduled[0]?.();
+    });
+
+    await act(async () => {
+      root.render(
+        <JdwPreview
+          invalidationSchedule={schedule}
+          json={json}
+          onInvalidationBatch={(batch) => batches.push(batch)}
+          values={{ title: 'Third title' }}
+        />,
+      );
+    });
+    await act(async () => {
+      scheduled[1]?.();
+    });
+
+    expect(batches.map((batch) => batch.changedPaths)).toEqual([['title'], ['title']]);
+    expect(container.textContent).toContain('Third title');
 
     await act(async () => {
       root.unmount();

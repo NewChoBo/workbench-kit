@@ -1,5 +1,9 @@
 export { getJdwPreviewInvalidations, JdwPreview, type JdwPreviewProps } from './JdwPreview.js';
 export {
+  useJdwListenScheduler,
+  type UseJdwListenSchedulerOptions,
+} from './useJdwListenScheduler.js';
+export {
   JdwPreviewViewport,
   resolveContainerLayoutConstraints,
   resolveJdwPreviewFrameSize,

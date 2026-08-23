@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import {
   collectJsonWidgetChangedValuePaths,
@@ -10,12 +10,16 @@ import {
   type LayoutConstraints,
   type JsonWidgetValueMap,
   type JsonWidgetInvalidation,
+  type JsonWidgetListenSchedule,
+  type JsonWidgetListenSchedulerBatch,
+  type JsonWidgetNode,
   type ValidationIssue,
   type WidgetPath,
 } from '@workbench-kit/jdw';
 
 import { WorkbenchParseError, WorkbenchRenderSurface } from '../layout/WorkbenchLayout.js';
 import { renderJdwWithLayout } from './cssRenderBackend.js';
+import { useJdwListenScheduler } from './useJdwListenScheduler.js';
 
 const EMPTY_CHANGED_VALUE_PATHS: readonly string[] = [];
 
@@ -29,6 +33,10 @@ export interface JdwPreviewProps {
   strictKnownTypes?: boolean | undefined;
   values?: JsonWidgetValueMap | undefined;
   changedValuePaths?: readonly string[] | undefined;
+  /** Increment when the same explicit changed-path set represents a new event. */
+  changedValuePathsVersion?: number | undefined;
+  invalidationSchedule?: JsonWidgetListenSchedule | undefined;
+  onInvalidationBatch?: (batch: JsonWidgetListenSchedulerBatch) => void;
   onSelectPath?: ((path: WidgetPath) => void) | undefined;
   /**
    * When set, expand `type: "ref"` before validate/layout so composed documents
@@ -58,9 +66,16 @@ function mergeChangedValuePaths(
   first: readonly string[],
   second: readonly string[],
 ): readonly string[] {
-  return [
-    ...new Set([...first, ...second].map((path) => path.trim()).filter((path) => path.length > 0)),
-  ];
+  return [...new Set([...first, ...second])];
+}
+
+function areSameChangedValuePaths(first: readonly string[], second: readonly string[]): boolean {
+  return first.length === second.length && first.every((path, index) => path === second[index]);
+}
+
+interface JdwPreviewDocumentState {
+  readonly issues: readonly ValidationIssue[];
+  readonly node: JsonWidgetNode | null;
 }
 
 interface JdwPreviewState {
@@ -68,6 +83,11 @@ interface JdwPreviewState {
   readonly issues: readonly ValidationIssue[];
   readonly renderOutput: ReactNode;
   readonly valid: boolean;
+}
+
+interface JdwPreviewListenEvent {
+  readonly changedPaths: readonly string[];
+  readonly version: number;
 }
 
 export function JdwPreview({
@@ -80,12 +100,32 @@ export function JdwPreview({
   strictKnownTypes = true,
   values,
   changedValuePaths = EMPTY_CHANGED_VALUE_PATHS,
+  changedValuePathsVersion,
+  invalidationSchedule,
+  onInvalidationBatch,
   onSelectPath,
   documentPath = null,
   loadDocument,
 }: JdwPreviewProps) {
   const previousValuesRef = useRef<JsonWidgetValueMap | undefined>(values);
+  const previousExplicitChangeRef = useRef<{
+    readonly hasVersion: boolean;
+    readonly initialized: boolean;
+    readonly paths: readonly string[];
+    readonly version: number | undefined;
+  }>({
+    hasVersion: false,
+    initialized: false,
+    paths: EMPTY_CHANGED_VALUE_PATHS,
+    version: undefined,
+  });
+  const onInvalidationBatchRef = useRef(onInvalidationBatch);
   const onSelectPathRef = useRef(onSelectPath);
+  const [listenEvent, setListenEvent] = useState<JdwPreviewListenEvent>({
+    changedPaths: EMPTY_CHANGED_VALUE_PATHS,
+    version: 0,
+  });
+  onInvalidationBatchRef.current = onInvalidationBatch;
   onSelectPathRef.current = onSelectPath;
 
   const changedValuePathsFromValues = useMemo(
@@ -98,22 +138,49 @@ export function JdwPreview({
   );
 
   useEffect(() => {
-    previousValuesRef.current = values;
-  }, [values]);
+    const previousExplicitChange = previousExplicitChangeRef.current;
+    const hasExplicitVersion = changedValuePathsVersion !== undefined;
+    const explicitPathsChanged = previousExplicitChange.initialized
+      ? previousExplicitChange.hasVersion !== hasExplicitVersion ||
+        !areSameChangedValuePaths(previousExplicitChange.paths, changedValuePaths) ||
+        (hasExplicitVersion && !Object.is(previousExplicitChange.version, changedValuePathsVersion))
+      : changedValuePaths.length > 0;
+    const inferredChangedPaths = collectJsonWidgetChangedValuePaths(
+      previousValuesRef.current,
+      values,
+    );
 
-  const previewState = useMemo<JdwPreviewState>(() => {
+    previousValuesRef.current = values;
+    previousExplicitChangeRef.current = {
+      hasVersion: hasExplicitVersion,
+      initialized: true,
+      paths: [...changedValuePaths],
+      version: changedValuePathsVersion,
+    };
+
+    const eventPaths = mergeChangedValuePaths(
+      explicitPathsChanged ? changedValuePaths : EMPTY_CHANGED_VALUE_PATHS,
+      inferredChangedPaths,
+    );
+    if (eventPaths.length > 0) {
+      setListenEvent((current) => ({
+        changedPaths: eventPaths,
+        version: current.version + 1,
+      }));
+    }
+  }, [changedValuePaths, changedValuePathsVersion, values]);
+
+  const documentState = useMemo<JdwPreviewDocumentState>(() => {
     const parsed = parseJsonWidgetData(json);
     if (parsed.parseError !== null || parsed.value === null) {
       return {
-        invalidations: [],
         issues: [
           {
             path: 'root',
             message: parsed.parseError ?? 'Invalid JSON widget data.',
           },
         ],
-        renderOutput: null,
-        valid: false,
+        node: null,
       };
     }
 
@@ -125,19 +192,43 @@ export function JdwPreview({
       });
       if (expanded.issues.length > 0 || expanded.value === null) {
         return {
-          invalidations: [],
           issues: expanded.issues.map((issue) => ({
             path: issue.path,
             message: issue.message,
           })),
-          renderOutput: null,
-          valid: false,
+          node: null,
         };
       }
       drawableNode = expanded.value;
     }
 
-    const resolvedNode = resolveJsonWidgetValues(drawableNode, values);
+    return { issues: [], node: drawableNode };
+  }, [documentPath, json, loadDocument]);
+
+  const scheduledBatch = useJdwListenScheduler({
+    root: documentState.node,
+    changedPaths: documentState.node ? listenEvent.changedPaths : EMPTY_CHANGED_VALUE_PATHS,
+    changeVersion: listenEvent.version,
+    ...(invalidationSchedule ? { schedule: invalidationSchedule } : {}),
+  });
+
+  useEffect(() => {
+    if (scheduledBatch) {
+      onInvalidationBatchRef.current?.(scheduledBatch);
+    }
+  }, [scheduledBatch]);
+
+  const previewState = useMemo<JdwPreviewState>(() => {
+    if (documentState.node === null) {
+      return {
+        invalidations: [],
+        issues: documentState.issues,
+        renderOutput: null,
+        valid: false,
+      };
+    }
+
+    const resolvedNode = resolveJsonWidgetValues(documentState.node, values);
     const issues: ValidationIssue[] = [];
     validateJsonWidgetNode(resolvedNode, 'root', issues, {
       registeredTypes: registry?.types(),
@@ -145,7 +236,7 @@ export function JdwPreview({
     });
 
     return {
-      invalidations: collectJsonWidgetInvalidations(drawableNode, activeChangedValuePaths),
+      invalidations: collectJsonWidgetInvalidations(documentState.node, activeChangedValuePaths),
       issues,
       renderOutput:
         issues.length === 0
@@ -161,11 +252,9 @@ export function JdwPreview({
     };
   }, [
     activeChangedValuePaths,
-    documentPath,
+    documentState,
     emptyLabel,
-    json,
     layoutConstraints,
-    loadDocument,
     registry,
     selectedPath,
     strictKnownTypes,
