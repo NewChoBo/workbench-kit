@@ -83,7 +83,7 @@ WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DONE; depend
 { WB-NS-072C component-role + typed token/resource resolution [DONE; dependency: WB-NS-072B]
   WB-NS-072D explicit pack migration planner + transaction [DONE; dependencies: WB-NS-072B/C] }
         ↓
-WB-NS-072E Canvas/Inspector/provenance integration [DESIGNING; dependencies: WB-NS-072C, WB-NS-072D]
+WB-NS-072E Canvas/Inspector/provenance integration [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-072C, WB-NS-072D]
         ↓
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [DESIGNING; dependency: WB-NS-072E]
 
@@ -3970,22 +3970,702 @@ rollback remains for this packet.
 
 ## WB-NS-072E - Canvas, Inspector, and provenance integration
 
-- **Status:** `DESIGNING`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 12, 18-21
 - **Ownership:** `GENERIC_KIT`
-- **Dependencies:** `WB-NS-072C`, `WB-NS-072D`
+- **Dependencies:** `WB-NS-072C`, `WB-NS-072D` (`DONE`)
+- **Exact source/API baseline:** `origin/develop@ed6312da230f9fd8e9f521f16e929b193847b741`
+- **Implementation packages:** public additive authoring contract in `@workbench-kit/jdw`;
+  detached plan/finalize integration and Canvas/Inspector projection in the existing generic owners
 
-### Packet
+### Goal and bounded outcome
 
-Project resolved values, scope inheritance, compatibility choices, and diagnostics through Canvas/Inspector surfaces while preserving command and transaction parity.
+Add provider-neutral component-input binding projection and deterministic multi-operation
+authoring through the existing canonical `UiDocument` path. A caller can build a detached
+plan, inspect a read-only Preview, and Apply it as exactly one transaction/history entry.
+Canvas and Inspector then expose the same binding/provenance state and diagnostics.
+
+This packet preserves the public V1 command/transaction/session surface. Endpoint binding and
+atomic batch Apply are an explicitly additive V2 API over the same `UiDocument` and the same
+history semantics. There is no second document, binding sidecar, persistence model, or history
+authority.
+
+### Current gap and ownership
+
+Current source keeps two intentional namespaces:
+
+1. `UiDocumentNodeAuthoring.properties` stores property `UiValueSource` values, including
+   `{ kind: 'binding', bindingId }` where a property schema permits it.
+2. `UiComponentDescriptor.bindings` declares exact component interface endpoints with their own
+   ID, direction, and `UiValueSchema`.
+
+The document currently has no persisted projection for the second namespace, and the public V1
+command union has no set/clear operation for an opaque provider binding at an exact component
+input. Implementation must not overload `set-property`, force input IDs into the property
+namespace, or make Workbench resolve provider/source semantics. Workbench owns only exact
+endpoint projection, validation against immutable component descriptors, detached planning,
+transaction/history behavior, and generic Canvas/Inspector presentation.
+
+### Public compatibility contract
+
+The following existing public names remain source- and behavior-compatible and retain their
+closed six-variant `UiDocumentCommand` union:
+
+```text
+UiDocumentCommand
+UiDocumentTransaction
+UiDocumentTransactionRecord
+UiAuthoringSessionState
+ApplyUiDocumentCommandResult
+UiAuthoringSessionCommandResult
+applyUiDocumentCommand
+applyUiAuthoringSessionCommand
+createUiAuthoringSession
+undoUiAuthoringSession
+redoUiAuthoringSession
+```
+
+Add these separately named opt-in public types and equally explicit `V2`-suffixed functions:
+
+```text
+UiDocumentAtomicCommandV2
+UiDocumentCommandV2
+UiDocumentTransactionV2
+UiDocumentTransactionRecordV2
+UiAuthoringSessionStateV2
+ApplyUiDocumentCommandV2Result
+UiAuthoringSessionV2CommandResult
+ApplyUiDesignSystemPackChangeV2Result
+UiDocumentCommandV2Issue
+UiDocumentCommandV2IssueCode
+UiDocumentCommandV2Context
+applyUiDocumentCommandV2
+applyUiAuthoringSessionCommandV2
+createUiAuthoringSessionV2
+undoUiAuthoringSessionV2
+redoUiAuthoringSessionV2
+applyUiDesignSystemPackChangeV2
+UiAuthoringRecipeProvenance
+UiAuthoringRecipeRef
+UiAuthoringDesignSystemInputSnapshot
+CreateUiAuthoringDetachedPlanInput
+UiAuthoringDetachedPlan
+UiAuthoringPlanPreview
+UiAuthoringPlanDiagnostic
+UiAuthoringPlanDiagnosticCode
+UiAuthoringPlanFinalizeContext
+UiAuthoringPlanFinalizeResult
+createUiAuthoringDetachedPlan
+previewUiAuthoringDetachedPlan
+finalizeUiAuthoringDetachedPlan
+UiAuthoringResolutionNodeProjection
+UiAuthoringResolutionProjection
+UiAuthoringBindingProvenance
+UiAuthoringInputBindingProjection
+UiAuthoringDocumentNodeProjection
+UiAuthoringDocumentProjection
+WorkbenchAuthoringProjection
+UiAuthoringSurfaceAction
+projectUiAuthoringResolution
+projectUiAuthoringDocument
+composeWorkbenchAuthoringProjection
+WorkbenchAuthoringController
+WorkbenchAuthoringSurfaceProps
+WorkbenchAuthoringCanvas
+WorkbenchAuthoringInspector
+```
+
+V1 commands are valid V2 atomic commands. V2 must share one private mutation core and one
+canonical document/history model with V1; it is not permission to duplicate live state. Removing,
+aliasing, or widening V1 is a separate future migration packet.
+
+```ts
+interface UiDocumentCommandV2Context {
+  readonly componentCatalog: UiComponentCatalogContract;
+}
+```
+
+`UiDocumentCommandV2Context` carries the current immutable component catalog used for exact
+component/input lookup. Both direct `applyUiDocumentCommandV2` and
+`applyUiAuthoringSessionCommandV2` require that context. A set/clear command cannot bypass endpoint
+existence, direction, or exact component-version validation merely because it did not originate in
+the higher-level planner. V2 session creation and Undo/Redo keep the V2-typed history state but do
+not store a mutable service locator or catalog inside canonical document/history data.
+
+### Canonical document and version boundary
+
+Extend the existing `$authoring` envelope rather than adding a side table:
+
+```ts
+interface UiDocumentNodeAuthoring {
+  /** Semantic-root only. Omitted on the root means legacy v0; `1` means v1. */
+  readonly documentSchemaVersion?: 1;
+  readonly component: UiComponentRef;
+  readonly properties: Readonly<Record<string, UiValueSource>>;
+  readonly bindings?: Readonly<Record<string, string>>;
+  readonly themeScopeId?: string;
+  readonly designSystem?: UiDesignSystemState;
+  readonly layout?: {
+    readonly strategyId: string;
+    readonly values: Readonly<Record<string, UiValueSource>>;
+  };
+}
+```
+
+`bindings` maps exact `UiComponentBindingDescriptor.id` input IDs to non-blank canonical opaque
+`bindingId` values. The same `bindingId` may be assigned to multiple eligible endpoints as
+explicit fan-out. Empty maps canonicalize to omission. Clear removes only the exact endpoint and
+does not synthesize a literal/default replacement.
+
+Version behavior is frozen:
+
+- semantic-root `$authoring.documentSchemaVersion` omission is legacy v0;
+- root value `1` is supported v1; child version markers are invalid with
+  `nonroot-document-schema-version`;
+- any other raw root version, including a future integer greater than 1, is
+  `unsupported-document-schema-version` and write-ineligible before recognized-field projection;
+- unsupported raw source remains available for diagnostics/recovery and ordinary V1/V2 commands
+  must not rewrite, normalize, downgrade, default, or replace it;
+- the first V2 transaction that actually persists an endpoint binding upgrades v0 to v1 in that
+  same atomic transaction;
+- clearing/rearranging an already-v1 document never downgrades it, and V1 mutation of v1 preserves
+  the root marker plus all recognized v1 envelope state losslessly.
+
+Endpoint state is v1-only. A raw v0 source that already contains `bindings` is malformed with
+`bindings-require-document-schema-version`; it is not silently accepted and then normalized by a
+later command. V1 operations cannot be used as a V2 write bypass:
+
+- V1 `insert-node` rejects an incoming node that already carries `bindings`;
+- V1 `replace-node` may preserve an existing target binding map only when the replacement carries
+  the exact same map; adding, changing, or silently dropping endpoint state is rejected;
+- V1 property/layout/move operations preserve all recognized v1 envelope state, while removing a
+  node removes that node and its endpoint projections as the existing structural command implies;
+- root/child version placement is validated before any V1 or V2 command projection.
+
+### V2 command and transaction contract
+
+```ts
+type UiDocumentAtomicCommandV2 =
+  | UiDocumentCommand
+  | {
+      readonly type: 'set-input-binding';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly inputId: string;
+      readonly bindingId: string;
+    }
+  | {
+      readonly type: 'clear-input-binding';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly inputId: string;
+    };
+
+type UiDocumentCommandV2 =
+  | UiDocumentAtomicCommandV2
+  | {
+      readonly type: 'batch';
+      readonly commandId: string;
+      readonly commands: readonly UiDocumentAtomicCommandV2[];
+    };
+
+type UiDocumentCommandV2IssueCode =
+  | UiDocumentCommandIssueCode
+  | 'component-unavailable'
+  | 'input-unavailable'
+  | 'input-output-only'
+  | 'invalid-binding-id'
+  | 'duplicate-command-id'
+  | 'nested-batch'
+  | 'empty-batch'
+  | 'operation-failed';
+
+interface UiDocumentCommandV2Issue {
+  readonly code: UiDocumentCommandV2IssueCode;
+  readonly message: string;
+  readonly commandId?: string;
+  readonly nodeId?: string;
+  readonly inputId?: string;
+}
+
+interface UiDocumentTransactionV2 {
+  readonly transactionId: string;
+  readonly command: UiDocumentCommandV2;
+  readonly intent?: UiDesignSystemPackChangeCommand;
+  readonly baseRevision: number;
+  readonly nextRevision: number;
+  readonly patches: readonly WidgetPatch[];
+}
+
+interface ApplyUiDocumentCommandV2Result {
+  readonly document: UiDocument;
+  readonly transaction: UiDocumentTransactionV2 | null;
+  readonly issues: readonly (UiDocumentIssue | UiDocumentCommandIssue | UiDocumentCommandV2Issue)[];
+  readonly changed: boolean;
+}
+
+interface UiDocumentTransactionRecordV2 {
+  readonly transaction: UiDocumentTransactionV2;
+  readonly beforeDocument: UiDocument;
+  readonly afterDocument: UiDocument;
+  readonly beforeSelectedNodeIds: readonly string[];
+  readonly afterSelectedNodeIds: readonly string[];
+}
+
+interface UiAuthoringSessionStateV2 {
+  readonly document: UiDocument;
+  readonly selectedNodeIds: readonly string[];
+  readonly past: readonly UiDocumentTransactionRecordV2[];
+  readonly future: readonly UiDocumentTransactionRecordV2[];
+}
+
+interface UiAuthoringSessionV2CommandResult {
+  readonly state: UiAuthoringSessionStateV2;
+  readonly commandResult: ApplyUiDocumentCommandV2Result;
+}
+
+interface ApplyUiDesignSystemPackChangeV2Result {
+  readonly state: UiAuthoringSessionStateV2;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+  readonly changed: boolean;
+}
+
+function applyUiDocumentCommandV2(
+  document: UiDocument,
+  command: UiDocumentCommandV2,
+  context: UiDocumentCommandV2Context,
+): ApplyUiDocumentCommandV2Result;
+
+function createUiAuthoringSessionV2(
+  document: UiDocument,
+  selectedNodeIds?: readonly string[],
+): UiAuthoringSessionStateV2;
+
+function applyUiAuthoringSessionCommandV2(
+  state: UiAuthoringSessionStateV2,
+  command: UiDocumentCommandV2,
+  context: UiDocumentCommandV2Context,
+): UiAuthoringSessionV2CommandResult;
+
+function undoUiAuthoringSessionV2(
+  state: UiAuthoringSessionStateV2,
+): UiAuthoringSessionStateV2 | null;
+
+function redoUiAuthoringSessionV2(
+  state: UiAuthoringSessionStateV2,
+): UiAuthoringSessionStateV2 | null;
+
+function applyUiDesignSystemPackChangeV2(
+  state: UiAuthoringSessionStateV2,
+  mutation: DesignSystemPackChangeMutation,
+  currentRegistryRevision: number,
+): ApplyUiDesignSystemPackChangeV2Result;
+```
+
+`UiDocumentTransactionV2.command` is a `UiDocumentCommandV2`; V1 transaction/session types never
+acquire V2 variants by union widening. Batch behavior is fixed:
+
+- nested batches are invalid;
+- an empty batch is invalid with `empty-batch`; it does not create a transaction;
+- command IDs are canonical, all child IDs are unique, and the batch ID cannot equal a child ID;
+- children run in supplied order against one detached working document, so a later child may
+  target a stable node inserted earlier in the same batch;
+- validate the complete result before publication;
+- any child failure returns the original document with no transaction and no history mutation;
+- success increments `UiDocument.revision` exactly once and records exactly one session history
+  entry; Undo/Redo restores the complete before/after document and selection in one step;
+- a canonically unchanged final source is a no-op with no transaction/history entry.
+
+Selection repair happens once after complete-result validation, never after each child. Surviving
+selected node IDs retain their prior order, removed IDs are dropped, and inserted/replacement nodes
+are not auto-selected. Failure and canonical no-op preserve selection exactly.
+
+`applyUiDesignSystemPackChangeV2` is an additive compatibility bridge around the existing validated
+072D mutation/apply core. It records the same canonical root replacement command plus
+`UiDesignSystemPackChangeCommand` intent as one `UiDocumentTransactionV2` in the current V2
+session, preserving document-schema v1 bindings and selection. It does not create a V1 session,
+copy history between stacks, or expose a second Design System mutation path. Existing V1
+`applyUiDesignSystemPackChange` remains unchanged for V1 consumers.
+
+Low-level mutation remains renderer- and provider-neutral and structurally validates canonical
+IDs. Contextual set/clear eligibility is resolved by the detached planner against an immutable
+component-catalog snapshot: exact node, exact `UiComponentRef`, exact input descriptor, and
+direction `input | bidirectional`. Output-only endpoints are not assignable in this slice.
+
+### Detached plan, Preview, and Apply flow
+
+```text
+recipe identity/version + document identity/revision
+  + Design System resolution operands
+  + exact component/input descriptor snapshots
+        -> detached plan
+        -> pure Preview with operations/diffs/diagnostics
+        -> stale-operand revalidation
+        -> one V2 batch
+        -> exactly one UiDocumentTransactionV2/history entry
+```
+
+Preview mutates no document, selection, history, provider state, or host store. Apply revalidates
+every captured operand and fails closed on drift. An integrating host may embed the resulting
+document in its own larger product transaction, but Workbench never coordinates host-owned data,
+content, window, credential, authorization, or source persistence.
+
+The final JDW-owned detached plan shape is explicit and data-only:
+
+```ts
+type UiAuthoringRecipeProvenance = DesignSystemContributionProvenance;
+
+interface UiAuthoringRecipeRef {
+  readonly id: string;
+  readonly version: string;
+  readonly provenance: UiAuthoringRecipeProvenance;
+}
+
+interface UiAuthoringDesignSystemInputSnapshot {
+  readonly state: UiDesignSystemState | null;
+  readonly registryRevision: number;
+  readonly hostWidth?: number;
+}
+
+type UiAuthoringPlanDiagnosticCode =
+  | 'stale-document'
+  | 'stale-design-system'
+  | 'stale-component-catalog'
+  | 'role-unresolved'
+  | 'layout-unsupported'
+  | 'structural-constraint-violation'
+  | 'plan-blocked';
+
+interface UiAuthoringPlanDiagnostic {
+  readonly code: UiAuthoringPlanDiagnosticCode;
+  readonly message: string;
+  readonly path: string;
+  readonly commandId?: string;
+  readonly nodeId?: string;
+  readonly inputId?: string;
+  readonly cause?: DesignSystemDiagnostic | UiDocumentIssue | UiDocumentCommandV2Issue;
+}
+
+interface UiAuthoringDetachedPlan {
+  readonly planId: string;
+  readonly recipe: UiAuthoringRecipeRef;
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly endpointSnapshots: readonly {
+    readonly nodeId: string;
+    readonly component: UiComponentRef;
+    readonly input: UiComponentBindingDescriptor;
+  }[];
+  readonly commands: readonly UiDocumentAtomicCommandV2[];
+  readonly diagnostics: readonly UiAuthoringPlanDiagnostic[];
+  readonly blocked: boolean;
+}
+
+interface CreateUiAuthoringDetachedPlanInput {
+  readonly planId: string;
+  readonly recipe: UiAuthoringRecipeRef;
+  readonly state: UiAuthoringSessionStateV2;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly commands: readonly UiDocumentAtomicCommandV2[];
+}
+
+interface UiAuthoringPlanPreview {
+  readonly planId: string;
+  readonly commands: readonly UiDocumentAtomicCommandV2[];
+  readonly diagnostics: readonly UiAuthoringPlanDiagnostic[];
+  readonly blocked: boolean;
+}
+
+interface UiAuthoringPlanFinalizeContext {
+  readonly state: UiAuthoringSessionStateV2;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly componentCatalog: UiComponentCatalogContract;
+}
+
+interface UiAuthoringPlanFinalizeResult {
+  readonly command?: UiDocumentCommandV2;
+  readonly diagnostics: readonly UiAuthoringPlanDiagnostic[];
+}
+```
+
+`UiAuthoringRecipeRef` identifies a reusable generic catalog recipe only; it never remains a live
+owner after Apply. The design-system snapshot is the existing immutable resolution operand, not a
+second Theme/Pack state. The planner may resolve semantic component roles and typed layout
+requirements through existing contract/resolver owners, then JDW captures the exact resolved
+component/input snapshots and atomic commands above. Preview projects that detached data;
+finalization re-resolves every endpoint against the current V2 context, compares the document and
+Design System operands, and emits one `batch`. No controller may retain mutable document/catalog
+services or publish a second state store.
+
+`createUiAuthoringDetachedPlan`, `previewUiAuthoringDetachedPlan`, and
+`finalizeUiAuthoringDetachedPlan` are pure functions. Creation snapshots and validates hostile
+inputs; Preview returns no executable callback; finalization returns a command but does not apply
+it. The caller commits that command only through `applyUiAuthoringSessionCommandV2`, keeping the
+single canonical session/history boundary explicit.
+
+Freeze at least these stable diagnostics in the existing diagnostic ownership model:
+
+```text
+stale-document
+component-unavailable
+input-unavailable
+input-output-only
+invalid-binding-id
+duplicate-command-id
+nested-batch
+operation-failed
+nonroot-document-schema-version
+unsupported-document-schema-version
+bindings-require-document-schema-version
+empty-batch
+```
+
+Missing or renamed endpoints never remap by label, ordinal, or fuzzy capability. Duplicate use of
+one `bindingId` across different eligible endpoints is valid fan-out, not a collision.
+
+Document/version/placement failures remain `UiDocumentIssue` ownership. V2 command shape,
+catalog eligibility, duplicate ID, batch, and child-application failures use the additive
+`UiDocumentCommandV2Issue` result owned by JDW. Recipe resolution, stale operands, role/layout
+compatibility, and Preview blocking use `UiAuthoringPlanDiagnostic`; existing Design System
+failures are preserved as structured causes rather than flattened into an `operation-failed`
+string.
+
+### Canvas, Inspector, ThemeScope, and responsive projection
+
+The binding successor extends the previously frozen 072E projection rather than replacing it.
+Canvas, Inspector, graph-property projection, and renderer adapters consume one revisioned,
+read-only authoring projection derived from:
+
+```text
+UiDocument identity/revision
+  + immutable Design System registry/input snapshot
+  + exact component catalog
+  + current host-width/preview state
+      -> resolved values/components
+      -> Theme/ThemeScope/token/resource provenance
+      -> endpoint binding projection
+      -> compatibility and unresolved diagnostics
+```
+
+Freeze the shared data-only projection boundary:
+
+```ts
+interface UiAuthoringResolutionNodeProjection {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+  readonly componentCompatibility: ComponentCompatibility;
+  readonly componentProvenance: DesignSystemContributionProvenance | null;
+  readonly effectiveTheme: DesignSystemThemeRef | null;
+  readonly scopeChain: readonly string[];
+  readonly properties: Readonly<Record<string, DesignValueResolutionResult>>;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+}
+
+interface UiAuthoringResolutionProjection {
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly registryRevision: number;
+  readonly hostWidth?: number;
+  readonly nodes: readonly UiAuthoringResolutionNodeProjection[];
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+}
+
+interface UiAuthoringBindingProvenance {
+  readonly kind: 'document-input-binding';
+  readonly path: string;
+}
+
+interface UiAuthoringInputBindingProjection {
+  readonly input: UiComponentBindingDescriptor;
+  readonly bindingId?: string;
+  readonly assignable: boolean;
+  readonly reason:
+    'available' | 'component-unavailable' | 'input-unavailable' | 'input-output-only';
+  readonly provenance: UiAuthoringBindingProvenance | null;
+  readonly issues: readonly UiDocumentCommandV2Issue[];
+}
+
+interface UiAuthoringDocumentNodeProjection {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+  readonly selected: boolean;
+  readonly bindings: readonly UiAuthoringInputBindingProjection[];
+  readonly responsiveVariantId?: string;
+}
+
+interface UiAuthoringDocumentProjection {
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly nodes: readonly UiAuthoringDocumentNodeProjection[];
+  readonly issues: readonly (UiDocumentIssue | UiDocumentCommandV2Issue)[];
+}
+
+interface WorkbenchAuthoringProjection {
+  readonly resolution: UiAuthoringResolutionProjection;
+  readonly document: UiAuthoringDocumentProjection;
+}
+
+type UiAuthoringSurfaceAction =
+  | { readonly kind: 'document-command-v2'; readonly command: UiDocumentCommandV2 }
+  | {
+      readonly kind: 'design-system-change';
+      readonly mutation: DesignSystemPackChangeMutation;
+    };
+
+interface WorkbenchAuthoringController {
+  readonly projection: WorkbenchAuthoringProjection;
+  readonly dispatch: (action: UiAuthoringSurfaceAction) => void;
+}
+
+interface WorkbenchAuthoringSurfaceProps {
+  readonly controller: WorkbenchAuthoringController;
+  readonly readOnly?: boolean;
+}
+```
+
+`@workbench-kit/workbench-core/design-system` owns the data-only
+`UiAuthoringResolutionProjection` and pure `projectUiAuthoringResolution(...)` over the immutable
+registry snapshot, existing contracts-owned authored-document snapshot, component catalog, and
+host-width input. It reuses existing `DesignValueResolutionResult` and
+`DesignSystemDiagnostic`; it does not import JDW.
+
+`@workbench-kit/jdw` owns `UiAuthoringDocumentProjection` and pure
+`projectUiAuthoringDocument(state, context)`, which resolves each exact catalog input descriptor,
+assignability, binding provenance, canonical hierarchy, selection, responsive variant identity,
+issues, and revision without importing workbench-core or React. `@workbench-kit/react` owns the
+shallow data composition
+`composeWorkbenchAuthoringProjection(resolution, document)`, which rejects mismatched
+document IDs/revisions rather than joining stale projections. Dependency direction remains
+`react -> jdw/workbench-core -> contracts`; the two headless owners do not import each other.
+
+`@workbench-kit/react` adds `WorkbenchAuthoringCanvas` and `WorkbenchAuthoringInspector`. Both
+accept the same `WorkbenchAuthoringSurfaceProps`, whose controller contains one immutable joined
+projection and one `dispatch(action)` callback. The controller is a host-provided adapter, not a
+new state/history service. The components own no document copy, hidden selection, or patch-based
+legacy mutation. Current canvas primitives remain reusable presentation pieces; the legacy
+raw-`GenericWidget` Inspector is not silently reinterpreted as the canonical authoring surface.
+
+Theme selection, ThemeScope creation/removal, token overrides, and Pack compatibility choices are
+represented as `design-system-change` actions carrying the existing validated
+`DesignSystemPackChangeMutation`; a V2 controller commits them only through
+`applyUiDesignSystemPackChangeV2`, while V1 consumers retain existing
+`applyUiDesignSystemPackChange`. Property/layout/binding/tree edits use `document-command-v2` and
+the V2 session path. Both kinds append to the same V2 `past` stack and clear the same `future`
+stack. Canvas and Inspector must emit the same action for the same supported user operation, so
+neither surface can bypass Preview, validation, revision, or history ownership.
+
+The existing root-owned `UiDesignSystemState`, per-node `themeScopeId`, nearest-scope resolution,
+072D pack-change planner/finalizer, and token/resource/component resolvers remain authoritative.
+072E does not add another Theme command or resolver. Same-pack Theme changes invalidate only
+affected presentation projection, never rewrite hierarchy/layout/bindings, and preserve semantic
+component and focus identity. Pack compatibility choices continue through 072D and do not enter a
+V2 batch as an unvalidated root replacement.
+
+Responsive/Canvas/nested layout variants remain typed canonical `UiDocument` layout state; raw
+CSS and renderer-local breakpoint maps are never authoring truth. Host width is ephemeral
+resolution/preview input and is not persisted as the current rendered result. The detached plan
+captures the exact host-width/variant operands used for Preview and Apply so drift fails closed.
+If exact-current implementation inventory cannot encode a responsive variant without inventing a
+second layout schema or renderer state owner, stop that slice with `DESIGN_GAP`; the headless V2
+binding/plan seam may land first, but this packet is not `DONE` until the canonical responsive
+projection and Canvas/Inspector parity are proven.
+
+### Ordered implementation tasks
+
+1. Add pre-projection semantic-root version inspection and lossless v0/v1 read/write behavior;
+   lock unsupported raw future versions before ordinary mutation.
+2. Add optional per-node endpoint bindings to the canonical authoring envelope, parsing,
+   validation, serialization, V1 insert/replace bypass guards, and round-trip tests without
+   changing V1 public command types.
+3. Introduce the additive V2 command/transaction/result/session/context/function names and root
+   exports; share a private canonical mutation core with V1 and require exact catalog validation.
+4. Implement set/clear endpoint mutation, v0-to-v1 upgrade, non-nestable all-or-nothing batch,
+   one-revision/one-history semantics, selection repair, the V2 Design System apply bridge, and
+   one-step Undo/Redo across interleaved document/Design System transactions.
+5. Extend the existing detached recipe/plan/Preview/finalize seam with exact component-input
+   descriptor capture, Design System/host-width operands, stale checks, diagnostics, and V2 batch
+   compilation.
+6. Add the split workbench-core resolution projection and JDW document projection plus the strict
+   React join with the dependency direction above; no React or renderer state enters the headless
+   owners.
+7. Add `WorkbenchAuthoringCanvas` and `WorkbenchAuthoringInspector` over the same projection/action
+   contract with keyboard/pointer parity, visible diagnostics, focus restoration, and no hidden
+   mutation.
+8. Add packed-consumer fixtures proving unchanged V1 exhaustive switches/signatures and additive
+   V2 exhaustive handling/root exports; update the authoring architecture documentation for the
+   explicit V1/V2 boundary.
+9. Freeze one source candidate, run the focused tests during development, then run repository
+   static/fast/browser gates once on the final SHA. Electron is not required because this packet
+   has no native boundary.
 
 ### Validation
 
-Backendless controller tests plus browser coverage for projection, focus preservation, scoped inheritance, and visible diagnostics; commit safety and repository validation on the exact head.
+Pure/backendless minimum:
+
+- v0 parse/edit parity, atomic first-binding v1 upgrade, v1 state preservation through V1
+  mutation, and raw-preserved future-version write lock;
+- malformed v0-with-bindings rejection plus V1 insert/replace attempts to add/change/drop binding
+  state failing closed while unrelated V1 mutations preserve v1 state;
+- set/clear exact endpoint, same-value idempotence, clear-missing no-op, fan-out, exact component
+  version resolution, and property-binding versus component-input-binding round trip;
+- fail-closed direct-V2 and planned missing/output-only/drifted endpoints, catalog/component-version
+  mismatch, and noncanonical binding IDs;
+- `insert -> set input binding -> set property/layout` as one revision/history record;
+- empty/nested batches, duplicate child IDs, and batch/child ID collision fail without mutation;
+- middle-child failure leaves source, revision, selection, and history unchanged;
+- successful selection repair runs once against the final document; failure/no-op preserves exact
+  selection; one-step Undo/Redo restores the full batch and selection;
+- interleaved V2 batch and Design System change records share one past/future stack; Undo/Redo
+  crosses both in exact commit order while V1 signatures/behavior remain unchanged;
+- detached Preview is mutation-free and work is bounded by referenced operations/nodes/descriptors,
+  not a global catalog Cartesian scan.
+
+Packed public compatibility minimum:
+
+- a legacy consumer retains an exhaustive six-variant `UiDocumentCommand` switch with a `never`
+  default and an exhaustive `UiDocumentTransaction.command` switch;
+- old V1 apply/session signatures remain assignable to their previous public contracts;
+- an opt-in V2 consumer exhaustively handles inherited V1 variants, set, clear, and batch;
+- package root exports add V2 names without replacing or aliasing V1.
+
+Browser/Canvas/Inspector acceptance after the headless seam exists:
+
+- Canvas and Inspector read the same projection and show unresolved/stale diagnostics without
+  hidden mutation;
+- exact endpoint descriptor, assignability, opaque binding, document provenance, component
+  compatibility, and contribution provenance agree across both surfaces;
+- keyboard-only set/clear plus Undo/Redo reaches the same document as pointer interaction;
+- resolved value, ThemeScope/token/resource provenance, responsive host-width preview, and pack
+  compatibility choices are equivalent across both surfaces;
+- focus restoration, error announcement, scoped inheritance, and same-pack Theme changes preserve
+  the existing accessibility and structural identity contracts.
+
+Run `pnpm check:commit-safety`, focused package tests, public-export/packed-consumer checks,
+`pnpm validate:static`, `pnpm validate:fast`, and the required browser lane on the frozen exact
+candidate. Electron/native validation is out of scope unless implementation unexpectedly changes a
+native boundary.
+
+### Non-goals
+
+- no widening/removal/aliasing of the V1 public command or transaction APIs;
+- no second document, binding sidecar, history stack, property/input namespace collapse, fuzzy
+  endpoint remap, catalog-validation bypass, renderer-local responsive state owner, provider
+  resolution, transformation runtime, product persistence coordinator, arbitrary cross-pack Theme
+  mixing, Electron/native API, or AI-only operation path;
+- no implementation of the later ThemeRegistry/shell compatibility cleanup owned by `WB-NS-072F`.
 
 ### Done criteria
 
-Canvas and Inspector expose equivalent supported operations and provenance, while same-pack theme changes preserve canonical structure and focus identity.
+The packet is complete when one canonical `UiDocument` can preserve legacy V1 consumers, opt into
+V2 exact endpoint binding and all-or-nothing batch Apply, round-trip v0/v1 without silent data loss,
+write-lock unsupported future versions, Preview without mutation, and record one revision/history
+entry with one-step Undo/Redo. Canvas and Inspector must expose equivalent operations,
+provenance, diagnostics, keyboard behavior, and focus restoration while same-pack Theme changes
+preserve canonical structure and focus identity. Exact-head source review must find no public V1
+break, duplicate document/history/binding truth, product-specific ownership, hidden mutation, or
+unreleased dependency drift.
 
 ## WB-NS-072F - Existing theme compatibility delegation and cleanup
 
