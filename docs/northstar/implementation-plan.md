@@ -94,6 +94,10 @@ Workflow runtime + published interfaces
 Host adapter maturation / multi-host validation
         ↓
 Backendless/performance + compatibility hardening
+
+Command/keybinding management parity
+        ↓
+WB-NS-080A CommandRegistry effective keybinding management [READY_FOR_IMPLEMENTATION]
 ```
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
@@ -1424,6 +1428,382 @@ Reject the implementation if:
   last snapshot as current authority, or leaves any in-flight duplicate
   unresolved;
 - Electron/native coverage is claimed.
+
+## WB-NS-080A — CommandRegistry effective keybinding management
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Issue owner:** [#253](https://github.com/NewChoBo/workbench-kit/issues/253)
+- **Ownership:** `GENERIC_KIT`
+- **Reviewed source base:** `origin/develop@01abbfa9327335c690093f4acc7f064af14023a6`
+- **Admissible implementation base:** the first `origin/develop` commit that contains this packet
+  unchanged; source work starts only after that documentation merge
+- **Runtime layer:** `PURE_WEB / backendless`
+- **Dependencies:** existing public `CommandRegistry`, keybinding management entries and local
+  persistence seams; no extension-provider or native dependency
+
+### Goal and user outcome
+
+A CommandRegistry-only host can show the same effective shortcuts that its generic shortcut bridge
+executes, set or reset one unconditional managed override, persist it, and reload it without a full
+WorkbenchProvider or ExtensionRegistry. Defaults, capture, conflict detection and runtime matching
+share one explicit-platform canonical chord grammar. Existing persisted macOS shortcuts retain their
+observable meaning across the grammar upgrade.
+
+### Target ownership and API
+
+`@workbench-kit/platform` owns the reusable mechanics:
+
+- root exports `WorkbenchShortcutPlatform`, `resolveWorkbenchShortcutPlatform`,
+  `normalizeWorkbenchShortcutCandidates`, `normalizeWorkbenchShortcutFromEvent`,
+  `matchesWorkbenchShortcut` and `workbenchShortcutsOverlap`;
+- one pure projection from `CommandRegistry + context + platform` to command metadata and ordered
+  default `KeybindingDefinition` values, exported as `projectCommandRegistryKeybindings`;
+- one provider-free `createKeybindingManagementModel` over that projection and caller-owned
+  overrides;
+- pure supported-managed-record set/reset operations that preserve unsupported records.
+
+The existing generic React `WorkbenchShortcutCommandBridge` consumes that platform projection and
+accepts the same override array as the management model. `KeybindingCaptureField` emits canonical
+explicit-platform chords. `@workbench-kit/workbench-core` owns the injected-storage v0/v1 codec and
+detailed read result through the exact `@workbench-kit/workbench-core/keybinding-overrides-storage`
+subpath. shell-react keeps its current root persistence compatibility facades and WorkbenchProvider
+remains a composition adapter. Provider-bound `KeybindingRegistry` extension dispatch remains a
+separate compatibility path.
+
+The new public contracts are additive and use these exact names:
+
+```ts
+type WorkbenchShortcutPlatform = 'linux' | 'mac' | 'unknown' | 'windows';
+
+interface WorkbenchShortcutEventLike {
+  readonly altKey?: boolean | undefined;
+  readonly ctrlKey?: boolean | undefined;
+  readonly key: string;
+  readonly metaKey?: boolean | undefined;
+  readonly preventDefault?: (() => void) | undefined;
+  readonly shiftKey?: boolean | undefined;
+  readonly stopPropagation?: (() => void) | undefined;
+}
+
+function resolveWorkbenchShortcutPlatform(input?: {
+  readonly navigatorPlatform?: string | undefined;
+}): WorkbenchShortcutPlatform;
+
+function normalizeWorkbenchShortcutCandidates(
+  shortcut: string,
+  platform: WorkbenchShortcutPlatform,
+): readonly string[];
+
+function normalizeWorkbenchShortcutFromEvent(
+  event: WorkbenchShortcutEventLike,
+  platform: WorkbenchShortcutPlatform,
+): string | undefined;
+
+function matchesWorkbenchShortcut(input: {
+  readonly event: WorkbenchShortcutEventLike;
+  readonly platform: WorkbenchShortcutPlatform;
+  readonly shortcut: string;
+}): boolean;
+
+function workbenchShortcutsOverlap(
+  left: string,
+  right: string,
+  platform: WorkbenchShortcutPlatform,
+): boolean;
+
+interface CommandRegistryKeybindingProjection {
+  readonly commands: readonly KeybindingManagementCommandInput[];
+  readonly defaults: readonly KeybindingDefinition[];
+}
+
+function projectCommandRegistryKeybindings<TContext>(input: {
+  readonly registry: CommandRegistry<TContext>;
+  readonly context: TContext;
+  readonly platform: WorkbenchShortcutPlatform;
+  readonly commandIds?: readonly string[];
+}): CommandRegistryKeybindingProjection;
+
+interface CommandRegistryKeybindingManagementModel {
+  readonly entries: readonly KeybindingManagementEntry[];
+  readonly overrides: readonly KeybindingDefinition[];
+  set(commandId: string, key: string): KeybindingManagementMutationResult;
+  reset(commandId: string): KeybindingManagementMutationResult;
+}
+
+function createKeybindingManagementModel(input: {
+  readonly editingDisabledReason?: string;
+  readonly projection: CommandRegistryKeybindingProjection;
+  readonly overrides: readonly KeybindingDefinition[];
+  readonly onOverridesChange: (next: readonly KeybindingDefinition[]) => void;
+  readonly platform: WorkbenchShortcutPlatform;
+}): CommandRegistryKeybindingManagementModel;
+
+interface KeybindingManagementMutationResult {
+  readonly changed: boolean;
+  readonly overrides: readonly KeybindingDefinition[];
+  readonly reason?: 'ambiguous-records' | 'unsupported-record' | 'write-locked';
+}
+
+interface WorkbenchKeybindingOverridesStorageReadResult {
+  readonly diagnostic?: WorkbenchPersistenceDiagnostic;
+  readonly entries: readonly WorkbenchKeybindingDefinition[];
+  readonly format:
+    'decode-failed' | 'legacy-v0' | 'missing' | 'read-failed' | 'unsupported-future' | 'v1';
+  readonly writeEligible: boolean;
+}
+
+function readWorkbenchKeybindingOverridesStorageResult(input: {
+  readonly options?: WorkbenchPersistenceDiagnosticOptions;
+  readonly platform: WorkbenchShortcutPlatform;
+  readonly storage?: WorkbenchStorageReader;
+  readonly storageKey: string;
+}): WorkbenchKeybindingOverridesStorageReadResult;
+
+function writeWorkbenchKeybindingOverridesStorageResult(input: {
+  readonly entries: readonly WorkbenchKeybindingDefinition[];
+  readonly options?: WorkbenchPersistenceDiagnosticOptions;
+  readonly storage?: WorkbenchStorageWriter;
+  readonly storageKey: string;
+}): WorkbenchPersistenceWriteResult;
+```
+
+`@workbench-kit/react/workbench` additively exposes
+`WorkbenchShortcutCommandBridgeProps.keybindingProjection?` and
+`WorkbenchShortcutCommandBridgeProps.keybindingOverrides?`.
+`@workbench-kit/react/workbench/management` additively exposes
+`KeybindingCaptureFieldProps.platform?`, `KeybindingManagementPanelProps.editingDisabledReason?` and
+the `KeybindingManagementEntry.editable`, `disabledReason` and `storedKeys` fields; omission of the
+platform delegates to the one platform resolver for source compatibility. The workbench-core leaf
+exports
+`readWorkbenchKeybindingOverridesStorageResult` and
+`writeWorkbenchKeybindingOverridesStorageResult`; shell-react's existing
+`readPersistedKeybindingOverrides*` / `writePersistedKeybindingOverrides*` names delegate to them.
+The read operation requires the same explicit `WorkbenchShortcutPlatform` operand used by the
+projection so legacy macOS interpretation cannot drift between layers.
+With no argument, `resolveWorkbenchShortcutPlatform` reads the current global navigator platform;
+an explicit input is pure/testable and an absent or unrecognized explicit value returns `unknown`.
+
+React's existing public `WorkbenchShortcutPlatform` and `WorkbenchShortcutEventLike` names become
+type aliases/re-exports of the platform contracts. Existing `getWorkbenchShortcutFromEvent` and
+`matchesWorkbenchShortcut` React exports remain source-compatible facades: they resolve an omitted
+platform as before, delegate normalization/matching to platform and retain their existing display
+format/boolean result. `getWorkbenchShortcutCommandBindings`, Palette/Quick Open helpers and
+`runWorkbenchShortcutCommand` remain exported, but no React-local parser or matcher remains.
+
+The bridge's legacy explicit `bindings` source and the new projection source are mutually exclusive
+in `WorkbenchShortcutCommandBridgeProps`:
+
+```ts
+type WorkbenchShortcutCommandBindingSource =
+  | {
+      readonly bindings: readonly WorkbenchShortcutCommandBinding[];
+      readonly keybindingOverrides?: never;
+      readonly keybindingProjection?: never;
+    }
+  | {
+      readonly bindings?: undefined;
+      readonly keybindingOverrides?: readonly KeybindingDefinition[];
+      readonly keybindingProjection: CommandRegistryKeybindingProjection;
+    }
+  | {
+      readonly bindings?: undefined;
+      readonly keybindingOverrides?: readonly KeybindingDefinition[];
+      readonly keybindingProjection?: undefined;
+    };
+```
+
+The first branch preserves the caller-supplied bindings as the sole runtime truth and performs no
+projection, override application or registry-change subscription. The second consumes the supplied
+immutable projection as-is, applies overrides and relies on caller replacement for revision changes.
+The third internally projects and subscribes to registry changes. `commandIds`, context/platform
+identity and the other existing execution props remain available in all branches; the latter two
+branches recompute effective bindings when their projection or overrides identity changes.
+
+`projectCommandRegistryKeybindings` is one immutable snapshot. A provider-free host passes that
+same snapshot to its management model and bridge. The React bridge subscribes once to
+`CommandRegistry.onDidChangeCommands`, recomputes when the registry revision, supplied context
+identity or explicit platform changes, and otherwise reuses the snapshot; keydown never evaluates a
+CommandValue. An explicitly supplied projection is consumed as-is and is caller-replaced when its
+context/platform revision changes. That subscription applies only to the internal-projection branch
+above; the explicit projection and legacy bindings branches do not subscribe. WorkbenchProvider/
+shell composition applies the same lifecycle instead of maintaining a second default projection.
+
+The public workbench keybindings config remains the existing raw array grammar. Only the local
+override storage value gains a private versioned envelope:
+
+```ts
+interface WorkbenchKeybindingOverridesStorageV1 {
+  readonly kind: 'workbench.keybindingOverrides';
+  readonly version: 1;
+  readonly entries: readonly WorkbenchKeybindingDefinition[];
+}
+```
+
+### Canonical projection and override semantics
+
+- Resolve each `CommandDefinition.shortcut` CommandValue against the supplied context once per
+  projection call. Split comma candidates deterministically, preserve declaration order, and use
+  the first candidate as the management default while every candidate remains a runtime default.
+- Normalize case, spacing and token aliases at the boundary. Declaration aliases
+  `Ctrl/Cmd`/`Cmd/Ctrl`/`mod`/`primary` resolve to `meta` on macOS and `ctrl` on Windows/Linux; they
+  never produce a compatibility token. New macOS capture distinguishes physical Ctrl (`ctrl`) from
+  Cmd (`meta`). Only legacy-v0 macOS storage migration may emit the reserved
+  `legacy-primary-or-control` token. Matching/conflict treats that token as overlapping either
+  explicit modifier, while explicit `ctrl` and `meta` do not overlap each other. Capture and normal
+  command-default normalization never emit the reserved token.
+- A supported managed override has the target command, one canonical key, no `when`, and no
+  non-empty `args`. It suppresses all CommandRegistry defaults for that command. Reset removes only
+  that supported record and restores every ordered default.
+- Conditional or non-empty-args records are preserved unchanged and always represented by the
+  command's visible disabled management row. The row exposes every stored chord through
+  `storedKeys`, a stable reason that conditional/argument bindings are not editable here, and no
+  active Capture/Reset callback. The row need not expose raw `when` or `args` values. They do not
+  suppress generic CommandRegistry defaults because that bridge owns neither when-context
+  resolution nor argument execution.
+- A command is editable only when it has no unsupported records and at most one supported record.
+  If supported and unsupported records coexist, or more than one supported record exists, the one
+  visible row lists every stored chord and is disabled with an `unsupported-record` or
+  `ambiguous-records` reason. Direct `set`/`reset` calls for such a row are deterministic no-ops and
+  do not call `onOverridesChange`. For an editable command, `set` replaces its sole supported record
+  (or appends one when absent), while `reset` removes its sole supported record; all other records
+  and their relative order remain unchanged.
+- Command executability, missing-handler, disabled-match preventDefault and propagation behavior
+  remain unchanged after effective shortcut resolution. Command Palette and Quick Open opening
+  shortcuts remain on their existing hard-shortcut path.
+
+### Persistence, migration and error flow
+
+```text
+missing value -> empty current override state -> first managed write encodes v1
+v1 envelope -> validate entries -> current editable state -> every write remains v1
+legacy v0 array -> compatibility projection -> current editable state
+  -> next successful managed write encodes v1
+future envelope or malformed/read-failed value -> empty safe projection + diagnostic
+  -> write-ineligible state -> visible management lock -> set/reset are no-ops
+```
+
+- On macOS, a legacy v0 unconditional managed `ctrl` modifier migrates to the reserved
+  `legacy-primary-or-control` token, so both physical Ctrl and Meta continue matching. Windows/Linux
+  legacy `ctrl` stays literal.
+- Legacy conditional/non-empty-args entries retain their key, `when` and `args` values unchanged.
+- Migration is lazy and non-destructive. Reading alone performs no write.
+- Unknown versions and malformed/read-failed current values never fall back to a write-eligible
+  empty state. The provider keeps read provenance, `writeEligible` and `dirty/writeRequested` as
+  separate state: mount/read never writes; only a successful editable mutation marks the current
+  generation dirty and requests one write. A locked generation passes its bounded diagnostic text
+  as `editingDisabledReason`, so Set/Reset are disabled and cannot report transient success.
+- `initialKeybindingOverrides` is an explicit authoritative generation and does not read or inherit a
+  storage generation's lock. Changing its identity, the storage adapter/key, persistence setting or
+  explicit platform creates a new generation and re-evaluates provenance/eligibility. Within one
+  generation, set/reset cannot change a false `writeEligible` value to true.
+- Existing read/write/decode diagnostics stay bounded to operation and logical storage key.
+
+### Capture, focus and conflict interaction
+
+- Activating Capture enters recording and announces that state through an associated live status.
+  Escape cancels, consumes the key and returns focus to the same Capture trigger. Tab (and Shift+Tab)
+  cancels without preventing or stopping the native key event, so focus leaves normally.
+- Bare Control, Meta, Alt or Shift keeps recording without producing a chord. A valid non-modifier
+  chord is normalized with the explicit platform, saved, exits recording and returns focus to the
+  Capture trigger. Backspace/Delete while recording resets only an existing user override, exits
+  recording and returns focus; it is a no-op for a default-only command.
+- Default-only rows show their effective default in the Capture trigger but no Clear/Reset action.
+  An overridden editable row exposes one `Reset to default` action; after reset removes that action,
+  focus moves to the row's stable Capture trigger. Locked/unsupported/ambiguous rows expose stored
+  chords and their associated reason, with Capture and Reset disabled and no mutation callback.
+- A conflict is a visible, non-blocking warning that identifies the conflicting command. The newly
+  captured override remains applied, recording ends, and the Capture trigger is associated with the
+  warning through `aria-describedby`; the same message is announced through the row live status.
+
+### Ordered implementation tasks
+
+1. Add platform shortcut normalization/event/candidate/overlap primitives and focused alias,
+   modifier and invalid-input tests.
+2. Add the pure CommandRegistry projection and provider-free management model/operations; adapt
+   existing management-entry conflict detection without breaking current callers.
+3. Make generic React bridge default projection and override suppression consume the shared
+   platform mechanics; add additive override/platform props and retain disabled/missing behavior.
+4. Make capture use the shared event projection and explicit platform semantics.
+5. Add the provider-neutral workbench-core v0/v1 decoder/encoder, macOS compatibility migration and
+   future-envelope diagnostic/write lock; keep public config parsing unchanged and delegate the
+   existing shell-react facades to it.
+6. Adapt WorkbenchProvider and provider-bound management composition to the pure operations, pass
+   the same override state into generic shell-command dispatch, and preserve extension dispatch.
+7. Add provider-free import/public-export, upgrade/reload and UI interaction regressions, then run
+   exact-head repository validation and producer-distinct source review.
+
+### Compatibility, scope and performance
+
+In scope: generic platform projection/model/normalization, additive React bridge/capture integration,
+storage-only v1 envelope, WorkbenchProvider compatibility composition and focused tests.
+
+Out of scope: a second registry/provider/state framework, public config-array versioning, full
+keybindings.json semantics, conditional generic bridge execution, overlay-shortcut redesign,
+extension dispatch redesign, OS-global shortcuts, Electron/native work and package release/tag.
+
+Projection and management work is linear in commands plus default/override records. Event matching
+may index the projected bindings but must not re-resolve CommandValue shortcuts per candidate or
+create a hidden second registry. No separate performance gate is material for this bounded path.
+
+### Validation
+
+Focused development tests cover platform normalization/projection/model, React bridge/capture,
+shell persistence/provider and provider-bound dispatch. The frozen exact candidate runs:
+
+```powershell
+pnpm check:commit-safety
+pnpm --filter @workbench-kit/platform typecheck
+pnpm --filter @workbench-kit/react typecheck
+pnpm --filter @workbench-kit/shell-react typecheck
+pnpm typecheck:react-exact-optional
+pnpm check:public-exports
+pnpm check:packed-consumer
+pnpm validate:static
+pnpm validate:fast
+```
+
+No Electron gate is required. Existing Vitest DOM interaction coverage is the required UI layer;
+no new browser layout or native boundary is introduced by this packet.
+
+Required DOM interactions cover provider-free rendering; visible disabled unsupported/ambiguous
+rows with stored chords, reasons and no mutation; macOS Cmd versus physical Ctrl capture; Escape,
+Tab/Shift+Tab, modifier-only and Delete/Backspace behavior; recording and conflict association/live
+announcement; reset-to-default visibility and focus recovery; and visible future/decode/read lock
+with no persisted or transient mutation. Pure platform tests own grammar/runtime/conflict behavior,
+workbench-core tests own v0/v1/future/decode provenance and codec behavior, and shell-react tests own
+generation, dirty-write and reload recovery.
+
+### Acceptance / Done criteria
+
+- provider-free management and generic runtime consume one dynamic CommandRegistry projection;
+- explicit-platform defaults, capture, conflicts, persistence and event matching converge;
+- legacy macOS v0 `ctrl` retains Ctrl-or-Cmd behavior, while new `ctrl` and `meta` survive reload as
+  distinct chords, no new/default/capture path emits `legacy-primary-or-control`, and Windows/Linux
+  behavior is unchanged;
+- the first managed save writes v1 without changing public config-array grammar;
+- unsupported conditional/args records survive unrelated edit/write unchanged, remain non-editable,
+  stay visible with their stored chords and reason, and do not suppress generic defaults;
+- mixed unsupported/supported and duplicate-supported commands remain visible, lossless and
+  non-editable; their set/reset operations are deterministic no-ops;
+- a future, malformed or read-failed storage value remains non-destructive, visibly write-locked and
+  mutation-free through set/reset;
+- one supported override suppresses every default candidate and reset restores them;
+- capture preserves native Tab traversal, distinguishes macOS Ctrl/Cmd, announces recording and
+  non-blocking conflicts, and restores stable focus after cancel/save/reset;
+- disabled/missing-handler, extension KeybindingRegistry and hard overlay shortcuts are unchanged;
+- provider-free imports, public exports, focused tests and all exact-head gates pass.
+
+### Source-review checklist
+
+Reject a candidate that duplicates shortcut parsers or default registries; resolves defaults
+differently in management and runtime; guesses legacy macOS intent; rewrites unsupported records;
+lets future storage become write-eligible after an edit; suppresses defaults with unsupported data;
+changes conditional extension dispatch, public config grammar or hard overlay shortcuts; introduces
+WorkbenchProvider as a provider-free dependency; or claims Electron/package/release completion.
+
+The Issue #253 successor-v3 producer-distinct readiness review closes the target API, ownership,
+modifier compatibility, persistence and non-scope decisions at the exact base above. This packet is
+implementation-ready; source review remains required after one frozen candidate.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
