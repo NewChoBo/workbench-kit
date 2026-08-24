@@ -2,7 +2,7 @@
 
 import { act, useEffect, useLayoutEffect } from 'react';
 import { createRoot } from 'react-dom/client';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
 
 import { WorkbenchProvider, useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
@@ -187,6 +187,315 @@ describe('WorkbenchCommandHost', () => {
       commandRegistration?.dispose();
       root.unmount();
     });
+  });
+
+  it('dispatches a command owned by the KeybindingRegistry exactly once', async () => {
+    const commandId = 'test.single-owner';
+    const run = vi.fn();
+    let services: CapturedWorkbenchServices | undefined;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          initialKeybindingOverrides={[{ command: commandId, key: 'alt+e' }]}
+          persistEditorState={false}
+          persistKeybindingOverrides={false}
+          persistLayout={false}
+          persistLocalPreferences={false}
+        >
+          <WorkbenchCommandHost
+            enableCommandPalette={false}
+            enableExtensionKeybindings
+            enableQuickOpen={false}
+            enableShortcutBridge
+            onOpenSettings={() => undefined}
+          />
+          <KeybindingManagementProbe commandId={commandId} />
+          <WorkbenchServicesProbe
+            onCapture={(capturedServices) => {
+              services = capturedServices;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    let commandRegistration: { dispose(): void } | undefined;
+    let keybindingRegistration: { dispose(): void } | undefined;
+    await act(async () => {
+      commandRegistration = services?.commands.registerCommand({
+        handler: run,
+        id: commandId,
+        run,
+        shortcut: 'ctrl+g',
+        title: 'Single owner command',
+      });
+      keybindingRegistration = services?.keybindings.registerKeybinding({
+        command: commandId,
+        key: 'ctrl+e',
+      });
+    });
+
+    expect(container.querySelector('[data-testid="management-keybinding"]')?.textContent).toBe(
+      'ctrl+g|alt+e',
+    );
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          altKey: true,
+          key: 'e',
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(run).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          initialKeybindingOverrides={[{ command: commandId, key: 'alt+e' }]}
+          persistEditorState={false}
+          persistKeybindingOverrides={false}
+          persistLayout={false}
+          persistLocalPreferences={false}
+        >
+          <WorkbenchCommandHost
+            enableCommandPalette={false}
+            enableExtensionKeybindings={false}
+            enableQuickOpen={false}
+            enableShortcutBridge
+            onOpenSettings={() => undefined}
+          />
+          <KeybindingManagementProbe commandId={commandId} />
+          <WorkbenchServicesProbe
+            onCapture={(capturedServices) => {
+              services = capturedServices;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          altKey: true,
+          bubbles: true,
+          cancelable: true,
+          key: 'e',
+        }),
+      );
+      await Promise.resolve();
+    });
+
+    expect(run).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      services?.resetCommandKeybindingOverride(commandId);
+    });
+    expect(container.querySelector('[data-testid="management-keybinding"]')?.textContent).toBe(
+      'ctrl+g|ctrl+g',
+    );
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          key: 'e',
+        }),
+      );
+      await Promise.resolve();
+    });
+    expect(run).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          key: 'g',
+        }),
+      );
+      await Promise.resolve();
+    });
+    expect(run).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      keybindingRegistration?.dispose();
+      commandRegistration?.dispose();
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('keeps an extension-only managed override on one runtime lane', async () => {
+    const commandId = 'test.extension-only-owner';
+    const run = vi.fn();
+    let services: CapturedWorkbenchServices | undefined;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderHost = (enableExtensionKeybindings: boolean) => (
+      <WorkbenchProvider
+        initialKeybindingOverrides={[{ command: commandId, key: 'alt+q' }]}
+        persistEditorState={false}
+        persistKeybindingOverrides={false}
+        persistLayout={false}
+        persistLocalPreferences={false}
+      >
+        <WorkbenchCommandHost
+          enableCommandPalette={false}
+          enableExtensionKeybindings={enableExtensionKeybindings}
+          enableQuickOpen={false}
+          enableShortcutBridge
+          onOpenSettings={() => undefined}
+        />
+        <KeybindingManagementProbe commandId={commandId} />
+        <WorkbenchServicesProbe
+          onCapture={(capturedServices) => {
+            services = capturedServices;
+          }}
+        />
+      </WorkbenchProvider>
+    );
+
+    await act(async () => {
+      root.render(renderHost(true));
+    });
+
+    let commandRegistration: { dispose(): void } | undefined;
+    let keybindingRegistration: { dispose(): void } | undefined;
+    await act(async () => {
+      commandRegistration = services?.commands.registerCommand({
+        handler: run,
+        id: commandId,
+        run,
+        title: 'Extension-only owner command',
+      });
+      keybindingRegistration = services?.keybindings.registerKeybinding({
+        command: commandId,
+        key: 'ctrl+q',
+      });
+    });
+
+    expect(container.querySelector('[data-testid="management-keybinding"]')?.textContent).toBe(
+      'ctrl+q|alt+q',
+    );
+
+    const dispatchOverride = async () => {
+      await act(async () => {
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            altKey: true,
+            bubbles: true,
+            cancelable: true,
+            key: 'q',
+          }),
+        );
+        await Promise.resolve();
+      });
+    };
+
+    await dispatchOverride();
+    expect(run).toHaveBeenCalledOnce();
+
+    await act(async () => {
+      root.render(renderHost(false));
+    });
+    await dispatchOverride();
+    expect(run).toHaveBeenCalledTimes(2);
+
+    await act(async () => {
+      keybindingRegistration?.dispose();
+      commandRegistration?.dispose();
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('leaves Capture Tab traversal untouched by extension keybindings', async () => {
+    const commandId = 'test.capture-tab';
+    const run = vi.fn();
+    let services: CapturedWorkbenchServices | undefined;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          persistEditorState={false}
+          persistKeybindingOverrides={false}
+          persistLayout={false}
+          persistLocalPreferences={false}
+        >
+          <WorkbenchCommandHost
+            enableCommandPalette={false}
+            enableExtensionKeybindings
+            enableQuickOpen={false}
+            enableShortcutBridge={false}
+            onOpenSettings={() => undefined}
+          />
+          <WorkbenchServicesProbe
+            onCapture={(capturedServices) => {
+              services = capturedServices;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    let commandRegistration: { dispose(): void } | undefined;
+    let keybindingRegistration: { dispose(): void } | undefined;
+    await act(async () => {
+      commandRegistration = services?.commands.registerCommand({
+        handler: run,
+        id: commandId,
+        title: 'Capture Tab command',
+      });
+      keybindingRegistration = services?.keybindings.registerKeybinding({
+        command: commandId,
+        key: 'tab',
+      });
+    });
+    const captureTarget = document.createElement('button');
+    captureTarget.dataset.workbenchShortcutCaptureRecording = 'true';
+    container.append(captureTarget);
+    const event = new KeyboardEvent('keydown', {
+      bubbles: true,
+      cancelable: true,
+      key: 'Tab',
+    });
+    const preventDefault = vi.spyOn(event, 'preventDefault');
+    const stopPropagation = vi.spyOn(event, 'stopPropagation');
+    const stopImmediatePropagation = vi.spyOn(event, 'stopImmediatePropagation');
+
+    await act(async () => {
+      captureTarget.dispatchEvent(event);
+      await Promise.resolve();
+    });
+
+    expect(run).not.toHaveBeenCalled();
+    expect(preventDefault).not.toHaveBeenCalled();
+    expect(stopPropagation).not.toHaveBeenCalled();
+    expect(stopImmediatePropagation).not.toHaveBeenCalled();
+    expect(event.defaultPrevented).toBe(false);
+
+    await act(async () => {
+      keybindingRegistration?.dispose();
+      commandRegistration?.dispose();
+      root.unmount();
+    });
+    container.remove();
   });
 
   it('uses the same managed override for shell command management and runtime dispatch', async () => {

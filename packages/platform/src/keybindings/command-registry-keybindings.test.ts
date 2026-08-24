@@ -59,6 +59,25 @@ describe('projectCommandRegistryKeybindings', () => {
     expect(Object.isFrozen(projection.commands)).toBe(true);
     expect(Object.isFrozen(projection.defaults)).toBe(true);
   });
+
+  it('does not project the storage-only legacy modifier from command defaults', () => {
+    const projection = projectCommandRegistryKeybindings({
+      context: { alternate: false },
+      platform: 'mac',
+      registry: new CommandRegistry<TestContext>([
+        {
+          id: 'legacy.storage-only',
+          label: 'Legacy storage only',
+          shortcut: 'legacy-primary-or-control+k',
+        },
+      ]),
+    });
+
+    expect(projection.commands).toEqual([
+      { id: 'legacy.storage-only', label: 'Legacy storage only' },
+    ]);
+    expect(projection.defaults).toEqual([]);
+  });
 });
 
 describe('managed keybinding operations', () => {
@@ -111,6 +130,19 @@ describe('managed keybinding operations', () => {
         platform: 'windows',
       }),
     ).toEqual({ changed: false, overrides: duplicates, reason: 'ambiguous-records' });
+  });
+
+  it('rejects the storage-only legacy modifier as a new set input', () => {
+    const overrides = [{ command: 'editor.save', key: 'ctrl+s' }] as const;
+
+    expect(
+      setManagedKeybindingOverride({
+        commandId: 'editor.save',
+        key: 'legacy-primary-or-control+s',
+        overrides,
+        platform: 'mac',
+      }),
+    ).toEqual({ changed: false, overrides, reason: 'unsupported-record' });
   });
 });
 
@@ -218,5 +250,29 @@ describe('createKeybindingManagementModel', () => {
       reason: 'write-locked',
     });
     expect(onOverridesChange).not.toHaveBeenCalled();
+  });
+
+  it('keeps a migrated legacy storage record editable and resettable', () => {
+    const onOverridesChange = vi.fn();
+    const model = createKeybindingManagementModel({
+      onOverridesChange,
+      overrides: [{ command: 'editor.save', key: 'legacy-primary-or-control+s' }],
+      platform: 'mac',
+      projection: projectCommandRegistryKeybindings({
+        context: { alternate: false },
+        platform: 'mac',
+        registry: new CommandRegistry<TestContext>([
+          { id: 'editor.save', label: 'Save', shortcut: 'Cmd+S' },
+        ]),
+      }),
+    });
+
+    expect(model.entries[0]).toMatchObject({
+      editable: true,
+      effectiveKey: 'legacy-primary-or-control+s',
+      userKey: 'legacy-primary-or-control+s',
+    });
+    expect(model.reset('editor.save')).toEqual({ changed: true, overrides: [] });
+    expect(onOverridesChange).toHaveBeenCalledWith([]);
   });
 });

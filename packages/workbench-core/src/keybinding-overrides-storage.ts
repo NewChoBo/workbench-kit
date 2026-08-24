@@ -106,8 +106,9 @@ function decodeStorageValue(
   platform: WorkbenchShortcutPlatform,
 ): DecodedStorageValue {
   if (Array.isArray(value)) {
+    const parsedEntries = parseWorkbenchKeybindingsConfig(value);
     return {
-      entries: canonicalizeSupportedEntries(parseWorkbenchKeybindingsConfig(value), platform, true),
+      entries: canonicalizeSupportedEntries(parsedEntries, value, platform, true),
       format: 'legacy-v0',
       writeEligible: true,
     };
@@ -133,12 +134,9 @@ function decodeStorageValue(
     throw new TypeError('Unexpected keybinding override storage envelope field.');
   }
 
+  const parsedEntries = parseWorkbenchKeybindingsConfig(value.entries);
   return {
-    entries: canonicalizeSupportedEntries(
-      parseWorkbenchKeybindingsConfig(value.entries),
-      platform,
-      false,
-    ),
+    entries: canonicalizeSupportedEntries(parsedEntries, value.entries, platform, false),
     format: 'v1',
     writeEligible: true,
   };
@@ -146,15 +144,22 @@ function decodeStorageValue(
 
 function canonicalizeSupportedEntries(
   entries: readonly WorkbenchKeybindingDefinition[],
+  rawEntries: unknown,
   platform: WorkbenchShortcutPlatform,
   migrateLegacyMacCtrl: boolean,
 ): readonly WorkbenchKeybindingDefinition[] {
-  return entries.map((entry) => {
+  if (!Array.isArray(rawEntries) || rawEntries.length !== entries.length) {
+    throw new TypeError('Expected validated keybinding override entries.');
+  }
+
+  return entries.map((entry, index) => {
     if (!isSupportedManagedRecord(entry)) {
-      return entry;
+      return restoreValidatedUnsupportedEntry(rawEntries[index]);
     }
 
-    const candidates = normalizeWorkbenchShortcutCandidates(entry.key, platform);
+    const candidates = migrateLegacyMacCtrl
+      ? normalizeWorkbenchShortcutCandidates(entry.key, platform)
+      : normalizeStoredShortcutCandidates(entry.key, platform);
     if (candidates.length !== 1) {
       throw new TypeError('Expected one canonical legacy keybinding candidate.');
     }
@@ -167,11 +172,22 @@ function canonicalizeSupportedEntries(
     return {
       ...entry,
       key:
-        migrateLegacyMacCtrl && platform === 'mac'
+        migrateLegacyMacCtrl && platform === 'mac' && !canonicalKey.split('+').includes('meta')
           ? replaceCanonicalModifierToken(canonicalKey, 'ctrl', LEGACY_PRIMARY_OR_CONTROL_TOKEN)
           : canonicalKey,
     };
   });
+}
+
+function restoreValidatedUnsupportedEntry(value: unknown): WorkbenchKeybindingDefinition {
+  if (!isRecord(value)) {
+    throw new TypeError('Expected a validated keybinding override record.');
+  }
+
+  // parseWorkbenchKeybindingsConfig has already validated the record shape and
+  // values. Return the raw JSON record so unsupported key/when/args content is
+  // not normalized by the public config parser before an unrelated managed write.
+  return value as unknown as WorkbenchKeybindingDefinition;
 }
 
 function isSupportedManagedRecord(entry: WorkbenchKeybindingDefinition): boolean {
@@ -182,11 +198,36 @@ function assertCanonicalSupportedEntries(entries: readonly WorkbenchKeybindingDe
   for (const entry of entries) {
     if (!isSupportedManagedRecord(entry)) continue;
 
-    const candidates = normalizeWorkbenchShortcutCandidates(entry.key, 'unknown');
+    const candidates = normalizeStoredShortcutCandidates(entry.key, 'unknown');
     if (candidates.length !== 1 || candidates[0] !== entry.key) {
       throw new TypeError('Expected a canonical keybinding override.');
     }
   }
+}
+
+function normalizeStoredShortcutCandidates(
+  shortcut: string,
+  platform: WorkbenchShortcutPlatform,
+): readonly string[] {
+  if (!shortcut.includes(LEGACY_PRIMARY_OR_CONTROL_TOKEN)) {
+    return normalizeWorkbenchShortcutCandidates(shortcut, platform);
+  }
+
+  const normalized = normalizeWorkbenchShortcutCandidates(
+    shortcut.split(LEGACY_PRIMARY_OR_CONTROL_TOKEN).join('ctrl'),
+    platform,
+  );
+  if (normalized.length !== 1) return [];
+
+  const tokens = normalized[0]?.split('+') ?? [];
+  if (tokens.filter((token) => token === 'ctrl').length !== 1 || tokens.includes('meta')) {
+    return [];
+  }
+
+  const restored = tokens
+    .map((token) => (token === 'ctrl' ? LEGACY_PRIMARY_OR_CONTROL_TOKEN : token))
+    .join('+');
+  return restored === shortcut ? [restored] : [];
 }
 
 function replaceCanonicalModifierToken(key: string, from: string, to: string): string {

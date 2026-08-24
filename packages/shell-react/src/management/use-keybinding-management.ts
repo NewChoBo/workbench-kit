@@ -4,6 +4,7 @@ import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
 
 import { useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
 import { resolveShellCommandActivities } from '../workbench/command-palette.js';
+import { normalizeExtensionKeybindingCandidates } from '../workbench/keybinding-bridge.js';
 
 export function useKeybindingManagementModel() {
   const {
@@ -32,18 +33,24 @@ export function useKeybindingManagementModel() {
     };
   }, [keybindings]);
   const extensionDefaults = useMemo(
-    () => keybindings.getKeybindings(),
-    [keybindingRevision, keybindings],
+    () =>
+      keybindings.getKeybindings().flatMap((binding) =>
+        normalizeExtensionKeybindingCandidates(binding.key, keybindingPlatform, true).map(
+          (key) => ({
+            ...binding,
+            key,
+          }),
+        ),
+      ),
+    [keybindingPlatform, keybindingRevision, keybindings],
   );
   const defaults = useMemo(() => {
-    const projectedKeys = new Set(
-      keybindingProjection.defaults.map((binding) => `${binding.command}\u0000${binding.key}`),
+    const genericCommandIds = new Set(
+      keybindingProjection.defaults.map((binding) => binding.command),
     );
     return [
       ...keybindingProjection.defaults,
-      ...extensionDefaults.filter(
-        (binding) => !projectedKeys.has(`${binding.command}\u0000${binding.key}`),
-      ),
+      ...extensionDefaults.filter((binding) => !genericCommandIds.has(binding.command)),
     ];
   }, [extensionDefaults, keybindingProjection.defaults]);
 
@@ -81,8 +88,8 @@ export function useKeybindingManagementModel() {
   const overrideCount = keybindingOverrides.length;
 
   const setKeybinding = (commandId: string, key: string | undefined) => {
-    const defaultKey = defaults.find((binding) => binding.command === commandId)?.key;
-    if (!key || key === defaultKey) {
+    const commandDefaults = defaults.filter((binding) => binding.command === commandId);
+    if (!key || (commandDefaults.length === 1 && key === commandDefaults[0]?.key)) {
       resetCommandKeybindingOverride(commandId);
       return;
     }

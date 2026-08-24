@@ -59,9 +59,30 @@ export function normalizeWorkbenchShortcutCandidates(
   shortcut: string,
   platform: WorkbenchShortcutPlatform,
 ): readonly string[] {
+  return normalizeWorkbenchShortcutCandidatesInternal(shortcut, platform, false);
+}
+
+export function normalizeStoredWorkbenchShortcutCandidates(
+  shortcut: string,
+  platform: WorkbenchShortcutPlatform,
+): readonly string[] {
+  return normalizeWorkbenchShortcutCandidatesInternal(shortcut, platform, true);
+}
+
+function normalizeWorkbenchShortcutCandidatesInternal(
+  shortcut: string,
+  platform: WorkbenchShortcutPlatform,
+  allowLegacyPrimaryOrControl: boolean,
+): readonly string[] {
   return Object.freeze(
     splitShortcutCandidates(shortcut).flatMap((candidate) => {
       const parsed = parseWorkbenchShortcut(candidate, platform);
+      if (
+        !allowLegacyPrimaryOrControl &&
+        parsed?.modifiers.has(WORKBENCH_LEGACY_PRIMARY_OR_CONTROL_MODIFIER)
+      ) {
+        return [];
+      }
       return parsed ? [formatParsedShortcut(parsed)] : [];
     }),
   );
@@ -98,7 +119,7 @@ export function matchesWorkbenchShortcut({
   const eventShortcut = normalizeWorkbenchShortcutFromEvent(event, platform);
   if (!eventShortcut) return false;
 
-  return normalizeWorkbenchShortcutCandidates(shortcut, platform).some((candidate) =>
+  return normalizeStoredWorkbenchShortcutCandidates(shortcut, platform).some((candidate) =>
     canonicalShortcutsOverlap(eventShortcut, candidate, platform),
   );
 }
@@ -108,8 +129,8 @@ export function workbenchShortcutsOverlap(
   right: string,
   platform: WorkbenchShortcutPlatform,
 ): boolean {
-  const leftCandidates = normalizeWorkbenchShortcutCandidates(left, platform);
-  const rightCandidates = normalizeWorkbenchShortcutCandidates(right, platform);
+  const leftCandidates = normalizeStoredWorkbenchShortcutCandidates(left, platform);
+  const rightCandidates = normalizeStoredWorkbenchShortcutCandidates(right, platform);
 
   return leftCandidates.some((leftCandidate) =>
     rightCandidates.some((rightCandidate) =>
@@ -153,7 +174,7 @@ export function getWorkbenchShortcutConflictSignatures(
   shortcut: string,
   platform: WorkbenchShortcutPlatform,
 ): readonly string[] {
-  return normalizeWorkbenchShortcutCandidates(shortcut, platform).flatMap((candidate) => {
+  return normalizeStoredWorkbenchShortcutCandidates(shortcut, platform).flatMap((candidate) => {
     const parsed = parseWorkbenchShortcut(candidate, platform);
     if (!parsed) return [];
     return expandLegacyModifier(parsed.modifiers).map(

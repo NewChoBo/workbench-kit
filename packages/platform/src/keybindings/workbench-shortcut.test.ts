@@ -48,9 +48,7 @@ describe('normalizeWorkbenchShortcutCandidates', () => {
   it('never turns normal primary aliases into the reserved legacy modifier', () => {
     expect(normalizeWorkbenchShortcutCandidates('Ctrl/Cmd+K', 'mac')).toEqual(['meta+k']);
     expect(normalizeWorkbenchShortcutCandidates('Ctrl/Cmd+K', 'windows')).toEqual(['ctrl+k']);
-    expect(normalizeWorkbenchShortcutCandidates('legacy-primary-or-control+k', 'mac')).toEqual([
-      'legacy-primary-or-control+k',
-    ]);
+    expect(normalizeWorkbenchShortcutCandidates('legacy-primary-or-control+k', 'mac')).toEqual([]);
   });
 });
 
@@ -94,6 +92,20 @@ describe('workbench shortcut matching and overlap', () => {
   });
 
   it('lets only the legacy token overlap both Ctrl and Meta', () => {
+    expect(
+      matchesWorkbenchShortcut({
+        event: { ctrlKey: true, key: 'k' },
+        platform: 'mac',
+        shortcut: 'legacy-primary-or-control+k',
+      }),
+    ).toBe(true);
+    expect(
+      matchesWorkbenchShortcut({
+        event: { key: 'k', metaKey: true },
+        platform: 'mac',
+        shortcut: 'legacy-primary-or-control+k',
+      }),
+    ).toBe(true);
     expect(workbenchShortcutsOverlap('legacy-primary-or-control+k', 'ctrl+k', 'mac')).toBe(true);
     expect(workbenchShortcutsOverlap('legacy-primary-or-control+k', 'meta+k', 'mac')).toBe(true);
     expect(workbenchShortcutsOverlap('ctrl+k', 'meta+k', 'mac')).toBe(false);

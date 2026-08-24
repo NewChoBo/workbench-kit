@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react';
 import {
   canExecuteCommand,
   createKeybindingManagementModel,
@@ -287,16 +287,17 @@ export function useWorkbenchShortcutCommands<TContext>({
 }: UseWorkbenchShortcutCommandsOptions<TContext>) {
   const resolvedPlatform = platform ?? resolveWorkbenchShortcutPlatform();
   const usesInternalProjection = bindings === undefined && keybindingProjection === undefined;
-  const [registryRevision, setRegistryRevision] = useState(0);
+  const [registryRevision, setRegistryRevision] = useState(() => registry.revision);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!usesInternalProjection) {
       return undefined;
     }
 
     const disposable = registry.onDidChangeCommands(() => {
-      setRegistryRevision((current) => current + 1);
+      setRegistryRevision(registry.revision);
     });
+    setRegistryRevision(registry.revision);
     return () => disposable.dispose();
   }, [registry, usesInternalProjection]);
 

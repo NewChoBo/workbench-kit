@@ -42,8 +42,8 @@ describe('keybinding override storage', () => {
     expect(result).toEqual({
       entries: [
         { command: 'save', key: 'ctrl+s' },
-        { command: 'conditional', key: 'CTRL + K', when: 'editorFocus' },
-        { args: ['draft'], command: 'with-args', key: 'CTRL + D' },
+        { command: 'conditional', key: ' CTRL + K ', when: 'editorFocus' },
+        { args: ['draft'], command: 'with-args', key: ' CTRL + D ' },
       ],
       format: 'legacy-v0',
       writeEligible: true,
@@ -81,6 +81,80 @@ describe('keybinding override storage', () => {
     });
   });
 
+  it('round-trips a migrated macOS legacy token through the v1 envelope', () => {
+    const values = new Map<string, string>([
+      [STORAGE_KEY, JSON.stringify([{ command: 'legacy', key: 'ctrl+k' }])],
+    ]);
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    };
+    const migrated = readWorkbenchKeybindingOverridesStorageResult({
+      platform: 'mac',
+      storage,
+      storageKey: STORAGE_KEY,
+    });
+
+    expect(migrated.entries).toEqual([{ command: 'legacy', key: 'legacy-primary-or-control+k' }]);
+    expect(
+      writeWorkbenchKeybindingOverridesStorageResult({
+        entries: migrated.entries,
+        storage,
+        storageKey: STORAGE_KEY,
+      }),
+    ).toEqual({ committed: true });
+    expect(
+      readWorkbenchKeybindingOverridesStorageResult({
+        platform: 'mac',
+        storage,
+        storageKey: STORAGE_KEY,
+      }),
+    ).toMatchObject({
+      entries: [{ command: 'legacy', key: 'legacy-primary-or-control+k' }],
+      format: 'v1',
+      writeEligible: true,
+    });
+  });
+
+  it('keeps an explicit legacy-v0 macOS Ctrl+Meta chord writable', () => {
+    const values = new Map<string, string>([
+      [STORAGE_KEY, JSON.stringify([{ command: 'both', key: 'ctrl+meta+k' }])],
+    ]);
+    const storage = {
+      getItem: (key: string) => values.get(key) ?? null,
+      setItem: (key: string, value: string) => values.set(key, value),
+    };
+    const legacy = readWorkbenchKeybindingOverridesStorageResult({
+      platform: 'mac',
+      storage,
+      storageKey: STORAGE_KEY,
+    });
+
+    expect(legacy).toMatchObject({
+      entries: [{ command: 'both', key: 'ctrl+meta+k' }],
+      format: 'legacy-v0',
+      writeEligible: true,
+    });
+    expect(
+      writeWorkbenchKeybindingOverridesStorageResult({
+        entries: legacy.entries,
+        storage,
+        storageKey: STORAGE_KEY,
+      }),
+    ).toEqual({ committed: true });
+    expect(
+      readWorkbenchKeybindingOverridesStorageResult({
+        platform: 'mac',
+        storage,
+        storageKey: STORAGE_KEY,
+      }),
+    ).toMatchObject({
+      entries: [{ command: 'both', key: 'ctrl+meta+k' }],
+      format: 'v1',
+      writeEligible: true,
+    });
+  });
+
   it('canonicalizes supported v1 records while keeping macOS ctrl and meta distinct', () => {
     const result = readWorkbenchKeybindingOverridesStorageResult({
       platform: 'mac',
@@ -105,7 +179,7 @@ describe('keybinding override storage', () => {
         { command: 'physical-control', key: 'ctrl+k' },
         { command: 'command-key', key: 'meta+k' },
         { command: 'primary-alias', key: 'meta+p' },
-        { command: 'conditional', key: 'Ctrl/Cmd + U', when: 'editorFocus' },
+        { command: 'conditional', key: ' Ctrl/Cmd + U ', when: 'editorFocus' },
       ],
       format: 'v1',
       writeEligible: true,
@@ -248,6 +322,58 @@ describe('keybinding override storage', () => {
       entries,
     });
   });
+
+  it.each(['legacy-v0', 'v1'] as const)(
+    'preserves unsupported raw JSON content through an unrelated managed write from %s',
+    (format) => {
+      const values = new Map<string, string>();
+      const unsupported = {
+        args: [{ draft: true, nested: [' keep ', 1] }],
+        command: ' conditional.command ',
+        key: ' Ctrl/Cmd + K, Alt + K ',
+        when: ' editorFocus && resourceLang == markdown ',
+      };
+      const entries = [{ command: 'save', key: ' Ctrl + S ' }, unsupported];
+      values.set(
+        STORAGE_KEY,
+        JSON.stringify(
+          format === 'legacy-v0'
+            ? entries
+            : {
+                entries,
+                kind: 'workbench.keybindingOverrides',
+                version: 1,
+              },
+        ),
+      );
+      const storage = {
+        getItem: (key: string) => values.get(key) ?? null,
+        setItem: (key: string, value: string) => values.set(key, value),
+      };
+
+      const readResult = readWorkbenchKeybindingOverridesStorageResult({
+        platform: 'windows',
+        storage,
+        storageKey: STORAGE_KEY,
+      });
+
+      expect(readResult.format).toBe(format);
+      expect(readResult.entries).toEqual([{ command: 'save', key: 'ctrl+s' }, unsupported]);
+
+      const writeResult = writeWorkbenchKeybindingOverridesStorageResult({
+        entries: [{ command: 'save', key: 'ctrl+shift+s' }, readResult.entries[1]!],
+        storage,
+        storageKey: STORAGE_KEY,
+      });
+
+      expect(writeResult).toEqual({ committed: true });
+      expect(JSON.parse(values.get(STORAGE_KEY) ?? '{}')).toEqual({
+        entries: [{ command: 'save', key: 'ctrl+shift+s' }, unsupported],
+        kind: 'workbench.keybindingOverrides',
+        version: 1,
+      });
+    },
+  );
 
   it.each([
     ['modifier-only', 'ctrl'],

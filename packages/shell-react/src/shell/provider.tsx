@@ -850,13 +850,15 @@ export function WorkbenchProvider({
     () => services.extensionRegistry.commands.revision,
   );
   useLayoutEffect(() => {
-    const disposable = services.extensionRegistry.commands.onDidChangeCommands(() => {
+    const updateRevision = () => {
       setCommandKeybindingRevision(services.extensionRegistry.commands.revision);
-    });
-    setCommandKeybindingRevision(services.extensionRegistry.commands.revision);
+    };
+    const commandDisposable =
+      services.extensionRegistry.commands.onDidChangeCommands(updateRevision);
+    updateRevision();
 
     return () => {
-      disposable.dispose();
+      commandDisposable.dispose();
     };
   }, [services.extensionRegistry.commands]);
   const keybindingProjection = useMemo(

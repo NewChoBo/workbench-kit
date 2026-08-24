@@ -1,8 +1,5 @@
 import { formatKeybindingLabel } from './format-keybinding-label.js';
-import {
-  analyzeManagedKeybindingRecords,
-  normalizeSupportedManagedKeybinding,
-} from './managed-keybinding-overrides.js';
+import { analyzeManagedKeybindingRecords } from './managed-keybinding-overrides.js';
 import type { KeybindingDefinition } from './types.js';
 import {
   getWorkbenchShortcutConflictSignatures,
@@ -53,11 +50,7 @@ export function buildKeybindingManagementEntries({
 }): KeybindingManagementEntry[] {
   const defaultsByCommand = groupKeybindingsByCommand(defaults);
   const overridesByCommand = groupKeybindingsByCommand(overrides);
-  const supportedOverrides = [...overridesByCommand].flatMap(([commandId, commandOverrides]) => {
-    const analysis = analyzeManagedKeybindingRecords(commandOverrides, commandId, platform);
-    const supported = analysis.mutationReason ? undefined : analysis.supported[0];
-    return supported ? [{ command: commandId, key: supported.key }] : [];
-  });
+  const supportedOverrides = collectSupportedManagedOverrides(overrides, platform);
   const overriddenCommands = new Set(supportedOverrides.map((binding) => binding.command));
   const conflicts = buildConflictIndex({
     defaults,
@@ -151,10 +144,7 @@ export function findKeybindingConflict({
   readonly overriddenCommands?: ReadonlySet<string>;
   readonly platform?: WorkbenchShortcutPlatform | undefined;
 }): string | undefined {
-  const supportedOverrides = overrides.flatMap((binding) => {
-    const canonicalKey = normalizeSupportedManagedKeybinding(binding, platform);
-    return canonicalKey ? [{ command: binding.command, key: canonicalKey }] : [];
-  });
+  const supportedOverrides = collectSupportedManagedOverrides(overrides, platform);
   const suppressedDefaults =
     overriddenCommands ?? new Set(supportedOverrides.map((binding) => binding.command));
   const userConflict = supportedOverrides.find(
@@ -188,6 +178,17 @@ function groupKeybindingsByCommand(
     }
   }
   return groups;
+}
+
+function collectSupportedManagedOverrides(
+  overrides: readonly KeybindingDefinition[],
+  platform: WorkbenchShortcutPlatform,
+): readonly KeybindingDefinition[] {
+  return [...groupKeybindingsByCommand(overrides)].flatMap(([commandId, commandOverrides]) => {
+    const analysis = analyzeManagedKeybindingRecords(commandOverrides, commandId, platform);
+    const supported = analysis.mutationReason ? undefined : analysis.supported[0];
+    return supported ? [{ command: commandId, key: supported.key }] : [];
+  });
 }
 
 function buildConflictIndex({

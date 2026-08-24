@@ -1,11 +1,12 @@
 /** @vitest-environment jsdom */
 
-import { act } from 'react';
+import { act, useLayoutEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
   createCommandRegistry,
   projectCommandRegistryKeybindings,
   type CommandDefinition,
+  type CommandRegistry,
 } from '@workbench-kit/platform';
 import { describe, expect, it } from 'vitest';
 import { KeybindingCaptureField } from '../management/KeybindingCaptureField';
@@ -27,6 +28,21 @@ function command(id: string, shortcut: string): CommandDefinition<TestContext> {
     run: ({ log }) => log.push(id),
     shortcut,
   };
+}
+
+function RegisterCommandInLayoutEffect({
+  definition,
+  registry,
+}: {
+  readonly definition: CommandDefinition<TestContext>;
+  readonly registry: CommandRegistry<TestContext>;
+}) {
+  useLayoutEffect(() => {
+    const disposable = registry.registerCommand(definition);
+    return () => disposable.dispose();
+  }, [definition, registry]);
+
+  return null;
 }
 
 async function dispatchShortcut(key: string, modifiers: KeyboardEventInit = {}) {
@@ -63,6 +79,34 @@ describe('WorkbenchShortcutCommandBridge interactions', () => {
       });
       await dispatchShortcut('2', { ctrlKey: true });
       expect(context.log).toEqual(['command.first', 'command.second']);
+    } finally {
+      await act(async () => root.unmount());
+    }
+  });
+
+  it('reconciles a command registered before its internal layout subscription', async () => {
+    const context: TestContext = { log: [] };
+    const registry = createCommandRegistry<TestContext>([]);
+    const lateCommand = command('command.layout', 'Ctrl+L');
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    try {
+      await act(async () => {
+        root.render(
+          <>
+            <RegisterCommandInLayoutEffect definition={lateCommand} registry={registry} />
+            <WorkbenchShortcutCommandBridge
+              context={context}
+              platform="windows"
+              registry={registry}
+            />
+          </>,
+        );
+      });
+
+      await dispatchShortcut('l', { ctrlKey: true });
+      expect(context.log).toEqual(['command.layout']);
     } finally {
       await act(async () => root.unmount());
     }

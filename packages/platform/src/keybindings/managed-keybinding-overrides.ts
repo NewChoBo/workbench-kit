@@ -1,5 +1,6 @@
 import type { KeybindingDefinition } from './types.js';
 import {
+  normalizeStoredWorkbenchShortcutCandidates,
   normalizeWorkbenchShortcutCandidates,
   type WorkbenchShortcutPlatform,
 } from './workbench-shortcut.js';
@@ -35,7 +36,7 @@ export function normalizeSupportedManagedKeybinding(
     return undefined;
   }
 
-  const canonicalKeys = normalizeWorkbenchShortcutCandidates(binding.key, platform);
+  const canonicalKeys = normalizeStoredWorkbenchShortcutCandidates(binding.key, platform);
   return canonicalKeys.length === 1 ? canonicalKeys[0] : undefined;
 }
 

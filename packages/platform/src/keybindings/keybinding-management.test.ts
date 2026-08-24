@@ -99,6 +99,31 @@ describe('buildKeybindingManagementEntries', () => {
     expect(mixed[0]?.userKey).toBeUndefined();
     expect(duplicate[0]).toMatchObject({ editable: false, effectiveKey: 'ctrl+o' });
     expect(duplicate[0]?.userKey).toBeUndefined();
+
+    expect(
+      findKeybindingConflict({
+        commandId: 'target.command',
+        defaults: [{ command: 'workbench.open', key: 'ctrl+o' }],
+        key: 'ctrl+o',
+        overrides: [
+          { command: 'workbench.open', key: 'alt+o' },
+          { command: 'workbench.open', key: 'shift+o', when: 'editorFocus' },
+        ],
+        platform: 'windows',
+      }),
+    ).toBe('workbench.open');
+    expect(
+      findKeybindingConflict({
+        commandId: 'target.command',
+        defaults: [{ command: 'workbench.open', key: 'ctrl+o' }],
+        key: 'ctrl+o',
+        overrides: [
+          { command: 'workbench.open', key: 'alt+o' },
+          { command: 'workbench.open', key: 'shift+o' },
+        ],
+        platform: 'windows',
+      }),
+    ).toBe('workbench.open');
   });
 
   it('uses canonical overlap without conflating explicit macOS Ctrl and Meta', () => {
