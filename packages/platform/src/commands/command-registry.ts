@@ -6,6 +6,7 @@ export class CommandRegistry<TContext = void> implements Disposable {
   private readonly commands = new Map<string, CommandDefinition<TContext>>();
   private readonly onDidChangeCommandsEmitter = new Emitter<void>();
   private readonly onDidRegisterCommandEmitter = new Emitter<CommandDefinition<TContext>>();
+  private commandRevision = 0;
 
   readonly onDidChangeCommands = this.onDidChangeCommandsEmitter.event;
   readonly onDidRegisterCommand = this.onDidRegisterCommandEmitter.event;
@@ -18,6 +19,10 @@ export class CommandRegistry<TContext = void> implements Disposable {
 
   get size(): number {
     return this.commands.size;
+  }
+
+  get revision(): number {
+    return this.commandRevision;
   }
 
   [Symbol.iterator](): IterableIterator<[string, CommandDefinition<TContext>]> {
@@ -34,6 +39,7 @@ export class CommandRegistry<TContext = void> implements Disposable {
     }
 
     this.commands.set(definition.id, definition);
+    this.commandRevision += 1;
     this.onDidRegisterCommandEmitter.fire(definition);
     this.onDidChangeCommandsEmitter.fire(undefined);
 
@@ -41,6 +47,7 @@ export class CommandRegistry<TContext = void> implements Disposable {
       const current = this.commands.get(definition.id);
       if (current === definition) {
         this.commands.delete(definition.id);
+        this.commandRevision += 1;
         this.onDidChangeCommandsEmitter.fire(undefined);
       }
     });
@@ -66,10 +73,21 @@ export class CommandRegistry<TContext = void> implements Disposable {
     return this.commands.has(commandId);
   }
 
+  notifyCommandChanged(commandId: string): boolean {
+    if (!this.commands.has(commandId)) {
+      return false;
+    }
+
+    this.commandRevision += 1;
+    this.onDidChangeCommandsEmitter.fire(undefined);
+    return true;
+  }
+
   dispose(): void {
     const hadCommands = this.commands.size > 0;
     this.commands.clear();
     if (hadCommands) {
+      this.commandRevision += 1;
       this.onDidChangeCommandsEmitter.fire(undefined);
     }
     this.onDidChangeCommandsEmitter.dispose();

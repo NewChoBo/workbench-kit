@@ -115,6 +115,28 @@ export {
 
 export { KeybindingRegistry } from './keybindings/keybinding-registry.js';
 export {
+  matchesWorkbenchShortcut,
+  normalizeWorkbenchShortcutCandidates,
+  normalizeWorkbenchShortcutFromEvent,
+  resolveWorkbenchShortcutPlatform,
+  workbenchShortcutsOverlap,
+  type WorkbenchShortcutEventLike,
+  type WorkbenchShortcutPlatform,
+} from './keybindings/workbench-shortcut.js';
+export {
+  projectCommandRegistryKeybindings,
+  type CommandRegistryKeybindingProjection,
+} from './keybindings/command-registry-keybindings.js';
+export {
+  createKeybindingManagementModel,
+  type CommandRegistryKeybindingManagementModel,
+} from './keybindings/keybinding-management-model.js';
+export {
+  resetManagedKeybindingOverride,
+  setManagedKeybindingOverride,
+  type KeybindingManagementMutationResult,
+} from './keybindings/managed-keybinding-overrides.js';
+export {
   buildKeybindingManagementEntries,
   filterKeybindingManagementEntries,
   findKeybindingConflict,

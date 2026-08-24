@@ -3,6 +3,7 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -46,9 +47,15 @@ import {
 import {
   ContextKeyService,
   createWorkbenchPermissionContextKeys,
+  projectCommandRegistryKeybindings,
+  resetManagedKeybindingOverride,
+  resolveWorkbenchShortcutPlatform,
+  setManagedKeybindingOverride,
   type CommandRegistry,
+  type CommandRegistryKeybindingProjection,
   type ContextKeyValue,
   type KeybindingRegistry,
+  type WorkbenchShortcutPlatform,
 } from '@workbench-kit/platform';
 import type {
   WorkbenchExtensionsConfig,
@@ -74,6 +81,7 @@ import {
   isWorkbenchKeybindingPersistenceAvailable,
   readPersistedKeybindingOverridesResult,
   writePersistedKeybindingOverridesResult,
+  type PersistedKeybindingOverridesReadResult,
 } from '../management/keybinding-overrides-storage.js';
 import {
   BUILTIN_EXPLORER_VIEW_CONTAINER_ID,
@@ -199,7 +207,10 @@ export interface WorkbenchContextValue {
   installedExtensionsStorage?: WorkbenchStorageAdapter;
   installedExtensionsStorageKey: string;
   keybindings: KeybindingRegistry;
+  keybindingEditingDisabledReason?: string | undefined;
   keybindingOverrides: readonly WorkbenchKeybindingDefinition[];
+  keybindingPlatform: WorkbenchShortcutPlatform;
+  keybindingProjection: CommandRegistryKeybindingProjection;
   layoutService: LayoutService;
   localizations: LocalizationRegistry;
   menus: MenuRegistry;
@@ -237,8 +248,10 @@ interface DeferredProviderDispose {
 }
 
 interface KeybindingOverridesState {
+  readonly dirty: boolean;
   readonly initialOverrides: readonly WorkbenchKeybindingDefinition[] | undefined;
   readonly overrides: readonly WorkbenchKeybindingDefinition[];
+  readonly platform: WorkbenchShortcutPlatform;
   readonly shouldPersist: boolean;
   readonly storage: WorkbenchStorageAdapter | undefined;
   readonly storageKey: string;
@@ -253,9 +266,11 @@ function isKeybindingStateCurrent(
   shouldPersist: boolean,
   storage: WorkbenchStorageAdapter | undefined,
   storageKey: string,
+  platform: WorkbenchShortcutPlatform,
 ): boolean {
   return (
     state.initialOverrides === initialOverrides &&
+    state.platform === platform &&
     state.shouldPersist === shouldPersist &&
     state.storage === storage &&
     state.storageKey === storageKey
@@ -264,19 +279,21 @@ function isKeybindingStateCurrent(
 
 function createKeybindingOverridesState(
   initialOverrides: readonly WorkbenchKeybindingDefinition[] | undefined,
-  resolvedOverrides: readonly WorkbenchKeybindingDefinition[],
-  readFailed: boolean,
+  resolved: PersistedKeybindingOverridesReadResult,
   shouldPersist: boolean,
   storage: WorkbenchStorageAdapter | undefined,
   storageKey: string,
+  platform: WorkbenchShortcutPlatform,
 ): KeybindingOverridesState {
   return {
+    dirty: false,
     initialOverrides,
-    overrides: resolvedOverrides,
+    overrides: resolved.value,
+    platform,
     shouldPersist,
     storage,
     storageKey,
-    writeEligible: initialOverrides !== undefined || !readFailed,
+    writeEligible: resolved.writeEligible,
   };
 }
 
@@ -340,6 +357,7 @@ export function WorkbenchProvider({
   const shouldPersistKeybindingOverrides =
     persistKeybindingOverrides ??
     (keybindingOverridesStorage !== undefined || isWorkbenchKeybindingPersistenceAvailable());
+  const keybindingPlatform = resolveWorkbenchShortcutPlatform();
   const shouldPersistLayout =
     persistLayout ?? (layoutStorage !== undefined || isWorkbenchLayoutPersistenceAvailable());
   const shouldPersistLocalPreferences =
@@ -366,18 +384,25 @@ export function WorkbenchProvider({
     [editorStateStorage, editorStateStorageKey, initialEditorState, shouldPersistEditorState],
   );
   const resolvedInitialEditorState = resolvedInitialEditorStateResult.value;
-  const resolvedInitialKeybindingOverridesResult = useMemo(
+  const resolvedInitialKeybindingOverridesResult = useMemo<PersistedKeybindingOverridesReadResult>(
     () =>
       initialKeybindingOverrides !== undefined
-        ? { value: initialKeybindingOverrides }
+        ? {
+            entries: initialKeybindingOverrides,
+            format: 'v1',
+            value: initialKeybindingOverrides,
+            writeEligible: true,
+          }
         : shouldPersistKeybindingOverrides
           ? readPersistedKeybindingOverridesResult(
               keybindingOverridesStorageKey,
               keybindingOverridesStorage,
+              { platform: keybindingPlatform },
             )
-          : { value: [] },
+          : { entries: [], format: 'missing', value: [], writeEligible: true },
     [
       initialKeybindingOverrides,
+      keybindingPlatform,
       keybindingOverridesStorage,
       keybindingOverridesStorageKey,
       shouldPersistKeybindingOverrides,
@@ -387,23 +412,32 @@ export function WorkbenchProvider({
   const [keybindingState, setKeybindingState] = useState<KeybindingOverridesState>(() =>
     createKeybindingOverridesState(
       initialKeybindingOverrides,
-      resolvedInitialKeybindingOverrides,
-      resolvedInitialKeybindingOverridesResult.diagnostic !== undefined,
+      resolvedInitialKeybindingOverridesResult,
       shouldPersistKeybindingOverrides,
       keybindingOverridesStorage,
       keybindingOverridesStorageKey,
+      keybindingPlatform,
     ),
   );
+  const handledKeybindingWriteRef = useRef<KeybindingOverridesState | undefined>(undefined);
   const keybindingStateIsCurrent = isKeybindingStateCurrent(
     keybindingState,
     initialKeybindingOverrides,
     shouldPersistKeybindingOverrides,
     keybindingOverridesStorage,
     keybindingOverridesStorageKey,
+    keybindingPlatform,
   );
   const keybindingOverrides = keybindingStateIsCurrent
     ? keybindingState.overrides
     : resolvedInitialKeybindingOverrides;
+  const keybindingWriteEligible = keybindingStateIsCurrent
+    ? keybindingState.writeEligible
+    : resolvedInitialKeybindingOverridesResult.writeEligible;
+  const keybindingEditingDisabledReason = keybindingWriteEligible
+    ? undefined
+    : (resolvedInitialKeybindingOverridesResult.diagnostic?.message ??
+      'Stored keyboard shortcuts cannot be edited in this version.');
   const [contextKeyService] = useState(() => createInitialContextKeyService(contextKeyValues));
 
   useEffect(() => {
@@ -430,23 +464,25 @@ export function WorkbenchProvider({
         shouldPersistKeybindingOverrides,
         keybindingOverridesStorage,
         keybindingOverridesStorageKey,
+        keybindingPlatform,
       )
         ? current
         : createKeybindingOverridesState(
             initialKeybindingOverrides,
-            resolvedInitialKeybindingOverrides,
-            resolvedInitialKeybindingOverridesResult.diagnostic !== undefined,
+            resolvedInitialKeybindingOverridesResult,
             shouldPersistKeybindingOverrides,
             keybindingOverridesStorage,
             keybindingOverridesStorageKey,
+            keybindingPlatform,
           ),
     );
   }, [
     initialKeybindingOverrides,
     keybindingOverridesStorage,
     keybindingOverridesStorageKey,
+    keybindingPlatform,
     resolvedInitialKeybindingOverrides,
-    resolvedInitialKeybindingOverridesResult.diagnostic,
+    resolvedInitialKeybindingOverridesResult,
     shouldPersistKeybindingOverrides,
   ]);
 
@@ -459,25 +495,53 @@ export function WorkbenchProvider({
           shouldPersistKeybindingOverrides,
           keybindingOverridesStorage,
           keybindingOverridesStorageKey,
+          keybindingPlatform,
         )
           ? current.overrides
           : resolvedInitialKeybindingOverrides;
-        const without = currentOverrides.filter((binding) => binding.command !== commandId);
+        const currentWriteEligible = isKeybindingStateCurrent(
+          current,
+          initialKeybindingOverrides,
+          shouldPersistKeybindingOverrides,
+          keybindingOverridesStorage,
+          keybindingOverridesStorageKey,
+          keybindingPlatform,
+        )
+          ? current.writeEligible
+          : resolvedInitialKeybindingOverridesResult.writeEligible;
+        if (!currentWriteEligible) {
+          return current;
+        }
+
+        const result = setManagedKeybindingOverride({
+          commandId,
+          key,
+          overrides: currentOverrides,
+          platform: keybindingPlatform,
+        });
+        if (!result.changed) {
+          return current;
+        }
+
         return {
+          dirty: true,
           initialOverrides: initialKeybindingOverrides,
-          overrides: [...without, { command: commandId, key }],
+          overrides: result.overrides,
+          platform: keybindingPlatform,
           shouldPersist: shouldPersistKeybindingOverrides,
           storage: keybindingOverridesStorage,
           storageKey: keybindingOverridesStorageKey,
-          writeEligible: true,
+          writeEligible: currentWriteEligible,
         };
       });
     },
     [
       initialKeybindingOverrides,
+      keybindingPlatform,
       keybindingOverridesStorage,
       keybindingOverridesStorageKey,
       resolvedInitialKeybindingOverrides,
+      resolvedInitialKeybindingOverridesResult.writeEligible,
       shouldPersistKeybindingOverrides,
     ],
   );
@@ -491,33 +555,66 @@ export function WorkbenchProvider({
           shouldPersistKeybindingOverrides,
           keybindingOverridesStorage,
           keybindingOverridesStorageKey,
+          keybindingPlatform,
         )
           ? current.overrides
           : resolvedInitialKeybindingOverrides;
+        const currentWriteEligible = isKeybindingStateCurrent(
+          current,
+          initialKeybindingOverrides,
+          shouldPersistKeybindingOverrides,
+          keybindingOverridesStorage,
+          keybindingOverridesStorageKey,
+          keybindingPlatform,
+        )
+          ? current.writeEligible
+          : resolvedInitialKeybindingOverridesResult.writeEligible;
+        if (!currentWriteEligible) {
+          return current;
+        }
+
+        const result = resetManagedKeybindingOverride({
+          commandId,
+          overrides: currentOverrides,
+          platform: keybindingPlatform,
+        });
+        if (!result.changed) {
+          return current;
+        }
+
         return {
+          dirty: true,
           initialOverrides: initialKeybindingOverrides,
-          overrides: currentOverrides.filter((binding) => binding.command !== commandId),
+          overrides: result.overrides,
+          platform: keybindingPlatform,
           shouldPersist: shouldPersistKeybindingOverrides,
           storage: keybindingOverridesStorage,
           storageKey: keybindingOverridesStorageKey,
-          writeEligible: true,
+          writeEligible: currentWriteEligible,
         };
       });
     },
     [
       initialKeybindingOverrides,
+      keybindingPlatform,
       keybindingOverridesStorage,
       keybindingOverridesStorageKey,
       resolvedInitialKeybindingOverrides,
+      resolvedInitialKeybindingOverridesResult.writeEligible,
       shouldPersistKeybindingOverrides,
     ],
   );
 
   useEffect(() => {
-    if (!keybindingStateIsCurrent) {
+    if (
+      !keybindingStateIsCurrent ||
+      !keybindingState.dirty ||
+      handledKeybindingWriteRef.current === keybindingState
+    ) {
       return;
     }
 
+    handledKeybindingWriteRef.current = keybindingState;
     onKeybindingOverridesChange?.(keybindingState.overrides);
     if (!shouldPersistKeybindingOverrides || !keybindingState.writeEligible) {
       return;
@@ -571,6 +668,7 @@ export function WorkbenchProvider({
       initialKeybindingOverrides,
       keybindingOverridesStorage,
       keybindingOverridesStorageKey,
+      keybindingPlatform,
       shouldPersistKeybindingOverrides,
     ],
     diagnosticHandlerRef,
@@ -748,6 +846,29 @@ export function WorkbenchProvider({
     diagnosticHandlerRef,
   ]);
 
+  const [commandKeybindingRevision, setCommandKeybindingRevision] = useState(
+    () => services.extensionRegistry.commands.revision,
+  );
+  useLayoutEffect(() => {
+    const disposable = services.extensionRegistry.commands.onDidChangeCommands(() => {
+      setCommandKeybindingRevision(services.extensionRegistry.commands.revision);
+    });
+    setCommandKeybindingRevision(services.extensionRegistry.commands.revision);
+
+    return () => {
+      disposable.dispose();
+    };
+  }, [services.extensionRegistry.commands]);
+  const keybindingProjection = useMemo(
+    () =>
+      projectCommandRegistryKeybindings({
+        context: undefined,
+        platform: keybindingPlatform,
+        registry: services.extensionRegistry.commands,
+      }),
+    [commandKeybindingRevision, keybindingPlatform, services.extensionRegistry.commands],
+  );
+
   useEffect(() => {
     if (!shouldPersistLayout) {
       return undefined;
@@ -886,7 +1007,10 @@ export function WorkbenchProvider({
       installedExtensionsStorage,
       installedExtensionsStorageKey,
       keybindings: services.extensionRegistry.keybindings,
+      keybindingEditingDisabledReason,
       keybindingOverrides,
+      keybindingPlatform,
+      keybindingProjection,
       layoutService: services.layoutService,
       localizations: services.extensionRegistry.localizations,
       menus: services.extensionRegistry.menus,
@@ -908,7 +1032,10 @@ export function WorkbenchProvider({
       contextKeyService,
       installedExtensionsStorage,
       installedExtensionsStorageKey,
+      keybindingEditingDisabledReason,
       keybindingOverrides,
+      keybindingPlatform,
+      keybindingProjection,
       resetCommandKeybindingOverride,
       services,
       setCommandKeybindingOverride,

@@ -160,6 +160,11 @@
   line-height: 1.45;
 }
 
+.workbench-management-notice--warning {
+  border-color: color-mix(in srgb, var(--color-warning, #cca700) 45%, var(--color-border));
+  color: var(--color-text);
+}
+
 .workbench-management-card-list {
   list-style: none;
   margin: 0;
@@ -378,6 +383,13 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.workbench-management-list-item__reason {
+  margin: 0;
+  color: var(--color-text-muted);
+  font-size: 12px;
+  line-height: 1.4;
 }
 
 .workbench-management-list-item__menus {

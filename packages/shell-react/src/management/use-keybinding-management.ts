@@ -1,5 +1,5 @@
-import { useMemo } from 'react';
-import { buildKeybindingManagementEntries } from '@workbench-kit/platform';
+import { useLayoutEffect, useMemo, useState } from 'react';
+import { createKeybindingManagementModel } from '@workbench-kit/platform';
 import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
 
 import { useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
@@ -11,30 +11,71 @@ export function useKeybindingManagementModel() {
     commands,
     extensionCatalog,
     keybindings,
+    keybindingEditingDisabledReason,
     keybindingOverrides,
+    keybindingPlatform,
+    keybindingProjection,
     resetCommandKeybindingOverride,
     setCommandKeybindingOverride,
     views,
   } = useWorkbench();
 
-  const defaults = useMemo(
-    () => keybindings.getKeybindings(),
-    [keybindingOverrides.length, keybindings],
-  );
+  const [keybindingRevision, setKeybindingRevision] = useState(() => keybindings.revision);
+  useLayoutEffect(() => {
+    const disposable = keybindings.onDidChangeKeybindings(() => {
+      setKeybindingRevision(keybindings.revision);
+    });
+    setKeybindingRevision(keybindings.revision);
 
-  const entries = useMemo(
+    return () => {
+      disposable.dispose();
+    };
+  }, [keybindings]);
+  const extensionDefaults = useMemo(
+    () => keybindings.getKeybindings(),
+    [keybindingRevision, keybindings],
+  );
+  const defaults = useMemo(() => {
+    const projectedKeys = new Set(
+      keybindingProjection.defaults.map((binding) => `${binding.command}\u0000${binding.key}`),
+    );
+    return [
+      ...keybindingProjection.defaults,
+      ...extensionDefaults.filter(
+        (binding) => !projectedKeys.has(`${binding.command}\u0000${binding.key}`),
+      ),
+    ];
+  }, [extensionDefaults, keybindingProjection.defaults]);
+
+  const model = useMemo(
     () =>
-      buildKeybindingManagementEntries({
-        commands: collectKeybindingManagementCommands({
-          activities,
-          commands,
-          extensionCatalog,
-          views,
-        }),
-        defaults,
+      createKeybindingManagementModel({
+        editingDisabledReason: keybindingEditingDisabledReason,
+        onOverridesChange: () => undefined,
         overrides: keybindingOverrides,
+        platform: keybindingPlatform,
+        projection: {
+          ...keybindingProjection,
+          commands: collectKeybindingManagementCommands({
+            activities,
+            commands,
+            extensionCatalog,
+            views,
+          }),
+          defaults,
+        },
       }),
-    [activities, commands, defaults, extensionCatalog, keybindingOverrides, views],
+    [
+      activities,
+      commands,
+      defaults,
+      extensionCatalog,
+      keybindingEditingDisabledReason,
+      keybindingOverrides,
+      keybindingPlatform,
+      keybindingProjection,
+      views,
+    ],
   );
 
   const overrideCount = keybindingOverrides.length;
@@ -50,8 +91,10 @@ export function useKeybindingManagementModel() {
   };
 
   return {
-    entries,
+    editingDisabledReason: keybindingEditingDisabledReason,
+    entries: model.entries,
     overrideCount,
+    platform: keybindingPlatform,
     resetKeybinding: resetCommandKeybindingOverride,
     setKeybinding,
   };

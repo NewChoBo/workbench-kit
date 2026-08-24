@@ -1,13 +1,21 @@
-import { useEffect } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   canExecuteCommand,
+  createKeybindingManagementModel,
   executeCommand,
+  matchesWorkbenchShortcut as matchesPlatformWorkbenchShortcut,
+  normalizeWorkbenchShortcutFromEvent,
+  projectCommandRegistryKeybindings,
+  resolveWorkbenchShortcutPlatform,
   type CommandRegistry,
-  type CommandValue,
+  type CommandRegistryKeybindingProjection,
+  type KeybindingDefinition,
+  type WorkbenchShortcutEventLike as PlatformWorkbenchShortcutEventLike,
+  type WorkbenchShortcutPlatform as PlatformWorkbenchShortcutPlatform,
 } from '@workbench-kit/platform';
-import { normalizeKeyToken } from '../../utils/normalizeKeyToken';
 
-export type WorkbenchShortcutPlatform = 'linux' | 'mac' | 'unknown' | 'windows';
+export type WorkbenchShortcutPlatform = PlatformWorkbenchShortcutPlatform;
+export type WorkbenchShortcutEventLike = PlatformWorkbenchShortcutEventLike;
 
 export interface WorkbenchShortcutCommandBinding {
   commandId: string;
@@ -19,17 +27,8 @@ export interface WorkbenchShortcutCommandBinding {
 export interface WorkbenchShortcutCommandBindingInput<TContext> {
   commandIds?: readonly string[] | undefined;
   context: TContext;
+  platform?: WorkbenchShortcutPlatform | undefined;
   registry: CommandRegistry<TContext>;
-}
-
-export interface WorkbenchShortcutEventLike {
-  altKey?: boolean | undefined;
-  ctrlKey?: boolean | undefined;
-  key: string;
-  metaKey?: boolean | undefined;
-  preventDefault?: (() => void) | undefined;
-  shiftKey?: boolean | undefined;
-  stopPropagation?: (() => void) | undefined;
 }
 
 export interface WorkbenchShortcutMatchInput {
@@ -43,7 +42,6 @@ export interface WorkbenchShortcutCommandRunInput<
 > extends WorkbenchShortcutCommandBindingInput<TContext> {
   bindings?: readonly WorkbenchShortcutCommandBinding[] | undefined;
   event: WorkbenchShortcutEventLike;
-  platform?: WorkbenchShortcutPlatform | undefined;
   preventDefault?: boolean | undefined;
   preventDefaultForDisabledMatches?: boolean | undefined;
   stopPropagation?: boolean | undefined;
@@ -68,157 +66,97 @@ export type WorkbenchShortcutCommandRunResult =
       shortcut?: string | undefined;
     };
 
-export interface UseWorkbenchShortcutCommandsOptions<TContext> extends Omit<
-  WorkbenchShortcutCommandRunInput<TContext>,
-  'event'
-> {
+interface WorkbenchShortcutCommandCommonOptions<
+  TContext,
+> extends WorkbenchShortcutCommandBindingInput<TContext> {
   enabled?: boolean | undefined;
   onShortcutCommand?: ((result: WorkbenchShortcutCommandRunResult) => void) | undefined;
+  preventDefault?: boolean | undefined;
+  preventDefaultForDisabledMatches?: boolean | undefined;
+  stopPropagation?: boolean | undefined;
   target?: EventTarget | null | undefined;
   useCapture?: boolean | undefined;
 }
 
+type WorkbenchShortcutCommandBindingSource =
+  | {
+      readonly bindings: readonly WorkbenchShortcutCommandBinding[];
+      readonly keybindingOverrides?: never;
+      readonly keybindingProjection?: never;
+    }
+  | {
+      readonly bindings?: undefined;
+      readonly keybindingOverrides?: readonly KeybindingDefinition[];
+      readonly keybindingProjection: CommandRegistryKeybindingProjection;
+    }
+  | {
+      readonly bindings?: undefined;
+      readonly keybindingOverrides?: readonly KeybindingDefinition[];
+      readonly keybindingProjection?: undefined;
+    };
+
+export type UseWorkbenchShortcutCommandsOptions<TContext> =
+  WorkbenchShortcutCommandCommonOptions<TContext> & WorkbenchShortcutCommandBindingSource;
+
 export type WorkbenchShortcutCommandBridgeProps<TContext> =
   UseWorkbenchShortcutCommandsOptions<TContext>;
 
-type ShortcutModifier = 'alt' | 'ctrl' | 'meta' | 'shift';
+const LEGACY_EVENT_MODIFIER_LABELS: Readonly<Record<string, string>> = {
+  alt: 'Alt',
+  ctrl: 'Ctrl',
+  meta: 'Cmd',
+  shift: 'Shift',
+};
+const EMPTY_KEYBINDING_OVERRIDES: readonly KeybindingDefinition[] = Object.freeze([]);
 
-interface ParsedShortcut {
-  ctrlOrMeta: boolean;
-  key?: string | undefined;
-  modifiers: Set<ShortcutModifier>;
+function formatLegacyShortcutEventLabel(shortcut: string): string {
+  return shortcut
+    .split('+')
+    .map((token) => LEGACY_EVENT_MODIFIER_LABELS[token] ?? token)
+    .join('+');
 }
 
-function resolveCommandValue<TContext, TValue>(
-  value: CommandValue<TContext, TValue> | undefined,
-  context: TContext,
-): TValue | undefined {
-  if (typeof value !== 'function') return value;
-  return (value as (context: TContext) => TValue)(context);
-}
-
-function getDefaultShortcutPlatform(): WorkbenchShortcutPlatform {
-  if (typeof navigator === 'undefined') return 'unknown';
-  const platform = navigator.platform.toLowerCase();
-  if (platform.includes('mac')) return 'mac';
-  if (platform.includes('win')) return 'windows';
-  if (platform.includes('linux')) return 'linux';
-  return 'unknown';
-}
-
-function normalizeEventKey(key: string) {
-  if (key === ' ') return 'space';
-  return normalizeKeyToken(key);
-}
-
-function parseShortcut(
-  shortcut: string,
-  platform: WorkbenchShortcutPlatform,
-): ParsedShortcut | undefined {
-  const tokens = shortcut
-    .trim()
-    .split(/[+\s]+/)
-    .map((token) => token.trim())
-    .filter(Boolean);
-  if (!tokens.length) return undefined;
-
-  const parsed: ParsedShortcut = {
-    ctrlOrMeta: false,
-    modifiers: new Set(),
-  };
-
-  tokens.forEach((token) => {
-    const normalized = token.toLowerCase();
-    if (normalized === 'ctrl' || normalized === 'control') {
-      parsed.modifiers.add('ctrl');
-      return;
-    }
-
-    if (normalized === 'cmd' || normalized === 'command' || normalized === 'meta') {
-      parsed.modifiers.add('meta');
-      return;
-    }
-
-    if (normalized === 'alt' || normalized === 'option') {
-      parsed.modifiers.add('alt');
-      return;
-    }
-
-    if (normalized === 'shift') {
-      parsed.modifiers.add('shift');
-      return;
-    }
-
-    if (
-      normalized === 'ctrl/cmd' ||
-      normalized === 'cmd/ctrl' ||
-      normalized === 'ctrlcmd' ||
-      normalized === 'cmdorctrl'
-    ) {
-      parsed.ctrlOrMeta = true;
-      return;
-    }
-
-    if (normalized === 'mod' || normalized === 'primary') {
-      parsed.modifiers.add(platform === 'mac' ? 'meta' : 'ctrl');
-      return;
-    }
-
-    parsed.key = normalizeKeyToken(token);
-  });
-
-  return parsed.key ? parsed : undefined;
-}
-
-function hasExpectedModifiers(event: WorkbenchShortcutEventLike, parsed: ParsedShortcut) {
-  const ctrl = Boolean(event.ctrlKey);
-  const meta = Boolean(event.metaKey);
-
-  if (parsed.ctrlOrMeta) {
-    if (!ctrl && !meta) return false;
-  } else {
-    if (ctrl !== parsed.modifiers.has('ctrl')) return false;
-    if (meta !== parsed.modifiers.has('meta')) return false;
-  }
-
-  return (
-    Boolean(event.altKey) === parsed.modifiers.has('alt') &&
-    Boolean(event.shiftKey) === parsed.modifiers.has('shift')
-  );
-}
-
-export function getWorkbenchShortcutFromEvent(event: WorkbenchShortcutEventLike) {
-  const parts: string[] = [];
-  if (event.ctrlKey) parts.push('Ctrl');
-  if (event.metaKey) parts.push('Cmd');
-  if (event.altKey) parts.push('Alt');
-  if (event.shiftKey) parts.push('Shift');
-  parts.push(normalizeEventKey(event.key));
-  return parts.join('+');
+export function getWorkbenchShortcutFromEvent(
+  event: WorkbenchShortcutEventLike,
+  platform = resolveWorkbenchShortcutPlatform(),
+): string {
+  const shortcut = normalizeWorkbenchShortcutFromEvent(event, platform);
+  return shortcut ? formatLegacyShortcutEventLabel(shortcut) : '';
 }
 
 export function matchesWorkbenchShortcut({
   event,
-  platform = getDefaultShortcutPlatform(),
+  platform,
   shortcut,
 }: WorkbenchShortcutMatchInput) {
-  return shortcut
-    .split(',')
-    .map((candidate) => parseShortcut(candidate, platform))
-    .some(
-      (parsed) =>
-        Boolean(parsed) &&
-        parsed?.key === normalizeEventKey(event.key) &&
-        hasExpectedModifiers(event, parsed),
-    );
+  const resolvedPlatform = platform ?? resolveWorkbenchShortcutPlatform();
+  const compatibleShortcut =
+    platform === undefined
+      ? shortcut.replace(
+          /ctrl\s*\/\s*cmd|cmd\s*\/\s*ctrl|ctrlcmd|cmdorctrl/giu,
+          'legacy-primary-or-control',
+        )
+      : shortcut;
+  return matchesPlatformWorkbenchShortcut({
+    event,
+    platform: resolvedPlatform,
+    shortcut: compatibleShortcut,
+  });
 }
 
 export function matchesWorkbenchCommandPaletteShortcut(event: WorkbenchShortcutEventLike) {
-  return matchesWorkbenchShortcut({ event, shortcut: 'Ctrl/Cmd+Shift+P' });
+  return matchesHardPrimaryShortcut(event, 'Ctrl/Cmd+Shift+P');
 }
 
 export function matchesWorkbenchQuickAccessShortcut(event: WorkbenchShortcutEventLike) {
-  return matchesWorkbenchShortcut({ event, shortcut: 'Ctrl/Cmd+P' });
+  return matchesHardPrimaryShortcut(event, 'Ctrl/Cmd+P');
+}
+
+function matchesHardPrimaryShortcut(event: WorkbenchShortcutEventLike, shortcut: string): boolean {
+  return (
+    matchesPlatformWorkbenchShortcut({ event, platform: 'windows', shortcut }) ||
+    matchesPlatformWorkbenchShortcut({ event, platform: 'mac', shortcut })
+  );
 }
 
 export function getWorkbenchCommandPaletteShortcutLabel() {
@@ -232,23 +170,48 @@ export function getWorkbenchQuickAccessShortcutLabel() {
 export function getWorkbenchShortcutCommandBindings<TContext>({
   commandIds,
   context,
+  platform = resolveWorkbenchShortcutPlatform(),
   registry,
 }: WorkbenchShortcutCommandBindingInput<TContext>): WorkbenchShortcutCommandBinding[] {
-  const allowedCommandIds = commandIds ? new Set(commandIds) : undefined;
-
-  return [...registry.values()].flatMap((command) => {
-    if (allowedCommandIds && !allowedCommandIds.has(command.id)) return [];
-
-    const shortcut = resolveCommandValue(command.shortcut, context);
-    if (!shortcut) return [];
-
-    return [
-      {
-        commandId: command.id,
-        shortcut,
-      },
-    ];
+  const projection = projectCommandRegistryKeybindings({
+    commandIds,
+    context,
+    platform,
+    registry,
   });
+  return projection.defaults.map((binding) => ({
+    commandId: binding.command,
+    shortcut: binding.key,
+  }));
+}
+
+function getEffectiveProjectionBindings(
+  projection: CommandRegistryKeybindingProjection,
+  overrides: readonly KeybindingDefinition[],
+  platform: WorkbenchShortcutPlatform,
+): WorkbenchShortcutCommandBinding[] {
+  const managementModel = createKeybindingManagementModel({
+    onOverridesChange: () => undefined,
+    overrides,
+    platform,
+    projection,
+  });
+  const supportedOverrides = managementModel.entries.flatMap<WorkbenchShortcutCommandBinding>(
+    (entry) =>
+      entry.editable === true && entry.userKey
+        ? [{ commandId: entry.commandId, shortcut: entry.userKey }]
+        : [],
+  );
+  const overriddenCommands = new Set(supportedOverrides.map((binding) => binding.commandId));
+
+  return [
+    ...supportedOverrides,
+    ...projection.defaults.flatMap<WorkbenchShortcutCommandBinding>((binding) =>
+      overriddenCommands.has(binding.command)
+        ? []
+        : [{ commandId: binding.command, shortcut: binding.key }],
+    ),
+  ];
 }
 
 function getUnmatchedReason<TContext>(
@@ -274,7 +237,7 @@ export function runWorkbenchShortcutCommand<TContext>({
   stopPropagation = false,
 }: WorkbenchShortcutCommandRunInput<TContext>): WorkbenchShortcutCommandRunResult {
   const resolvedBindings =
-    bindings ?? getWorkbenchShortcutCommandBindings({ commandIds, context, registry });
+    bindings ?? getWorkbenchShortcutCommandBindings({ commandIds, context, platform, registry });
   const binding = resolvedBindings.find((candidate) =>
     matchesWorkbenchShortcut({ event, platform, shortcut: candidate.shortcut }),
   );
@@ -311,6 +274,8 @@ export function useWorkbenchShortcutCommands<TContext>({
   commandIds,
   context,
   enabled = true,
+  keybindingOverrides = EMPTY_KEYBINDING_OVERRIDES,
+  keybindingProjection,
   onShortcutCommand,
   platform,
   preventDefault,
@@ -320,6 +285,45 @@ export function useWorkbenchShortcutCommands<TContext>({
   target,
   useCapture = false,
 }: UseWorkbenchShortcutCommandsOptions<TContext>) {
+  const resolvedPlatform = platform ?? resolveWorkbenchShortcutPlatform();
+  const usesInternalProjection = bindings === undefined && keybindingProjection === undefined;
+  const [registryRevision, setRegistryRevision] = useState(0);
+
+  useEffect(() => {
+    if (!usesInternalProjection) {
+      return undefined;
+    }
+
+    const disposable = registry.onDidChangeCommands(() => {
+      setRegistryRevision((current) => current + 1);
+    });
+    return () => disposable.dispose();
+  }, [registry, usesInternalProjection]);
+
+  const internalProjection = useMemo(() => {
+    if (!usesInternalProjection) {
+      return undefined;
+    }
+
+    return projectCommandRegistryKeybindings({
+      commandIds,
+      context,
+      platform: resolvedPlatform,
+      registry,
+    });
+  }, [commandIds, context, registry, registryRevision, resolvedPlatform, usesInternalProjection]);
+
+  const resolvedBindings = useMemo(() => {
+    if (bindings !== undefined) {
+      return bindings;
+    }
+
+    const projection = keybindingProjection ?? internalProjection;
+    return projection
+      ? getEffectiveProjectionBindings(projection, keybindingOverrides, resolvedPlatform)
+      : [];
+  }, [bindings, internalProjection, keybindingOverrides, keybindingProjection, resolvedPlatform]);
+
   useEffect(() => {
     if (!enabled) return undefined;
 
@@ -327,12 +331,16 @@ export function useWorkbenchShortcutCommands<TContext>({
     if (!resolvedTarget) return undefined;
 
     const listener = (event: Event) => {
+      if (isWorkbenchShortcutCaptureEvent(event)) {
+        return;
+      }
+
       const result = runWorkbenchShortcutCommand({
-        bindings,
+        bindings: resolvedBindings,
         commandIds,
         context,
         event: event as unknown as WorkbenchShortcutEventLike,
-        platform,
+        platform: resolvedPlatform,
         preventDefault,
         preventDefaultForDisabledMatches,
         registry,
@@ -346,19 +354,28 @@ export function useWorkbenchShortcutCommands<TContext>({
       resolvedTarget.removeEventListener('keydown', listener, { capture: useCapture });
     };
   }, [
-    bindings,
     commandIds,
     context,
     enabled,
     onShortcutCommand,
-    platform,
     preventDefault,
     preventDefaultForDisabledMatches,
     registry,
+    resolvedBindings,
+    resolvedPlatform,
     stopPropagation,
     target,
     useCapture,
   ]);
+}
+
+function isWorkbenchShortcutCaptureEvent(event: Event): boolean {
+  const target = event.target;
+  return (
+    typeof Element !== 'undefined' &&
+    target instanceof Element &&
+    target.closest('[data-workbench-shortcut-capture-recording="true"]') !== null
+  );
 }
 
 export function WorkbenchShortcutCommandBridge<TContext>(

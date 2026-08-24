@@ -1,79 +1,115 @@
 import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react';
-import { formatKeybindingLabel } from '@workbench-kit/platform';
+import {
+  formatKeybindingLabel,
+  normalizeWorkbenchShortcutFromEvent,
+  resolveWorkbenchShortcutPlatform,
+  type WorkbenchShortcutPlatform,
+} from '@workbench-kit/platform';
 import { Button } from '../../primitives/button';
 import { cx } from '../../utils/cx';
-import { normalizeKeyToken } from '../../utils/normalizeKeyToken';
 
 export interface KeybindingCaptureFieldProps {
+  ariaDescribedBy?: string | undefined;
   ariaLabel?: string | undefined;
   className?: string | undefined;
   disabled?: boolean | undefined;
   onCancel?: (() => void) | undefined;
   onChange: (key: string | undefined) => void;
   placeholder?: string | undefined;
+  platform?: WorkbenchShortcutPlatform | undefined;
   value?: string | undefined;
 }
 
 export function KeybindingCaptureField({
+  ariaDescribedBy,
   ariaLabel = 'Keyboard shortcut',
   className,
   disabled = false,
   onCancel,
   onChange,
   placeholder = 'Press keys to record',
+  platform,
   value,
 }: KeybindingCaptureFieldProps) {
   const fieldId = useId();
+  const statusId = useId();
   const [recording, setRecording] = useState(false);
   const buttonRef = useRef<HTMLButtonElement>(null);
+  const resolvedPlatform = platform ?? resolveWorkbenchShortcutPlatform();
 
   useEffect(() => {
-    if (!recording) {
+    if (disabled) {
+      setRecording(false);
+    }
+  }, [disabled]);
+
+  useEffect(() => {
+    if (!recording || disabled) {
       return undefined;
     }
 
-    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      event.preventDefault();
-      event.stopPropagation();
+    const finishRecording = () => {
+      setRecording(false);
+      buttonRef.current?.focus();
+    };
 
-      if (event.key === 'Escape') {
+    const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (event.key === 'Tab') {
         setRecording(false);
         onCancel?.();
         return;
       }
 
+      event.preventDefault();
+      event.stopPropagation();
+      event.stopImmediatePropagation();
+
+      if (event.key === 'Escape') {
+        onCancel?.();
+        finishRecording();
+        return;
+      }
+
       if (event.key === 'Backspace' || event.key === 'Delete') {
         onChange(undefined);
-        setRecording(false);
+        finishRecording();
         return;
       }
 
-      if (event.key === 'Tab' || event.key === 'Shift') {
+      if (['Alt', 'Control', 'Meta', 'Shift'].includes(event.key)) {
         return;
       }
 
-      onChange(normalizeKeybindingKeyFromEvent(event));
-      setRecording(false);
+      const shortcut = normalizeWorkbenchShortcutFromEvent(event, resolvedPlatform);
+      if (!shortcut) {
+        return;
+      }
+
+      onChange(shortcut);
+      finishRecording();
     };
 
     window.addEventListener('keydown', handleKeyDown, true);
     return () => {
       window.removeEventListener('keydown', handleKeyDown, true);
     };
-  }, [onCancel, onChange, recording]);
+  }, [disabled, onCancel, onChange, recording, resolvedPlatform]);
 
   const displayValue = value ? formatKeybindingLabel(value) : undefined;
+  const describedBy = [statusId, ariaDescribedBy].filter(Boolean).join(' ');
 
   return (
     <div className={cx('workbench-keybinding-capture', className)}>
       <Button
         ref={buttonRef}
+        aria-describedby={describedBy}
         aria-label={ariaLabel}
         className={cx(
           'workbench-keybinding-capture__trigger',
           recording && 'workbench-keybinding-capture__trigger--recording',
         )}
         disabled={disabled}
+        data-workbench-shortcut-capture-recording={recording ? 'true' : undefined}
         id={fieldId}
         type="button"
         onClick={() => {
@@ -96,6 +132,11 @@ export function KeybindingCaptureField({
       >
         {recording ? 'Press shortcut…' : (displayValue ?? placeholder)}
       </Button>
+      <span aria-live="polite" className="ui-visually-hidden" id={statusId} role="status">
+        {recording
+          ? 'Recording keyboard shortcut. Press a key combination, Escape to cancel, or Tab to leave.'
+          : ''}
+      </span>
       {value ? (
         <Button
           aria-label="Clear keyboard shortcut"
@@ -112,23 +153,4 @@ export function KeybindingCaptureField({
       ) : null}
     </div>
   );
-}
-
-function normalizeKeybindingKeyFromEvent(
-  event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
-): string {
-  const parts: string[] = [];
-
-  if (event.ctrlKey || event.metaKey) {
-    parts.push('ctrl');
-  }
-  if (event.altKey) {
-    parts.push('alt');
-  }
-  if (event.shiftKey) {
-    parts.push('shift');
-  }
-
-  parts.push(normalizeKeyToken(event.key));
-  return parts.join('+');
 }

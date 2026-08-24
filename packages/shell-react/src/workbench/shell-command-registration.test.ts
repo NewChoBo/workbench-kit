@@ -1,4 +1,4 @@
-import { CommandRegistry } from '@workbench-kit/platform';
+import { CommandRegistry, projectCommandRegistryKeybindings } from '@workbench-kit/platform';
 import {
   WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
   WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
@@ -7,7 +7,7 @@ import {
   getWorkbenchShowActivityCommandId,
   type WorkbenchShellCommandContext,
 } from '@workbench-kit/react/workbench/commands';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { registerWorkbenchShellCommandHandlers } from './shell-command-registration.js';
 
@@ -99,5 +99,35 @@ describe('registerWorkbenchShellCommandHandlers', () => {
     expect(
       registry.getCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID)?.handler,
     ).toBeUndefined();
+  });
+
+  it('notifies projections when existing command metadata is attached and restored', () => {
+    const registry = new CommandRegistry([
+      { id: WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID, title: 'Custom Focus Mode' },
+    ]);
+    const shellCommand = createWorkbenchShellCommands({ activities: [] }).find(
+      (command) => command.id === WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
+    );
+    if (!shellCommand) throw new Error('Expected focus mode shell command.');
+    const onDidChangeCommands = vi.fn();
+    registry.onDidChangeCommands(onDidChangeCommands);
+
+    const registration = registerWorkbenchShellCommandHandlers(registry, [shellCommand], () =>
+      createShellContext([]),
+    );
+
+    expect(onDidChangeCommands).toHaveBeenCalledOnce();
+    expect(
+      projectCommandRegistryKeybindings({ context: undefined, platform: 'windows', registry })
+        .defaults,
+    ).toEqual([{ command: WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID, key: 'ctrl+shift+f11' }]);
+
+    registration.dispose();
+
+    expect(onDidChangeCommands).toHaveBeenCalledTimes(2);
+    expect(
+      projectCommandRegistryKeybindings({ context: undefined, platform: 'windows', registry })
+        .defaults,
+    ).toEqual([]);
   });
 });

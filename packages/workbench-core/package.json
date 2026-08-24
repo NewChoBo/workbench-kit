@@ -23,6 +23,7 @@
       "import": "./src/design-system/index.ts",
       "default": "./src/design-system/index.ts"
     },
+    "./keybinding-overrides-storage": "./src/keybinding-overrides-storage.ts",
     "./layout": "./src/layout/service.ts",
     "./storage": "./src/storage.ts"
   },

@@ -58,4 +58,67 @@ describe('buildKeybindingManagementEntries', () => {
 
     expect(conflict).toBe('workbench.open');
   });
+
+  it('ignores unsupported overrides when suppressing defaults', () => {
+    const conflict = findKeybindingConflict({
+      commandId: 'editor.save',
+      defaults: [{ command: 'workbench.open', key: 'meta+k' }],
+      key: 'legacy-primary-or-control+k',
+      overrides: [{ command: 'workbench.open', key: 'alt+k', when: 'editorFocus' }],
+      platform: 'mac',
+    });
+
+    expect(conflict).toBe('workbench.open');
+  });
+
+  it('keeps defaults effective for mixed and duplicate managed records', () => {
+    const defaults = [
+      { command: 'editor.save', key: 'ctrl+s' },
+      { command: 'workbench.open', key: 'ctrl+o' },
+    ] as const;
+    const mixed = buildKeybindingManagementEntries({
+      commands: [{ id: 'editor.save', label: 'Save' }],
+      defaults,
+      overrides: [
+        { command: 'editor.save', key: 'alt+s' },
+        { command: 'editor.save', key: 'shift+s', when: 'editorFocus' },
+      ],
+      platform: 'windows',
+    });
+    const duplicate = buildKeybindingManagementEntries({
+      commands: [{ id: 'workbench.open', label: 'Open' }],
+      defaults,
+      overrides: [
+        { command: 'workbench.open', key: 'alt+o' },
+        { command: 'workbench.open', key: 'shift+o' },
+      ],
+      platform: 'windows',
+    });
+
+    expect(mixed[0]).toMatchObject({ editable: false, effectiveKey: 'ctrl+s' });
+    expect(mixed[0]?.userKey).toBeUndefined();
+    expect(duplicate[0]).toMatchObject({ editable: false, effectiveKey: 'ctrl+o' });
+    expect(duplicate[0]?.userKey).toBeUndefined();
+  });
+
+  it('uses canonical overlap without conflating explicit macOS Ctrl and Meta', () => {
+    expect(
+      findKeybindingConflict({
+        commandId: 'editor.save',
+        defaults: [{ command: 'workbench.open', key: 'meta+k' }],
+        key: 'ctrl+k',
+        overrides: [],
+        platform: 'mac',
+      }),
+    ).toBeUndefined();
+    expect(
+      findKeybindingConflict({
+        commandId: 'editor.save',
+        defaults: [{ command: 'workbench.open', key: 'meta+k' }],
+        key: 'legacy-primary-or-control+k',
+        overrides: [],
+        platform: 'mac',
+      }),
+    ).toBe('workbench.open');
+  });
 });

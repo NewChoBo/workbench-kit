@@ -1,8 +1,33 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 
 import { KeybindingRegistry } from './keybinding-registry.js';
 
 describe('KeybindingRegistry', () => {
+  it('notifies consumers when keybindings are registered and removed', () => {
+    const registry = new KeybindingRegistry();
+    const onDidChangeKeybindings = vi.fn();
+    const onDidRegisterKeybinding = vi.fn();
+    registry.onDidChangeKeybindings(onDidChangeKeybindings);
+    registry.onDidRegisterKeybinding(onDidRegisterKeybinding);
+    expect(registry.revision).toBe(0);
+
+    const registration = registry.registerKeybinding({ command: 'sample.run', key: 'ctrl+r' });
+
+    expect(onDidRegisterKeybinding).toHaveBeenCalledOnce();
+    expect(onDidChangeKeybindings).toHaveBeenCalledOnce();
+    expect(registry.revision).toBe(1);
+
+    registration.dispose();
+
+    expect(onDidRegisterKeybinding).toHaveBeenCalledOnce();
+    expect(onDidChangeKeybindings).toHaveBeenCalledTimes(2);
+    expect(registry.revision).toBe(2);
+    expect(registry.getKeybindings()).toEqual([]);
+
+    registration.dispose();
+    expect(onDidChangeKeybindings).toHaveBeenCalledTimes(2);
+  });
+
   it('resolves keybindings filtered by when clauses', () => {
     const registry = new KeybindingRegistry();
 

@@ -1,8 +1,4 @@
 import {
-  createCommandRegistryFromContributions,
-  type CommandRegistry,
-} from '@workbench-kit/platform';
-import {
   WorkbenchCommandPalette,
   WorkbenchQuickOpen,
   WorkbenchShortcutCommandBridge,
@@ -108,6 +104,8 @@ export function WorkbenchCommandHost({
     extensionCatalog,
     keybindings,
     keybindingOverrides,
+    keybindingPlatform,
+    keybindingProjection,
     layoutService,
     views,
     workspaceHostPort,
@@ -174,14 +172,6 @@ export function WorkbenchCommandHost({
         }).map((command) => command.id),
       ),
     [managedShellActivities],
-  );
-
-  const shellCommandRegistry = useMemo(
-    () =>
-      createCommandRegistryFromContributions<WorkbenchShellCommandContext>([
-        { commands: shellCommandDefinitions },
-      ]),
-    [shellCommandDefinitions],
   );
 
   const shellContext = useMemo<WorkbenchShellCommandContext>(
@@ -382,9 +372,12 @@ export function WorkbenchCommandHost({
     <>
       {enableShortcutBridge ? (
         <WorkbenchShortcutCommandBridge
-          context={shellContext}
+          context={undefined}
+          keybindingOverrides={keybindingOverrides}
+          keybindingProjection={keybindingProjection}
+          platform={keybindingPlatform}
           preventDefault
-          registry={shellCommandRegistry as CommandRegistry<WorkbenchShellCommandContext>}
+          registry={commands}
         />
       ) : null}
       {enableCommandPalette ? (
