@@ -202,6 +202,7 @@ function ContextKeyValueProbe({ contextKey }: { contextKey: string }) {
 }
 
 interface KeybindingStateProbeValue {
+  readonly editingDisabledReason: WorkbenchContextValue['keybindingEditingDisabledReason'];
   readonly overrides: WorkbenchContextValue['keybindingOverrides'];
   readonly setOverride: WorkbenchContextValue['setCommandKeybindingOverride'];
 }
@@ -211,14 +212,16 @@ function KeybindingStateProbe({
 }: {
   onValue: (value: KeybindingStateProbeValue) => void;
 }) {
-  const { keybindingOverrides, setCommandKeybindingOverride } = useWorkbench();
+  const { keybindingEditingDisabledReason, keybindingOverrides, setCommandKeybindingOverride } =
+    useWorkbench();
 
   useEffect(() => {
     onValue({
+      editingDisabledReason: keybindingEditingDisabledReason,
       overrides: keybindingOverrides,
       setOverride: setCommandKeybindingOverride,
     });
-  }, [keybindingOverrides, onValue, setCommandKeybindingOverride]);
+  }, [keybindingEditingDisabledReason, keybindingOverrides, onValue, setCommandKeybindingOverride]);
 
   return null;
 }
@@ -633,7 +636,7 @@ describe('WorkbenchProvider', () => {
     expect(markup).toContain('Hello World: Say Hello');
   });
 
-  it('does not write old keybinding state into a newly selected persistence target', async () => {
+  it('does not write a selected keybinding generation until an explicit managed edit', async () => {
     const storageKeyA = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/generation-a`;
     const storageKeyB = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/generation-b`;
     const overridesA = [{ command: 'command.a', key: 'ctrl+a' }];
@@ -689,18 +692,26 @@ describe('WorkbenchProvider', () => {
     });
 
     expect(latest?.overrides).toEqual(overridesB);
-    expect(writesB.length).toBeGreaterThan(0);
-    expect(
-      writesB.every((value) => JSON.stringify(JSON.parse(value)) === JSON.stringify(overridesB)),
-    ).toBe(true);
+    expect(writesB).toEqual([]);
     expect(JSON.parse(valuesB.get(storageKeyB) ?? '[]')).toEqual(overridesB);
+
+    await act(async () => {
+      latest?.setOverride('command.b', 'ctrl+c');
+    });
+
+    expect(writesB).toHaveLength(1);
+    expect(JSON.parse(valuesB.get(storageKeyB) ?? '{}')).toEqual({
+      entries: [{ command: 'command.b', key: 'ctrl+c' }],
+      kind: 'workbench.keybindingOverrides',
+      version: 1,
+    });
 
     await act(async () => {
       root.unmount();
     });
   });
 
-  it('keeps failed-generation keybindings in memory without acknowledging an old write', async () => {
+  it('locks a failed keybinding generation and recovers only after a generation change', async () => {
     const storageKeyA = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/failure-a`;
     const storageKeyB = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/failure-b`;
     const overridesA = [{ command: 'command.a', key: 'ctrl+a' }];
@@ -755,6 +766,7 @@ describe('WorkbenchProvider', () => {
     });
 
     expect(latest?.overrides).toEqual([]);
+    expect(latest?.editingDisabledReason).toBe('Workbench storage could not be read.');
     expect(writesB).toBe(0);
     expect(diagnostics).toHaveBeenCalledTimes(1);
     expect(diagnostics).toHaveBeenLastCalledWith(
@@ -769,16 +781,106 @@ describe('WorkbenchProvider', () => {
       latest?.setOverride('command.b', 'ctrl+b');
     });
 
-    expect(latest?.overrides).toEqual([{ command: 'command.b', key: 'ctrl+b' }]);
-    expect(writesB).toBe(1);
-    expect(diagnostics).toHaveBeenCalledTimes(2);
-    expect(diagnostics).toHaveBeenLastCalledWith(
-      expect.objectContaining({
-        code: 'write_failed',
-        operation: 'write',
-        storageKey: storageKeyB,
-      }),
-    );
+    expect(latest?.overrides).toEqual([]);
+    expect(writesB).toBe(0);
+    expect(diagnostics).toHaveBeenCalledTimes(1);
+
+    const storageKeyC = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/recovered-c`;
+    const valuesC = new Map<string, string>();
+    let writesC = 0;
+    const storageC: WorkbenchStorageAdapter = {
+      getItem: (key) => valuesC.get(key) ?? null,
+      setItem: (key, value) => {
+        writesC += 1;
+        valuesC.set(key, value);
+      },
+    };
+
+    await act(async () => {
+      root.render(
+        <StrictMode>
+          <WorkbenchProvider
+            keybindingOverridesStorage={storageC}
+            keybindingOverridesStorageKey={storageKeyC}
+            onPersistenceDiagnostic={diagnostics}
+            persistKeybindingOverrides
+          >
+            <KeybindingStateProbe onValue={onValue} />
+          </WorkbenchProvider>
+        </StrictMode>,
+      );
+    });
+
+    expect(latest?.editingDisabledReason).toBeUndefined();
+    expect(writesC).toBe(0);
+
+    await act(async () => {
+      latest?.setOverride('command.c', 'ctrl+c');
+    });
+
+    expect(latest?.overrides).toEqual([{ command: 'command.c', key: 'ctrl+c' }]);
+    expect(writesC).toBe(1);
+    expect(JSON.parse(valuesC.get(storageKeyC) ?? '{}')).toEqual({
+      entries: [{ command: 'command.c', key: 'ctrl+c' }],
+      kind: 'workbench.keybindingOverrides',
+      version: 1,
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('keeps a future keybinding envelope visibly locked and byte-for-byte untouched', async () => {
+    const storageKey = `${DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY}/future`;
+    const storedValue = JSON.stringify({
+      entries: [{ command: 'future.command', key: 'meta+f' }],
+      futureState: 'preserve-me',
+      kind: 'workbench.keybindingOverrides',
+      version: 2,
+    });
+    let currentValue = storedValue;
+    let writes = 0;
+    const storage: WorkbenchStorageAdapter = {
+      getItem: () => currentValue,
+      setItem: (_key, value) => {
+        writes += 1;
+        currentValue = value;
+      },
+    };
+    const diagnostics = vi.fn();
+    const container = document.createElement('div');
+    const root = createRoot(container);
+    let latest: KeybindingStateProbeValue | undefined;
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          keybindingOverridesStorage={storage}
+          keybindingOverridesStorageKey={storageKey}
+          onPersistenceDiagnostic={diagnostics}
+          persistKeybindingOverrides
+        >
+          <KeybindingStateProbe
+            onValue={(value) => {
+              latest = value;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+
+    expect(latest?.overrides).toEqual([]);
+    expect(latest?.editingDisabledReason).toBe('Workbench storage value could not be decoded.');
+    expect(diagnostics).toHaveBeenCalledTimes(1);
+
+    await act(async () => {
+      latest?.setOverride('future.command', 'ctrl+f');
+    });
+
+    expect(latest?.overrides).toEqual([]);
+    expect(writes).toBe(0);
+    expect(currentValue).toBe(storedValue);
 
     await act(async () => {
       root.unmount();

@@ -1,8 +1,4 @@
 import {
-  createCommandRegistryFromContributions,
-  type CommandRegistry,
-} from '@workbench-kit/platform';
-import {
   WorkbenchCommandPalette,
   WorkbenchQuickOpen,
   WorkbenchShortcutCommandBridge,
@@ -20,7 +16,7 @@ import {
   matchesWorkbenchCommandPaletteShortcut,
   matchesWorkbenchQuickAccessShortcut,
 } from '@workbench-kit/react/workbench/command-ui';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
 import { useWorkbench } from '../shell/provider.js';
@@ -30,7 +26,10 @@ import {
   collectExtensionCommandFeaturesById,
   resolveShellCommandActivities,
 } from './command-palette.js';
-import { resolveExtensionKeybindingCommand } from './keybinding-bridge.js';
+import {
+  normalizeExtensionKeybindingCandidates,
+  resolveExtensionKeybindingCommand,
+} from './keybinding-bridge.js';
 import { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
 
 const WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
@@ -108,6 +107,8 @@ export function WorkbenchCommandHost({
     extensionCatalog,
     keybindings,
     keybindingOverrides,
+    keybindingPlatform,
+    keybindingProjection,
     layoutService,
     views,
     workspaceHostPort,
@@ -117,12 +118,48 @@ export function WorkbenchCommandHost({
   const [quickOpenOpen, setQuickOpenOpen] = useState(false);
   const [quickOpenQuery, setQuickOpenQuery] = useState('');
   const [layout, setLayout] = useState(() => layoutService.getState());
+  const [extensionKeybindingRevision, setExtensionKeybindingRevision] = useState(
+    () => keybindings.revision,
+  );
   const shellContextRef = useRef<WorkbenchShellCommandContext | undefined>(undefined);
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const contextKeySnapshot = useMemo(
     () => contextKeyService.createSnapshot(),
     [contextKeyRevision, contextKeyService],
   );
+  const genericKeybindingCommandIds = useMemo(
+    () => new Set(keybindingProjection.defaults.map((binding) => binding.command)),
+    [keybindingProjection.defaults],
+  );
+  useLayoutEffect(() => {
+    const disposable = keybindings.onDidChangeKeybindings(() => {
+      setExtensionKeybindingRevision(keybindings.revision);
+    });
+    setExtensionKeybindingRevision(keybindings.revision);
+    return () => disposable.dispose();
+  }, [keybindings]);
+  const extensionOnlyCommandIds = useMemo(() => {
+    const commandIds = new Set<string>();
+    for (const binding of keybindings.getKeybindings()) {
+      if (
+        !genericKeybindingCommandIds.has(binding.command) &&
+        normalizeExtensionKeybindingCandidates(binding.key, keybindingPlatform, true).length > 0
+      ) {
+        commandIds.add(binding.command);
+      }
+    }
+    return commandIds;
+  }, [extensionKeybindingRevision, genericKeybindingCommandIds, keybindingPlatform, keybindings]);
+  const runtimeKeybindingProjection = useMemo(() => {
+    if (!enableExtensionKeybindings) return keybindingProjection;
+
+    return Object.freeze({
+      commands: Object.freeze(
+        keybindingProjection.commands.filter((command) => !extensionOnlyCommandIds.has(command.id)),
+      ),
+      defaults: keybindingProjection.defaults,
+    });
+  }, [enableExtensionKeybindings, extensionOnlyCommandIds, keybindingProjection]);
 
   const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
     ? workspaceHostPort.service
@@ -174,14 +211,6 @@ export function WorkbenchCommandHost({
         }).map((command) => command.id),
       ),
     [managedShellActivities],
-  );
-
-  const shellCommandRegistry = useMemo(
-    () =>
-      createCommandRegistryFromContributions<WorkbenchShellCommandContext>([
-        { commands: shellCommandDefinitions },
-      ]),
-    [shellCommandDefinitions],
   );
 
   const shellContext = useMemo<WorkbenchShellCommandContext>(
@@ -356,6 +385,10 @@ export function WorkbenchCommandHost({
     }
 
     const onKeyDown = (event: KeyboardEvent) => {
+      if (isActiveShortcutCaptureTarget(event)) {
+        return;
+      }
+
       if (
         matchesWorkbenchCommandPaletteShortcut(event) ||
         matchesWorkbenchQuickAccessShortcut(event)
@@ -363,7 +396,14 @@ export function WorkbenchCommandHost({
         return;
       }
 
-      const match = resolveExtensionKeybindingCommand(keybindings, event, {}, keybindingOverrides);
+      const match = resolveExtensionKeybindingCommand(
+        keybindings,
+        event,
+        {},
+        keybindingOverrides,
+        keybindingPlatform,
+        genericKeybindingCommandIds,
+      );
       if (!match) {
         return;
       }
@@ -376,15 +416,25 @@ export function WorkbenchCommandHost({
     return () => {
       window.removeEventListener('keydown', onKeyDown);
     };
-  }, [enableExtensionKeybindings, executeCommand, keybindings, keybindingOverrides]);
+  }, [
+    enableExtensionKeybindings,
+    executeCommand,
+    genericKeybindingCommandIds,
+    keybindings,
+    keybindingOverrides,
+    keybindingPlatform,
+  ]);
 
   return (
     <>
       {enableShortcutBridge ? (
         <WorkbenchShortcutCommandBridge
-          context={shellContext}
+          context={undefined}
+          keybindingOverrides={keybindingOverrides}
+          keybindingProjection={runtimeKeybindingProjection}
+          platform={keybindingPlatform}
           preventDefault
-          registry={shellCommandRegistry as CommandRegistry<WorkbenchShellCommandContext>}
+          registry={commands}
         />
       ) : null}
       {enableCommandPalette ? (
@@ -416,5 +466,14 @@ export function WorkbenchCommandHost({
         />
       ) : null}
     </>
+  );
+}
+
+function isActiveShortcutCaptureTarget(event: Event): boolean {
+  const target = event.target;
+  return (
+    typeof Element !== 'undefined' &&
+    target instanceof Element &&
+    target.closest('[data-workbench-shortcut-capture-recording="true"]') !== null
   );
 }

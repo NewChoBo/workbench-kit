@@ -1,6 +1,11 @@
 import { formatKeybindingLabel } from './format-keybinding-label.js';
-import { getEffectiveKeybindingForCommand } from './resolve-keybinding-with-overrides.js';
+import { analyzeManagedKeybindingRecords } from './managed-keybinding-overrides.js';
 import type { KeybindingDefinition } from './types.js';
+import {
+  getWorkbenchShortcutConflictSignatures,
+  workbenchShortcutsOverlap,
+  type WorkbenchShortcutPlatform,
+} from './workbench-shortcut.js';
 
 export interface KeybindingManagementCommandInput {
   readonly category?: string | undefined;
@@ -16,9 +21,12 @@ export interface KeybindingManagementEntry {
   readonly conflictCommandId?: string | undefined;
   readonly defaultKey?: string | undefined;
   readonly defaultKeyLabel?: string | undefined;
+  readonly disabledReason?: string | undefined;
+  readonly editable?: boolean | undefined;
   readonly effectiveKey?: string | undefined;
   readonly effectiveKeyLabel?: string | undefined;
   readonly sourceLabel?: string | undefined;
+  readonly storedKeys?: readonly string[] | undefined;
   readonly userKey?: string | undefined;
   readonly userKeyLabel?: string | undefined;
 }
@@ -30,19 +38,36 @@ function labelForKey(key: string | undefined): string | undefined {
 export function buildKeybindingManagementEntries({
   commands,
   defaults,
+  editingDisabledReason,
   overrides,
+  platform = 'unknown',
 }: {
   readonly commands: readonly KeybindingManagementCommandInput[];
   readonly defaults: readonly KeybindingDefinition[];
+  readonly editingDisabledReason?: string | undefined;
   readonly overrides: readonly KeybindingDefinition[];
+  readonly platform?: WorkbenchShortcutPlatform | undefined;
 }): KeybindingManagementEntry[] {
-  const overriddenCommands = new Set(overrides.map((binding) => binding.command));
+  const defaultsByCommand = groupKeybindingsByCommand(defaults);
+  const overridesByCommand = groupKeybindingsByCommand(overrides);
+  const supportedOverrides = collectSupportedManagedOverrides(overrides, platform);
+  const overriddenCommands = new Set(supportedOverrides.map((binding) => binding.command));
+  const conflicts = buildConflictIndex({
+    defaults,
+    overriddenCommands,
+    supportedOverrides,
+    platform,
+  });
 
   return commands
     .map((command) => {
-      const defaultBinding = defaults.find((binding) => binding.command === command.id);
-      const userBinding = overrides.find((binding) => binding.command === command.id);
-      const effectiveBinding = getEffectiveKeybindingForCommand(command.id, defaults, overrides);
+      const commandDefaults = defaultsByCommand.get(command.id) ?? [];
+      const commandOverrides = overridesByCommand.get(command.id) ?? [];
+      const analysis = analyzeManagedKeybindingRecords(commandOverrides, command.id, platform);
+      const defaultBinding = commandDefaults[0];
+      const userBinding = analysis.mutationReason ? undefined : analysis.supported[0];
+      const effectiveKey = userBinding?.key ?? defaultBinding?.key;
+      const disabledReason = editingDisabledReason ?? analysis.disabledReason;
 
       const entry: KeybindingManagementEntry = {
         category: command.category,
@@ -50,22 +75,18 @@ export function buildKeybindingManagementEntries({
         commandLabel: command.label,
         defaultKey: defaultBinding?.key,
         defaultKeyLabel: labelForKey(defaultBinding?.key),
-        effectiveKey: effectiveBinding?.key,
-        effectiveKeyLabel: labelForKey(effectiveBinding?.key),
+        disabledReason,
+        editable: disabledReason === undefined,
+        effectiveKey,
+        effectiveKeyLabel: labelForKey(effectiveKey),
         sourceLabel: command.sourceLabel,
+        storedKeys: analysis.storedKeys,
         userKey: userBinding?.key,
         userKeyLabel: labelForKey(userBinding?.key),
       };
 
-      if (effectiveBinding?.key) {
-        const conflict = findKeybindingConflict({
-          commandId: command.id,
-          defaults,
-          key: effectiveBinding.key,
-          overrides,
-          overriddenCommands,
-        });
-
+      if (effectiveKey) {
+        const conflict = findIndexedConflict(conflicts, command.id, effectiveKey, platform);
         if (conflict) {
           return {
             ...entry,
@@ -97,6 +118,8 @@ export function filterKeybindingManagementEntries(
       entry.defaultKeyLabel,
       entry.userKeyLabel,
       entry.effectiveKeyLabel,
+      entry.disabledReason,
+      ...(entry.storedKeys ?? []),
     ]
       .filter(Boolean)
       .join(' ')
@@ -111,16 +134,22 @@ export function findKeybindingConflict({
   defaults,
   key,
   overrides,
-  overriddenCommands = new Set(overrides.map((binding) => binding.command)),
+  overriddenCommands,
+  platform = 'unknown',
 }: {
   readonly commandId: string;
   readonly defaults: readonly KeybindingDefinition[];
   readonly key: string;
   readonly overrides: readonly KeybindingDefinition[];
   readonly overriddenCommands?: ReadonlySet<string>;
+  readonly platform?: WorkbenchShortcutPlatform | undefined;
 }): string | undefined {
-  const userConflict = overrides.find(
-    (binding) => binding.key === key && binding.command !== commandId,
+  const supportedOverrides = collectSupportedManagedOverrides(overrides, platform);
+  const suppressedDefaults =
+    overriddenCommands ?? new Set(supportedOverrides.map((binding) => binding.command));
+  const userConflict = supportedOverrides.find(
+    (binding) =>
+      binding.command !== commandId && workbenchShortcutsOverlap(binding.key, key, platform),
   );
   if (userConflict) {
     return userConflict.command;
@@ -128,10 +157,84 @@ export function findKeybindingConflict({
 
   const defaultConflict = defaults.find(
     (binding) =>
-      binding.key === key &&
       binding.command !== commandId &&
-      !overriddenCommands.has(binding.command),
+      !suppressedDefaults.has(binding.command) &&
+      workbenchShortcutsOverlap(binding.key, key, platform),
   );
 
   return defaultConflict?.command;
+}
+
+function groupKeybindingsByCommand(
+  bindings: readonly KeybindingDefinition[],
+): ReadonlyMap<string, readonly KeybindingDefinition[]> {
+  const groups = new Map<string, KeybindingDefinition[]>();
+  for (const binding of bindings) {
+    const group = groups.get(binding.command);
+    if (group) {
+      group.push(binding);
+    } else {
+      groups.set(binding.command, [binding]);
+    }
+  }
+  return groups;
+}
+
+function collectSupportedManagedOverrides(
+  overrides: readonly KeybindingDefinition[],
+  platform: WorkbenchShortcutPlatform,
+): readonly KeybindingDefinition[] {
+  return [...groupKeybindingsByCommand(overrides)].flatMap(([commandId, commandOverrides]) => {
+    const analysis = analyzeManagedKeybindingRecords(commandOverrides, commandId, platform);
+    const supported = analysis.mutationReason ? undefined : analysis.supported[0];
+    return supported ? [{ command: commandId, key: supported.key }] : [];
+  });
+}
+
+function buildConflictIndex({
+  defaults,
+  overriddenCommands,
+  platform,
+  supportedOverrides,
+}: {
+  readonly defaults: readonly KeybindingDefinition[];
+  readonly overriddenCommands: ReadonlySet<string>;
+  readonly platform: WorkbenchShortcutPlatform;
+  readonly supportedOverrides: readonly KeybindingDefinition[];
+}): ReadonlyMap<string, readonly string[]> {
+  const index = new Map<
+    string,
+    { readonly commandIds: Set<string>; readonly commands: string[] }
+  >();
+  const add = (binding: KeybindingDefinition) => {
+    for (const signature of getWorkbenchShortcutConflictSignatures(binding.key, platform)) {
+      const entry = index.get(signature);
+      if (!entry) {
+        index.set(signature, {
+          commandIds: new Set([binding.command]),
+          commands: [binding.command],
+        });
+      } else if (!entry.commandIds.has(binding.command)) {
+        entry.commandIds.add(binding.command);
+        entry.commands.push(binding.command);
+      }
+    }
+  };
+
+  supportedOverrides.forEach(add);
+  defaults.filter((binding) => !overriddenCommands.has(binding.command)).forEach(add);
+  return new Map([...index].map(([signature, entry]) => [signature, entry.commands]));
+}
+
+function findIndexedConflict(
+  conflicts: ReadonlyMap<string, readonly string[]>,
+  commandId: string,
+  key: string,
+  platform: WorkbenchShortcutPlatform,
+): string | undefined {
+  for (const signature of getWorkbenchShortcutConflictSignatures(key, platform)) {
+    const conflict = conflicts.get(signature)?.find((candidate) => candidate !== commandId);
+    if (conflict) return conflict;
+  }
+  return undefined;
 }

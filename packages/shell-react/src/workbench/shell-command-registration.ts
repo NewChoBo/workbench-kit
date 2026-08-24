@@ -1,4 +1,8 @@
-import type { CommandDefinition, CommandRegistry } from '@workbench-kit/platform';
+import {
+  resolveCommandValue,
+  type CommandDefinition,
+  type CommandRegistry,
+} from '@workbench-kit/platform';
 import type { WorkbenchShellCommandContext } from '@workbench-kit/react/workbench';
 
 export interface WorkbenchShellCommandRegistration {
@@ -14,16 +18,34 @@ export function registerWorkbenchShellCommandHandlers(
     const handler = () => {
       command.run?.(getContext());
     };
+    const isEnabled = command.isEnabled
+      ? () => command.isEnabled?.(getContext()) ?? true
+      : undefined;
+    const run = () => {
+      command.run?.(getContext());
+    };
+    const shortcut = resolveCommandValue(command.shortcut, getContext());
     const existing = registry.getCommand(command.id);
 
     if (existing) {
       const previousHandler = existing.handler;
+      const previousIsEnabled = existing.isEnabled;
+      const previousRun = existing.run;
+      const previousShortcut = existing.shortcut;
       existing.handler = handler;
+      existing.isEnabled = isEnabled;
+      existing.run = run;
+      existing.shortcut = shortcut;
+      registry.notifyCommandChanged(command.id);
 
       return {
         dispose() {
-          if (existing.handler === handler) {
+          if (registry.getCommand(command.id) === existing && existing.handler === handler) {
             existing.handler = previousHandler;
+            existing.isEnabled = previousIsEnabled;
+            existing.run = previousRun;
+            existing.shortcut = previousShortcut;
+            registry.notifyCommandChanged(command.id);
           }
         },
       };
@@ -34,6 +56,9 @@ export function registerWorkbenchShellCommandHandlers(
       handler,
       icon: resolveStaticCommandIcon(command),
       id: command.id,
+      isEnabled,
+      run,
+      shortcut,
       title: resolveStaticCommandTitle(command),
     });
   });

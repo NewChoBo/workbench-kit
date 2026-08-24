@@ -6,9 +6,16 @@ import { type KeybindingDefinition, type KeybindingMatch } from './types.js';
 
 export class KeybindingRegistry implements Disposable {
   private readonly bindings: KeybindingDefinition[] = [];
+  private readonly onDidChangeKeybindingsEmitter = new Emitter<void>();
   private readonly onDidRegisterKeybindingEmitter = new Emitter<KeybindingDefinition>();
+  private keybindingRevision = 0;
 
+  readonly onDidChangeKeybindings = this.onDidChangeKeybindingsEmitter.event;
   readonly onDidRegisterKeybinding = this.onDidRegisterKeybindingEmitter.event;
+
+  get revision(): number {
+    return this.keybindingRevision;
+  }
 
   getKeybindings(): readonly KeybindingDefinition[] {
     return [...this.bindings];
@@ -16,12 +23,16 @@ export class KeybindingRegistry implements Disposable {
 
   registerKeybinding(binding: KeybindingDefinition): Disposable {
     this.bindings.push(binding);
+    this.keybindingRevision += 1;
     this.onDidRegisterKeybindingEmitter.fire(binding);
+    this.onDidChangeKeybindingsEmitter.fire(undefined);
 
     return toDisposable(() => {
       const index = this.bindings.indexOf(binding);
       if (index >= 0) {
         this.bindings.splice(index, 1);
+        this.keybindingRevision += 1;
+        this.onDidChangeKeybindingsEmitter.fire(undefined);
       }
     });
   }
@@ -44,7 +55,13 @@ export class KeybindingRegistry implements Disposable {
   }
 
   dispose(): void {
+    const hadBindings = this.bindings.length > 0;
     this.bindings.length = 0;
+    if (hadBindings) {
+      this.keybindingRevision += 1;
+      this.onDidChangeKeybindingsEmitter.fire(undefined);
+    }
+    this.onDidChangeKeybindingsEmitter.dispose();
     this.onDidRegisterKeybindingEmitter.dispose();
   }
 }

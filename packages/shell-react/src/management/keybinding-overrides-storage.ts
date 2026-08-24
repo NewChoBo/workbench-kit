@@ -1,22 +1,21 @@
-import {
-  parseWorkbenchKeybindingsConfig,
-  type WorkbenchKeybindingDefinition,
-} from '@workbench-kit/workbench-config';
+import { type WorkbenchKeybindingDefinition } from '@workbench-kit/workbench-config';
 import {
   type WorkbenchPersistenceDiagnosticOptions,
-  type WorkbenchPersistenceReadResult,
   type WorkbenchPersistenceWriteResult,
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
-
 import {
-  readLocalJsonStorage,
-  readLocalJsonStorageResult,
-  resolveLocalWorkbenchStorage,
-  writeLocalJsonStorage,
-  writeLocalJsonStorageResult,
-} from '../storage/local-json-storage.js';
+  readWorkbenchKeybindingOverridesStorageResult,
+  writeWorkbenchKeybindingOverridesStorageResult,
+  type WorkbenchKeybindingOverridesStorageReadResult,
+} from '@workbench-kit/workbench-core/keybinding-overrides-storage';
+import {
+  resolveWorkbenchShortcutPlatform,
+  type WorkbenchShortcutPlatform,
+} from '@workbench-kit/platform';
+
+import { resolveLocalWorkbenchStorage } from '../storage/local-json-storage.js';
 
 export const DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY = 'workbench-kit/.workbench/keybindings';
 
@@ -27,22 +26,35 @@ export function isWorkbenchKeybindingPersistenceAvailable(): boolean {
 export function readPersistedKeybindingOverrides(
   storageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
+  options: ReadPersistedKeybindingOverridesOptions = {},
 ): readonly WorkbenchKeybindingDefinition[] {
-  return readLocalJsonStorage(storageKey, parseWorkbenchKeybindingsConfig, () => [], storage);
+  return readPersistedKeybindingOverridesResult(storageKey, storage, options).value;
+}
+
+export interface ReadPersistedKeybindingOverridesOptions extends WorkbenchPersistenceDiagnosticOptions {
+  readonly platform?: WorkbenchShortcutPlatform | undefined;
+}
+
+export interface PersistedKeybindingOverridesReadResult extends WorkbenchKeybindingOverridesStorageReadResult {
+  readonly value: readonly WorkbenchKeybindingDefinition[];
 }
 
 export function readPersistedKeybindingOverridesResult(
   storageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
-  options: WorkbenchPersistenceDiagnosticOptions = {},
-): WorkbenchPersistenceReadResult<readonly WorkbenchKeybindingDefinition[]> {
-  return readLocalJsonStorageResult(
-    storageKey,
-    parseWorkbenchKeybindingsConfig,
-    () => [],
-    storage,
+  options: ReadPersistedKeybindingOverridesOptions = {},
+): PersistedKeybindingOverridesReadResult {
+  const result = readWorkbenchKeybindingOverridesStorageResult({
     options,
-  );
+    platform: options.platform ?? resolveWorkbenchShortcutPlatform(),
+    storage: resolveLocalWorkbenchStorage(storage),
+    storageKey,
+  });
+
+  return {
+    ...result,
+    value: result.entries,
+  };
 }
 
 export function writePersistedKeybindingOverrides(
@@ -50,7 +62,15 @@ export function writePersistedKeybindingOverrides(
   storageKey = DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   storage?: WorkbenchStorageWriter,
 ): void {
-  writeLocalJsonStorage(storageKey, overrides, storage, { errorMode: 'throw' });
+  const resolvedStorage = resolveLocalWorkbenchStorage(storage);
+  if (!resolvedStorage) {
+    return;
+  }
+
+  const result = writePersistedKeybindingOverridesResult(overrides, storageKey, resolvedStorage);
+  if (!result.committed) {
+    throw new Error(result.diagnostic.message);
+  }
 }
 
 export function writePersistedKeybindingOverridesResult(
@@ -59,5 +79,10 @@ export function writePersistedKeybindingOverridesResult(
   storage?: WorkbenchStorageWriter,
   options: WorkbenchPersistenceDiagnosticOptions = {},
 ): WorkbenchPersistenceWriteResult {
-  return writeLocalJsonStorageResult(storageKey, overrides, storage, options);
+  return writeWorkbenchKeybindingOverridesStorageResult({
+    entries: overrides,
+    options,
+    storage: resolveLocalWorkbenchStorage(storage),
+    storageKey,
+  });
 }

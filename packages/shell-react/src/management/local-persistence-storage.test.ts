@@ -86,6 +86,12 @@ describe('management local persistence storage', () => {
     ).toThrow('quota exceeded');
     expect(() =>
       writePersistedKeybindingOverrides([], DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY, storage),
-    ).toThrow('quota exceeded');
+    ).toThrow('Workbench storage value could not be written.');
+  });
+
+  it('keeps the legacy void keybinding writer a no-op without a browser backend', () => {
+    expect(() =>
+      writePersistedKeybindingOverrides([], DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY),
+    ).not.toThrow();
   });
 });

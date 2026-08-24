@@ -58,6 +58,14 @@ describe('ShortcutCommandBridge helpers', () => {
     expect(
       matchesWorkbenchShortcut({
         event: createEvent('s', { ctrlKey: true }),
+        platform: 'windows',
+        shortcut: 'Ctrl/Cmd+S',
+      }),
+    ).toBe(true);
+    expect(
+      matchesWorkbenchShortcut({
+        event: createEvent('s', { metaKey: true }),
+        platform: 'mac',
         shortcut: 'Ctrl/Cmd+S',
       }),
     ).toBe(true);
@@ -102,12 +110,12 @@ describe('ShortcutCommandBridge helpers', () => {
   });
 
   it('formats keyboard events for logging', () => {
-    expect(getWorkbenchShortcutFromEvent(createEvent('Enter', { ctrlKey: true }))).toBe(
+    expect(getWorkbenchShortcutFromEvent(createEvent('Enter', { ctrlKey: true }), 'windows')).toBe(
       'Ctrl+enter',
     );
-    expect(getWorkbenchShortcutFromEvent(createEvent(' ', { metaKey: true, shiftKey: true }))).toBe(
-      'Cmd+Shift+space',
-    );
+    expect(
+      getWorkbenchShortcutFromEvent(createEvent(' ', { metaKey: true, shiftKey: true }), 'mac'),
+    ).toBe('Cmd+Shift+space');
   });
 
   it('derives command bindings from command shortcut metadata', () => {
@@ -118,11 +126,12 @@ describe('ShortcutCommandBridge helpers', () => {
       getWorkbenchShortcutCommandBindings({
         commandIds: ['editor.save', 'editor.discard'],
         context,
+        platform: 'windows',
         registry,
       }),
     ).toEqual([
-      { commandId: 'editor.save', shortcut: 'Ctrl/Cmd+S' },
-      { commandId: 'editor.discard', shortcut: 'Ctrl+Shift+D' },
+      { commandId: 'editor.save', shortcut: 'ctrl+s' },
+      { commandId: 'editor.discard', shortcut: 'ctrl+shift+d' },
     ]);
   });
 
@@ -134,13 +143,14 @@ describe('ShortcutCommandBridge helpers', () => {
     const result = runWorkbenchShortcutCommand({
       context,
       event,
+      platform: 'windows',
       registry,
     });
 
     expect(result).toMatchObject({
       commandId: 'editor.save',
       handled: true,
-      shortcut: 'Ctrl/Cmd+S',
+      shortcut: 'ctrl+s',
     });
     expect(context.log).toEqual(['save']);
     expect(event.preventDefault).toHaveBeenCalledTimes(1);
@@ -155,6 +165,7 @@ describe('ShortcutCommandBridge helpers', () => {
       runWorkbenchShortcutCommand({
         context: disabledContext,
         event: disabledEvent,
+        platform: 'windows',
         preventDefaultForDisabledMatches: true,
         registry,
       }),
@@ -170,6 +181,7 @@ describe('ShortcutCommandBridge helpers', () => {
       runWorkbenchShortcutCommand({
         context: { canSave: true, dirty: true, log: [] },
         event: createEvent('m', { altKey: true }),
+        platform: 'windows',
         registry,
       }),
     ).toMatchObject({

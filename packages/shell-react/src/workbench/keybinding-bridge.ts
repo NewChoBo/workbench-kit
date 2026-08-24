@@ -1,32 +1,21 @@
-import type { ContextKeyValue, KeybindingRegistry } from '@workbench-kit/platform';
-import { resolveKeybindingWithOverrides, type KeybindingDefinition } from '@workbench-kit/platform';
-
-function normalizeKeyToken(token: string): string {
-  const key = token.trim().toLowerCase();
-  if (key === 'del') return 'delete';
-  if (key === 'esc') return 'escape';
-  if (key === 'return') return 'enter';
-  if (key === 'spacebar' || key === 'space') return 'space';
-  return key.length === 1 ? key : key;
-}
+import {
+  evaluateWhenClause,
+  normalizeWorkbenchShortcutCandidates,
+  normalizeWorkbenchShortcutFromEvent,
+  resolveWorkbenchShortcutPlatform,
+  workbenchShortcutsOverlap,
+  type ContextKeyValue,
+  type KeybindingDefinition,
+  type KeybindingMatch,
+  type KeybindingRegistry,
+  type WorkbenchShortcutPlatform,
+} from '@workbench-kit/platform';
 
 export function normalizeKeybindingKeyFromEvent(
   event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
+  platform: WorkbenchShortcutPlatform = resolveWorkbenchShortcutPlatform(),
 ): string {
-  const parts: string[] = [];
-
-  if (event.ctrlKey || event.metaKey) {
-    parts.push('ctrl');
-  }
-  if (event.altKey) {
-    parts.push('alt');
-  }
-  if (event.shiftKey) {
-    parts.push('shift');
-  }
-
-  parts.push(normalizeKeyToken(event.key));
-  return parts.join('+');
+  return normalizeWorkbenchShortcutFromEvent(event, platform) ?? '';
 }
 
 export function resolveExtensionKeybindingCommand(
@@ -34,21 +23,78 @@ export function resolveExtensionKeybindingCommand(
   event: Pick<KeyboardEvent, 'altKey' | 'ctrlKey' | 'key' | 'metaKey' | 'shiftKey'>,
   contextKeys: Readonly<Record<string, ContextKeyValue>> = {},
   overrides: readonly KeybindingDefinition[] = [],
-) {
-  const key = normalizeKeybindingKeyFromEvent(event);
+  platform: WorkbenchShortcutPlatform = resolveWorkbenchShortcutPlatform(),
+  excludedCommandIds: ReadonlySet<string> = new Set(),
+): KeybindingMatch | undefined {
+  const key = normalizeKeybindingKeyFromEvent(event, platform);
+  if (!key) return undefined;
 
-  if (overrides.length > 0) {
-    const match = resolveKeybindingWithOverrides(
-      registry.getKeybindings(),
-      overrides,
+  const defaults = registry
+    .getKeybindings()
+    .filter(
+      (binding) =>
+        !excludedCommandIds.has(binding.command) &&
+        normalizeExtensionKeybindingCandidates(binding.key, platform, true).length > 0,
+    );
+  const ownedCommandIds = new Set(defaults.map((binding) => binding.command));
+  const ownedOverrides = overrides.filter((binding) => ownedCommandIds.has(binding.command));
+  const overriddenCommands = new Set(ownedOverrides.map((binding) => binding.command));
+  const userMatches = ownedOverrides.filter((binding) =>
+    bindingMatchesEvent(
+      binding,
       key,
       contextKeys,
-    );
-    if (match) {
-      return match;
-    }
-  }
+      platform,
+      binding.when !== undefined || (binding.args?.length ?? 0) > 0,
+    ),
+  );
+  const defaultMatches = defaults.filter(
+    (binding) =>
+      !overriddenCommands.has(binding.command) &&
+      bindingMatchesEvent(binding, key, contextKeys, platform, true),
+  );
 
-  const matches = registry.resolveKeybindings(key, contextKeys);
-  return matches[0];
+  return [...userMatches, ...defaultMatches]
+    .map((binding) => ({
+      ...binding,
+      specificity: binding.when ? binding.when.length : 0,
+    }))
+    .sort((left, right) => right.specificity - left.specificity)[0];
+}
+
+function bindingMatchesEvent(
+  binding: KeybindingDefinition,
+  eventKey: string,
+  contextKeys: Readonly<Record<string, ContextKeyValue>>,
+  platform: WorkbenchShortcutPlatform,
+  preserveLegacyMacPrimaryCompatibility: boolean,
+): boolean {
+  return (
+    (workbenchShortcutsOverlap(binding.key, eventKey, platform) ||
+      normalizeExtensionKeybindingCandidates(
+        binding.key,
+        platform,
+        preserveLegacyMacPrimaryCompatibility,
+      ).some((candidate) => workbenchShortcutsOverlap(candidate, eventKey, platform))) &&
+    evaluateWhenClause(binding.when, contextKeys)
+  );
+}
+
+export function normalizeExtensionKeybindingCandidates(
+  shortcut: string,
+  platform: WorkbenchShortcutPlatform,
+  preserveLegacyMacPrimaryCompatibility = false,
+): readonly string[] {
+  return normalizeWorkbenchShortcutCandidates(shortcut, platform).flatMap((candidate) => {
+    const tokens = candidate.split('+');
+    if (
+      !preserveLegacyMacPrimaryCompatibility ||
+      platform !== 'mac' ||
+      !tokens.includes('ctrl') ||
+      tokens.includes('meta')
+    ) {
+      return [candidate];
+    }
+    return [candidate, tokens.map((token) => (token === 'ctrl' ? 'meta' : token)).join('+')];
+  });
 }
