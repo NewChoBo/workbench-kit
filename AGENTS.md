@@ -53,11 +53,14 @@ not identify private hosts while following this workflow.
 
 ## Before you change code
 
-1. Read surrounding code and match existing naming, exports, and validation lanes.
-2. Keep diffs focused — no drive-by refactors.
-3. Run the smallest validation lane that covers your change (`typecheck`, `lint`,
+1. For Northstar source work, confirm the relevant packet in
+   [`docs/northstar/implementation-plan.md`](docs/northstar/implementation-plan.md) is
+   `READY_FOR_IMPLEMENTATION`; otherwise return to design/documentation only.
+2. Read surrounding code and match existing naming, exports, and validation lanes.
+3. Keep diffs focused — no drive-by refactors.
+4. Run the smallest validation lane that covers your change (`typecheck`, `lint`,
    `check:public-exports`, `validate:static` / `validate:fast`, etc.).
-4. For UI, prefer the active tool’s browser/preview (Cursor browser MCP, IDE
+5. For UI, prefer the active tool’s browser/preview (Cursor browser MCP, IDE
    preview, Storybook UI, `pnpm dev`). **Do not treat Playwright /
    `pnpm validate:ui` as mandatory** for routine agent work—use it when CI
    parity or required Storybook play coverage is explicitly requested.
