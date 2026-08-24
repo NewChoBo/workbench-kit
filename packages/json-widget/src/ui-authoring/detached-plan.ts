@@ -113,7 +113,7 @@ export function createUiAuthoringDetachedPlan(
   input: CreateUiAuthoringDetachedPlanInput,
 ): UiAuthoringDetachedPlan {
   const diagnostics: UiAuthoringPlanDiagnostic[] = [];
-  let commands: readonly UiDocumentAtomicCommandV2[] = Object.freeze([]);
+  let commands: readonly UiDocumentAtomicCommandV2[];
   let recipe: CreateUiAuthoringDetachedPlanInput['recipe'];
   let designSystemInput: UiAuthoringDesignSystemInputSnapshot;
   try {
