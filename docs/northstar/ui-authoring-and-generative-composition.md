@@ -139,6 +139,24 @@ Target rules:
 - every accepted edit passes through the same command/transaction and validation path;
 - undo/redo, diff, review, preview, persistence, and migration behave the same regardless of whether an edit originated from mouse/keyboard, inspector, schema, or AI.
 
+### 3.1 Additive command compatibility
+
+The public six-variant `UiDocumentCommand` and its V1 transaction/session functions remain a
+closed compatibility surface. Exact component-input binding and atomic multi-operation Apply use
+the separately named `UiDocumentCommandV2`, `UiDocumentTransactionV2`, and V2 session functions.
+V1 commands are valid V2 atomic operations, but the V1 union is not widened or aliased.
+
+Both versions mutate the same canonical `UiDocument`. V2 adds the semantic-root schema marker and
+per-node exact input binding projection inside `$authoring`; it does not add a binding sidecar or a
+second history owner. A V2 batch validates against an immutable exact component catalog, publishes
+one revision and one history record, and restores the full document and selection in one Undo/Redo
+step.
+
+Reusable recipe flows are data-only and detached: create a plan from exact document, Design
+System, host-width, and endpoint operands; inspect a mutation-free Preview; revalidate those
+operands; then finalize one V2 batch. Finalization never applies by itself, and provider or
+host-owned state remains outside Workbench.
+
 ## 4. Typed property/value model
 
 The same semantic value model should drive inspector editors, form fields, component inputs, graph inputs, bindings, layout/style authoring, and generation constraints without forcing identical UI.

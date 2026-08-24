@@ -29,6 +29,11 @@ export {
   type ExplicitComponentReplacement,
 } from './component-resolver.js';
 export {
+  projectUiAuthoringResolution,
+  type UiAuthoringResolutionNodeProjection,
+  type UiAuthoringResolutionProjection,
+} from './authoring-projection.js';
+export {
   DesignSystemPackChangePlanner,
   type DesignSystemComponentChoice,
   type DesignSystemDependencyChoice,

@@ -773,3 +773,10 @@ export type {
   UsePreviewViewportOptions,
   UsePreviewViewportResult,
 } from './layout/usePreviewViewport';
+export { composeWorkbenchAuthoringProjection } from './authoring';
+export type {
+  UiAuthoringSurfaceAction,
+  WorkbenchAuthoringController,
+  WorkbenchAuthoringProjection,
+  WorkbenchAuthoringSurfaceProps,
+} from './authoring';

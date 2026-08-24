@@ -1,18 +1,32 @@
 import { describe, expect, it } from 'vitest';
 
-import type { DesignSystemPackChangeMutation, UiDesignSystemState } from '@workbench-kit/contracts';
+import {
+  resolveUiComponentCatalog,
+  type DesignSystemPackChangeMutation,
+  type UiDesignSystemState,
+} from '@workbench-kit/contracts';
 
 import { formatWidgetDocumentJson } from '../document/document.js';
 import type { GenericWidget } from '../widget/tree.js';
 import { createUiDocument, readUiDocumentNodeAuthoring } from './document.js';
-import { applyUiDesignSystemPackChange, projectUiDesignSystemDocument } from './design-system.js';
+import {
+  applyUiDesignSystemPackChange,
+  applyUiDesignSystemPackChangeV2,
+  projectUiDesignSystemDocument,
+} from './design-system.js';
 import {
   applyUiAuthoringSessionCommand,
   createUiAuthoringSession,
   redoUiAuthoringSession,
   undoUiAuthoringSession,
 } from './session.js';
-import type { UiDocumentCommand } from './types.js';
+import {
+  applyUiAuthoringSessionCommandV2,
+  createUiAuthoringSessionV2,
+  redoUiAuthoringSessionV2,
+  undoUiAuthoringSessionV2,
+} from './session-v2.js';
+import type { UiDocument, UiDocumentCommand } from './types.js';
 
 const sourceRef = Object.freeze({ id: 'source.design', version: '1.0.0' });
 const targetRef = Object.freeze({ id: 'target.design', version: '2.0.0' });
@@ -66,6 +80,21 @@ function authoredDocument(): GenericWidget {
 
 function createDocument() {
   const result = createUiDocument('design-document', formatWidgetDocumentJson(authoredDocument()));
+  expect(result.issues).toEqual([]);
+  return result.document!;
+}
+
+function createVersionedDocument() {
+  const root = authoredDocument();
+  (root.$authoring as Record<string, unknown>).documentSchemaVersion = 1;
+  (root.$authoring as Record<string, unknown>).bindings = {
+    primary: 'provider.profile',
+  };
+  const child = (root.children as GenericWidget[])[0]!;
+  (child.$authoring as Record<string, unknown>).bindings = {
+    value: 'provider.child',
+  };
+  const result = createUiDocument('design-document-v1', formatWidgetDocumentJson(root));
   expect(result.issues).toEqual([]);
   return result.document!;
 }
@@ -149,9 +178,7 @@ describe('UI Design System persistence and projection', () => {
 });
 
 describe('atomic Design System Pack mutation', () => {
-  function mutationFor(
-    session: ReturnType<typeof createUiAuthoringSession>,
-  ): DesignSystemPackChangeMutation {
+  function mutationFor(session: { readonly document: UiDocument }): DesignSystemPackChangeMutation {
     const sourceDocument = projectUiDesignSystemDocument(session.document).document!;
     return {
       requestId: 'pack-change-1',
@@ -234,6 +261,65 @@ describe('atomic Design System Pack mutation', () => {
     expect(undone.document.source).toBe(before.document.source);
     expect(undone.selectedNodeIds).toEqual(['child']);
     expect(redoUiAuthoringSession(undone)?.document.source).toBe(result.state.document.source);
+  });
+
+  it('interleaves a V2 batch and Pack change in one history while preserving v1 bindings', () => {
+    const initial = createUiAuthoringSessionV2(createVersionedDocument(), ['child']);
+    const context = { componentCatalog: resolveUiComponentCatalog([]).catalog };
+    const afterBatch = applyUiAuthoringSessionCommandV2(
+      initial,
+      {
+        type: 'batch',
+        commandId: 'batch-before-pack',
+        commands: [
+          {
+            type: 'set-property',
+            commandId: 'set-before-pack',
+            nodeId: 'root',
+            propertyId: 'temporary',
+            value: { kind: 'literal', value: true },
+          },
+        ],
+      },
+      context,
+    ).state;
+    const afterPack = applyUiDesignSystemPackChangeV2(afterBatch, mutationFor(afterBatch), 7);
+
+    expect(afterPack.diagnostics).toEqual([]);
+    expect(afterPack.changed).toBe(true);
+    expect(afterPack.state.document.revision).toBe(2);
+    expect(afterPack.state.past.map((record) => record.transaction.command.type)).toEqual([
+      'batch',
+      'replace-node',
+    ]);
+    expect(afterPack.state.past[1]?.transaction.intent).toMatchObject({
+      type: 'apply-design-system-pack-change',
+      commandId: 'pack-change-1',
+    });
+    expect(readUiDocumentNodeAuthoring(afterPack.state.document.root)).toMatchObject({
+      documentSchemaVersion: 1,
+      bindings: { primary: 'provider.profile' },
+    });
+    expect(
+      readUiDocumentNodeAuthoring((afterPack.state.document.root.children as GenericWidget[])[0]!),
+    ).toMatchObject({ bindings: { value: 'provider.child' } });
+
+    const afterPackUndo = undoUiAuthoringSessionV2(afterPack.state)!;
+    expect(afterPackUndo.document.source).toBe(afterBatch.document.source);
+    expect(afterPackUndo.future.map((record) => record.transaction.command.type)).toEqual([
+      'replace-node',
+    ]);
+    const afterBatchUndo = undoUiAuthoringSessionV2(afterPackUndo)!;
+    expect(afterBatchUndo.document.source).toBe(initial.document.source);
+    expect(afterBatchUndo.future.map((record) => record.transaction.command.type)).toEqual([
+      'batch',
+      'replace-node',
+    ]);
+    const batchRedone = redoUiAuthoringSessionV2(afterBatchUndo)!;
+    expect(batchRedone.document.source).toBe(afterBatch.document.source);
+    const packRedone = redoUiAuthoringSessionV2(batchRedone)!;
+    expect(packRedone.document.source).toBe(afterPack.state.document.source);
+    expect(packRedone.future).toEqual([]);
   });
 
   it('clears redo history and rejects a canonical no-op without adding a record', () => {

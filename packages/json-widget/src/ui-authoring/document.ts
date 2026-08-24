@@ -30,6 +30,21 @@ function isCanonicalText(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value === value.trim();
 }
 
+function readOwnEnumerableDataValue(
+  value: object,
+  key: PropertyKey,
+): { readonly ok: true; readonly value: unknown } | { readonly ok: false } {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (
+    descriptor === undefined ||
+    descriptor.enumerable !== true ||
+    !Object.prototype.hasOwnProperty.call(descriptor, 'value')
+  ) {
+    return { ok: false };
+  }
+  return { ok: true, value: descriptor.value };
+}
+
 function componentRef(value: unknown): UiComponentRef | null {
   if (!isObjectRecord(value) || !isCanonicalText(value.id) || !isCanonicalText(value.version)) {
     return null;
@@ -73,14 +88,24 @@ function validateValueMap(
 }
 
 export function readUiDocumentNodeAuthoring(widget: GenericWidget): UiDocumentNodeAuthoring | null {
-  const value = widget[UI_DOCUMENT_AUTHORING_ARG];
-  if (!isObjectRecord(value)) return null;
+  const ownAuthoring = readOwnEnumerableDataValue(widget, UI_DOCUMENT_AUTHORING_ARG);
+  if (!ownAuthoring.ok || !isObjectRecord(ownAuthoring.value)) return null;
+  const value = ownAuthoring.value;
 
   const component = componentRef(value.component);
   if (!component || !isObjectRecord(value.properties)) return null;
 
   const properties = value.properties as Readonly<Record<string, UiValueSource>>;
+  const bindings =
+    isObjectRecord(value.bindings) &&
+    Object.entries(value.bindings).every(
+      ([inputId, bindingId]) => isCanonicalText(inputId) && isCanonicalText(bindingId),
+    )
+      ? (value.bindings as Readonly<Record<string, string>>)
+      : undefined;
   const extras = {
+    ...(value.documentSchemaVersion === 1 ? { documentSchemaVersion: 1 as const } : {}),
+    ...(bindings !== undefined && Object.keys(bindings).length > 0 ? { bindings } : {}),
     ...(value.themeScopeId !== undefined && isCanonicalText(value.themeScopeId)
       ? { themeScopeId: value.themeScopeId }
       : {}),
@@ -163,7 +188,19 @@ export function validateUiDocumentWrapperIdentity(
 export function validateUiDocumentRoot(root: GenericWidget): readonly UiDocumentIssue[] {
   const issues: UiDocumentIssue[] = [];
   const seen = new Set<string>();
-  const rawRootAuthoring = root[UI_DOCUMENT_AUTHORING_ARG];
+  const ownRootAuthoring = readOwnEnumerableDataValue(root, UI_DOCUMENT_AUTHORING_ARG);
+  const rawRootAuthoring = ownRootAuthoring.ok ? ownRootAuthoring.value : undefined;
+  const rawDocumentSchemaVersion = isObjectRecord(rawRootAuthoring)
+    ? rawRootAuthoring.documentSchemaVersion
+    : undefined;
+  const documentSchemaVersion = rawDocumentSchemaVersion === 1 ? 1 : 0;
+  if (rawDocumentSchemaVersion !== undefined && rawDocumentSchemaVersion !== 1) {
+    issues.push({
+      code: 'unsupported-document-schema-version',
+      message: 'The UI document schema version is unsupported and must remain write-locked.',
+      path: `root.${UI_DOCUMENT_AUTHORING_ARG}.documentSchemaVersion`,
+    });
+  }
   const rawDesignSystem = isObjectRecord(rawRootAuthoring)
     ? rawRootAuthoring.designSystem
     : undefined;
@@ -187,7 +224,8 @@ export function validateUiDocumentRoot(root: GenericWidget): readonly UiDocument
 
   for (const entry of collectWidgetNodes(root)) {
     const path = widgetPathKey(entry.path);
-    const nodeId = isCanonicalText(entry.widget.id) ? entry.widget.id : undefined;
+    const ownNodeId = readOwnEnumerableDataValue(entry.widget, 'id');
+    const nodeId = ownNodeId.ok && isCanonicalText(ownNodeId.value) ? ownNodeId.value : undefined;
     if (entry.widget.type === 'expanded' || entry.widget.type === 'flexible') {
       issues.push({
         code: 'wrapper-authoring-identity',
@@ -213,7 +251,8 @@ export function validateUiDocumentRoot(root: GenericWidget): readonly UiDocument
       seen.add(nodeId);
     }
 
-    const authoring = entry.widget[UI_DOCUMENT_AUTHORING_ARG];
+    const ownAuthoring = readOwnEnumerableDataValue(entry.widget, UI_DOCUMENT_AUTHORING_ARG);
+    const authoring = ownAuthoring.ok ? ownAuthoring.value : undefined;
     if (!isObjectRecord(authoring)) {
       issues.push({
         code: 'invalid-authoring-envelope',
@@ -231,6 +270,46 @@ export function validateUiDocumentRoot(root: GenericWidget): readonly UiDocument
         path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.designSystem`,
         ...(nodeId !== undefined ? { nodeId } : {}),
       });
+    }
+
+    if (entry.path.length > 0 && authoring.documentSchemaVersion !== undefined) {
+      issues.push({
+        code: 'nonroot-document-schema-version',
+        message: 'Only the semantic root may own the UI document schema version.',
+        path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.documentSchemaVersion`,
+        ...(nodeId !== undefined ? { nodeId } : {}),
+      });
+    }
+
+    if (authoring.bindings !== undefined) {
+      if (documentSchemaVersion === 0) {
+        issues.push({
+          code: 'bindings-require-document-schema-version',
+          message: 'Component input bindings require UI document schema version 1.',
+          path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.bindings`,
+          ...(nodeId !== undefined ? { nodeId } : {}),
+        });
+      }
+      if (!isObjectRecord(authoring.bindings)) {
+        issues.push({
+          code: 'invalid-input-binding',
+          message: 'UI document input bindings must be a canonical input-to-binding map.',
+          path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.bindings`,
+          ...(nodeId !== undefined ? { nodeId } : {}),
+        });
+      } else {
+        for (const [inputId, bindingId] of Object.entries(authoring.bindings)) {
+          if (!isCanonicalText(inputId) || !isCanonicalText(bindingId)) {
+            issues.push({
+              code: 'invalid-input-binding',
+              message: 'UI document input and binding ids must be non-blank and already trimmed.',
+              path: `${path}.${UI_DOCUMENT_AUTHORING_ARG}.bindings.${inputId}`,
+              ...(nodeId !== undefined ? { nodeId } : {}),
+              inputId,
+            });
+          }
+        }
+      }
     }
 
     const parentChain = entry.parent
