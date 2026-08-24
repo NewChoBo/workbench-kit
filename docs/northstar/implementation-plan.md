@@ -81,7 +81,7 @@ WB-NS-072A design-system foundation consolidation map [DONE]
 WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DONE; dependencies: WB-NS-072A, WB-NS-070A/B/C/D; WB-NS-040 is an extension-integration boundary]
         ↓
 { WB-NS-072C component-role + typed token/resource resolution [DONE; dependency: WB-NS-072B]
-  WB-NS-072D explicit pack migration planner + transaction [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-072B/C] }
+  WB-NS-072D explicit pack migration planner + transaction [DONE; dependencies: WB-NS-072B/C] }
         ↓
 WB-NS-072E Canvas/Inspector/provenance integration [DESIGNING; dependencies: WB-NS-072C, WB-NS-072D]
         ↓
@@ -97,7 +97,7 @@ Backendless/performance + compatibility hardening
 
 Command/keybinding management parity
         ↓
-WB-NS-080A CommandRegistry effective keybinding management [READY_FOR_IMPLEMENTATION]
+WB-NS-080A CommandRegistry effective keybinding management [DONE]
 ```
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
@@ -1431,7 +1431,7 @@ Reject the implementation if:
 
 ## WB-NS-080A — CommandRegistry effective keybinding management
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Issue owner:** [#253](https://github.com/NewChoBo/workbench-kit/issues/253)
 - **Ownership:** `GENERIC_KIT`
 - **Reviewed source base:** `origin/develop@01abbfa9327335c690093f4acc7f064af14023a6`
@@ -1440,6 +1440,14 @@ Reject the implementation if:
 - **Runtime layer:** `PURE_WEB / backendless`
 - **Dependencies:** existing public `CommandRegistry`, keybinding management entries and local
   persistence seams; no extension-provider or native dependency
+- **Integrated implementation:** PR #352 / reviewed successor
+  `c28f91dd0dc1c49e984b532be1c07f18d4cf70a3` / merge
+  `ec64776db70db08e7d79934289c5358ac6408f41`
+- **Completion evidence:** three producer-distinct source reviews returned
+  `PASS / P0 none / P1 none / P2 none`; commit safety, platform/react/shell typechecks, optional
+  exactness, public exports, packed-consumer, `validate:static`, and the 444-file/2,318-test
+  `validate:fast` gate passed on the exact reviewed successor. Browser and Electron were not run
+  because the packet is pure web/DOM logic with no native or layout boundary change.
 
 ### Goal and user outcome
 
@@ -1801,9 +1809,10 @@ lets future storage become write-eligible after an edit; suppresses defaults wit
 changes conditional extension dispatch, public config grammar or hard overlay shortcuts; introduces
 WorkbenchProvider as a provider-free dependency; or claims Electron/package/release completion.
 
-The Issue #253 successor-v3 producer-distinct readiness review closes the target API, ownership,
-modifier compatibility, persistence and non-scope decisions at the exact base above. This packet is
-implementation-ready; source review remains required after one frozen candidate.
+The Issue #253 successor-v3 producer-distinct readiness review closed the target API, ownership,
+modifier compatibility, persistence and non-scope decisions at the exact base above. The source
+successor listed above implemented the packet, passed exact-head validation and producer-distinct
+review, and is integrated into `develop`; this packet is `DONE`.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
