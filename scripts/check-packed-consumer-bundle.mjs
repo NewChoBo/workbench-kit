@@ -133,6 +133,14 @@ try {
     cwd: consumerDir,
     stdio: 'inherit',
   });
+  runCommand('node', [path.join(consumerDir, 'src', 'node-ui-authoring-runtime.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'node-ui-authoring-runtime.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
 
   console.log('[check-packed-consumer] Building external production consumer...');
   runCommand(
@@ -524,6 +532,263 @@ export const packedDesignSystemRegistry = new DesignSystemPackRegistry();
 
 const registry = new DesignSystemPackRegistry();
 if (registry.snapshot().revision !== 0) process.exit(1);
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'ui-authoring-compat.ts'),
+    `import type { DesignSystemPackChangeMutation } from '@workbench-kit/contracts';
+import {
+  applyUiAuthoringSessionCommand,
+  applyUiAuthoringSessionCommandV2,
+  applyUiDesignSystemPackChange,
+  applyUiDesignSystemPackChangeV2,
+  applyUiDocumentCommand,
+  applyUiDocumentCommandV2,
+  createUiAuthoringDetachedPlan,
+  createUiAuthoringSession,
+  createUiAuthoringSessionV2,
+  finalizeUiAuthoringDetachedPlan,
+  previewUiAuthoringDetachedPlan,
+  projectUiAuthoringDocument,
+  redoUiAuthoringSession,
+  redoUiAuthoringSessionV2,
+  undoUiAuthoringSession,
+  undoUiAuthoringSessionV2,
+  type ApplyUiDocumentCommandResult,
+  type ApplyUiDocumentCommandV2Result,
+  type ApplyUiDesignSystemPackChangeResult,
+  type ApplyUiDesignSystemPackChangeV2Result,
+  type CreateUiAuthoringDetachedPlanInput,
+  type UiAuthoringSessionCommandResult,
+  type UiAuthoringSessionState,
+  type UiAuthoringSessionStateV2,
+  type UiAuthoringSessionV2CommandResult,
+  type UiAuthoringBindingProvenance,
+  type UiAuthoringDesignSystemInputSnapshot,
+  type UiAuthoringDetachedPlan,
+  type UiAuthoringDocumentProjection,
+  type UiAuthoringDocumentNodeProjection,
+  type UiAuthoringInputBindingProjection,
+  type UiAuthoringPlanDiagnostic,
+  type UiAuthoringPlanDiagnosticCode,
+  type UiAuthoringPlanFinalizeContext,
+  type UiAuthoringPlanFinalizeResult,
+  type UiAuthoringPlanPreview,
+  type UiAuthoringRecipeRef,
+  type UiAuthoringRecipeProvenance,
+  type UiDocument,
+  type UiDocumentAtomicCommandV2,
+  type UiDocumentCommand,
+  type UiDocumentCommandV2,
+  type UiDocumentCommandV2Context,
+  type UiDocumentCommandV2Issue,
+  type UiDocumentCommandV2IssueCode,
+  type UiDocumentTransaction,
+  type UiDocumentTransactionRecordV2,
+  type UiDocumentTransactionV2,
+} from '@workbench-kit/jdw';
+
+export function consumeLegacyUiDocumentCommand(command: UiDocumentCommand): string {
+  switch (command.type) {
+    case 'insert-node':
+      return 'insert-node';
+    case 'remove-node':
+      return 'remove-node';
+    case 'replace-node':
+      return 'replace-node';
+    case 'move-node':
+      return 'move-node';
+    case 'set-property':
+      return 'set-property';
+    case 'set-layout':
+      return 'set-layout';
+    default: {
+      const exhaustive: never = command;
+      return exhaustive;
+    }
+  }
+}
+
+export function consumeLegacyUiDocumentTransaction(transaction: UiDocumentTransaction): string {
+  const command = transaction.command;
+  switch (command.type) {
+    case 'insert-node':
+      return 'insert-node';
+    case 'remove-node':
+      return 'remove-node';
+    case 'replace-node':
+      return 'replace-node';
+    case 'move-node':
+      return 'move-node';
+    case 'set-property':
+      return 'set-property';
+    case 'set-layout':
+      return 'set-layout';
+    default: {
+      const exhaustive: never = command;
+      return exhaustive;
+    }
+  }
+}
+
+export function consumeUiDocumentCommandV2(command: UiDocumentCommandV2): string {
+  switch (command.type) {
+    case 'insert-node':
+      return 'insert-node';
+    case 'remove-node':
+      return 'remove-node';
+    case 'replace-node':
+      return 'replace-node';
+    case 'move-node':
+      return 'move-node';
+    case 'set-property':
+      return 'set-property';
+    case 'set-layout':
+      return 'set-layout';
+    case 'set-input-binding':
+      return 'set-input-binding';
+    case 'clear-input-binding':
+      return 'clear-input-binding';
+    case 'batch':
+      return 'batch';
+    default: {
+      const exhaustive: never = command;
+      return exhaustive;
+    }
+  }
+}
+
+type LegacyApplyUiDocumentCommand = (
+  document: UiDocument,
+  command: UiDocumentCommand,
+) => ApplyUiDocumentCommandResult;
+type LegacyApplyUiAuthoringSessionCommand = (
+  state: UiAuthoringSessionState,
+  command: UiDocumentCommand,
+) => UiAuthoringSessionCommandResult;
+type LegacyCreateUiAuthoringSession = (
+  document: UiDocument,
+  selectedNodeIds?: readonly string[],
+) => UiAuthoringSessionState;
+type LegacyMoveUiAuthoringSessionHistory = (
+  state: UiAuthoringSessionState,
+) => UiAuthoringSessionState | null;
+type LegacyApplyUiDesignSystemPackChange = (
+  state: UiAuthoringSessionState,
+  mutation: DesignSystemPackChangeMutation,
+  currentRegistryRevision: number,
+) => ApplyUiDesignSystemPackChangeResult;
+
+export const legacyApplyUiDocumentCommand: LegacyApplyUiDocumentCommand = applyUiDocumentCommand;
+export const legacyApplyUiAuthoringSessionCommand: LegacyApplyUiAuthoringSessionCommand =
+  applyUiAuthoringSessionCommand;
+export const legacyCreateUiAuthoringSession: LegacyCreateUiAuthoringSession =
+  createUiAuthoringSession;
+export const legacyUndoUiAuthoringSession: LegacyMoveUiAuthoringSessionHistory =
+  undoUiAuthoringSession;
+export const legacyRedoUiAuthoringSession: LegacyMoveUiAuthoringSessionHistory =
+  redoUiAuthoringSession;
+export const legacyApplyUiDesignSystemPackChange: LegacyApplyUiDesignSystemPackChange =
+  applyUiDesignSystemPackChange;
+
+export type PackedUiAuthoringV2Contracts = {
+  atomicCommand: UiDocumentAtomicCommandV2;
+  command: UiDocumentCommandV2;
+  context: UiDocumentCommandV2Context;
+  transaction: UiDocumentTransactionV2;
+  transactionRecord: UiDocumentTransactionRecordV2;
+  documentResult: ApplyUiDocumentCommandV2Result;
+  sessionState: UiAuthoringSessionStateV2;
+  sessionResult: UiAuthoringSessionV2CommandResult;
+  designSystemResult: ApplyUiDesignSystemPackChangeV2Result;
+  recipe: UiAuthoringRecipeRef;
+  recipeProvenance: UiAuthoringRecipeProvenance;
+  createPlanInput: CreateUiAuthoringDetachedPlanInput;
+  designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  plan: UiAuthoringDetachedPlan;
+  preview: UiAuthoringPlanPreview;
+  planDiagnostic: UiAuthoringPlanDiagnostic;
+  planDiagnosticCode: UiAuthoringPlanDiagnosticCode;
+  finalizeContext: UiAuthoringPlanFinalizeContext;
+  finalizeResult: UiAuthoringPlanFinalizeResult;
+  bindingProvenance: UiAuthoringBindingProvenance;
+  inputBinding: UiAuthoringInputBindingProjection;
+  documentProjection: UiAuthoringDocumentProjection;
+  documentNodeProjection: UiAuthoringDocumentNodeProjection;
+  commandIssue: UiDocumentCommandV2Issue;
+  commandIssueCode: UiDocumentCommandV2IssueCode;
+};
+
+export const packedUiAuthoringV2Runtime = Object.freeze({
+  applyUiAuthoringSessionCommandV2,
+  applyUiDesignSystemPackChangeV2,
+  applyUiDocumentCommandV2,
+  createUiAuthoringDetachedPlan,
+  createUiAuthoringSessionV2,
+  finalizeUiAuthoringDetachedPlan,
+  previewUiAuthoringDetachedPlan,
+  projectUiAuthoringDocument,
+  redoUiAuthoringSessionV2,
+  undoUiAuthoringSessionV2,
+});
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'node-ui-authoring-runtime.cjs'),
+    `const jdw = require('@workbench-kit/jdw');
+
+const requiredFunctions = [
+  'applyUiAuthoringSessionCommand',
+  'applyUiAuthoringSessionCommandV2',
+  'applyUiDesignSystemPackChange',
+  'applyUiDesignSystemPackChangeV2',
+  'applyUiDocumentCommand',
+  'applyUiDocumentCommandV2',
+  'createUiAuthoringDetachedPlan',
+  'createUiAuthoringSession',
+  'createUiAuthoringSessionV2',
+  'finalizeUiAuthoringDetachedPlan',
+  'previewUiAuthoringDetachedPlan',
+  'projectUiAuthoringDocument',
+  'redoUiAuthoringSession',
+  'redoUiAuthoringSessionV2',
+  'undoUiAuthoringSession',
+  'undoUiAuthoringSessionV2',
+];
+for (const name of requiredFunctions) {
+  if (typeof jdw[name] !== 'function') {
+    throw new TypeError('Packed JDW CommonJS root is missing function export: ' + name);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'node-ui-authoring-runtime.mjs'),
+    `import * as jdw from '@workbench-kit/jdw';
+
+const requiredFunctions = [
+  'applyUiAuthoringSessionCommand',
+  'applyUiAuthoringSessionCommandV2',
+  'applyUiDesignSystemPackChange',
+  'applyUiDesignSystemPackChangeV2',
+  'applyUiDocumentCommand',
+  'applyUiDocumentCommandV2',
+  'createUiAuthoringDetachedPlan',
+  'createUiAuthoringSession',
+  'createUiAuthoringSessionV2',
+  'finalizeUiAuthoringDetachedPlan',
+  'previewUiAuthoringDetachedPlan',
+  'projectUiAuthoringDocument',
+  'redoUiAuthoringSession',
+  'redoUiAuthoringSessionV2',
+  'undoUiAuthoringSession',
+  'undoUiAuthoringSessionV2',
+];
+for (const name of requiredFunctions) {
+  if (typeof jdw[name] !== 'function') {
+    throw new TypeError('Packed JDW ESM root is missing function export: ' + name);
+  }
+}
 `,
   );
   fs.writeFileSync(

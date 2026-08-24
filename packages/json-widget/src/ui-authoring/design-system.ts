@@ -18,12 +18,16 @@ import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutab
 import { normalizeUiDocumentSelection } from './session.js';
 import type {
   ApplyUiDesignSystemPackChangeResult,
+  ApplyUiDesignSystemPackChangeV2Result,
   ProjectUiDesignSystemDocumentResult,
   UiAuthoringSessionState,
+  UiAuthoringSessionStateV2,
   UiDocument,
   UiDocumentNode,
   UiDocumentTransaction,
+  UiDocumentTransactionV2,
   UiDocumentTransactionRecord,
+  UiDocumentTransactionRecordV2,
 } from './types.js';
 import { collectWidgetNodes, type GenericWidget } from '../widget/tree.js';
 import { isGenericWidget } from '../widget/type-guards.js';
@@ -63,6 +67,13 @@ function failure(
   state: UiAuthoringSessionState,
   ...diagnostics: readonly DesignSystemDiagnostic[]
 ): ApplyUiDesignSystemPackChangeResult {
+  return Object.freeze({ state, diagnostics: freezeDiagnostics(diagnostics), changed: false });
+}
+
+function failureV2(
+  state: UiAuthoringSessionStateV2,
+  ...diagnostics: readonly DesignSystemDiagnostic[]
+): ApplyUiDesignSystemPackChangeV2Result {
   return Object.freeze({ state, diagnostics: freezeDiagnostics(diagnostics), changed: false });
 }
 
@@ -370,23 +381,26 @@ function rewriteRoot(root: GenericWidget, mutation: DesignSystemPackChangeMutati
   return visit(root, true);
 }
 
-function isAuthoringSessionState(value: unknown): value is UiAuthoringSessionState {
+function isAuthoringSessionStateValue(
+  value: unknown,
+  isTransactionRecord: (entry: unknown) => boolean,
+): boolean {
   if (
     !isPlainRecord(value) ||
     !isUiDocumentValue(value.document) ||
     !Array.isArray(value.selectedNodeIds) ||
     !value.selectedNodeIds.every(isCanonicalText) ||
     !Array.isArray(value.past) ||
-    !value.past.every(isUiDocumentTransactionRecord) ||
+    !value.past.every(isTransactionRecord) ||
     !Array.isArray(value.future) ||
-    !value.future.every(isUiDocumentTransactionRecord)
+    !value.future.every(isTransactionRecord)
   ) {
     return false;
   }
   return true;
 }
 
-function isUiDocumentTransactionRecord(value: unknown): value is UiDocumentTransactionRecord {
+function isUiDocumentTransactionRecordValue(value: unknown): boolean {
   if (
     !isPlainRecord(value) ||
     !isPlainRecord(value.transaction) ||
@@ -415,6 +429,180 @@ function isUiDocumentTransactionRecord(value: unknown): value is UiDocumentTrans
   );
 }
 
+function isUiDocumentTransactionRecord(value: unknown): value is UiDocumentTransactionRecord {
+  return isUiDocumentTransactionRecordValue(value);
+}
+
+function isUiDocumentTransactionRecordV2(value: unknown): value is UiDocumentTransactionRecordV2 {
+  return isUiDocumentTransactionRecordValue(value);
+}
+
+function isAuthoringSessionState(value: unknown): value is UiAuthoringSessionState {
+  return isAuthoringSessionStateValue(value, isUiDocumentTransactionRecord);
+}
+
+function isAuthoringSessionStateV2(value: unknown): value is UiAuthoringSessionStateV2 {
+  return isAuthoringSessionStateValue(value, isUiDocumentTransactionRecordV2);
+}
+
+interface DesignSystemApplyState {
+  readonly document: UiDocument;
+  readonly selectedNodeIds: readonly string[];
+}
+
+type DesignSystemApplyTransaction = UiDocumentTransaction & UiDocumentTransactionV2;
+
+type DesignSystemApplyCoreResult =
+  | {
+      readonly changed: false;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    }
+  | {
+      readonly changed: true;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+      readonly document: UiDocument;
+      readonly selectedNodeIds: readonly string[];
+      readonly transaction: DesignSystemApplyTransaction;
+    };
+
+function coreFailure(diagnosticEntry: DesignSystemDiagnostic): DesignSystemApplyCoreResult {
+  return Object.freeze({
+    changed: false,
+    diagnostics: Object.freeze([diagnosticEntry]),
+  });
+}
+
+function applyUiDesignSystemPackChangeCore(
+  state: DesignSystemApplyState,
+  mutation: DesignSystemPackChangeMutation,
+  currentRegistryRevision: number,
+): DesignSystemApplyCoreResult {
+  if (
+    !isMutation(mutation) ||
+    !Number.isInteger(currentRegistryRevision) ||
+    currentRegistryRevision < 0
+  ) {
+    return coreFailure(
+      diagnostic(
+        'invalid-pack-change-mutation',
+        'Pack-change mutation and registry revision must be canonical.',
+        'mutation',
+      ),
+    );
+  }
+  if (mutation.registryRevision !== currentRegistryRevision) {
+    return coreFailure(
+      diagnostic(
+        'pack-change-registry-stale',
+        'The Design System registry changed after the mutation was finalized.',
+        'mutation.registryRevision',
+        { requestId: mutation.requestId },
+      ),
+    );
+  }
+
+  const currentProjection = projectUiDesignSystemDocument(state.document);
+  if (
+    currentProjection.document === undefined ||
+    state.document.documentId !== mutation.documentId ||
+    state.document.revision !== mutation.baseRevision ||
+    !declarativeEqual(currentProjection.document, mutation.sourceDocument)
+  ) {
+    return coreFailure(
+      diagnostic(
+        'pack-change-document-stale',
+        'The authored document changed after the mutation was finalized.',
+        'mutation.sourceDocument',
+        { requestId: mutation.requestId },
+      ),
+    );
+  }
+
+  const currentNodes = new Map(
+    currentProjection.document.nodes.map((node) => [node.nodeId, node.component]),
+  );
+  for (const entry of mutation.components) {
+    const current = currentNodes.get(entry.nodeId);
+    if (
+      current === undefined ||
+      current.id !== entry.source.id ||
+      current.version !== entry.source.version
+    ) {
+      return coreFailure(
+        diagnostic(
+          'pack-change-apply-rejected',
+          'A component substitution no longer matches its exact source node.',
+          'mutation.components',
+          { nodeId: entry.nodeId, requestId: mutation.requestId },
+        ),
+      );
+    }
+  }
+  const dependencies = collectDependencyIds(currentProjection.document);
+  if (
+    mutation.tokens.some((entry) => !dependencies.tokens.has(entry.sourceId)) ||
+    mutation.resources.some((entry) => !dependencies.resources.has(entry.sourceId))
+  ) {
+    return coreFailure(
+      diagnostic(
+        'pack-change-apply-rejected',
+        'A dependency substitution no longer has an authored source occurrence.',
+        'mutation',
+        { requestId: mutation.requestId },
+      ),
+    );
+  }
+
+  const nextRevision = state.document.revision + 1;
+  const nextRoot = rewriteRoot(state.document.root, mutation);
+  const nextResult = createUiDocumentFromRoot(state.document.documentId, nextRevision, nextRoot);
+  if (nextResult.document === null || nextResult.document.source === state.document.source) {
+    return coreFailure(
+      diagnostic(
+        'pack-change-apply-rejected',
+        nextResult.issues[0]?.message ?? 'Pack-change mutation produced no canonical change.',
+        'mutation',
+        { requestId: mutation.requestId },
+      ),
+    );
+  }
+
+  const nextSelectedNodeIds = normalizeUiDocumentSelection(
+    nextResult.document,
+    state.selectedNodeIds,
+  );
+  const transaction = deepFreezeUiAuthoringValue({
+    transactionId: `${mutation.requestId}@${state.document.revision}->${nextRevision}`,
+    command: {
+      type: 'replace-node',
+      commandId: mutation.requestId,
+      nodeId: state.document.root.id,
+      node: cloneUiAuthoringJsonValue(nextRoot) as UiDocumentNode,
+    },
+    intent: {
+      type: 'apply-design-system-pack-change',
+      commandId: mutation.requestId,
+      mutation,
+    },
+    baseRevision: state.document.revision,
+    nextRevision,
+    patches: [
+      {
+        type: 'replace-widget',
+        path: [],
+        widget: cloneUiAuthoringJsonValue(nextRoot),
+      },
+    ],
+  } satisfies DesignSystemApplyTransaction);
+  return Object.freeze({
+    changed: true,
+    diagnostics: Object.freeze([]),
+    document: nextResult.document,
+    selectedNodeIds: nextSelectedNodeIds,
+    transaction,
+  });
+}
+
 export function applyUiDesignSystemPackChange(
   state: UiAuthoringSessionState,
   mutation: DesignSystemPackChangeMutation,
@@ -435,12 +623,7 @@ export function applyUiDesignSystemPackChange(
       ),
     );
   }
-  if (
-    !isAuthoringSessionState(safeState) ||
-    !isMutation(safeMutation) ||
-    !Number.isInteger(currentRegistryRevision) ||
-    currentRegistryRevision < 0
-  ) {
+  if (!isAuthoringSessionState(safeState)) {
     return failure(
       state,
       diagnostic(
@@ -450,130 +633,80 @@ export function applyUiDesignSystemPackChange(
       ),
     );
   }
-  if (safeMutation.registryRevision !== currentRegistryRevision) {
-    return failure(
-      state,
-      diagnostic(
-        'pack-change-registry-stale',
-        'The Design System registry changed after the mutation was finalized.',
-        'mutation.registryRevision',
-        { requestId: safeMutation.requestId },
-      ),
-    );
-  }
-
-  const currentProjection = projectUiDesignSystemDocument(safeState.document);
-  if (
-    currentProjection.document === undefined ||
-    safeState.document.documentId !== safeMutation.documentId ||
-    safeState.document.revision !== safeMutation.baseRevision ||
-    !declarativeEqual(currentProjection.document, safeMutation.sourceDocument)
-  ) {
-    return failure(
-      state,
-      diagnostic(
-        'pack-change-document-stale',
-        'The authored document changed after the mutation was finalized.',
-        'mutation.sourceDocument',
-        { requestId: safeMutation.requestId },
-      ),
-    );
-  }
-
-  const currentNodes = new Map(
-    currentProjection.document.nodes.map((node) => [node.nodeId, node.component]),
+  const applied = applyUiDesignSystemPackChangeCore(
+    safeState,
+    safeMutation,
+    currentRegistryRevision,
   );
-  for (const entry of safeMutation.components) {
-    const current = currentNodes.get(entry.nodeId);
-    if (
-      current === undefined ||
-      current.id !== entry.source.id ||
-      current.version !== entry.source.version
-    ) {
-      return failure(
-        state,
-        diagnostic(
-          'pack-change-apply-rejected',
-          'A component substitution no longer matches its exact source node.',
-          'mutation.components',
-          { nodeId: entry.nodeId, requestId: safeMutation.requestId },
-        ),
-      );
-    }
-  }
-  const dependencies = collectDependencyIds(currentProjection.document);
-  if (
-    safeMutation.tokens.some((entry) => !dependencies.tokens.has(entry.sourceId)) ||
-    safeMutation.resources.some((entry) => !dependencies.resources.has(entry.sourceId))
-  ) {
-    return failure(
-      state,
-      diagnostic(
-        'pack-change-apply-rejected',
-        'A dependency substitution no longer has an authored source occurrence.',
-        'mutation',
-        { requestId: safeMutation.requestId },
-      ),
-    );
-  }
+  if (!applied.changed) return failure(state, ...applied.diagnostics);
 
-  const nextRevision = safeState.document.revision + 1;
-  const nextRoot = rewriteRoot(safeState.document.root, safeMutation);
-  const nextResult = createUiDocumentFromRoot(
-    safeState.document.documentId,
-    nextRevision,
-    nextRoot,
-  );
-  if (nextResult.document === null || nextResult.document.source === safeState.document.source) {
-    return failure(
-      state,
-      diagnostic(
-        'pack-change-apply-rejected',
-        nextResult.issues[0]?.message ?? 'Pack-change mutation produced no canonical change.',
-        'mutation',
-        { requestId: safeMutation.requestId },
-      ),
-    );
-  }
-
-  const nextSelectedNodeIds = normalizeUiDocumentSelection(
-    nextResult.document,
-    safeState.selectedNodeIds,
-  );
-  const transaction = deepFreezeUiAuthoringValue({
-    transactionId: `${safeMutation.requestId}@${safeState.document.revision}->${nextRevision}`,
-    command: {
-      type: 'replace-node',
-      commandId: safeMutation.requestId,
-      nodeId: safeState.document.root.id,
-      node: cloneUiAuthoringJsonValue(nextRoot) as UiDocumentNode,
-    },
-    intent: {
-      type: 'apply-design-system-pack-change',
-      commandId: safeMutation.requestId,
-      mutation: safeMutation,
-    },
-    baseRevision: safeState.document.revision,
-    nextRevision,
-    patches: [
-      {
-        type: 'replace-widget',
-        path: [],
-        widget: cloneUiAuthoringJsonValue(nextRoot),
-      },
-    ],
-  } satisfies UiDocumentTransaction);
   const record = deepFreezeUiAuthoringValue({
-    transaction,
+    transaction: applied.transaction,
     beforeDocument: safeState.document,
-    afterDocument: nextResult.document,
+    afterDocument: applied.document,
     beforeSelectedNodeIds: safeState.selectedNodeIds,
-    afterSelectedNodeIds: nextSelectedNodeIds,
-  });
+    afterSelectedNodeIds: applied.selectedNodeIds,
+  } satisfies UiDocumentTransactionRecord);
   return Object.freeze({
     state: deepFreezeUiAuthoringValue({
-      document: nextResult.document,
-      selectedNodeIds: nextSelectedNodeIds,
+      document: applied.document,
+      selectedNodeIds: applied.selectedNodeIds,
+      past: Object.freeze([...safeState.past, record]),
+      future: Object.freeze([]),
+    }),
+    diagnostics: Object.freeze([]),
+    changed: true,
+  });
+}
+
+export function applyUiDesignSystemPackChangeV2(
+  state: UiAuthoringSessionStateV2,
+  mutation: DesignSystemPackChangeMutation,
+  currentRegistryRevision: number,
+): ApplyUiDesignSystemPackChangeV2Result {
+  let safeState: UiAuthoringSessionStateV2;
+  let safeMutation: DesignSystemPackChangeMutation;
+  try {
+    safeState = snapshotDesignSystemResolutionInput(state);
+    safeMutation = snapshotDesignSystemResolutionInput(mutation);
+  } catch {
+    return failureV2(
+      state,
+      diagnostic(
+        'invalid-pack-change-mutation',
+        'Pack-change mutation must be plain declarative data.',
+        'mutation',
+      ),
+    );
+  }
+  if (!isAuthoringSessionStateV2(safeState)) {
+    return failureV2(
+      state,
+      diagnostic(
+        'invalid-pack-change-mutation',
+        'Pack-change mutation and registry revision must be canonical.',
+        'mutation',
+      ),
+    );
+  }
+  const applied = applyUiDesignSystemPackChangeCore(
+    safeState,
+    safeMutation,
+    currentRegistryRevision,
+  );
+  if (!applied.changed) return failureV2(state, ...applied.diagnostics);
+
+  const record = deepFreezeUiAuthoringValue({
+    transaction: applied.transaction,
+    beforeDocument: safeState.document,
+    afterDocument: applied.document,
+    beforeSelectedNodeIds: safeState.selectedNodeIds,
+    afterSelectedNodeIds: applied.selectedNodeIds,
+  } satisfies UiDocumentTransactionRecordV2);
+  return Object.freeze({
+    state: deepFreezeUiAuthoringValue({
+      document: applied.document,
+      selectedNodeIds: applied.selectedNodeIds,
       past: Object.freeze([...safeState.past, record]),
       future: Object.freeze([]),
     }),

@@ -20,6 +20,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./authoring": "./src/authoring/index.ts",
     "./drag-mime": "./src/utils/dragMime.ts",
     "./modal": "./src/modal/Modal.tsx",
     "./layout": "./src/layout/index.ts",
@@ -85,6 +86,7 @@
     "@workbench-kit/runtime": "workspace:*",
     "@workbench-kit/services": "workspace:*",
     "@workbench-kit/tokens": "workspace:*",
+    "@workbench-kit/workbench-core": "workspace:*",
     "@workbench-kit/workspace": "workspace:*",
     "remark-gfm": "^4.0.1",
     "rehype-sanitize": "^6.0.0"

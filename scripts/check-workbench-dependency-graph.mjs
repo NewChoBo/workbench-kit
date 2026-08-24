@@ -51,6 +51,7 @@ const packageRules = toRuleMap({
     '@workbench-kit/runtime',
     '@workbench-kit/services',
     '@workbench-kit/tokens',
+    '@workbench-kit/workbench-core',
     '@workbench-kit/workspace',
   ],
 });

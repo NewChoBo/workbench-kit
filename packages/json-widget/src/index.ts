@@ -156,16 +156,39 @@ export {
 
 export type {
   ApplyUiDocumentCommandResult,
+  ApplyUiDocumentCommandV2Result,
   ApplyUiDesignSystemPackChangeResult,
+  ApplyUiDesignSystemPackChangeV2Result,
+  CreateUiAuthoringDetachedPlanInput,
   CreateUiDocumentResult,
   MigrateWidgetDocumentOptions,
   MigrateWidgetDocumentResult,
   UiAuthoringSessionCommandResult,
   UiAuthoringSessionState,
+  UiAuthoringSessionStateV2,
+  UiAuthoringSessionV2CommandResult,
+  UiAuthoringBindingProvenance,
+  UiAuthoringDesignSystemInputSnapshot,
+  UiAuthoringDetachedPlan,
+  UiAuthoringDocumentNodeProjection,
+  UiAuthoringDocumentProjection,
+  UiAuthoringInputBindingProjection,
+  UiAuthoringPlanDiagnostic,
+  UiAuthoringPlanDiagnosticCode,
+  UiAuthoringPlanFinalizeContext,
+  UiAuthoringPlanFinalizeResult,
+  UiAuthoringPlanPreview,
+  UiAuthoringRecipeProvenance,
+  UiAuthoringRecipeRef,
   UiDocument,
+  UiDocumentAtomicCommandV2,
   UiDocumentCommand,
   UiDocumentCommandIssue,
   UiDocumentCommandIssueCode,
+  UiDocumentCommandV2,
+  UiDocumentCommandV2Context,
+  UiDocumentCommandV2Issue,
+  UiDocumentCommandV2IssueCode,
   UiDocumentHierarchyEntry,
   UiDocumentIssue,
   UiDocumentIssueCode,
@@ -177,6 +200,8 @@ export type {
   UiDocumentNodeAuthoring,
   UiDocumentTransaction,
   UiDocumentTransactionRecord,
+  UiDocumentTransactionRecordV2,
+  UiDocumentTransactionV2,
   UiDesignSystemPackChangeCommand,
   ProjectUiDesignSystemDocumentResult,
 } from './ui-authoring/types.js';
@@ -197,8 +222,10 @@ export {
   validateUiDocumentWrapperIdentity,
 } from './ui-authoring/document.js';
 export { applyUiDocumentCommand } from './ui-authoring/commands.js';
+export { applyUiDocumentCommandV2 } from './ui-authoring/commands-v2.js';
 export {
   applyUiDesignSystemPackChange,
+  applyUiDesignSystemPackChangeV2,
   projectUiDesignSystemDocument,
 } from './ui-authoring/design-system.js';
 export {
@@ -209,6 +236,18 @@ export {
   selectUiDocumentNodes,
   undoUiAuthoringSession,
 } from './ui-authoring/session.js';
+export {
+  applyUiAuthoringSessionCommandV2,
+  createUiAuthoringSessionV2,
+  redoUiAuthoringSessionV2,
+  undoUiAuthoringSessionV2,
+} from './ui-authoring/session-v2.js';
+export {
+  createUiAuthoringDetachedPlan,
+  finalizeUiAuthoringDetachedPlan,
+  previewUiAuthoringDetachedPlan,
+} from './ui-authoring/detached-plan.js';
+export { projectUiAuthoringDocument } from './ui-authoring/projection.js';
 export { migrateWidgetDocumentToUiDocument } from './ui-authoring/migration.js';
 
 export {

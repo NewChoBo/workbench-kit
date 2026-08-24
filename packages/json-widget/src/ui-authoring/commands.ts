@@ -33,6 +33,53 @@ function isCanonicalText(value: string): boolean {
   return value.length > 0 && value === value.trim();
 }
 
+function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function isKnownUiDocumentCommand(value: unknown): value is UiDocumentCommand {
+  if (!isPlainRecord(value) || typeof value.type !== 'string') return false;
+  switch (value.type) {
+    case 'insert-node':
+      return (
+        typeof value.commandId === 'string' &&
+        typeof value.parentId === 'string' &&
+        Number.isInteger(value.index) &&
+        isGenericWidget(value.node)
+      );
+    case 'remove-node':
+      return typeof value.commandId === 'string' && typeof value.nodeId === 'string';
+    case 'replace-node':
+      return (
+        typeof value.commandId === 'string' &&
+        typeof value.nodeId === 'string' &&
+        isGenericWidget(value.node)
+      );
+    case 'move-node':
+      return (
+        typeof value.commandId === 'string' &&
+        typeof value.nodeId === 'string' &&
+        typeof value.targetParentId === 'string' &&
+        Number.isInteger(value.index)
+      );
+    case 'set-property':
+      return (
+        typeof value.commandId === 'string' &&
+        typeof value.nodeId === 'string' &&
+        typeof value.propertyId === 'string'
+      );
+    case 'set-layout':
+      return (
+        typeof value.commandId === 'string' &&
+        typeof value.nodeId === 'string' &&
+        typeof value.strategyId === 'string' &&
+        isPlainRecord(value.values)
+      );
+    default:
+      return false;
+  }
+}
+
 function fail(
   document: UiDocument,
   ...issues: readonly (UiDocumentIssue | UiDocumentCommandIssue)[]
@@ -253,8 +300,10 @@ function validateSubtreeIdentityAgainstDocument(
   command: Extract<UiDocumentCommand, { readonly type: 'insert-node' | 'replace-node' }>,
   index: CommandIndex,
 ): readonly UiDocumentIssue[] {
-  const issues = [...validateUiDocumentRoot(command.node)];
-  if (issues.length > 0) return issues;
+  const protectedStateIssues = validateV1ProtectedAuthoringState(command, index);
+  if (protectedStateIssues.length > 0) return protectedStateIssues;
+
+  const issues: UiDocumentIssue[] = [];
 
   const replacedPath =
     command.type === 'replace-node' ? index.get(command.nodeId)?.path : undefined;
@@ -273,6 +322,110 @@ function validateSubtreeIdentityAgainstDocument(
     }
   }
   return issues;
+}
+
+interface ProtectedAuthoringState {
+  readonly documentSchemaVersion: unknown;
+  readonly hasDocumentSchemaVersion: boolean;
+  readonly bindings: readonly (readonly [string, string])[];
+  readonly hasBindings: boolean;
+}
+
+function protectedAuthoringState(widget: GenericWidget): ProtectedAuthoringState {
+  const candidate = (widget as unknown as Readonly<Record<string, unknown>>).$authoring;
+  const raw: Readonly<Record<string, unknown>> = isPlainRecord(candidate)
+    ? candidate
+    : Object.freeze({});
+  const rawBindings = raw.bindings;
+  const bindings =
+    rawBindings !== null && typeof rawBindings === 'object' && !Array.isArray(rawBindings)
+      ? Object.entries(rawBindings as Readonly<Record<string, unknown>>)
+          .filter((entry): entry is [string, string] => typeof entry[1] === 'string')
+          .sort(([left], [right]) => left.localeCompare(right))
+      : [];
+  return {
+    documentSchemaVersion: raw.documentSchemaVersion,
+    hasDocumentSchemaVersion: Object.prototype.hasOwnProperty.call(raw, 'documentSchemaVersion'),
+    bindings,
+    hasBindings: Object.prototype.hasOwnProperty.call(raw, 'bindings'),
+  };
+}
+
+function protectedStateEquals(
+  left: ProtectedAuthoringState,
+  right: ProtectedAuthoringState,
+): boolean {
+  return (
+    left.hasDocumentSchemaVersion === right.hasDocumentSchemaVersion &&
+    Object.is(left.documentSchemaVersion, right.documentSchemaVersion) &&
+    left.hasBindings === right.hasBindings &&
+    left.bindings.length === right.bindings.length &&
+    left.bindings.every(
+      ([inputId, bindingId], index) =>
+        inputId === right.bindings[index]?.[0] && bindingId === right.bindings[index]?.[1],
+    )
+  );
+}
+
+function validateV1ProtectedAuthoringState(
+  command: Extract<UiDocumentCommand, { readonly type: 'insert-node' | 'replace-node' }>,
+  index: CommandIndex,
+): readonly UiDocumentIssue[] {
+  if (command.type === 'insert-node') {
+    for (const entry of collectWidgetNodes(command.node)) {
+      const state = protectedAuthoringState(entry.widget);
+      if (state.hasBindings || state.hasDocumentSchemaVersion) {
+        return [
+          {
+            code: state.hasBindings
+              ? 'bindings-require-document-schema-version'
+              : 'nonroot-document-schema-version',
+            message: 'V1 insert-node cannot introduce V2 document version or input binding state.',
+            path: 'command.node.$authoring',
+            nodeId: entry.widget.id as string,
+          },
+        ];
+      }
+    }
+    return [];
+  }
+
+  const current = index.get(command.nodeId);
+  if (!current) return [];
+  const before = new Map(
+    collectWidgetNodes(current.node).map((entry) => [
+      entry.widget.id as string,
+      protectedAuthoringState(entry.widget),
+    ]),
+  );
+  const after = new Map(
+    collectWidgetNodes(command.node).map((entry) => [
+      entry.widget.id as string,
+      protectedAuthoringState(entry.widget),
+    ]),
+  );
+  const protectedNodeIds = new Set([...before.keys(), ...after.keys()]);
+  for (const nodeId of protectedNodeIds) {
+    const previous = before.get(nodeId);
+    const next = after.get(nodeId);
+    const previousProtected =
+      previous !== undefined && (previous.hasBindings || previous.hasDocumentSchemaVersion);
+    const nextProtected = next !== undefined && (next.hasBindings || next.hasDocumentSchemaVersion);
+    if (
+      previousProtected !== nextProtected ||
+      (previousProtected && nextProtected && !protectedStateEquals(previous!, next!))
+    ) {
+      return [
+        {
+          code: 'invalid-input-binding',
+          message: 'V1 replace-node must preserve existing V2 authoring state exactly.',
+          path: 'command.node.$authoring',
+          nodeId,
+        },
+      ];
+    }
+  }
+  return [];
 }
 
 function validateCommandPayload(
@@ -379,6 +532,9 @@ export function applyUiDocumentCommand(
   document: UiDocument,
   command: UiDocumentCommand,
 ): ApplyUiDocumentCommandResult {
+  const existingIssues = validateUiDocumentRoot(document.root);
+  if (existingIssues.length > 0) return fail(document, ...existingIssues);
+
   let safeCommand: UiDocumentCommand;
   try {
     safeCommand = deepFreezeUiAuthoringValue(cloneUiAuthoringJsonValue(command));
@@ -386,6 +542,13 @@ export function applyUiDocumentCommand(
     return fail(document, {
       code: 'invalid-command-payload',
       message: error instanceof Error ? error.message : String(error),
+    });
+  }
+
+  if (!isKnownUiDocumentCommand(safeCommand)) {
+    return fail(document, {
+      code: 'invalid-command-payload',
+      message: 'UI document command payload is not a recognized canonical command.',
     });
   }
 

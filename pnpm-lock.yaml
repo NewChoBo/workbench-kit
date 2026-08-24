@@ -308,6 +308,9 @@ importers:
       '@workbench-kit/tokens':
         specifier: workspace:*
         version: link:../tokens
+      '@workbench-kit/workbench-core':
+        specifier: workspace:*
+        version: link:../workbench-core
       '@workbench-kit/workspace':
         specifier: workspace:*
         version: link:../workspace
