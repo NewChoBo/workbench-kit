@@ -4,9 +4,11 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## Current checkpoint
 
-- **Integration baseline:** `develop@462b1b4d9653a3ac07732e1cfc61c37aa62664c1`.
-- `WB-NS-001A` is integrated through PR #301. The compatible `ExtensionRegistry` facade now delegates focused inventory, contribution-routing, API-construction, and activation-lifecycle responsibilities, including teardown barriers.
-- The reviewed `WB-NS-001B1` shell inventory and focused-service contract are closed and ready for implementation. `WB-NS-001B2` source migration remains gated on integrating that promotion projection and revalidating an exact implementation base and separate owner.
+- **Reviewed repository baseline:** `develop@3f535e920111676a59480b1fb1bd3657f3ba55e5`. The latest source-bearing integration is `cfd64106a5212d787f5f5ef1e2231b81cb41524a`; later integrations through the reviewed baseline are documentation-only and do not change package source or API.
+- The extension-runtime decomposition chain (`WB-NS-001A`, `WB-NS-001B1`, `WB-NS-001B2`) is `DONE`. The compatible `ExtensionRegistry` facade delegates focused runtime roles, and shell consumers use focused services without public aggregate-registry reach-through.
+- The manual authoring foundations (`WB-NS-070A` through `070D`) and graph type/property-input foundation (`WB-NS-071A`) are `DONE`: typed values, layout strategies, component descriptors, one `UiDocument` command/history path, and graph-node metadata now have explicit owners.
+- The design-system foundation and compatibility chain (`WB-NS-072A` through `072F`) is `DONE`: pack/theme resolution, typed token/resource roles, migration planning, Canvas/Inspector provenance, and legacy theme compatibility delegate to one integrated path.
+- Effective keybinding management and the provider-free command host (`WB-NS-080A`, `WB-NS-080B`) are `DONE`. No active Northstar source packet is `READY_FOR_IMPLEMENTATION` or `IMPLEMENTING` at this checkpoint.
 - Existing correctness, UX, release, and lifecycle Issues retain their own ownership. This roadmap does not replace or duplicate their acceptance criteria.
 
 ## Strategic outcomes
@@ -21,16 +23,16 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## NOW
 
-- **Close the extension-runtime decomposition follow-through.** Integrate the reviewed `WB-NS-001B1` promotion projection, then open the separately owned `WB-NS-001B2` implementation lane only after fresh exact-base revalidation. Do not widen the public runtime API merely to remove aggregate shell reach-through.
+- **Close the next design horizon without reopening completed foundations.** Reconcile the `WB-NS-071B` component/node development requirement flow first, then project a separate implementation packet only after producer-distinct review. `WB-NS-071C` remains downstream ecosystem work.
 - **Maintain one durable roadmap projection.** Keep this file synchronized only when repository truth materially changes the horizon, dependency order, or effect gate. Detailed Issue/packet state stays with its canonical owner.
 - **Finish independently owned high-value work without collapsing ownership.** Correctness, accessibility, Field Remap, JDW, extension-management, and repository-lifecycle work continue through their focused Issues and producer/reviewer lanes.
 
 ## NEXT
 
-- **Typed property/schema foundation** — close the `WB-NS-030` and `WB-NS-070A` reuse boundaries before introducing new public schema families.
-- **Canonical transaction/history ownership** — prove reversible history at each domain's actual document/operation boundary before extracting a shared abstraction. `WorkbenchDocument`, JDW, and Field Remap currently provide different ownership evidence.
-- **Manual visual-authoring vertical** — prove Palette/Hierarchy/Inspector/Canvas over one canonical document with direct manipulation, backendless preview, and undo/redo.
-- **DesignSystemPack vertical** — establish the current reuse/consolidation map, then prove versioned packs, theme/token/component metadata, provenance, and explicit migration transactions without a parallel permanent UI engine.
+- **Graph/document and schema convergence** — close the remaining `WB-NS-010` and `WB-NS-030` decisions by reusing the integrated UI-authoring, node-descriptor, JDW, SchemaForm, and Field Remap contracts rather than introducing parallel document or scalar-schema families.
+- **Component/node development flow** — after `WB-NS-071B` is reviewed, prove one requirement-to-descriptor-to-preview path with explicit provenance and human-controlled acceptance before opening the `WB-NS-071C` external ecosystem boundary.
+- **Extension ecosystem integration** — mature catalog/install, compatibility, trust, permission, and lifecycle decisions through `WB-NS-040` while keeping declarative design-system inputs separate from executable extension authority.
+- **Projection and workflow architecture** — compose the completed manual authoring and design-system foundations into reusable GUI-builder projections before extracting a broader workflow runtime.
 - **Scenario/performance contract** — use deterministic SMALL/TYPICAL/STRESS fixtures for the same vertical so accessibility, disposal, responsiveness, and memory behavior are architecture constraints rather than release cleanup.
 
 ## LATER
