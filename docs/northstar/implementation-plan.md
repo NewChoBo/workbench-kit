@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@e312a0aee1028c6289c6ab6dba927b37582736bd`.
+- **Current integration baseline:** `origin/develop@cfd64106a5212d787f5f5ef1e2231b81cb41524a`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -85,7 +85,7 @@ WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DONE; depend
         ↓
 WB-NS-072E Canvas/Inspector/provenance integration [DONE; dependencies: WB-NS-072C, WB-NS-072D]
         ↓
-WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [READY_FOR_IMPLEMENTATION; dependency: WB-NS-072E]
+WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [DONE; dependency: WB-NS-072E]
 
 Projection/GUI-builder architecture
         ↓
@@ -4918,11 +4918,17 @@ unreleased dependency drift.
 
 ## WB-NS-072F - Existing theme compatibility delegation and cleanup
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) section 22
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072E`
 - **Readiness baseline:** `origin/develop@e312a0aee1028c6289c6ab6dba927b37582736bd`
+- **Source candidate:** `39e1c954b5bdded1fd1f25483fa25829faa7d56d`
+- **Reviewed successor and integration baseline:**
+  `origin/develop@cfd64106a5212d787f5f5ef1e2231b81cb41524a` through PR #364
+- **Final evidence:** `pnpm validate:fast` passed 460 test files / 2,466 tests;
+  `pnpm validate:ui` passed 14 suites / 81 tests with 8 skips and zero failures; core,
+  UX, and public/packed compatibility reviews all returned `PASS` with no P0/P1
 
 ### Goal and current boundary
 
@@ -4937,7 +4943,7 @@ supersedes. The authored Design System and shell appearance remain distinct stat
   persisted or exposed as a fabricated `DesignSystemThemeRef`;
 - this packet adds no product approval, default-selection, persistence, or migration policy.
 
-Current source has three divergent readers of the same compatibility state. Appearance Settings
+At the readiness baseline, source had three divergent readers of the same compatibility state. Appearance Settings
 merges options with overwrite semantics and applies DOM attributes/legacy CSS overrides;
 theme-selection protection independently rebuilds option lists with exact-uniqueness semantics;
 document and nested Workbench roots can receive presentation through separate effects. The target
@@ -5320,6 +5326,11 @@ the host-synchronized document and shell-owned regions share one decision withou
 explicit nested provider; registry revision/content drift fails closed; legacy CSS themes never
 become fake Design System identities; and duplicate compatibility logic is removed only with exact
 consumer and parity evidence.
+
+The reviewed successor at `cfd64106a5212d787f5f5ef1e2231b81cb41524a` satisfies these
+criteria. It preserves the public compatibility surface, routes Settings/presentation/protection
+through the private catalog, fails closed on registry or source drift, owns legacy override cleanup
+without changing native boundaries, and is integrated on `origin/develop` through PR #364.
 
 ---
 
