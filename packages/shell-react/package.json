@@ -15,6 +15,7 @@
     "./command-descriptors": "./src/commands/use-command-descriptors.ts",
     "./registry-command-descriptors": "./src/commands/use-extension-registry-command-descriptors.ts",
     "./command-host": "./src/workbench/command-host.tsx",
+    "./command-host-controller": "./src/workbench/command-host-controller.tsx",
     "./command-palette": "./src/workbench/command-palette.ts",
     "./field-remap": "./src/field-remap/index.ts",
     "./field-remap/view.css": "./src/field-remap/view.css",

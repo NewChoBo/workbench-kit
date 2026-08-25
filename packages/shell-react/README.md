@@ -51,6 +51,28 @@ registry can use `registry-command-descriptors` without importing Provider
 context into that leaf bundle. The root barrel remains the discovery surface,
 not the default runtime import graph.
 
+### Provider-free command host
+
+Hosts that already own command descriptors and execution can compose the canonical
+Command Palette and Quick Open without `WorkbenchProvider`:
+
+```tsx
+import { WorkbenchCommandHostController } from '@workbench-kit/shell-react/command-host-controller';
+
+<WorkbenchCommandHostController
+  commands={commands}
+  executeCommand={executeCommand}
+  quickOpenProviders={quickOpenProviders}
+/>;
+```
+
+`commands` is the complete palette descriptor set. The controller owns only overlay
+state, hard Palette/Quick Open shortcuts, selection routing, and completion-driven
+closing. Hosts continue to own command registration, descriptor projection, Quick Open
+provider construction, persistence, and error reporting. Pass `shortcutBridge` only
+when the host also wants the generic keybinding bridge; omit it or pass `false` to keep
+that routing host-owned.
+
 ### Focused extension context migration
 
 `WorkbenchContextValue` no longer exposes the aggregate `ExtensionRegistry`.

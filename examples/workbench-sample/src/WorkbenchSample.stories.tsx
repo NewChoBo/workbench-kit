@@ -1,4 +1,9 @@
 ﻿import type { Meta, StoryObj } from '@storybook/react-vite';
+import { createCommandRegistry } from '@workbench-kit/platform';
+import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standalone';
+import type { WorkbenchStandaloneBootstrap } from '@workbench-kit/react/workbench/standalone';
+import { WorkbenchCommandHostController } from '@workbench-kit/shell-react/command-host-controller';
+import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import { expectVisibleChatBubbleText } from '../../../packages/react/src/workbench/story/chatStory';
@@ -52,6 +57,82 @@ const meta = {
 export default meta;
 
 type Story = StoryObj<typeof meta>;
+
+const providerFreeCommandHostBootstrap = {
+  contract: {
+    activities: [{ id: 'home', label: 'Home' }],
+    commandRegistry: createCommandRegistry(),
+    initialTheme: 'dark',
+    statusSections: [],
+  },
+} satisfies WorkbenchStandaloneBootstrap<'home'>;
+
+function ProviderFreeCommandHostStory() {
+  const [lastExecution, setLastExecution] = useState('none');
+
+  return (
+    <WorkbenchStandaloneShell
+      bootstrap={providerFreeCommandHostBootstrap}
+      includeSettings={false}
+      renderOverlays={() => (
+        <WorkbenchCommandHostController
+          commands={[{ id: 'story.command', label: 'Run standalone command' }]}
+          executeCommand={(commandId, ...args) => {
+            const path = (args[0] as { path?: unknown } | undefined)?.path;
+            setLastExecution(typeof path === 'string' ? `${commandId}:${path}` : commandId);
+          }}
+          quickOpenProviders={[
+            {
+              id: 'story.files',
+              label: 'Files',
+              search: () => [
+                {
+                  data: { path: 'docs/standalone.md' },
+                  id: 'docs/standalone.md',
+                  label: 'standalone.md',
+                },
+              ],
+            },
+          ]}
+        />
+      )}
+      renderPrimarySidebar={() => <aside>Standalone navigation</aside>}
+      renderSecondaryArea={() => (
+        <main aria-label="Standalone command host">
+          <p>Provider-free controller mounted.</p>
+          <output aria-label="Last standalone command">{lastExecution}</output>
+        </main>
+      )}
+    />
+  );
+}
+
+export const ProviderFreeCommandHost: Story = {
+  name: 'Provider-free command host',
+  render: () => <ProviderFreeCommandHostStory />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+
+    await expect(canvas.getByLabelText('Standalone command host')).toBeVisible();
+    await userEvent.keyboard('{Control>}{Shift>}p{/Control}{/Shift}');
+    const palette = await canvas.findByRole('dialog', { name: /Command Palette/ });
+    await expect(
+      within(palette).getByRole('option', { name: 'Run standalone command' }),
+    ).toBeVisible();
+
+    await userEvent.keyboard('{Control>}p{/Control}');
+    await waitFor(() =>
+      expect(canvas.queryByRole('dialog', { name: /Command Palette/ })).toBeNull(),
+    );
+    const quickOpen = await canvas.findByRole('dialog', { name: /Quick Open/ });
+    const file = await within(quickOpen).findByRole('option', { name: /standalone\.md/ });
+    await userEvent.click(file);
+
+    await expect(canvas.getByLabelText('Last standalone command')).toHaveTextContent(
+      'workspace.open:docs/standalone.md',
+    );
+  },
+};
 
 export const LoginGate: Story = {
   name: 'Login gate',
