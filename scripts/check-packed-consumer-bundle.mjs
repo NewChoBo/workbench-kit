@@ -78,6 +78,28 @@ try {
     cwd: repoRoot,
     stdio: 'inherit',
   });
+  console.log(
+    '[check-packed-consumer] Typechecking focused authoring-development exports with exact optional properties...',
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      path.join(consumerDir, 'src', 'authoring-development-types.ts'),
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
   runCommand(
     'pnpm',
     [
@@ -142,6 +164,14 @@ try {
     stdio: 'inherit',
   });
   runCommand('node', [path.join(consumerDir, 'src', 'node-ui-authoring-runtime.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'authoring-development-runtime.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'authoring-development-runtime.mjs')], {
     cwd: consumerDir,
     stdio: 'inherit',
   });
@@ -702,6 +732,439 @@ export function verifyPackedGraphAuthoringRuntime(): {
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'authoring-development-types.ts'),
+    `import {
+  resolveNodeTypeCatalog,
+  resolveUiComponentCatalog,
+  type UiAtomicComponentDescriptor,
+} from '@workbench-kit/contracts';
+import {
+  AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES,
+  AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  parseAuthoringDevelopmentRequirement,
+  reconcileAuthoringDevelopmentRequirement,
+  resolveAuthoringDevelopmentRequirement,
+  type AuthoringDevelopmentComponentRequirement,
+  type AuthoringDevelopmentIntent,
+  type AuthoringDevelopmentNodeTypeRequirement,
+  type AuthoringDevelopmentRequirement,
+  type AuthoringDevelopmentRequirementIssue,
+  type AuthoringDevelopmentRequirementIssueCode,
+  type AuthoringDevelopmentRequirementParseResult,
+  type AuthoringDevelopmentRequirementResolution,
+  type AuthoringDevelopmentRequirementResumeResolution,
+  type AuthoringDevelopmentRequirementResumeStatus,
+  type AuthoringDevelopmentRequirementStatus,
+  type AuthoringDevelopmentTarget,
+} from '@workbench-kit/contracts/authoring-development';
+
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentComponentRequirement as RootAuthoringDevelopmentComponentRequirement } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentIntent as RootAuthoringDevelopmentIntent } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentNodeTypeRequirement as RootAuthoringDevelopmentNodeTypeRequirement } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirement as RootAuthoringDevelopmentRequirement } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirementIssue as RootAuthoringDevelopmentRequirementIssue } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirementIssueCode as RootAuthoringDevelopmentRequirementIssueCode } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirementParseResult as RootAuthoringDevelopmentRequirementParseResult } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirementResolution as RootAuthoringDevelopmentRequirementResolution } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirementResumeResolution as RootAuthoringDevelopmentRequirementResumeResolution } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirementResumeStatus as RootAuthoringDevelopmentRequirementResumeStatus } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentRequirementStatus as RootAuthoringDevelopmentRequirementStatus } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B remains available only from the focused public subpath.
+import type { AuthoringDevelopmentTarget as RootAuthoringDevelopmentTarget } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071B snapshot helpers remain private implementation details.
+import { snapshotAuthoringDevelopmentValue } from '@workbench-kit/contracts/authoring-development/snapshot';
+// @ts-expect-error WB-NS-071B snapshot helpers remain private implementation details.
+import { UnsupportedAuthoringDevelopmentSnapshotValueError } from '@workbench-kit/contracts/authoring-development/snapshot';
+
+const descriptor: UiAtomicComponentDescriptor = {
+  id: 'workbench.consumer.packed-card',
+  version: '1.0.0',
+  kind: 'atomic',
+  properties: [{ id: 'title', value: { type: 'string' } }],
+  designTime: { label: 'Packed card' },
+};
+
+export const packedAuthoringDevelopmentRequirement = {
+  schemaVersion: AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  requirementId: 'packed-authoring-development',
+  target: { kind: 'component', descriptor },
+  intent: { summary: 'Provide a reusable packed card.', acceptance: ['Renders a title.'] },
+} satisfies AuthoringDevelopmentRequirement;
+
+export const packedAuthoringDevelopmentTarget: AuthoringDevelopmentTarget =
+  packedAuthoringDevelopmentRequirement.target;
+export const packedAuthoringDevelopmentComponentRequirement: AuthoringDevelopmentComponentRequirement =
+  packedAuthoringDevelopmentRequirement;
+export const packedAuthoringDevelopmentNodeTypeRequirement: AuthoringDevelopmentNodeTypeRequirement = {
+  schemaVersion: AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  requirementId: 'packed-authoring-development-node',
+  target: {
+    kind: 'node-type',
+    descriptor: {
+      id: 'workbench.consumer.packed-node',
+      version: '1.0.0',
+      inputs: [{ id: 'input', value: { type: 'string' } }],
+      outputs: [{ id: 'output', value: { type: 'string' } }],
+      designTime: { label: 'Packed node' },
+    },
+  },
+  intent: { summary: 'Provide a reusable packed node.', acceptance: ['Exposes exact ports.'] },
+};
+export const packedAuthoringDevelopmentIssueCode: AuthoringDevelopmentRequirementIssueCode =
+  'malformed-requirement';
+export const packedAuthoringDevelopmentIssue: AuthoringDevelopmentRequirementIssue = {
+  code: packedAuthoringDevelopmentIssueCode,
+  message: 'Packed issue',
+  path: '$',
+};
+export const packedAuthoringDevelopmentStatuses: readonly AuthoringDevelopmentRequirementStatus[] =
+  ['missing', 'fulfilled', 'identity-conflict', 'catalog-unavailable', 'invalid', 'unsupported-version'];
+export const packedAuthoringDevelopmentResumeStatuses: readonly AuthoringDevelopmentRequirementResumeStatus[] =
+  ['same-requirement', 'new-requirement', 'requirement-id-conflict', 'invalid', 'unsupported-version'];
+if (!AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES.includes(packedAuthoringDevelopmentIssueCode)) {
+  throw new TypeError('Packed authoring-development issue vocabulary is incomplete.');
+}
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined for an optional field.
+export const packedInvalidOptionalIntent: AuthoringDevelopmentIntent = {
+  summary: 'Invalid optional intent',
+  acceptance: [],
+  nonGoals: undefined,
+};
+
+export function consumePackedAuthoringDevelopmentParseResult(
+  result: AuthoringDevelopmentRequirementParseResult,
+): string {
+  switch (result.status) {
+    case 'valid':
+      return result.requirement.requirementId;
+    case 'invalid':
+    case 'unsupported-version':
+      return result.issues[0]?.code ?? result.status;
+    default: {
+      const exhaustive: never = result;
+      return exhaustive;
+    }
+  }
+}
+
+export function consumePackedAuthoringDevelopmentResolution(
+  result: AuthoringDevelopmentRequirementResolution,
+): string {
+  switch (result.status) {
+    case 'missing':
+    case 'fulfilled':
+    case 'identity-conflict':
+    case 'catalog-unavailable':
+    case 'invalid':
+    case 'unsupported-version':
+      return result.status;
+    default: {
+      const exhaustive: never = result;
+      return exhaustive;
+    }
+  }
+}
+
+export function consumePackedAuthoringDevelopmentResumeResolution(
+  result: AuthoringDevelopmentRequirementResumeResolution,
+): string {
+  switch (result.status) {
+    case 'same-requirement':
+    case 'new-requirement':
+    case 'requirement-id-conflict':
+    case 'invalid':
+    case 'unsupported-version':
+      return result.status;
+    default: {
+      const exhaustive: never = result;
+      return exhaustive;
+    }
+  }
+}
+
+const parsed = parseAuthoringDevelopmentRequirement(packedAuthoringDevelopmentRequirement);
+if (parsed.status === 'valid') {
+  const catalogs = {
+    components: resolveUiComponentCatalog([]).catalog,
+    nodeTypes: resolveNodeTypeCatalog([]).catalog,
+  };
+  consumePackedAuthoringDevelopmentResolution(
+    resolveAuthoringDevelopmentRequirement(parsed.requirement, catalogs),
+  );
+  consumePackedAuthoringDevelopmentResumeResolution(
+    reconcileAuthoringDevelopmentRequirement(parsed.requirement, parsed.requirement),
+  );
+}
+
+void (0 as unknown as RootAuthoringDevelopmentRequirement);
+void (0 as unknown as RootAuthoringDevelopmentComponentRequirement);
+void (0 as unknown as RootAuthoringDevelopmentIntent);
+void (0 as unknown as RootAuthoringDevelopmentNodeTypeRequirement);
+void (0 as unknown as RootAuthoringDevelopmentRequirementIssue);
+void (0 as unknown as RootAuthoringDevelopmentRequirementIssueCode);
+void (0 as unknown as RootAuthoringDevelopmentRequirementParseResult);
+void (0 as unknown as RootAuthoringDevelopmentRequirementResolution);
+void (0 as unknown as RootAuthoringDevelopmentRequirementResumeResolution);
+void (0 as unknown as RootAuthoringDevelopmentRequirementResumeStatus);
+void (0 as unknown as RootAuthoringDevelopmentRequirementStatus);
+void (0 as unknown as RootAuthoringDevelopmentTarget);
+void snapshotAuthoringDevelopmentValue;
+void UnsupportedAuthoringDevelopmentSnapshotValueError;
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'authoring-development-runtime.cjs'),
+    `const contracts = require('@workbench-kit/contracts');
+const development = require('@workbench-kit/contracts/authoring-development');
+
+const runtimeNames = [
+  'AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES',
+  'AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION',
+  'parseAuthoringDevelopmentRequirement',
+  'reconcileAuthoringDevelopmentRequirement',
+  'resolveAuthoringDevelopmentRequirement',
+];
+for (const name of runtimeNames) {
+  if (name in contracts) {
+    throw new TypeError('Authoring-development unexpectedly leaked through the contracts root: ' + name);
+  }
+  if (!(name in development)) {
+    throw new TypeError('Packed authoring-development CommonJS export is missing: ' + name);
+  }
+}
+for (const name of [
+  'parseAuthoringDevelopmentRequirement',
+  'reconcileAuthoringDevelopmentRequirement',
+  'resolveAuthoringDevelopmentRequirement',
+]) {
+  if (typeof development[name] !== 'function') {
+    throw new TypeError('Packed authoring-development CommonJS function is invalid: ' + name);
+  }
+}
+if (development.AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION !== 1) {
+  throw new TypeError('Packed authoring-development CommonJS schema version is invalid.');
+}
+const expectedIssueCodes = [
+  'unsupported-schema-version',
+  'malformed-requirement',
+  'malformed-intent',
+  'unsupported-target-kind',
+  'malformed-target',
+  'noncanonical-requirement-text',
+  'invalid-component-descriptor',
+  'composite-component-target',
+  'invalid-node-type-descriptor',
+  'unsafe-existing-component-descriptor',
+  'unsafe-existing-node-type-descriptor',
+  'component-catalog-unavailable',
+  'node-type-catalog-unavailable',
+  'component-identity-conflict',
+  'node-type-identity-conflict',
+  'requirement-id-conflict',
+];
+if (
+  !Object.isFrozen(development.AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES) ||
+  JSON.stringify(development.AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES) !==
+    JSON.stringify(expectedIssueCodes)
+) {
+  throw new TypeError('Packed authoring-development CommonJS issue vocabulary is invalid.');
+}
+
+let privateSubpathRejected = false;
+try {
+  require('@workbench-kit/contracts/authoring-development/snapshot');
+} catch (error) {
+  privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+}
+if (!privateSubpathRejected) {
+  throw new TypeError('Packed authoring-development CommonJS private snapshot subpath is exposed.');
+}
+
+const descriptor = {
+  id: 'workbench.consumer.packed-card',
+  version: '1.0.0',
+  kind: 'atomic',
+  properties: [{ id: 'title', value: { type: 'string' } }],
+  designTime: { label: 'Packed card' },
+};
+const requirement = {
+  schemaVersion: development.AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  requirementId: 'packed-authoring-development',
+  target: { kind: 'component', descriptor },
+  intent: { summary: 'Provide a reusable packed card.', acceptance: ['Renders a title.'] },
+};
+const parsed = development.parseAuthoringDevelopmentRequirement(requirement);
+if (
+  parsed.status !== 'valid' ||
+  !Object.isFrozen(parsed) ||
+  !Object.isFrozen(parsed.requirement) ||
+  !Object.isFrozen(parsed.requirement.target.descriptor)
+) {
+  throw new TypeError('Packed authoring-development CommonJS parse contract failed.');
+}
+
+const nodeTypes = contracts.resolveNodeTypeCatalog([]).catalog;
+const componentCatalog = (components) =>
+  contracts.resolveUiComponentCatalog([
+    { contributorId: 'packed-authoring-development', components },
+  ]).catalog;
+const missing = development.resolveAuthoringDevelopmentRequirement(parsed.requirement, {
+  components: componentCatalog([]),
+  nodeTypes,
+});
+const fulfilled = development.resolveAuthoringDevelopmentRequirement(parsed.requirement, {
+  components: componentCatalog([descriptor]),
+  nodeTypes,
+});
+const conflictingDescriptor = {
+  ...descriptor,
+  designTime: { ...descriptor.designTime, hiddenFromPalette: true },
+};
+const conflict = development.resolveAuthoringDevelopmentRequirement(parsed.requirement, {
+  components: componentCatalog([conflictingDescriptor]),
+  nodeTypes,
+});
+if (
+  missing.status !== 'missing' ||
+  fulfilled.status !== 'fulfilled' ||
+  conflict.status !== 'identity-conflict'
+) {
+  throw new TypeError('Packed authoring-development CommonJS resolution contract failed.');
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'authoring-development-runtime.mjs'),
+    `import * as contracts from '@workbench-kit/contracts';
+import {
+  AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES,
+  AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  parseAuthoringDevelopmentRequirement,
+  reconcileAuthoringDevelopmentRequirement,
+  resolveAuthoringDevelopmentRequirement,
+} from '@workbench-kit/contracts/authoring-development';
+
+const runtimeNames = [
+  'AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES',
+  'AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION',
+  'parseAuthoringDevelopmentRequirement',
+  'reconcileAuthoringDevelopmentRequirement',
+  'resolveAuthoringDevelopmentRequirement',
+];
+for (const name of runtimeNames) {
+  if (name in contracts) {
+    throw new TypeError('Authoring-development unexpectedly leaked through the contracts root: ' + name);
+  }
+}
+if (
+  typeof parseAuthoringDevelopmentRequirement !== 'function' ||
+  typeof reconcileAuthoringDevelopmentRequirement !== 'function' ||
+  typeof resolveAuthoringDevelopmentRequirement !== 'function' ||
+  AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION !== 1
+) {
+  throw new TypeError('Packed authoring-development ESM exports are incomplete.');
+}
+const expectedIssueCodes = [
+  'unsupported-schema-version',
+  'malformed-requirement',
+  'malformed-intent',
+  'unsupported-target-kind',
+  'malformed-target',
+  'noncanonical-requirement-text',
+  'invalid-component-descriptor',
+  'composite-component-target',
+  'invalid-node-type-descriptor',
+  'unsafe-existing-component-descriptor',
+  'unsafe-existing-node-type-descriptor',
+  'component-catalog-unavailable',
+  'node-type-catalog-unavailable',
+  'component-identity-conflict',
+  'node-type-identity-conflict',
+  'requirement-id-conflict',
+];
+if (
+  !Object.isFrozen(AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES) ||
+  JSON.stringify(AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES) !== JSON.stringify(expectedIssueCodes)
+) {
+  throw new TypeError('Packed authoring-development ESM issue vocabulary is invalid.');
+}
+
+let privateSubpathRejected = false;
+try {
+  await import('@workbench-kit/contracts/authoring-development/snapshot');
+} catch (error) {
+  privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+}
+if (!privateSubpathRejected) {
+  throw new TypeError('Packed authoring-development ESM private snapshot subpath is exposed.');
+}
+
+const descriptor = {
+  id: 'workbench.consumer.packed-card',
+  version: '1.0.0',
+  kind: 'atomic',
+  properties: [{ id: 'title', value: { type: 'string' } }],
+  designTime: { label: 'Packed card' },
+};
+const requirement = {
+  schemaVersion: AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  requirementId: 'packed-authoring-development',
+  target: { kind: 'component', descriptor },
+  intent: { summary: 'Provide a reusable packed card.', acceptance: ['Renders a title.'] },
+};
+const parsed = parseAuthoringDevelopmentRequirement(requirement);
+if (
+  parsed.status !== 'valid' ||
+  !Object.isFrozen(parsed) ||
+  !Object.isFrozen(parsed.requirement) ||
+  !Object.isFrozen(parsed.requirement.target.descriptor)
+) {
+  throw new TypeError('Packed authoring-development ESM parse contract failed.');
+}
+
+const nodeTypes = contracts.resolveNodeTypeCatalog([]).catalog;
+const componentCatalog = (components) =>
+  contracts.resolveUiComponentCatalog([
+    { contributorId: 'packed-authoring-development', components },
+  ]).catalog;
+const missing = resolveAuthoringDevelopmentRequirement(parsed.requirement, {
+  components: componentCatalog([]),
+  nodeTypes,
+});
+const fulfilled = resolveAuthoringDevelopmentRequirement(parsed.requirement, {
+  components: componentCatalog([descriptor]),
+  nodeTypes,
+});
+const conflictingDescriptor = {
+  ...descriptor,
+  designTime: { ...descriptor.designTime, hiddenFromPalette: true },
+};
+const conflict = resolveAuthoringDevelopmentRequirement(parsed.requirement, {
+  components: componentCatalog([conflictingDescriptor]),
+  nodeTypes,
+});
+if (
+  missing.status !== 'missing' ||
+  fulfilled.status !== 'fulfilled' ||
+  conflict.status !== 'identity-conflict'
+) {
+  throw new TypeError('Packed authoring-development ESM resolution contract failed.');
+}
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'builtins.ts'),
     `import { BUILTIN_WORKBENCH_EXTENSIONS } from '@workbench-kit/shell-react';
 
@@ -1192,6 +1655,7 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
           strict: true,
           target: 'ES2022',
         },
+        exclude: ['src/authoring-development-types.ts'],
         include: ['src/**/*.ts'],
       },
       null,
