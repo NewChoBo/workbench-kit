@@ -74,7 +74,7 @@ WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mec
 WB-NS-070F provider-neutral generative UI parity [DESIGNING; optional after the manual command chain, not a WB-NS-071A dependency]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
-WB-NS-071B component/node development requirement flow [READY_FOR_IMPLEMENTATION]
+WB-NS-071B component/node development requirement flow [DONE]
         ↓
 WB-NS-071C external node ecosystem adapter contract
 
@@ -3303,8 +3303,9 @@ The integrated source implements the graph-authoring contracts under `packages/c
 
 ### `WB-NS-071B` bounded readiness packet — missing capability to development requirement
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Exact source/API base:** `origin/develop@80fab0af8fed297bf9c0afa4805f44e9903109c8`
+- **Integrated implementation:** PR #370 / reviewed successor `76f21f1e9520d45728f3a9be27c359e921052f7a` / merge `7051a2e7051838770a4d7d527904aa4a5515db0d`
 - **Dependencies:** `WB-NS-070C` and `WB-NS-071A` `DONE`; the existing UI component and node-type descriptors/catalogs remain the only target authorities
 - **Target owner:** focused public subpath `@workbench-kit/contracts/authoring-development`
 - **Implementation scope:** inert component/node development requirements, strict plain-data snapshotting, exact catalog reconciliation, deterministic diagnostics, public exports and backendless tests
@@ -3639,6 +3640,17 @@ Construction/parsing is linear in the supplied requirement descriptor, strict sn
 The packet is implementation-ready when an independent consumer can import the focused public subpath, create and freeze one inert atomic-component or node-type development requirement, resolve it against fresh existing catalogs as `missing`, `fulfilled` or fail-closed conflict, and resume only through an explicit caller action without invoking a provider, browser, Electron, extension runtime or document owner.
 
 Producer-distinct source review must reject mutable requirement registries, document persistence, second descriptor/value schemas, label/tag/version-nearest/AI matching, provenance-based snapshot bypasses, accessors or exotic values crossing the boundary, repository/task/code payloads, executable trust claims, automatic Apply/activation, future-schema rewriting, vendor/product coupling, extension/runtime widening and 071C scope. Acceptance requires `PASS / P0 none / P1 none / P2 none` on the exact candidate plus the focused and final validation above.
+
+The integrated source implements the focused leaf under
+`packages/contracts/src/authoring-development/` and exposes it only through
+`@workbench-kit/contracts/authoring-development`. Candidate `9e70537094490541728ff411a36716a9b64c3909`
+established the production contract; one batched evidence successor
+`76f21f1e9520d45728f3a9be27c359e921052f7a` closed every review finding without changing
+production behavior. Focused contracts tests passed 57/57, packed TypeScript/CJS/ESM consumption
+passed, and final static plus 461-file/2,523-test fast validation passed on the successor. Three
+producer-distinct successor reviews returned `PASS / P0 none / P1 none / P2 none`. Browser and
+Electron were not required because no renderer or native boundary changed. PR #370 integrated the
+reviewed successor as merge `7051a2e7051838770a4d7d527904aa4a5515db0d`.
 
 ### ComfyUI discovery
 
