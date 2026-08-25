@@ -1,10 +1,6 @@
 import {
-  WorkbenchCommandPalette,
-  WorkbenchQuickOpen,
-  WorkbenchShortcutCommandBridge,
   createWorkbenchShellCommands,
   createWorkspaceFilesQuickOpenProvider,
-  resolveQuickOpenItemPath,
   type QuickOpenItem,
   type QuickOpenProvider,
   type QuickOpenSelectContext,
@@ -16,10 +12,11 @@ import {
   matchesWorkbenchCommandPaletteShortcut,
   matchesWorkbenchQuickAccessShortcut,
 } from '@workbench-kit/react/workbench/command-ui';
-import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
 import { useWorkbench } from '../shell/provider.js';
+import { WorkbenchCommandHostController } from './command-host-controller.js';
 import { registerWorkbenchShellCommandHandlers } from './shell-command-registration.js';
 import {
   buildWorkbenchPaletteCommands,
@@ -31,8 +28,6 @@ import {
   resolveExtensionKeybindingCommand,
 } from './keybinding-bridge.js';
 import { isWorkspaceResourceService, useWorkspaceResourceState } from './workspace-view-state.js';
-
-const WORKSPACE_OPEN_COMMAND_ID = 'workspace.open' as const;
 
 export interface WorkbenchCommandHostProps {
   additionalCommands?: readonly WorkbenchCommandDescriptor[];
@@ -113,10 +108,6 @@ export function WorkbenchCommandHost({
     views,
     workspaceHostPort,
   } = useWorkbench();
-  const [paletteOpen, setPaletteOpen] = useState(false);
-  const [paletteQuery, setPaletteQuery] = useState('');
-  const [quickOpenOpen, setQuickOpenOpen] = useState(false);
-  const [quickOpenQuery, setQuickOpenQuery] = useState('');
   const [layout, setLayout] = useState(() => layoutService.getState());
   const [extensionKeybindingRevision, setExtensionKeybindingRevision] = useState(
     () => keybindings.revision,
@@ -290,95 +281,6 @@ export function WorkbenchCommandHost({
     ];
   }, [quickOpenProviders, quickOpenRecentPaths, workspaceService, workspaceState?.files]);
 
-  const closePalette = useCallback(() => {
-    setPaletteOpen(false);
-  }, []);
-
-  const openPalette = useCallback((query = '') => {
-    setQuickOpenOpen(false);
-    setPaletteQuery(query);
-    setPaletteOpen(true);
-  }, []);
-
-  const closeQuickOpen = useCallback(() => {
-    setQuickOpenOpen(false);
-  }, []);
-
-  const openQuickOpen = useCallback((query = '') => {
-    setPaletteOpen(false);
-    setQuickOpenQuery(query);
-    setQuickOpenOpen(true);
-  }, []);
-
-  const runPaletteCommand = useCallback(
-    (command: WorkbenchCommandDescriptor, context: WorkbenchCommandRunContext) => {
-      const finish = () => {
-        closePalette();
-      };
-
-      if (onRunCommand?.(command, context)) {
-        finish();
-        return;
-      }
-
-      void executeCommand(command.id).finally(finish);
-    },
-    [closePalette, executeCommand, onRunCommand],
-  );
-
-  const runQuickOpenItem = useCallback(
-    (item: QuickOpenItem, context: QuickOpenSelectContext) => {
-      const finish = () => {
-        closeQuickOpen();
-      };
-
-      if (onOpenQuickOpenItem?.(item, context)) {
-        finish();
-        return;
-      }
-
-      const path = resolveQuickOpenItemPath(item);
-      if (!path) {
-        finish();
-        return;
-      }
-
-      void executeCommand(WORKSPACE_OPEN_COMMAND_ID, { path }).finally(finish);
-    },
-    [closeQuickOpen, executeCommand, onOpenQuickOpenItem],
-  );
-
-  useEffect(() => {
-    if (!enableCommandPalette && !enableQuickOpen) {
-      return undefined;
-    }
-
-    const onKeyDown = (event: KeyboardEvent) => {
-      if (enableCommandPalette && matchesWorkbenchCommandPaletteShortcut(event)) {
-        event.preventDefault();
-        openPalette('>');
-        return;
-      }
-
-      if (matchesWorkbenchQuickAccessShortcut(event)) {
-        event.preventDefault();
-        if (enableQuickOpen) {
-          openQuickOpen();
-          return;
-        }
-
-        if (enableCommandPalette) {
-          openPalette();
-        }
-      }
-    };
-
-    window.addEventListener('keydown', onKeyDown);
-    return () => {
-      window.removeEventListener('keydown', onKeyDown);
-    };
-  }, [enableCommandPalette, enableQuickOpen, openPalette, openQuickOpen]);
-
   useEffect(() => {
     if (!enableExtensionKeybindings) {
       return undefined;
@@ -426,46 +328,35 @@ export function WorkbenchCommandHost({
   ]);
 
   return (
-    <>
-      {enableShortcutBridge ? (
-        <WorkbenchShortcutCommandBridge
-          context={undefined}
-          keybindingOverrides={keybindingOverrides}
-          keybindingProjection={runtimeKeybindingProjection}
-          platform={keybindingPlatform}
-          preventDefault
-          registry={commands}
-        />
-      ) : null}
-      {enableCommandPalette ? (
-        <WorkbenchCommandPalette
-          closeLabel={commandPaletteCloseLabel}
-          commands={paletteCommands}
-          emptyLabel={commandPaletteEmptyLabel}
-          open={paletteOpen}
-          placeholder={commandPalettePlaceholder}
-          query={paletteQuery}
-          title={commandPaletteTitle}
-          onClose={closePalette}
-          onQueryChange={setPaletteQuery}
-          onRunCommand={runPaletteCommand}
-        />
-      ) : null}
-      {enableQuickOpen ? (
-        <WorkbenchQuickOpen
-          closeLabel={quickOpenCloseLabel}
-          emptyLabel={quickOpenEmptyLabel}
-          open={quickOpenOpen}
-          placeholder={quickOpenPlaceholder}
-          providers={resolvedQuickOpenProviders}
-          query={quickOpenQuery}
-          title={quickOpenTitle}
-          onClose={closeQuickOpen}
-          onQueryChange={setQuickOpenQuery}
-          onSelectItem={runQuickOpenItem}
-        />
-      ) : null}
-    </>
+    <WorkbenchCommandHostController
+      commandPaletteCloseLabel={commandPaletteCloseLabel}
+      commandPaletteEmptyLabel={commandPaletteEmptyLabel}
+      commandPalettePlaceholder={commandPalettePlaceholder}
+      commandPaletteTitle={commandPaletteTitle}
+      commands={paletteCommands}
+      enableCommandPalette={enableCommandPalette}
+      enableQuickOpen={enableQuickOpen}
+      executeCommand={executeCommand}
+      quickOpenCloseLabel={quickOpenCloseLabel}
+      quickOpenEmptyLabel={quickOpenEmptyLabel}
+      quickOpenPlaceholder={quickOpenPlaceholder}
+      quickOpenProviders={resolvedQuickOpenProviders}
+      quickOpenTitle={quickOpenTitle}
+      shortcutBridge={
+        enableShortcutBridge
+          ? {
+              context: undefined,
+              keybindingOverrides,
+              keybindingProjection: runtimeKeybindingProjection,
+              platform: keybindingPlatform,
+              preventDefault: true,
+              registry: commands,
+            }
+          : false
+      }
+      {...(onOpenQuickOpenItem === undefined ? {} : { onOpenQuickOpenItem })}
+      {...(onRunCommand === undefined ? {} : { onRunCommand })}
+    />
   );
 }
 

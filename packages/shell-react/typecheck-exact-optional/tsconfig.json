@@ -1,0 +1,16 @@
+{
+  "extends": "../../../tsconfig.base.json",
+  "compilerOptions": {
+    "baseUrl": ".",
+    "exactOptionalPropertyTypes": true,
+    "jsx": "react-jsx",
+    "lib": ["ES2020", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@workbench-kit/react/workbench/command-ui": [
+        "../../react/typecheck-exact-optional/.tmp-types/workbench/commands/command-ui.d.ts"
+      ],
+      "@workbench-kit/workspace": ["./workspace-shim.d.ts"]
+    }
+  },
+  "include": ["./smoke.tsx", "./workspace-shim.d.ts"]
+}

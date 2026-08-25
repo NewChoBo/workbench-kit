@@ -1,0 +1,12 @@
+{
+  "extends": "../tsconfig.json",
+  "compilerOptions": {
+    "declaration": true,
+    "emitDeclarationOnly": true,
+    "noEmit": false,
+    "outDir": "./.tmp-types",
+    "rootDir": "../src",
+    "tsBuildInfoFile": "./.tmp-types/.tsbuildinfo"
+  },
+  "include": ["../src/workbench/command-host-controller.tsx"]
+}

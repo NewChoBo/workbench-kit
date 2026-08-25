@@ -232,6 +232,11 @@ export {
   resolveShellCommandActivities,
 } from './workbench/command-palette.js';
 export { WorkbenchCommandHost, type WorkbenchCommandHostProps } from './workbench/command-host.js';
+export {
+  WorkbenchCommandHostController,
+  type WorkbenchCommandHostControllerProps,
+  type WorkbenchCommandHostExecutor,
+} from './workbench/command-host-controller.js';
 export { WorkbenchStartupGate, type WorkbenchStartupGateProps } from './workbench/startup-gate.js';
 export {
   normalizeKeybindingKeyFromEvent,

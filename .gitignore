@@ -8,6 +8,7 @@ storybook-static/
 .cache/
 tmp/
 packages/react/typecheck-exact-optional/.tmp-types/
+packages/shell-react/typecheck-exact-optional/.tmp-types/
 debug-storybook.log
 
 # Secrets / local env (never commit real credentials)

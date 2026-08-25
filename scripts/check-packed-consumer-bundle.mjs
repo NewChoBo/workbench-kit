@@ -16,6 +16,10 @@ const packDir = path.join(fixtureRoot, 'pack');
 const consumerDir = path.join(fixtureRoot, 'consumer');
 const nodeModulesDir = path.join(consumerDir, 'node_modules');
 const outputDir = path.join(consumerDir, 'dist');
+const focusedCommandHostControllerOutputDir = path.join(
+  consumerDir,
+  'dist-focused-command-host-controller',
+);
 const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
 
 // Keep a little deliberate headroom for normal fixes, while forcing larger
@@ -151,7 +155,10 @@ try {
 
   const coreMetrics = verifyOutput();
 
-  buildFocusedStyleConsumer('focused-overlay');
+  buildFocusedConsumer('focused-command-host-controller');
+  verifyFocusedCommandHostControllerOutput();
+
+  buildFocusedConsumer('focused-overlay');
   verifyFocusedStyleOutput({
     budgetBytes: PACKED_CONSUMER_BUDGETS.focusedOverlayCssGzipBytes,
     coreCssGzipBytes: coreMetrics.cssGzipBytes,
@@ -808,6 +815,27 @@ export const packedStrictFieldRemapProjection = projectValueTransformToNodeType(
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-command-host-controller.ts'),
+    `import {
+  WorkbenchCommandHostController,
+  type WorkbenchCommandHostControllerProps,
+  type WorkbenchCommandHostExecutor,
+} from '@workbench-kit/shell-react/command-host-controller';
+
+const executeCommand: WorkbenchCommandHostExecutor = () => undefined;
+const props = {
+  commands: [],
+  executeCommand,
+} satisfies WorkbenchCommandHostControllerProps;
+
+(globalThis as typeof globalThis & { __workbenchKitCommandHostController?: unknown })
+  .__workbenchKitCommandHostController = Object.freeze({
+  WorkbenchCommandHostController,
+  props,
+});
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'focused-overlay.ts'),
     `import '@workbench-kit/react/styles/foundation.css';
 import '@workbench-kit/react/styles/overlay.css';
@@ -851,6 +879,11 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
 `,
   );
   writeFocusedViteConfig(
+    'focused-command-host-controller',
+    path.join(consumerDir, 'src', 'focused-command-host-controller.ts'),
+    focusedCommandHostControllerOutputDir,
+  );
+  writeFocusedViteConfig(
     'focused-overlay',
     path.join(consumerDir, 'src', 'focused-overlay.ts'),
     focusedOverlayOutputDir,
@@ -867,18 +900,83 @@ function writeFocusedViteConfig(name, input, outputDirectory) {
     manifest: true,
     outDir: ${JSON.stringify(outputDirectory)},
     rollupOptions: { input: ${JSON.stringify(input)} },
+    sourcemap: true,
   },
 };
 `,
   );
 }
 
-function buildFocusedStyleConsumer(name) {
-  console.log(`[check-packed-consumer] Building ${name} CSS consumer...`);
+function buildFocusedConsumer(name) {
+  console.log(`[check-packed-consumer] Building ${name} consumer...`);
   runCommand(
     'pnpm',
     ['exec', 'vite', 'build', '--config', path.join(consumerDir, `vite.${name}.config.mjs`)],
     { cwd: repoRoot, stdio: 'inherit' },
+  );
+}
+
+function collectInitialJavaScriptSources(outputDirectory, label) {
+  const manifest = readJson(path.join(outputDirectory, '.vite', 'manifest.json'));
+  const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
+  if (!entryKey) throw new Error(`${label} consumer emitted no Vite entry.`);
+
+  const sources = [];
+  for (const entry of collectStaticEntries(manifest, entryKey).filter((candidate) =>
+    candidate.file?.endsWith('.js'),
+  )) {
+    const chunkPath = path.join(outputDirectory, entry.file);
+    const sourceMap = readJson(`${chunkPath}.map`);
+    sources.push(...(sourceMap.sources ?? []));
+  }
+  if (sources.length === 0) throw new Error(`${label} emitted no source-map evidence.`);
+  return sources;
+}
+
+function verifyFocusedCommandHostControllerOutput() {
+  const sources = collectInitialJavaScriptSources(
+    focusedCommandHostControllerOutputDir,
+    'focused command-host controller',
+  );
+  const normalizedSources = sources.map((source) =>
+    `/${source.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const requiredSourceSegments = [
+    '/@workbench-kit/shell-react/src/workbench/command-host-controller.tsx',
+    '/@workbench-kit/react/src/workbench/commands/commandpalette.tsx',
+    '/@workbench-kit/react/src/workbench/commands/shortcutcommandbridge.tsx',
+    '/@workbench-kit/react/src/workbench/commands/workbenchquickopen.tsx',
+    '/@workbench-kit/platform/src/commands/command-contributions.ts',
+  ];
+  const forbiddenSourceSegments = [
+    '/@workbench-kit/shell-react/src/workbench/command-host.tsx',
+    '/@workbench-kit/shell-react/src/shell/provider',
+    '/@workbench-kit/shell-react/src/extensions/',
+    '/@workbench-kit/workbench-core/',
+    '/packages/workbench-core/',
+  ];
+
+  for (const requiredSegment of requiredSourceSegments) {
+    if (!normalizedSources.some((source) => source.includes(requiredSegment))) {
+      throw new Error(
+        `Focused command-host controller consumer is missing retained source ${requiredSegment}.`,
+      );
+    }
+  }
+
+  const forbiddenSources = normalizedSources.filter((source) =>
+    forbiddenSourceSegments.some((segment) => source.includes(segment)),
+  );
+  if (forbiddenSources.length > 0) {
+    throw new Error(
+      `Focused command-host controller pulled the provider/extension graph:\n${[
+        ...new Set(forbiddenSources),
+      ].join('\n')}`,
+    );
+  }
+
+  console.log(
+    `[check-packed-consumer] focused command-host controller graph OK (${sources.length} source-map entries).`,
   );
 }
 

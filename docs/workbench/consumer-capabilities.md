@@ -33,6 +33,7 @@ Use official subpath exports from `@workbench-kit/react`. Do not import from `pa
 | `@workbench-kit/shell-react/host-shell`                   | Leaf — product-owned content slots with Kit layout/chrome              |
 | `@workbench-kit/shell-react/shell`                        | Leaf — assembled shell without an implicit editor                      |
 | `@workbench-kit/shell-react/command-host`                 | Leaf — command host orchestration                                      |
+| `@workbench-kit/shell-react/command-host-controller`      | Leaf — provider-free Command Palette and Quick Open controller         |
 | `@workbench-kit/shell-react/command-palette`              | Leaf — shortcut and palette helpers                                    |
 | `@workbench-kit/shell-react/command-descriptors`          | Leaf — resolved command descriptor hook                                |
 | `@workbench-kit/shell-react/registry-command-descriptors` | Leaf — provider-free descriptor hook for a host-owned registry         |
