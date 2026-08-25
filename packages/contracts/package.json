@@ -5,6 +5,9 @@
   "type": "module",
   "typesVersions": {
     "*": {
+      "authoring-development": [
+        "dist/authoring-development.d.ts"
+      ],
       "theme-presets": [
         "dist/theme-presets.d.ts"
       ]
@@ -21,6 +24,12 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "default": "./dist/index.js"
+    },
+    "./authoring-development": {
+      "types": "./dist/authoring-development.d.ts",
+      "import": "./dist/authoring-development.js",
+      "require": "./dist/authoring-development.cjs",
+      "default": "./dist/authoring-development.js"
     },
     "./theme-presets": {
       "types": "./dist/theme-presets.d.ts",
