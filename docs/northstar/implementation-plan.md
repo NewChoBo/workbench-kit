@@ -1933,7 +1933,7 @@ synchronous host claim? ── yes → close once, no fallback
 - Ctrl/Cmd+P opens Quick Open and closes Command Palette; when Quick Open is disabled but Command
   Palette is enabled, it opens Command Palette without forcing the `>` query.
 - The hard-shortcut window listener is installed once for the enabled configuration and removed on
-  cleanup. It does not consume shortcut-capture events or duplicate the generic bridge.
+  cleanup. It does not duplicate the generic bridge.
 - A truthy `onRunCommand` or `onOpenQuickOpenItem` result claims the action synchronously, closes
   immediately and skips fallback execution.
 - An unclaimed palette command calls the injected executor. An unclaimed Quick Open file with a
@@ -2010,7 +2010,7 @@ on the exact candidate includes:
   built-in extension modules and workbench-core extension graph;
 - `pnpm check:commit-safety`, focused shell-react/type checks, exact-optional typecheck,
   `check:public-exports`, dependency-graph and packed-consumer checks;
-- one exact-head `pnpm validate:static`, full unit gate and the focused
+- one exact-head `pnpm validate:static`, `pnpm test` full unit gate and the focused
   StandaloneShell/Storybook browser interaction.
 
 Electron is not run because this packet changes no main, preload, BrowserWindow, native IPC or
