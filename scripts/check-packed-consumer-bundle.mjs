@@ -547,33 +547,49 @@ if (registry.snapshot().revision !== 0) process.exit(1);
 import {
   applyUiAuthoringSessionCommand,
   applyUiAuthoringSessionCommandV2,
+  applyUiAuthoringSessionCommandV3,
   applyUiDesignSystemPackChange,
   applyUiDesignSystemPackChangeV2,
+  applyUiDesignSystemPackChangeV3,
   applyUiDocumentCommand,
   applyUiDocumentCommandV2,
+  applyUiDocumentCommandV3,
   createUiAuthoringDetachedPlan,
   createUiAuthoringSession,
   createUiAuthoringSessionV2,
+  createUiAuthoringSessionV3,
+  createUiDocumentV3,
   finalizeUiAuthoringDetachedPlan,
   previewUiAuthoringDetachedPlan,
   projectUiAuthoringDocument,
+  projectUiAuthoringDocumentV3,
+  projectUiDesignSystemDocumentV3,
   redoUiAuthoringSession,
   redoUiAuthoringSessionV2,
+  redoUiAuthoringSessionV3,
+  selectUiDocumentNodesV3,
   undoUiAuthoringSession,
   undoUiAuthoringSessionV2,
+  undoUiAuthoringSessionV3,
+  upgradeUiDocumentToV3,
   type ApplyUiDocumentCommandResult,
   type ApplyUiDocumentCommandV2Result,
+  type ApplyUiDocumentCommandV3Result,
   type ApplyUiDesignSystemPackChangeResult,
   type ApplyUiDesignSystemPackChangeV2Result,
+  type ApplyUiDesignSystemPackChangeV3Result,
   type CreateUiAuthoringDetachedPlanInput,
   type UiAuthoringSessionCommandResult,
   type UiAuthoringSessionState,
   type UiAuthoringSessionStateV2,
+  type UiAuthoringSessionStateV3,
   type UiAuthoringSessionV2CommandResult,
+  type UiAuthoringSessionV3CommandResult,
   type UiAuthoringBindingProvenance,
   type UiAuthoringDesignSystemInputSnapshot,
   type UiAuthoringDetachedPlan,
   type UiAuthoringDocumentProjection,
+  type UiAuthoringDocumentProjectionV3,
   type UiAuthoringDocumentNodeProjection,
   type UiAuthoringInputBindingProjection,
   type UiAuthoringPlanDiagnostic,
@@ -585,14 +601,21 @@ import {
   type UiAuthoringRecipeProvenance,
   type UiDocument,
   type UiDocumentAtomicCommandV2,
+  type UiDocumentAtomicCommandV3,
   type UiDocumentCommand,
   type UiDocumentCommandV2,
+  type UiDocumentCommandV3,
   type UiDocumentCommandV2Context,
+  type UiDocumentCommandV3Context,
   type UiDocumentCommandV2Issue,
   type UiDocumentCommandV2IssueCode,
   type UiDocumentTransaction,
   type UiDocumentTransactionRecordV2,
+  type UiDocumentTransactionRecordV3,
   type UiDocumentTransactionV2,
+  type UiDocumentTransactionV3,
+  type UiDocumentNodeAuthoringV3,
+  type UiDocumentV3,
 } from '@workbench-kit/jdw';
 
 export function consumeLegacyUiDocumentCommand(command: UiDocumentCommand): string {
@@ -665,6 +688,77 @@ export function consumeUiDocumentCommandV2(command: UiDocumentCommandV2): string
   }
 }
 
+export function consumeUiDocumentCommandV3(command: UiDocumentCommandV3): string {
+  switch (command.type) {
+    case 'insert-node':
+    case 'remove-node':
+    case 'replace-node':
+    case 'move-node':
+    case 'set-property':
+    case 'set-layout':
+    case 'set-input-binding':
+    case 'clear-input-binding':
+    case 'batch':
+    case 'upsert-responsive-variant':
+    case 'remove-responsive-variant':
+    case 'set-responsive-property':
+    case 'clear-responsive-property':
+    case 'set-responsive-layout':
+    case 'clear-responsive-layout':
+      return command.type;
+    default: {
+      const exhaustive: never = command;
+      return exhaustive;
+    }
+  }
+}
+
+export function consumeUiDocumentTransactionV3(transaction: UiDocumentTransactionV3): string {
+  switch (transaction.kind) {
+    case 'document-command':
+      return consumeUiDocumentCommandV3(transaction.command);
+    case 'design-system-change':
+      return transaction.intent.type;
+    default: {
+      const exhaustive: never = transaction;
+      return exhaustive;
+    }
+  }
+}
+
+export function consumeUiDocumentV3(document: UiDocumentV3): readonly [string, string, unknown] {
+  const rootId: string = document.root.id;
+  const rootType: string = document.root.type;
+  const extendedRoot: UiDocumentV3['root'] = {
+    ...document.root,
+    packedConsumerField: { enabled: true },
+  };
+  const arbitraryWidgetField: unknown = extendedRoot.packedConsumerField;
+  return [rootId, rootType, arbitraryWidgetField];
+}
+
+type PackedSchema2UiDocument = UiDocumentV3 & {
+  readonly root: UiDocumentV3['root'] & {
+    readonly $authoring: UiDocumentNodeAuthoringV3 & {
+      readonly documentSchemaVersion: 2;
+    };
+  };
+};
+declare const packedV3Document: PackedSchema2UiDocument;
+declare const packedLegacyCommand: UiDocumentCommand;
+declare const packedV2Command: UiDocumentCommandV2;
+declare const packedV2Context: UiDocumentCommandV2Context;
+if (false) {
+  // @ts-expect-error V3 schema 2 documents are intentionally rejected by the legacy mutator.
+  applyUiDocumentCommand(packedV3Document, packedLegacyCommand);
+  // @ts-expect-error V3 schema 2 documents are intentionally rejected by the V2 mutator.
+  applyUiDocumentCommandV2(packedV3Document, packedV2Command, packedV2Context);
+  // @ts-expect-error V3 schema 2 documents are intentionally rejected by the legacy session.
+  createUiAuthoringSession(packedV3Document);
+  // @ts-expect-error V3 schema 2 documents are intentionally rejected by the V2 session.
+  createUiAuthoringSessionV2(packedV3Document);
+}
+
 type LegacyApplyUiDocumentCommand = (
   document: UiDocument,
   command: UiDocumentCommand,
@@ -726,6 +820,20 @@ export type PackedUiAuthoringV2Contracts = {
   commandIssueCode: UiDocumentCommandV2IssueCode;
 };
 
+export type PackedUiAuthoringV3Contracts = {
+  atomicCommand: UiDocumentAtomicCommandV3;
+  command: UiDocumentCommandV3;
+  context: UiDocumentCommandV3Context;
+  transaction: UiDocumentTransactionV3;
+  transactionRecord: UiDocumentTransactionRecordV3;
+  document: UiDocumentV3;
+  documentResult: ApplyUiDocumentCommandV3Result;
+  sessionState: UiAuthoringSessionStateV3;
+  sessionResult: UiAuthoringSessionV3CommandResult;
+  designSystemResult: ApplyUiDesignSystemPackChangeV3Result;
+  documentProjection: UiAuthoringDocumentProjectionV3;
+};
+
 export const packedUiAuthoringV2Runtime = Object.freeze({
   applyUiAuthoringSessionCommandV2,
   applyUiDesignSystemPackChangeV2,
@@ -738,6 +846,20 @@ export const packedUiAuthoringV2Runtime = Object.freeze({
   redoUiAuthoringSessionV2,
   undoUiAuthoringSessionV2,
 });
+
+export const packedUiAuthoringV3Runtime = Object.freeze({
+  applyUiAuthoringSessionCommandV3,
+  applyUiDesignSystemPackChangeV3,
+  applyUiDocumentCommandV3,
+  createUiAuthoringSessionV3,
+  createUiDocumentV3,
+  projectUiAuthoringDocumentV3,
+  projectUiDesignSystemDocumentV3,
+  redoUiAuthoringSessionV3,
+  selectUiDocumentNodesV3,
+  undoUiAuthoringSessionV3,
+  upgradeUiDocumentToV3,
+});
 `,
   );
   fs.writeFileSync(
@@ -747,20 +869,31 @@ export const packedUiAuthoringV2Runtime = Object.freeze({
 const requiredFunctions = [
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
+  'applyUiAuthoringSessionCommandV3',
   'applyUiDesignSystemPackChange',
   'applyUiDesignSystemPackChangeV2',
+  'applyUiDesignSystemPackChangeV3',
   'applyUiDocumentCommand',
   'applyUiDocumentCommandV2',
+  'applyUiDocumentCommandV3',
   'createUiAuthoringDetachedPlan',
   'createUiAuthoringSession',
   'createUiAuthoringSessionV2',
+  'createUiAuthoringSessionV3',
+  'createUiDocumentV3',
   'finalizeUiAuthoringDetachedPlan',
   'previewUiAuthoringDetachedPlan',
   'projectUiAuthoringDocument',
+  'projectUiAuthoringDocumentV3',
+  'projectUiDesignSystemDocumentV3',
   'redoUiAuthoringSession',
   'redoUiAuthoringSessionV2',
+  'redoUiAuthoringSessionV3',
+  'selectUiDocumentNodesV3',
   'undoUiAuthoringSession',
   'undoUiAuthoringSessionV2',
+  'undoUiAuthoringSessionV3',
+  'upgradeUiDocumentToV3',
 ];
 for (const name of requiredFunctions) {
   if (typeof jdw[name] !== 'function') {
@@ -776,20 +909,31 @@ for (const name of requiredFunctions) {
 const requiredFunctions = [
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
+  'applyUiAuthoringSessionCommandV3',
   'applyUiDesignSystemPackChange',
   'applyUiDesignSystemPackChangeV2',
+  'applyUiDesignSystemPackChangeV3',
   'applyUiDocumentCommand',
   'applyUiDocumentCommandV2',
+  'applyUiDocumentCommandV3',
   'createUiAuthoringDetachedPlan',
   'createUiAuthoringSession',
   'createUiAuthoringSessionV2',
+  'createUiAuthoringSessionV3',
+  'createUiDocumentV3',
   'finalizeUiAuthoringDetachedPlan',
   'previewUiAuthoringDetachedPlan',
   'projectUiAuthoringDocument',
+  'projectUiAuthoringDocumentV3',
+  'projectUiDesignSystemDocumentV3',
   'redoUiAuthoringSession',
   'redoUiAuthoringSessionV2',
+  'redoUiAuthoringSessionV3',
+  'selectUiDocumentNodesV3',
   'undoUiAuthoringSession',
   'undoUiAuthoringSessionV2',
+  'undoUiAuthoringSessionV3',
+  'upgradeUiDocumentToV3',
 ];
 for (const name of requiredFunctions) {
   if (typeof jdw[name] !== 'function') {

@@ -14,8 +14,8 @@ import {
   createUiDocumentFromRoot,
   readUiDocumentNodeAuthoring,
 } from './document.js';
+import { createUiDocumentV3FromRoot, readUiDocumentNodeAuthoringV3 } from './document-v3.js';
 import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutability.js';
-import { normalizeUiDocumentSelection } from './session.js';
 import type {
   ApplyUiDesignSystemPackChangeResult,
   ApplyUiDesignSystemPackChangeV2Result,
@@ -28,6 +28,7 @@ import type {
   UiDocumentTransactionV2,
   UiDocumentTransactionRecord,
   UiDocumentTransactionRecordV2,
+  UiDocumentV3,
 } from './types.js';
 import { collectWidgetNodes, type GenericWidget } from '../widget/tree.js';
 import { isGenericWidget } from '../widget/type-guards.js';
@@ -174,6 +175,100 @@ export function projectUiDesignSystemDocument(
   });
 }
 
+/** Projects the additive V3 responsive authoring state without changing the V1/V2 projection. */
+export function projectUiDesignSystemDocumentV3(
+  document: UiDocumentV3,
+): ProjectUiDesignSystemDocumentResult {
+  let state: UiDocumentV3;
+  try {
+    state = snapshotDesignSystemResolutionInput(document);
+  } catch {
+    return Object.freeze({
+      diagnostics: freezeDiagnostics([
+        diagnostic(
+          'invalid-pack-change-request',
+          'The authored document projection input must be plain declarative data.',
+          'document',
+        ),
+      ]),
+    });
+  }
+  const validated = createUiDocumentV3FromRoot(state.documentId, state.revision, state.root);
+  if (
+    validated.document === null ||
+    validated.document.source !== state.source ||
+    !declarativeEqual(validated.document.root, state.root) ||
+    !declarativeEqual(validated.document.designSystem, state.designSystem)
+  ) {
+    return Object.freeze({
+      diagnostics: freezeDiagnostics([
+        diagnostic(
+          'invalid-pack-change-request',
+          'The authored document projection input is invalid.',
+          'document',
+        ),
+      ]),
+    });
+  }
+  if (state.designSystem === null) {
+    return Object.freeze({
+      diagnostics: freezeDiagnostics([
+        diagnostic(
+          'source-design-system-state-required',
+          'Pack-change planning requires explicit root design-system state.',
+          'document.designSystem',
+        ),
+      ]),
+    });
+  }
+
+  const rootAuthoring = readUiDocumentNodeAuthoringV3(state.root)!;
+  const scopeChains = new Map<string, readonly string[]>();
+  const nodes = collectWidgetNodes(state.root).map((entry) => {
+    const authoring = readUiDocumentNodeAuthoringV3(entry.widget)!;
+    const parentChain = entry.parent
+      ? (scopeChains.get(entry.parent.id as string) ?? Object.freeze([]))
+      : Object.freeze([]);
+    const scopeChain = authoring.themeScopeId
+      ? Object.freeze([...parentChain, authoring.themeScopeId])
+      : parentChain;
+    scopeChains.set(entry.widget.id as string, scopeChain);
+    return Object.freeze({
+      nodeId: entry.widget.id as string,
+      component: Object.freeze({ ...authoring.component }),
+      properties: deepFreezeUiAuthoringValue(cloneUiAuthoringJsonValue(authoring.properties)),
+      ...(authoring.layout
+        ? {
+            layout: Object.freeze({
+              strategyId: authoring.layout.strategyId,
+              values: deepFreezeUiAuthoringValue(
+                cloneUiAuthoringJsonValue(authoring.layout.values),
+              ),
+            }),
+          }
+        : {}),
+      ...(authoring.responsiveOverrides === undefined
+        ? {}
+        : {
+            responsiveOverrides: deepFreezeUiAuthoringValue(
+              cloneUiAuthoringJsonValue(authoring.responsiveOverrides),
+            ),
+          }),
+      scopeChain,
+    });
+  });
+  return Object.freeze({
+    document: deepFreezeUiAuthoringValue({
+      documentId: state.documentId,
+      revision: state.revision,
+      state: cloneUiAuthoringJsonValue(state.designSystem),
+      responsiveVariants: cloneUiAuthoringJsonValue(rootAuthoring.responsiveVariants ?? []),
+      nodes: Object.freeze(nodes),
+    }),
+    diagnostics: Object.freeze([]),
+  });
+}
+
 function declarativeEqual(left: unknown, right: unknown): boolean {
   if (Object.is(left, right)) return true;
   if (Array.isArray(left) || Array.isArray(right)) {
@@ -209,6 +304,75 @@ function isSource(value: unknown): value is UiValueSource {
   return field !== undefined && isCanonicalText(value[field]);
 }
 
+function responsiveVariantIds(value: unknown): ReadonlySet<string> | null {
+  if (value === undefined) return new Set();
+  if (!Array.isArray(value)) return null;
+  const ids = new Set<string>();
+  let previous: { readonly min: number; readonly max: number; readonly id: string } | undefined;
+  for (const variant of value) {
+    if (
+      !isPlainRecord(variant) ||
+      !isCanonicalText(variant.id) ||
+      ids.has(variant.id) ||
+      !isPlainRecord(variant.hostWidth)
+    ) {
+      return null;
+    }
+    const hasMin = Object.prototype.hasOwnProperty.call(variant.hostWidth, 'minInclusive');
+    const hasMax = Object.prototype.hasOwnProperty.call(variant.hostWidth, 'maxExclusive');
+    const min = hasMin ? variant.hostWidth.minInclusive : 0;
+    const max = hasMax ? variant.hostWidth.maxExclusive : Number.POSITIVE_INFINITY;
+    if (
+      (!hasMin && !hasMax) ||
+      typeof min !== 'number' ||
+      !Number.isFinite(min) ||
+      min < 0 ||
+      (hasMin && min === 0) ||
+      typeof max !== 'number' ||
+      (hasMax && !Number.isFinite(max)) ||
+      max <= 0 ||
+      min >= max
+    ) {
+      return null;
+    }
+    const current = { min, max, id: variant.id };
+    if (
+      previous !== undefined &&
+      (current.min < previous.max ||
+        current.min < previous.min ||
+        (current.min === previous.min && current.max < previous.max) ||
+        (current.min === previous.min &&
+          current.max === previous.max &&
+          current.id.localeCompare(previous.id) < 0))
+    ) {
+      return null;
+    }
+    previous = current;
+    ids.add(variant.id);
+  }
+  return ids;
+}
+
+function isResponsiveOverrideMap(value: unknown, variantIds: ReadonlySet<string>): boolean {
+  if (value === undefined) return true;
+  return (
+    isPlainRecord(value) &&
+    Object.entries(value).every(([variantId, override]) => {
+      if (!variantIds.has(variantId) || !isPlainRecord(override)) return false;
+      const propertiesValid =
+        override.properties === undefined ||
+        (isPlainRecord(override.properties) && Object.values(override.properties).every(isSource));
+      const layoutValid =
+        override.layout === undefined ||
+        (isPlainRecord(override.layout) &&
+          isCanonicalText(override.layout.strategyId) &&
+          isPlainRecord(override.layout.values) &&
+          Object.values(override.layout.values).every(isSource));
+      return propertiesValid && layoutValid;
+    })
+  );
+}
+
 function isAuthoredDocument(value: unknown): value is DesignSystemAuthoredDocumentSnapshot {
   if (
     !isPlainRecord(value) ||
@@ -221,6 +385,8 @@ function isAuthoredDocument(value: unknown): value is DesignSystemAuthoredDocume
   ) {
     return false;
   }
+  const variantIds = responsiveVariantIds(value.responsiveVariants);
+  if (variantIds === null) return false;
   const seen = new Set<string>();
   return value.nodes.every((node) => {
     if (
@@ -230,6 +396,7 @@ function isAuthoredDocument(value: unknown): value is DesignSystemAuthoredDocume
       !isCanonicalRef(node.component) ||
       !isPlainRecord(node.properties) ||
       !Object.values(node.properties).every(isSource) ||
+      !isResponsiveOverrideMap(node.responsiveOverrides, variantIds) ||
       !Array.isArray(node.scopeChain) ||
       !node.scopeChain.every(isCanonicalText) ||
       new Set(node.scopeChain).size !== node.scopeChain.length
@@ -312,6 +479,10 @@ function collectDependencyIds(document: DesignSystemAuthoredDocumentSnapshot): {
   for (const node of document.nodes) {
     Object.values(node.properties).forEach(visit);
     if (node.layout) Object.values(node.layout.values).forEach(visit);
+    for (const override of Object.values(node.responsiveOverrides ?? {})) {
+      Object.values(override.properties ?? {}).forEach(visit);
+      if (override.layout) Object.values(override.layout.values).forEach(visit);
+    }
   }
   for (const scope of Object.values(document.state.scopes ?? {})) {
     for (const [tokenId, source] of Object.entries(scope.tokenOverrides ?? {})) {
@@ -352,7 +523,7 @@ function rewriteRoot(root: GenericWidget, mutation: DesignSystemPackChangeMutati
   const resourceMap = new Map(mutation.resources.map((entry) => [entry.sourceId, entry.targetId]));
 
   const visit = (widget: GenericWidget, rootNode: boolean): GenericWidget => {
-    const authoring = readUiDocumentNodeAuthoring(widget)!;
+    const authoring = readUiDocumentNodeAuthoringV3(widget)!;
     const rawAuthoring = widget.$authoring as Readonly<Record<string, unknown>>;
     const nextAuthoring: Record<string, unknown> = {
       ...rawAuthoring,
@@ -366,6 +537,30 @@ function rewriteRoot(root: GenericWidget, mutation: DesignSystemPackChangeMutati
             },
           }
         : {}),
+      ...(authoring.responsiveOverrides === undefined
+        ? {}
+        : {
+            responsiveOverrides: Object.fromEntries(
+              Object.entries(authoring.responsiveOverrides).map(([variantId, override]) => [
+                variantId,
+                {
+                  ...(override.properties === undefined
+                    ? {}
+                    : {
+                        properties: rewriteValueMap(override.properties, tokenMap, resourceMap),
+                      }),
+                  ...(override.layout === undefined
+                    ? {}
+                    : {
+                        layout: {
+                          ...override.layout,
+                          values: rewriteValueMap(override.layout.values, tokenMap, resourceMap),
+                        },
+                      }),
+                },
+              ]),
+            ),
+          }),
     };
     if (rootNode) nextAuthoring.designSystem = mutation.targetState;
 
@@ -445,14 +640,22 @@ function isAuthoringSessionStateV2(value: unknown): value is UiAuthoringSessionS
   return isAuthoringSessionStateValue(value, isUiDocumentTransactionRecordV2);
 }
 
-interface DesignSystemApplyState {
-  readonly document: UiDocument;
+interface DesignSystemDocumentLike {
+  readonly documentId: string;
+  readonly revision: number;
+  readonly source: string;
+  readonly root: GenericWidget & { readonly id: string };
+  readonly designSystem: UiDesignSystemState | null;
+}
+
+interface DesignSystemApplyState<TDocument extends DesignSystemDocumentLike = UiDocument> {
+  readonly document: TDocument;
   readonly selectedNodeIds: readonly string[];
 }
 
 type DesignSystemApplyTransaction = UiDocumentTransaction & UiDocumentTransactionV2;
 
-type DesignSystemApplyCoreResult =
+type DesignSystemApplyCoreResult<TDocument extends DesignSystemDocumentLike = UiDocument> =
   | {
       readonly changed: false;
       readonly diagnostics: readonly DesignSystemDiagnostic[];
@@ -460,23 +663,53 @@ type DesignSystemApplyCoreResult =
   | {
       readonly changed: true;
       readonly diagnostics: readonly DesignSystemDiagnostic[];
-      readonly document: UiDocument;
+      readonly document: TDocument;
       readonly selectedNodeIds: readonly string[];
       readonly transaction: DesignSystemApplyTransaction;
     };
 
-function coreFailure(diagnosticEntry: DesignSystemDiagnostic): DesignSystemApplyCoreResult {
+function coreFailure<TDocument extends DesignSystemDocumentLike>(
+  diagnosticEntry: DesignSystemDiagnostic,
+): DesignSystemApplyCoreResult<TDocument> {
   return Object.freeze({
     changed: false,
     diagnostics: Object.freeze([diagnosticEntry]),
   });
 }
 
-function applyUiDesignSystemPackChangeCore(
-  state: DesignSystemApplyState,
+function normalizeDesignSystemSelection(
+  document: DesignSystemDocumentLike,
+  selectedNodeIds: readonly string[],
+): readonly string[] {
+  const nodeIds = new Set(
+    collectWidgetNodes(document.root).flatMap((entry) =>
+      typeof entry.widget.id === 'string' ? [entry.widget.id] : [],
+    ),
+  );
+  const seen = new Set<string>();
+  return Object.freeze(
+    selectedNodeIds.filter((nodeId) => {
+      if (!nodeIds.has(nodeId) || seen.has(nodeId)) return false;
+      seen.add(nodeId);
+      return true;
+    }),
+  );
+}
+
+function applyUiDesignSystemPackChangeCore<TDocument extends DesignSystemDocumentLike>(
+  state: DesignSystemApplyState<TDocument>,
   mutation: DesignSystemPackChangeMutation,
   currentRegistryRevision: number,
-): DesignSystemApplyCoreResult {
+  projectDocument: (document: TDocument) => ProjectUiDesignSystemDocumentResult,
+  createDocumentFromRoot: (
+    documentId: string,
+    revision: number,
+    root: GenericWidget,
+  ) => {
+    readonly document: TDocument | null;
+    readonly issues: readonly { readonly message: string }[];
+  },
+): DesignSystemApplyCoreResult<TDocument> {
   if (
     !isMutation(mutation) ||
     !Number.isInteger(currentRegistryRevision) ||
@@ -501,7 +734,7 @@ function applyUiDesignSystemPackChangeCore(
     );
   }
 
-  const currentProjection = projectUiDesignSystemDocument(state.document);
+  const currentProjection = projectDocument(state.document);
   if (
     currentProjection.document === undefined ||
     state.document.documentId !== mutation.documentId ||
@@ -555,7 +788,7 @@ function applyUiDesignSystemPackChangeCore(
 
   const nextRevision = state.document.revision + 1;
   const nextRoot = rewriteRoot(state.document.root, mutation);
-  const nextResult = createUiDocumentFromRoot(state.document.documentId, nextRevision, nextRoot);
+  const nextResult = createDocumentFromRoot(state.document.documentId, nextRevision, nextRoot);
   if (nextResult.document === null || nextResult.document.source === state.document.source) {
     return coreFailure(
       diagnostic(
@@ -567,7 +800,7 @@ function applyUiDesignSystemPackChangeCore(
     );
   }
 
-  const nextSelectedNodeIds = normalizeUiDocumentSelection(
+  const nextSelectedNodeIds = normalizeDesignSystemSelection(
     nextResult.document,
     state.selectedNodeIds,
   );
@@ -601,6 +834,70 @@ function applyUiDesignSystemPackChangeCore(
     selectedNodeIds: nextSelectedNodeIds,
     transaction,
   });
+}
+
+export type ApplyUiDesignSystemPackChangeDocumentV3Result =
+  | {
+      readonly changed: false;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+    }
+  | {
+      readonly changed: true;
+      readonly diagnostics: readonly DesignSystemDiagnostic[];
+      readonly document: UiDocumentV3;
+      readonly selectedNodeIds: readonly string[];
+      readonly transaction: Readonly<
+        Pick<UiDocumentTransaction, 'transactionId' | 'baseRevision' | 'nextRevision' | 'patches'>
+      >;
+    };
+
+/** Internal V3 session seam: validates and applies one responsive-aware Pack mutation. */
+export function applyUiDesignSystemPackChangeDocumentV3(
+  state: DesignSystemApplyState<UiDocumentV3>,
+  mutation: DesignSystemPackChangeMutation,
+  currentRegistryRevision: number,
+): ApplyUiDesignSystemPackChangeDocumentV3Result {
+  let safeState: DesignSystemApplyState<UiDocumentV3>;
+  let safeMutation: DesignSystemPackChangeMutation;
+  try {
+    safeState = snapshotDesignSystemResolutionInput(state);
+    safeMutation = snapshotDesignSystemResolutionInput(mutation);
+  } catch {
+    return coreFailure(
+      diagnostic(
+        'invalid-pack-change-mutation',
+        'Pack-change mutation must be plain declarative data.',
+        'mutation',
+      ),
+    );
+  }
+  const validated = createUiDocumentV3FromRoot(
+    safeState.document.documentId,
+    safeState.document.revision,
+    safeState.document.root,
+  );
+  if (
+    validated.document === null ||
+    validated.document.source !== safeState.document.source ||
+    !declarativeEqual(validated.document.designSystem, safeState.document.designSystem) ||
+    !Array.isArray(safeState.selectedNodeIds) ||
+    !safeState.selectedNodeIds.every(isCanonicalText)
+  ) {
+    return coreFailure(
+      diagnostic(
+        'invalid-pack-change-mutation',
+        'Pack-change mutation and V3 document state must be canonical.',
+        'mutation',
+      ),
+    );
+  }
+  return applyUiDesignSystemPackChangeCore(
+    safeState,
+    safeMutation,
+    currentRegistryRevision,
+    projectUiDesignSystemDocumentV3,
+    createUiDocumentV3FromRoot,
+  );
 }
 
 export function applyUiDesignSystemPackChange(
@@ -637,6 +934,8 @@ export function applyUiDesignSystemPackChange(
     safeState,
     safeMutation,
     currentRegistryRevision,
+    projectUiDesignSystemDocument,
+    createUiDocumentFromRoot,
   );
   if (!applied.changed) return failure(state, ...applied.diagnostics);
 
@@ -693,6 +992,8 @@ export function applyUiDesignSystemPackChangeV2(
     safeState,
     safeMutation,
     currentRegistryRevision,
+    projectUiDesignSystemDocument,
+    createUiDocumentFromRoot,
   );
   if (!applied.changed) return failureV2(state, ...applied.diagnostics);
 

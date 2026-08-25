@@ -773,10 +773,25 @@ export type {
   UsePreviewViewportOptions,
   UsePreviewViewportResult,
 } from './layout/usePreviewViewport';
-export { composeWorkbenchAuthoringProjection } from './authoring';
+export {
+  composeWorkbenchAuthoringProjection,
+  composeWorkbenchAuthoringProjectionV3,
+  createWorkbenchAuthoringCommandId,
+  createWorkbenchAuthoringLayoutActionV3,
+  createWorkbenchAuthoringPropertyActionV3,
+  WorkbenchAuthoringCanvas,
+  WorkbenchAuthoringInspector,
+} from './authoring';
 export type {
   UiAuthoringSurfaceAction,
+  UiAuthoringSurfaceActionV3,
+  WorkbenchAuthoringCommandIdInput,
   WorkbenchAuthoringController,
+  WorkbenchAuthoringControllerV3,
+  WorkbenchAuthoringLayoutActionInput,
   WorkbenchAuthoringProjection,
+  WorkbenchAuthoringProjectionV3,
+  WorkbenchAuthoringPropertyActionInput,
   WorkbenchAuthoringSurfaceProps,
+  WorkbenchAuthoringSurfacePropsV3,
 } from './authoring';

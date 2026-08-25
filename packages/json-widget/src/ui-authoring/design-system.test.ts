@@ -9,10 +9,13 @@ import {
 import { formatWidgetDocumentJson } from '../document/document.js';
 import type { GenericWidget } from '../widget/tree.js';
 import { createUiDocument, readUiDocumentNodeAuthoring } from './document.js';
+import { createUiDocumentV3, readUiDocumentNodeAuthoringV3 } from './document-v3.js';
 import {
   applyUiDesignSystemPackChange,
+  applyUiDesignSystemPackChangeDocumentV3,
   applyUiDesignSystemPackChangeV2,
   projectUiDesignSystemDocument,
+  projectUiDesignSystemDocumentV3,
 } from './design-system.js';
 import {
   applyUiAuthoringSessionCommand,
@@ -26,6 +29,12 @@ import {
   redoUiAuthoringSessionV2,
   undoUiAuthoringSessionV2,
 } from './session-v2.js';
+import {
+  applyUiDesignSystemPackChangeV3,
+  createUiAuthoringSessionV3,
+  redoUiAuthoringSessionV3,
+  undoUiAuthoringSessionV3,
+} from './session-v3.js';
 import type { UiDocument, UiDocumentCommand } from './types.js';
 
 const sourceRef = Object.freeze({ id: 'source.design', version: '1.0.0' });
@@ -99,6 +108,35 @@ function createVersionedDocument() {
   return result.document!;
 }
 
+function createResponsiveDocument() {
+  const root = authoredDocument();
+  const rootAuthoring = root.$authoring as Record<string, unknown>;
+  rootAuthoring.documentSchemaVersion = 2;
+  rootAuthoring.responsiveVariants = [
+    { id: 'narrow', hostWidth: { maxExclusive: 600 } },
+    { id: 'medium', hostWidth: { minInclusive: 600, maxExclusive: 1000 } },
+    { id: 'wide', hostWidth: { minInclusive: 1000 } },
+  ];
+  rootAuthoring.responsiveOverrides = {
+    narrow: {
+      properties: { color: { kind: 'token', tokenId: 'color.old' } },
+      layout: {
+        strategyId: 'layout.flex',
+        values: { gap: { kind: 'token', tokenId: 'space.old' } },
+      },
+    },
+  };
+  const child = (root.children as GenericWidget[])[0]!;
+  (child.$authoring as Record<string, unknown>).responsiveOverrides = {
+    medium: {
+      properties: { icon: { kind: 'resource', resourceId: 'image.old' } },
+    },
+  };
+  const result = createUiDocumentV3('responsive-design-document', formatWidgetDocumentJson(root));
+  expect(result.issues).toEqual([]);
+  return result.document!;
+}
+
 describe('UI Design System persistence and projection', () => {
   it('persists root state and projects document-order nodes with root-to-leaf scope chains', () => {
     const document = createDocument();
@@ -143,6 +181,44 @@ describe('UI Design System persistence and projection', () => {
     ]);
   });
 
+  it('projects the V3 root catalog and sparse responsive overrides without changing V1 output', () => {
+    const document = createResponsiveDocument();
+    const projection = projectUiDesignSystemDocumentV3(document);
+
+    expect(projection.diagnostics).toEqual([]);
+    expect(projection.document).toMatchObject({
+      responsiveVariants: [
+        { id: 'narrow', hostWidth: { maxExclusive: 600 } },
+        { id: 'medium', hostWidth: { minInclusive: 600, maxExclusive: 1000 } },
+        { id: 'wide', hostWidth: { minInclusive: 1000 } },
+      ],
+      nodes: [
+        {
+          nodeId: 'root',
+          responsiveOverrides: {
+            narrow: {
+              properties: { color: { kind: 'token', tokenId: 'color.old' } },
+              layout: { values: { gap: { kind: 'token', tokenId: 'space.old' } } },
+            },
+          },
+        },
+        {
+          nodeId: 'child',
+          responsiveOverrides: {
+            medium: {
+              properties: { icon: { kind: 'resource', resourceId: 'image.old' } },
+            },
+          },
+        },
+      ],
+    });
+    expect(Object.isFrozen(projection.document?.responsiveVariants)).toBe(true);
+    expect(Object.isFrozen(projection.document?.nodes[0]?.responsiveOverrides)).toBe(true);
+    expect(projectUiDesignSystemDocumentV3({ ...document, source: '{}' }).diagnostics).toEqual([
+      expect.objectContaining({ code: 'invalid-pack-change-request', path: 'document' }),
+    ]);
+  });
+
   it('rejects non-root state, unknown scopes, and repeated scope ids on one ancestry path', () => {
     const root = authoredDocument();
     const child = (root.children as GenericWidget[])[0]!;
@@ -182,6 +258,46 @@ describe('atomic Design System Pack mutation', () => {
     const sourceDocument = projectUiDesignSystemDocument(session.document).document!;
     return {
       requestId: 'pack-change-1',
+      registryRevision: 7,
+      documentId: sourceDocument.documentId,
+      baseRevision: sourceDocument.revision,
+      sourceDocument,
+      targetState: {
+        pack: targetRef,
+        theme: { pack: targetRef, themeId: 'bright' },
+        scopes: {
+          panel: {
+            theme: { pack: targetRef, themeId: 'dim' },
+            tokenOverrides: {
+              'color.new': { kind: 'resource', resourceId: 'image.new' },
+            },
+          },
+        },
+      },
+      components: [
+        {
+          nodeId: 'root',
+          source: { id: 'layout.column', version: '1.0.0' },
+          target: { id: 'layout.stack', version: '2.0.0' },
+        },
+        {
+          nodeId: 'child',
+          source: { id: 'content.text', version: '1.0.0' },
+          target: { id: 'content.label', version: '2.0.0' },
+        },
+      ],
+      tokens: [
+        { sourceId: 'color.old', targetId: 'color.new' },
+        { sourceId: 'space.old', targetId: 'space.new' },
+      ],
+      resources: [{ sourceId: 'image.old', targetId: 'image.new' }],
+    };
+  }
+
+  function responsiveMutationFor(): DesignSystemPackChangeMutation {
+    const sourceDocument = projectUiDesignSystemDocumentV3(createResponsiveDocument()).document!;
+    return {
+      requestId: 'responsive-pack-change',
       registryRevision: 7,
       documentId: sourceDocument.documentId,
       baseRevision: sourceDocument.revision,
@@ -261,6 +377,71 @@ describe('atomic Design System Pack mutation', () => {
     expect(undone.document.source).toBe(before.document.source);
     expect(undone.selectedNodeIds).toEqual(['child']);
     expect(redoUiAuthoringSession(undone)?.document.source).toBe(result.state.document.source);
+  });
+
+  it('applies responsive Pack dependencies through the V3 document seam', () => {
+    const document = createResponsiveDocument();
+    const mutation = responsiveMutationFor();
+    const result = applyUiDesignSystemPackChangeDocumentV3(
+      { document, selectedNodeIds: ['child'] },
+      mutation,
+      7,
+    );
+
+    expect(result.diagnostics).toEqual([]);
+    expect(result.changed).toBe(true);
+    if (!result.changed) throw new Error('expected responsive Pack mutation to apply');
+    expect(result.document.revision).toBe(1);
+    expect(result.document.designSystem).toEqual(mutation.targetState);
+    expect(result.selectedNodeIds).toEqual(['child']);
+    expect(result.transaction).toMatchObject({
+      transactionId: 'responsive-pack-change@0->1',
+      baseRevision: 0,
+      nextRevision: 1,
+    });
+    expect(readUiDocumentNodeAuthoringV3(result.document.root)).toMatchObject({
+      component: { id: 'layout.stack', version: '2.0.0' },
+      responsiveOverrides: {
+        narrow: {
+          properties: { color: { kind: 'token', tokenId: 'color.new' } },
+          layout: { values: { gap: { kind: 'token', tokenId: 'space.new' } } },
+        },
+      },
+    });
+    expect(
+      readUiDocumentNodeAuthoringV3((result.document.root.children as GenericWidget[])[0]!),
+    ).toMatchObject({
+      component: { id: 'content.label', version: '2.0.0' },
+      responsiveOverrides: {
+        medium: {
+          properties: { icon: { kind: 'resource', resourceId: 'image.new' } },
+        },
+      },
+    });
+  });
+
+  it('records responsive Pack migration in the same discriminated V3 history', () => {
+    const before = createUiAuthoringSessionV3(createResponsiveDocument(), ['child']);
+    const mutation = responsiveMutationFor();
+    const applied = applyUiDesignSystemPackChangeV3(before, mutation, 7);
+
+    expect(applied.diagnostics).toEqual([]);
+    expect(applied.changed).toBe(true);
+    expect(applied.state.past).toHaveLength(1);
+    expect(applied.state.past[0]?.transaction).toMatchObject({
+      kind: 'design-system-change',
+      intent: {
+        type: 'apply-design-system-pack-change',
+        commandId: 'responsive-pack-change',
+      },
+    });
+    expect('command' in applied.state.past[0]!.transaction).toBe(false);
+    const undone = undoUiAuthoringSessionV3(applied.state)!;
+    expect(undone.document.source).toBe(before.document.source);
+    expect(undone.selectedNodeIds).toEqual(['child']);
+    const redone = redoUiAuthoringSessionV3(undone)!;
+    expect(redone.document.source).toBe(applied.state.document.source);
+    expect(redone.future).toEqual([]);
   });
 
   it('interleaves a V2 batch and Pack change in one history while preserving v1 bindings', () => {

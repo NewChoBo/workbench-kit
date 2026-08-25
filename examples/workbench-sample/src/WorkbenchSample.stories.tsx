@@ -1,8 +1,34 @@
 ﻿import type { Meta, StoryObj } from '@storybook/react-vite';
+import type {
+  UiComponentCatalogContract,
+  UiComponentDescriptor,
+  UiDesignSystemState,
+} from '@workbench-kit/contracts';
+import {
+  applyUiAuthoringSessionCommandV3,
+  createUiDocumentV3,
+  formatWidgetDocumentJson,
+  projectUiAuthoringDocumentV3,
+  type UiAuthoringSessionStateV3,
+  type UiDocumentCommandV3Context,
+  type UiDocumentV3,
+  type UiResponsiveEditingTarget,
+} from '@workbench-kit/jdw';
 import { createCommandRegistry } from '@workbench-kit/platform';
+import {
+  composeWorkbenchAuthoringProjectionV3,
+  WorkbenchAuthoringCanvas,
+  WorkbenchAuthoringInspector,
+  type UiAuthoringSurfaceActionV3,
+  type WorkbenchAuthoringControllerV3,
+} from '@workbench-kit/react/authoring';
 import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standalone';
 import type { WorkbenchStandaloneBootstrap } from '@workbench-kit/react/workbench/standalone';
 import { WorkbenchCommandHostController } from '@workbench-kit/shell-react/command-host-controller';
+import type {
+  UiAuthoringResolutionProjection,
+  UiDesignSystemAuthoringChoiceProjection,
+} from '@workbench-kit/workbench-core/design-system';
 import { useState } from 'react';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
@@ -132,6 +158,441 @@ export const ProviderFreeCommandHost: Story = {
 
     await expect(canvas.getByLabelText('Last standalone command')).toHaveTextContent(
       'workspace.open:docs/standalone.md',
+    );
+  },
+};
+
+const AUTHORING_COMPONENT = Object.freeze<UiComponentDescriptor>({
+  id: 'workbench-neutral:card',
+  version: '1.0.0',
+  kind: 'atomic',
+  properties: Object.freeze([
+    Object.freeze({ id: 'title', label: 'Title', value: Object.freeze({ type: 'string' }) }),
+  ]),
+  layout: Object.freeze({
+    supportedStrategyIds: Object.freeze(['canvas']),
+    defaultStrategyId: 'canvas',
+  }),
+  designTime: Object.freeze({ label: 'Card' }),
+});
+
+const AUTHORING_COMPONENT_CATALOG = Object.freeze<UiComponentCatalogContract>({
+  component: (ref) =>
+    ref.id === AUTHORING_COMPONENT.id && ref.version === AUTHORING_COMPONENT.version
+      ? AUTHORING_COMPONENT
+      : undefined,
+  components: () => Object.freeze([AUTHORING_COMPONENT]),
+});
+
+const AUTHORING_COMMAND_CONTEXT = Object.freeze<UiDocumentCommandV3Context>({
+  componentCatalog: AUTHORING_COMPONENT_CATALOG,
+  layoutStrategies: Object.freeze([
+    Object.freeze({
+      id: 'canvas',
+      kind: 'canvas',
+      label: 'Canvas',
+      supportedContainerProperties: Object.freeze(['width']),
+      supportedChildProperties: Object.freeze([]),
+    }),
+  ]),
+  layoutProperties: Object.freeze([
+    Object.freeze({
+      id: 'width',
+      label: 'Width',
+      scope: 'container',
+      group: 'sizing',
+      strategyKinds: Object.freeze(['canvas']),
+      value: Object.freeze({ type: 'layout.dimension' }),
+    }),
+  ]),
+});
+
+const authoringPx = (value: number) =>
+  Object.freeze({
+    kind: 'literal' as const,
+    value: Object.freeze({ kind: 'length' as const, value, unit: 'px' as const }),
+  });
+
+const AUTHORING_DESIGN_SYSTEM = Object.freeze<UiDesignSystemState>({
+  pack: Object.freeze({ id: 'workbench-neutral', version: '1.0.0' }),
+  theme: Object.freeze({
+    pack: Object.freeze({ id: 'workbench-neutral', version: '1.0.0' }),
+    themeId: 'night',
+  }),
+});
+
+const AUTHORING_ROOT = Object.freeze({
+  type: 'text',
+  id: 'hero-card',
+  text: 'Provider-free responsive authoring',
+  $authoring: Object.freeze({
+    documentSchemaVersion: 2,
+    component: Object.freeze({
+      id: AUTHORING_COMPONENT.id,
+      version: AUTHORING_COMPONENT.version,
+    }),
+    properties: Object.freeze({
+      title: Object.freeze({ kind: 'literal', value: 'Base workspace' }),
+    }),
+    layout: Object.freeze({
+      strategyId: 'canvas',
+      values: Object.freeze({ width: authoringPx(560) }),
+    }),
+    designSystem: AUTHORING_DESIGN_SYSTEM,
+    responsiveVariants: Object.freeze([
+      Object.freeze({ id: 'narrow', hostWidth: Object.freeze({ maxExclusive: 520 }) }),
+      Object.freeze({
+        id: 'medium',
+        hostWidth: Object.freeze({ minInclusive: 520, maxExclusive: 900 }),
+      }),
+      Object.freeze({ id: 'wide', hostWidth: Object.freeze({ minInclusive: 900 }) }),
+    ]),
+    responsiveOverrides: Object.freeze({
+      wide: Object.freeze({
+        properties: Object.freeze({
+          title: Object.freeze({ kind: 'literal', value: 'Wide workspace' }),
+        }),
+        layout: Object.freeze({
+          strategyId: 'canvas',
+          values: Object.freeze({ width: authoringPx(760) }),
+        }),
+      }),
+      medium: Object.freeze({
+        properties: Object.freeze({
+          title: Object.freeze({ kind: 'literal', value: 'Medium workspace' }),
+        }),
+        layout: Object.freeze({
+          strategyId: 'canvas',
+          values: Object.freeze({ width: authoringPx(520) }),
+        }),
+      }),
+      narrow: Object.freeze({
+        properties: Object.freeze({
+          title: Object.freeze({ kind: 'literal', value: 'Compact workspace' }),
+        }),
+        layout: Object.freeze({
+          strategyId: 'canvas',
+          values: Object.freeze({ width: authoringPx(320) }),
+        }),
+      }),
+    }),
+  }),
+});
+
+const AUTHORING_DOCUMENT_RESULT = createUiDocumentV3(
+  'provider-free-authoring',
+  formatWidgetDocumentJson(AUTHORING_ROOT),
+);
+if (AUTHORING_DOCUMENT_RESULT.document === null) {
+  throw new TypeError(
+    AUTHORING_DOCUMENT_RESULT.issues[0]?.message ?? 'Authoring Story document is invalid.',
+  );
+}
+const AUTHORING_DOCUMENT = Object.freeze<UiDocumentV3>({
+  ...AUTHORING_DOCUMENT_RESULT.document,
+  revision: 7,
+});
+
+const AUTHORING_SESSION = Object.freeze<UiAuthoringSessionStateV3>({
+  document: AUTHORING_DOCUMENT,
+  selectedNodeIds: Object.freeze(['hero-card']),
+  past: Object.freeze([]),
+  future: Object.freeze([]),
+});
+
+const AUTHORING_CHOICES = Object.freeze<UiDesignSystemAuthoringChoiceProjection>({
+  registryRevision: 11,
+  state: AUTHORING_DESIGN_SYSTEM,
+  packs: Object.freeze([
+    Object.freeze({
+      ref: AUTHORING_DESIGN_SYSTEM.pack,
+      displayName: 'Workbench Neutral',
+      themes: Object.freeze([
+        Object.freeze({ ref: AUTHORING_DESIGN_SYSTEM.theme, displayName: 'Night' }),
+        Object.freeze({
+          ref: Object.freeze({
+            pack: AUTHORING_DESIGN_SYSTEM.pack,
+            themeId: 'day',
+          }),
+          displayName: 'Day',
+        }),
+      ]),
+    }),
+    Object.freeze({
+      ref: Object.freeze({ id: 'workbench-contrast', version: '1.0.0' }),
+      displayName: 'Workbench Contrast',
+      themes: Object.freeze([
+        Object.freeze({
+          ref: Object.freeze({
+            pack: Object.freeze({ id: 'workbench-contrast', version: '1.0.0' }),
+            themeId: 'high-contrast',
+          }),
+          displayName: 'High Contrast',
+        }),
+      ]),
+    }),
+  ]),
+  diagnostics: Object.freeze([]),
+});
+
+function createAuthoringResolution(
+  authoredDocument: UiDocumentV3,
+  previewHostWidth: number,
+  activeResponsiveVariantId: string | undefined,
+  title: string,
+): UiAuthoringResolutionProjection {
+  const component = { id: AUTHORING_COMPONENT.id, version: AUTHORING_COMPONENT.version };
+  return {
+    documentId: authoredDocument.documentId,
+    documentRevision: authoredDocument.revision,
+    registryRevision: AUTHORING_CHOICES.registryRevision,
+    hostWidth: previewHostWidth,
+    ...(activeResponsiveVariantId === undefined ? {} : { activeResponsiveVariantId }),
+    nodes: [
+      {
+        nodeId: 'hero-card',
+        component,
+        componentCompatibility: { kind: 'direct', source: component, target: component },
+        componentProvenance: {
+          source: 'builtin',
+          sourceId: 'workbench-neutral',
+          sourceVersion: '1.0.0',
+        },
+        effectiveTheme: AUTHORING_DESIGN_SYSTEM.theme,
+        scopeChain: [],
+        properties: {
+          title: {
+            value: {
+              valueType: 'string',
+              source: { kind: 'literal', value: title },
+              provenance: [{ kind: 'theme', sourceId: 'night', tokenId: 'title' }],
+            },
+            diagnostics: [],
+          },
+        },
+        diagnostics: [],
+      },
+    ],
+    diagnostics: [],
+  };
+}
+
+function AuthoringStoryHarness({
+  initialEditingTarget,
+  initialWidth,
+  showDiagnostic = false,
+}: {
+  initialEditingTarget: UiResponsiveEditingTarget;
+  initialWidth: number;
+  showDiagnostic?: boolean;
+}) {
+  const [previewHostWidth, setPreviewHostWidth] = useState(initialWidth);
+  const [editingTarget, setEditingTarget] = useState(initialEditingTarget);
+  const [session, setSession] = useState(AUTHORING_SESSION);
+  const [lastAction, setLastAction] = useState<UiAuthoringSurfaceActionV3 | null>(null);
+  const document = projectUiAuthoringDocumentV3(session, AUTHORING_COMMAND_CONTEXT, {
+    previewHostWidth,
+    editingTarget,
+  });
+  const titleProjection = document.nodes[0]?.properties.title;
+  const title =
+    titleProjection?.value.kind === 'literal' && typeof titleProjection.value.value === 'string'
+      ? titleProjection.value.value
+      : 'Unresolved title';
+  const choices: UiDesignSystemAuthoringChoiceProjection = showDiagnostic
+    ? {
+        ...AUTHORING_CHOICES,
+        diagnostics: [
+          {
+            code: 'theme-not-found',
+            message: 'Story diagnostic: a fallback Theme would be required.',
+            path: 'state.theme.themeId',
+            packId: 'workbench-neutral',
+            requestedVersion: '1.0.0',
+            themeId: 'missing',
+          },
+        ],
+      }
+    : AUTHORING_CHOICES;
+  const projection = composeWorkbenchAuthoringProjectionV3(
+    createAuthoringResolution(
+      session.document,
+      previewHostWidth,
+      document.activeResponsiveVariantId,
+      title,
+    ),
+    document,
+    choices,
+  );
+  const controller: WorkbenchAuthoringControllerV3 = {
+    projection,
+    dispatch: (action) => {
+      setLastAction(action);
+      if (action.kind === 'document-command-v3') {
+        setSession(
+          (current) =>
+            applyUiAuthoringSessionCommandV3(current, action.command, AUTHORING_COMMAND_CONTEXT)
+              .state,
+        );
+      }
+    },
+    setPreviewHostWidth,
+    setEditingTarget,
+  };
+  const stacked = previewHostWidth < 520;
+
+  return (
+    <div
+      data-authoring-story-layout={stacked ? 'stacked' : 'split'}
+      style={{
+        display: 'grid',
+        gridTemplateColumns: stacked ? 'minmax(0, 1fr)' : 'minmax(0, 1fr) 320px',
+        gridTemplateRows: stacked ? '560px minmax(360px, auto)' : 'minmax(560px, 1fr)',
+        gap: 12,
+        minHeight: 720,
+      }}
+    >
+      <WorkbenchAuthoringCanvas controller={controller} />
+      <WorkbenchAuthoringInspector controller={controller} />
+      <output className="ui-visually-hidden" data-testid="last-authoring-action">
+        {lastAction === null ? 'none' : JSON.stringify(lastAction)}
+      </output>
+      <output className="ui-visually-hidden" data-testid="authoring-document-revision">
+        {session.document.revision}
+      </output>
+      <output className="ui-visually-hidden" data-testid="authoring-history-count">
+        {session.past.length}
+      </output>
+    </div>
+  );
+}
+
+async function verifyAuthoringViewport(
+  canvasElement: HTMLElement,
+  expected: { width: number; variantId: string },
+) {
+  const canvas = within(canvasElement);
+  const canvasSurface = canvas.getByLabelText('Authoring Canvas');
+  await expect(canvasSurface).toHaveAttribute('data-preview-host-width', String(expected.width));
+  await expect(canvasSurface).toHaveAttribute('data-active-variant', expected.variantId);
+  await expect(canvas.getByTestId('authoring-target-status')).toHaveTextContent(
+    `Active: Variant ${expected.variantId} · Editing: Variant ${expected.variantId}`,
+  );
+  await expect(canvas.getByLabelText('Design System Pack')).toBeDisabled();
+  await expect(canvas.getByLabelText('Design System Theme')).toBeDisabled();
+  await expect(canvas.getByLabelText('Available Design System choices')).toHaveTextContent(
+    'Workbench Neutral',
+  );
+  await expect(canvas.getByLabelText('Available Design System choices')).toHaveTextContent('Day');
+  await expect(canvas.getByLabelText('Available Design System choices')).toHaveTextContent(
+    'Workbench Contrast',
+  );
+  await expect(canvas.getByLabelText('Available Design System choices')).toHaveTextContent(
+    'High Contrast',
+  );
+
+  const viewport = canvasElement.querySelector<HTMLElement>(
+    '.ui-workbench-preview-canvas__viewport',
+  );
+  if (!viewport) throw new Error('Authoring preview viewport did not render.');
+  await waitFor(() =>
+    expect(Math.round(viewport.getBoundingClientRect().width)).toBe(expected.width),
+  );
+
+  const layoutActions = canvas.getAllByRole('button', {
+    name: 'Override layout with effective',
+  });
+  await userEvent.click(layoutActions[0]!);
+  const pointerAction = canvas.getByTestId('last-authoring-action').textContent;
+  canvas.getAllByRole('button', { name: 'Override layout with effective' })[1]!.focus();
+  await userEvent.keyboard('{Enter}');
+  await waitFor(() =>
+    expect(canvas.getByTestId('last-authoring-action').textContent).toBe(pointerAction),
+  );
+  await expect(canvas.getByTestId('authoring-history-count')).toHaveTextContent('0');
+
+  await userEvent.click(canvas.getByRole('button', { name: 'Clear layout override' }));
+  await expect(canvas.getByTestId('authoring-history-count')).toHaveTextContent('1');
+  await expect(canvas.getByTestId('authoring-document-revision')).toHaveTextContent('8');
+  await expect(canvas.getByText('Provenance').parentElement!).toHaveTextContent('Base');
+
+  await userEvent.click(
+    canvas.getAllByRole('button', { name: 'Override layout with effective' })[0]!,
+  );
+  await waitFor(() => {
+    expect(canvas.getByTestId('authoring-history-count')).toHaveTextContent('2');
+    expect(canvas.getByTestId('authoring-document-revision')).toHaveTextContent('9');
+  });
+}
+
+export const AuthoringWide: Story = {
+  name: 'Authoring / Wide',
+  render: () => (
+    <AuthoringStoryHarness
+      initialEditingTarget={{ kind: 'variant', variantId: 'wide' }}
+      initialWidth={900}
+    />
+  ),
+  play: async ({ canvasElement }) =>
+    verifyAuthoringViewport(canvasElement, { width: 900, variantId: 'wide' }),
+};
+
+export const AuthoringMedium: Story = {
+  name: 'Authoring / Medium',
+  render: () => (
+    <AuthoringStoryHarness
+      initialEditingTarget={{ kind: 'variant', variantId: 'medium' }}
+      initialWidth={640}
+    />
+  ),
+  play: async ({ canvasElement }) =>
+    verifyAuthoringViewport(canvasElement, { width: 640, variantId: 'medium' }),
+};
+
+export const AuthoringNarrow: Story = {
+  name: 'Authoring / Narrow',
+  render: () => (
+    <AuthoringStoryHarness
+      initialEditingTarget={{ kind: 'variant', variantId: 'narrow' }}
+      initialWidth={360}
+    />
+  ),
+  play: async ({ canvasElement }) =>
+    verifyAuthoringViewport(canvasElement, { width: 360, variantId: 'narrow' }),
+};
+
+export const AuthoringCrossWidth: Story = {
+  name: 'Authoring / Cross-width target lock',
+  render: () => (
+    <AuthoringStoryHarness
+      initialEditingTarget={{ kind: 'variant', variantId: 'wide' }}
+      initialWidth={900}
+      showDiagnostic
+    />
+  ),
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const width = canvas.getByLabelText('Preview width');
+    await userEvent.click(width);
+    await userEvent.keyboard('{Control>}a{/Control}360');
+    await expect(width).toHaveValue(360);
+    await waitFor(() =>
+      expect(canvas.getByTestId('authoring-target-status')).toHaveTextContent(
+        'Active: Variant narrow · Editing: Variant wide',
+      ),
+    );
+    await expect(
+      canvas.getAllByRole('button', { name: 'Override layout with effective' })[0],
+    ).toBeDisabled();
+    await expect(canvas.getAllByRole('alert')[0]).toHaveTextContent('Story diagnostic');
+    await userEvent.click(canvas.getByRole('button', { name: 'Edit active' }));
+    const canvasMutation = canvas.getAllByRole('button', {
+      name: 'Override layout with effective',
+    })[0]!;
+    await expect(canvasMutation).toBeEnabled();
+    await expect(canvasMutation).toHaveFocus();
+    await expect(canvas.getByTestId('authoring-target-status')).toHaveTextContent(
+      'Active: Variant narrow · Editing: Variant narrow',
     );
   },
 };

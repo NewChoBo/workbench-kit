@@ -125,6 +125,39 @@ describe('projectUiAuthoringResolution', () => {
     expect(Object.isFrozen(projection.nodes[0]?.scopeChain)).toBe(true);
   });
 
+  it('derives the active responsive variant from host width and resolves its sparse properties', () => {
+    const base = document();
+    const responsive: DesignSystemAuthoredDocumentSnapshot = {
+      ...base,
+      responsiveVariants: [
+        { id: 'narrow', hostWidth: { maxExclusive: 600 } },
+        { id: 'wide', hostWidth: { minInclusive: 600 } },
+      ],
+      nodes: base.nodes.map((node) => ({
+        ...node,
+        responsiveOverrides: {
+          narrow: {
+            properties: { color: { kind: 'literal', value: '#123456' } },
+          },
+        },
+      })),
+    };
+
+    const narrow = projectUiAuthoringResolution(responsive, registry(), catalog(), 599);
+    const wide = projectUiAuthoringResolution(responsive, registry(), catalog(), 600);
+
+    expect(narrow.activeResponsiveVariantId).toBe('narrow');
+    expect(narrow.nodes[0]?.properties.color.value).toMatchObject({
+      source: { kind: 'literal', value: '#123456' },
+      provenance: [{ kind: 'instance' }],
+    });
+    expect(wide.activeResponsiveVariantId).toBe('wide');
+    expect(wide.nodes[0]?.properties.color.value).toMatchObject({
+      source: { kind: 'literal', value: '#abcdef' },
+      provenance: [{ kind: 'instance' }, { kind: 'theme-scope', tokenId: 'color.text' }],
+    });
+  });
+
   it('fails an exact component missing from the catalog closed without scanning the catalog', () => {
     let exactLookups = 0;
     const exactOnlyCatalog: UiComponentCatalogContract = Object.freeze({
@@ -179,5 +212,40 @@ describe('projectUiAuthoringResolution', () => {
       diagnostics: [{ code: 'invalid-pack-change-request', path: 'document' }],
     });
     expect('hostWidth' in projection).toBe(false);
+  });
+
+  it('rejects orphan responsive overrides and explicit infinite host-width bounds', () => {
+    const base = document();
+    const orphan = {
+      ...base,
+      responsiveVariants: [{ id: 'narrow', hostWidth: { maxExclusive: 600 } }],
+      nodes: base.nodes.map((node) => ({
+        ...node,
+        responsiveOverrides: { typo: { properties: {} } },
+      })),
+    } as never;
+    const explicitInfinity = {
+      ...base,
+      responsiveVariants: [
+        { id: 'wide', hostWidth: { minInclusive: 600, maxExclusive: Number.POSITIVE_INFINITY } },
+      ],
+    } as never;
+    const explicitZero = {
+      ...base,
+      responsiveVariants: [{ id: 'narrow', hostWidth: { minInclusive: 0, maxExclusive: 600 } }],
+    } as never;
+    const noncanonicalOrder = {
+      ...base,
+      responsiveVariants: [
+        { id: 'wide', hostWidth: { minInclusive: 600 } },
+        { id: 'narrow', hostWidth: { maxExclusive: 600 } },
+      ],
+    } as never;
+
+    for (const malformed of [orphan, explicitInfinity, explicitZero, noncanonicalOrder]) {
+      expect(projectUiAuthoringResolution(malformed, registry(), catalog()).diagnostics).toEqual([
+        expect.objectContaining({ code: 'invalid-pack-change-request', path: 'document' }),
+      ]);
+    }
   });
 });

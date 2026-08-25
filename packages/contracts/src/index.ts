@@ -257,6 +257,8 @@ export type {
   DesignSystemAuthoredDocumentSnapshot,
   DesignSystemAuthoredLayoutSnapshot,
   DesignSystemAuthoredNodeSnapshot,
+  DesignSystemAuthoredResponsiveOverrideSnapshot,
+  DesignSystemAuthoredResponsiveVariantSnapshot,
   DesignSystemComponentRoleMapping,
   DesignSystemComponentRoleRef,
   DesignSystemComponentRoleRequirements,
