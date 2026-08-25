@@ -61,7 +61,10 @@ function WorkbenchProvider({
 }: WorkbenchProviderProps) {
   return <BareWorkbenchProvider availableExtensions={availableExtensions} {...props} />;
 }
-import { WORKBENCH_APPEARANCE_FIELD_LABELS } from '@workbench-kit/react/workbench';
+import {
+  WorkbenchThemeProvider,
+  WORKBENCH_APPEARANCE_FIELD_LABELS,
+} from '@workbench-kit/react/workbench';
 import {
   BUILTIN_EXPLORER_MOVE_COMMAND_ID,
   BUILTIN_EXPLORER_REVEAL_COMMAND_ID,
@@ -1699,6 +1702,183 @@ describe('WorkbenchProvider', () => {
     await act(async () => {
       root.unmount();
     });
+    container.remove();
+  });
+
+  it('preserves an unresolved controlled preset until the user explicitly recovers it', async () => {
+    const darkPresetChanges: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderShell = (darkPreset: string) => (
+      <WorkbenchProvider
+        extensionsConfig={{
+          enabled: ['workbench-kit.builtin.settings'],
+          recommendations: [],
+        }}
+      >
+        <TestWorkbenchShell
+          darkPreset={darkPreset}
+          editorArea={<main>Editor Area</main>}
+          lightPreset="skyblue"
+          rootClassName="appearance-shell-root"
+          theme="dark"
+          onDarkPresetChange={(nextPreset) => {
+            darkPresetChanges.push(nextPreset);
+          }}
+        />
+      </WorkbenchProvider>
+    );
+
+    await act(async () => {
+      root.render(renderShell('skyblue'));
+    });
+    await flushReactEffects();
+
+    const shellRoot = container.querySelector<HTMLElement>('.appearance-shell-root');
+    expect(shellRoot?.dataset.theme).toBe('dark');
+    expect(shellRoot?.hasAttribute('data-theme-preset')).toBe(false);
+    expect(document.documentElement.dataset.workbenchUnresolvedThemePreset).toBe('skyblue');
+    expect(darkPresetChanges).toEqual([]);
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const appearanceButton = findButtonByText(container, 'Appearance');
+    await act(async () => {
+      appearanceButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const darkPresetCombobox = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button[role="combobox"]'),
+    ).find(
+      (button) =>
+        button.getAttribute('aria-label') ===
+        WORKBENCH_APPEARANCE_FIELD_LABELS.preferredDarkColorTheme,
+    );
+    const darkPresetSelect = darkPresetCombobox?.parentElement?.querySelector<HTMLSelectElement>(
+      'select.ui-select__native',
+    );
+    const diagnosticId = darkPresetCombobox?.getAttribute('aria-describedby');
+    const diagnostic = diagnosticId
+      ? container.querySelector<HTMLElement>(`#${diagnosticId}`)
+      : null;
+
+    expect(darkPresetSelect?.value).toBe('skyblue');
+    expect(darkPresetCombobox?.textContent).toContain('Unavailable: skyblue');
+    expect(diagnostic?.getAttribute('role')).toBe('status');
+    expect(diagnostic?.textContent).toContain(
+      'The appearance “skyblue” does not belong to the dark scheme.',
+    );
+    expect(darkPresetChanges).toEqual([]);
+
+    await act(async () => {
+      darkPresetSelect!.value = 'purple';
+      darkPresetSelect!.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    expect(darkPresetChanges).toEqual(['purple']);
+
+    await act(async () => {
+      root.render(renderShell('purple'));
+    });
+    await flushReactEffects();
+
+    expect(shellRoot?.dataset.theme).toBe('dark');
+    expect(shellRoot?.dataset.themePreset).toBe('purple');
+    expect(document.documentElement.hasAttribute('data-workbench-unresolved-theme-preset')).toBe(
+      false,
+    );
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('keeps host legacy theme overrides coordinated without disturbing nested providers', async () => {
+    const documentRoot = document.documentElement;
+    documentRoot.style.setProperty('--color-bg', '#010203');
+    const tokenOverrides = Object.fromEntries(
+      REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, '#101820']),
+    );
+    const hostThemes = [
+      createWorkbenchHostThemeRegistration('workbench-kit.test.host.legacy', tokenOverrides, {
+        label: 'Test Host Legacy Theme',
+        mode: 'dark',
+      }),
+    ];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderShell = (darkPreset: string) => (
+      <WorkbenchProvider hostThemes={hostThemes}>
+        <WorkbenchShell
+          commandHost={false}
+          darkPreset={darkPreset}
+          editorArea={
+            <WorkbenchThemeProvider
+              data-testid="nested-theme-provider"
+              theme="light"
+              themePreset="skyblue"
+            >
+              <main>Nested Editor Area</main>
+            </WorkbenchThemeProvider>
+          }
+          lightPreset="skyblue"
+          rootClassName="host-theme-shell-root"
+          theme="dark"
+        />
+      </WorkbenchProvider>
+    );
+
+    await act(async () => {
+      root.render(renderShell('workbench-kit.test.host.legacy'));
+    });
+    await flushReactEffects();
+
+    const shellRoot = container.querySelector<HTMLElement>('.host-theme-shell-root');
+    const nestedProvider = container.querySelector<HTMLElement>(
+      '[data-testid="nested-theme-provider"]',
+    );
+    expect(shellRoot?.dataset.theme).toBe('dark');
+    expect(shellRoot?.dataset.themePreset).toBe('workbench-kit.test.host.legacy');
+    for (const tokenKey of REQUIRED_THEME_TOKEN_KEYS) {
+      expect(shellRoot?.style.getPropertyValue(tokenKey)).toBe('#101820');
+      expect(documentRoot.style.getPropertyValue(tokenKey)).toBe('#101820');
+    }
+    expect(nestedProvider?.dataset.theme).toBe('light');
+    expect(nestedProvider?.dataset.themePreset).toBe('skyblue');
+
+    await act(async () => {
+      root.render(renderShell('purple'));
+    });
+    await flushReactEffects();
+
+    expect(container.querySelector('.host-theme-shell-root')).toBe(shellRoot);
+    expect(container.querySelector('[data-testid="nested-theme-provider"]')).toBe(nestedProvider);
+    expect(shellRoot?.dataset.themePreset).toBe('purple');
+    for (const tokenKey of REQUIRED_THEME_TOKEN_KEYS) {
+      expect(shellRoot?.style.getPropertyValue(tokenKey)).toBe('');
+      expect(documentRoot.style.getPropertyValue(tokenKey)).toBe(
+        tokenKey === '--color-bg' ? '#010203' : '',
+      );
+    }
+    expect(nestedProvider?.dataset.theme).toBe('light');
+    expect(nestedProvider?.dataset.themePreset).toBe('skyblue');
+
+    await act(async () => {
+      root.unmount();
+    });
+    expect(documentRoot.style.getPropertyValue('--color-bg')).toBe('#010203');
+    documentRoot.style.removeProperty('--color-bg');
     container.remove();
   });
 

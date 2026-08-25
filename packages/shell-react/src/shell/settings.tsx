@@ -1,32 +1,33 @@
-import { useEffect, useMemo, useRef, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Badge, Checkbox, Field, Select } from '@workbench-kit/react/primitives';
 import {
-  applyWorkbenchAppearance,
-  DARK_THEME_PRESET_OPTIONS,
   DEFAULT_SHELL_PRESET,
-  LIGHT_THEME_PRESET_OPTIONS,
   SHELL_PRESET_OPTIONS,
   WORKBENCH_APPEARANCE_FIELD_DESCRIPTIONS,
   WORKBENCH_APPEARANCE_FIELD_LABELS,
   WORKBENCH_COLOR_SCHEME_OPTIONS,
-  type WorkbenchColorSchemePreference,
-  type WorkbenchThemePresetOption,
 } from '@workbench-kit/react/workbench';
 import {
   WorkbenchSettingsSection,
   type WorkbenchSettingsCategory,
 } from '@workbench-kit/react/workbench/settings';
 import {
-  applyThemeTokenOverrides,
   type ConfigurationRegistry,
   type LocalizationRegistry,
   type PreferenceService,
-  type ThemeRegistry,
 } from '@workbench-kit/workbench-core';
 import type { PreferenceScope } from '@workbench-kit/workbench-config';
 
 import { isRecord } from '../is-record.js';
-import { useWorkbench, type WorkbenchExtensionCatalogReader } from './provider.js';
+import type { WorkbenchExtensionCatalogReader } from './provider.js';
+import {
+  getWorkbenchAppearanceCatalogEntries,
+  resolveWorkbenchAppearanceSelection,
+  type WorkbenchAppearanceCatalogEntry,
+  type WorkbenchAppearanceCatalogSnapshot,
+  type WorkbenchAppearanceSelectionResolution,
+  type WorkbenchAppearanceSelectionTarget,
+} from './appearance-catalog.js';
 import { WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
 
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
@@ -63,10 +64,10 @@ export interface WorkbenchSettingsCategoryInput extends WorkbenchAppearanceSetti
 }
 
 export interface WorkbenchSettingsContributionAccess {
+  readonly appearanceCatalog: WorkbenchAppearanceCatalogSnapshot;
   readonly configurations: ConfigurationRegistry;
   readonly extensionCatalog: WorkbenchExtensionCatalogReader;
   readonly localizations: LocalizationRegistry;
-  readonly themes: ThemeRegistry;
 }
 
 export function createSettingsCategories(
@@ -88,9 +89,9 @@ export function createSettingsCategories(
   }: WorkbenchSettingsCategoryInput,
 ): WorkbenchSettingsCategory[] {
   const configurations = contributions.configurations.getConfigurations();
-  const mergedThemeOptions = mergeThemeOptions(themeOptions, contributions.themes.getThemes());
   const localeOptions = buildLocaleOptions(contributions.localizations.getLocalizations());
   const appearanceCategory = createAppearanceSettingsCategory({
+    appearanceCatalog: contributions.appearanceCatalog,
     darkPreset,
     lightPreset,
     locale,
@@ -102,7 +103,7 @@ export function createSettingsCategories(
     onThemeChange,
     shellPreset,
     theme,
-    themeOptions: mergedThemeOptions,
+    themeOptions,
   });
 
   if (configurations.length === 0) {
@@ -171,33 +172,6 @@ function formatPreferenceScopeLabel(scope: PreferenceScope): string {
   return WORKBENCH_PREFERENCE_SCOPES.find((candidate) => candidate.id === scope)?.label ?? scope;
 }
 
-function mergeThemeOptions(
-  baseOptions: readonly WorkbenchThemeOption[] | undefined,
-  contributedThemes: readonly {
-    id: string;
-    label: string;
-    tokenOverrides?: Record<string, string> | undefined;
-  }[],
-): readonly WorkbenchThemeOption[] {
-  const merged = new Map<string, WorkbenchThemeOption>();
-
-  for (const option of baseOptions ?? []) {
-    merged.set(option.id, option);
-  }
-
-  for (const theme of contributedThemes) {
-    merged.set(theme.id, {
-      description: theme.tokenOverrides
-        ? 'Contributed theme with token overrides.'
-        : 'Contributed theme.',
-      id: theme.id,
-      label: theme.label,
-    });
-  }
-
-  return [...merged.values()];
-}
-
 function buildLocaleOptions(
   localizations: readonly { locale: string; label: string }[],
 ): readonly WorkbenchLocaleOption[] {
@@ -210,7 +184,121 @@ function buildLocaleOptions(
   return options;
 }
 
+interface WorkbenchAppearancePresentedOption extends WorkbenchThemeOption {
+  readonly entry: WorkbenchAppearanceCatalogEntry;
+}
+
+function projectAppearanceOptions(
+  catalog: WorkbenchAppearanceCatalogSnapshot,
+  target: WorkbenchAppearanceSelectionTarget,
+  hostOptions: readonly WorkbenchThemeOption[] | undefined,
+): readonly WorkbenchAppearancePresentedOption[] {
+  const projected: WorkbenchAppearancePresentedOption[] = [];
+  const visitedIds = new Set<string>();
+
+  for (const entry of getWorkbenchAppearanceCatalogEntries(catalog, target)) {
+    if (visitedIds.has(entry.id)) {
+      continue;
+    }
+    visitedIds.add(entry.id);
+
+    const resolution = resolveWorkbenchAppearanceSelection(catalog, target, entry.id);
+    if (resolution.status !== 'resolved') {
+      continue;
+    }
+
+    let description: ReactNode;
+    if (entry.source === 'host-option') {
+      const original = hostOptions?.[entry.sourceOrdinal];
+      if (!original || original.id !== entry.id || original.label !== entry.label) {
+        continue;
+      }
+      description = original.description;
+    } else if (entry.source === 'legacy-extension-theme' || entry.source === 'legacy-host-theme') {
+      description = entry.hasLegacyCssOverrides
+        ? 'Contributed theme with token overrides.'
+        : 'Contributed theme.';
+    }
+
+    projected.push({ description, entry, id: entry.id, label: entry.label });
+  }
+
+  return projected;
+}
+
+function findProjectedOption(
+  options: readonly WorkbenchAppearancePresentedOption[],
+  id: string | undefined,
+): WorkbenchAppearancePresentedOption | undefined {
+  return id === undefined ? undefined : options.find((option) => option.id === id);
+}
+
+function resolveRawAppearanceSelection(
+  catalog: WorkbenchAppearanceCatalogSnapshot,
+  target: WorkbenchAppearanceSelectionTarget,
+  rawValue: string | undefined,
+): WorkbenchAppearanceSelectionResolution | undefined {
+  return rawValue === undefined
+    ? undefined
+    : resolveWorkbenchAppearanceSelection(catalog, target, rawValue);
+}
+
+function describeAppearanceResolution(
+  rawValue: string,
+  resolution: Exclude<WorkbenchAppearanceSelectionResolution, { status: 'resolved' }>,
+): string {
+  switch (resolution.status) {
+    case 'conflicted':
+      return `The appearance “${rawValue}” has conflicting sources. Choose another listed option to recover.`;
+    case 'wrong-scheme':
+      return `The appearance “${rawValue}” does not belong to the ${resolution.expected} scheme. Choose a listed option to recover.`;
+    case 'unresolved':
+      return `The appearance “${rawValue}” is unavailable. Choose a listed option to recover.`;
+  }
+}
+
+function renderInvalidAppearanceOption(
+  rawValue: string | undefined,
+  resolution: WorkbenchAppearanceSelectionResolution | undefined,
+) {
+  if (rawValue === undefined) {
+    return (
+      <option disabled value="">
+        No appearance selected
+      </option>
+    );
+  }
+  if (!resolution || resolution.status === 'resolved') {
+    return null;
+  }
+  return (
+    <option disabled value={rawValue}>
+      Unavailable: {rawValue}
+    </option>
+  );
+}
+
+function AppearanceSelectionDiagnostic({
+  id,
+  rawValue,
+  resolution,
+}: {
+  id: string;
+  rawValue: string | undefined;
+  resolution: WorkbenchAppearanceSelectionResolution | undefined;
+}) {
+  if (rawValue === undefined || !resolution || resolution.status === 'resolved') {
+    return null;
+  }
+  return (
+    <p id={id} className="workbench-appearance-settings__description" role="status">
+      {describeAppearanceResolution(rawValue, resolution)}
+    </p>
+  );
+}
+
 function createAppearanceSettingsCategory({
+  appearanceCatalog,
   darkPreset,
   lightPreset,
   locale,
@@ -224,25 +312,30 @@ function createAppearanceSettingsCategory({
   theme,
   themeOptions,
 }: WorkbenchAppearanceSettingsInput & {
+  appearanceCatalog: WorkbenchAppearanceCatalogSnapshot;
   localeOptions: readonly WorkbenchLocaleOption[];
-  themeOptions: readonly WorkbenchThemeOption[];
 }): WorkbenchSettingsCategory | undefined {
   const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
+  const appearanceEntries = getWorkbenchAppearanceCatalogEntries(
+    appearanceCatalog,
+    usesAppearancePresets ? 'light-preset' : 'flat-theme',
+  );
 
-  if (!usesAppearancePresets && !themeOptions?.length && !localeOptions?.length) {
+  if (!usesAppearancePresets && !appearanceEntries.length && !localeOptions?.length) {
     return undefined;
   }
 
   return {
     content: (
       <AppearanceSettingsSection
+        appearanceCatalog={appearanceCatalog}
         darkPreset={darkPreset}
         lightPreset={lightPreset}
         locale={locale}
         localeOptions={localeOptions ?? []}
         shellPreset={shellPreset}
         theme={theme}
-        themeOptions={themeOptions ?? []}
+        themeOptions={themeOptions}
         onDarkPresetChange={onDarkPresetChange}
         onLightPresetChange={onLightPresetChange}
         onLocaleChange={onLocaleChange}
@@ -256,6 +349,7 @@ function createAppearanceSettingsCategory({
 }
 
 function AppearanceSettingsSection({
+  appearanceCatalog,
   darkPreset,
   lightPreset,
   locale,
@@ -269,111 +363,46 @@ function AppearanceSettingsSection({
   theme,
   themeOptions,
 }: WorkbenchAppearanceSettingsInput & {
+  appearanceCatalog: WorkbenchAppearanceCatalogSnapshot;
   localeOptions: readonly WorkbenchLocaleOption[];
-  themeOptions: readonly WorkbenchThemeOption[];
 }) {
-  const { themes } = useWorkbench();
-  const themeRevision = themes.getRevision();
-  const containerRef = useRef<HTMLDivElement>(null);
-  const previousThemeOverridesRef = useRef<Readonly<Record<string, string>> | undefined>(undefined);
   const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
-  const lightPresetOptions = useMemo<readonly WorkbenchThemePresetOption[]>(
-    () => [
-      ...LIGHT_THEME_PRESET_OPTIONS,
-      ...themes
-        .getThemes()
-        .filter((contributedTheme) => contributedTheme.mode === 'light')
-        .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
-    ],
-    [themeRevision, themes],
+  const flatThemeProjection = projectAppearanceOptions(
+    appearanceCatalog,
+    'flat-theme',
+    themeOptions,
   );
-  const darkPresetOptions = useMemo<readonly WorkbenchThemePresetOption[]>(
-    () => [
-      ...DARK_THEME_PRESET_OPTIONS,
-      ...themes
-        .getThemes()
-        .filter((contributedTheme) => contributedTheme.mode === 'dark')
-        .map((contributedTheme) => ({ id: contributedTheme.id, label: contributedTheme.label })),
-    ],
-    [themeRevision, themes],
+  const lightPresetProjection = projectAppearanceOptions(
+    appearanceCatalog,
+    'light-preset',
+    themeOptions,
   );
-  const selectedTheme = themeOptions.find((option) => option.id === theme) ?? themeOptions[0];
-  const selectedThemeId = selectedTheme?.id ?? '';
-  const selectedColorScheme =
-    WORKBENCH_COLOR_SCHEME_OPTIONS.find((option) => option.id === theme) ??
-    WORKBENCH_COLOR_SCHEME_OPTIONS[0];
-  const selectedColorSchemeId = (selectedColorScheme?.id ??
-    'system') as WorkbenchColorSchemePreference;
-  const selectedLightPreset =
-    lightPresetOptions.find((option) => option.id === lightPreset) ?? lightPresetOptions[0];
-  const selectedDarkPreset =
-    darkPresetOptions.find((option) => option.id === darkPreset) ?? darkPresetOptions[0];
+  const darkPresetProjection = projectAppearanceOptions(
+    appearanceCatalog,
+    'dark-preset',
+    themeOptions,
+  );
+  const flatThemeResolution = resolveRawAppearanceSelection(appearanceCatalog, 'flat-theme', theme);
+  const lightPresetResolution = resolveRawAppearanceSelection(
+    appearanceCatalog,
+    'light-preset',
+    lightPreset,
+  );
+  const darkPresetResolution = resolveRawAppearanceSelection(
+    appearanceCatalog,
+    'dark-preset',
+    darkPreset,
+  );
+  const selectedTheme = findProjectedOption(flatThemeProjection, theme);
+  const selectedColorScheme = WORKBENCH_COLOR_SCHEME_OPTIONS.find((option) => option.id === theme);
+  const colorSchemeDiagnostic =
+    usesAppearancePresets && theme !== undefined && selectedColorScheme === undefined
+      ? `The color scheme “${theme}” is unavailable. Choose a listed scheme to recover.`
+      : undefined;
   const selectedLocale = localeOptions.find((option) => option.id === locale) ?? localeOptions[0];
   const selectedLocaleId = selectedLocale?.id ?? 'en';
   const selectedShellPreset =
     SHELL_PRESET_OPTIONS.find((option) => option.id === shellPreset) ?? SHELL_PRESET_OPTIONS[0];
-
-  useEffect(() => {
-    if (typeof document === 'undefined') {
-      return;
-    }
-
-    let activeThemeId: string | undefined;
-
-    if (usesAppearancePresets) {
-      const appearanceSettings = {
-        darkPreset: selectedDarkPreset.id,
-        lightPreset: selectedLightPreset.id,
-        shellPreset: selectedShellPreset.id,
-        themePreference: selectedColorSchemeId,
-      };
-      const { resolvedTheme } = applyWorkbenchAppearance(
-        document.documentElement,
-        appearanceSettings,
-      );
-      activeThemeId = resolvedTheme === 'light' ? selectedLightPreset.id : selectedDarkPreset.id;
-
-      const workbenchRoot = containerRef.current?.closest<HTMLElement>(
-        '[data-theme-preset], [data-theme], [data-shell-preset]',
-      );
-      if (workbenchRoot && workbenchRoot !== document.documentElement) {
-        applyWorkbenchAppearance(workbenchRoot, appearanceSettings);
-      }
-    } else {
-      activeThemeId = selectedThemeId;
-    }
-
-    const contributedTheme = activeThemeId ? themes.getTheme(activeThemeId) : undefined;
-
-    // The actual workbench root (e.g. `.ide-root`) re-declares `data-theme-preset` locally,
-    // which shadows inheritance from `documentElement` for everything rendered inside it.
-    // Apply the override there too, or it only ever reaches stray document.body portals.
-    const workbenchRoot = containerRef.current?.closest<HTMLElement>(
-      '[data-theme-preset], [data-theme]',
-    );
-    const overrideTargets =
-      workbenchRoot && workbenchRoot !== document.documentElement
-        ? [document.documentElement, workbenchRoot]
-        : [document.documentElement];
-
-    for (const target of overrideTargets) {
-      applyThemeTokenOverrides(
-        target,
-        contributedTheme?.tokenOverrides,
-        previousThemeOverridesRef.current,
-      );
-    }
-    previousThemeOverridesRef.current = contributedTheme?.tokenOverrides;
-  }, [
-    themeRevision,
-    themes,
-    selectedColorSchemeId,
-    selectedDarkPreset.id,
-    selectedLightPreset.id,
-    selectedShellPreset.id,
-    selectedThemeId,
-    usesAppearancePresets,
-  ]);
 
   return (
     <WorkbenchSettingsSection
@@ -381,7 +410,7 @@ function AppearanceSettingsSection({
       title="Appearance"
       description="Configure how the workbench is presented."
     >
-      <div ref={containerRef} className="workbench-appearance-settings">
+      <div className="workbench-appearance-settings">
         {usesAppearancePresets ? (
           <>
             <Field
@@ -391,17 +420,34 @@ function AppearanceSettingsSection({
             >
               <Select
                 aria-label={WORKBENCH_APPEARANCE_FIELD_LABELS.colorScheme}
+                aria-describedby={
+                  colorSchemeDiagnostic ? 'workbench-color-scheme-diagnostic' : undefined
+                }
                 controlWidth="full"
                 disabled={!onThemeChange}
-                value={selectedColorSchemeId}
+                value={theme ?? ''}
                 onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
               >
+                {colorSchemeDiagnostic ? (
+                  <option disabled value={theme}>
+                    Unavailable: {theme}
+                  </option>
+                ) : null}
                 {WORKBENCH_COLOR_SCHEME_OPTIONS.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
                 ))}
               </Select>
+              {colorSchemeDiagnostic ? (
+                <p
+                  id="workbench-color-scheme-diagnostic"
+                  className="workbench-appearance-settings__description"
+                  role="status"
+                >
+                  {colorSchemeDiagnostic}
+                </p>
+              ) : null}
             </Field>
             <Field
               className="workbench-appearance-settings__field"
@@ -410,17 +456,28 @@ function AppearanceSettingsSection({
             >
               <Select
                 aria-label={WORKBENCH_APPEARANCE_FIELD_LABELS.preferredLightColorTheme}
+                aria-describedby={
+                  lightPresetResolution && lightPresetResolution.status !== 'resolved'
+                    ? 'workbench-light-preset-diagnostic'
+                    : undefined
+                }
                 controlWidth="full"
                 disabled={!onLightPresetChange}
-                value={selectedLightPreset.id}
+                value={lightPreset ?? ''}
                 onValueChange={(nextPreset) => onLightPresetChange?.(nextPreset)}
               >
-                {lightPresetOptions.map((option) => (
+                {renderInvalidAppearanceOption(lightPreset, lightPresetResolution)}
+                {lightPresetProjection.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
                 ))}
               </Select>
+              <AppearanceSelectionDiagnostic
+                id="workbench-light-preset-diagnostic"
+                rawValue={lightPreset}
+                resolution={lightPresetResolution}
+              />
             </Field>
             <Field
               className="workbench-appearance-settings__field"
@@ -429,17 +486,28 @@ function AppearanceSettingsSection({
             >
               <Select
                 aria-label={WORKBENCH_APPEARANCE_FIELD_LABELS.preferredDarkColorTheme}
+                aria-describedby={
+                  darkPresetResolution && darkPresetResolution.status !== 'resolved'
+                    ? 'workbench-dark-preset-diagnostic'
+                    : undefined
+                }
                 controlWidth="full"
                 disabled={!onDarkPresetChange}
-                value={selectedDarkPreset.id}
+                value={darkPreset ?? ''}
                 onValueChange={(nextPreset) => onDarkPresetChange?.(nextPreset)}
               >
-                {darkPresetOptions.map((option) => (
+                {renderInvalidAppearanceOption(darkPreset, darkPresetResolution)}
+                {darkPresetProjection.map((option) => (
                   <option key={option.id} value={option.id}>
                     {option.label}
                   </option>
                 ))}
               </Select>
+              <AppearanceSelectionDiagnostic
+                id="workbench-dark-preset-diagnostic"
+                rawValue={darkPreset}
+                resolution={darkPresetResolution}
+              />
             </Field>
             <Field
               className="workbench-appearance-settings__field"
@@ -461,7 +529,7 @@ function AppearanceSettingsSection({
               </Select>
             </Field>
           </>
-        ) : themeOptions.length ? (
+        ) : flatThemeProjection.length || theme !== undefined ? (
           <Field
             className="workbench-appearance-settings__field"
             label="Color theme"
@@ -469,12 +537,18 @@ function AppearanceSettingsSection({
           >
             <Select
               aria-label="Color theme"
+              aria-describedby={
+                flatThemeResolution && flatThemeResolution.status !== 'resolved'
+                  ? 'workbench-flat-theme-diagnostic'
+                  : undefined
+              }
               controlWidth="full"
               disabled={!onThemeChange}
-              value={selectedThemeId}
+              value={theme ?? ''}
               onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
             >
-              {themeOptions.map((option) => (
+              {renderInvalidAppearanceOption(theme, flatThemeResolution)}
+              {flatThemeProjection.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
@@ -485,6 +559,11 @@ function AppearanceSettingsSection({
                 {selectedTheme.description}
               </p>
             ) : null}
+            <AppearanceSelectionDiagnostic
+              id="workbench-flat-theme-diagnostic"
+              rawValue={theme}
+              resolution={flatThemeResolution}
+            />
           </Field>
         ) : null}
         {localeOptions.length > 1 ? (

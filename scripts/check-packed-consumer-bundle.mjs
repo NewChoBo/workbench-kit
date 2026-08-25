@@ -523,6 +523,128 @@ async function verifyPackedGraphAuthoring(): Promise<{
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'appearance-public-compatibility.ts'),
+    `import {
+  REQUIRED_THEME_TOKEN_KEYS,
+  ThemeRegistry,
+  createWorkbenchHostThemeRegistration,
+  registerHostWorkbenchThemes,
+  registerWorkbenchTheme,
+  type RegisterWorkbenchThemeOptions,
+  type WorkbenchHostThemeRegistration,
+} from '@workbench-kit/workbench-core';
+import type {
+  WorkbenchProviderProps,
+  WorkbenchShellProps,
+  WorkbenchThemeOption,
+} from '@workbench-kit/shell-react';
+import {
+  createWorkbenchHostThemeRegistration as createWorkbenchHostThemeRegistrationFromShell,
+  registerHostWorkbenchThemes as registerHostWorkbenchThemesFromShell,
+  registerWorkbenchTheme as registerWorkbenchThemeFromShell,
+} from '@workbench-kit/shell-react';
+
+// These 072F modules are implementation details: a root-barrel leak or a new packed subpath must
+// fail this external consumer fixture.
+type PackedShellReactPublicValues = typeof import('@workbench-kit/shell-react');
+type PackedShellReactShellPublicValues = typeof import('@workbench-kit/shell-react/shell');
+type PackedPrivateAppearanceValueName =
+  | 'createWorkbenchAppearanceCatalogSnapshot'
+  | 'getWorkbenchAppearanceCatalogEntries'
+  | 'resolveWorkbenchAppearanceSelection'
+  | 'createWorkbenchAppearanceOverrideSnapshot'
+  | 'createWorkbenchDocumentAppearanceOverrideController'
+  | 'createWorkbenchDocumentAppearanceDiagnosticController';
+type PackedPrivateAppearanceValuesRemainInternal = Extract<
+  keyof PackedShellReactPublicValues | keyof PackedShellReactShellPublicValues,
+  PackedPrivateAppearanceValueName
+> extends never
+  ? true
+  : never;
+export const packedPrivateAppearanceValuesRemainInternal: PackedPrivateAppearanceValuesRemainInternal =
+  true;
+
+// @ts-expect-error WB-NS-072F catalog types remain private to shell-react.
+type PackedPrivateAppearanceCatalogType = import('@workbench-kit/shell-react').WorkbenchAppearanceCatalogSnapshot;
+// @ts-expect-error WB-NS-072F controller types remain private to shell-react.
+type PackedPrivateAppearanceControllerType = import('@workbench-kit/shell-react').WorkbenchDocumentAppearanceOverrideController;
+// @ts-expect-error WB-NS-072F catalog types do not leak through the public shell subpath.
+type PackedPrivateAppearanceCatalogShellType = import('@workbench-kit/shell-react/shell').WorkbenchAppearanceCatalogSnapshot;
+// @ts-expect-error WB-NS-072F controller types do not leak through the public shell subpath.
+type PackedPrivateAppearanceControllerShellType = import('@workbench-kit/shell-react/shell').WorkbenchDocumentAppearanceOverrideController;
+// @ts-expect-error WB-NS-072F catalog has no packed public subpath.
+type PackedPrivateAppearanceCatalogSubpath = typeof import('@workbench-kit/shell-react/appearance-catalog');
+// @ts-expect-error WB-NS-072F controller has no packed public subpath.
+type PackedPrivateAppearanceControllerSubpath = typeof import('@workbench-kit/shell-react/appearance-controller');
+
+const packedTokenOverrides = Object.freeze(
+  Object.fromEntries(REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, '#202020'])),
+) satisfies Readonly<Record<string, string>>;
+const packedThemeRegistrationOptions: RegisterWorkbenchThemeOptions = {
+  label: 'Packed direct theme',
+  mode: 'dark',
+};
+const packedHostTheme: WorkbenchHostThemeRegistration = createWorkbenchHostThemeRegistration(
+  'workbench-kit.consumer.host-theme',
+  packedTokenOverrides,
+  { label: 'Packed host theme', mode: 'light' },
+);
+export const packedShellThemeRegistrationHelperParity: {
+  create: typeof createWorkbenchHostThemeRegistration;
+  register: typeof registerWorkbenchTheme;
+  registerHost: typeof registerHostWorkbenchThemes;
+} = {
+  create: createWorkbenchHostThemeRegistrationFromShell,
+  register: registerWorkbenchThemeFromShell,
+  registerHost: registerHostWorkbenchThemesFromShell,
+};
+
+export const packedWorkbenchProviderAppearanceProps: Pick<
+  WorkbenchProviderProps,
+  'hostThemes'
+> = { hostThemes: [packedHostTheme] };
+
+export const packedWorkbenchThemeOption: WorkbenchThemeOption = {
+  description: 'Packed ReactNode-compatible description',
+  id: 'workbench-kit.consumer.flat-theme',
+  label: 'Packed flat theme',
+};
+packedWorkbenchThemeOption.label = 'Packed mutable flat theme';
+
+const packedAppearanceChanges: string[] = [];
+export const packedWorkbenchShellAppearanceProps: Pick<
+  WorkbenchShellProps,
+  | 'theme'
+  | 'lightPreset'
+  | 'darkPreset'
+  | 'onThemeChange'
+  | 'onLightPresetChange'
+  | 'onDarkPresetChange'
+> = {
+  darkPreset: 'purple',
+  lightPreset: 'skyblue',
+  onDarkPresetChange: (preset) => packedAppearanceChanges.push(preset),
+  onLightPresetChange: (preset) => packedAppearanceChanges.push(preset),
+  onThemeChange: (theme) => packedAppearanceChanges.push(theme),
+  theme: 'system',
+};
+
+export function verifyPackedThemeRegistrationHelpers(): void {
+  const registry: ThemeRegistry = new ThemeRegistry();
+  const direct = registerWorkbenchTheme(
+    registry,
+    'workbench-kit.consumer.direct-theme',
+    packedTokenOverrides,
+    packedThemeRegistrationOptions,
+  );
+  const host = registerHostWorkbenchThemes(registry, [packedHostTheme]);
+  host.dispose();
+  direct.dispose();
+  registry.dispose();
+}
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'graph-authoring-runtime.ts'),
     `import {
   resolveNodeTypeCatalog,

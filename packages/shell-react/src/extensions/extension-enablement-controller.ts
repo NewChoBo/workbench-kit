@@ -77,6 +77,7 @@ export class ExtensionEnablementController implements DisposableLike {
   private readonly storageKey: string;
   private installedRecords: readonly InstalledExtensionRecord[];
   private themeSelectionProtection: ThemeSelectionProtectionSnapshot | undefined;
+  private themeSelectionProtectionGeneration = 0;
   private disposed = false;
 
   constructor({
@@ -123,11 +124,17 @@ export class ExtensionEnablementController implements DisposableLike {
     };
   };
 
-  setThemeSelectionProtection(snapshot: ThemeSelectionProtectionSnapshot | undefined): void {
+  setThemeSelectionProtection(snapshot: ThemeSelectionProtectionSnapshot | undefined): () => void {
+    const generation = ++this.themeSelectionProtectionGeneration;
     this.themeSelectionProtection =
       snapshot?.kind === 'known'
         ? { ...snapshot, protectedThemeIds: [...snapshot.protectedThemeIds] }
         : snapshot;
+    return () => {
+      if (this.themeSelectionProtectionGeneration === generation) {
+        this.themeSelectionProtection = undefined;
+      }
+    };
   }
 
   commitInstalledRecords(
@@ -348,7 +355,8 @@ export class ExtensionEnablementController implements DisposableLike {
     const selectionProtection = this.themeSelectionProtection;
     if (
       selectionProtection?.kind !== 'known' ||
-      selectionProtection.themeRegistryRevision !== this.registry.themes.getRevision()
+      selectionProtection.themeRegistryRevision !== this.registry.themes.getRevision() ||
+      !selectionProtection.isCurrent()
     ) {
       return { commitRequestedState: false, eligible: false, kind: 'reloadRequired' };
     }

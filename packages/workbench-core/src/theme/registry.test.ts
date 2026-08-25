@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
 import { ExtensionRegistry } from '../extension/registry.js';
-import { REQUIRED_THEME_TOKEN_KEYS, ThemeRegistry, applyThemeTokenOverrides } from './registry.js';
+import {
+  REQUIRED_THEME_TOKEN_KEYS,
+  ThemeRegistry,
+  applyThemeTokenOverrides,
+  type ThemeRegistryChangeEvent,
+  type WorkbenchThemeContribution,
+} from './registry.js';
 
 function buildCompleteTokenOverrides(baseColor: string): Record<string, string> {
   return Object.fromEntries(REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, baseColor]));
@@ -40,6 +46,52 @@ describe('ThemeRegistry', () => {
     ]);
   });
 
+  it('preserves registered object identity and exposes writable own-data drift without a revision', () => {
+    const registry = new ThemeRegistry();
+    const registeredThemes: unknown[] = [];
+    const changes: ThemeRegistryChangeEvent[] = [];
+    registry.onDidRegisterTheme((theme) => registeredThemes.push(theme));
+    registry.onDidChangeThemes((event) => changes.push(event));
+    const registeredId = 'workbench-kit.samples.mutable-theme';
+    const tokenOverrides = buildCompleteTokenOverrides('#101010');
+    const theme: WorkbenchThemeContribution = {
+      extensionId: 'workbench-kit.samples.mutable',
+      id: registeredId,
+      label: 'Before',
+      mode: 'dark',
+      tokenOverrides,
+    };
+
+    const registration = registry.registerTheme(theme);
+    const registeredRevision = registry.getRevision();
+
+    expect(registry.getTheme(registeredId)).toBe(theme);
+    expect(registry.getThemes()).toHaveLength(1);
+    expect(registry.getThemes()[0]).toBe(theme);
+    expect(registeredThemes[0]).toBe(theme);
+    expect(changes[0]).toEqual({ kind: 'registered', theme });
+
+    theme.label = 'After';
+    theme.mode = 'light';
+    tokenOverrides['--color-bg'] = '#fefefe';
+
+    expect(registry.getRevision()).toBe(registeredRevision);
+    expect(registry.getTheme(registeredId)).toBe(theme);
+    expect(registry.getTheme(registeredId)).toMatchObject({
+      label: 'After',
+      mode: 'light',
+      tokenOverrides: { '--color-bg': '#fefefe' },
+    });
+
+    registration.dispose();
+    expect(registry.getTheme(registeredId)).toBeUndefined();
+    expect(registry.getRevision()).toBe(registeredRevision + 1);
+    expect(changes[1]).toEqual({ kind: 'unregistered', theme });
+
+    registration.dispose();
+    expect(registry.getRevision()).toBe(registeredRevision + 1);
+  });
+
   it('registers contributed themes from extensions', () => {
     const registry = new ExtensionRegistry();
 
@@ -72,6 +124,62 @@ describe('ThemeRegistry', () => {
         id: 'workbench-kit.samples.theme-alt.dark-blue',
         label: 'Dark Blue Alt',
       }),
+    ]);
+  });
+
+  it('rolls back an earlier theme when a later contribution duplicates a registered id', () => {
+    const registry = new ExtensionRegistry();
+    const retainedTheme = {
+      extensionId: 'workbench-kit.samples.retained',
+      id: 'workbench-kit.samples.retained.theme',
+      label: 'Retained Theme',
+      mode: 'dark' as const,
+      tokenOverrides: buildCompleteTokenOverrides('#111111'),
+    };
+    registry.themes.registerTheme(retainedTheme);
+    const changes: string[] = [];
+    registry.themes.onDidChangeThemes(({ kind, theme }) => {
+      changes.push(`${kind}:${theme.id}`);
+    });
+
+    expect(() =>
+      registry.registerExtension({
+        manifest: {
+          schemaVersion: 1,
+          id: 'workbench-kit.samples.theme-batch',
+          name: 'samples-theme-batch',
+          displayName: 'Theme Batch',
+          version: '0.0.0',
+          publisher: 'workbench-kit',
+          engines: { workbench: '^0.0.0', extensionApi: '^0.0.0' },
+          activationEvents: ['onStartup'],
+          contributes: {
+            themes: [
+              {
+                id: 'workbench-kit.samples.theme-batch.first',
+                label: 'First Theme',
+                mode: 'light',
+                tokenOverrides: buildCompleteTokenOverrides('#eeeeee'),
+              },
+              {
+                id: retainedTheme.id,
+                label: 'Duplicate Theme',
+                mode: 'dark',
+                tokenOverrides: buildCompleteTokenOverrides('#222222'),
+              },
+            ],
+          },
+        },
+      }),
+    ).toThrow(`Theme "${retainedTheme.id}" is already registered.`);
+
+    expect(registry.getExtension('workbench-kit.samples.theme-batch')).toBeUndefined();
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-batch.first')).toBeUndefined();
+    expect(registry.themes.getTheme(retainedTheme.id)).toBe(retainedTheme);
+    expect(registry.themes.getThemes()).toEqual([retainedTheme]);
+    expect(changes).toEqual([
+      'registered:workbench-kit.samples.theme-batch.first',
+      'unregistered:workbench-kit.samples.theme-batch.first',
     ]);
   });
 

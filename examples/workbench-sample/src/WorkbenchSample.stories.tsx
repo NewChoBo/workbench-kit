@@ -1012,6 +1012,12 @@ export const SettingsAppearanceSmoke: Story = {
     const canvas = within(canvasElement);
 
     await waitForWorkbenchReady(canvas);
+    const shellRoot = canvasElement.querySelector<HTMLElement>('.ide-root');
+    const editorRegion = canvasElement.querySelector<HTMLElement>('.workbench-sample-editor-frame');
+    const activityBar = canvasElement.querySelector<HTMLElement>('.ui-workbench-activity-bar');
+    expect(shellRoot).not.toBeNull();
+    expect(editorRegion).not.toBeNull();
+    expect(activityBar).not.toBeNull();
     await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
 
     const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
@@ -1021,6 +1027,49 @@ export const SettingsAppearanceSmoke: Story = {
       within(settingsDialog).getByRole('combobox', { name: 'Color scheme' }),
     ).toBeVisible();
     await expect(within(settingsDialog).getByRole('heading', { name: 'Appearance' })).toBeVisible();
+
+    const colorSchemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Color scheme',
+    });
+    await userEvent.click(colorSchemeSelect);
+    await userEvent.click(
+      await within(canvasElement.ownerDocument.body).findByRole('option', { name: 'Dark' }),
+    );
+
+    const darkThemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Preferred Dark Color Theme',
+    });
+    await userEvent.click(darkThemeSelect);
+    await userEvent.click(
+      await within(canvasElement.ownerDocument.body).findByRole('option', {
+        name: 'Sample Forest',
+      }),
+    );
+
+    await waitFor(() => {
+      expect(shellRoot).toHaveAttribute('data-theme', 'dark');
+      expect(shellRoot).toHaveAttribute('data-theme-preset', 'workbench-kit.sample.host.forest');
+      expect(shellRoot?.style.getPropertyValue('--color-bg')).toBe('#0f1a12');
+      expect(canvasElement.ownerDocument.documentElement.style.getPropertyValue('--color-bg')).toBe(
+        '#0f1a12',
+      );
+      expect(getComputedStyle(editorRegion!).getPropertyValue('--color-bg')).toBe('#0f1a12');
+      expect(getComputedStyle(activityBar!).getPropertyValue('--color-bg')).toBe('#0f1a12');
+    });
+    await expect(darkThemeSelect).toHaveFocus();
+
+    await userEvent.click(darkThemeSelect);
+    await userEvent.click(
+      await within(canvasElement.ownerDocument.body).findByRole('option', { name: 'Deep Navy' }),
+    );
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.ide-root')).toBe(shellRoot);
+      expect(shellRoot).toHaveAttribute('data-theme-preset', 'navy');
+      expect(shellRoot?.style.getPropertyValue('--color-bg')).toBe('');
+      expect(canvasElement.ownerDocument.documentElement.style.getPropertyValue('--color-bg')).toBe(
+        '',
+      );
+    });
   },
 };
 

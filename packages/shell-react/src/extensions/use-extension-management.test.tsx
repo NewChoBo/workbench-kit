@@ -110,16 +110,15 @@ function ThemeLifecycleManagementProbe({
   const [themeRevision, bumpThemeRevision] = useReducer((revision: number) => revision + 1, 0);
   useEffect(() => themes.onDidChangeThemes(bumpThemeRevision).dispose, [themes]);
   useEffect(() => {
-    controller.setThemeSelectionProtection(
+    return controller.setThemeSelectionProtection(
       createThemeSelectionProtectionSnapshot({
         darkPreset: undefined,
         lightPreset: undefined,
         theme: 'workbench-kit.test.host-theme',
-        themeOptions: [{ id: 'workbench-kit.test.host-theme' }],
+        themeOptions: [{ id: 'workbench-kit.test.host-theme', label: 'Host theme' }],
         themes,
       }),
     );
-    return () => controller.setThemeSelectionProtection(undefined);
   }, [controller, themeRevision, themes]);
 
   return <ExtensionManagementProbe catalogUrl="" onChange={onChange} />;

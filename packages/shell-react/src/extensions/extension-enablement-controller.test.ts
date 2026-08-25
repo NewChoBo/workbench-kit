@@ -104,7 +104,7 @@ function setKnownUnselectedTheme(
       darkPreset: undefined,
       lightPreset: undefined,
       theme: 'workbench-kit.test.host-theme',
-      themeOptions: [{ id: 'workbench-kit.test.host-theme' }],
+      themeOptions: [{ id: 'workbench-kit.test.host-theme', label: 'Host theme' }],
       themes: registry.themes,
     }),
   );
@@ -244,7 +244,12 @@ describe('ExtensionEnablementController', () => {
         darkPreset: undefined,
         lightPreset: undefined,
         theme: 'workbench-kit.samples.theme-alt.dark-blue',
-        themeOptions: [{ id: 'workbench-kit.samples.theme-alt.dark-blue' }],
+        themeOptions: [
+          {
+            id: 'workbench-kit.samples.theme-alt.dark-blue',
+            label: 'Conflicting host theme',
+          },
+        ],
       },
     ],
   ])('fails closed without mutating for %s', (_label, selection) => {
@@ -276,7 +281,7 @@ describe('ExtensionEnablementController', () => {
         darkPreset: undefined,
         lightPreset: undefined,
         theme: undefined,
-        themeOptions: [{ id: 'workbench-kit.test.fallback-theme' }],
+        themeOptions: [{ id: 'workbench-kit.test.fallback-theme', label: 'Fallback theme' }],
         themes: registry.themes,
       }),
     );
@@ -297,7 +302,7 @@ describe('ExtensionEnablementController', () => {
       darkPreset: undefined,
       lightPreset: undefined,
       theme: 'workbench-kit.test.host-theme',
-      themeOptions: [{ id: 'workbench-kit.test.host-theme' }],
+      themeOptions: [{ id: 'workbench-kit.test.host-theme', label: 'Host theme' }],
       themes: registry.themes,
     });
     const unrelatedRegistration = registry.themes.registerTheme({
@@ -317,6 +322,57 @@ describe('ExtensionEnablementController', () => {
     expect(persistence.setItem).not.toHaveBeenCalled();
 
     unrelatedRegistration.dispose();
+  });
+
+  it('fails closed when registered theme own data drifts without a registry revision', () => {
+    const { controller, persistence, registry } = createHarness({ enabled: true });
+    const selectedHostOptions = [{ id: 'workbench-kit.test.host-theme', label: 'Host theme' }];
+    controller.setThemeSelectionProtection(
+      createThemeSelectionProtectionSnapshot({
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: selectedHostOptions[0].id,
+        themeOptions: selectedHostOptions,
+        themes: registry.themes,
+      }),
+    );
+    const capturedRevision = registry.themes.getRevision();
+    const mutableTheme = registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue') as {
+      label: string;
+    };
+    mutableTheme.label = 'Mutated without an event';
+
+    expect(registry.themes.getRevision()).toBe(capturedRevision);
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: true,
+      kind: 'reloadRequired',
+    });
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+    expect(persistence.setItem).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when host option own data drifts without a registry revision', () => {
+    const { controller, persistence, registry } = createHarness({ enabled: true });
+    const hostOptions = [{ id: 'workbench-kit.test.host-theme', label: 'Host theme' }];
+    controller.setThemeSelectionProtection(
+      createThemeSelectionProtectionSnapshot({
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: hostOptions[0].id,
+        themeOptions: hostOptions,
+        themes: registry.themes,
+      }),
+    );
+    const capturedRevision = registry.themes.getRevision();
+    hostOptions[0].label = 'Mutated host theme';
+
+    expect(registry.themes.getRevision()).toBe(capturedRevision);
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: true,
+      kind: 'reloadRequired',
+    });
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+    expect(persistence.setItem).not.toHaveBeenCalled();
   });
 
   it.each([
@@ -419,11 +475,15 @@ describe('ExtensionEnablementController', () => {
       registrationLifetime,
       registry,
     });
-    controller.setThemeSelectionProtection({
-      kind: 'known',
-      protectedThemeIds: [],
-      themeRegistryRevision: registry.themes.getRevision(),
-    });
+    controller.setThemeSelectionProtection(
+      createThemeSelectionProtectionSnapshot({
+        darkPreset: undefined,
+        lightPreset: undefined,
+        theme: 'workbench-kit.test.host-theme',
+        themeOptions: [{ id: 'workbench-kit.test.host-theme', label: 'Host theme' }],
+        themes: registry.themes,
+      }),
+    );
 
     expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
       kind: 'reloadRequired',

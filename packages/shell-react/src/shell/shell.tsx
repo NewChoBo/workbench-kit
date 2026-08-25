@@ -1,4 +1,13 @@
-import { useCallback, useEffect, useMemo, useReducer, useState, type ReactNode } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useReducer,
+  useRef,
+  useState,
+  type CSSProperties,
+  type ReactNode,
+} from 'react';
 import { Modal } from '@workbench-kit/react/modal';
 import { Badge, Button, IconButton } from '@workbench-kit/react/primitives';
 import {
@@ -18,7 +27,6 @@ import type {
 import { WORKBENCH_PERMISSION_CONTEXT_KEY_CAN_OPEN_SETTINGS } from '@workbench-kit/platform';
 import { isPreferenceScope, type PreferenceScope } from '@workbench-kit/workbench-config';
 import {
-  resolveActiveThemePreset,
   DEFAULT_SHELL_PRESET,
   useResolvedWorkbenchTheme,
   type WorkbenchCommandDescriptor,
@@ -63,6 +71,12 @@ import {
 } from './secondary-actions.js';
 import { SETTINGS_EXTENSION_ID, WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
 import { createSettingsCategories, type WorkbenchThemeOption } from './settings.js';
+import { createWorkbenchAppearanceCatalogSnapshot } from './appearance-catalog.js';
+import {
+  createWorkbenchDocumentAppearanceDiagnosticController,
+  createWorkbenchDocumentAppearanceOverrideController,
+} from './appearance-controller.js';
+import { resolveWorkbenchAppearancePresentation } from './appearance-presentation.js';
 import {
   createContributedWorkbenchStatusSections,
   createDefaultWorkbenchStatusSections,
@@ -200,10 +214,6 @@ export function WorkbenchShell({
 }: WorkbenchShellProps) {
   const resolvedEditorArea = editorArea ?? null;
   const resolvedWorkbenchTheme = useResolvedWorkbenchTheme(theme ?? 'system');
-  const activeThemePreset =
-    lightPreset !== undefined && darkPreset !== undefined
-      ? resolveActiveThemePreset(resolvedWorkbenchTheme, { darkPreset, lightPreset })
-      : undefined;
   const {
     activities,
     commands,
@@ -222,6 +232,25 @@ export function WorkbenchShell({
     viewHostFactories,
     views,
   } = useWorkbench();
+  const appearanceCatalog = createWorkbenchAppearanceCatalogSnapshot({
+    hostOptions: themeOptions,
+    themes,
+  });
+  const appearancePresentation = resolveWorkbenchAppearancePresentation({
+    catalog: appearanceCatalog,
+    darkPreset,
+    lightPreset,
+    resolvedSystemTheme: resolvedWorkbenchTheme,
+    theme,
+  });
+  const rootAppearanceStyle = appearancePresentation.legacyTokenOverrides as
+    CSSProperties | undefined;
+  const documentAppearanceControllerRef = useRef<
+    ReturnType<typeof createWorkbenchDocumentAppearanceOverrideController> | undefined
+  >(undefined);
+  const documentAppearanceDiagnosticControllerRef = useRef<
+    ReturnType<typeof createWorkbenchDocumentAppearanceDiagnosticController> | undefined
+  >(undefined);
   const extensionEnablement = useExtensionEnablementController();
   const contextKeyRevision = useContextKeyRevision(contextKeyService);
   const contextKeySnapshot = useMemo(
@@ -233,13 +262,14 @@ export function WorkbenchShell({
   const themeSelectionProtection = useMemo(
     () =>
       createThemeSelectionProtectionSnapshot({
+        catalog: appearanceCatalog,
         darkPreset,
         lightPreset,
         theme,
         themeOptions,
         themes,
       }),
-    [darkPreset, lightPreset, theme, themeOptions, themeRevision, themes],
+    [appearanceCatalog, darkPreset, lightPreset, theme, themeOptions, themeRevision, themes],
   );
   const [preferenceRevision, bumpPreferenceRevision] = useReducer((count: number) => count + 1, 0);
   const [isHelpOpen, setHelpOpen] = useState(false);
@@ -313,11 +343,40 @@ export function WorkbenchShell({
   });
 
   useEffect(() => {
-    extensionEnablement.setThemeSelectionProtection(themeSelectionProtection);
-    return () => {
-      extensionEnablement.setThemeSelectionProtection(undefined);
-    };
+    return extensionEnablement.setThemeSelectionProtection(themeSelectionProtection);
   }, [extensionEnablement, themeSelectionProtection]);
+
+  useEffect(() => {
+    if (typeof document === 'undefined') {
+      return undefined;
+    }
+    const controller = createWorkbenchDocumentAppearanceOverrideController(
+      document.documentElement,
+    );
+    const diagnosticController = createWorkbenchDocumentAppearanceDiagnosticController(
+      document.documentElement,
+    );
+    documentAppearanceControllerRef.current = controller;
+    documentAppearanceDiagnosticControllerRef.current = diagnosticController;
+    return () => {
+      documentAppearanceControllerRef.current = undefined;
+      documentAppearanceDiagnosticControllerRef.current = undefined;
+      diagnosticController.dispose();
+      controller.dispose();
+    };
+  }, []);
+
+  useEffect(() => {
+    documentAppearanceControllerRef.current?.update(appearancePresentation.legacyTokenOverrides);
+    documentAppearanceDiagnosticControllerRef.current?.update({
+      unresolvedTheme: appearancePresentation.unresolvedTheme,
+      unresolvedThemePreset: appearancePresentation.unresolvedThemePreset,
+    });
+  }, [
+    appearancePresentation.legacyTokenOverrides,
+    appearancePresentation.unresolvedTheme,
+    appearancePresentation.unresolvedThemePreset,
+  ]);
 
   useEffect(() => {
     if (visibleActivityItems.length === 0) {
@@ -374,7 +433,7 @@ export function WorkbenchShell({
       ...managementCategories,
       ...(additionalSettingsCategories ?? []),
       ...createSettingsCategories(
-        { configurations, extensionCatalog, localizations, themes },
+        { appearanceCatalog, configurations, extensionCatalog, localizations },
         {
           activeScope: settingsScopeId,
           darkPreset,
@@ -395,6 +454,7 @@ export function WorkbenchShell({
   }, [
     accountManagement,
     additionalSettingsCategories,
+    appearanceCatalog,
     commandHost,
     darkPreset,
     configurations,
@@ -699,11 +759,13 @@ export function WorkbenchShell({
         sizePercent: layout.panel.sizePercent,
       }}
       rootClassName={rootClassName}
+      rootStyle={rootAppearanceStyle}
       secondaryArea={resolvedEditorArea}
       statusSections={resolvedStatusSections}
       titleBar={resolvedTitleBar}
-      theme={resolvedWorkbenchTheme}
-      themePreset={activeThemePreset}
+      theme={appearancePresentation.theme}
+      themePreference={appearancePresentation.themePreference}
+      themePreset={appearancePresentation.themePreset}
       shellPreset={shellPreset}
       overlays={
         <>
