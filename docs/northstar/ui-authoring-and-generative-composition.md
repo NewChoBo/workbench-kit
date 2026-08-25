@@ -394,6 +394,16 @@ DevelopmentValidationContract
 RegistryContributionDescriptor
 ```
 
+`WB-NS-071B` v1 closes these provisional roles through the focused
+`@workbench-kit/contracts/authoring-development` surface. One versioned
+`AuthoringDevelopmentRequirement` reuses the existing descriptor contracts for a desired atomic
+component or node type; that discriminated descriptor target is the bounded registry-contribution
+contract. `AuthoringScaffoldPlan` and `DevelopmentValidationContract` remain external
+implementation-lane concerns rather than public v1 Workbench contracts. These provisional labels
+must not create a second descriptor, catalog, task or execution schema. This v1 packet does not
+add component/node contributions to the extension manifest; the `INSTALL_EXTENSION` branch remains
+a later explicit extension-integration contract.
+
 Flow:
 
 ```text

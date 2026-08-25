@@ -74,7 +74,7 @@ WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mec
 WB-NS-070F provider-neutral generative UI parity [DESIGNING; optional after the manual command chain, not a WB-NS-071A dependency]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
-WB-NS-071B component/node development requirement flow
+WB-NS-071B component/node development requirement flow [READY_FOR_IMPLEMENTATION]
         ↓
 WB-NS-071C external node ecosystem adapter contract
 
@@ -3300,6 +3300,345 @@ The packet is complete when a browser-, Electron- and AI-free consumer can decla
 Producer-distinct readiness review must reject a second value-schema/type system, implicit property connectability, duplicated property/socket schemas, runtime or renderer functions in contracts, `@xyflow/react` leakage, transform compatibility/evaluation duplication, a universal component/node registry, last-writer-wins catalog conflicts, a new free-form Field Remap graph document or implementation of `WB-NS-010`/071B/071C scope. The reviewed readiness successor promoted the packet to `READY_FOR_IMPLEMENTATION` and was integrated before this source lane began.
 
 The integrated source implements the graph-authoring contracts under `packages/contracts/src/graph-authoring/` and the bounded one-way adapter under `packages/field-remap/src/projection/`. Producer-distinct exact-source review returned `PASS / P0 none / P1 none / P2 none`; repository static, 428-file/2,136-test unit and Chromium Storybook gates passed on the reviewed successor. Electron was not required because no native boundary changed.
+
+### `WB-NS-071B` bounded readiness packet — missing capability to development requirement
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Exact source/API base:** `origin/develop@80fab0af8fed297bf9c0afa4805f44e9903109c8`
+- **Dependencies:** `WB-NS-070C` and `WB-NS-071A` `DONE`; the existing UI component and node-type descriptors/catalogs remain the only target authorities
+- **Target owner:** focused public subpath `@workbench-kit/contracts/authoring-development`
+- **Implementation scope:** inert component/node development requirements, strict plain-data snapshotting, exact catalog reconciliation, deterministic diagnostics, public exports and backendless tests
+
+#### Outcome
+
+An AI-disabled, renderer-free consumer can record an explicit request for one missing atomic UI component or graph node type, preserve the reviewed requirement as inert immutable data, compare its exact descriptor target with a fresh existing catalog and decide whether implementation is still missing, already fulfilled or blocked by an identity conflict. The contract never writes source, installs an extension, mutates a document or automatically applies the result.
+
+Manual and optional generative planners emit the same requirement envelope. Code generation, repository/task execution, trust, installation, activation, preview and Apply remain external lanes with separate authority. A fulfilled requirement proves only exact declarative catalog equivalence; it does not prove that code is trusted, installed, runnable, released or accepted into a user document.
+
+#### Canonical ownership and boundaries
+
+| Concern                                       | Decision                                                                  | Reason / follow-up                                                                                                                           |
+| --------------------------------------------- | ------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| Component target                              | Reuse `UiAtomicComponentDescriptor` and the existing UI component catalog | Composite authoring reuses composition and does not escalate to source development. No second component schema or registry is introduced.    |
+| Node target                                   | Reuse `NodeTypeDescriptor` and the existing graph-specific node catalog   | Exact current node semantics remain canonical. 071B does not create a universal component/node registry.                                     |
+| Requirement lifecycle                         | New inert contracts-only leaf                                             | The envelope can cross planners and implementation tools without importing a task system, repository protocol, runtime or renderer.          |
+| Existing-catalog operands                     | 071B-owned strict snapshot before comparison                              | Catalog provenance is not trusted. Both component and node occupants cross the same own-data/plain-data boundary without invoking accessors. |
+| Resume identity                               | Exact frozen full-envelope equivalence for one opaque `requirementId`     | The identifier is a correlation identity, not a content hash. Reusing it with changed intent or target fails closed.                         |
+| Fulfillment identity                          | Exact target ref plus canonical semantic descriptor equivalence           | Display metadata cannot create false conflicts, while runtime identity and authored ordered structures remain exact.                         |
+| Runtime, extension and implementation tooling | Keep external                                                             | The public contract carries no code, module URL, package/repository path, branch, task, pull-request, permission or execution state.         |
+| Documents and Apply                           | Do not extend                                                             | `UiDocument`, graph documents and command/history owners receive no persisted requirement or automatic mutation.                             |
+
+#### Public contract
+
+The names, signatures and status discriminants below are frozen. Issue messages and additional issue context fields may follow existing contracts naming conventions without weakening the required issue distinctions.
+
+```ts
+export const AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION = 1 as const;
+
+export interface AuthoringDevelopmentIntent {
+  readonly summary: string;
+  readonly acceptance: readonly string[];
+  readonly nonGoals?: readonly string[];
+}
+
+export type AuthoringDevelopmentTarget =
+  | {
+      readonly kind: 'component';
+      readonly descriptor: UiAtomicComponentDescriptor;
+    }
+  | {
+      readonly kind: 'node-type';
+      readonly descriptor: NodeTypeDescriptor;
+    };
+
+export interface AuthoringDevelopmentRequirement {
+  readonly schemaVersion: 1;
+  readonly requirementId: string;
+  readonly target: AuthoringDevelopmentTarget;
+  readonly intent: AuthoringDevelopmentIntent;
+}
+
+export type AuthoringDevelopmentRequirementIssueCode =
+  | 'unsupported-schema-version'
+  | 'malformed-requirement'
+  | 'malformed-intent'
+  | 'unsupported-target-kind'
+  | 'malformed-target'
+  | 'noncanonical-requirement-text'
+  | 'invalid-component-descriptor'
+  | 'composite-component-target'
+  | 'invalid-node-type-descriptor'
+  | 'unsafe-existing-component-descriptor'
+  | 'unsafe-existing-node-type-descriptor'
+  | 'component-catalog-unavailable'
+  | 'node-type-catalog-unavailable'
+  | 'component-identity-conflict'
+  | 'node-type-identity-conflict'
+  | 'requirement-id-conflict';
+
+export interface AuthoringDevelopmentRequirementIssue {
+  readonly code: AuthoringDevelopmentRequirementIssueCode;
+  readonly message: string;
+  readonly path: string;
+}
+
+export type AuthoringDevelopmentRequirementParseResult =
+  | {
+      readonly status: 'valid';
+      readonly requirement: AuthoringDevelopmentRequirement;
+      readonly issues: readonly [];
+    }
+  | {
+      readonly status: 'invalid' | 'unsupported-version';
+      readonly requirement?: never;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    };
+
+export type AuthoringDevelopmentRequirementStatus =
+  | 'missing'
+  | 'fulfilled'
+  | 'identity-conflict'
+  | 'catalog-unavailable'
+  | 'invalid'
+  | 'unsupported-version';
+
+export type AuthoringDevelopmentComponentRequirement = Omit<
+  AuthoringDevelopmentRequirement,
+  'target'
+> & {
+  readonly target: Extract<AuthoringDevelopmentTarget, { readonly kind: 'component' }>;
+};
+
+export type AuthoringDevelopmentNodeTypeRequirement = Omit<
+  AuthoringDevelopmentRequirement,
+  'target'
+> & {
+  readonly target: Extract<AuthoringDevelopmentTarget, { readonly kind: 'node-type' }>;
+};
+
+export type AuthoringDevelopmentRequirementResolution =
+  | {
+      readonly status: 'missing';
+      readonly requirement: AuthoringDevelopmentRequirement;
+      readonly existingComponent?: never;
+      readonly existingNodeType?: never;
+      readonly issues: readonly [];
+    }
+  | {
+      readonly status: 'fulfilled';
+      readonly requirement: AuthoringDevelopmentComponentRequirement;
+      readonly existingComponent: UiComponentDescriptor;
+      readonly existingNodeType?: never;
+      readonly issues: readonly [];
+    }
+  | {
+      readonly status: 'fulfilled';
+      readonly requirement: AuthoringDevelopmentNodeTypeRequirement;
+      readonly existingComponent?: never;
+      readonly existingNodeType: NodeTypeDescriptor;
+      readonly issues: readonly [];
+    }
+  | {
+      readonly status: 'identity-conflict';
+      readonly requirement: AuthoringDevelopmentComponentRequirement;
+      readonly existingComponent?: UiComponentDescriptor;
+      readonly existingNodeType?: never;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    }
+  | {
+      readonly status: 'identity-conflict';
+      readonly requirement: AuthoringDevelopmentNodeTypeRequirement;
+      readonly existingComponent?: never;
+      readonly existingNodeType?: NodeTypeDescriptor;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    }
+  | {
+      readonly status: 'catalog-unavailable';
+      readonly requirement: AuthoringDevelopmentComponentRequirement;
+      readonly existingComponent?: never;
+      readonly existingNodeType?: never;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    }
+  | {
+      readonly status: 'catalog-unavailable';
+      readonly requirement: AuthoringDevelopmentNodeTypeRequirement;
+      readonly existingComponent?: never;
+      readonly existingNodeType?: never;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    }
+  | {
+      readonly status: 'invalid' | 'unsupported-version';
+      readonly requirement?: never;
+      readonly existingComponent?: never;
+      readonly existingNodeType?: never;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    };
+
+export type AuthoringDevelopmentRequirementResumeStatus =
+  | 'same-requirement'
+  | 'new-requirement'
+  | 'requirement-id-conflict'
+  | 'invalid'
+  | 'unsupported-version';
+
+export type AuthoringDevelopmentRequirementResumeResolution =
+  | {
+      readonly status: 'same-requirement' | 'new-requirement';
+      readonly previous: AuthoringDevelopmentRequirement;
+      readonly requirement: AuthoringDevelopmentRequirement;
+      readonly issues: readonly [];
+    }
+  | {
+      readonly status: 'requirement-id-conflict';
+      readonly previous: AuthoringDevelopmentRequirement;
+      readonly requirement: AuthoringDevelopmentRequirement;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    }
+  | {
+      readonly status: 'invalid' | 'unsupported-version';
+      readonly previous?: never;
+      readonly requirement?: never;
+      readonly issues: readonly AuthoringDevelopmentRequirementIssue[];
+    };
+
+export function parseAuthoringDevelopmentRequirement(
+  value: unknown,
+): AuthoringDevelopmentRequirementParseResult;
+
+export function resolveAuthoringDevelopmentRequirement(
+  requirement: AuthoringDevelopmentRequirement,
+  catalogs: {
+    readonly components: UiComponentCatalogContract;
+    readonly nodeTypes: NodeTypeCatalog;
+  },
+): AuthoringDevelopmentRequirementResolution;
+
+export function reconcileAuthoringDevelopmentRequirement(
+  previous: unknown,
+  next: unknown,
+): AuthoringDevelopmentRequirementResumeResolution;
+```
+
+Every parse, resume and catalog-resolution result is immutable. Every exposed requirement, occupant, issue and nested supported value is a detached frozen snapshot regardless of success or failure.
+
+#### Validation and strict snapshot boundary
+
+Parsing first applies the same strict acyclic own-data/plain-data snapshot to the raw `unknown` envelope without reading `schemaVersion`, `target.kind` or any other property. Only the successfully detached snapshot may enter schema/discriminant checks and the existing descriptor validators; raw requirement getters and setters are never invoked. Parsing then validates and freezes the full envelope before it can enter reconciliation:
+
+- `schemaVersion` accepts only exact version `1`; future or unknown versions return `unsupported-version` and are never rewritten;
+- `requirementId`, intent summary, acceptance entries, optional non-goal entries and every target identity/text field are already-trimmed, non-blank canonical strings;
+- the component arm accepts only a valid `UiAtomicComponentDescriptor`; composites are rejected because composition is the existing no-code path;
+- the node arm accepts only a valid current `NodeTypeDescriptor`;
+- unknown target kinds, malformed discriminants, mixed arms and invalid nested descriptors return deterministic issues and no usable requirement;
+- `intent` guides the external implementation lane only. It cannot override descriptor identity, catalog matching, runtime dispatch, permissions or Apply.
+
+`resolveAuthoringDevelopmentRequirement()` applies that same parse/snapshot path again before reading its nominally typed requirement, so a forged TypeScript value cannot bypass the runtime boundary. It invokes only the catalog selected by the parsed target kind. If that exact catalog lookup throws, resolution catches the failure and returns `catalog-unavailable` with the matching sanitized component/node issue; raw thrown values, messages and stacks are neither exposed nor persisted. An unavailable catalog is never reported as `missing` or `identity-conflict`.
+
+Before semantic comparison, both exact component and exact node catalog occupants cross one 071B-owned strict snapshot boundary. That boundary:
+
+1. inspects own property descriptors and never reads through a getter or setter;
+2. accepts only the supported plain-data subset represented by the canonical descriptor contracts;
+3. rejects inherited/exotic prototypes, executable or non-portable values, unsupported keys/value shapes and cycles deterministically;
+4. detaches supported mutable arrays/objects and freezes the resulting graph for the resolution lifetime;
+5. runs the matching existing component/node descriptor validator on the successfully detached occupant before projection;
+6. classifies an occupied exact target whose snapshot or descriptor validation fails as `identity-conflict` with a target-kind-specific unsafe-existing-descriptor issue, never as `missing` or `fulfilled`.
+
+This operand hardening is local to 071B. It does not widen or change `resolveUiComponentCatalog`, `resolveNodeTypeCatalog` or their contribution policies.
+
+#### Exact reconciliation and canonical semantic projection
+
+Lookup uses only the target's exact `{ id, version }` reference. There is no label/tag/capability search, version-nearest selection, AI similarity, implicit latest version or cross-kind fallback.
+
+1. No exact occupant returns `missing`.
+2. A safely snapshotted, valid exact occupant whose canonical semantic projection equals the requested descriptor returns `fulfilled` and includes the detached occupant.
+3. An occupied exact reference with a materially different, unsafe or descriptor-invalid occupant returns `identity-conflict`.
+4. A selected catalog whose lookup throws returns sanitized `catalog-unavailable`.
+5. Invalid or unsupported requirement envelopes never reach catalog lookup.
+
+One internal canonical projection defines equality for both target arms. No other omitted optional field receives an implicit default unless an existing canonical Workbench normalizer already defines that equivalence:
+
+- shared `UiValueSchema` semantics include `type`, `defaultValue`, constraints, `editor.id` and `editor.metadata`;
+- `allowedSources` uses the existing `normalizeUiAllowedSources`; omitted remains literal-only and set membership uses canonical ordering;
+- plain object key order is ignored, authored arrays remain order-sensitive, and accessor/exotic/unsupported values fail closed;
+- an atomic component includes exact `id`, `version` and `kind`; each ordered property contributes `id`, exact optional `required` presence/value and the shared value-schema projection; each ordered event contributes `id`, payload presence and payload value-schema projection; each ordered binding contributes `id`, `direction` and value-schema projection;
+- each ordered child slot contributes `id`, `cardinality` and set-like exact `allowedComponents`; layout also includes set-like `supportedStrategyIds` and exact `defaultStrategyId`; accessibility includes set-like `supportedRoles` plus exact `defaultRole`, `accessibleNamePropertyId` and `accessibleDescriptionPropertyId`;
+- a node type includes exact `id` and `version`; ordered properties use the same property projection; each ordered input preserves the `propertyId` versus inline `value` branch, exact optional `required` presence/value and its exact property ID or value-schema projection; each ordered output includes `id` and value-schema projection; capabilities are set-like;
+- component/node `designTime.hiddenFromPalette` is semantic and normalized as `=== true`;
+- component/node design label, description, category, icon and tags, plus property/event/binding/port label and description, are presentation metadata and do not affect fulfillment.
+
+Endpoint/declaration arrays remain ordered because their position is authored meaning. Membership collections compare as sets after canonicalization. No second general-purpose deep-equality, value-schema normalization or descriptor registry becomes public.
+
+#### Requirement identity and explicit lifecycle
+
+`requirementId` is an opaque immutable instance/correlation identity. Workbench retains no mutable global requirement registry. `reconcileAuthoringDevelopmentRequirement(previous, next)` strictly parses and snapshots both operands, then returns `new-requirement` for different IDs, `same-requirement` for an equivalent frozen full envelope, or `requirement-id-conflict` for the same ID paired with any changed target or intent. Invalid and future-version operands preserve their fail-closed status; no catalog lookup, overwrite, merge or newest-wins migration occurs. An external persistence/transport owner calls this stateless API before replacing its stored envelope. Catalog fulfillment equivalence is intentionally narrower than full-envelope resume identity. A backendless persistence-owner fixture proves the rule without introducing a public ID generator, task service or hidden registry.
+
+Full-envelope resume equality includes every accepted serialized requirement field, including all target descriptor presentation metadata and all intent text/array order. Plain-record key order is ignored while every array remains ordered. It does not reuse the narrower catalog-fulfillment projection and does not normalize away any field except through the strict parser's already-frozen canonical input rules.
+
+The supported lifecycle is:
+
+```text
+manual planner or optional generative planner
+  -> exact catalog/composition check
+  -> concrete existing component/node descriptor target
+  -> parse + freeze inert requirement
+  -> external implementation/trust/install lane
+  -> fresh catalog snapshot
+  -> exact resolve
+  -> explicit human/tool retry or preview
+```
+
+Catalog arrival never auto-applies a component/node, mutates a document, advances task state or activates executable code. The caller explicitly invokes resolution again and separately decides whether to preview, trust or Apply through existing owners.
+
+#### Deterministic issue vocabulary
+
+Expose a frozen issue-code vocabulary sufficient to distinguish at least:
+
+- unsupported schema version, malformed requirement/intent/target and noncanonical text;
+- invalid component descriptor, composite component target and invalid node descriptor;
+- unsafe existing component descriptor and unsafe existing node descriptor;
+- selected component catalog unavailable and selected node catalog unavailable without raw exception detail;
+- component identity conflict and node identity conflict;
+- requirement ID reused with a changed full envelope.
+
+Issues accumulate deterministically in declaration order where multiple independent fields are invalid. They contain inert structured data only and do not echo code, secrets, repository locations or executable values.
+
+#### Ordered implementation slice
+
+1. Add the focused `authoring-development` leaf, public types/status/issues, parser, stateless resume reconciler and 071B-owned strict snapshot helper under `packages/contracts/src/`.
+2. Reconcile exact component and node targets through the existing catalogs without adding a registry or changing their resolution behavior; catch and sanitize selected-catalog lookup failure.
+3. Cover component `missing`, `fulfilled`, semantic metadata tolerance, identity conflict, invalid envelope, unsafe occupant, plain-data semantic-invalid occupant and composite rejection.
+4. Cover the equivalent node cases, including properties, property-backed inputs and plain-data semantic-invalid custom-catalog occupants from the current 071A contract.
+5. Fail closed for future versions, unknown target kinds, malformed nested data, accessors, exotic objects, executable values and cycles.
+6. Prove manual and optional provider/generative producers can construct the same inert envelope without adding a provider dependency.
+7. Add a backendless resumption fixture: `missing` -> fresh catalog arrival -> `fulfilled` -> explicit retry/preview signal, with no automatic Apply or document mutation.
+8. Add focused public-subpath and packed-consumer checks for `@workbench-kit/contracts/authoring-development`, separately proving TypeScript types with `exactOptionalPropertyTypes`, Node CJS `require` and ESM `import` from the packed tarball.
+9. Freeze one exact source candidate and obtain producer-distinct review of the code, fixtures and public packed surface before integration.
+
+#### Scope and non-scope
+
+In scope: framework-neutral data contracts, target descriptor reuse, strict operand snapshotting, exact catalog lookup, canonical semantic comparison, immutable parse/resolution evidence, deterministic diagnostics, public subpath exports and browser/Electron-free tests.
+
+Not in scope: source/code payloads, arbitrary JSX/HTML/CSS/script, code generation, package/repository/file/branch/task/PR metadata, network/provider protocols, extension discovery/install/trust/activation, renderer/runtime registration, document persistence, command/history changes, automatic preview or Apply, component composition, graph instances/edges/execution, 071C external ecosystem adapters, product policy, Electron/native work or a second component/node/value schema.
+
+#### Focused and final validation
+
+- focused development loop: contracts authoring-development unit tests and contracts typecheck only;
+- parsing: valid component/node envelopes, manual/generative producer parity, canonical text, immutability, malformed/unknown/future-version fail-closed behavior;
+- strict snapshot: raw requirement and catalog-own data, detachment/freeze, accessors never invoked, inherited/exotic/cyclic/executable values rejected for both catalog kinds, and plain-data but descriptor-invalid occupants rejected after snapshot;
+- reconciliation: exact-ref `missing`, semantic `fulfilled`, metadata-only tolerance, ordered-array difference, set-like membership normalization, target-specific identity conflicts and sanitized selected-catalog unavailability;
+- identity: same requirement ID plus equivalent full frozen envelope may resume; changed envelope returns `requirement-id-conflict`;
+- lifecycle: fresh-catalog resumption remains explicit and causes no Apply, document write, runtime activation or task mutation;
+- public compatibility: the new API is exposed only from the focused subpath, the contracts root and private helpers remain unchanged/unexposed, and packed-tarball fixtures separately prove TypeScript types under `exactOptionalPropertyTypes`, Node CJS `require` and ESM `import`; existing contracts consumers remain source-compatible;
+- frozen exact candidate: `pnpm check:commit-safety`, `pnpm validate:static` and `pnpm validate:fast` once on the same reviewed SHA;
+- browser and Electron: not required because this packet adds no UI, renderer behavior or native boundary.
+
+Construction/parsing is linear in the supplied requirement descriptor, strict snapshotting and semantic comparison are linear in the occupied descriptor, and exact catalog lookup remains constant-time after existing catalog construction. Review rejects repeated full-catalog scans per resolution, parallel normalization/equality engines, mutable registries and runtime dependencies; no arbitrary bundle-size or millisecond cap is imposed.
+
+#### Acceptance and readiness-review gate
+
+The packet is implementation-ready when an independent consumer can import the focused public subpath, create and freeze one inert atomic-component or node-type development requirement, resolve it against fresh existing catalogs as `missing`, `fulfilled` or fail-closed conflict, and resume only through an explicit caller action without invoking a provider, browser, Electron, extension runtime or document owner.
+
+Producer-distinct source review must reject mutable requirement registries, document persistence, second descriptor/value schemas, label/tag/version-nearest/AI matching, provenance-based snapshot bypasses, accessors or exotic values crossing the boundary, repository/task/code payloads, executable trust claims, automatic Apply/activation, future-schema rewriting, vendor/product coupling, extension/runtime widening and 071C scope. Acceptance requires `PASS / P0 none / P1 none / P2 none` on the exact candidate plus the focused and final validation above.
 
 ### ComfyUI discovery
 
