@@ -515,10 +515,8 @@ describe('FieldRemapPanel', () => {
     });
     await clickTestId(container, 'field-remap-select-edge-e-name');
     await clickTestId(container, 'field-remap-select-edge-e-tags', { shiftKey: true });
-    const mapper = container.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
-    const event = await pressKey(mapper, 'Delete');
+    await clickTestId(container, 'field-remap-remove-edge-e-name');
 
-    expect(event.defaultPrevented).toBe(true);
     expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
     expect(container.querySelector('[data-testid="field-remap-lane-e-tags"]')).toBeNull();
     expect(historyActionsRef.current?.canUndo).toBe(true);

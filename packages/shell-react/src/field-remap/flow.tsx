@@ -23,11 +23,13 @@ import {
   Position,
   ReactFlow,
   ReactFlowProvider,
+  SmoothStepEdge,
   useEdgesState,
   useNodesState,
   useReactFlow,
   type Connection,
   type Edge,
+  type EdgeProps,
   type FinalConnectionState,
   type Node,
   type NodeProps,
@@ -92,7 +94,6 @@ import {
   normalizeFieldRemapBulkSelection,
   planFieldRemapBulkDelete,
   removeMappingOperator,
-  removeTransformStepFromEdge,
   updateFieldRemapBulkSelection,
   updateMappingOperator,
   type FieldRemapBulkSelectionRef,
@@ -102,6 +103,14 @@ import {
 import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
 import { FieldRemapPreviewRail, type FieldRemapPreviewState } from './preview.js';
 import './view.css';
+
+type FieldRemapFocusSurface = 'graph' | 'list';
+type FieldRemapFocusableElement = HTMLElement | SVGElement;
+type RegisterFieldRemapFocusTarget = (
+  key: string,
+  surface: FieldRemapFocusSurface,
+  element: FieldRemapFocusableElement | null,
+) => void;
 
 const loadFieldRemapModalDetail = async () => {
   const module = await import('./modal-detail.js');
@@ -181,8 +190,21 @@ function TargetObjectNode({ data }: NodeProps<Node<FieldRemapTargetObjectNodeDat
 }
 
 function TransformNode({ data }: NodeProps<Node<FieldRemapTransformNodeData>>): JSX.Element {
+  const registerFocusTarget = data.registerFocusTarget as RegisterFieldRemapFocusTarget | undefined;
+  const selectionKey = fieldRemapBulkSelectionKey({
+    kind: 'transformStep',
+    edgeId: data.mappingEdgeId,
+    stepIndex: data.stepIndex,
+  });
+  const registerRoot = useCallback(
+    (element: HTMLDivElement | null) => {
+      registerFocusTarget?.(selectionKey, 'graph', element?.parentElement ?? null);
+    },
+    [registerFocusTarget, selectionKey],
+  );
   return (
     <div
+      ref={registerRoot}
       className={
         data.selected
           ? 'workbench-field-remap-flow-node workbench-field-remap-flow-node--transform is-selected'
@@ -196,6 +218,31 @@ function TransformNode({ data }: NodeProps<Node<FieldRemapTransformNodeData>>): 
       <code className="workbench-field-remap-flow-node__id">{data.transformId}</code>
       <Handle type="source" position={Position.Right} id="out" />
     </div>
+  );
+}
+
+function FieldRemapSmoothStepEdge(props: EdgeProps<Edge<FieldRemapFlowEdgeData>>): JSX.Element {
+  const registerFocusTarget = props.data?.registerFocusTarget as
+    RegisterFieldRemapFocusTarget | undefined;
+  const mappingEdgeId = props.data?.mappingEdgeId;
+  const canonicalSegment = props.data?.segment === 'direct' || props.data?.segment === 'in';
+  const selectionKey =
+    mappingEdgeId && canonicalSegment
+      ? fieldRemapBulkSelectionKey({ kind: 'edge', edgeId: mappingEdgeId })
+      : undefined;
+  const registerRoot = useCallback(
+    (element: SVGGElement | null) => {
+      if (selectionKey) {
+        registerFocusTarget?.(selectionKey, 'graph', element?.parentElement ?? null);
+      }
+    },
+    [registerFocusTarget, selectionKey],
+  );
+
+  return (
+    <g ref={selectionKey ? registerRoot : undefined}>
+      <SmoothStepEdge {...props} />
+    </g>
   );
 }
 
@@ -309,6 +356,10 @@ const nodeTypes = {
   fieldRemapDraftTransform: DraftTransformNode,
   fieldRemapCombineOperator: CombineOperatorNode,
   fieldRemapSplitOperator: SplitOperatorNode,
+};
+
+const edgeTypes = {
+  smoothstep: FieldRemapSmoothStepEdge,
 };
 
 /** Imperative Flow chrome actions for integrating hosts (fit-view without Controls DOM). */
@@ -463,10 +514,15 @@ function areFieldRemapBulkSelectionsEqual(
   );
 }
 
+function fieldRemapBulkDomainKey(refs: readonly FieldRemapBulkSelectionRef[]): string {
+  return refs
+    .map(fieldRemapBulkSelectionKey)
+    .map((key) => `${key.length}:${key}`)
+    .join('');
+}
+
 function fieldRemapBulkRefFromKeyboardTarget(
   target: EventTarget | null,
-  nodes: readonly Node[],
-  edges: readonly Edge[],
 ): FieldRemapBulkSelectionRef | undefined {
   if (!(target instanceof Element)) {
     return undefined;
@@ -484,22 +540,7 @@ function fieldRemapBulkRefFromKeyboardTarget(
       return { kind: 'transformStep', edgeId: explicitEdgeId, stepIndex };
     }
   }
-
-  const nodeId = target.closest<HTMLElement>('.react-flow__node')?.dataset.id;
-  const node = nodeId ? nodes.find((candidate) => candidate.id === nodeId) : undefined;
-  const nodeData = node?.data as FieldRemapFlowNodeData | undefined;
-  if (nodeData?.kind === 'transform') {
-    return {
-      kind: 'transformStep',
-      edgeId: nodeData.mappingEdgeId,
-      stepIndex: nodeData.stepIndex,
-    };
-  }
-
-  const flowEdgeId = target.closest<HTMLElement>('.react-flow__edge')?.dataset.id;
-  const flowEdge = flowEdgeId ? edges.find((candidate) => candidate.id === flowEdgeId) : undefined;
-  const mappingEdgeId = (flowEdge?.data as FieldRemapFlowEdgeData | undefined)?.mappingEdgeId;
-  return mappingEdgeId ? { kind: 'edge', edgeId: mappingEdgeId } : undefined;
+  return undefined;
 }
 
 function connectionFromFinalState(state: FinalConnectionState): Connection | null {
@@ -688,15 +729,46 @@ function FieldRemapFlowCanvas({
   const closeModalDetail = useCallback(() => setSelectionRef.current(null), []);
   const canonicalBulkRefs = useMemo(() => listFieldRemapBulkSelectionRefs(edges), [edges]);
   const bulkDomainKey = useMemo(
-    () => canonicalBulkRefs.map(fieldRemapBulkSelectionKey).join('\u0000'),
+    () => fieldRemapBulkDomainKey(canonicalBulkRefs),
     [canonicalBulkRefs],
   );
   const bulkSelectionKeys = useMemo(
     () => new Set(bulkSelection.map(fieldRemapBulkSelectionKey)),
     [bulkSelection],
   );
-  const controlledSelectionKey = fieldRemapSelectionKey(selectionProp ?? null);
-  const previousControlledSelectionKeyRef = useRef(controlledSelectionKey);
+  const authoritativeSelectionKey = fieldRemapSelectionKey(authoritativeSelection);
+  const previousAuthoritativeSelectionKeyRef = useRef(authoritativeSelectionKey);
+  const bulkFocusTargetsRef = useRef(
+    new Map<string, Partial<Record<FieldRemapFocusSurface, FieldRemapFocusableElement>>>(),
+  );
+  const registerBulkFocusTarget = useCallback<RegisterFieldRemapFocusTarget>(
+    (key, surface, element) => {
+      const current = bulkFocusTargetsRef.current.get(key) ?? {};
+      if (element) {
+        current[surface] = element;
+        bulkFocusTargetsRef.current.set(key, current);
+        return;
+      }
+      delete current[surface];
+      if (current.graph || current.list) {
+        bulkFocusTargetsRef.current.set(key, current);
+      } else {
+        bulkFocusTargetsRef.current.delete(key);
+      }
+    },
+    [],
+  );
+  const focusBulkTarget = useCallback(
+    (ref: FieldRemapBulkSelectionRef, preferredSurface?: FieldRemapFocusSurface) => {
+      const targets = bulkFocusTargetsRef.current.get(fieldRemapBulkSelectionKey(ref));
+      const target =
+        (preferredSurface ? targets?.[preferredSurface] : undefined) ??
+        targets?.list ??
+        targets?.graph;
+      target?.focus({ preventScroll: true });
+    },
+    [],
+  );
   const lastPrimaryCorrectionRef = useRef<string | undefined>(undefined);
   const pendingPrimaryCorrectionAckRef = useRef<
     { readonly domainKey: string; readonly selectionKey: string } | undefined
@@ -720,14 +792,14 @@ function FieldRemapFlowCanvas({
   const flowAriaLabelConfig = useMemo(
     () => ({
       'node.a11yDescription.default': readOnly
-        ? 'Press Enter or Space to inspect this item. Hold Control, Command, or Shift to extend the Workbench selection.'
-        : 'Press Enter or Space to select this item. Hold Control, Command, or Shift to extend the Workbench selection.',
+        ? 'Press Enter or Space to inspect this item. Control or Command toggles a non-primary item; Shift adds it.'
+        : 'Press Enter or Space to select this item. Control or Command toggles a non-primary item; Shift adds it.',
       'node.a11yDescription.keyboardDisabled': readOnly
         ? 'Press Enter or Space to inspect this item. Workbench editing is read only.'
         : 'Press Enter or Space to select this item. Use the Workbench controls to edit it.',
       'edge.a11yDescription.default': readOnly
-        ? 'Press Enter or Space to inspect this mapping. Hold Control, Command, or Shift to extend the Workbench selection.'
-        : 'Press Enter or Space to select this mapping. Hold Control, Command, or Shift to extend the Workbench selection.',
+        ? 'Press Enter or Space to inspect this mapping. Control or Command toggles a non-primary mapping; Shift adds it.'
+        : 'Press Enter or Space to select this mapping. Control or Command toggles a non-primary mapping; Shift adds it.',
     }),
     [readOnly],
   );
@@ -763,25 +835,27 @@ function FieldRemapFlowCanvas({
   }, [readOnly, selectionProp]);
 
   useEffect(() => {
-    let controlledReset: readonly FieldRemapBulkSelectionRef[] | undefined;
-    if (
-      selectionProp !== undefined &&
-      previousControlledSelectionKeyRef.current !== controlledSelectionKey
-    ) {
-      previousControlledSelectionKeyRef.current = controlledSelectionKey;
+    let authoritativeReset: readonly FieldRemapBulkSelectionRef[] | undefined;
+    if (previousAuthoritativeSelectionKeyRef.current !== authoritativeSelectionKey) {
+      previousAuthoritativeSelectionKeyRef.current = authoritativeSelectionKey;
       lastPrimaryCorrectionRef.current = undefined;
       const pendingAck = pendingPrimaryCorrectionAckRef.current;
-      const acceptsCorrection = pendingAck?.selectionKey === controlledSelectionKey;
+      const acceptsCorrection =
+        pendingAck?.selectionKey === authoritativeSelectionKey &&
+        (pendingAck.domainKey === bulkDomainKey ||
+          pendingAck.domainKey === pendingBulkCommitRef.current?.domainKey);
       pendingPrimaryCorrectionAckRef.current = undefined;
       if (!acceptsCorrection) {
         pendingBulkCommitRef.current = undefined;
-        const controlledRef = asFieldRemapBulkSelectionRef(selectionProp);
-        const next = controlledRef ? normalizeFieldRemapBulkSelection(edges, [controlledRef]) : [];
-        controlledReset = next;
+        const authoritativeRef = asFieldRemapBulkSelectionRef(authoritativeSelection);
+        const next = authoritativeRef
+          ? normalizeFieldRemapBulkSelection(edges, [authoritativeRef])
+          : [];
+        authoritativeReset = next;
         setBulkSelection((current) =>
           areFieldRemapBulkSelectionsEqual(current, next) ? current : next,
         );
-        if (!controlledRef || next.length > 0) {
+        if (!authoritativeRef || next.length > 0) {
           return;
         }
       }
@@ -815,7 +889,7 @@ function FieldRemapFlowCanvas({
     const primaryIsValid = canonicalBulkRefs.some(
       (ref) => fieldRemapBulkSelectionKey(ref) === primaryKey,
     );
-    let next = controlledReset ?? normalizeFieldRemapBulkSelection(edges, bulkSelection);
+    let next = authoritativeReset ?? normalizeFieldRemapBulkSelection(edges, bulkSelection);
     if (primaryIsValid && !next.some((ref) => fieldRemapBulkSelectionKey(ref) === primaryKey)) {
       next = normalizeFieldRemapBulkSelection(edges, [...next, primaryRef]);
     }
@@ -849,12 +923,11 @@ function FieldRemapFlowCanvas({
     bulkDomainKey,
     bulkSelection,
     canonicalBulkRefs,
-    controlledSelectionKey,
+    authoritativeSelectionKey,
     edges,
     onSelectionChangeProp,
     authoritativeSelection,
     selection,
-    selectionProp,
     selectionExternallyManaged,
     setSelection,
   ]);
@@ -952,17 +1025,26 @@ function FieldRemapFlowCanvas({
     () =>
       graph.nodes.map((node) => {
         if (node.data.kind === 'transform') {
-          const selected = bulkSelectionKeys.has(
-            fieldRemapBulkSelectionKey({
-              kind: 'transformStep',
-              edgeId: node.data.mappingEdgeId,
-              stepIndex: node.data.stepIndex,
-            }),
-          );
+          const ref = {
+            kind: 'transformStep',
+            edgeId: node.data.mappingEdgeId,
+            stepIndex: node.data.stepIndex,
+          } as const;
+          const selected = bulkSelectionKeys.has(fieldRemapBulkSelectionKey(ref));
           return {
             ...node,
-            data: { ...node.data, selected },
+            data: { ...node.data, selected, registerFocusTarget: registerBulkFocusTarget },
             selected,
+            selectable: false,
+            focusable: true,
+            ariaRole: 'button' as const,
+            ariaLabel: `${node.data.label} convert step`,
+            domAttributes: {
+              'aria-pressed': selected,
+              'data-field-remap-bulk-kind': ref.kind,
+              'data-field-remap-bulk-edge-id': ref.edgeId,
+              'data-field-remap-bulk-step-index': ref.stepIndex,
+            },
           };
         }
         if (node.data.kind === 'draft-transform') {
@@ -976,21 +1058,41 @@ function FieldRemapFlowCanvas({
         }
         return node;
       }),
-    [bulkSelectionKeys, graph.nodes, selection],
+    [bulkSelectionKeys, graph.nodes, registerBulkFocusTarget, selection],
   );
 
   const flowEdgesWithSelection = useMemo(
     () =>
       graph.edges.map((edge) => {
-        const mappingEdgeId = (edge.data as FieldRemapFlowEdgeData | undefined)?.mappingEdgeId;
+        const data = edge.data as FieldRemapFlowEdgeData | undefined;
+        const mappingEdgeId = data?.mappingEdgeId;
         const selected = mappingEdgeId
           ? bulkSelectionKeys.has(
               fieldRemapBulkSelectionKey({ kind: 'edge', edgeId: mappingEdgeId }),
             )
           : false;
-        return { ...edge, selected };
+        if (!mappingEdgeId) {
+          return { ...edge, selected };
+        }
+        const canonicalSegment = data?.segment === 'direct' || data?.segment === 'in';
+        return {
+          ...edge,
+          data: { ...data, registerFocusTarget: registerBulkFocusTarget },
+          selected,
+          selectable: false,
+          focusable: canonicalSegment,
+          ariaRole: canonicalSegment ? ('button' as const) : ('presentation' as const),
+          ariaLabel: canonicalSegment ? `Mapping ${mappingEdgeId}` : undefined,
+          domAttributes: canonicalSegment
+            ? {
+                'aria-pressed': selected,
+                'data-field-remap-bulk-kind': 'edge',
+                'data-field-remap-bulk-edge-id': mappingEdgeId,
+              }
+            : { 'aria-hidden': true },
+        };
       }),
-    [bulkSelectionKeys, graph.edges],
+    [bulkSelectionKeys, graph.edges, registerBulkFocusTarget],
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(nodesWithSelection);
@@ -1028,38 +1130,6 @@ function FieldRemapFlowCanvas({
   }, [graphSyncKey, setFlowEdges, setNodes]);
 
   useEffect(() => {
-    const mapper = mapperRef.current;
-    if (!mapper) {
-      return;
-    }
-    const projectGraphSelection = () => {
-      const graphElements = mapper.querySelectorAll<HTMLElement>(
-        '.react-flow__node, .react-flow__edge',
-      );
-      for (const element of Array.from(graphElements)) {
-        const ref = fieldRemapBulkRefFromKeyboardTarget(
-          element,
-          nodesWithSelection,
-          flowEdgesWithSelection,
-        );
-        if (!ref) {
-          element.removeAttribute('aria-pressed');
-          continue;
-        }
-        element.setAttribute('role', 'button');
-        element.setAttribute(
-          'aria-pressed',
-          bulkSelectionKeys.has(fieldRemapBulkSelectionKey(ref)) ? 'true' : 'false',
-        );
-      }
-    };
-    projectGraphSelection();
-    const observer = new MutationObserver(projectGraphSelection);
-    observer.observe(mapper, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, [bulkSelectionKeys, flowEdgesWithSelection, graphSyncKey, nodesWithSelection]);
-
-  useEffect(() => {
     const pending = pendingBulkFocusRef.current;
     const mapper = mapperRef.current;
     if (!pending || !mapper || pending.domainKey !== bulkDomainKey) {
@@ -1070,30 +1140,9 @@ function FieldRemapFlowCanvas({
       mapper.focus({ preventScroll: true });
       return;
     }
-
-    const targetKey = fieldRemapBulkSelectionKey(pending.target);
-    const explicitTargets = mapper.querySelectorAll<HTMLElement>('[data-field-remap-bulk-kind]');
-    const explicitTarget = Array.from(explicitTargets).find((element) => {
-      const ref = fieldRemapBulkRefFromKeyboardTarget(
-        element,
-        nodesWithSelection,
-        flowEdgesWithSelection,
-      );
-      return ref && fieldRemapBulkSelectionKey(ref) === targetKey;
-    });
-    const graphTargets = mapper.querySelectorAll<HTMLElement>(
-      '.react-flow__node, .react-flow__edge',
-    );
-    const graphTarget = Array.from(graphTargets).find((element) => {
-      const ref = fieldRemapBulkRefFromKeyboardTarget(
-        element,
-        nodesWithSelection,
-        flowEdgesWithSelection,
-      );
-      return ref && fieldRemapBulkSelectionKey(ref) === targetKey;
-    });
-    (explicitTarget ?? graphTarget ?? mapper).focus({ preventScroll: true });
-  }, [bulkDomainKey, flowEdgesWithSelection, nodesWithSelection]);
+    const targets = bulkFocusTargetsRef.current.get(fieldRemapBulkSelectionKey(pending.target));
+    (targets?.list ?? targets?.graph ?? mapper).focus({ preventScroll: true });
+  }, [bulkDomainKey]);
 
   const connectionContext = useMemo(
     () => ({ sources, targets, edges, transforms, drafts, operators }),
@@ -1346,9 +1395,9 @@ function FieldRemapFlowCanvas({
           ? normalizeFieldRemapBulkSelection(plan.edges, [fallbackRef])
           : [];
       }
-      const nextDomainKey = listFieldRemapBulkSelectionRefs(plan.edges)
-        .map(fieldRemapBulkSelectionKey)
-        .join('\u0000');
+      const nextDomainKey = fieldRemapBulkDomainKey(listFieldRemapBulkSelectionRefs(plan.edges));
+      const primaryKeyChanged =
+        fieldRemapSelectionKey(nextPrimary) !== fieldRemapSelectionKey(selection);
 
       pendingBulkCommitRef.current = {
         domainKey: nextDomainKey,
@@ -1359,18 +1408,18 @@ function FieldRemapFlowCanvas({
         domainKey: nextDomainKey,
         target: asFieldRemapBulkSelectionRef(nextPrimary) ?? null,
       };
+      if (primaryKeyChanged) {
+        lastPrimaryCorrectionRef.current = `${nextDomainKey}\u0001${fieldRemapSelectionKey(selection)}\u0001${fieldRemapSelectionKey(nextPrimary)}`;
+        pendingPrimaryCorrectionAckRef.current = onSelectionChangeProp
+          ? {
+              domainKey: nextDomainKey,
+              selectionKey: fieldRemapSelectionKey(nextPrimary),
+            }
+          : undefined;
+      }
       onEdgesChange(plan.edges);
 
-      const primaryKeyChanged =
-        fieldRemapSelectionKey(nextPrimary) !== fieldRemapSelectionKey(selection);
       if (primaryKeyChanged) {
-        pendingPrimaryCorrectionAckRef.current =
-          onSelectionChangeProp && primaryKeyChanged
-            ? {
-                domainKey: nextDomainKey,
-                selectionKey: fieldRemapSelectionKey(nextPrimary),
-              }
-            : undefined;
         if (!selectionExternallyManaged) {
           setInternalSelection(nextPrimary);
         } else {
@@ -1444,37 +1493,22 @@ function FieldRemapFlowCanvas({
       if (data.kind !== 'transform') {
         return;
       }
+      const target = {
+        kind: 'transformStep',
+        edgeId: data.mappingEdgeId,
+        stepIndex: data.stepIndex,
+      } as const;
       if (!readOnly && event.altKey) {
-        const edge = edges.find((item) => item.id === data.mappingEdgeId);
-        if (!edge) {
-          return;
-        }
-        const next = removeTransformStepFromEdge(edge, data.stepIndex);
-        onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
-        setSelection(
-          (next.transformIds?.length ?? 0) > 0
-            ? {
-                kind: 'transformStep',
-                edgeId: edge.id,
-                stepIndex: Math.min(data.stepIndex, (next.transformIds?.length ?? 1) - 1),
-              }
-            : { kind: 'edge', edgeId: edge.id },
-        );
+        commitBulkDelete([target]);
         return;
       }
-      applyBulkSelectionGesture(
-        {
-          kind: 'transformStep',
-          edgeId: data.mappingEdgeId,
-          stepIndex: data.stepIndex,
-        },
-        event,
-      );
+      applyBulkSelectionGesture(target, event);
+      focusBulkTarget(target, 'graph');
     },
     [
       applyBulkSelectionGesture,
-      edges,
-      onEdgesChange,
+      commitBulkDelete,
+      focusBulkTarget,
       onOperatorsChange,
       operators,
       readOnly,
@@ -1489,9 +1523,11 @@ function FieldRemapFlowCanvas({
       if (!mappingEdgeId) {
         return;
       }
-      applyBulkSelectionGesture({ kind: 'edge', edgeId: mappingEdgeId }, event);
+      const target = { kind: 'edge', edgeId: mappingEdgeId } as const;
+      applyBulkSelectionGesture(target, event);
+      focusBulkTarget(target, 'graph');
     },
-    [applyBulkSelectionGesture],
+    [applyBulkSelectionGesture, focusBulkTarget],
   );
 
   const onBulkSelectionKeyDownCapture = useCallback(
@@ -1499,7 +1535,7 @@ function FieldRemapFlowCanvas({
       if ((event.key !== 'Enter' && event.key !== ' ') || event.defaultPrevented || event.altKey) {
         return;
       }
-      const target = fieldRemapBulkRefFromKeyboardTarget(event.target, nodes, flowEdges);
+      const target = fieldRemapBulkRefFromKeyboardTarget(event.target);
       if (!target) {
         return;
       }
@@ -1508,7 +1544,7 @@ function FieldRemapFlowCanvas({
       pendingPrimaryCorrectionAckRef.current = undefined;
       applyBulkSelectionGesture(target, event);
     },
-    [applyBulkSelectionGesture, flowEdges, nodes],
+    [applyBulkSelectionGesture],
   );
 
   const onKeyDown = useCallback(
@@ -1736,6 +1772,7 @@ function FieldRemapFlowCanvas({
             nodes={nodes}
             edges={flowEdges}
             nodeTypes={nodeTypes}
+            edgeTypes={edgeTypes}
             onNodesChange={onProjectedNodesChange}
             onEdgesChange={onProjectedFlowEdgesChange}
             onConnect={readOnly ? undefined : onConnect}
@@ -1751,6 +1788,7 @@ function FieldRemapFlowCanvas({
             nodesDraggable={!readOnly}
             nodesConnectable={!readOnly}
             edgesReconnectable={!readOnly}
+            elementsSelectable={false}
             ariaLabelConfig={flowAriaLabelConfig}
             deleteKeyCode={null}
             fitView
@@ -1915,7 +1953,9 @@ function FieldRemapFlowCanvas({
               const defaultAddId = appendCatalog[0]?.id;
               const listContext = canEditListContext(edge, sources, targets);
               const edgeRef = { kind: 'edge', edgeId: edge.id } as const;
-              const edgeSelected = bulkSelectionKeys.has(fieldRemapBulkSelectionKey(edgeRef));
+              const edgeKey = fieldRemapBulkSelectionKey(edgeRef);
+              const edgeSelected = bulkSelectionKeys.has(edgeKey);
+              const visibleRemoveRefs = edgeSelected ? bulkSelection : [edgeRef];
               const laneSelected = canonicalBulkRefs.some(
                 (ref) =>
                   ref.edgeId === edge.id && bulkSelectionKeys.has(fieldRemapBulkSelectionKey(ref)),
@@ -1929,6 +1969,7 @@ function FieldRemapFlowCanvas({
                   data-testid={`field-remap-lane-${edge.id}`}
                 >
                   <button
+                    ref={(element) => registerBulkFocusTarget(edgeKey, 'list', element)}
                     type="button"
                     aria-pressed={edgeSelected}
                     className={
@@ -2002,10 +2043,14 @@ function FieldRemapFlowCanvas({
                         type="button"
                         data-testid={`field-remap-remove-edge-${edge.id}`}
                         icon="codicon-trash"
-                        label={chromeLabels.removeBinding}
+                        label={
+                          visibleRemoveRefs.length > 1
+                            ? `Remove ${visibleRemoveRefs.length} selected items`
+                            : chromeLabels.removeBinding
+                        }
                         variant="danger"
                         onClick={() => {
-                          commitBulkDelete([edgeRef]);
+                          commitBulkDelete(visibleRemoveRefs);
                         }}
                       />
                     </span>

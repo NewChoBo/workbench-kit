@@ -27,10 +27,10 @@ const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
   focusedOverlayCssGzipBytes: 11_500,
-  // The exact pre-keybinding-management baseline consumed 240,860 bytes. Shared platform grammar,
-  // the management model, and its limited status selectors replace the React-local parser and add
-  // 4,052 bytes without a second parser or static dependency; retain deliberate repair headroom.
-  initialGzipBytes: 246_000,
+  // The exact pre-semantic-multi-selection baseline consumed 244,912 bytes. Field Remap's semantic
+  // membership, atomic Remove, and accessibility/focus projection add 2,659 bytes while retaining
+  // the same 1,878-module / one-static-chunk graph; keep deliberate repair headroom.
+  initialGzipBytes: 250_000,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.

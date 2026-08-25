@@ -27,11 +27,14 @@ interface CapturedReactFlowProps {
   readonly onConnectEnd: (event: MouseEvent, state: FinalConnectionState) => void;
   readonly onEdgesDelete?: ((edges: readonly unknown[]) => void) | undefined;
   readonly onEdgeClick?: ((event: MouseEvent, edge: Edge) => void) | undefined;
+  readonly onNodeClick?:
+    ((event: MouseEvent, node: { readonly data: Record<string, unknown> }) => void) | undefined;
   readonly onSelectionChange?: ((selection: OnSelectionChangeParams) => void) | undefined;
   readonly nodes?: readonly { readonly draggable?: boolean | undefined }[] | undefined;
   readonly nodesDraggable?: boolean | undefined;
   readonly nodesConnectable?: boolean | undefined;
   readonly edgesReconnectable?: boolean | undefined;
+  readonly elementsSelectable?: boolean | undefined;
 }
 
 vi.mock('@xyflow/react', async () => {
@@ -187,12 +190,19 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     const onEdgesChange = vi.fn();
     const onConnectionFeedback = vi.fn();
     const onSelectionChange = vi.fn();
-    await renderFlow({ readOnly: true, onEdgesChange, onConnectionFeedback, onSelectionChange });
+    await renderFlow({
+      readOnly: true,
+      edges: [{ ...edge, transformIds: ['string:trim'] }],
+      onEdgesChange,
+      onConnectionFeedback,
+      onSelectionChange,
+    });
 
     expect(flowHarness.props?.nodesDraggable).toBe(false);
     expect(flowHarness.props?.nodes?.every((node) => node.draggable === undefined)).toBe(true);
     expect(flowHarness.props?.nodesConnectable).toBe(false);
     expect(flowHarness.props?.edgesReconnectable).toBe(false);
+    expect(flowHarness.props?.elementsSelectable).toBe(false);
     expect(flowHarness.props?.onConnect).toBeUndefined();
     expect(flowHarness.props?.onConnectStart).toBeUndefined();
     expect(flowHarness.props?.onConnectEnd).toBeUndefined();
@@ -208,34 +218,22 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     expect(onEdgesChange).not.toHaveBeenCalled();
     expect(onConnectionFeedback).not.toHaveBeenCalled();
 
-    expect(flowHarness.props?.onEdgeClick).toBeUndefined();
-    flowHarness.props?.onSelectionChange?.({
-      nodes: [],
-      edges: [
-        {
-          id: 'fe:edge:name:direct',
-          source: 'obj:source',
-          target: 'obj:target',
-          data: { mappingEdgeId: 'edge:name', segment: 'direct' },
-        },
-      ],
+    expect(flowHarness.props?.onSelectionChange).toBeUndefined();
+    flowHarness.props?.onEdgeClick?.(new MouseEvent('click'), {
+      id: 'fe:edge:name:in',
+      source: 'obj:source',
+      target: 'xf:edge:name:0',
+      data: { mappingEdgeId: 'edge:name', segment: 'in' },
     });
     expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'edge:name' });
 
     onSelectionChange.mockClear();
-    flowHarness.props?.onSelectionChange?.({
-      nodes: [
-        {
-          id: 'xf:edge:name:0',
-          position: { x: 0, y: 0 },
-          data: {
-            kind: 'transform',
-            mappingEdgeId: 'edge:name',
-            stepIndex: 0,
-          },
-        },
-      ],
-      edges: [],
+    flowHarness.props?.onNodeClick?.(new MouseEvent('click'), {
+      data: {
+        kind: 'transform',
+        mappingEdgeId: 'edge:name',
+        stepIndex: 0,
+      },
     });
     expect(onSelectionChange).toHaveBeenCalledWith({
       kind: 'transformStep',

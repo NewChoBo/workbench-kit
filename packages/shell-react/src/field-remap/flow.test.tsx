@@ -1189,6 +1189,44 @@ describe('FieldRemapFlowMapper host chrome', () => {
     ).toBe('true');
   });
 
+  it('resets membership when switching from controlled back to uncontrolled selection', async () => {
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({ onEdgesChange });
+    await clickWithModifiers(
+      container!.querySelector('[data-testid="field-remap-select-edge-e-name"]')!,
+    );
+
+    await rerenderMapper({
+      selection: { kind: 'edge', edgeId: 'e-title' },
+      onSelectionChange,
+      onEdgesChange,
+    });
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-select-edge-e-title"]')
+        ?.getAttribute('aria-pressed'),
+    ).toBe('true');
+
+    await rerenderMapper({ onEdgesChange });
+    const name = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    const title = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-title"]',
+    )!;
+    expect(name.dataset.primary).toBe('true');
+    expect(name.getAttribute('aria-pressed')).toBe('true');
+    expect(title.getAttribute('aria-pressed')).toBe('false');
+
+    onEdgesChange.mockClear();
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    await pressKey(mapper, 'Delete');
+    const nextEdges = onEdgesChange.mock.lastCall?.[0] as readonly MappingEdge[];
+    expect(nextEdges.some((edge) => edge.id === 'e-name')).toBe(false);
+    expect(nextEdges.some((edge) => edge.id === 'e-title')).toBe(true);
+  });
+
   it('corrects a stale controlled primary once and preserves surviving membership on acknowledgement', async () => {
     const sample = getFieldRemapSample('nested-ab');
     const onSelectionChange = vi.fn();
@@ -1277,6 +1315,24 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(primaryNoop.defaultPrevented).toBe(true);
     expect(primary.getAttribute('aria-pressed')).toBe('true');
     expect(onSelectionChange).not.toHaveBeenCalled();
+
+    await clickWithModifiers(nameStep, { ctrlKey: true });
+    expect(nameStep.getAttribute('aria-pressed')).toBe('false');
+    expect(document.activeElement).toBe(nameStep);
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('projects graph transform selection declaratively without DOM patching', async () => {
+    await renderMapper({
+      selection: { kind: 'transformStep', edgeId: 'e-title', stepIndex: 1 },
+    });
+    const transform = container!.querySelector<HTMLElement>(
+      '.react-flow__node[data-id="xf:e-title:1"]',
+    )!;
+    expect(transform.getAttribute('role')).toBe('button');
+    expect(transform.getAttribute('aria-pressed')).toBe('true');
+    expect(transform.dataset.fieldRemapBulkKind).toBe('transformStep');
+    expect(transform.tabIndex).toBe(0);
   });
 
   it('allows read-only graph keyboard multi-selection but never bulk deletion', async () => {
@@ -1340,6 +1396,69 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(onSelectionChange).toHaveBeenCalledOnce();
     expect(onSelectionChange).toHaveBeenCalledWith(null);
     expect(onOperatorsChange).not.toHaveBeenCalled();
+  });
+
+  it('does not repeat a bulk-delete primary correction when only edges are accepted', async () => {
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+      onEdgesChange,
+    });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    await pressKey(mapper, 'Delete');
+    const nextEdges = onEdgesChange.mock.lastCall?.[0] as readonly MappingEdge[];
+    expect(onEdgesChange).toHaveBeenCalledOnce();
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+
+    await rerenderMapper({
+      edges: nextEdges,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+      onEdgesChange,
+    });
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+  });
+
+  it('uses a selected row Remove for the whole semantic membership', async () => {
+    const onEdgesChange = vi.fn();
+    await renderMapper({ onEdgesChange });
+    const name = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    const tags = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-tags"]',
+    )!;
+    await clickWithModifiers(name);
+    await clickWithModifiers(tags, { shiftKey: true });
+    await clickWithModifiers(
+      container!.querySelector('[data-testid="field-remap-remove-edge-e-name"]')!,
+    );
+    const bulkEdges = onEdgesChange.mock.lastCall?.[0] as readonly MappingEdge[];
+    expect(onEdgesChange).toHaveBeenCalledOnce();
+    expect(bulkEdges.some((edge) => edge.id === 'e-name' || edge.id === 'e-tags')).toBe(false);
+  });
+
+  it('uses an unselected row Remove only for that row', async () => {
+    const onEdgesChange = vi.fn();
+    await renderMapper({ onEdgesChange });
+    await clickWithModifiers(
+      container!.querySelector('[data-testid="field-remap-select-edge-e-name"]')!,
+    );
+    await clickWithModifiers(
+      container!.querySelector('[data-testid="field-remap-select-edge-e-tags"]')!,
+      { shiftKey: true },
+    );
+    await clickWithModifiers(
+      container!.querySelector('[data-testid="field-remap-remove-edge-e-title"]')!,
+    );
+    const singletonEdges = onEdgesChange.mock.lastCall?.[0] as readonly MappingEdge[];
+    expect(onEdgesChange).toHaveBeenCalledOnce();
+    expect(singletonEdges.some((edge) => edge.id === 'e-title')).toBe(false);
+    expect(singletonEdges.some((edge) => edge.id === 'e-name')).toBe(true);
+    expect(singletonEdges.some((edge) => edge.id === 'e-tags')).toBe(true);
   });
 
   it('routes Backspace through transform-step removal and preserves a valid selection', async () => {
