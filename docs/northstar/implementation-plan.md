@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@2b31df43a60a0c12a8c4a34958b63287c2a07625`.
+- **Current integration baseline:** `origin/develop@5ecbe610164902cf76767922a252cfb78d34e514`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -83,7 +83,7 @@ WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DONE; depend
 { WB-NS-072C component-role + typed token/resource resolution [DONE; dependency: WB-NS-072B]
   WB-NS-072D explicit pack migration planner + transaction [DONE; dependencies: WB-NS-072B/C] }
         ↓
-WB-NS-072E Canvas/Inspector/provenance integration [READY_FOR_IMPLEMENTATION; dependencies: WB-NS-072C, WB-NS-072D]
+WB-NS-072E Canvas/Inspector/provenance integration [DONE; dependencies: WB-NS-072C, WB-NS-072D]
         ↓
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [DESIGNING; dependency: WB-NS-072E]
 
@@ -99,7 +99,7 @@ Command/keybinding management parity
         ↓
 WB-NS-080A CommandRegistry effective keybinding management [DONE]
         ↓
-WB-NS-080B provider-free command-host controller [READY_FOR_IMPLEMENTATION]
+WB-NS-080B provider-free command-host controller [DONE]
 ```
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
@@ -1818,7 +1818,7 @@ review, and is integrated into `develop`; this packet is `DONE`.
 
 ## WB-NS-080B — Provider-free command-host controller
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Canonical work:** [Issue #252 exact API freeze](https://github.com/NewChoBo/workbench-kit/issues/252#issuecomment-5404324944)
 - **Ownership:** `GENERIC_KIT`; `packages/shell-react`
 - **Dependency:** `WB-NS-080A` (`DONE`)
@@ -1828,6 +1828,14 @@ review, and is integrated into `develop`; this packet is `DONE`.
   unchanged; package source work starts only after that documentation merge
 - **Public entrypoint:** `@workbench-kit/shell-react/command-host-controller`
 - **Runtime layer:** `PURE_WEB / DOM / backendless`; no Electron or native boundary
+- **Integrated implementation:** PR #358 / reviewed candidate
+  `26055cea059059085ec30d030bdb3bd29a30d9e2` / merge
+  `d3dda7168d9496f826696fcf60ace344b353f585`
+- **Completion evidence:** producer-distinct source review returned
+  `PASS / P0 none / P1 none / P2 none`; commit safety, `validate:static`, the 449-file/2,361-test
+  full unit gate, packed focused-subpath import-graph validation and the provider-free Chromium
+  Story passed on the exact candidate with no console errors or warnings. Electron was not run
+  because the packet changed no native boundary.
 
 ### Goal and user outcome
 
@@ -2028,10 +2036,9 @@ public props, shell/extension/workspace behavior and #253 effective shortcuts. E
 fallback and executor completion path closes exactly once without swallowed errors or a second
 state/descriptor/keybinding authority.
 
-Producer-distinct readiness review returned `PASS / P0 none / P1 none / P2 none` for the frozen
-public contract at the exact baseline above. Source completion still requires an exact-candidate
-producer-distinct review and the listed validation; this READY projection is not a source, release,
-package or publish claim.
+Producer-distinct readiness and source reviews returned `PASS / P0 none / P1 none / P2 none` for
+the frozen contract and exact candidate recorded above. The integrated source satisfies this packet;
+release, package publish and consumer adoption remain separate claims.
 
 ### Source-review checklist
 
@@ -4200,13 +4207,21 @@ rollback remains for this packet.
 
 ## WB-NS-072E - Canvas, Inspector, and provenance integration
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) sections 12, 18-21
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072C`, `WB-NS-072D` (`DONE`)
 - **Exact source/API baseline:** `origin/develop@ed6312da230f9fd8e9f521f16e929b193847b741`
 - **Implementation packages:** public additive authoring contract in `@workbench-kit/jdw`;
   detached plan/finalize integration and Canvas/Inspector projection in the existing generic owners
+- **Integrated implementation:** PR #359 / delivered candidate
+  `fc36883e5870641ce7ccb1491c1d980168871291` / merge
+  `5ecbe610164902cf76767922a252cfb78d34e514`
+- **Completion evidence:** three producer-distinct reviews found no blocker. The delivered candidate
+  has the same source tree as exact local test point `1cd2aebc` (`1c459d07`): `validate:static`,
+  `validate:fast` (455 files / 2,393 tests) and `validate:ui` (14 suites / 73 interactions) passed;
+  both hosted Validate runs also passed. Electron was not run because the packet changed no native
+  boundary.
 
 ### Goal and bounded outcome
 
