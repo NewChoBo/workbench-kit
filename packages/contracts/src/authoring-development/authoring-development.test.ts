@@ -8,6 +8,7 @@ import type {
   UiComponentDescriptor,
 } from '../index';
 import {
+  AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES,
   parseAuthoringDevelopmentRequirement,
   reconcileAuthoringDevelopmentRequirement,
   resolveAuthoringDevelopmentRequirement,
@@ -224,7 +225,46 @@ function expectIssue(
   expect(result.issues.map((issue) => issue.code)).toContain(code);
 }
 
+function expectDeepFrozen(value: unknown, seen = new Set<object>()): void {
+  if (typeof value !== 'object' || value === null || seen.has(value)) return;
+  seen.add(value);
+  expect(Object.isFrozen(value)).toBe(true);
+  for (const descriptor of Object.values(Object.getOwnPropertyDescriptors(value))) {
+    if (Object.prototype.hasOwnProperty.call(descriptor, 'value')) {
+      expectDeepFrozen(descriptor.value, seen);
+    }
+  }
+}
+
+function expectOwnKeysAbsent(value: object, keys: readonly string[]): void {
+  for (const key of keys) {
+    expect(Object.prototype.hasOwnProperty.call(value, key)).toBe(false);
+  }
+}
+
 describe('authoring development requirement parsing', () => {
+  it('exposes one frozen exact issue-code vocabulary', () => {
+    expect(AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES).toEqual([
+      'unsupported-schema-version',
+      'malformed-requirement',
+      'malformed-intent',
+      'unsupported-target-kind',
+      'malformed-target',
+      'noncanonical-requirement-text',
+      'invalid-component-descriptor',
+      'composite-component-target',
+      'invalid-node-type-descriptor',
+      'unsafe-existing-component-descriptor',
+      'unsafe-existing-node-type-descriptor',
+      'component-catalog-unavailable',
+      'node-type-catalog-unavailable',
+      'component-identity-conflict',
+      'node-type-identity-conflict',
+      'requirement-id-conflict',
+    ]);
+    expect(Object.isFrozen(AUTHORING_DEVELOPMENT_REQUIREMENT_ISSUE_CODES)).toBe(true);
+  });
+
   it('parses detached frozen component and node envelopes', () => {
     for (const raw of [componentRequirement(), nodeRequirement()]) {
       const result = parseAuthoringDevelopmentRequirement(raw);
@@ -273,6 +313,88 @@ describe('authoring development requirement parsing', () => {
     const unknownSourceResult = parseAuthoringDevelopmentRequirement(unknownSource);
     expect(unknownSourceResult.status).toBe('invalid');
     expectIssue(unknownSourceResult, 'invalid-component-descriptor');
+  });
+
+  it('rejects malformed intent arms, mixed targets, and unknown keys', () => {
+    const malformedIntent = mutableClone(componentRequirement()) as unknown as {
+      intent: unknown;
+    };
+    malformedIntent.intent = null;
+    const malformedIntentResult = parseAuthoringDevelopmentRequirement(malformedIntent);
+    expect(malformedIntentResult.status).toBe('invalid');
+    expectIssue(malformedIntentResult, 'malformed-intent');
+
+    const malformedAcceptance = mutableClone(componentRequirement()) as unknown as {
+      intent: { acceptance: unknown };
+    };
+    malformedAcceptance.intent.acceptance = 'not-an-array';
+    const malformedAcceptanceResult = parseAuthoringDevelopmentRequirement(malformedAcceptance);
+    expect(malformedAcceptanceResult.status).toBe('invalid');
+    expectIssue(malformedAcceptanceResult, 'malformed-intent');
+
+    const malformedNonGoals = mutableClone(componentRequirement()) as unknown as {
+      intent: { nonGoals: unknown };
+    };
+    malformedNonGoals.intent.nonGoals = [1];
+    const malformedNonGoalsResult = parseAuthoringDevelopmentRequirement(malformedNonGoals);
+    expect(malformedNonGoalsResult.status).toBe('invalid');
+    expectIssue(malformedNonGoalsResult, 'malformed-intent');
+
+    const noncanonicalAcceptance = mutableClone(componentRequirement());
+    noncanonicalAcceptance.intent.acceptance[0] = ' padded acceptance ';
+    const noncanonicalAcceptanceResult =
+      parseAuthoringDevelopmentRequirement(noncanonicalAcceptance);
+    expect(noncanonicalAcceptanceResult.status).toBe('invalid');
+    expectIssue(noncanonicalAcceptanceResult, 'noncanonical-requirement-text');
+
+    const mixedTarget = mutableClone(componentRequirement()) as unknown as {
+      target: { kind: 'component'; descriptor: NodeTypeDescriptor };
+    };
+    mixedTarget.target.descriptor = nodeTypeDescriptor();
+    const mixedTargetResult = parseAuthoringDevelopmentRequirement(mixedTarget);
+    expect(mixedTargetResult.status).toBe('invalid');
+    expectIssue(mixedTargetResult, 'invalid-component-descriptor');
+
+    const unknownTargetKey = mutableClone(componentRequirement()) as unknown as {
+      target: Record<string, unknown>;
+    };
+    unknownTargetKey.target.unexpected = 'not-supported';
+    const unknownTargetKeyResult = parseAuthoringDevelopmentRequirement(unknownTargetKey);
+    expect(unknownTargetKeyResult.status).toBe('invalid');
+    expectIssue(unknownTargetKeyResult, 'malformed-target');
+
+    const unknownEnvelopeKey = mutableClone(componentRequirement()) as unknown as Record<
+      string,
+      unknown
+    >;
+    unknownEnvelopeKey.repository = 'must-not-cross-the-contract';
+    const unknownEnvelopeKeyResult = parseAuthoringDevelopmentRequirement(unknownEnvelopeKey);
+    expect(unknownEnvelopeKeyResult.status).toBe('invalid');
+    expectIssue(unknownEnvelopeKeyResult, 'malformed-requirement');
+  });
+
+  it('accumulates independent issues in deterministic declaration order', () => {
+    const result = parseAuthoringDevelopmentRequirement({
+      schemaVersion: 1,
+      requirementId: ' padded id ',
+      intent: {
+        summary: ' padded summary ',
+        acceptance: [' padded acceptance ', ''],
+        nonGoals: [' padded non-goal '],
+      },
+      target: { kind: 'renderer', descriptor: {} },
+    });
+
+    expect(result.status).toBe('invalid');
+    expect(result.issues.map(({ code, path }) => [code, path])).toEqual([
+      ['noncanonical-requirement-text', 'requirementId'],
+      ['noncanonical-requirement-text', 'intent.summary'],
+      ['noncanonical-requirement-text', 'intent.acceptance[0]'],
+      ['noncanonical-requirement-text', 'intent.acceptance[1]'],
+      ['noncanonical-requirement-text', 'intent.nonGoals[0]'],
+      ['unsupported-target-kind', 'target.kind'],
+    ]);
+    expectDeepFrozen(result);
   });
 
   it('never invokes raw accessors before rejecting the envelope', () => {
@@ -387,6 +509,70 @@ describe('authoring development requirement parsing', () => {
 });
 
 describe('exact component and node reconciliation', () => {
+  it('performs one exact frozen lookup without catalog enumeration for each target kind', () => {
+    const componentLookup = vi.fn((ref: { readonly id: string; readonly version: string }) => {
+      expect(ref).toEqual({ id: 'workbench.data-card', version: '1.0.0' });
+      expect(Object.isFrozen(ref)).toBe(true);
+      return undefined;
+    });
+    const componentEnumeration = vi.fn(() => {
+      throw new Error('component enumeration must remain unused');
+    });
+    const unselectedNodeLookup = vi.fn(() => {
+      throw new Error('unselected node lookup must remain unused');
+    });
+    const nodeEnumerationDuringComponentLookup = vi.fn(() => {
+      throw new Error('node enumeration must remain unused');
+    });
+
+    const componentResult = resolveAuthoringDevelopmentRequirement(componentRequirement(), {
+      components: {
+        component: componentLookup,
+        components: componentEnumeration,
+      },
+      nodeTypes: {
+        nodeType: unselectedNodeLookup,
+        nodeTypes: nodeEnumerationDuringComponentLookup,
+      },
+    });
+    expect(componentResult.status).toBe('missing');
+    expect(componentLookup).toHaveBeenCalledTimes(1);
+    expect(componentEnumeration).not.toHaveBeenCalled();
+    expect(unselectedNodeLookup).not.toHaveBeenCalled();
+    expect(nodeEnumerationDuringComponentLookup).not.toHaveBeenCalled();
+
+    const nodeLookup = vi.fn((ref: { readonly id: string; readonly version: string }) => {
+      expect(ref).toEqual({ id: 'workbench.filter', version: '1.0.0' });
+      expect(Object.isFrozen(ref)).toBe(true);
+      return undefined;
+    });
+    const nodeEnumeration = vi.fn(() => {
+      throw new Error('node enumeration must remain unused');
+    });
+    const unselectedComponentLookup = vi.fn(() => {
+      throw new Error('unselected component lookup must remain unused');
+    });
+    const componentEnumerationDuringNodeLookup = vi.fn(() => {
+      throw new Error('component enumeration must remain unused');
+    });
+
+    const nodeResult = resolveAuthoringDevelopmentRequirement(nodeRequirement(), {
+      components: {
+        component: unselectedComponentLookup,
+        components: componentEnumerationDuringNodeLookup,
+      },
+      nodeTypes: {
+        nodeType: nodeLookup,
+        nodeTypes: nodeEnumeration,
+      },
+    });
+    expect(nodeResult.status).toBe('missing');
+    expect(nodeLookup).toHaveBeenCalledTimes(1);
+    expect(nodeEnumeration).not.toHaveBeenCalled();
+    expect(unselectedComponentLookup).not.toHaveBeenCalled();
+    expect(componentEnumerationDuringNodeLookup).not.toHaveBeenCalled();
+  });
+
   it('reports missing, fulfilled, and target-specific material conflicts for both target kinds', () => {
     const component = componentDescriptor();
     const node = nodeTypeDescriptor();
@@ -690,32 +876,71 @@ describe('exact component and node reconciliation', () => {
 });
 
 describe('untrusted catalog operands', () => {
-  it.each([
-    ['component', 'accessor'],
-    ['component', 'cycle'],
-    ['component', 'plain-invalid'],
-    ['node-type', 'accessor'],
-    ['node-type', 'cycle'],
-    ['node-type', 'plain-invalid'],
-  ] as const)('fails closed for a %s catalog %s occupant', (kind, hostileKind) => {
+  const hostileCases = (
+    [
+      'accessor',
+      'cycle',
+      'custom-prototype',
+      'exotic',
+      'function',
+      'undefined',
+      'bigint',
+      'symbol',
+      'nonfinite',
+      'sparse-array',
+      'array-non-index',
+      'plain-invalid',
+    ] as const
+  ).flatMap((hostileKind) =>
+    (['component', 'node-type'] as const).map((kind) => [kind, hostileKind] as const),
+  );
+
+  it.each(hostileCases)('fails closed for a %s catalog %s occupant', (kind, hostileKind) => {
     const getter = vi.fn(() => 'workbench.secret');
-    let occupant: unknown;
-    if (kind === 'component') {
-      occupant = componentDescriptor();
-      if (hostileKind === 'plain-invalid') {
-        (occupant as { designTime: { label: string } }).designTime.label = '';
+    let occupant: unknown = kind === 'component' ? componentDescriptor() : nodeTypeDescriptor();
+    switch (hostileKind) {
+      case 'accessor':
+        Object.defineProperty(occupant as object, 'secret', { enumerable: true, get: getter });
+        break;
+      case 'cycle':
+        (occupant as Record<string, unknown>).cycle = occupant;
+        break;
+      case 'custom-prototype':
+        Object.setPrototypeOf(occupant as object, { inherited: 'secret-inherited-value' });
+        break;
+      case 'exotic':
+        occupant = new Date('2026-08-26T00:00:00.000Z');
+        break;
+      case 'function':
+        (occupant as Record<string, unknown>).hostile = () => 'secret-function-value';
+        break;
+      case 'undefined':
+        (occupant as Record<string, unknown>).hostile = undefined;
+        break;
+      case 'bigint':
+        (occupant as Record<string, unknown>).hostile = 1n;
+        break;
+      case 'symbol':
+        (occupant as Record<string, unknown>).hostile = Symbol('secret-symbol-value');
+        break;
+      case 'nonfinite':
+        (occupant as Record<string, unknown>).hostile = Number.POSITIVE_INFINITY;
+        break;
+      case 'sparse-array': {
+        const sparse = new Array<unknown>(2);
+        sparse[1] = 'secret-sparse-value';
+        (occupant as Record<string, unknown>).hostile = sparse;
+        break;
       }
-    } else {
-      occupant = nodeTypeDescriptor();
-      if (hostileKind === 'plain-invalid') {
-        (occupant as { designTime: { label: string } }).designTime.label = '';
+      case 'array-non-index': {
+        const array = ['value'] as unknown[] & { secret?: string };
+        array.secret = 'secret-array-property';
+        (occupant as Record<string, unknown>).hostile = array;
+        break;
       }
-    }
-    if (hostileKind === 'accessor') {
-      Object.defineProperty(occupant as object, 'secret', { enumerable: true, get: getter });
-    }
-    if (hostileKind === 'cycle') {
-      (occupant as Record<string, unknown>).cycle = occupant;
+      case 'plain-invalid':
+        (occupant as { designTime: { label: string } }).designTime.label = '';
+        break;
     }
 
     const result =
@@ -736,6 +961,8 @@ describe('untrusted catalog operands', () => {
         : 'unsafe-existing-node-type-descriptor',
     );
     expect(getter).not.toHaveBeenCalled();
+    expectOwnKeysAbsent(result, ['existingComponent', 'existingNodeType']);
+    expectDeepFrozen(result);
     expect(JSON.stringify(result)).not.toContain('secret');
   });
 
@@ -800,6 +1027,168 @@ describe('untrusted catalog operands', () => {
     expect(serialized).not.toContain(rawStackMarker);
     expect(Object.keys(result.issues[0]!)).toEqual(['code', 'message', 'path']);
     expect(Object.isFrozen(result.issues[0])).toBe(true);
+  });
+});
+
+describe('immutable result graphs', () => {
+  it('deep-freezes every parse, resolution, and resume status without impossible fields', () => {
+    const validComponentParse = parseAuthoringDevelopmentRequirement(componentRequirement());
+    const validNodeParse = parseAuthoringDevelopmentRequirement(nodeRequirement());
+    const invalidParse = parseAuthoringDevelopmentRequirement({ schemaVersion: 1 });
+    const unsupportedParse = parseAuthoringDevelopmentRequirement({
+      ...componentRequirement(),
+      schemaVersion: 2,
+    });
+
+    const invalidResolution = resolveAuthoringDevelopmentRequirement(
+      {
+        ...componentRequirement(),
+        requirementId: ' invalid ',
+      } as AuthoringDevelopmentRequirement,
+      catalogs(),
+    );
+    const unsupportedResolution = resolveAuthoringDevelopmentRequirement(
+      {
+        ...componentRequirement(),
+        schemaVersion: 2,
+      } as unknown as AuthoringDevelopmentRequirement,
+      catalogs(),
+    );
+    const missingComponent = resolveAuthoringDevelopmentRequirement(
+      componentRequirement(),
+      catalogs(),
+    );
+    const missingNode = resolveAuthoringDevelopmentRequirement(nodeRequirement(), catalogs());
+    const fulfilledComponent = resolveAuthoringDevelopmentRequirement(
+      componentRequirement(),
+      catalogs(componentDescriptor()),
+    );
+    const fulfilledNode = resolveAuthoringDevelopmentRequirement(
+      nodeRequirement(),
+      catalogs(undefined, nodeTypeDescriptor()),
+    );
+
+    const changedComponent = mutableClone(componentDescriptor());
+    changedComponent.properties![0]!.value.type = 'string';
+    const semanticComponentConflict = resolveAuthoringDevelopmentRequirement(
+      componentRequirement(),
+      catalogs(changedComponent),
+    );
+    const changedNode = mutableClone(nodeTypeDescriptor());
+    changedNode.outputs[0]!.value.type = 'string';
+    const semanticNodeConflict = resolveAuthoringDevelopmentRequirement(
+      nodeRequirement(),
+      catalogs(undefined, changedNode),
+    );
+    const unsafeComponentConflict = resolveAuthoringDevelopmentRequirement(
+      componentRequirement(),
+      catalogs(new Date('2026-08-26T00:00:00.000Z') as unknown as UiComponentDescriptor),
+    );
+    const unsafeNodeConflict = resolveAuthoringDevelopmentRequirement(
+      nodeRequirement(),
+      catalogs(undefined, new Date('2026-08-26T00:00:00.000Z') as unknown as NodeTypeDescriptor),
+    );
+    const unavailableComponent = resolveAuthoringDevelopmentRequirement(componentRequirement(), {
+      components: componentCatalog(undefined, () => {
+        throw new Error('component unavailable');
+      }),
+      nodeTypes: nodeCatalog(),
+    });
+    const unavailableNode = resolveAuthoringDevelopmentRequirement(nodeRequirement(), {
+      components: componentCatalog(),
+      nodeTypes: nodeCatalog(undefined, () => {
+        throw new Error('node unavailable');
+      }),
+    });
+
+    const sameResume = reconcileAuthoringDevelopmentRequirement(
+      componentRequirement(),
+      clone(componentRequirement()),
+    );
+    const nextRequirement = componentRequirement(
+      componentDescriptor(),
+      'requirement.component.next',
+    );
+    const newResume = reconcileAuthoringDevelopmentRequirement(
+      componentRequirement(),
+      nextRequirement,
+    );
+    const changedIntent = mutableClone(componentRequirement());
+    changedIntent.intent.summary = 'A changed implementation request.';
+    const conflictResume = reconcileAuthoringDevelopmentRequirement(
+      componentRequirement(),
+      changedIntent,
+    );
+    const invalidResume = reconcileAuthoringDevelopmentRequirement({}, componentRequirement());
+    const unsupportedResume = reconcileAuthoringDevelopmentRequirement(componentRequirement(), {
+      ...componentRequirement(),
+      schemaVersion: 2,
+    });
+
+    const cases: readonly [label: string, expectedStatus: string, result: object][] = [
+      ['valid component parse', 'valid', validComponentParse],
+      ['valid node parse', 'valid', validNodeParse],
+      ['invalid parse', 'invalid', invalidParse],
+      ['unsupported parse', 'unsupported-version', unsupportedParse],
+      ['invalid resolution', 'invalid', invalidResolution],
+      ['unsupported resolution', 'unsupported-version', unsupportedResolution],
+      ['missing component', 'missing', missingComponent],
+      ['missing node', 'missing', missingNode],
+      ['fulfilled component', 'fulfilled', fulfilledComponent],
+      ['fulfilled node', 'fulfilled', fulfilledNode],
+      ['semantic component conflict', 'identity-conflict', semanticComponentConflict],
+      ['semantic node conflict', 'identity-conflict', semanticNodeConflict],
+      ['unsafe component conflict', 'identity-conflict', unsafeComponentConflict],
+      ['unsafe node conflict', 'identity-conflict', unsafeNodeConflict],
+      ['unavailable component', 'catalog-unavailable', unavailableComponent],
+      ['unavailable node', 'catalog-unavailable', unavailableNode],
+      ['same resume', 'same-requirement', sameResume],
+      ['new resume', 'new-requirement', newResume],
+      ['conflict resume', 'requirement-id-conflict', conflictResume],
+      ['invalid resume', 'invalid', invalidResume],
+      ['unsupported resume', 'unsupported-version', unsupportedResume],
+    ];
+    for (const [label, expectedStatus, result] of cases) {
+      expect(result, label).toHaveProperty('status', expectedStatus);
+      expectDeepFrozen(result);
+    }
+
+    expectOwnKeysAbsent(invalidParse, ['requirement']);
+    expectOwnKeysAbsent(unsupportedParse, ['requirement']);
+    expectOwnKeysAbsent(invalidResolution, [
+      'requirement',
+      'existingComponent',
+      'existingNodeType',
+    ]);
+    expectOwnKeysAbsent(unsupportedResolution, [
+      'requirement',
+      'existingComponent',
+      'existingNodeType',
+    ]);
+    for (const result of [missingComponent, missingNode]) {
+      expectOwnKeysAbsent(result, ['existingComponent', 'existingNodeType']);
+    }
+    expectOwnKeysAbsent(fulfilledComponent, ['existingNodeType']);
+    expectOwnKeysAbsent(fulfilledNode, ['existingComponent']);
+    expect(semanticComponentConflict).toHaveProperty('existingComponent');
+    expectOwnKeysAbsent(semanticComponentConflict, ['existingNodeType']);
+    expect(semanticNodeConflict).toHaveProperty('existingNodeType');
+    expectOwnKeysAbsent(semanticNodeConflict, ['existingComponent']);
+    for (const result of [
+      unsafeComponentConflict,
+      unsafeNodeConflict,
+      unavailableComponent,
+      unavailableNode,
+    ]) {
+      expectOwnKeysAbsent(result, ['existingComponent', 'existingNodeType']);
+    }
+    for (const result of [sameResume, newResume, conflictResume]) {
+      expect(result).toHaveProperty('previous');
+      expect(result).toHaveProperty('requirement');
+    }
+    for (const result of [invalidResume, unsupportedResume]) {
+      expectOwnKeysAbsent(result, ['previous', 'requirement']);
+    }
   });
 });
 
