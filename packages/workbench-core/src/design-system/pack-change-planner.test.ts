@@ -257,6 +257,131 @@ describe('DesignSystemPackChangePlanner', () => {
     );
   });
 
+  it('plans and validates dependencies authored only in responsive overrides', () => {
+    const base = document();
+    const responsiveDocument: DesignSystemAuthoredDocumentSnapshot = {
+      ...base,
+      responsiveVariants: [{ id: 'narrow', hostWidth: { maxExclusive: 600 } }],
+      nodes: base.nodes.map((node, index) =>
+        index === 0
+          ? {
+              ...node,
+              responsiveOverrides: {
+                narrow: {
+                  properties: {
+                    color: { kind: 'token', tokenId: 'color.old' },
+                    icon: { kind: 'resource', resourceId: 'image.old' },
+                  },
+                  layout: {
+                    strategyId: 'layout.flex',
+                    values: { gap: { kind: 'token', tokenId: 'space.old' } },
+                  },
+                },
+              },
+            }
+          : node,
+      ),
+    };
+    const snapshot = registry().snapshot();
+    const planner = new DesignSystemPackChangePlanner();
+    const planned = planner.plan(snapshot, request(responsiveDocument));
+
+    expect(planned.diagnostics).toEqual([]);
+    expect(planned.plan?.tokens).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceId: 'color.old',
+          occurrences: expect.arrayContaining([
+            expect.objectContaining({
+              path: 'nodes.root.responsiveOverrides.narrow.properties.color',
+            }),
+          ]),
+        }),
+        expect.objectContaining({
+          sourceId: 'space.old',
+          occurrences: expect.arrayContaining([
+            expect.objectContaining({
+              path: 'nodes.root.responsiveOverrides.narrow.layout.values.gap',
+            }),
+          ]),
+        }),
+      ]),
+    );
+    expect(planned.plan?.resources).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceId: 'image.old',
+          occurrences: expect.arrayContaining([
+            expect.objectContaining({
+              path: 'nodes.root.responsiveOverrides.narrow.properties.icon',
+            }),
+          ]),
+        }),
+      ]),
+    );
+
+    const finalized = planner.finalize(
+      snapshot,
+      planned.plan!.sourceDocument,
+      planned.plan!,
+      choices(),
+    );
+    expect(finalized.diagnostics).toEqual([]);
+    expect(finalized.mutation?.sourceDocument.nodes[0]?.responsiveOverrides).toEqual(
+      responsiveDocument.nodes[0]?.responsiveOverrides,
+    );
+  });
+
+  it('rejects orphan, overlapping, and explicit-infinite responsive ranges', () => {
+    const base = document();
+    const malformedDocuments = [
+      {
+        ...base,
+        responsiveVariants: [{ id: 'narrow', hostWidth: { maxExclusive: 600 } }],
+        nodes: base.nodes.map((node) => ({
+          ...node,
+          responsiveOverrides: { typo: { properties: {} } },
+        })),
+      },
+      {
+        ...base,
+        responsiveVariants: [
+          { id: 'first', hostWidth: { maxExclusive: 700 } },
+          { id: 'second', hostWidth: { minInclusive: 600 } },
+        ],
+      },
+      {
+        ...base,
+        responsiveVariants: [
+          {
+            id: 'wide',
+            hostWidth: { minInclusive: 600, maxExclusive: Number.POSITIVE_INFINITY },
+          },
+        ],
+      },
+      {
+        ...base,
+        responsiveVariants: [{ id: 'narrow', hostWidth: { minInclusive: 0, maxExclusive: 600 } }],
+      },
+      {
+        ...base,
+        responsiveVariants: [
+          { id: 'wide', hostWidth: { minInclusive: 600 } },
+          { id: 'narrow', hostWidth: { maxExclusive: 600 } },
+        ],
+      },
+    ] as readonly DesignSystemAuthoredDocumentSnapshot[];
+    const planner = new DesignSystemPackChangePlanner();
+
+    for (const malformed of malformedDocuments) {
+      const result = planner.plan(registry().snapshot(), request(malformed));
+      expect(result.plan).toBeUndefined();
+      expect(result.diagnostics).toEqual(
+        expect.arrayContaining([expect.objectContaining({ code: 'invalid-pack-change-request' })]),
+      );
+    }
+  });
+
   it('delegates direct, semantic-role, and unsupported component classifications without implicit choices', () => {
     const planner = new DesignSystemPackChangePlanner();
     const directRef = { id: 'direct.design', version: '1.0.0' };

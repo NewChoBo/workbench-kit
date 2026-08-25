@@ -127,11 +127,27 @@ export interface DesignSystemAuthoredLayoutSnapshot {
   readonly values: Readonly<Record<string, UiValueSource>>;
 }
 
+export interface DesignSystemAuthoredResponsiveOverrideSnapshot {
+  readonly properties?: Readonly<Record<string, UiValueSource>>;
+  readonly layout?: DesignSystemAuthoredLayoutSnapshot;
+}
+
+export interface DesignSystemAuthoredResponsiveVariantSnapshot {
+  readonly id: string;
+  readonly hostWidth: {
+    readonly minInclusive?: number;
+    readonly maxExclusive?: number;
+  };
+}
+
 export interface DesignSystemAuthoredNodeSnapshot {
   readonly nodeId: string;
   readonly component: UiComponentRef;
   readonly properties: Readonly<Record<string, UiValueSource>>;
   readonly layout?: DesignSystemAuthoredLayoutSnapshot;
+  readonly responsiveOverrides?: Readonly<
+    Record<string, DesignSystemAuthoredResponsiveOverrideSnapshot>
+  >;
   readonly scopeChain: readonly string[];
 }
 
@@ -139,6 +155,7 @@ export interface DesignSystemAuthoredDocumentSnapshot {
   readonly documentId: string;
   readonly revision: number;
   readonly state: UiDesignSystemState;
+  readonly responsiveVariants?: readonly DesignSystemAuthoredResponsiveVariantSnapshot[];
   readonly nodes: readonly DesignSystemAuthoredNodeSnapshot[];
 }
 

@@ -383,6 +383,19 @@ Rules:
 
 Manual Canvas/Inspector actions and generative/agent proposals use the same generic commands.
 
+Responsive authoring is an additive V3 view over the same serialized `UiDocument`; it does not
+widen the closed V1/V2 command, transaction, document, or session types. The semantic root owns a
+canonical, non-overlapping host-width variant catalog. Each node may own sparse typed property
+overrides and one complete layout override per declared variant. The first responsive mutation
+upgrades the root authoring marker to schema `2` in the same transaction. Future schema versions
+remain write-locked.
+
+The V3 command family adds upsert/remove variant and set/clear responsive property/layout atomics.
+A batch is non-nestable and commits as one revision and one V3 history record. Responsive edits,
+endpoint bindings, and accepted Design System Pack changes share that same V3 history. Pack
+migration dependency collection and rewrite include token/resource sources inside responsive
+property and layout overrides.
+
 Relevant target commands include:
 
 ```text
@@ -514,6 +527,17 @@ Current CSS theme sanitization is useful migration evidence and must not regress
 - allow cancel with zero document mutation;
 - after commit, normal undo restores the prior dependency/component references.
 
+### Responsive authoring
+
+- preview host width and the explicit base/variant editing target are separate transient inputs;
+- the active variant is derived only from host width and the canonical root catalog;
+- Canvas direct manipulation is disabled when the active and editing targets differ;
+- `Edit active` changes only the editing target and restores focus to the enabled mutation control;
+- Inspector may edit its explicit target while labeling a preview mismatch;
+- both surfaces show base versus responsive-override provenance and emit the same typed command;
+- Pack/Theme lists are read-only projections of the exact registry/state snapshot, not a second
+  registry or mutation path.
+
 ## 19. Accessibility target
 
 Pack/component metadata must be able to express accessibility requirements and design-time validation hooks, including semantic role/label expectations, focus behavior, contrast-relevant token relationships and reduced-motion capability where applicable.
@@ -558,6 +582,11 @@ Exact numeric budgets remain a later evidence-driven performance packet.
 - atomic migration transaction + undo/redo;
 - missing pack/component/token diagnostics;
 - extension contribution disposal/unregister behavior.
+- schema v0/v1 promotion, first responsive write to v2, v2 round trip and future-version lock;
+- finite canonical range validation, exact min/max boundaries and base fallback;
+- responsive property/layout schema validation, one-batch history and exact undo/redo;
+- responsive token/resource Pack migration through the same V3 history;
+- packed V1/V2 compatibility and explicit V3 promotion/rejection proofs.
 
 ### BROWSER
 
@@ -566,6 +595,8 @@ Exact numeric budgets remain a later evidence-driven performance packet.
 - CSS/custom-property adapter behavior;
 - scoped theme visual inheritance;
 - Inspector/Canvas provenance and compatibility UX.
+- wide/medium/narrow effective responsive projection;
+- active/edit target mismatch lock, `Edit active` focus restoration and keyboard/pointer parity.
 
 ### ELECTRON / NATIVE
 

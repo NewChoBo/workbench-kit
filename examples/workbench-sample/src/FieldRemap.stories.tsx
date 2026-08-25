@@ -93,6 +93,27 @@ async function expectCanvasFillsPane(flow: HTMLElement, pane: HTMLElement): Prom
   });
 }
 
+async function findVisibleFlowElement<T extends Element>(
+  canvasElement: HTMLElement,
+  selector: string,
+): Promise<T> {
+  return waitFor(() => {
+    const element = canvasElement.querySelector<T>(selector);
+    expect(element).toBeVisible();
+    const rect = element!.getBoundingClientRect();
+    expect(rect.width).toBeGreaterThan(0);
+    expect(rect.height).toBeGreaterThan(0);
+    return element!;
+  });
+}
+
+async function findVisibleFlowHandle(
+  canvasElement: HTMLElement,
+  selector: string,
+): Promise<HTMLElement> {
+  return findVisibleFlowElement<HTMLElement>(canvasElement, selector);
+}
+
 const rewireSources: readonly SourceField[] = [
   { id: 'src.name', label: 'Current name', dataType: 'string' },
   { id: 'src.other', label: 'Other name', dataType: 'string' },
@@ -183,25 +204,19 @@ export const ReadOnlyEmbed: Story = {
     const canvas = within(canvasElement);
     await expect(canvas.queryByTestId('field-remap-detail')).toBeNull();
     await expect(canvas.queryByTestId('field-remap-edges')).toBeNull();
-    const transformNode = await waitFor(() => {
-      const node = canvasElement.querySelector<HTMLElement>(
-        '.react-flow__node[data-id="xf:e-name:0"]',
-      );
-      expect(node).toBeTruthy();
-      return node!;
-    });
+    const transformNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="xf:e-name:0"]',
+    );
     transformNode.focus();
     await expect(transformNode).toHaveFocus();
     await userEvent.keyboard('{Enter}');
     await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
     await expect(canvas.getByTestId('field-remap-step-id')).toBeDisabled();
-    const directEdge = await waitFor(() => {
-      const edge = canvasElement.querySelector<SVGGElement>(
-        '.react-flow__edge[data-id="fe:e-country:direct"]',
-      );
-      expect(edge).toBeTruthy();
-      return edge!;
-    });
+    const directEdge = await findVisibleFlowElement<SVGGElement>(
+      canvasElement,
+      '.react-flow__edge[data-id="fe:e-country:direct"]',
+    );
     directEdge.focus();
     await expect(directEdge).toHaveFocus();
     await userEvent.keyboard('{Enter}');
@@ -217,29 +232,29 @@ export const ConnectionRejectFeedback: Story = {
   tags: ['storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const sourceHandle = canvasElement.querySelector<HTMLElement>(
+    const sourceHandle = await findVisibleFlowHandle(
+      canvasElement,
       '.react-flow__handle.source[data-nodeid="obj:source"][data-handleid="a.user_name"]',
     );
-    const targetHandle = canvasElement.querySelector<HTMLElement>(
+    const targetHandle = await findVisibleFlowHandle(
+      canvasElement,
       '.react-flow__handle.target[data-nodeid="obj:target"][data-handleid="b.labels"]',
     );
-    await expect(sourceHandle).toBeVisible();
-    await expect(targetHandle).toBeVisible();
     await expect(canvas.getByTestId('field-remap-lane-e-tags')).toBeVisible();
 
-    const sourceRect = sourceHandle!.getBoundingClientRect();
-    const targetRect = targetHandle!.getBoundingClientRect();
+    const sourceRect = sourceHandle.getBoundingClientRect();
+    const targetRect = targetHandle.getBoundingClientRect();
     await userEvent.pointer([
       {
         keys: '[MouseLeft>]',
-        target: sourceHandle!,
+        target: sourceHandle,
         coords: {
           clientX: sourceRect.x + sourceRect.width / 2,
           clientY: sourceRect.y + sourceRect.height / 2,
         },
       },
       {
-        target: targetHandle!,
+        target: targetHandle,
         coords: {
           clientX: targetRect.x + targetRect.width / 2,
           clientY: targetRect.y + targetRect.height / 2,
@@ -247,7 +262,7 @@ export const ConnectionRejectFeedback: Story = {
       },
       {
         keys: '[/MouseLeft]',
-        target: targetHandle!,
+        target: targetHandle,
         coords: {
           clientX: targetRect.x + targetRect.width / 2,
           clientY: targetRect.y + targetRect.height / 2,
@@ -269,30 +284,30 @@ export const RewireRejectFeedback: Story = {
   tags: ['storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
-    const sourceHandle = canvasElement.querySelector<HTMLElement>(
+    const sourceHandle = await findVisibleFlowHandle(
+      canvasElement,
       '.react-flow__handle.source[data-nodeid="obj:source"][data-handleid="src.other"]',
     );
-    const targetHandle = canvasElement.querySelector<HTMLElement>(
+    const targetHandle = await findVisibleFlowHandle(
+      canvasElement,
       '.react-flow__handle.target[data-nodeid="obj:target"][data-handleid="tgt.name"]',
     );
     const originalLane = canvas.getByTestId('field-remap-lane-edge:name');
-    await expect(sourceHandle).toBeVisible();
-    await expect(targetHandle).toBeVisible();
     await expect(originalLane).toHaveTextContent('src.name → tgt.name');
 
-    const sourceRect = sourceHandle!.getBoundingClientRect();
-    const targetRect = targetHandle!.getBoundingClientRect();
+    const sourceRect = sourceHandle.getBoundingClientRect();
+    const targetRect = targetHandle.getBoundingClientRect();
     await userEvent.pointer([
       {
         keys: '[MouseLeft>]',
-        target: sourceHandle!,
+        target: sourceHandle,
         coords: {
           clientX: sourceRect.x + sourceRect.width / 2,
           clientY: sourceRect.y + sourceRect.height / 2,
         },
       },
       {
-        target: targetHandle!,
+        target: targetHandle,
         coords: {
           clientX: targetRect.x + targetRect.width / 2,
           clientY: targetRect.y + targetRect.height / 2,
@@ -300,7 +315,7 @@ export const RewireRejectFeedback: Story = {
       },
       {
         keys: '[/MouseLeft]',
-        target: targetHandle!,
+        target: targetHandle,
         coords: {
           clientX: targetRect.x + targetRect.width / 2,
           clientY: targetRect.y + targetRect.height / 2,

@@ -2,6 +2,7 @@ import {
   isCanonicalDesignSystemText,
   snapshotDesignSystemResolutionInput,
   type DesignSystemAuthoredDocumentSnapshot,
+  type DesignSystemAuthoredResponsiveOverrideSnapshot,
   type DesignSystemContributionProvenance,
   type DesignSystemDiagnostic,
   type DesignSystemThemeRef,
@@ -30,8 +31,93 @@ export interface UiAuthoringResolutionProjection {
   readonly documentRevision: number;
   readonly registryRevision: number;
   readonly hostWidth?: number;
+  readonly activeResponsiveVariantId?: string;
   readonly nodes: readonly UiAuthoringResolutionNodeProjection[];
   readonly diagnostics: readonly DesignSystemDiagnostic[];
+}
+
+function isResponsiveVariantCatalog(value: unknown): boolean {
+  if (value === undefined) return true;
+  if (!Array.isArray(value)) return false;
+  const ids = new Set<string>();
+  const ranges: { readonly min: number; readonly max: number }[] = [];
+  for (const entry of value) {
+    if (
+      !isPlainRecord(entry) ||
+      !isCanonicalDesignSystemText(entry.id) ||
+      ids.has(entry.id) ||
+      !isPlainRecord(entry.hostWidth)
+    ) {
+      return false;
+    }
+    ids.add(entry.id);
+    const hasMin = Object.prototype.hasOwnProperty.call(entry.hostWidth, 'minInclusive');
+    const hasMax = Object.prototype.hasOwnProperty.call(entry.hostWidth, 'maxExclusive');
+    const min = hasMin ? entry.hostWidth.minInclusive : 0;
+    const max = hasMax ? entry.hostWidth.maxExclusive : Number.POSITIVE_INFINITY;
+    if (
+      (!hasMin && !hasMax) ||
+      typeof min !== 'number' ||
+      !Number.isFinite(min) ||
+      min < 0 ||
+      (hasMin && min === 0) ||
+      typeof max !== 'number' ||
+      (hasMax && !Number.isFinite(max)) ||
+      max <= 0 ||
+      min >= max
+    ) {
+      return false;
+    }
+    ranges.push({ min, max });
+  }
+  const canonical = [...ranges].sort((left, right) => left.min - right.min || left.max - right.max);
+  return (
+    ranges.every(
+      (range, index) => range.min === canonical[index]?.min && range.max === canonical[index]?.max,
+    ) && canonical.every((range, index) => index === 0 || range.min >= canonical[index - 1]!.max)
+  );
+}
+
+function isResponsiveOverrides(value: unknown): boolean {
+  if (value === undefined) return true;
+  return (
+    isPlainRecord(value) &&
+    Object.entries(value).every(
+      ([variantId, override]) =>
+        isCanonicalDesignSystemText(variantId) &&
+        isPlainRecord(override) &&
+        (override.properties === undefined || isPlainRecord(override.properties)) &&
+        (override.layout === undefined ||
+          (isPlainRecord(override.layout) &&
+            isCanonicalDesignSystemText(override.layout.strategyId) &&
+            isPlainRecord(override.layout.values))),
+    )
+  );
+}
+
+function activeResponsiveVariantId(
+  document: DesignSystemAuthoredDocumentSnapshot,
+  hostWidth: number | undefined,
+): string | undefined {
+  if (hostWidth === undefined) return undefined;
+  return document.responsiveVariants?.find((variant) => {
+    const min = variant.hostWidth.minInclusive ?? 0;
+    const max = variant.hostWidth.maxExclusive ?? Number.POSITIVE_INFINITY;
+    return hostWidth >= min && hostWidth < max;
+  })?.id;
+}
+
+function responsiveOverride(
+  node: DesignSystemAuthoredDocumentSnapshot['nodes'][number],
+  variantId: string | undefined,
+): DesignSystemAuthoredResponsiveOverrideSnapshot | undefined {
+  if (variantId === undefined || node.responsiveOverrides === undefined) return undefined;
+  const descriptor = Object.getOwnPropertyDescriptor(node.responsiveOverrides, variantId);
+  return descriptor !== undefined &&
+    Object.prototype.hasOwnProperty.call(descriptor, 'value') &&
+    isPlainRecord(descriptor.value)
+    ? (descriptor.value as DesignSystemAuthoredResponsiveOverrideSnapshot)
+    : undefined;
 }
 
 function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown>> {
@@ -49,22 +135,35 @@ function isCanonicalComponentRef(value: unknown): value is UiComponentRef {
 }
 
 function isProjectionDocument(value: unknown): value is DesignSystemAuthoredDocumentSnapshot {
-  return (
-    isPlainRecord(value) &&
-    isCanonicalDesignSystemText(value.documentId) &&
-    Number.isInteger(value.revision) &&
-    (value.revision as number) >= 0 &&
-    isPlainRecord(value.state) &&
-    Array.isArray(value.nodes) &&
-    value.nodes.every(
-      (node) =>
-        isPlainRecord(node) &&
-        isCanonicalDesignSystemText(node.nodeId) &&
-        isCanonicalComponentRef(node.component) &&
-        isPlainRecord(node.properties) &&
-        Array.isArray(node.scopeChain) &&
-        node.scopeChain.every(isCanonicalDesignSystemText),
-    )
+  if (
+    !isPlainRecord(value) ||
+    !isCanonicalDesignSystemText(value.documentId) ||
+    !Number.isInteger(value.revision) ||
+    (value.revision as number) < 0 ||
+    !isPlainRecord(value.state) ||
+    !isResponsiveVariantCatalog(value.responsiveVariants) ||
+    !Array.isArray(value.nodes)
+  ) {
+    return false;
+  }
+  const responsiveVariantIds = new Set(
+    (value.responsiveVariants as readonly { readonly id: string }[] | undefined)?.map(
+      (variant) => variant.id,
+    ) ?? [],
+  );
+  return value.nodes.every(
+    (node) =>
+      isPlainRecord(node) &&
+      isCanonicalDesignSystemText(node.nodeId) &&
+      isCanonicalComponentRef(node.component) &&
+      isPlainRecord(node.properties) &&
+      isResponsiveOverrides(node.responsiveOverrides) &&
+      (node.responsiveOverrides === undefined ||
+        Object.keys(node.responsiveOverrides as Readonly<Record<string, unknown>>).every(
+          (variantId) => responsiveVariantIds.has(variantId),
+        )) &&
+      Array.isArray(node.scopeChain) &&
+      node.scopeChain.every(isCanonicalDesignSystemText),
   );
 }
 
@@ -207,7 +306,13 @@ export function projectUiAuthoringResolution(
     const systemResolver = new DesignSystemResolver();
     const tokenResolver = new DesignTokenResolver();
     const componentResolver = new ComponentResolver();
+    const activeVariantId = activeResponsiveVariantId(snapshot, validHostWidth);
     const nodes = snapshot.nodes.map((node, nodeIndex) => {
+      const override = responsiveOverride(node, activeVariantId);
+      const authoredProperties = Object.freeze({
+        ...node.properties,
+        ...(override?.properties ?? {}),
+      });
       const component = freezeComponentRef(node.component);
       const resolution = systemResolver.resolve(registry, {
         state: snapshot.state,
@@ -243,15 +348,18 @@ export function projectUiAuthoringResolution(
       const propertyDiagnostics: DesignSystemDiagnostic[] = [];
       for (const propertyId of propertyIdsForNode(
         catalogComponent ?? packComponent,
-        node.properties,
+        authoredProperties,
       )) {
-        const hasInstanceValue = Object.prototype.hasOwnProperty.call(node.properties, propertyId);
+        const hasInstanceValue = Object.prototype.hasOwnProperty.call(
+          authoredProperties,
+          propertyId,
+        );
         const propertyResult =
           resolution.selection !== undefined
             ? tokenResolver.resolveComponentProperty(resolution.selection, {
                 component,
                 propertyId,
-                ...(hasInstanceValue ? { instanceValue: node.properties[propertyId] } : {}),
+                ...(hasInstanceValue ? { instanceValue: authoredProperties[propertyId] } : {}),
               })
             : Object.freeze<DesignValueResolutionResult>({
                 diagnostics: freezeDiagnostics([
@@ -303,6 +411,7 @@ export function projectUiAuthoringResolution(
       documentRevision: snapshot.revision,
       registryRevision,
       ...(validHostWidth === undefined ? {} : { hostWidth: validHostWidth }),
+      ...(activeVariantId === undefined ? {} : { activeResponsiveVariantId: activeVariantId }),
       nodes: Object.freeze(nodes),
       diagnostics,
     });

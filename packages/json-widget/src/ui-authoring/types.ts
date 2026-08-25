@@ -7,6 +7,8 @@ import type {
   UiComponentCatalogContract,
   UiComponentRef,
   UiDesignSystemState,
+  UiLayoutPropertyDescriptor,
+  UiLayoutStrategyDescriptor,
   UiValueSource,
 } from '@workbench-kit/contracts';
 
@@ -255,6 +257,246 @@ export interface ApplyUiDesignSystemPackChangeV2Result {
   readonly state: UiAuthoringSessionStateV2;
   readonly diagnostics: readonly DesignSystemDiagnostic[];
   readonly changed: boolean;
+}
+
+export interface UiResponsiveVariantDescriptor {
+  readonly id: string;
+  readonly hostWidth: {
+    readonly minInclusive?: number;
+    readonly maxExclusive?: number;
+  };
+}
+
+export interface UiResponsiveNodeOverride {
+  readonly properties?: Readonly<Record<string, UiValueSource>>;
+  readonly layout?: {
+    readonly strategyId: string;
+    readonly values: Readonly<Record<string, UiValueSource>>;
+  };
+}
+
+export interface UiDocumentNodeAuthoringV3 extends Omit<
+  UiDocumentNodeAuthoring,
+  'documentSchemaVersion'
+> {
+  /** Root only: omitted = v0, 1 = endpoint-binding format, 2 = responsive format. */
+  readonly documentSchemaVersion?: 1 | 2;
+  /** Semantic-root only. */
+  readonly responsiveVariants?: readonly UiResponsiveVariantDescriptor[];
+  /** Exact root-catalog variant ids mapped to sparse node overrides. */
+  readonly responsiveOverrides?: Readonly<Record<string, UiResponsiveNodeOverride>>;
+}
+
+export type UiDocumentNodeV3 = GenericWidget & {
+  readonly id: string;
+  readonly $authoring: UiDocumentNodeAuthoringV3;
+};
+
+export interface UiDocumentV3 extends Omit<UiDocument, 'root'> {
+  readonly root: UiDocumentNodeV3;
+}
+
+export type UiDocumentV3IssueCode =
+  | UiDocumentIssueCode
+  | 'invalid-responsive-variant-catalog'
+  | 'duplicate-responsive-variant-id'
+  | 'invalid-responsive-range'
+  | 'overlapping-responsive-range'
+  | 'nonroot-responsive-variant-catalog'
+  | 'invalid-responsive-overrides'
+  | 'responsive-variant-not-found'
+  | 'responsive-state-requires-document-schema-version';
+
+export interface UiDocumentV3Issue extends Omit<UiDocumentIssue, 'code'> {
+  readonly code: UiDocumentV3IssueCode;
+  readonly variantId?: string;
+}
+
+export interface CreateUiDocumentV3Result {
+  readonly document: UiDocumentV3 | null;
+  readonly issues: readonly (UiDocumentIssue | UiDocumentV3Issue)[];
+}
+
+export interface UiDocumentCommandV3Context extends UiDocumentCommandV2Context {
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+}
+
+export type UiDocumentAtomicCommandV3 =
+  | UiDocumentAtomicCommandV2
+  | {
+      readonly type: 'upsert-responsive-variant';
+      readonly commandId: string;
+      readonly variant: UiResponsiveVariantDescriptor;
+    }
+  | {
+      readonly type: 'remove-responsive-variant';
+      readonly commandId: string;
+      readonly variantId: string;
+    }
+  | {
+      readonly type: 'set-responsive-property';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly variantId: string;
+      readonly propertyId: string;
+      readonly value: UiValueSource;
+    }
+  | {
+      readonly type: 'clear-responsive-property';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly variantId: string;
+      readonly propertyId: string;
+    }
+  | {
+      readonly type: 'set-responsive-layout';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly variantId: string;
+      readonly strategyId: string;
+      readonly values: Readonly<Record<string, UiValueSource>>;
+    }
+  | {
+      readonly type: 'clear-responsive-layout';
+      readonly commandId: string;
+      readonly nodeId: string;
+      readonly variantId: string;
+    };
+
+export type UiDocumentCommandV3 =
+  | UiDocumentAtomicCommandV3
+  | {
+      readonly type: 'batch';
+      readonly commandId: string;
+      readonly commands: readonly UiDocumentAtomicCommandV3[];
+    };
+
+export type UiDocumentCommandV3IssueCode =
+  | UiDocumentCommandV2IssueCode
+  | 'responsive-variant-in-use'
+  | 'invalid-responsive-property-override'
+  | 'invalid-responsive-layout-override';
+
+export interface UiDocumentCommandV3Issue {
+  readonly code: UiDocumentCommandV3IssueCode;
+  readonly message: string;
+  readonly commandId?: string;
+  readonly nodeId?: string;
+  readonly inputId?: string;
+  readonly propertyId?: string;
+  readonly variantId?: string;
+}
+
+interface UiDocumentTransactionV3Base {
+  readonly transactionId: string;
+  readonly baseRevision: number;
+  readonly nextRevision: number;
+  readonly patches: readonly WidgetPatch[];
+}
+
+export type UiDocumentTransactionV3 =
+  | (UiDocumentTransactionV3Base & {
+      readonly kind: 'document-command';
+      readonly command: UiDocumentCommandV3;
+      readonly intent?: never;
+    })
+  | (UiDocumentTransactionV3Base & {
+      readonly kind: 'design-system-change';
+      readonly command?: never;
+      readonly intent: UiDesignSystemPackChangeCommand;
+    });
+
+export interface ApplyUiDocumentCommandV3Result {
+  readonly document: UiDocumentV3;
+  readonly transaction: UiDocumentTransactionV3 | null;
+  readonly issues: readonly (
+    | UiDocumentIssue
+    | UiDocumentV3Issue
+    | UiDocumentCommandIssue
+    | UiDocumentCommandV2Issue
+    | UiDocumentCommandV3Issue
+  )[];
+  readonly changed: boolean;
+}
+
+export interface UiDocumentTransactionRecordV3 {
+  readonly transaction: UiDocumentTransactionV3;
+  readonly beforeDocument: UiDocumentV3;
+  readonly afterDocument: UiDocumentV3;
+  readonly beforeSelectedNodeIds: readonly string[];
+  readonly afterSelectedNodeIds: readonly string[];
+}
+
+export interface UiAuthoringSessionStateV3 {
+  readonly document: UiDocumentV3;
+  readonly selectedNodeIds: readonly string[];
+  readonly past: readonly UiDocumentTransactionRecordV3[];
+  readonly future: readonly UiDocumentTransactionRecordV3[];
+}
+
+export interface UiAuthoringSessionV3CommandResult {
+  readonly state: UiAuthoringSessionStateV3;
+  readonly commandResult: ApplyUiDocumentCommandV3Result;
+}
+
+export interface ApplyUiDesignSystemPackChangeV3Result {
+  readonly state: UiAuthoringSessionStateV3;
+  readonly diagnostics: readonly DesignSystemDiagnostic[];
+  readonly changed: boolean;
+}
+
+export type UiResponsiveEditingTarget =
+  { readonly kind: 'base' } | { readonly kind: 'variant'; readonly variantId: string };
+
+export interface UiAuthoringProjectionContextV3 {
+  readonly previewHostWidth: number;
+  readonly editingTarget: UiResponsiveEditingTarget;
+}
+
+export type UiAuthoringResponsiveValueProvenance =
+  { readonly kind: 'base' } | { readonly kind: 'responsive-override'; readonly variantId: string };
+
+export interface UiAuthoringResponsiveValueProjection {
+  readonly value: UiValueSource;
+  readonly provenance: UiAuthoringResponsiveValueProvenance;
+}
+
+export interface UiAuthoringResponsiveLayoutProjection {
+  readonly strategyId: string;
+  readonly values: Readonly<Record<string, UiAuthoringResponsiveValueProjection>>;
+  readonly provenance: UiAuthoringResponsiveValueProvenance;
+}
+
+export interface UiAuthoringDocumentNodeProjectionV3 {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+  readonly selected: boolean;
+  readonly bindings: readonly UiAuthoringInputBindingProjection[];
+  /** Exact authored base values, independent from the preview-width effective projection. */
+  readonly baseProperties: Readonly<Record<string, UiValueSource>>;
+  /** Exact authored base layout, independent from the preview-width effective projection. */
+  readonly baseLayout?: {
+    readonly strategyId: string;
+    readonly values: Readonly<Record<string, UiValueSource>>;
+  };
+  readonly properties: Readonly<Record<string, UiAuthoringResponsiveValueProjection>>;
+  readonly layout?: UiAuthoringResponsiveLayoutProjection;
+  readonly responsiveOverrides: Readonly<Record<string, UiResponsiveNodeOverride>>;
+}
+
+export interface UiAuthoringDocumentProjectionV3 {
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly designSystem: UiDesignSystemState | null;
+  readonly responsiveVariants: readonly UiResponsiveVariantDescriptor[];
+  readonly previewHostWidth: number;
+  readonly editingTarget: UiResponsiveEditingTarget;
+  readonly activeResponsiveVariantId?: string;
+  readonly nodes: readonly UiAuthoringDocumentNodeProjectionV3[];
+  readonly issues: readonly (
+    UiDocumentIssue | UiDocumentV3Issue | UiDocumentCommandV2Issue | UiDocumentCommandV3Issue
+  )[];
 }
 
 export type UiAuthoringRecipeProvenance = DesignSystemContributionProvenance;

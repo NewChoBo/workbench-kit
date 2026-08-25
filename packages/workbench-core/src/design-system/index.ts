@@ -34,6 +34,12 @@ export {
   type UiAuthoringResolutionProjection,
 } from './authoring-projection.js';
 export {
+  projectUiDesignSystemAuthoringChoices,
+  type UiDesignSystemAuthoringChoiceProjection,
+  type UiDesignSystemPackChoice,
+  type UiDesignSystemThemeChoice,
+} from './authoring-choice-projection.js';
+export {
   DesignSystemPackChangePlanner,
   type DesignSystemComponentChoice,
   type DesignSystemDependencyChoice,

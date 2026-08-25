@@ -229,6 +229,177 @@ function isSource(value: unknown): value is UiValueSource {
   return field !== undefined && isCanonicalText(value[field]);
 }
 
+function isAuthoredLayout(value: unknown): boolean {
+  return (
+    isPlainRecord(value) &&
+    isCanonicalText(value.strategyId) &&
+    isPlainRecord(value.values) &&
+    Object.values(value.values).every(isSource)
+  );
+}
+
+function responsiveOverrideDiagnostics(
+  value: unknown,
+  path: string,
+  context: Partial<DesignSystemDiagnostic>,
+): readonly DesignSystemDiagnostic[] {
+  if (value === undefined) return Object.freeze([]);
+  if (!isPlainRecord(value)) {
+    return Object.freeze([
+      diagnostic(
+        'invalid-pack-change-request',
+        'Responsive overrides must be a canonical variant-to-override map.',
+        path,
+        context,
+      ),
+    ]);
+  }
+  const diagnostics: DesignSystemDiagnostic[] = [];
+  for (const [variantId, override] of Object.entries(value)) {
+    const overridePath = `${path}.${variantId}`;
+    if (!isCanonicalText(variantId) || !isPlainRecord(override)) {
+      diagnostics.push(
+        diagnostic(
+          'invalid-pack-change-request',
+          'Responsive override ids and payloads must be canonical declarative data.',
+          overridePath,
+          context,
+        ),
+      );
+      continue;
+    }
+    if (
+      override.properties !== undefined &&
+      (!isPlainRecord(override.properties) || !Object.values(override.properties).every(isSource))
+    ) {
+      diagnostics.push(
+        diagnostic(
+          'invalid-pack-change-request',
+          'Responsive property overrides must contain declarative value sources.',
+          `${overridePath}.properties`,
+          context,
+        ),
+      );
+    }
+    if (override.layout !== undefined && !isAuthoredLayout(override.layout)) {
+      diagnostics.push(
+        diagnostic(
+          'invalid-pack-change-request',
+          'Responsive layout overrides must use a canonical strategy and declarative values.',
+          `${overridePath}.layout`,
+          context,
+        ),
+      );
+    }
+  }
+  return freezeDiagnostics(diagnostics);
+}
+
+function responsiveVariantCatalogDiagnostics(
+  value: unknown,
+  context: Partial<DesignSystemDiagnostic>,
+): { readonly diagnostics: readonly DesignSystemDiagnostic[]; readonly ids: ReadonlySet<string> } {
+  if (value === undefined) {
+    return { diagnostics: Object.freeze([]), ids: new Set<string>() };
+  }
+  if (!Array.isArray(value)) {
+    return {
+      diagnostics: Object.freeze([
+        diagnostic(
+          'invalid-pack-change-request',
+          'Responsive variants must be a canonical ordered array.',
+          'request.document.responsiveVariants',
+          context,
+        ),
+      ]),
+      ids: new Set<string>(),
+    };
+  }
+  const diagnostics: DesignSystemDiagnostic[] = [];
+  const ids = new Set<string>();
+  const ranges: { readonly id: string; readonly min: number; readonly max: number }[] = [];
+  value.forEach((entry, index) => {
+    const path = `request.document.responsiveVariants[${index}]`;
+    if (!isPlainRecord(entry) || !isCanonicalText(entry.id) || !isPlainRecord(entry.hostWidth)) {
+      diagnostics.push(
+        diagnostic(
+          'invalid-pack-change-request',
+          'Responsive variant identity and host-width range must be canonical.',
+          path,
+          context,
+        ),
+      );
+      return;
+    }
+    if (ids.has(entry.id)) {
+      diagnostics.push(
+        diagnostic(
+          'invalid-pack-change-request',
+          `Responsive variant id "${entry.id}" must be unique.`,
+          `${path}.id`,
+          context,
+        ),
+      );
+      return;
+    }
+    ids.add(entry.id);
+    const hasMin = Object.prototype.hasOwnProperty.call(entry.hostWidth, 'minInclusive');
+    const hasMax = Object.prototype.hasOwnProperty.call(entry.hostWidth, 'maxExclusive');
+    const min = hasMin ? entry.hostWidth.minInclusive : 0;
+    const max = hasMax ? entry.hostWidth.maxExclusive : Number.POSITIVE_INFINITY;
+    if (
+      (!hasMin && !hasMax) ||
+      typeof min !== 'number' ||
+      !Number.isFinite(min) ||
+      min < 0 ||
+      (hasMin && min === 0) ||
+      typeof max !== 'number' ||
+      (hasMax && !Number.isFinite(max)) ||
+      max <= 0 ||
+      min >= max
+    ) {
+      diagnostics.push(
+        diagnostic(
+          'invalid-pack-change-request',
+          'Responsive host-width ranges must be finite, non-negative, non-empty bounds.',
+          `${path}.hostWidth`,
+          context,
+        ),
+      );
+      return;
+    }
+    ranges.push({ id: entry.id, min, max });
+  });
+  const canonicalRanges = [...ranges].sort(
+    (left, right) =>
+      left.min - right.min || left.max - right.max || left.id.localeCompare(right.id),
+  );
+  if (ranges.some((range, index) => range.id !== canonicalRanges[index]?.id)) {
+    diagnostics.push(
+      diagnostic(
+        'invalid-pack-change-request',
+        'Responsive variants must use canonical host-width order.',
+        'request.document.responsiveVariants',
+        context,
+      ),
+    );
+  }
+  for (let index = 1; index < canonicalRanges.length; index += 1) {
+    if (canonicalRanges[index]!.min < canonicalRanges[index - 1]!.max) {
+      diagnostics.push(
+        diagnostic(
+          'invalid-pack-change-request',
+          'Responsive host-width ranges must not overlap.',
+          'request.document.responsiveVariants',
+          context,
+        ),
+      );
+      break;
+    }
+  }
+  return { diagnostics: freezeDiagnostics(diagnostics), ids };
+}
+
 function authoredDocumentDiagnostics(
   value: unknown,
   requestId?: string,
@@ -273,6 +444,8 @@ function authoredDocumentDiagnostics(
     value.state as unknown as UiDesignSystemState,
     'request.document.state',
   ).map((entry) => diagnostic('invalid-pack-change-request', entry.message, entry.path, context));
+  const responsiveCatalog = responsiveVariantCatalogDiagnostics(value.responsiveVariants, context);
+  diagnostics.push(...responsiveCatalog.diagnostics);
   if (!Array.isArray(value.nodes)) {
     diagnostics.push(
       diagnostic(
@@ -342,13 +515,7 @@ function authoredDocumentDiagnostics(
         ),
       );
     }
-    if (
-      node.layout !== undefined &&
-      (!isPlainRecord(node.layout) ||
-        !isCanonicalText(node.layout.strategyId) ||
-        !isPlainRecord(node.layout.values) ||
-        !Object.values(node.layout.values).every(isSource))
-    ) {
+    if (node.layout !== undefined && !isAuthoredLayout(node.layout)) {
       diagnostics.push(
         diagnostic(
           'invalid-pack-change-request',
@@ -357,6 +524,27 @@ function authoredDocumentDiagnostics(
           nodeContext,
         ),
       );
+    }
+    diagnostics.push(
+      ...responsiveOverrideDiagnostics(
+        node.responsiveOverrides,
+        `${path}.responsiveOverrides`,
+        nodeContext,
+      ),
+    );
+    if (isPlainRecord(node.responsiveOverrides)) {
+      for (const variantId of Object.keys(node.responsiveOverrides)) {
+        if (!responsiveCatalog.ids.has(variantId)) {
+          diagnostics.push(
+            diagnostic(
+              'invalid-pack-change-request',
+              `Responsive override variant "${variantId}" is absent from the document catalog.`,
+              `${path}.responsiveOverrides.${variantId}`,
+              nodeContext,
+            ),
+          );
+        }
+      }
     }
   });
   return freezeDiagnostics(diagnostics);
@@ -456,42 +644,58 @@ function catalogDiagnostics(
     }
   });
   for (const node of request.document.nodes) {
-    if (!node.layout) continue;
-    const strategy = request.layoutStrategies.find(
-      (entry) => isPlainRecord(entry) && entry.id === node.layout!.strategyId,
-    );
-    if (
-      strategy === undefined ||
-      !Array.isArray(strategy.supportedContainerProperties) ||
-      !Array.isArray(strategy.supportedChildProperties)
-    ) {
-      diagnostics.push(
-        diagnostic(
-          'invalid-pack-change-request',
-          `Authored layout strategy "${node.layout.strategyId}" is missing from the request catalog.`,
-          `request.document.nodes.${node.nodeId}.layout.strategyId`,
-          { nodeId: node.nodeId, requestId: request.requestId },
-        ),
-      );
-      continue;
-    }
-    for (const propertyId of Object.keys(node.layout.values)) {
-      const property = request.layoutProperties.find(
-        (entry) => isPlainRecord(entry) && entry.id === propertyId,
+    const layouts = [
+      ...(node.layout
+        ? [{ path: `request.document.nodes.${node.nodeId}.layout`, value: node.layout }]
+        : []),
+      ...Object.entries(node.responsiveOverrides ?? {}).flatMap(([variantId, override]) =>
+        override.layout
+          ? [
+              {
+                path: `request.document.nodes.${node.nodeId}.responsiveOverrides.${variantId}.layout`,
+                value: override.layout,
+              },
+            ]
+          : [],
+      ),
+    ];
+    for (const layout of layouts) {
+      const strategy = request.layoutStrategies.find(
+        (entry) => isPlainRecord(entry) && entry.id === layout.value.strategyId,
       );
       if (
-        property === undefined ||
-        (!strategy.supportedContainerProperties.includes(propertyId) &&
-          !strategy.supportedChildProperties.includes(propertyId))
+        strategy === undefined ||
+        !Array.isArray(strategy.supportedContainerProperties) ||
+        !Array.isArray(strategy.supportedChildProperties)
       ) {
         diagnostics.push(
           diagnostic(
             'invalid-pack-change-request',
-            `Authored layout property "${propertyId}" is missing or unsupported by its strategy.`,
-            `request.document.nodes.${node.nodeId}.layout.values.${propertyId}`,
-            { nodeId: node.nodeId, propertyId, requestId: request.requestId },
+            `Authored layout strategy "${layout.value.strategyId}" is missing from the request catalog.`,
+            `${layout.path}.strategyId`,
+            { nodeId: node.nodeId, requestId: request.requestId },
           ),
         );
+        continue;
+      }
+      for (const propertyId of Object.keys(layout.value.values)) {
+        const property = request.layoutProperties.find(
+          (entry) => isPlainRecord(entry) && entry.id === propertyId,
+        );
+        if (
+          property === undefined ||
+          (!strategy.supportedContainerProperties.includes(propertyId) &&
+            !strategy.supportedChildProperties.includes(propertyId))
+        ) {
+          diagnostics.push(
+            diagnostic(
+              'invalid-pack-change-request',
+              `Authored layout property "${propertyId}" is missing or unsupported by its strategy.`,
+              `${layout.path}.values.${propertyId}`,
+              { nodeId: node.nodeId, propertyId, requestId: request.requestId },
+            ),
+          );
+        }
       }
     }
   }
@@ -542,6 +746,24 @@ function collectDependencies(
           nodeId: node.nodeId,
           propertyId,
         });
+      }
+    }
+    for (const [variantId, override] of Object.entries(node.responsiveOverrides ?? {})) {
+      for (const [propertyId, source] of Object.entries(override.properties ?? {})) {
+        visit(source, {
+          path: `nodes.${node.nodeId}.responsiveOverrides.${variantId}.properties.${propertyId}`,
+          nodeId: node.nodeId,
+          propertyId,
+        });
+      }
+      if (override.layout) {
+        for (const [propertyId, source] of Object.entries(override.layout.values)) {
+          visit(source, {
+            path: `nodes.${node.nodeId}.responsiveOverrides.${variantId}.layout.values.${propertyId}`,
+            nodeId: node.nodeId,
+            propertyId,
+          });
+        }
       }
     }
   }
@@ -1458,44 +1680,72 @@ export class DesignSystemPackChangePlanner {
           ),
         );
       }
-      for (const [propertyId, source] of Object.entries(node.properties)) {
-        const descriptor = targetComponent.properties?.find((entry) => entry.id === propertyId);
-        const rewritten = rewriteSource(source, tokenMap, resourceMap);
-        if (
-          descriptor === undefined ||
-          validateUiPropertyValue(descriptor, rewritten).length > 0 ||
-          tokenResolver.resolveComponentProperty(selection, {
-            component: targetRef,
-            propertyId,
-            instanceValue: rewritten,
-          }).diagnostics.length > 0
-        ) {
-          return failedFinalize(
-            diagnostic(
-              'pack-change-target-resolution-failed',
-              `Target component property "${propertyId}" cannot preserve the authored value.`,
-              `nodes.${node.nodeId}.properties.${propertyId}`,
-              { nodeId: node.nodeId, propertyId, requestId: safePlan.requestId },
-            ),
-          );
+      const propertySets = [
+        { path: `nodes.${node.nodeId}.properties`, values: node.properties },
+        ...Object.entries(node.responsiveOverrides ?? {}).flatMap(([variantId, override]) =>
+          override.properties
+            ? [
+                {
+                  path: `nodes.${node.nodeId}.responsiveOverrides.${variantId}.properties`,
+                  values: override.properties,
+                },
+              ]
+            : [],
+        ),
+      ];
+      for (const propertySet of propertySets) {
+        for (const [propertyId, source] of Object.entries(propertySet.values)) {
+          const descriptor = targetComponent.properties?.find((entry) => entry.id === propertyId);
+          const rewritten = rewriteSource(source, tokenMap, resourceMap);
+          if (
+            descriptor === undefined ||
+            validateUiPropertyValue(descriptor, rewritten).length > 0 ||
+            tokenResolver.resolveComponentProperty(selection, {
+              component: targetRef,
+              propertyId,
+              instanceValue: rewritten,
+            }).diagnostics.length > 0
+          ) {
+            return failedFinalize(
+              diagnostic(
+                'pack-change-target-resolution-failed',
+                `Target component property "${propertyId}" cannot preserve the authored value.`,
+                `${propertySet.path}.${propertyId}`,
+                { nodeId: node.nodeId, propertyId, requestId: safePlan.requestId },
+              ),
+            );
+          }
         }
       }
-      if (node.layout) {
-        const strategy = strategyMap.get(node.layout.strategyId);
+      const layouts = [
+        ...(node.layout ? [{ path: `nodes.${node.nodeId}.layout`, value: node.layout }] : []),
+        ...Object.entries(node.responsiveOverrides ?? {}).flatMap(([variantId, override]) =>
+          override.layout
+            ? [
+                {
+                  path: `nodes.${node.nodeId}.responsiveOverrides.${variantId}.layout`,
+                  value: override.layout,
+                },
+              ]
+            : [],
+        ),
+      ];
+      for (const layout of layouts) {
+        const strategy = strategyMap.get(layout.value.strategyId);
         if (
           strategy === undefined ||
-          !targetComponent.layout?.supportedStrategyIds?.includes(node.layout.strategyId)
+          !targetComponent.layout?.supportedStrategyIds?.includes(layout.value.strategyId)
         ) {
           return failedFinalize(
             diagnostic(
               'pack-change-target-resolution-failed',
               'The target component does not support the authored layout strategy.',
-              `nodes.${node.nodeId}.layout.strategyId`,
+              `${layout.path}.strategyId`,
               { nodeId: node.nodeId, requestId: safePlan.requestId },
             ),
           );
         }
-        for (const [propertyId, source] of Object.entries(node.layout.values)) {
+        for (const [propertyId, source] of Object.entries(layout.value.values)) {
           const descriptor = propertyMap.get(propertyId);
           const rewritten = rewriteSource(source, tokenMap, resourceMap);
           const layoutIssues =
@@ -1514,7 +1764,7 @@ export class DesignSystemPackChangePlanner {
                   ? 'unsupported-layout-literal-type'
                   : 'pack-change-target-resolution-failed',
                 `Layout property "${propertyId}" cannot be preserved in the target Pack.`,
-                `nodes.${node.nodeId}.layout.values.${propertyId}`,
+                `${layout.path}.values.${propertyId}`,
                 { nodeId: node.nodeId, propertyId, requestId: safePlan.requestId },
               ),
             );
@@ -1530,7 +1780,7 @@ export class DesignSystemPackChangePlanner {
               diagnostic(
                 'pack-change-target-resolution-failed',
                 `Layout token "${rewritten.tokenId}" cannot be resolved in the target Pack.`,
-                `nodes.${node.nodeId}.layout.values.${propertyId}`,
+                `${layout.path}.values.${propertyId}`,
                 { nodeId: node.nodeId, propertyId, requestId: safePlan.requestId },
               ),
             );
@@ -1542,7 +1792,7 @@ export class DesignSystemPackChangePlanner {
               diagnostic(
                 'pack-change-target-resolution-failed',
                 `Layout resource "${rewritten.resourceId}" is missing from the target Pack.`,
-                `nodes.${node.nodeId}.layout.values.${propertyId}`,
+                `${layout.path}.values.${propertyId}`,
                 { nodeId: node.nodeId, propertyId, requestId: safePlan.requestId },
               ),
             );

@@ -157,22 +157,33 @@ export {
 export type {
   ApplyUiDocumentCommandResult,
   ApplyUiDocumentCommandV2Result,
+  ApplyUiDocumentCommandV3Result,
   ApplyUiDesignSystemPackChangeResult,
   ApplyUiDesignSystemPackChangeV2Result,
+  ApplyUiDesignSystemPackChangeV3Result,
   CreateUiAuthoringDetachedPlanInput,
   CreateUiDocumentResult,
+  CreateUiDocumentV3Result,
   MigrateWidgetDocumentOptions,
   MigrateWidgetDocumentResult,
   UiAuthoringSessionCommandResult,
   UiAuthoringSessionState,
   UiAuthoringSessionStateV2,
+  UiAuthoringSessionStateV3,
   UiAuthoringSessionV2CommandResult,
+  UiAuthoringSessionV3CommandResult,
   UiAuthoringBindingProvenance,
   UiAuthoringDesignSystemInputSnapshot,
   UiAuthoringDetachedPlan,
   UiAuthoringDocumentNodeProjection,
+  UiAuthoringDocumentNodeProjectionV3,
   UiAuthoringDocumentProjection,
+  UiAuthoringDocumentProjectionV3,
   UiAuthoringInputBindingProjection,
+  UiAuthoringProjectionContextV3,
+  UiAuthoringResponsiveLayoutProjection,
+  UiAuthoringResponsiveValueProjection,
+  UiAuthoringResponsiveValueProvenance,
   UiAuthoringPlanDiagnostic,
   UiAuthoringPlanDiagnosticCode,
   UiAuthoringPlanFinalizeContext,
@@ -182,6 +193,7 @@ export type {
   UiAuthoringRecipeRef,
   UiDocument,
   UiDocumentAtomicCommandV2,
+  UiDocumentAtomicCommandV3,
   UiDocumentCommand,
   UiDocumentCommandIssue,
   UiDocumentCommandIssueCode,
@@ -189,6 +201,10 @@ export type {
   UiDocumentCommandV2Context,
   UiDocumentCommandV2Issue,
   UiDocumentCommandV2IssueCode,
+  UiDocumentCommandV3,
+  UiDocumentCommandV3Context,
+  UiDocumentCommandV3Issue,
+  UiDocumentCommandV3IssueCode,
   UiDocumentHierarchyEntry,
   UiDocumentIssue,
   UiDocumentIssueCode,
@@ -198,11 +214,21 @@ export type {
   UiDocumentMigrationResolver,
   UiDocumentNode,
   UiDocumentNodeAuthoring,
+  UiDocumentNodeAuthoringV3,
+  UiDocumentNodeV3,
   UiDocumentTransaction,
   UiDocumentTransactionRecord,
   UiDocumentTransactionRecordV2,
+  UiDocumentTransactionRecordV3,
   UiDocumentTransactionV2,
+  UiDocumentTransactionV3,
+  UiDocumentV3,
+  UiDocumentV3Issue,
+  UiDocumentV3IssueCode,
   UiDesignSystemPackChangeCommand,
+  UiResponsiveEditingTarget,
+  UiResponsiveNodeOverride,
+  UiResponsiveVariantDescriptor,
   ProjectUiDesignSystemDocumentResult,
 } from './ui-authoring/types.js';
 export {
@@ -223,10 +249,12 @@ export {
 } from './ui-authoring/document.js';
 export { applyUiDocumentCommand } from './ui-authoring/commands.js';
 export { applyUiDocumentCommandV2 } from './ui-authoring/commands-v2.js';
+export { applyUiDocumentCommandV3 } from './ui-authoring/commands-v3.js';
 export {
   applyUiDesignSystemPackChange,
   applyUiDesignSystemPackChangeV2,
   projectUiDesignSystemDocument,
+  projectUiDesignSystemDocumentV3,
 } from './ui-authoring/design-system.js';
 export {
   applyUiAuthoringSessionCommand,
@@ -243,11 +271,34 @@ export {
   undoUiAuthoringSessionV2,
 } from './ui-authoring/session-v2.js';
 export {
+  applyUiAuthoringSessionCommandV3,
+  applyUiDesignSystemPackChangeV3,
+  createUiAuthoringSessionV3,
+  redoUiAuthoringSessionV3,
+  selectUiDocumentNodesV3,
+  undoUiAuthoringSessionV3,
+} from './ui-authoring/session-v3.js';
+export {
   createUiAuthoringDetachedPlan,
   finalizeUiAuthoringDetachedPlan,
   previewUiAuthoringDetachedPlan,
 } from './ui-authoring/detached-plan.js';
 export { projectUiAuthoringDocument } from './ui-authoring/projection.js';
+export { projectUiAuthoringDocumentV3 } from './ui-authoring/projection-v3.js';
+export {
+  canonicalizeUiDocumentRootV3,
+  createUiDocumentV3,
+  formatUiDocumentV3,
+  readUiDocumentNodeAuthoringV3,
+  upgradeUiDocumentToV3,
+  validateUiDocumentRootV3,
+} from './ui-authoring/document-v3.js';
+export {
+  canonicalizeUiResponsiveVariantCatalog,
+  resolveActiveUiResponsiveVariant,
+  resolveUiResponsiveVariantRepresentativeWidth,
+  validateUiResponsiveVariantCatalog,
+} from './ui-authoring/responsive.js';
 export { migrateWidgetDocumentToUiDocument } from './ui-authoring/migration.js';
 
 export {
