@@ -14,6 +14,7 @@ import {
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapFlowMapper, type FieldRemapFlowActions } from './flow.js';
+import { writeFieldRemapTransformDragData } from './drag-payload.js';
 import { getFieldRemapSample } from './samples.js';
 
 const testGlobal = globalThis as typeof globalThis & {
@@ -116,6 +117,42 @@ describe('FieldRemapFlowMapper host chrome', () => {
       cancelable: true,
       ...init,
     });
+    await act(async () => {
+      target.dispatchEvent(event);
+      await Promise.resolve();
+    });
+    return event;
+  }
+
+  function createDataTransfer(): DataTransfer {
+    const entries = new Map<string, string>();
+    return {
+      dropEffect: 'none',
+      effectAllowed: 'uninitialized',
+      get types() {
+        return [...entries.keys()];
+      },
+      getData: (type: string) => entries.get(type) ?? '',
+      setData: (type: string, value: string) => {
+        entries.set(type, value);
+      },
+    } as unknown as DataTransfer;
+  }
+
+  async function dispatchDragEvent(
+    target: Element,
+    type: 'dragover' | 'drop',
+    dataTransfer: DataTransfer,
+    init: MouseEventInit = {},
+  ): Promise<MouseEvent> {
+    const event = new MouseEvent(type, {
+      bubbles: true,
+      cancelable: true,
+      clientX: 420,
+      clientY: 260,
+      ...init,
+    });
+    Object.defineProperty(event, 'dataTransfer', { value: dataTransfer });
     await act(async () => {
       target.dispatchEvent(event);
       await Promise.resolve();
@@ -1571,6 +1608,83 @@ describe('FieldRemapFlowMapper host chrome', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(container!.querySelector('[data-testid="field-remap-detail-draft-id"]')).toBeNull();
+  });
+
+  it('accepts one current private palette drop and rejects foreign, stale, and identity data', async () => {
+    const onEdgesChange = vi.fn();
+    await renderMapper({ onEdgesChange });
+    const flow = container!.querySelector<HTMLElement>('.react-flow')!;
+
+    const foreign = createDataTransfer();
+    foreign.setData('text/plain', 'string:trim');
+    expect((await dispatchDragEvent(flow, 'dragover', foreign)).defaultPrevented).toBe(false);
+    expect((await dispatchDragEvent(flow, 'drop', foreign)).defaultPrevented).toBe(false);
+
+    for (const transformId of ['missing:transform', 'identity', ' string:upper ']) {
+      const rejected = createDataTransfer();
+      writeFieldRemapTransformDragData(rejected, transformId);
+      expect((await dispatchDragEvent(flow, 'dragover', rejected)).defaultPrevented).toBe(true);
+      expect((await dispatchDragEvent(flow, 'drop', rejected)).defaultPrevented).toBe(false);
+    }
+    expect(container!.querySelectorAll('[data-testid^="field-remap-draft-"]')).toHaveLength(0);
+
+    const accepted = createDataTransfer();
+    writeFieldRemapTransformDragData(accepted, 'string:upper');
+    const readableGetData = accepted.getData;
+    accepted.getData = () => '';
+    expect((await dispatchDragEvent(flow, 'dragover', accepted)).defaultPrevented).toBe(true);
+    expect(accepted.dropEffect).toBe('copy');
+    accepted.getData = readableGetData;
+    expect((await dispatchDragEvent(flow, 'drop', accepted)).defaultPrevented).toBe(true);
+
+    expect(container!.querySelectorAll('[data-testid^="field-remap-draft-"]')).toHaveLength(1);
+    expect(container!.querySelector('[data-testid="field-remap-detail-draft-id"]')).toBeTruthy();
+    expect(container!.querySelector('.react-flow__node[data-id^="draft:"]')?.classList).toContain(
+      'selected',
+    );
+    expect(onEdgesChange).not.toHaveBeenCalled();
+
+    await act(async () => {
+      container!
+        .querySelector<HTMLButtonElement>('[data-testid="field-remap-detail-discard-draft"]')!
+        .click();
+    });
+    expect(container!.querySelectorAll('[data-testid^="field-remap-draft-"]')).toHaveLength(0);
+
+    await dispatchDragEvent(flow, 'drop', accepted);
+    expect(container!.querySelectorAll('[data-testid^="field-remap-draft-"]')).toHaveLength(1);
+    await rerenderMapper({ readOnly: true, onEdgesChange });
+    expect(container!.querySelectorAll('[data-testid^="field-remap-draft-"]')).toHaveLength(0);
+    expect(onEdgesChange).not.toHaveBeenCalled();
+  });
+
+  it('revalidates a palette payload against a replacement registry at drop time', async () => {
+    const original = createValueTransformRegistry();
+    original.register({
+      id: 'test:removed',
+      label: 'Removed transform',
+      inputTypes: ['string'],
+      outputType: 'string',
+      apply: (value) => value,
+    });
+    await renderMapper({ transforms: original });
+
+    const stale = createDataTransfer();
+    writeFieldRemapTransformDragData(stale, 'test:removed');
+    const replacement = createValueTransformRegistry();
+    replacement.register({
+      id: 'test:current',
+      label: 'Current transform',
+      inputTypes: ['string'],
+      outputType: 'string',
+      apply: (value) => value,
+    });
+    await rerenderMapper({ transforms: replacement });
+
+    const flow = container!.querySelector<HTMLElement>('.react-flow')!;
+    expect((await dispatchDragEvent(flow, 'dragover', stale)).defaultPrevented).toBe(true);
+    expect((await dispatchDragEvent(flow, 'drop', stale)).defaultPrevented).toBe(false);
+    expect(container!.querySelectorAll('[data-testid^="field-remap-draft-"]')).toHaveLength(0);
   });
 
   it('preserves native Delete behavior for editable and transform-option surfaces', async () => {

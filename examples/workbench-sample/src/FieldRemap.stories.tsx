@@ -164,6 +164,20 @@ export const NestedAB: Story = {
     await userEvent.click(canvas.getByTestId('field-remap-palette-item-string:upper'));
     await userEvent.click(canvas.getByTestId('field-remap-place-draft'));
     await expect(canvas.getByTestId('field-remap-detail-draft-id')).toBeVisible();
+    await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
+    await expect(canvas.getByTestId('field-remap-detail-binding')).toBeVisible();
+    const draftNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id^="draft:"]',
+    );
+    await userEvent.dblClick(draftNode);
+    await expect(canvas.getByTestId('field-remap-detail-draft-id')).toBeVisible();
+    const transformNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="xf:e-name:0"]',
+    );
+    await userEvent.dblClick(transformNode);
+    await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
   },
 };
 
@@ -742,6 +756,56 @@ export const ModalDetail: Story = {
   },
 };
 
+export const ModalNodeDetail: Story = {
+  name: 'Modal node detail',
+  args: {
+    sampleId: 'nested-ab',
+    chrome: 'embed',
+    detailPresentation: 'modal',
+    emptyDetail: 'collapse',
+    showBindingsList: false,
+    showMinimap: false,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    await userEvent.click(canvas.getByTestId('field-remap-palette-item-string:upper'));
+    await userEvent.click(canvas.getByTestId('field-remap-place-draft'));
+    let dialog = await body.findByRole('dialog', { name: 'Mapping details' });
+    await expect(within(dialog).getByTestId('field-remap-detail-draft-id')).toBeVisible();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close details' }));
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+
+    const sourceNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="obj:source"]',
+    );
+    await userEvent.dblClick(sourceNode);
+    await expect(body.queryByRole('dialog')).toBeNull();
+
+    const draftNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id^="draft:"]',
+    );
+    await userEvent.dblClick(draftNode);
+    dialog = await body.findByRole('dialog', { name: 'Mapping details' });
+    await expect(within(dialog).getByTestId('field-remap-detail-draft-id')).toBeVisible();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close details' }));
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+
+    const transformNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="xf:e-name:0"]',
+    );
+    await userEvent.dblClick(transformNode);
+    dialog = await body.findByRole('dialog', { name: 'Mapping details' });
+    await expect(within(dialog).getByTestId('field-remap-convert-note')).toBeVisible();
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close details' }));
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+  },
+};
+
 export const EmbedEdgeFill: Story = {
   name: 'Embed edge-fill',
   args: {
@@ -802,6 +866,10 @@ export const EmbedCollapsedDetail: Story = {
     await userEvent.click(zoomIn!);
     await waitFor(() => expect(viewport!.style.transform).not.toBe(initialTransform));
     const zoomedTransform = viewport!.style.transform;
+    await expect(canvas.getByTestId('field-remap-palette-item-string:upper')).toHaveAttribute(
+      'draggable',
+      'true',
+    );
 
     await expect(canvas.queryByTestId('field-remap-detail')).toBeNull();
     await expect(canvas.getByTestId('field-remap-convert-palette')).toBeVisible();
@@ -935,6 +1003,39 @@ export const CombineSplit: Story = {
     await expect(canvas.getByTestId('field-remap-add-combine')).toHaveAccessibleName('Add combine');
     await expect(canvas.getByTestId('field-remap-add-split')).toHaveAccessibleName('Add split');
     await waitFor(() => expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible());
+    const operatorNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="op:op-name"]',
+    );
+    await userEvent.dblClick(operatorNode);
+    await expect(canvas.getByTestId('field-remap-detail-operator-id')).toBeVisible();
     await expect(await canvas.findByTestId('field-remap-result')).toHaveTextContent('Ada');
+  },
+};
+
+export const CombineSplitModal: Story = {
+  name: 'n→m modal node detail',
+  args: {
+    sampleId: 'nm-combine-split',
+    chrome: 'embed',
+    detailPresentation: 'modal',
+    emptyDetail: 'collapse',
+    showBindingsList: false,
+    showMinimap: false,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const body = within(canvasElement.ownerDocument.body);
+    const operatorNode = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="op:op-name"]',
+    );
+    await userEvent.dblClick(operatorNode);
+    const dialog = await body.findByRole('dialog', { name: 'Mapping details' });
+    await expect(within(dialog).getByTestId('field-remap-detail-operator-id')).toHaveTextContent(
+      'op-name',
+    );
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close details' }));
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
   },
 };

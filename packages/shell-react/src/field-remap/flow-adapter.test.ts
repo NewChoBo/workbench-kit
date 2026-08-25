@@ -102,6 +102,27 @@ describe('field-remap-flow-adapter', () => {
     expect(inbound?.target).toBe(transformNodeId('e-title', 0));
   });
 
+  it('uses mapper-local draft positions without changing deterministic fallback layout', () => {
+    const graph = mappingToFlowGraph({
+      sources,
+      targets,
+      edges: [],
+      transforms,
+      drafts: [
+        { localId: 'dropped', transformId: 'string:trim' },
+        { localId: 'placed', transformId: 'string:upper' },
+      ],
+      draftPositions: new Map([['dropped', { x: 123, y: 456 }]]),
+    });
+
+    expect(
+      graph.nodes.find((node) => node.id === draftTransformNodeId('dropped'))?.position,
+    ).toEqual({ x: 123, y: 456 });
+    expect(
+      graph.nodes.find((node) => node.id === draftTransformNodeId('placed'))?.position,
+    ).toEqual({ x: 320, y: 112 });
+  });
+
   it('creates a mapping edge from object port handles (fan-out friendly)', () => {
     const edge = connectionToMappingEdge({
       sourceNodeId: SOURCE_OBJECT_NODE_ID,

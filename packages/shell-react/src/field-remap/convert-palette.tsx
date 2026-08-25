@@ -4,6 +4,7 @@ import { ClearableTextInput, IconButton } from '@workbench-kit/react/primitives'
 import type { ValueTransformRegistry } from '@workbench-kit/field-remap';
 
 import { defaultFieldRemapChromeLabels, type FieldRemapChromeLabels } from './chrome-labels.js';
+import { writeFieldRemapTransformDragData } from './drag-payload.js';
 
 export interface FieldRemapConvertPaletteProps {
   readonly transforms: ValueTransformRegistry;
@@ -207,6 +208,7 @@ export function FieldRemapConvertPalette({
               key={definition.id}
               aria-selected={selected}
               data-testid={`field-remap-palette-item-${definition.id}`}
+              draggable
               role="option"
               selected={selected}
               tabIndex={definition.id === rovingTransformId ? 0 : -1}
@@ -217,6 +219,10 @@ export function FieldRemapConvertPalette({
                 onSelectedTransformIdChange(definition.id);
               }}
               onDoubleClick={() => onPlaceDraft(definition.id)}
+              onDragStart={(event) => {
+                event.dataTransfer.effectAllowed = 'copy';
+                writeFieldRemapTransformDragData(event.dataTransfer, definition.id);
+              }}
               onFocus={() => setRequestedRovingTransformId(definition.id)}
               onKeyDown={(event) => handleOptionKeyDown(event, definition.id)}
             >

@@ -9,6 +9,7 @@ import {
   useRef,
   useState,
   type JSX,
+  type DragEvent,
   type KeyboardEvent,
   type MouseEvent,
   type Ref,
@@ -33,6 +34,7 @@ import {
   type FinalConnectionState,
   type Node,
   type NodeProps,
+  type XYPosition,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
@@ -49,6 +51,7 @@ import {
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapConvertPalette } from './convert-palette.js';
+import { hasFieldRemapTransformDragType, readFieldRemapTransformDragData } from './drag-payload.js';
 import {
   resolveFieldRemapChromeLabels,
   type FieldRemapChromeLabels,
@@ -806,6 +809,9 @@ function FieldRemapFlowCanvas({
   const detailVisible = emptyDetail === 'hint' || selection !== null;
   const sideRailVisible = previewVisible || (detailPresentation === 'rail' && detailVisible);
   const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
+  const [draftPositions, setDraftPositions] = useState<ReadonlyMap<string, XYPosition>>(
+    () => new Map(),
+  );
   const [connectionFeedback, setConnectionFeedback] = useState<FieldRemapConnectionFeedback | null>(
     null,
   );
@@ -815,6 +821,18 @@ function FieldRemapFlowCanvas({
     return first?.id ?? '';
   });
   const transformRegistrySignature = createTransformRegistrySignature(transforms);
+  const { screenToFlowPosition } = useReactFlow();
+
+  const removeDraftPosition = useCallback((localId: string) => {
+    setDraftPositions((current) => {
+      if (!current.has(localId)) {
+        return current;
+      }
+      const next = new Map(current);
+      next.delete(localId);
+      return next;
+    });
+  }, []);
 
   useEffect(() => {
     if (detailPresentation === 'modal') {
@@ -827,6 +845,7 @@ function FieldRemapFlowCanvas({
       return;
     }
     setDrafts([]);
+    setDraftPositions(new Map());
     setConnectionFeedback(null);
     connectionAttemptCompletedRef.current = false;
     if (selectionProp === undefined) {
@@ -974,6 +993,7 @@ function FieldRemapFlowCanvas({
         sourceTitle,
         targetTitle,
         drafts,
+        draftPositions,
       }),
     [
       sources,
@@ -984,6 +1004,7 @@ function FieldRemapFlowCanvas({
       sourceTitle,
       targetTitle,
       drafts,
+      draftPositions,
       transformRegistrySignature,
     ],
   );
@@ -1240,6 +1261,7 @@ function FieldRemapFlowCanvas({
           );
           onEdgesChange([...withoutTarget, finalized]);
           setDrafts(drafts.filter((item) => item.localId !== draft.localId));
+          removeDraftPosition(draft.localId);
           setSelection({
             kind: 'transformStep',
             edgeId: finalized.id,
@@ -1271,6 +1293,7 @@ function FieldRemapFlowCanvas({
           );
           onEdgesChange([...withoutTarget, finalized]);
           setDrafts(drafts.filter((item) => item.localId !== draft.localId));
+          removeDraftPosition(draft.localId);
           setSelection({
             kind: 'transformStep',
             edgeId: finalized.id,
@@ -1334,6 +1357,7 @@ function FieldRemapFlowCanvas({
       operators,
       publishConnectionFeedback,
       readOnly,
+      removeDraftPosition,
       rewirePolicy,
       setSelection,
       sources,
@@ -1460,16 +1484,58 @@ function FieldRemapFlowCanvas({
   );
 
   const placeDraft = useCallback(
-    (transformId: string) => {
+    (transformId: string, position?: XYPosition) => {
       if (readOnly) {
         return;
       }
       const draft = createDraftTransform(transformId);
       setDrafts((current) => [...current, draft]);
+      if (position) {
+        setDraftPositions((current) => new Map(current).set(draft.localId, position));
+      }
       setSelection({ kind: 'draft', localId: draft.localId });
       setPlaceTransformId(transformId);
     },
     [readOnly, setSelection],
+  );
+
+  const resolveDroppedTransformId = useCallback(
+    (dataTransfer: DataTransfer) => {
+      const transformId = readFieldRemapTransformDragData(dataTransfer);
+      const definition = transformId ? transforms.get(transformId) : undefined;
+      if (!transformId || transformId === 'identity' || definition?.id !== transformId) {
+        return undefined;
+      }
+      return transformId;
+    },
+    [transforms],
+  );
+
+  const onCanvasDragOver = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      if (readOnly || !hasFieldRemapTransformDragType(event.dataTransfer)) {
+        return;
+      }
+      event.preventDefault();
+      event.dataTransfer.dropEffect = 'copy';
+    },
+    [readOnly],
+  );
+
+  const onCanvasDrop = useCallback(
+    (event: DragEvent<HTMLDivElement>) => {
+      if (readOnly) {
+        return;
+      }
+      const transformId = resolveDroppedTransformId(event.dataTransfer);
+      if (!transformId) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      placeDraft(transformId, screenToFlowPosition({ x: event.clientX, y: event.clientY }));
+    },
+    [placeDraft, readOnly, resolveDroppedTransformId, screenToFlowPosition],
   );
 
   const onNodeClick = useCallback(
@@ -1571,6 +1637,7 @@ function FieldRemapFlowCanvas({
         event.stopPropagation();
         setSelection(null);
         setDrafts([]);
+        setDraftPositions(new Map());
         return;
       }
 
@@ -1609,6 +1676,7 @@ function FieldRemapFlowCanvas({
       } else if (selection.kind === 'draft') {
         if (drafts.some((draft) => draft.localId === selection.localId)) {
           setDrafts((current) => current.filter((draft) => draft.localId !== selection.localId));
+          removeDraftPosition(selection.localId);
           setSelection(null);
           consumed = true;
         }
@@ -1629,6 +1697,7 @@ function FieldRemapFlowCanvas({
       operators,
       previewVisible,
       readOnly,
+      removeDraftPosition,
       selection,
       setSelection,
     ],
@@ -1668,6 +1737,7 @@ function FieldRemapFlowCanvas({
       drafts={drafts}
       onDiscardDraft={(localId) => {
         setDrafts((current) => current.filter((item) => item.localId !== localId));
+        removeDraftPosition(localId);
       }}
       operators={operators}
       onOperatorsChange={onOperatorsChange}
@@ -1779,6 +1849,8 @@ function FieldRemapFlowCanvas({
             onConnectStart={readOnly ? undefined : onConnectStart}
             onConnectEnd={readOnly ? undefined : onConnectEnd}
             onEdgesDelete={readOnly ? undefined : onEdgesDelete}
+            onDragOver={onCanvasDragOver}
+            onDrop={onCanvasDrop}
             onNodeClick={onNodeClick}
             onEdgeClick={onEdgeClick}
             onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}

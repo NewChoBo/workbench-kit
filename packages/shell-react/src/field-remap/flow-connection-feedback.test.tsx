@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { act, type ComponentProps, type ReactNode } from 'react';
+import { act, type ComponentProps, type DragEvent, type ReactNode } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
 import {
@@ -17,6 +17,10 @@ import type {
 
 const flowHarness = vi.hoisted(() => ({
   props: null as CapturedReactFlowProps | null,
+  screenToFlowPosition: vi.fn((point: { readonly x: number; readonly y: number }) => ({
+    x: point.x + 10,
+    y: point.y + 20,
+  })),
 }));
 
 interface CapturedReactFlowProps {
@@ -30,7 +34,15 @@ interface CapturedReactFlowProps {
   readonly onNodeClick?:
     ((event: MouseEvent, node: { readonly data: Record<string, unknown> }) => void) | undefined;
   readonly onSelectionChange?: ((selection: OnSelectionChangeParams) => void) | undefined;
-  readonly nodes?: readonly { readonly draggable?: boolean | undefined }[] | undefined;
+  readonly onDragOver?: ((event: DragEvent<HTMLDivElement>) => void) | undefined;
+  readonly onDrop?: ((event: DragEvent<HTMLDivElement>) => void) | undefined;
+  readonly nodes?:
+    | readonly {
+        readonly draggable?: boolean | undefined;
+        readonly data?: Record<string, unknown> | undefined;
+        readonly position?: { readonly x: number; readonly y: number } | undefined;
+      }[]
+    | undefined;
   readonly nodesDraggable?: boolean | undefined;
   readonly nodesConnectable?: boolean | undefined;
   readonly edgesReconnectable?: boolean | undefined;
@@ -61,11 +73,15 @@ vi.mock('@xyflow/react', async () => {
       const [value, setValue] = useState(initial);
       return [value, setValue, () => undefined];
     },
-    useReactFlow: () => ({ fitView: () => Promise.resolve(true) }),
+    useReactFlow: () => ({
+      fitView: () => Promise.resolve(true),
+      screenToFlowPosition: flowHarness.screenToFlowPosition,
+    }),
   };
 });
 
 import { FieldRemapFlowMapper } from './flow.js';
+import { writeFieldRemapTransformDragData } from './drag-payload.js';
 
 describe('FieldRemapFlowMapper completed connection feedback', () => {
   let container: HTMLDivElement | undefined;
@@ -98,7 +114,23 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     container = undefined;
     root = undefined;
     flowHarness.props = null;
+    flowHarness.screenToFlowPosition.mockClear();
   });
+
+  function createDataTransfer(): DataTransfer {
+    const entries = new Map<string, string>();
+    return {
+      dropEffect: 'none',
+      effectAllowed: 'uninitialized',
+      get types() {
+        return [...entries.keys()];
+      },
+      getData: (type: string) => entries.get(type) ?? '',
+      setData: (type: string, value: string) => {
+        entries.set(type, value);
+      },
+    } as unknown as DataTransfer;
+  }
 
   async function renderFlow(
     overrides: Partial<ComponentProps<typeof FieldRemapFlowMapper>> = {},
@@ -184,6 +216,43 @@ describe('FieldRemapFlowMapper completed connection feedback', () => {
     expect(container!.querySelector('[role="status"]')?.textContent).toContain(
       'incompatible-port-types',
     );
+  });
+
+  it('projects accepted drop client coordinates once without a durable edge mutation', async () => {
+    const onEdgesChange = vi.fn();
+    await renderFlow({ onEdgesChange });
+    const dataTransfer = createDataTransfer();
+    writeFieldRemapTransformDragData(dataTransfer, 'string:upper');
+    const dragOver = {
+      dataTransfer,
+      preventDefault: vi.fn(),
+    } as unknown as DragEvent<HTMLDivElement>;
+    const drop = {
+      clientX: 111,
+      clientY: 222,
+      dataTransfer,
+      preventDefault: vi.fn(),
+      stopPropagation: vi.fn(),
+    } as unknown as DragEvent<HTMLDivElement>;
+
+    await act(async () => {
+      flowHarness.props?.onDragOver?.(dragOver);
+      flowHarness.props?.onDrop?.(drop);
+      await Promise.resolve();
+    });
+
+    expect(dragOver.preventDefault).toHaveBeenCalledOnce();
+    expect(dataTransfer.dropEffect).toBe('copy');
+    expect(drop.preventDefault).toHaveBeenCalledOnce();
+    expect(drop.stopPropagation).toHaveBeenCalledOnce();
+    expect(flowHarness.screenToFlowPosition).toHaveBeenCalledOnce();
+    expect(flowHarness.screenToFlowPosition).toHaveBeenCalledWith({ x: 111, y: 222 });
+    const draftNode = flowHarness.props?.nodes?.find(
+      (node) => node.data?.kind === 'draft-transform',
+    );
+    expect(draftNode?.position).toEqual({ x: 121, y: 242 });
+    expect(container!.querySelector('[data-testid="field-remap-detail-draft-id"]')).toBeTruthy();
+    expect(onEdgesChange).not.toHaveBeenCalled();
   });
 
   it('disables connection and deletion entry points at the React Flow boundary in read-only mode', async () => {

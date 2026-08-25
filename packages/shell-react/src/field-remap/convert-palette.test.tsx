@@ -7,6 +7,7 @@ import { createBuiltinValueTransformRegistry } from '@workbench-kit/field-remap'
 
 import type { FieldRemapChromeLabels } from './chrome-labels.js';
 import { FieldRemapConvertPalette } from './convert-palette.js';
+import { readFieldRemapTransformDragData } from './drag-payload.js';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -51,6 +52,21 @@ function pressKey(element: HTMLElement, key: string): boolean {
     );
   });
   return accepted;
+}
+
+function createDataTransfer(): DataTransfer {
+  const entries = new Map<string, string>();
+  return {
+    dropEffect: 'none',
+    effectAllowed: 'uninitialized',
+    get types() {
+      return [...entries.keys()];
+    },
+    getData: (type: string) => entries.get(type) ?? '',
+    setData: (type: string, value: string) => {
+      entries.set(type, value);
+    },
+  } as unknown as DataTransfer;
 }
 
 describe('FieldRemapConvertPalette', () => {
@@ -103,12 +119,20 @@ describe('FieldRemapConvertPalette', () => {
     const paletteItem = container.querySelector<HTMLButtonElement>(
       '[data-testid="field-remap-palette-item-string:trim"]',
     );
+    expect(paletteItem?.draggable).toBe(true);
+    const dataTransfer = createDataTransfer();
+    const dragStart = new Event('dragstart', { bubbles: true, cancelable: true });
+    Object.defineProperty(dragStart, 'dataTransfer', { value: dataTransfer });
     act(() => {
       paletteItem?.click();
       paletteItem?.dispatchEvent(new MouseEvent('dblclick', { bubbles: true }));
+      paletteItem?.dispatchEvent(dragStart);
     });
     expect(onSelectedTransformIdChange).toHaveBeenCalledWith('string:trim');
     expect(onPlaceDraft).toHaveBeenCalledWith('string:trim');
+    expect(onPlaceDraft).toHaveBeenCalledTimes(1);
+    expect(dataTransfer.effectAllowed).toBe('copy');
+    expect(readFieldRemapTransformDragData(dataTransfer)).toBe('string:trim');
     onPlaceDraft.mockClear();
     const placeButton = container!.querySelector<HTMLButtonElement>(
       '[data-testid="field-remap-place-draft"]',

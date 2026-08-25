@@ -204,6 +204,8 @@ export function mappingToFlowGraph(input: {
     readonly sourceFieldId?: string;
     readonly targetSlotId?: string;
   }[];
+  /** Mapper-local positions for ephemeral drafts created by canvas drop. */
+  readonly draftPositions?: ReadonlyMap<string, { readonly x: number; readonly y: number }>;
   /** Document v2 n→m operators (display / multi-port Flow nodes). */
   readonly operators?: readonly MappingOperator[];
 }): { nodes: Node<FieldRemapFlowNodeData>[]; edges: Edge<FieldRemapFlowEdgeData>[] } {
@@ -312,7 +314,7 @@ export function mappingToFlowGraph(input: {
     nodes.push({
       id: nodeId,
       type: 'fieldRemapDraftTransform',
-      position: {
+      position: input.draftPositions?.get(draft.localId) ?? {
         x: TRANSFORM_X,
         y: 40 + (input.edges.length + draftIndex) * TRANSFORM_ROW_GAP,
       },

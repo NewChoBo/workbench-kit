@@ -340,6 +340,7 @@ import type {
 } from '@workbench-kit/shell-react';
 import {
   FieldRemapFlowMapper,
+  type FieldRemapDraftTransform,
   type FieldRemapFlowMapperProps,
   type FieldRemapPreviewState,
   type FieldRemapSelection,
@@ -424,6 +425,21 @@ type PackedFieldRemapBulkPropsRemainInternal = Extract<
   ? true
   : never;
 const packedFieldRemapBulkPropsRemainInternal: PackedFieldRemapBulkPropsRemainInternal = true;
+type PackedFieldRemapDraftCoordinatesRemainInternal = Extract<
+  keyof FieldRemapDraftTransform,
+  'position' | 'x' | 'y'
+> extends never
+  ? true
+  : never;
+const packedFieldRemapDraftCoordinatesRemainInternal: PackedFieldRemapDraftCoordinatesRemainInternal =
+  true;
+type PackedFieldRemapDragPropsRemainInternal = Extract<
+  keyof FieldRemapFlowMapperProps,
+  'dragDataType' | 'draftPositions' | 'onDropDraft'
+> extends never
+  ? true
+  : never;
+const packedFieldRemapDragPropsRemainInternal: PackedFieldRemapDragPropsRemainInternal = true;
 function consumePackedFieldRemapSelection(selection: FieldRemapSelection): string {
   if (selection === null) {
     return 'none';
