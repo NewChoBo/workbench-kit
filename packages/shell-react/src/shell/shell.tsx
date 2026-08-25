@@ -70,7 +70,11 @@ import {
   getWorkbenchSecondaryActivityRoute,
 } from './secondary-actions.js';
 import { SETTINGS_EXTENSION_ID, WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
-import { createSettingsCategories, type WorkbenchThemeOption } from './settings.js';
+import {
+  createSettingsCategories,
+  createWorkbenchThemeOptionSnapshot,
+  type WorkbenchThemeOption,
+} from './settings.js';
 import { createWorkbenchAppearanceCatalogSnapshot } from './appearance-catalog.js';
 import {
   createWorkbenchDocumentAppearanceDiagnosticController,
@@ -232,8 +236,9 @@ export function WorkbenchShell({
     viewHostFactories,
     views,
   } = useWorkbench();
+  const appearanceThemeOptions = createWorkbenchThemeOptionSnapshot(themeOptions);
   const appearanceCatalog = createWorkbenchAppearanceCatalogSnapshot({
-    hostOptions: themeOptions,
+    hostOptions: appearanceThemeOptions,
     themes,
   });
   const appearancePresentation = resolveWorkbenchAppearancePresentation({
@@ -283,6 +288,9 @@ export function WorkbenchShell({
     setProfileOpen(false);
     setSettingsCategoryId(categoryId);
     setSettingsOpen(true);
+  }, []);
+  const closeSettingsModal = useCallback(() => {
+    setSettingsOpen(false);
   }, []);
   const settingsCapability = useMemo<WorkbenchSettingsCapability>(
     () => ({
@@ -447,7 +455,7 @@ export function WorkbenchShell({
           preferenceService,
           shellPreset,
           theme,
-          themeOptions,
+          themeOptions: appearanceThemeOptions,
         },
       ),
     ];
@@ -474,7 +482,7 @@ export function WorkbenchShell({
     theme,
     themeRevision,
     themes,
-    themeOptions,
+    appearanceThemeOptions,
   ]);
   const defaultSettingsCategoryId =
     settingsCategories.find((category) => category.id === SETTINGS_EXTENSION_ID)?.id ??
@@ -783,7 +791,7 @@ export function WorkbenchShell({
               categories={settingsCategories}
               defaultActiveCategoryId={defaultSettingsCategoryId}
               defaultActiveScopeId="workspace"
-              footer={<Button onClick={() => setSettingsOpen(false)}>Close</Button>}
+              footer={<Button onClick={closeSettingsModal}>Close</Button>}
               scopes={[...WORKBENCH_PREFERENCE_SCOPES]}
               searchValue={settingsSearchValue}
               title={chromeLabels.settingsLabel}
@@ -795,7 +803,7 @@ export function WorkbenchShell({
                 </Badge>
               }
               onActiveCategoryIdChange={setSettingsCategoryId}
-              onClose={() => setSettingsOpen(false)}
+              onClose={closeSettingsModal}
               onScopeChange={(scopeId) => {
                 if (isPreferenceScope(scopeId)) {
                   setSettingsScopeId(scopeId);

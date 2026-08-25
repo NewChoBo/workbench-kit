@@ -1,6 +1,8 @@
 import {
   DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
+  writePersistedWorkbenchAppearance,
+  type WorkbenchAppearanceSettings,
 } from '@workbench-kit/shell-react';
 
 import {
@@ -23,6 +25,17 @@ export interface SampleInstalledExtensionSeed {
   readonly manifestUrl: string;
 }
 
+export interface SampleAppearanceStorageWriteCounter {
+  readonly count: number;
+}
+
+let restoreAppearanceStorageWriteCounter: (() => void) | undefined;
+
+function stopSampleAppearanceStorageWriteCounter(): void {
+  restoreAppearanceStorageWriteCounter?.();
+  restoreAppearanceStorageWriteCounter = undefined;
+}
+
 /**
  * Deterministic storage reset for sample-host Storybook / future Playwright seeds.
  * Safe to call from story `render` (browser) only — no-ops when `window` is missing.
@@ -35,6 +48,7 @@ export function resetSampleHostStorage(account: SampleStoryAccount): void {
     return;
   }
 
+  stopSampleAppearanceStorageWriteCounter();
   window.localStorage.removeItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY);
   window.localStorage.removeItem(DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY);
   window.localStorage.removeItem(SAMPLE_PERMISSION_ROLE_STORAGE_KEY);
@@ -63,4 +77,50 @@ export function seedSampleInstalledExtension(
     createSampleInstalledExtensionsStorageKey(account),
     JSON.stringify([record], null, 2),
   );
+}
+
+export function seedSampleWorkbenchAppearance(settings: WorkbenchAppearanceSettings): void {
+  if (typeof window === 'undefined') {
+    return;
+  }
+
+  writePersistedWorkbenchAppearance(settings);
+}
+
+/** Count actual appearance storage writes after a scenario has finished seeding. */
+export function trackSampleAppearanceStorageWrites(): SampleAppearanceStorageWriteCounter {
+  if (typeof window === 'undefined') {
+    return Object.freeze({ count: 0 });
+  }
+
+  stopSampleAppearanceStorageWriteCounter();
+  const storage = window.localStorage;
+  const storagePrototype = Object.getPrototypeOf(storage) as object;
+  const originalDescriptor = Object.getOwnPropertyDescriptor(storagePrototype, 'setItem');
+  const originalSetItem = storage.setItem;
+  const state = { count: 0 };
+
+  Object.defineProperty(storagePrototype, 'setItem', {
+    ...originalDescriptor,
+    value(this: Storage, key: string, value: string) {
+      if (this === storage && key === DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY) {
+        state.count += 1;
+      }
+      return originalSetItem.call(this, key, value);
+    },
+  });
+
+  restoreAppearanceStorageWriteCounter = () => {
+    if (originalDescriptor === undefined) {
+      Reflect.deleteProperty(storagePrototype, 'setItem');
+    } else {
+      Object.defineProperty(storagePrototype, 'setItem', originalDescriptor);
+    }
+  };
+
+  return Object.freeze({
+    get count() {
+      return state.count;
+    },
+  });
 }

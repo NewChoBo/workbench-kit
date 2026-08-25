@@ -1,4 +1,3 @@
-import { WORKBENCH_COLOR_SCHEME_OPTIONS } from '@workbench-kit/react/workbench';
 import type { ThemeRegistry } from '@workbench-kit/workbench-core';
 
 import {
@@ -7,6 +6,7 @@ import {
   type WorkbenchAppearanceCatalogSnapshot,
   type WorkbenchAppearanceHostOptionInput,
 } from '../shell/appearance-catalog.js';
+import { classifyWorkbenchAppearanceThemeSelection } from '../shell/appearance-presentation.js';
 
 interface ThemeSelectionProtectionBase {
   readonly isCurrent: () => boolean;
@@ -55,13 +55,13 @@ export function createThemeSelectionProtectionSnapshot({
   };
   const hasLightPreset = lightPreset !== undefined;
   const hasDarkPreset = darkPreset !== undefined;
-
-  if (hasLightPreset !== hasDarkPreset) {
-    return Object.freeze({ ...base, kind: 'unknown' });
-  }
+  const themeSelection = classifyWorkbenchAppearanceThemeSelection(theme);
 
   if (hasLightPreset && hasDarkPreset) {
-    const knownColorScheme = WORKBENCH_COLOR_SCHEME_OPTIONS.some((option) => option.id === theme);
+    if (themeSelection.kind !== 'base-preference') {
+      return Object.freeze({ ...base, kind: 'unknown' });
+    }
+
     const lightResolution = resolveWorkbenchAppearanceSelection(
       catalog,
       'light-preset',
@@ -69,25 +69,29 @@ export function createThemeSelectionProtectionSnapshot({
     );
     const darkResolution = resolveWorkbenchAppearanceSelection(catalog, 'dark-preset', darkPreset);
 
-    if (
-      !knownColorScheme ||
-      lightResolution.status !== 'resolved' ||
-      darkResolution.status !== 'resolved'
-    ) {
+    if (lightResolution.status !== 'resolved' || darkResolution.status !== 'resolved') {
       return Object.freeze({ ...base, kind: 'unknown' });
     }
 
     return Object.freeze({
       ...base,
       kind: 'known',
-      protectedThemeIds: Object.freeze([theme, lightPreset, darkPreset] as string[]),
+      protectedThemeIds: Object.freeze([lightPreset, darkPreset]),
     });
   }
 
-  if (theme === undefined) {
-    return Object.freeze({ ...base, kind: 'unknown' });
+  if (themeSelection.kind === 'base-preference') {
+    return Object.freeze({
+      ...base,
+      kind: 'known',
+      protectedThemeIds: Object.freeze([]),
+    });
   }
-  const themeResolution = resolveWorkbenchAppearanceSelection(catalog, 'flat-theme', theme);
+  const themeResolution = resolveWorkbenchAppearanceSelection(
+    catalog,
+    'flat-theme',
+    themeSelection.rawTheme,
+  );
   if (themeResolution.status !== 'resolved') {
     return Object.freeze({ ...base, kind: 'unknown' });
   }
@@ -95,7 +99,7 @@ export function createThemeSelectionProtectionSnapshot({
   return Object.freeze({
     ...base,
     kind: 'known',
-    protectedThemeIds: Object.freeze([theme]),
+    protectedThemeIds: Object.freeze([themeSelection.rawTheme]),
   });
 }
 

@@ -88,8 +88,8 @@ function normalizeWorkbenchAppearance(value: unknown): WorkbenchAppearanceSettin
   const record = value as Record<string, unknown>;
   const themePreference = normalizeThemePreference(record.themePreference);
   // Preset ids may belong to a contributed theme, which isn't known until extensions
-  // register, so we can only validate shape here; the appearance UI falls back to a
-  // default option if the persisted id no longer resolves to anything.
+  // register, so we can only validate shape here. The appearance UI keeps an unresolved
+  // string visible until the user explicitly chooses a current option.
   const lightPreset = normalizePresetId(
     record.lightPreset,
     DEFAULT_WORKBENCH_APPEARANCE.lightPreset,

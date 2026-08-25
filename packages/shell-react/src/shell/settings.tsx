@@ -28,6 +28,7 @@ import {
   type WorkbenchAppearanceSelectionResolution,
   type WorkbenchAppearanceSelectionTarget,
 } from './appearance-catalog.js';
+import { classifyWorkbenchAppearanceThemeSelection } from './appearance-presentation.js';
 import { WORKBENCH_PREFERENCE_SCOPES } from './settings-constants.js';
 
 const APPEARANCE_SETTINGS_CATEGORY_ID = 'workbench.appearance';
@@ -36,6 +37,43 @@ export interface WorkbenchThemeOption {
   description?: ReactNode;
   id: string;
   label: string;
+}
+
+/** Captures one renderer-private own-data view shared by catalog and Settings projection. */
+export function createWorkbenchThemeOptionSnapshot(
+  options: readonly WorkbenchThemeOption[] | undefined,
+): readonly WorkbenchThemeOption[] | undefined {
+  if (options === undefined) {
+    return undefined;
+  }
+
+  const snapshot = new Array<WorkbenchThemeOption>(options.length);
+  options.forEach((option, sourceOrdinal) => {
+    const idDescriptor = Object.getOwnPropertyDescriptor(option, 'id');
+    const labelDescriptor = Object.getOwnPropertyDescriptor(option, 'label');
+    if (
+      !idDescriptor ||
+      !('value' in idDescriptor) ||
+      typeof idDescriptor.value !== 'string' ||
+      !labelDescriptor ||
+      !('value' in labelDescriptor) ||
+      typeof labelDescriptor.value !== 'string'
+    ) {
+      return;
+    }
+
+    const descriptionDescriptor = Object.getOwnPropertyDescriptor(option, 'description');
+    const captured = {
+      id: idDescriptor.value,
+      label: labelDescriptor.value,
+      ...(descriptionDescriptor && 'value' in descriptionDescriptor
+        ? { description: descriptionDescriptor.value as ReactNode }
+        : {}),
+    };
+    snapshot[sourceOrdinal] = Object.freeze(captured);
+  });
+
+  return Object.freeze(snapshot);
 }
 
 export interface WorkbenchLocaleOption {
@@ -216,7 +254,7 @@ function projectAppearanceOptions(
       description = original.description;
     } else if (entry.source === 'legacy-extension-theme' || entry.source === 'legacy-host-theme') {
       description = entry.hasLegacyCssOverrides
-        ? 'Contributed theme with token overrides.'
+        ? 'Contributed theme that declares token overrides.'
         : 'Contributed theme.';
     }
 
@@ -315,16 +353,6 @@ function createAppearanceSettingsCategory({
   appearanceCatalog: WorkbenchAppearanceCatalogSnapshot;
   localeOptions: readonly WorkbenchLocaleOption[];
 }): WorkbenchSettingsCategory | undefined {
-  const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
-  const appearanceEntries = getWorkbenchAppearanceCatalogEntries(
-    appearanceCatalog,
-    usesAppearancePresets ? 'light-preset' : 'flat-theme',
-  );
-
-  if (!usesAppearancePresets && !appearanceEntries.length && !localeOptions?.length) {
-    return undefined;
-  }
-
   return {
     content: (
       <AppearanceSettingsSection
@@ -367,6 +395,7 @@ function AppearanceSettingsSection({
   localeOptions: readonly WorkbenchLocaleOption[];
 }) {
   const usesAppearancePresets = lightPreset !== undefined && darkPreset !== undefined;
+  const themeSelection = classifyWorkbenchAppearanceThemeSelection(theme);
   const flatThemeProjection = projectAppearanceOptions(
     appearanceCatalog,
     'flat-theme',
@@ -382,7 +411,11 @@ function AppearanceSettingsSection({
     'dark-preset',
     themeOptions,
   );
-  const flatThemeResolution = resolveRawAppearanceSelection(appearanceCatalog, 'flat-theme', theme);
+  const flatThemeResolution = resolveRawAppearanceSelection(
+    appearanceCatalog,
+    'flat-theme',
+    themeSelection.kind === 'flat-theme' ? themeSelection.rawTheme : undefined,
+  );
   const lightPresetResolution = resolveRawAppearanceSelection(
     appearanceCatalog,
     'light-preset',
@@ -393,11 +426,15 @@ function AppearanceSettingsSection({
     'dark-preset',
     darkPreset,
   );
-  const selectedTheme = findProjectedOption(flatThemeProjection, theme);
-  const selectedColorScheme = WORKBENCH_COLOR_SCHEME_OPTIONS.find((option) => option.id === theme);
+  const selectedTheme = findProjectedOption(
+    flatThemeProjection,
+    themeSelection.kind === 'flat-theme' ? themeSelection.rawTheme : undefined,
+  );
+  const selectedThemeValue =
+    themeSelection.kind === 'base-preference' ? themeSelection.preference : themeSelection.rawTheme;
   const colorSchemeDiagnostic =
-    usesAppearancePresets && theme !== undefined && selectedColorScheme === undefined
-      ? `The color scheme “${theme}” is unavailable. Choose a listed scheme to recover.`
+    usesAppearancePresets && themeSelection.kind === 'flat-theme'
+      ? `The color scheme “${themeSelection.rawTheme}” is unavailable. Choose a listed scheme to recover.`
       : undefined;
   const selectedLocale = localeOptions.find((option) => option.id === locale) ?? localeOptions[0];
   const selectedLocaleId = selectedLocale?.id ?? 'en';
@@ -425,7 +462,7 @@ function AppearanceSettingsSection({
                 }
                 controlWidth="full"
                 disabled={!onThemeChange}
-                value={theme ?? ''}
+                value={selectedThemeValue}
                 onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
               >
                 {colorSchemeDiagnostic ? (
@@ -529,7 +566,7 @@ function AppearanceSettingsSection({
               </Select>
             </Field>
           </>
-        ) : flatThemeProjection.length || theme !== undefined ? (
+        ) : (
           <Field
             className="workbench-appearance-settings__field"
             label="Color theme"
@@ -544,15 +581,28 @@ function AppearanceSettingsSection({
               }
               controlWidth="full"
               disabled={!onThemeChange}
-              value={theme ?? ''}
+              value={selectedThemeValue}
               onValueChange={(nextTheme) => onThemeChange?.(nextTheme)}
             >
-              {renderInvalidAppearanceOption(theme, flatThemeResolution)}
-              {flatThemeProjection.map((option) => (
+              {renderInvalidAppearanceOption(
+                themeSelection.kind === 'flat-theme' ? themeSelection.rawTheme : undefined,
+                flatThemeResolution,
+              )}
+              {WORKBENCH_COLOR_SCHEME_OPTIONS.map((option) => (
                 <option key={option.id} value={option.id}>
                   {option.label}
                 </option>
               ))}
+              {flatThemeProjection
+                .filter(
+                  (option) =>
+                    classifyWorkbenchAppearanceThemeSelection(option.id).kind === 'flat-theme',
+                )
+                .map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.label}
+                  </option>
+                ))}
             </Select>
             {selectedTheme?.description ? (
               <p className="workbench-appearance-settings__description">
@@ -561,11 +611,11 @@ function AppearanceSettingsSection({
             ) : null}
             <AppearanceSelectionDiagnostic
               id="workbench-flat-theme-diagnostic"
-              rawValue={theme}
+              rawValue={themeSelection.kind === 'flat-theme' ? themeSelection.rawTheme : undefined}
               resolution={flatThemeResolution}
             />
           </Field>
-        ) : null}
+        )}
         {localeOptions.length > 1 ? (
           <Field
             className="workbench-appearance-settings__field"

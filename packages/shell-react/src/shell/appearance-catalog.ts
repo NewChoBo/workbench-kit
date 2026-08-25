@@ -230,7 +230,7 @@ function createRegisteredThemeEntry(
     return undefined;
   }
 
-  const base = {
+  const base: WorkbenchAppearanceCatalogEntry = {
     extensionId,
     hasLegacyCssOverrides: tokenOverrides.kind === 'present',
     id,

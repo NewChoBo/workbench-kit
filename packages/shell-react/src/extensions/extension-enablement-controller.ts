@@ -76,7 +76,10 @@ export class ExtensionEnablementController implements DisposableLike {
   private readonly storage: WorkbenchStorageAdapter | undefined;
   private readonly storageKey: string;
   private installedRecords: readonly InstalledExtensionRecord[];
-  private themeSelectionProtection: ThemeSelectionProtectionSnapshot | undefined;
+  private readonly themeSelectionProtectionOwners = new Map<
+    number,
+    ThemeSelectionProtectionSnapshot
+  >();
   private themeSelectionProtectionGeneration = 0;
   private disposed = false;
 
@@ -126,14 +129,24 @@ export class ExtensionEnablementController implements DisposableLike {
 
   setThemeSelectionProtection(snapshot: ThemeSelectionProtectionSnapshot | undefined): () => void {
     const generation = ++this.themeSelectionProtectionGeneration;
-    this.themeSelectionProtection =
-      snapshot?.kind === 'known'
+    if (snapshot === undefined) {
+      this.themeSelectionProtectionOwners.clear();
+      return () => undefined;
+    }
+
+    this.themeSelectionProtectionOwners.set(
+      generation,
+      snapshot.kind === 'known'
         ? { ...snapshot, protectedThemeIds: [...snapshot.protectedThemeIds] }
-        : snapshot;
+        : snapshot,
+    );
+    let disposed = false;
     return () => {
-      if (this.themeSelectionProtectionGeneration === generation) {
-        this.themeSelectionProtection = undefined;
+      if (disposed) {
+        return;
       }
+      disposed = true;
+      this.themeSelectionProtectionOwners.delete(generation);
     };
   }
 
@@ -235,6 +248,7 @@ export class ExtensionEnablementController implements DisposableLike {
     this.disposed = true;
     this.listeners.clear();
     this.registrationHandles.clear();
+    this.themeSelectionProtectionOwners.clear();
     this.registrationLifetime.dispose();
   }
 
@@ -352,16 +366,25 @@ export class ExtensionEnablementController implements DisposableLike {
       return { commitRequestedState: true, eligible: false, kind: 'reloadRequired' };
     }
 
-    const selectionProtection = this.themeSelectionProtection;
+    const selectionProtections = [...this.themeSelectionProtectionOwners.values()];
+    const themeRegistryRevision = this.registry.themes.getRevision();
     if (
-      selectionProtection?.kind !== 'known' ||
-      selectionProtection.themeRegistryRevision !== this.registry.themes.getRevision() ||
-      !selectionProtection.isCurrent()
+      selectionProtections.length === 0 ||
+      selectionProtections.some(
+        (selectionProtection) =>
+          selectionProtection.kind !== 'known' ||
+          selectionProtection.themeRegistryRevision !== themeRegistryRevision ||
+          !selectionProtection.isCurrent(),
+      )
     ) {
       return { commitRequestedState: false, eligible: false, kind: 'reloadRequired' };
     }
 
-    const protectedThemeIds = new Set(selectionProtection.protectedThemeIds);
+    const protectedThemeIds = new Set(
+      selectionProtections.flatMap((selectionProtection) =>
+        selectionProtection.kind === 'known' ? selectionProtection.protectedThemeIds : [],
+      ),
+    );
 
     const themes = description.manifest.contributes?.themes ?? [];
     if (themes.some((theme) => protectedThemeIds.has(theme.id))) {

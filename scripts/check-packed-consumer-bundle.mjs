@@ -552,9 +552,13 @@ type PackedPrivateAppearanceValueName =
   | 'createWorkbenchAppearanceCatalogSnapshot'
   | 'getWorkbenchAppearanceCatalogEntries'
   | 'resolveWorkbenchAppearanceSelection'
+  | 'resolveWorkbenchAppearancePresentation'
   | 'createWorkbenchAppearanceOverrideSnapshot'
   | 'createWorkbenchDocumentAppearanceOverrideController'
-  | 'createWorkbenchDocumentAppearanceDiagnosticController';
+  | 'createWorkbenchDocumentAppearanceDiagnosticController'
+  | 'createWorkbenchThemeOptionSnapshot'
+  | 'readPersistedWorkbenchAppearanceResult'
+  | 'writePersistedWorkbenchAppearanceResult';
 type PackedPrivateAppearanceValuesRemainInternal = Extract<
   keyof PackedShellReactPublicValues | keyof PackedShellReactShellPublicValues,
   PackedPrivateAppearanceValueName
@@ -568,14 +572,20 @@ export const packedPrivateAppearanceValuesRemainInternal: PackedPrivateAppearanc
 type PackedPrivateAppearanceCatalogType = import('@workbench-kit/shell-react').WorkbenchAppearanceCatalogSnapshot;
 // @ts-expect-error WB-NS-072F controller types remain private to shell-react.
 type PackedPrivateAppearanceControllerType = import('@workbench-kit/shell-react').WorkbenchDocumentAppearanceOverrideController;
+// @ts-expect-error WB-NS-072F presentation types remain private to shell-react.
+type PackedPrivateAppearancePresentationType = import('@workbench-kit/shell-react').WorkbenchAppearancePresentationDecision;
 // @ts-expect-error WB-NS-072F catalog types do not leak through the public shell subpath.
 type PackedPrivateAppearanceCatalogShellType = import('@workbench-kit/shell-react/shell').WorkbenchAppearanceCatalogSnapshot;
 // @ts-expect-error WB-NS-072F controller types do not leak through the public shell subpath.
 type PackedPrivateAppearanceControllerShellType = import('@workbench-kit/shell-react/shell').WorkbenchDocumentAppearanceOverrideController;
+// @ts-expect-error WB-NS-072F presentation types do not leak through the public shell subpath.
+type PackedPrivateAppearancePresentationShellType = import('@workbench-kit/shell-react/shell').WorkbenchAppearancePresentationDecision;
 // @ts-expect-error WB-NS-072F catalog has no packed public subpath.
 type PackedPrivateAppearanceCatalogSubpath = typeof import('@workbench-kit/shell-react/appearance-catalog');
 // @ts-expect-error WB-NS-072F controller has no packed public subpath.
 type PackedPrivateAppearanceControllerSubpath = typeof import('@workbench-kit/shell-react/appearance-controller');
+// @ts-expect-error WB-NS-072F presentation has no packed public subpath.
+type PackedPrivateAppearancePresentationSubpath = typeof import('@workbench-kit/shell-react/appearance-presentation');
 
 const packedTokenOverrides = Object.freeze(
   Object.fromEntries(REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, '#202020'])),

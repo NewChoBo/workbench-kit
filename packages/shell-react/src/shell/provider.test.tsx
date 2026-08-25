@@ -46,8 +46,11 @@ import {
   type WorkbenchShellProps,
 } from '../index.js';
 import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
+import type { ExtensionEnablementController } from '../extensions/extension-enablement-controller.js';
+import { useExtensionEnablementController } from '../extensions/extension-enablement-context.js';
 import { EditorArea } from '../editor/area.js';
 import { WorkbenchHostShell } from './host-shell.js';
+import { createWorkbenchThemeOptionSnapshot, type WorkbenchThemeOption } from './settings.js';
 import { SAMPLE_WORKBENCH_EXTENSIONS } from '../../../../examples/workbench-sample/src/sample-extensions.js';
 
 const TEST_AVAILABLE_EXTENSIONS = [
@@ -239,6 +242,20 @@ function HostThemeProbe({ themeId }: { themeId: string }) {
   const workbench = useWorkbench();
 
   return <span>{workbench.themes.getTheme(themeId)?.label ?? 'missing'}</span>;
+}
+
+function ExtensionEnablementControllerProbe({
+  onController,
+}: {
+  onController: (controller: ExtensionEnablementController) => void;
+}) {
+  const controller = useExtensionEnablementController();
+
+  useEffect(() => {
+    onController(controller);
+  }, [controller, onController]);
+
+  return null;
 }
 
 function PreferenceValueProbe({
@@ -1622,6 +1639,114 @@ describe('WorkbenchProvider', () => {
     container.remove();
   });
 
+  it('preserves filtered host option ordinals for unselected theme soft lifecycle', async () => {
+    let accessorReads = 0;
+    const invalidHostOption = { label: 'Accessor host option' } as WorkbenchThemeOption;
+    Object.defineProperty(invalidHostOption, 'id', {
+      configurable: true,
+      enumerable: true,
+      get: () => {
+        accessorReads += 1;
+        return 'workbench-kit.test.accessor-host-option';
+      },
+    });
+    const selectedHostOption = {
+      description: 'Selected host description',
+      id: 'workbench-kit.test.selected-host-option',
+      label: 'Selected host option',
+    };
+    const themeOptions = [invalidHostOption, selectedHostOption];
+    const capturedThemeOptions = createWorkbenchThemeOptionSnapshot(themeOptions);
+
+    expect(capturedThemeOptions).toHaveLength(themeOptions.length);
+    expect(Object.prototype.hasOwnProperty.call(capturedThemeOptions, 0)).toBe(false);
+    expect(capturedThemeOptions?.[1]).toEqual(selectedHostOption);
+    expect(Object.isFrozen(capturedThemeOptions)).toBe(true);
+    expect(Object.isFrozen(capturedThemeOptions?.[1])).toBe(true);
+    expect(accessorReads).toBe(0);
+
+    const installedExtensionsStorageKey =
+      'workbench-kit/.workbench/installed-extensions/theme-option-ordinal';
+    const installedExtensionsStorage = createMemoryStorage();
+    installedExtensionsStorage.setItem(
+      installedExtensionsStorageKey,
+      JSON.stringify([
+        {
+          category: 'theme',
+          enabled: false,
+          id: 'workbench-kit.samples.theme-alt',
+          installedAt: '2026-08-26T00:00:00.000Z',
+          manifestUrl: 'workbench-kit.samples.theme-alt',
+        },
+      ]),
+    );
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    let extensionEnablement: ExtensionEnablementController | undefined;
+    const captureExtensionEnablement = (controller: ExtensionEnablementController) => {
+      extensionEnablement = controller;
+    };
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+          installedExtensionsStorage={installedExtensionsStorage}
+          installedExtensionsStorageKey={installedExtensionsStorageKey}
+        >
+          <TestWorkbenchShell
+            editorArea={<main>Editor Area</main>}
+            theme={selectedHostOption.id}
+            themeOptions={themeOptions}
+          />
+          <ExtensionEnablementControllerProbe onController={captureExtensionEnablement} />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    let transition:
+      ReturnType<ExtensionEnablementController['toggleInstalledExtension']> | undefined;
+    await act(async () => {
+      transition = extensionEnablement?.toggleInstalledExtension(
+        'workbench-kit.samples.theme-alt',
+        true,
+      );
+    });
+    await flushReactEffects();
+
+    expect(transition).toMatchObject({
+      enabled: true,
+      extensionId: 'workbench-kit.samples.theme-alt',
+      kind: 'applied',
+    });
+    expect(accessorReads).toBe(0);
+
+    selectedHostOption.label = 'Drifted selected host option';
+    await act(async () => {
+      transition = extensionEnablement?.toggleInstalledExtension(
+        'workbench-kit.samples.theme-alt',
+        false,
+      );
+    });
+
+    expect(transition).toMatchObject({
+      enabled: true,
+      extensionId: 'workbench-kit.samples.theme-alt',
+      kind: 'reloadRequired',
+    });
+    expect(accessorReads).toBe(0);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('exposes theme selection through the settings appearance category', async () => {
     const themeChanges: string[] = [];
     const container = document.createElement('div');
@@ -1640,7 +1765,6 @@ describe('WorkbenchProvider', () => {
             darkPreset="purple"
             editorArea={<main>Editor Area</main>}
             lightPreset="skyblue"
-            theme="system"
             onThemeChange={(nextTheme) => {
               themeChanges.push(nextTheme);
             }}
@@ -1690,6 +1814,10 @@ describe('WorkbenchProvider', () => {
       'select.ui-select__native',
     );
     expect(themeSelect).not.toBeNull();
+    expect(themeSelect?.value).toBe('system');
+    expect(colorSchemeCombobox?.textContent).toContain('System');
+    expect(dialog?.textContent).not.toContain('Unavailable:');
+    expect(themeChanges).toEqual([]);
 
     await act(async () => {
       themeSelect!.value = 'light';
@@ -1698,6 +1826,224 @@ describe('WorkbenchProvider', () => {
     await flushReactEffects();
 
     expect(themeChanges).toEqual(['light']);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('shows a flat base scheme as an available Settings choice without writing it', async () => {
+    const themeChanges: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+        >
+          <TestWorkbenchShell
+            editorArea={<main>Editor Area</main>}
+            theme="dark"
+            onThemeChange={(nextTheme) => {
+              themeChanges.push(nextTheme);
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const appearanceButton = findButtonByText(container, 'Appearance');
+    await act(async () => {
+      appearanceButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const colorThemeCombobox = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button[role="combobox"]'),
+    ).find((button) => button.getAttribute('aria-label') === 'Color theme');
+    const colorThemeSelect = colorThemeCombobox?.parentElement?.querySelector<HTMLSelectElement>(
+      'select.ui-select__native',
+    );
+
+    expect(colorThemeSelect?.value).toBe('dark');
+    expect(colorThemeCombobox?.textContent).toContain('Dark');
+    expect(container.textContent).not.toContain('Unavailable: dark');
+    expect(themeChanges).toEqual([]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('keeps an unresolved flat theme visible until explicit recovery without remounting', async () => {
+    const themeChanges: string[] = [];
+    const missingTheme = 'workbench-kit.test.missing-flat';
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderShell = (theme: string) => (
+      <WorkbenchProvider
+        extensionsConfig={{
+          enabled: ['workbench-kit.builtin.settings'],
+          recommendations: [],
+        }}
+      >
+        <TestWorkbenchShell
+          editorArea={<main>Editor Area</main>}
+          rootClassName="missing-flat-theme-root"
+          theme={theme}
+          onThemeChange={(nextTheme) => {
+            themeChanges.push(nextTheme);
+          }}
+        />
+      </WorkbenchProvider>
+    );
+
+    await act(async () => {
+      root.render(renderShell(missingTheme));
+    });
+    await flushReactEffects();
+
+    const shellRoot = container.querySelector<HTMLElement>('.missing-flat-theme-root');
+    expect(shellRoot?.dataset.theme).toBe(missingTheme);
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const appearanceButton = findButtonByText(container, 'Appearance');
+    await act(async () => {
+      appearanceButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const findColorThemeControl = () => {
+      const combobox = Array.from(
+        container.querySelectorAll<HTMLButtonElement>('button[role="combobox"]'),
+      ).find((button) => button.getAttribute('aria-label') === 'Color theme');
+      return {
+        combobox,
+        select: combobox?.parentElement?.querySelector<HTMLSelectElement>(
+          'select.ui-select__native',
+        ),
+      };
+    };
+    const unresolvedControl = findColorThemeControl();
+    const diagnosticId = unresolvedControl.combobox?.getAttribute('aria-describedby');
+    const diagnostic = diagnosticId
+      ? container.querySelector<HTMLElement>(`#${diagnosticId}`)
+      : null;
+
+    expect(unresolvedControl.select?.value).toBe(missingTheme);
+    expect(unresolvedControl.combobox?.textContent).toContain(`Unavailable: ${missingTheme}`);
+    expect(diagnostic?.getAttribute('role')).toBe('status');
+    expect(diagnostic?.textContent).toContain(`The appearance “${missingTheme}” is unavailable.`);
+    expect(themeChanges).toEqual([]);
+    unresolvedControl.combobox?.focus();
+    expect(document.activeElement).toBe(unresolvedControl.combobox);
+
+    await act(async () => {
+      unresolvedControl.select!.value = 'system';
+      unresolvedControl.select!.dispatchEvent(new Event('change', { bubbles: true }));
+    });
+    expect(themeChanges).toEqual(['system']);
+
+    await act(async () => {
+      root.render(renderShell('system'));
+    });
+    await flushReactEffects();
+
+    const recoveredControl = findColorThemeControl();
+    expect(container.querySelector('.missing-flat-theme-root')).toBe(shellRoot);
+    expect(shellRoot?.dataset.theme).not.toBe(missingTheme);
+    expect(recoveredControl.select?.value).toBe('system');
+    expect(recoveredControl.combobox?.textContent).toContain('System');
+    expect(recoveredControl.combobox?.hasAttribute('aria-describedby')).toBe(false);
+    expect(container.textContent).not.toContain(`The appearance “${missingTheme}” is unavailable.`);
+    expect(document.activeElement).toBe(recoveredControl.combobox);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('rebuilds the catalog and renderer sidecar together after host option own-data drift', async () => {
+    const hostOption = {
+      description: 'Original host description',
+      id: 'workbench-kit.test.mutable-host-option',
+      label: 'Original host label',
+    };
+    const hostOptions = [hostOption];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.settings'],
+            recommendations: [],
+          }}
+        >
+          <TestWorkbenchShell
+            editorArea={<main>Editor Area</main>}
+            theme={hostOption.id}
+            themeOptions={hostOptions}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    hostOption.label = 'Updated host label';
+    hostOption.description = 'Updated host description';
+
+    const settingsButton = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Settings"]',
+    );
+    await act(async () => {
+      settingsButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const appearanceButton = findButtonByText(container, 'Appearance');
+    await act(async () => {
+      appearanceButton?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    const colorThemeCombobox = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('button[role="combobox"]'),
+    ).find((button) => button.getAttribute('aria-label') === 'Color theme');
+    expect(colorThemeCombobox?.textContent).toContain('Updated host label');
+    expect(container.textContent).toContain('Updated host description');
+    expect(container.textContent).not.toContain('Original host label');
+    expect(container.textContent).not.toContain('Original host description');
+    expect(container.textContent).not.toContain(
+      'Unavailable: workbench-kit.test.mutable-host-option',
+    );
 
     await act(async () => {
       root.unmount();

@@ -66,11 +66,13 @@ function createHarness({
   availableExtensions = [themeExtension],
   enabled,
   failWrites = false,
+  initializeProtection = true,
 }: {
   accepted?: boolean;
   availableExtensions?: readonly WorkbenchExtensionDescription[];
   enabled: boolean;
   failWrites?: boolean;
+  initializeProtection?: boolean;
 }) {
   const record = installedRecord(enabled);
   const persistence = createMemoryStorage([record], failWrites);
@@ -91,15 +93,17 @@ function createHarness({
     registrationLifetime,
     registry,
   });
-  setKnownUnselectedTheme(controller, registry);
+  if (initializeProtection) {
+    setKnownUnselectedTheme(controller, registry);
+  }
   return { controller, diagnostics, persistence, registry };
 }
 
 function setKnownUnselectedTheme(
   controller: ExtensionEnablementController,
   registry: ExtensionRegistry,
-): void {
-  controller.setThemeSelectionProtection(
+): () => void {
+  return controller.setThemeSelectionProtection(
     createThemeSelectionProtectionSnapshot({
       darkPreset: undefined,
       lightPreset: undefined,
@@ -110,11 +114,30 @@ function setKnownUnselectedTheme(
   );
 }
 
+function setKnownSelectedTheme(
+  controller: ExtensionEnablementController,
+  registry: ExtensionRegistry,
+): () => void {
+  return controller.setThemeSelectionProtection(
+    createThemeSelectionProtectionSnapshot({
+      darkPreset: undefined,
+      lightPreset: undefined,
+      theme: 'workbench-kit.samples.theme-alt.dark-blue',
+      themeOptions: undefined,
+      themes: registry.themes,
+    }),
+  );
+}
+
 describe('ExtensionEnablementController', () => {
   it('enables and disables an unselected declarative theme without a reload', () => {
-    const { controller, persistence, registry } = createHarness({ enabled: false });
+    const { controller, persistence, registry } = createHarness({
+      enabled: false,
+      initializeProtection: false,
+    });
     const changes: string[] = [];
     registry.themes.onDidChangeThemes(({ kind, theme }) => changes.push(`${kind}:${theme.id}`));
+    const disposeInitialProtection = setKnownUnselectedTheme(controller, registry);
 
     expect(controller.toggleInstalledExtension(themeExtension.manifest.id, true)).toMatchObject({
       enabled: true,
@@ -123,6 +146,7 @@ describe('ExtensionEnablementController', () => {
     expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
     expect(controller.getInstalledRecordsSnapshot()[0]?.enabled).toBe(true);
 
+    disposeInitialProtection();
     setKnownUnselectedTheme(controller, registry);
 
     expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
@@ -201,16 +225,121 @@ describe('ExtensionEnablementController', () => {
     expect(JSON.parse(persistence.values.get(STORAGE_KEY) ?? '[]')[0]?.enabled).toBe(false);
   });
 
-  it.each([
-    [
-      'missing primary selection with a contributed first-option fallback',
-      {
+  it('protects the union of selected and unselected shell owners from the same provider', () => {
+    const { controller, persistence, registry } = createHarness({
+      enabled: true,
+      initializeProtection: false,
+    });
+    setKnownSelectedTheme(controller, registry);
+    setKnownUnselectedTheme(controller, registry);
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: false,
+      kind: 'reloadRequired',
+    });
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+    expect(JSON.parse(persistence.values.get(STORAGE_KEY) ?? '[]')[0]?.enabled).toBe(false);
+  });
+
+  it('restores an older selected shell owner after the current owner is disposed', () => {
+    const { controller, registry } = createHarness({
+      enabled: true,
+      initializeProtection: false,
+    });
+    setKnownSelectedTheme(controller, registry);
+    const disposeCurrentOwner = setKnownUnselectedTheme(controller, registry);
+
+    disposeCurrentOwner();
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: false,
+      kind: 'reloadRequired',
+    });
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeDefined();
+  });
+
+  it('keeps the current unselected shell owner after an older owner is disposed', () => {
+    const { controller, registry } = createHarness({
+      enabled: true,
+      initializeProtection: false,
+    });
+    const disposeOlderOwner = setKnownSelectedTheme(controller, registry);
+    setKnownUnselectedTheme(controller, registry);
+
+    disposeOlderOwner();
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: false,
+      kind: 'applied',
+    });
+    expect(registry.themes.getTheme('workbench-kit.samples.theme-alt.dark-blue')).toBeUndefined();
+  });
+
+  it('fails closed while any live shell owner has unknown selection state', () => {
+    const { controller, persistence, registry } = createHarness({
+      enabled: true,
+      initializeProtection: false,
+    });
+    setKnownUnselectedTheme(controller, registry);
+    const disposeUnknownOwner = controller.setThemeSelectionProtection(
+      createThemeSelectionProtectionSnapshot({
         darkPreset: undefined,
         lightPreset: undefined,
-        theme: undefined,
+        theme: 'workbench-kit.test.missing-theme',
         themeOptions: undefined,
-      },
-    ],
+        themes: registry.themes,
+      }),
+    );
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: true,
+      kind: 'reloadRequired',
+    });
+    expect(persistence.setItem).not.toHaveBeenCalled();
+
+    disposeUnknownOwner();
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: false,
+      kind: 'applied',
+    });
+  });
+
+  it('fails closed while any live shell owner has a stale catalog snapshot', () => {
+    const { controller, persistence, registry } = createHarness({
+      enabled: true,
+      initializeProtection: false,
+    });
+    const staleSnapshot = createThemeSelectionProtectionSnapshot({
+      darkPreset: undefined,
+      lightPreset: undefined,
+      theme: 'workbench-kit.test.stale-host-theme',
+      themeOptions: [{ id: 'workbench-kit.test.stale-host-theme', label: 'Stale host theme' }],
+      themes: registry.themes,
+    });
+    const unrelatedRegistration = registry.themes.registerTheme({
+      extensionId: 'workbench-kit.test.unrelated-theme',
+      id: 'workbench-kit.test.unrelated-theme.light',
+      label: 'Unrelated Light',
+      mode: 'light',
+    });
+    setKnownUnselectedTheme(controller, registry);
+    const disposeStaleOwner = controller.setThemeSelectionProtection(staleSnapshot);
+
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: true,
+      kind: 'reloadRequired',
+    });
+    expect(persistence.setItem).not.toHaveBeenCalled();
+
+    disposeStaleOwner();
+    expect(controller.toggleInstalledExtension(themeExtension.manifest.id, false)).toMatchObject({
+      enabled: false,
+      kind: 'applied',
+    });
+    unrelatedRegistration.dispose();
+  });
+
+  it.each([
     [
       'unknown primary selection with a contributed first-option fallback',
       {
@@ -280,7 +409,7 @@ describe('ExtensionEnablementController', () => {
       createThemeSelectionProtectionSnapshot({
         darkPreset: undefined,
         lightPreset: undefined,
-        theme: undefined,
+        theme: 'workbench-kit.test.missing-theme',
         themeOptions: [{ id: 'workbench-kit.test.fallback-theme', label: 'Fallback theme' }],
         themes: registry.themes,
       }),

@@ -24,6 +24,11 @@ import {
 } from '@workbench-kit/react/authoring';
 import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standalone';
 import type { WorkbenchStandaloneBootstrap } from '@workbench-kit/react/workbench/standalone';
+import {
+  DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+  WorkbenchProvider,
+  WorkbenchShell,
+} from '@workbench-kit/shell-react';
 import { WorkbenchCommandHostController } from '@workbench-kit/shell-react/command-host-controller';
 import type {
   UiAuthoringResolutionProjection,
@@ -39,6 +44,7 @@ import {
 } from '../../../packages/react/src/workbench/story/shellStory';
 import { App } from './App.js';
 import { createSampleHost } from './createSampleHost.js';
+import { sampleHostThemes } from './host-themes.js';
 import { createSampleInstalledExtensionsStorageKey } from './sample-installed-extension-storage.js';
 import {
   expectEditorTabVisible,
@@ -62,6 +68,8 @@ import {
   applyExtensionsInstalledListScenario,
   applyThemeSoftLifecycleScenario,
   applySettingsAppearanceScenario,
+  applySettingsWrongSchemeAppearanceScenario,
+  applyFlatHostThemeOptionScenario,
   applyCommandsActivityScenario,
 } from './storybook/scenarios/index.js';
 import './host.css';
@@ -130,6 +138,94 @@ function ProviderFreeCommandHostStory() {
         </main>
       )}
     />
+  );
+}
+
+const FLAT_HOST_THEME_ID = 'workbench-kit.story.host-flat';
+const MISSING_FLAT_THEME_ID = 'workbench-kit.story.missing-flat';
+
+let appearanceStorageWriteCounter: ReturnType<typeof applyFlatHostThemeOptionScenario> | undefined;
+
+function readAppearanceStorageWriteCount(): number {
+  expect(appearanceStorageWriteCounter).toBeDefined();
+  return appearanceStorageWriteCounter?.count ?? -1;
+}
+
+function FlatHostThemeOptionStory() {
+  const [themeChangeCount, setThemeChangeCount] = useState(0);
+
+  return (
+    <WorkbenchProvider>
+      <WorkbenchShell
+        commandHost={false}
+        editorArea={
+          <main aria-label="Flat host theme workspace">
+            <output aria-label="Theme change callbacks">{themeChangeCount}</output>
+          </main>
+        }
+        onThemeChange={() => setThemeChangeCount((count) => count + 1)}
+        rootClassName="flat-host-theme-story"
+        statusSections={[]}
+        theme={FLAT_HOST_THEME_ID}
+        themeOptions={[{ id: FLAT_HOST_THEME_ID, label: 'Host Flat Theme' }]}
+        title="Flat host theme"
+      />
+    </WorkbenchProvider>
+  );
+}
+
+function MissingFlatThemeRecoveryStory() {
+  const [theme, setTheme] = useState(MISSING_FLAT_THEME_ID);
+  const [themeChangeCount, setThemeChangeCount] = useState(0);
+
+  return (
+    <WorkbenchProvider>
+      <WorkbenchShell
+        commandHost={false}
+        editorArea={
+          <main aria-label="Missing flat theme workspace">
+            <output aria-label="Missing theme recovery callbacks">{themeChangeCount}</output>
+          </main>
+        }
+        onThemeChange={(nextTheme) => {
+          setThemeChangeCount((count) => count + 1);
+          setTheme(nextTheme);
+        }}
+        rootClassName="missing-flat-theme-story"
+        statusSections={[]}
+        theme={theme}
+        title="Missing flat theme"
+      />
+    </WorkbenchProvider>
+  );
+}
+
+const FLAT_COLLISION_THEME_ID = sampleHostThemes[0].id;
+
+function FlatThemeCollisionRecoveryStory() {
+  const [theme, setTheme] = useState(FLAT_COLLISION_THEME_ID);
+  const [themeChangeCount, setThemeChangeCount] = useState(0);
+
+  return (
+    <WorkbenchProvider hostThemes={sampleHostThemes}>
+      <WorkbenchShell
+        commandHost={false}
+        editorArea={
+          <main aria-label="Flat theme collision workspace">
+            <output aria-label="Theme recovery callbacks">{themeChangeCount}</output>
+          </main>
+        }
+        onThemeChange={(nextTheme) => {
+          setThemeChangeCount((count) => count + 1);
+          setTheme(nextTheme);
+        }}
+        rootClassName="flat-theme-collision-story"
+        statusSections={[]}
+        theme={theme}
+        themeOptions={[{ id: FLAT_COLLISION_THEME_ID, label: 'Conflicting Flat Forest' }]}
+        title="Flat theme collision"
+      />
+    </WorkbenchProvider>
   );
 }
 
@@ -1031,10 +1127,19 @@ export const SettingsAppearanceSmoke: Story = {
     const colorSchemeSelect = within(settingsDialog).getByRole('combobox', {
       name: 'Color scheme',
     });
+    await expect(colorSchemeSelect).toHaveTextContent('System');
+    await userEvent.click(colorSchemeSelect);
+    await userEvent.click(
+      await within(canvasElement.ownerDocument.body).findByRole('option', { name: 'Light' }),
+    );
+    await waitFor(() => expect(shellRoot).toHaveAttribute('data-theme', 'light'));
+    await expect(colorSchemeSelect).toHaveFocus();
+
     await userEvent.click(colorSchemeSelect);
     await userEvent.click(
       await within(canvasElement.ownerDocument.body).findByRole('option', { name: 'Dark' }),
     );
+    await waitFor(() => expect(shellRoot).toHaveAttribute('data-theme', 'dark'));
 
     const darkThemeSelect = within(settingsDialog).getByRole('combobox', {
       name: 'Preferred Dark Color Theme',
@@ -1055,6 +1160,7 @@ export const SettingsAppearanceSmoke: Story = {
       );
       expect(getComputedStyle(editorRegion!).getPropertyValue('--color-bg')).toBe('#0f1a12');
       expect(getComputedStyle(activityBar!).getPropertyValue('--color-bg')).toBe('#0f1a12');
+      expect(getComputedStyle(settingsDialog).getPropertyValue('--color-bg')).toBe('#0f1a12');
     });
     await expect(darkThemeSelect).toHaveFocus();
 
@@ -1070,6 +1176,231 @@ export const SettingsAppearanceSmoke: Story = {
         '',
       );
     });
+  },
+};
+
+export const SettingsWrongSchemeAppearanceRecovery: Story = {
+  name: 'Settings wrong-scheme appearance recovery',
+  render: () => {
+    appearanceStorageWriteCounter = applySettingsWrongSchemeAppearanceScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const documentRoot = canvasElement.ownerDocument.documentElement;
+
+    await waitForWorkbenchReady(canvas);
+    const shellRoot = canvasElement.querySelector<HTMLElement>('.ide-root');
+    expect(shellRoot).not.toBeNull();
+    await waitFor(() => {
+      expect(shellRoot).toHaveAttribute('data-theme', 'dark');
+      expect(shellRoot).not.toHaveAttribute('data-theme-preset');
+      expect(shellRoot?.style.getPropertyValue('--color-bg')).toBe('');
+      expect(documentRoot).toHaveAttribute('data-workbench-unresolved-theme-preset', 'skyblue');
+    });
+    await waitFor(() => expect(readAppearanceStorageWriteCount()).toBeGreaterThan(0));
+    const resolutionWriteCount = readAppearanceStorageWriteCount();
+    const appearanceBeforeRecovery = window.localStorage.getItem(
+      DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+    );
+    expect(appearanceBeforeRecovery).not.toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    const darkThemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Preferred Dark Color Theme',
+    });
+    await expect(darkThemeSelect).toHaveTextContent('Unavailable: skyblue');
+    await expect(within(settingsDialog).getByRole('status')).toHaveTextContent(
+      'The appearance “skyblue” does not belong to the dark scheme.',
+    );
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBe(
+      appearanceBeforeRecovery,
+    );
+    expect(readAppearanceStorageWriteCount()).toBe(resolutionWriteCount);
+
+    darkThemeSelect.focus();
+    await expect(darkThemeSelect).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(
+      await within(canvasElement.ownerDocument.body).findByRole('option', { name: 'Deep Navy' }),
+    ).toBeVisible();
+    await userEvent.keyboard('{Enter}');
+
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.ide-root')).toBe(shellRoot);
+      expect(shellRoot).toHaveAttribute('data-theme-preset', 'navy');
+      expect(documentRoot).not.toHaveAttribute('data-workbench-unresolved-theme-preset');
+      expect(
+        JSON.parse(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY) ?? 'null'),
+      ).toMatchObject({ darkPreset: 'navy', themePreference: 'dark' });
+      expect(readAppearanceStorageWriteCount()).toBe(resolutionWriteCount + 1);
+    });
+    await expect(darkThemeSelect).toHaveFocus();
+  },
+};
+
+export const FlatHostThemeOption: Story = {
+  name: 'Flat host theme option pass-through',
+  render: () => {
+    appearanceStorageWriteCounter = applyFlatHostThemeOptionScenario();
+    return <FlatHostThemeOptionStory />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const shellRoot = await canvas.findByText('Flat host theme', {
+      selector: '.workbench-shell-titlebar__title',
+    });
+    const root = shellRoot.closest('.flat-host-theme-story');
+    expect(root).not.toBeNull();
+    await waitFor(() => {
+      expect(root).toHaveAttribute('data-theme', FLAT_HOST_THEME_ID);
+      expect(root).not.toHaveAttribute('data-theme-preset');
+      expect(canvasElement.ownerDocument.documentElement).not.toHaveAttribute(
+        'data-workbench-unresolved-theme',
+      );
+    });
+    const resolutionWriteCount = readAppearanceStorageWriteCount();
+    await expect(canvas.getByLabelText('Theme change callbacks')).toHaveTextContent('0');
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    await expect(
+      within(settingsDialog).getByRole('combobox', { name: 'Color theme' }),
+    ).toHaveTextContent('Host Flat Theme');
+    await expect(canvas.getByLabelText('Theme change callbacks')).toHaveTextContent('0');
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBeNull();
+    expect(readAppearanceStorageWriteCount()).toBe(resolutionWriteCount);
+  },
+};
+
+export const MissingFlatThemeRecovery: Story = {
+  name: 'Missing flat theme recovery',
+  render: () => {
+    appearanceStorageWriteCounter = applyFlatHostThemeOptionScenario();
+    return <MissingFlatThemeRecoveryStory />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const documentRoot = canvasElement.ownerDocument.documentElement;
+    const title = await canvas.findByText('Missing flat theme', {
+      selector: '.workbench-shell-titlebar__title',
+    });
+    const shellRoot = title.closest('.missing-flat-theme-story');
+    expect(shellRoot).not.toBeNull();
+
+    await waitFor(() => {
+      expect(shellRoot).toHaveAttribute('data-theme', MISSING_FLAT_THEME_ID);
+      expect(shellRoot).not.toHaveAttribute('data-theme-preset');
+      expect(documentRoot).not.toHaveAttribute('data-workbench-unresolved-theme');
+    });
+    const resolutionWriteCount = readAppearanceStorageWriteCount();
+    await expect(canvas.getByLabelText('Missing theme recovery callbacks')).toHaveTextContent('0');
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    const colorThemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Color theme',
+    });
+    await expect(colorThemeSelect).toHaveTextContent(`Unavailable: ${MISSING_FLAT_THEME_ID}`);
+    expect(colorThemeSelect.getAttribute('aria-describedby')).not.toBeNull();
+    await expect(within(settingsDialog).getByRole('status')).toHaveTextContent(
+      `The appearance “${MISSING_FLAT_THEME_ID}” is unavailable.`,
+    );
+    await expect(canvas.getByLabelText('Missing theme recovery callbacks')).toHaveTextContent('0');
+    expect(readAppearanceStorageWriteCount()).toBe(resolutionWriteCount);
+
+    colorThemeSelect.focus();
+    await expect(colorThemeSelect).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(
+      await within(canvasElement.ownerDocument.body).findByRole('option', { name: 'System' }),
+    ).toBeVisible();
+    await userEvent.keyboard('{Home}{Enter}');
+
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.missing-flat-theme-story')).toBe(shellRoot);
+      expect(shellRoot).toHaveAttribute('data-theme');
+      expect(shellRoot).not.toHaveAttribute('data-theme', MISSING_FLAT_THEME_ID);
+      expect(documentRoot).not.toHaveAttribute('data-workbench-unresolved-theme');
+      expect(colorThemeSelect).not.toHaveAttribute('aria-describedby');
+    });
+    await expect(colorThemeSelect).toHaveTextContent('System');
+    await expect(colorThemeSelect).toHaveFocus();
+    await expect(canvas.getByLabelText('Missing theme recovery callbacks')).toHaveTextContent('1');
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBeNull();
+    expect(readAppearanceStorageWriteCount()).toBe(resolutionWriteCount);
+  },
+};
+
+export const FlatThemeCollisionRecovery: Story = {
+  name: 'Flat theme collision recovery',
+  render: () => {
+    appearanceStorageWriteCounter = applyFlatHostThemeOptionScenario();
+    return <FlatThemeCollisionRecoveryStory />;
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const documentRoot = canvasElement.ownerDocument.documentElement;
+    const title = await canvas.findByText('Flat theme collision', {
+      selector: '.workbench-shell-titlebar__title',
+    });
+    const shellRoot = title.closest('.flat-theme-collision-story');
+    expect(shellRoot).not.toBeNull();
+
+    await waitFor(() => {
+      expect(shellRoot).not.toHaveAttribute('data-theme');
+      expect(shellRoot).not.toHaveAttribute('data-theme-preset');
+      expect(documentRoot).toHaveAttribute(
+        'data-workbench-unresolved-theme',
+        FLAT_COLLISION_THEME_ID,
+      );
+    });
+    const resolutionWriteCount = readAppearanceStorageWriteCount();
+    await expect(canvas.getByLabelText('Theme recovery callbacks')).toHaveTextContent('0');
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBeNull();
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    const colorThemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Color theme',
+    });
+    await expect(colorThemeSelect).toHaveTextContent(`Unavailable: ${FLAT_COLLISION_THEME_ID}`);
+    const diagnosticId = colorThemeSelect.getAttribute('aria-describedby');
+    expect(diagnosticId).not.toBeNull();
+    await expect(within(settingsDialog).getByRole('status')).toHaveTextContent(
+      `The appearance “${FLAT_COLLISION_THEME_ID}” has conflicting sources.`,
+    );
+    await expect(canvas.getByLabelText('Theme recovery callbacks')).toHaveTextContent('0');
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBeNull();
+    expect(readAppearanceStorageWriteCount()).toBe(resolutionWriteCount);
+
+    colorThemeSelect.focus();
+    await expect(colorThemeSelect).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+    await expect(
+      await within(canvasElement.ownerDocument.body).findByRole('option', { name: 'System' }),
+    ).toBeVisible();
+    await userEvent.keyboard('{Home}{Enter}');
+
+    await waitFor(() => {
+      expect(canvasElement.querySelector('.flat-theme-collision-story')).toBe(shellRoot);
+      expect(shellRoot).toHaveAttribute('data-theme');
+      expect(shellRoot).not.toHaveAttribute('data-theme', FLAT_COLLISION_THEME_ID);
+      expect(documentRoot).not.toHaveAttribute('data-workbench-unresolved-theme');
+      expect(colorThemeSelect).not.toHaveAttribute('aria-describedby');
+    });
+    await expect(colorThemeSelect).toHaveTextContent('System');
+    await expect(colorThemeSelect).toHaveFocus();
+    await expect(canvas.getByLabelText('Theme recovery callbacks')).toHaveTextContent('1');
+    expect(window.localStorage.getItem(DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY)).toBeNull();
+    expect(readAppearanceStorageWriteCount()).toBe(resolutionWriteCount);
   },
 };
 
@@ -1137,6 +1468,102 @@ export const ThemeSoftLifecycle: Story = {
     });
     await userEvent.click(restoredDarkThemeSelect);
     expect(documentCanvas.queryByRole('option', { name: 'Dark Blue Alt' })).toBeNull();
+  },
+};
+
+export const SelectedThemeLifecycleProtection: Story = {
+  name: 'Selected theme lifecycle protection',
+  tags: ['storybook-play-extension-management'],
+  render: () => {
+    applyThemeSoftLifecycleScenario();
+    return createSampleHost();
+  },
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const documentRoot = canvasElement.ownerDocument.documentElement;
+
+    await waitForWorkbenchReady(canvas);
+    const shellRoot = canvasElement.querySelector<HTMLElement>('.ide-root');
+    expect(shellRoot).not.toBeNull();
+    await userEvent.click(canvas.getByRole('button', { name: 'Extensions' }));
+    const listSwitcher = await canvas.findByLabelText('Extension lists');
+    await userEvent.click(within(listSwitcher).getByRole('button', { name: 'Installed' }));
+    const installedList = await canvas.findByLabelText('Installed extensions');
+    const themeRow = within(installedList)
+      .getByText('Alternate Theme Pack', { selector: '.workbench-extensions-sidebar__title' })
+      .closest('.workbench-extensions-sidebar__item');
+    expect(themeRow).not.toBeNull();
+    await userEvent.click(within(themeRow as HTMLElement).getByRole('button', { name: 'Enable' }));
+
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const settingsDialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Appearance' }));
+    const colorSchemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Color scheme',
+    });
+    await userEvent.click(colorSchemeSelect);
+    await userEvent.click(
+      await within(documentRoot.ownerDocument.body).findByRole('option', { name: 'Dark' }),
+    );
+    const darkThemeSelect = within(settingsDialog).getByRole('combobox', {
+      name: 'Preferred Dark Color Theme',
+    });
+    await userEvent.click(darkThemeSelect);
+    await userEvent.click(
+      await within(documentRoot.ownerDocument.body).findByRole('option', {
+        name: 'Dark Blue Alt',
+      }),
+    );
+    await waitFor(() => {
+      expect(shellRoot).toHaveAttribute(
+        'data-theme-preset',
+        'workbench-kit.samples.theme-alt.dark-blue',
+      );
+      expect(shellRoot?.style.getPropertyValue('--color-bg')).toBe('#0a1628');
+      expect(documentRoot.style.getPropertyValue('--color-bg')).toBe('#0a1628');
+    });
+    await userEvent.click(within(settingsDialog).getByRole('button', { name: 'Close' }));
+
+    const restoredInstalledList = await canvas.findByRole('list', {
+      name: 'Installed extensions',
+    });
+    const restoredThemeRow = within(restoredInstalledList)
+      .getByText('Alternate Theme Pack', { selector: '.workbench-extensions-sidebar__title' })
+      .closest('.workbench-extensions-sidebar__item');
+    expect(restoredThemeRow).not.toBeNull();
+    const originalRequestAnimationFrame = window.requestAnimationFrame;
+    let reloadRequestCount = 0;
+    window.requestAnimationFrame = (() => {
+      reloadRequestCount += 1;
+      return -1;
+    }) as typeof window.requestAnimationFrame;
+    try {
+      await userEvent.click(
+        within(restoredThemeRow as HTMLElement).getByRole('button', { name: 'Disable' }),
+      );
+    } finally {
+      window.requestAnimationFrame = originalRequestAnimationFrame;
+    }
+
+    expect(reloadRequestCount).toBeGreaterThanOrEqual(1);
+    await expect(
+      within(restoredThemeRow as HTMLElement).getByText('Reload required'),
+    ).toBeVisible();
+    await expect(
+      within(restoredThemeRow as HTMLElement).getByRole('button', { name: 'Reloading…' }),
+    ).toBeDisabled();
+    expect(canvasElement.querySelector('.ide-root')).toBe(shellRoot);
+    expect(shellRoot).toHaveAttribute(
+      'data-theme-preset',
+      'workbench-kit.samples.theme-alt.dark-blue',
+    );
+    expect(shellRoot?.style.getPropertyValue('--color-bg')).toBe('#0a1628');
+    expect(documentRoot.style.getPropertyValue('--color-bg')).toBe('#0a1628');
+    expect(
+      JSON.parse(
+        window.localStorage.getItem(createSampleInstalledExtensionsStorageKey('tester')) ?? '[]',
+      ),
+    ).toEqual([expect.objectContaining({ enabled: false, id: 'workbench-kit.samples.theme-alt' })]);
   },
 };
 

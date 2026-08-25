@@ -1,6 +1,9 @@
 import {
   resetSampleHostStorage,
   seedSampleInstalledExtension,
+  seedSampleWorkbenchAppearance,
+  trackSampleAppearanceStorageWrites,
+  type SampleAppearanceStorageWriteCounter,
   type SampleInstalledExtensionSeed,
 } from '../fixtures/sampleHostStorage.js';
 
@@ -72,6 +75,24 @@ export function applyThemeSoftLifecycleScenario(): void {
 /** Settings → Appearance category fields (color scheme / theme presets). */
 export function applySettingsAppearanceScenario(): void {
   resetSampleHostStorage('tester');
+}
+
+/** Persisted light-only preset selected for dark mode; Settings must keep it raw until recovery. */
+export function applySettingsWrongSchemeAppearanceScenario(): SampleAppearanceStorageWriteCounter {
+  resetSampleHostStorage('tester');
+  seedSampleWorkbenchAppearance({
+    darkPreset: 'skyblue',
+    lightPreset: 'skyblue',
+    shellPreset: 'default',
+    themePreference: 'dark',
+  });
+  return trackSampleAppearanceStorageWrites();
+}
+
+/** Public flat host option projection with no sample App persistence involved. */
+export function applyFlatHostThemeOptionScenario(): SampleAppearanceStorageWriteCounter {
+  resetSampleHostStorage('none');
+  return trackSampleAppearanceStorageWrites();
 }
 
 /** Commands activity → command management sidebar. */

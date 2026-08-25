@@ -1,4 +1,5 @@
 import type { ResolvedWorkbenchTheme } from '@workbench-kit/react/workbench';
+import { REQUIRED_THEME_TOKEN_KEYS } from '@workbench-kit/workbench-core';
 
 import {
   resolveWorkbenchAppearanceSelection,
@@ -14,6 +15,17 @@ import {
 
 export type WorkbenchAppearancePresentationMode = 'flat-theme' | 'preset';
 export type WorkbenchAppearancePresentationPreference = 'system' | 'light' | 'dark';
+
+export type WorkbenchAppearanceThemeSelection =
+  | {
+      readonly kind: 'base-preference';
+      readonly preference: WorkbenchAppearancePresentationPreference;
+      readonly rawTheme: string | undefined;
+    }
+  | {
+      readonly kind: 'flat-theme';
+      readonly rawTheme: string;
+    };
 
 export interface ResolveWorkbenchAppearancePresentationInput {
   readonly catalog: WorkbenchAppearanceCatalogSnapshot;
@@ -60,20 +72,21 @@ export function resolveWorkbenchAppearancePresentation({
   resolvedSystemTheme,
   theme,
 }: ResolveWorkbenchAppearancePresentationInput): WorkbenchAppearancePresentationDecision {
-  const rawTheme = theme ?? 'system';
-  const basePreference = resolveBasePreference(rawTheme, resolvedSystemTheme);
+  const themeSelection = classifyWorkbenchAppearanceThemeSelection(theme);
 
   if (lightPreset !== undefined && darkPreset !== undefined) {
-    if (!basePreference) {
+    if (themeSelection.kind === 'flat-theme') {
       return createDecision({
         mode: 'preset',
-        unresolvedTheme: rawTheme,
+        unresolvedTheme: themeSelection.rawTheme,
       });
     }
+    const basePreference = resolveBasePreference(themeSelection.preference, resolvedSystemTheme);
     return resolvePresetPresentation(catalog, basePreference, lightPreset, darkPreset);
   }
 
-  if (basePreference) {
+  if (themeSelection.kind === 'base-preference') {
+    const basePreference = resolveBasePreference(themeSelection.preference, resolvedSystemTheme);
     return createDecision({
       mode: 'flat-theme',
       theme: basePreference.theme,
@@ -81,22 +94,36 @@ export function resolveWorkbenchAppearancePresentation({
     });
   }
 
-  return resolveFlatThemePresentation(catalog, rawTheme);
+  return resolveFlatThemePresentation(catalog, themeSelection.rawTheme);
+}
+
+/** Shared package-private classification for controlled appearance values. */
+export function classifyWorkbenchAppearanceThemeSelection(
+  theme: string | undefined,
+): WorkbenchAppearanceThemeSelection {
+  switch (theme) {
+    case undefined:
+      return Object.freeze({ kind: 'base-preference', preference: 'system', rawTheme: undefined });
+    case 'system':
+    case 'light':
+    case 'dark':
+      return Object.freeze({ kind: 'base-preference', preference: theme, rawTheme: theme });
+    default:
+      return Object.freeze({ kind: 'flat-theme', rawTheme: theme });
+  }
 }
 
 function resolveBasePreference(
-  rawTheme: string,
+  preference: WorkbenchAppearancePresentationPreference,
   resolvedSystemTheme: ResolvedWorkbenchTheme,
-): ResolvedBasePreference | undefined {
-  switch (rawTheme) {
+): ResolvedBasePreference {
+  switch (preference) {
     case 'system':
       return { preference: 'system', theme: resolvedSystemTheme };
     case 'light':
       return { preference: 'light', theme: 'light' };
     case 'dark':
       return { preference: 'dark', theme: 'dark' };
-    default:
-      return undefined;
   }
 }
 
@@ -205,8 +232,19 @@ function createRegisteredThemeDecision({
   readonly selectionTarget: WorkbenchAppearanceSelectionTarget;
   readonly themePreference?: WorkbenchAppearancePresentationPreference | undefined;
 }): WorkbenchAppearancePresentationDecision {
+  const legacyTokenOverrides = createWorkbenchAppearanceOverrideSnapshot(
+    entry.legacyTokenOverrides,
+  );
+  const completeLegacyTokenOverrides =
+    legacyTokenOverrides !== undefined &&
+    REQUIRED_THEME_TOKEN_KEYS.every((key) =>
+      Object.prototype.hasOwnProperty.call(legacyTokenOverrides, key),
+    )
+      ? legacyTokenOverrides
+      : undefined;
+
   return createDecision({
-    legacyTokenOverrides: createWorkbenchAppearanceOverrideSnapshot(entry.legacyTokenOverrides),
+    legacyTokenOverrides: completeLegacyTokenOverrides,
     mode,
     selectionResolution,
     selectionTarget,

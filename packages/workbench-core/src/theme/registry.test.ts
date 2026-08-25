@@ -69,7 +69,8 @@ describe('ThemeRegistry', () => {
     expect(registry.getThemes()).toHaveLength(1);
     expect(registry.getThemes()[0]).toBe(theme);
     expect(registeredThemes[0]).toBe(theme);
-    expect(changes[0]).toEqual({ kind: 'registered', theme });
+    expect(changes[0]?.kind).toBe('registered');
+    expect(changes[0]?.theme).toBe(theme);
 
     theme.label = 'After';
     theme.mode = 'light';
@@ -86,7 +87,8 @@ describe('ThemeRegistry', () => {
     registration.dispose();
     expect(registry.getTheme(registeredId)).toBeUndefined();
     expect(registry.getRevision()).toBe(registeredRevision + 1);
-    expect(changes[1]).toEqual({ kind: 'unregistered', theme });
+    expect(changes[1]?.kind).toBe('unregistered');
+    expect(changes[1]?.theme).toBe(theme);
 
     registration.dispose();
     expect(registry.getRevision()).toBe(registeredRevision + 1);

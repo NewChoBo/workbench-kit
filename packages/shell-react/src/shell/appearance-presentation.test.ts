@@ -6,7 +6,10 @@ import {
 } from '@workbench-kit/workbench-core';
 
 import { createWorkbenchAppearanceCatalogSnapshot } from './appearance-catalog.js';
-import { resolveWorkbenchAppearancePresentation } from './appearance-presentation.js';
+import {
+  classifyWorkbenchAppearanceThemeSelection,
+  resolveWorkbenchAppearancePresentation,
+} from './appearance-presentation.js';
 
 function buildCompleteTokenOverrides(value: string): Record<string, string> {
   return Object.fromEntries(REQUIRED_THEME_TOKEN_KEYS.map((key) => [key, value]));
@@ -27,6 +30,26 @@ function registerTheme(
 }
 
 describe('Workbench appearance presentation', () => {
+  it('classifies an omitted theme as the derived system preference', () => {
+    expect(classifyWorkbenchAppearanceThemeSelection(undefined)).toEqual({
+      kind: 'base-preference',
+      preference: 'system',
+      rawTheme: undefined,
+    });
+
+    expect(
+      resolveWorkbenchAppearancePresentation({
+        catalog: createWorkbenchAppearanceCatalogSnapshot({ themes: new ThemeRegistry() }),
+        resolvedSystemTheme: 'dark',
+      }),
+    ).toMatchObject({
+      mode: 'flat-theme',
+      theme: 'dark',
+      themePreference: 'system',
+      unresolvedTheme: undefined,
+    });
+  });
+
   it('preserves flat host pass-through, missing raw identity, and conflict degradation', () => {
     const themes = new ThemeRegistry();
     registerTheme(themes, { id: 'flat.conflict', mode: 'dark' });
@@ -111,6 +134,46 @@ describe('Workbench appearance presentation', () => {
     expect(decision.legacyTokenOverrides?.['--color-bg']).toBe('#202020');
     expect(decision.legacyTokenOverrides).not.toHaveProperty('--unsafe-extra');
     expect(Object.isFrozen(decision.legacyTokenOverrides)).toBe(true);
+  });
+
+  it('drops the complete legacy override record when sanitization removes a required token', () => {
+    const themes = new ThemeRegistry();
+    const tokenOverrides = buildCompleteTokenOverrides('#202020');
+    tokenOverrides['--color-bg'] = 'url(javascript:alert(1))';
+    registerTheme(themes, {
+      id: 'registered.unsafe-required',
+      mode: 'dark',
+      tokenOverrides,
+    });
+
+    expect(
+      resolveWorkbenchAppearancePresentation({
+        catalog: createWorkbenchAppearanceCatalogSnapshot({ themes }),
+        resolvedSystemTheme: 'light',
+        theme: 'registered.unsafe-required',
+      }),
+    ).toMatchObject({
+      legacyTokenOverrides: undefined,
+      theme: 'dark',
+      themePreset: 'registered.unsafe-required',
+    });
+  });
+
+  it('treats partial preset props as flat presentation', () => {
+    expect(
+      resolveWorkbenchAppearancePresentation({
+        catalog: createWorkbenchAppearanceCatalogSnapshot({ themes: new ThemeRegistry() }),
+        lightPreset: 'orange',
+        resolvedSystemTheme: 'light',
+        theme: 'dark',
+      }),
+    ).toMatchObject({
+      mode: 'flat-theme',
+      selectionResolution: undefined,
+      theme: 'dark',
+      themePreference: 'dark',
+      themePreset: undefined,
+    });
   });
 
   it('uses the resolved system base for built-ins and the declared base for registered presets', () => {
