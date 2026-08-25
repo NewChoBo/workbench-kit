@@ -336,11 +336,13 @@ import type {
   WorkbenchSettingsCapabilityPublication,
   WorkbenchSettingsCapabilityPublisher,
   FieldRemapPreviewState as FieldRemapRootPreviewState,
+  FieldRemapSelection as FieldRemapRootSelection,
 } from '@workbench-kit/shell-react';
 import {
   FieldRemapFlowMapper,
   type FieldRemapFlowMapperProps,
   type FieldRemapPreviewState,
+  type FieldRemapSelection,
 } from '@workbench-kit/shell-react/field-remap';
 import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
@@ -406,6 +408,41 @@ const packedFieldRemapPreview: FieldRemapPreviewState = {
   reason: 'no-sample',
 };
 const packedFieldRemapRootPreview: FieldRemapRootPreviewState = packedFieldRemapPreview;
+const packedFieldRemapSelections: readonly FieldRemapSelection[] = [
+  { kind: 'edge', edgeId: 'edge:1' },
+  { kind: 'transformStep', edgeId: 'edge:1', stepIndex: 0 },
+  { kind: 'draft', localId: 'draft:1' },
+  { kind: 'operator', operatorId: 'operator:1' },
+  null,
+];
+const packedFieldRemapRootSelections: readonly FieldRemapRootSelection[] =
+  packedFieldRemapSelections;
+type PackedFieldRemapBulkPropsRemainInternal = Extract<
+  keyof FieldRemapFlowMapperProps,
+  'bulkSelection' | 'onBulkSelectionChange'
+> extends never
+  ? true
+  : never;
+const packedFieldRemapBulkPropsRemainInternal: PackedFieldRemapBulkPropsRemainInternal = true;
+function consumePackedFieldRemapSelection(selection: FieldRemapSelection): string {
+  if (selection === null) {
+    return 'none';
+  }
+  switch (selection.kind) {
+    case 'edge':
+      return selection.edgeId;
+    case 'transformStep':
+      return \`\${selection.edgeId}:\${selection.stepIndex}\`;
+    case 'draft':
+      return selection.localId;
+    case 'operator':
+      return selection.operatorId;
+    default: {
+      const exhaustive: never = selection;
+      return exhaustive;
+    }
+  }
+}
 const packedFieldRemapPreviewProps: Pick<
   FieldRemapFlowMapperProps,
   'preview' | 'readOnly' | 'showPreview'
@@ -444,6 +481,10 @@ async function verifyPackedGraphAuthoring(): Promise<{
   packedThemeChange,
   packedFieldRemapPreview,
   packedFieldRemapRootPreview,
+  packedFieldRemapSelections,
+  packedFieldRemapRootSelections,
+  packedFieldRemapBulkPropsRemainInternal,
+  packedFieldRemapSelectionKinds: packedFieldRemapSelections.map(consumePackedFieldRemapSelection),
   packedFieldRemapPreviewProps,
   verifyPackedGraphAuthoring,
   commands: createWorkbenchShellCommands({ activities: [] }),

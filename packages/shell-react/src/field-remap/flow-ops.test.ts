@@ -17,9 +17,13 @@ import {
   createDraftTransform,
   createSplitOperator,
   finalizeDraftTransform,
+  listFieldRemapBulkSelectionRefs,
   listCompatibleTransforms,
+  normalizeFieldRemapBulkSelection,
+  planFieldRemapBulkDelete,
   removeMappingOperator,
   setTransformStepIdOnEdge,
+  updateFieldRemapBulkSelection,
   upsertItemEdgeOnParent,
 } from './flow-ops.js';
 
@@ -179,5 +183,165 @@ describe('field-remap flow-ops', () => {
       'b.labels',
     );
     expect(removeMappingOperator([combine, split], combine.id)).toEqual([split]);
+  });
+
+  it('uses edge order then ascending transform steps as the only membership order', () => {
+    const edges: readonly MappingEdge[] = [
+      {
+        id: 'e-b',
+        sourceFieldId: 'a.tags',
+        targetSlotId: 'b.labels',
+        transformIds: ['array:first', 'string:trim'],
+      },
+      { id: 'e-a', sourceFieldId: 'a.user_name', targetSlotId: 'b.name' },
+    ];
+
+    expect(listFieldRemapBulkSelectionRefs(edges)).toEqual([
+      { kind: 'edge', edgeId: 'e-b' },
+      { kind: 'transformStep', edgeId: 'e-b', stepIndex: 0 },
+      { kind: 'transformStep', edgeId: 'e-b', stepIndex: 1 },
+      { kind: 'edge', edgeId: 'e-a' },
+    ]);
+    expect(
+      normalizeFieldRemapBulkSelection(edges, [
+        { kind: 'edge', edgeId: 'e-a' },
+        { kind: 'transformStep', edgeId: 'e-b', stepIndex: 1 },
+        { kind: 'edge', edgeId: 'e-a' },
+        { kind: 'edge', edgeId: 'stale' },
+      ]),
+    ).toEqual([
+      { kind: 'transformStep', edgeId: 'e-b', stepIndex: 1 },
+      { kind: 'edge', edgeId: 'e-a' },
+    ]);
+  });
+
+  it('keeps the primary anchored across additive and toggle gestures', () => {
+    const edges: readonly MappingEdge[] = [
+      { id: 'e-a', sourceFieldId: 'a.user_name', targetSlotId: 'b.name' },
+      { id: 'e-b', sourceFieldId: 'a.user_name', targetSlotId: 'b.title' },
+    ];
+    const primary = { kind: 'edge', edgeId: 'e-a' } as const;
+    const added = updateFieldRemapBulkSelection({
+      edges,
+      membership: [primary],
+      primary,
+      target: { kind: 'edge', edgeId: 'e-b' },
+      gesture: 'add',
+    });
+    expect(added).toEqual({
+      membership: [primary, { kind: 'edge', edgeId: 'e-b' }],
+      primary,
+    });
+
+    const toggledOut = updateFieldRemapBulkSelection({
+      edges,
+      membership: added.membership,
+      primary,
+      target: { kind: 'edge', edgeId: 'e-b' },
+      gesture: 'toggle',
+    });
+    expect(toggledOut).toEqual({ membership: [primary], primary });
+    expect(
+      updateFieldRemapBulkSelection({
+        edges,
+        membership: toggledOut.membership,
+        primary,
+        target: primary,
+        gesture: 'toggle',
+      }),
+    ).toEqual({ membership: [primary], primary });
+  });
+
+  it('treats a stale primary gesture as a fresh canonical singleton', () => {
+    const edges: readonly MappingEdge[] = [
+      { id: 'e-a', sourceFieldId: 'a.user_name', targetSlotId: 'b.name' },
+    ];
+    expect(
+      updateFieldRemapBulkSelection({
+        edges,
+        membership: [{ kind: 'edge', edgeId: 'stale' }],
+        primary: { kind: 'edge', edgeId: 'stale' },
+        target: { kind: 'edge', edgeId: 'e-a' },
+        gesture: 'add',
+      }),
+    ).toEqual({
+      membership: [{ kind: 'edge', edgeId: 'e-a' }],
+      primary: { kind: 'edge', edgeId: 'e-a' },
+    });
+  });
+
+  it('plans overlap and descending original-index removal as one immutable result', () => {
+    const edgeA: MappingEdge = {
+      id: 'e-a',
+      sourceFieldId: 'a.user_name',
+      targetSlotId: 'b.name',
+      transformIds: ['string:trim', 'string:upper', 'string:suffix'],
+      transformOptionSteps: [undefined, undefined, { value: '!' }],
+    };
+    const edgeB: MappingEdge = {
+      id: 'e-b',
+      sourceFieldId: 'a.tags',
+      targetSlotId: 'b.labels',
+      transformIds: ['array:first'],
+    };
+    const edgeC: MappingEdge = {
+      id: 'e-c',
+      sourceFieldId: 'a.user_name',
+      targetSlotId: 'b.title',
+    };
+
+    const plan = planFieldRemapBulkDelete(
+      [edgeA, edgeB, edgeC],
+      [
+        { kind: 'transformStep', edgeId: 'e-a', stepIndex: 2 },
+        { kind: 'transformStep', edgeId: 'e-a', stepIndex: 0 },
+        { kind: 'edge', edgeId: 'e-b' },
+        { kind: 'transformStep', edgeId: 'e-b', stepIndex: 0 },
+      ],
+    );
+    expect(plan.status).toBe('changed');
+    if (plan.status !== 'changed') {
+      return;
+    }
+    expect(plan.edges).toEqual([
+      { ...edgeA, transformIds: ['string:upper'], transformOptionSteps: undefined },
+      edgeC,
+    ]);
+    expect(plan.edges[1]).toBe(edgeC);
+    expect(edgeA.transformIds).toEqual(['string:trim', 'string:upper', 'string:suffix']);
+  });
+
+  it('retains an edge when every step is removed and rejects any stale member atomically', () => {
+    const edge: MappingEdge = {
+      id: 'e-a',
+      sourceFieldId: 'a.user_name',
+      targetSlotId: 'b.name',
+      transformIds: ['string:trim'],
+      transformOptionSteps: [{ value: 'ignored' }],
+    };
+    expect(
+      planFieldRemapBulkDelete([edge], [{ kind: 'transformStep', edgeId: 'e-a', stepIndex: 0 }]),
+    ).toEqual({
+      status: 'changed',
+      edges: [{ ...edge, transformIds: undefined, transformOptionSteps: undefined }],
+    });
+    expect(
+      planFieldRemapBulkDelete(
+        [edge],
+        [
+          { kind: 'transformStep', edgeId: 'e-a', stepIndex: 0 },
+          { kind: 'edge', edgeId: 'stale' },
+        ],
+      ),
+    ).toEqual({ status: 'invalid' });
+    expect(
+      planFieldRemapBulkDelete([edge], [{ kind: 'transformStep', edgeId: 'e-a', stepIndex: 0.5 }]),
+    ).toEqual({ status: 'invalid' });
+    expect(
+      planFieldRemapBulkDelete(
+        [edge],
+        [{ kind: 'transformStep', edgeId: 'e-a', stepIndex: Number.NaN }],
+      ),
+    ).toEqual({ status: 'invalid' });
   });
 });

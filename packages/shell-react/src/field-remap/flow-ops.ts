@@ -28,6 +28,156 @@ export type FieldRemapSelection =
   | { readonly kind: 'operator'; readonly operatorId: string }
   | null;
 
+/** Mapper-local durable membership. It is intentionally not part of the public Flow props. */
+export type FieldRemapBulkSelectionRef =
+  | { readonly kind: 'edge'; readonly edgeId: string }
+  | { readonly kind: 'transformStep'; readonly edgeId: string; readonly stepIndex: number };
+
+export type FieldRemapSelectionGesture = 'plain' | 'toggle' | 'add';
+
+export function fieldRemapBulkSelectionKey(ref: FieldRemapBulkSelectionRef): string {
+  return ref.kind === 'edge'
+    ? `edge:${ref.edgeId}`
+    : `transformStep:${ref.edgeId}:${ref.stepIndex}`;
+}
+
+export function fieldRemapSelectionKey(selection: FieldRemapSelection): string {
+  if (selection === null) {
+    return 'none';
+  }
+  if (selection.kind === 'draft') {
+    return `draft:${selection.localId}`;
+  }
+  if (selection.kind === 'operator') {
+    return `operator:${selection.operatorId}`;
+  }
+  return fieldRemapBulkSelectionKey(selection);
+}
+
+export function asFieldRemapBulkSelectionRef(
+  selection: FieldRemapSelection,
+): FieldRemapBulkSelectionRef | undefined {
+  return selection?.kind === 'edge' || selection?.kind === 'transformStep' ? selection : undefined;
+}
+
+/** One semantic order shared by selection, stale reconciliation, deletion and focus. */
+export function listFieldRemapBulkSelectionRefs(
+  edges: readonly MappingEdge[],
+): FieldRemapBulkSelectionRef[] {
+  const refs: FieldRemapBulkSelectionRef[] = [];
+  for (const edge of edges) {
+    refs.push({ kind: 'edge', edgeId: edge.id });
+    for (let stepIndex = 0; stepIndex < (edge.transformIds?.length ?? 0); stepIndex += 1) {
+      refs.push({ kind: 'transformStep', edgeId: edge.id, stepIndex });
+    }
+  }
+  return refs;
+}
+
+export function normalizeFieldRemapBulkSelection(
+  edges: readonly MappingEdge[],
+  refs: readonly FieldRemapBulkSelectionRef[],
+): FieldRemapBulkSelectionRef[] {
+  const requested = new Set(refs.map(fieldRemapBulkSelectionKey));
+  return listFieldRemapBulkSelectionRefs(edges).filter((ref) =>
+    requested.has(fieldRemapBulkSelectionKey(ref)),
+  );
+}
+
+export function updateFieldRemapBulkSelection(input: {
+  readonly edges: readonly MappingEdge[];
+  readonly membership: readonly FieldRemapBulkSelectionRef[];
+  readonly primary: FieldRemapSelection;
+  readonly target: FieldRemapBulkSelectionRef;
+  readonly gesture: FieldRemapSelectionGesture;
+}): {
+  readonly membership: readonly FieldRemapBulkSelectionRef[];
+  readonly primary: FieldRemapSelection;
+} {
+  const targetKey = fieldRemapBulkSelectionKey(input.target);
+  const canonical = listFieldRemapBulkSelectionRefs(input.edges);
+  if (!canonical.some((ref) => fieldRemapBulkSelectionKey(ref) === targetKey)) {
+    return {
+      membership: normalizeFieldRemapBulkSelection(input.edges, input.membership),
+      primary: input.primary,
+    };
+  }
+
+  const primaryRef = asFieldRemapBulkSelectionRef(input.primary);
+  const primaryKey = primaryRef ? fieldRemapBulkSelectionKey(primaryRef) : undefined;
+  const primaryIsValid = primaryKey
+    ? canonical.some((ref) => fieldRemapBulkSelectionKey(ref) === primaryKey)
+    : false;
+  if (input.gesture === 'plain' || primaryKey === undefined || !primaryIsValid) {
+    return { membership: [input.target], primary: input.target };
+  }
+
+  const membership = normalizeFieldRemapBulkSelection(input.edges, input.membership);
+  const keys = new Set(membership.map(fieldRemapBulkSelectionKey));
+  if (input.gesture === 'add') {
+    keys.add(targetKey);
+  } else if (targetKey !== primaryKey) {
+    if (keys.has(targetKey)) {
+      keys.delete(targetKey);
+    } else {
+      keys.add(targetKey);
+    }
+  }
+  keys.add(primaryKey);
+
+  return {
+    membership: canonical.filter((ref) => keys.has(fieldRemapBulkSelectionKey(ref))),
+    primary: input.primary,
+  };
+}
+
+export type FieldRemapBulkDeletePlan =
+  | { readonly status: 'invalid' | 'unchanged' }
+  | { readonly status: 'changed'; readonly edges: readonly MappingEdge[] };
+
+/** Plan one immutable, all-or-nothing durable removal from one edge snapshot. */
+export function planFieldRemapBulkDelete(
+  edges: readonly MappingEdge[],
+  refs: readonly FieldRemapBulkSelectionRef[],
+): FieldRemapBulkDeletePlan {
+  if (refs.length === 0) {
+    return { status: 'unchanged' };
+  }
+
+  const validKeys = new Set(listFieldRemapBulkSelectionRefs(edges).map(fieldRemapBulkSelectionKey));
+  if (refs.some((ref) => !validKeys.has(fieldRemapBulkSelectionKey(ref)))) {
+    return { status: 'invalid' };
+  }
+
+  const selectedEdges = new Set(refs.filter((ref) => ref.kind === 'edge').map((ref) => ref.edgeId));
+  const selectedSteps = new Map<string, Set<number>>();
+  for (const ref of refs) {
+    if (ref.kind === 'transformStep' && !selectedEdges.has(ref.edgeId)) {
+      const indices = selectedSteps.get(ref.edgeId) ?? new Set<number>();
+      indices.add(ref.stepIndex);
+      selectedSteps.set(ref.edgeId, indices);
+    }
+  }
+
+  const nextEdges = edges
+    .filter((edge) => !selectedEdges.has(edge.id))
+    .map((edge) => {
+      const indices = selectedSteps.get(edge.id);
+      if (!indices) {
+        return edge;
+      }
+      const transformIds = (edge.transformIds ?? []).filter((_, index) => !indices.has(index));
+      const optionSteps = edge.transformOptionSteps?.filter((_, index) => !indices.has(index));
+      return {
+        ...edge,
+        transformIds: transformIds.length > 0 ? transformIds : undefined,
+        transformOptionSteps: resizeOptionSteps(optionSteps, transformIds.length),
+      };
+    });
+
+  return { status: 'changed', edges: nextEdges };
+}
+
 /**
  * Ephemeral place-then-wire transform. Not part of `FieldRemapDocument` until
  * both ports are bound and {@link finalizeDraftTransform} succeeds.

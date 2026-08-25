@@ -219,6 +219,13 @@ export const ReadOnlyEmbed: Story = {
     );
     directEdge.focus();
     await expect(directEdge).toHaveFocus();
+    await userEvent.keyboard('{Shift>}{Enter}{/Shift}');
+    await expect(transformNode).toHaveAttribute('aria-pressed', 'true');
+    await expect(directEdge).toHaveAttribute('aria-pressed', 'true');
+    await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
+    await userEvent.keyboard('{Delete}');
+    await expect(directEdge).toBeVisible();
+    await expect(canvasElement.textContent?.toLowerCase()).not.toContain('press delete to remove');
     await userEvent.keyboard('{Enter}');
     await expect(canvas.getByTestId('field-remap-detail-binding')).toHaveTextContent(
       'a.profile.country → b.location.country',
@@ -407,6 +414,65 @@ export const SemanticHistory: Story = {
 
     await userEvent.click(redo);
     await waitFor(() => expect(canvas.queryByTestId('field-remap-lane-e-name')).toBeNull());
+  },
+};
+
+export const SemanticMultiSelectBulkRemove: Story = {
+  name: 'Semantic multi-select / bulk Remove',
+  args: {
+    sampleId: 'nested-ab',
+    showHostChromeDemo: true,
+    showBindingsList: true,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const mapper = canvas.getByTestId('field-remap-mapper');
+    const name = canvas.getByTestId('field-remap-select-edge-e-name');
+    const tags = canvas.getByTestId('field-remap-select-edge-e-tags');
+    const undo = canvas.getByTestId('field-remap-undo');
+
+    await userEvent.click(name);
+    await expect(name).toHaveAttribute('aria-pressed', 'true');
+    await expect(name).toHaveAttribute('data-primary', 'true');
+
+    await userEvent.keyboard('{Control>}');
+    await userEvent.click(tags);
+    await userEvent.keyboard('{/Control}');
+    await expect(tags).toHaveAttribute('aria-pressed', 'true');
+    await expect(tags).toHaveAttribute('data-primary', 'false');
+
+    const titleStep = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="xf:e-title:0"]',
+    );
+    titleStep.focus();
+    await userEvent.keyboard('{Shift>}{Enter}{/Shift}');
+    await expect(titleStep).toHaveAttribute('aria-pressed', 'true');
+
+    const cityStep = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id="xf:e-city:0"]',
+    );
+    cityStep.focus();
+    await userEvent.keyboard('{Meta>}{Space}{/Meta}');
+    await expect(cityStep).toHaveAttribute('aria-pressed', 'true');
+    await expect(canvas.getByTestId('field-remap-detail-binding')).toHaveTextContent(
+      'a.user_name → b.name',
+    );
+
+    await userEvent.keyboard('{Delete}');
+    await waitFor(() => {
+      expect(canvas.queryByTestId('field-remap-lane-e-name')).toBeNull();
+      expect(canvas.queryByTestId('field-remap-lane-e-tags')).toBeNull();
+    });
+    await expect(mapper).toHaveFocus();
+    await expect(undo).toBeEnabled();
+
+    await userEvent.click(undo);
+    await expect(await canvas.findByTestId('field-remap-lane-e-name')).toBeVisible();
+    await expect(await canvas.findByTestId('field-remap-lane-e-tags')).toBeVisible();
+    await expect(undo).toBeDisabled();
   },
 };
 

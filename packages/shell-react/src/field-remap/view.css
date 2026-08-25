@@ -772,6 +772,11 @@
   font: inherit;
 }
 
+.workbench-field-remap-flow__binding-select.is-selected {
+  color: var(--vscode-textLink-foreground, var(--color-accent, #3794ff));
+  font-weight: 600;
+}
+
 .workbench-field-remap-detail,
 .workbench-field-remap-convert-note {
   display: flex;

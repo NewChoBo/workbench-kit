@@ -107,6 +107,22 @@ describe('FieldRemapFlowMapper host chrome', () => {
     return event;
   }
 
+  async function clickWithModifiers(
+    target: Element,
+    init: MouseEventInit = {},
+  ): Promise<MouseEvent> {
+    const event = new MouseEvent('click', {
+      bubbles: true,
+      cancelable: true,
+      ...init,
+    });
+    await act(async () => {
+      target.dispatchEvent(event);
+      await Promise.resolve();
+    });
+    return event;
+  }
+
   it('resyncs controlled node content when render metadata changes without topology changes', async () => {
     const sources: readonly SourceField[] = [
       { id: 'source:name', label: 'Original source field', dataType: 'string' },
@@ -1039,7 +1055,7 @@ describe('FieldRemapFlowMapper host chrome', () => {
       operatorNode.dispatchEvent(new MouseEvent('click', { bubbles: true, altKey: true }));
     });
     expect(onOperatorsChange).not.toHaveBeenCalled();
-    expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'operator', operatorId: 'op-name' });
+    expect(onSelectionChange).not.toHaveBeenCalled();
 
     const updatedOperators = sample.operators?.map((operator) =>
       operator.id === 'op-name' && operator.kind === 'combine'
@@ -1087,6 +1103,245 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(onSelectionChange).toHaveBeenCalledWith(null);
   });
 
+  it('shares plain, toggle, and additive membership across uncontrolled binding buttons', async () => {
+    await renderMapper();
+    const name = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    const title = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-title"]',
+    )!;
+    const tags = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-tags"]',
+    )!;
+
+    await clickWithModifiers(name);
+    expect(name.getAttribute('aria-pressed')).toBe('true');
+    expect(name.dataset.primary).toBe('true');
+
+    await clickWithModifiers(tags, { ctrlKey: true });
+    expect(name.getAttribute('aria-pressed')).toBe('true');
+    expect(tags.getAttribute('aria-pressed')).toBe('true');
+    expect(tags.dataset.primary).toBe('false');
+    expect(name.dataset.primary).toBe('true');
+
+    await clickWithModifiers(title, { shiftKey: true });
+    expect(title.getAttribute('aria-pressed')).toBe('true');
+    expect(name.dataset.primary).toBe('true');
+
+    await clickWithModifiers(name, { metaKey: true });
+    expect(name.getAttribute('aria-pressed')).toBe('true');
+
+    await clickWithModifiers(tags, { metaKey: true });
+    expect(tags.getAttribute('aria-pressed')).toBe('false');
+    expect(title.getAttribute('aria-pressed')).toBe('true');
+  });
+
+  it('keeps the legacy callback-only selection surface externally managed', async () => {
+    const onSelectionChange = vi.fn();
+    await renderMapper({ onSelectionChange });
+    const name = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    await clickWithModifiers(name);
+
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+    expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'e-name' });
+    expect(name.getAttribute('aria-pressed')).toBe('false');
+    expect(container!.querySelector('[data-testid="field-remap-detail-binding"]')).toBeNull();
+  });
+
+  it('resets mapper-local membership only for a semantic controlled primary change', async () => {
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+    });
+    const name = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    const tags = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-tags"]',
+    )!;
+
+    await clickWithModifiers(tags, { ctrlKey: true });
+    expect(name.getAttribute('aria-pressed')).toBe('true');
+    expect(tags.getAttribute('aria-pressed')).toBe('true');
+    expect(onSelectionChange).not.toHaveBeenCalled();
+
+    await rerenderMapper({
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+    });
+    expect(name.getAttribute('aria-pressed')).toBe('true');
+    expect(tags.getAttribute('aria-pressed')).toBe('true');
+
+    await rerenderMapper({
+      selection: { kind: 'edge', edgeId: 'e-title' },
+      onSelectionChange,
+    });
+    expect(name.getAttribute('aria-pressed')).toBe('false');
+    expect(tags.getAttribute('aria-pressed')).toBe('false');
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-select-edge-e-title"]')
+        ?.getAttribute('aria-pressed'),
+    ).toBe('true');
+  });
+
+  it('corrects a stale controlled primary once and preserves surviving membership on acknowledgement', async () => {
+    const sample = getFieldRemapSample('nested-ab');
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+    });
+    await clickWithModifiers(
+      container!.querySelector('[data-testid="field-remap-select-edge-e-title"]')!,
+      { shiftKey: true },
+    );
+    await clickWithModifiers(
+      container!.querySelector('[data-testid="field-remap-select-edge-e-tags"]')!,
+      { shiftKey: true },
+    );
+    const withoutPrimary = sample.edges.filter((edge) => edge.id !== 'e-name');
+    onSelectionChange.mockClear();
+
+    await rerenderMapper({
+      edges: withoutPrimary,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+    });
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+    expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'e-title' });
+
+    await rerenderMapper({
+      edges: withoutPrimary,
+      selection: { kind: 'edge', edgeId: 'e-title' },
+      onSelectionChange,
+    });
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-select-edge-e-title"]')
+        ?.getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-select-edge-e-tags"]')
+        ?.getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+  });
+
+  it('does not loop when a host ignores a stale-primary correction', async () => {
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'edge', edgeId: 'missing' },
+      onSelectionChange,
+    });
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+
+    await rerenderMapper({
+      selection: { kind: 'edge', edgeId: 'missing' },
+      onSelectionChange,
+    });
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+  });
+
+  it('routes graph Enter/Space modifiers through semantic membership without raw XYFlow drift', async () => {
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'transformStep', edgeId: 'e-title', stepIndex: 0 },
+      onSelectionChange,
+    });
+    const primary = container!.querySelector<HTMLElement>(
+      '.react-flow__node[data-id="xf:e-title:0"]',
+    )!;
+    const nameStep = container!.querySelector<HTMLElement>(
+      '.react-flow__node[data-id="xf:e-name:0"]',
+    )!;
+    expect(primary.getAttribute('aria-pressed')).toBe('true');
+
+    const added = await pressKey(nameStep, 'Enter', { ctrlKey: true });
+    expect(added.defaultPrevented).toBe(true);
+    expect(onSelectionChange).not.toHaveBeenCalled();
+    expect(nameStep.getAttribute('aria-pressed')).toBe('true');
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-select-edge-e-name"]')
+        ?.getAttribute('aria-pressed'),
+    ).toBe('false');
+
+    const primaryNoop = await pressKey(primary, ' ', { metaKey: true });
+    expect(primaryNoop.defaultPrevented).toBe(true);
+    expect(primary.getAttribute('aria-pressed')).toBe('true');
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('allows read-only graph keyboard multi-selection but never bulk deletion', async () => {
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      readOnly: true,
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onEdgesChange,
+      onSelectionChange,
+    });
+    const titleStep = container!.querySelector<HTMLElement>(
+      '.react-flow__node[data-id="xf:e-title:0"]',
+    )!;
+    const added = await pressKey(titleStep, ' ', { shiftKey: true });
+    expect(added.defaultPrevented).toBe(true);
+    expect(onSelectionChange).not.toHaveBeenCalled();
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-select-edge-e-name"]')
+        ?.getAttribute('aria-pressed'),
+    ).toBe('true');
+    expect(titleStep.getAttribute('aria-pressed')).toBe('true');
+
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const deleteEvent = await pressKey(mapper, 'Delete');
+    expect(deleteEvent.defaultPrevented).toBe(false);
+    expect(onEdgesChange).not.toHaveBeenCalled();
+    expect(document.body.textContent).not.toContain('press delete to remove');
+  });
+
+  it('plans one bulk edge removal and emits one durable callback', async () => {
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    const onOperatorsChange = vi.fn();
+    await renderMapper({ onEdgesChange, onOperatorsChange });
+    const name = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    const tags = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-tags"]',
+    )!;
+    await clickWithModifiers(name);
+    await clickWithModifiers(tags, { shiftKey: true });
+
+    await rerenderMapper({
+      selection: { kind: 'edge', edgeId: 'e-name' },
+      onSelectionChange,
+      onEdgesChange,
+      onOperatorsChange,
+    });
+    await clickWithModifiers(tags, { shiftKey: true });
+    onEdgesChange.mockClear();
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const event = await pressKey(mapper, 'Delete');
+    const nextEdges = onEdgesChange.mock.lastCall?.[0] as readonly MappingEdge[];
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(onEdgesChange).toHaveBeenCalledOnce();
+    expect(nextEdges.some((edge) => edge.id === 'e-name' || edge.id === 'e-tags')).toBe(false);
+    expect(onSelectionChange).toHaveBeenCalledOnce();
+    expect(onSelectionChange).toHaveBeenCalledWith(null);
+    expect(onOperatorsChange).not.toHaveBeenCalled();
+  });
+
   it('routes Backspace through transform-step removal and preserves a valid selection', async () => {
     const onEdgesChange = vi.fn();
     const onSelectionChange = vi.fn();
@@ -1102,11 +1357,44 @@ describe('FieldRemapFlowMapper host chrome', () => {
 
     expect(event.defaultPrevented).toBe(true);
     expect(nextEdges.find((edge) => edge.id === 'e-title')?.transformIds).toEqual(['string:upper']);
+    expect(onSelectionChange).not.toHaveBeenCalled();
+  });
+
+  it('preserves the adjacent-step and owning-edge fallback for singleton Remove', async () => {
+    const sample = getFieldRemapSample('nested-ab');
+    const onEdgesChange = vi.fn();
+    const onSelectionChange = vi.fn();
+    await renderMapper({
+      selection: { kind: 'transformStep', edgeId: 'e-title', stepIndex: 1 },
+      onSelectionChange,
+      onEdgesChange,
+    });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    await pressKey(mapper, 'Delete');
     expect(onSelectionChange).toHaveBeenCalledWith({
       kind: 'transformStep',
       edgeId: 'e-title',
       stepIndex: 0,
     });
+
+    const singleStepEdges = sample.edges.map((edge) =>
+      edge.id === 'e-title' ? { ...edge, transformIds: ['string:trim'] } : edge,
+    );
+    onEdgesChange.mockClear();
+    onSelectionChange.mockClear();
+    await rerenderMapper({
+      edges: singleStepEdges,
+      selection: { kind: 'transformStep', edgeId: 'e-title', stepIndex: 0 },
+      onSelectionChange,
+      onEdgesChange,
+    });
+    await pressKey(mapper, 'Backspace');
+    expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'e-title' });
+    expect(
+      (onEdgesChange.mock.lastCall?.[0] as readonly MappingEdge[]).find(
+        (edge) => edge.id === 'e-title',
+      )?.transformIds,
+    ).toBeUndefined();
   });
 
   it('deletes authorable operators and leaves read-only operators unconsumed', async () => {

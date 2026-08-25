@@ -18,11 +18,15 @@ import {
 } from './panel.js';
 import { getFieldRemapBrowseDemoShapes, getFieldRemapSample } from './samples.js';
 
-async function clickTestId(container: HTMLElement, testId: string): Promise<void> {
+async function clickTestId(
+  container: HTMLElement,
+  testId: string,
+  init: MouseEventInit = {},
+): Promise<void> {
   const button = container.querySelector<HTMLButtonElement>(`[data-testid="${testId}"]`);
   expect(button).toBeTruthy();
   await act(async () => {
-    button!.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    button!.dispatchEvent(new MouseEvent('click', { bubbles: true, ...init }));
     await Promise.resolve();
   });
 }
@@ -492,6 +496,37 @@ describe('FieldRemapPanel', () => {
 
     await act(async () => historyActionsRef.current?.redo());
     expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
+  });
+
+  it('records one history transition for one bulk Remove and restores it with one Undo', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const historyActionsRef = createRef<FieldRemapHistoryActions | null>();
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample="nested-ab"
+          editableShapes={false}
+          historyActionsRef={historyActionsRef}
+        />,
+      );
+    });
+    await clickTestId(container, 'field-remap-select-edge-e-name');
+    await clickTestId(container, 'field-remap-select-edge-e-tags', { shiftKey: true });
+    const mapper = container.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const event = await pressKey(mapper, 'Delete');
+
+    expect(event.defaultPrevented).toBe(true);
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
+    expect(container.querySelector('[data-testid="field-remap-lane-e-tags"]')).toBeNull();
+    expect(historyActionsRef.current?.canUndo).toBe(true);
+
+    await act(async () => historyActionsRef.current?.undo());
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeTruthy();
+    expect(container.querySelector('[data-testid="field-remap-lane-e-tags"]')).toBeTruthy();
+    expect(historyActionsRef.current?.canUndo).toBe(false);
   });
 
   it('routes available Panel history shortcuts and leaves unavailable actions unconsumed', async () => {

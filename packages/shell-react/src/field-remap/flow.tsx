@@ -31,7 +31,6 @@ import {
   type FinalConnectionState,
   type Node,
   type NodeProps,
-  type OnSelectionChangeParams,
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
@@ -85,10 +84,18 @@ import {
   edgePortTypes,
   enableListContextOnEdge,
   finalizeDraftTransform,
+  asFieldRemapBulkSelectionRef,
+  fieldRemapBulkSelectionKey,
+  fieldRemapSelectionKey,
   listCompatibleTransforms,
+  listFieldRemapBulkSelectionRefs,
+  normalizeFieldRemapBulkSelection,
+  planFieldRemapBulkDelete,
   removeMappingOperator,
   removeTransformStepFromEdge,
+  updateFieldRemapBulkSelection,
   updateMappingOperator,
+  type FieldRemapBulkSelectionRef,
   type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
@@ -444,6 +451,57 @@ export interface FieldRemapConnectionFeedback {
   readonly impactedEdgeIds?: readonly string[];
 }
 
+function areFieldRemapBulkSelectionsEqual(
+  left: readonly FieldRemapBulkSelectionRef[],
+  right: readonly FieldRemapBulkSelectionRef[],
+): boolean {
+  return (
+    left.length === right.length &&
+    left.every(
+      (ref, index) => fieldRemapBulkSelectionKey(ref) === fieldRemapBulkSelectionKey(right[index]!),
+    )
+  );
+}
+
+function fieldRemapBulkRefFromKeyboardTarget(
+  target: EventTarget | null,
+  nodes: readonly Node[],
+  edges: readonly Edge[],
+): FieldRemapBulkSelectionRef | undefined {
+  if (!(target instanceof Element)) {
+    return undefined;
+  }
+
+  const explicit = target.closest<HTMLElement>('[data-field-remap-bulk-kind]');
+  const explicitKind = explicit?.dataset.fieldRemapBulkKind;
+  const explicitEdgeId = explicit?.dataset.fieldRemapBulkEdgeId;
+  if (explicitKind === 'edge' && explicitEdgeId) {
+    return { kind: 'edge', edgeId: explicitEdgeId };
+  }
+  if (explicitKind === 'transformStep' && explicitEdgeId) {
+    const stepIndex = Number(explicit.dataset.fieldRemapBulkStepIndex);
+    if (Number.isInteger(stepIndex) && stepIndex >= 0) {
+      return { kind: 'transformStep', edgeId: explicitEdgeId, stepIndex };
+    }
+  }
+
+  const nodeId = target.closest<HTMLElement>('.react-flow__node')?.dataset.id;
+  const node = nodeId ? nodes.find((candidate) => candidate.id === nodeId) : undefined;
+  const nodeData = node?.data as FieldRemapFlowNodeData | undefined;
+  if (nodeData?.kind === 'transform') {
+    return {
+      kind: 'transformStep',
+      edgeId: nodeData.mappingEdgeId,
+      stepIndex: nodeData.stepIndex,
+    };
+  }
+
+  const flowEdgeId = target.closest<HTMLElement>('.react-flow__edge')?.dataset.id;
+  const flowEdge = flowEdgeId ? edges.find((candidate) => candidate.id === flowEdgeId) : undefined;
+  const mappingEdgeId = (flowEdge?.data as FieldRemapFlowEdgeData | undefined)?.mappingEdgeId;
+  return mappingEdgeId ? { kind: 'edge', edgeId: mappingEdgeId } : undefined;
+}
+
 function connectionFromFinalState(state: FinalConnectionState): Connection | null {
   if (!state.fromNode || !state.fromHandle || !state.toNode || !state.toHandle) {
     return null;
@@ -601,12 +659,78 @@ function FieldRemapFlowCanvas({
   const restoreMapperFocusRef = useRef(false);
   const [workspaceLayout, setWorkspaceLayout] = useState<'wide' | 'medium' | 'narrow'>('wide');
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
-  const selection = selectionProp !== undefined ? selectionProp : internalSelection;
-  const setSelection = onSelectionChangeProp ?? setInternalSelection;
+  const authoritativeSelection = selectionProp !== undefined ? selectionProp : internalSelection;
+  const selectionExternallyManaged =
+    selectionProp !== undefined || onSelectionChangeProp !== undefined;
+  const [bulkSelection, setBulkSelection] = useState<readonly FieldRemapBulkSelectionRef[]>(() => {
+    const initial = asFieldRemapBulkSelectionRef(selectionProp ?? null);
+    return initial ? normalizeFieldRemapBulkSelection(edges, [initial]) : [];
+  });
+  const selection = authoritativeSelection;
+  const selectionRef = useRef(authoritativeSelection);
+  selectionRef.current = authoritativeSelection;
+  const setSelection = useCallback(
+    (next: FieldRemapSelection) => {
+      if (fieldRemapSelectionKey(selectionRef.current) === fieldRemapSelectionKey(next)) {
+        return;
+      }
+      if (!selectionExternallyManaged) {
+        setInternalSelection(next);
+        const nextRef = asFieldRemapBulkSelectionRef(next);
+        setBulkSelection(nextRef ? normalizeFieldRemapBulkSelection(edges, [nextRef]) : []);
+      }
+      onSelectionChangeProp?.(next);
+    },
+    [edges, onSelectionChangeProp, selectionExternallyManaged],
+  );
   const setSelectionRef = useRef(setSelection);
   setSelectionRef.current = setSelection;
   const closeModalDetail = useCallback(() => setSelectionRef.current(null), []);
+  const canonicalBulkRefs = useMemo(() => listFieldRemapBulkSelectionRefs(edges), [edges]);
+  const bulkDomainKey = useMemo(
+    () => canonicalBulkRefs.map(fieldRemapBulkSelectionKey).join('\u0000'),
+    [canonicalBulkRefs],
+  );
+  const bulkSelectionKeys = useMemo(
+    () => new Set(bulkSelection.map(fieldRemapBulkSelectionKey)),
+    [bulkSelection],
+  );
+  const controlledSelectionKey = fieldRemapSelectionKey(selectionProp ?? null);
+  const previousControlledSelectionKeyRef = useRef(controlledSelectionKey);
+  const lastPrimaryCorrectionRef = useRef<string | undefined>(undefined);
+  const pendingPrimaryCorrectionAckRef = useRef<
+    { readonly domainKey: string; readonly selectionKey: string } | undefined
+  >(undefined);
+  const pendingBulkFocusRef = useRef<
+    | {
+        readonly domainKey: string;
+        readonly target: FieldRemapBulkSelectionRef | null;
+      }
+    | undefined
+  >(undefined);
+  const pendingBulkCommitRef = useRef<
+    | {
+        readonly domainKey: string;
+        readonly membership: readonly FieldRemapBulkSelectionRef[];
+        readonly primary: FieldRemapSelection;
+      }
+    | undefined
+  >(undefined);
   const previewVisible = showPreview && preview !== undefined && preview.status !== 'unavailable';
+  const flowAriaLabelConfig = useMemo(
+    () => ({
+      'node.a11yDescription.default': readOnly
+        ? 'Press Enter or Space to inspect this item. Hold Control, Command, or Shift to extend the Workbench selection.'
+        : 'Press Enter or Space to select this item. Hold Control, Command, or Shift to extend the Workbench selection.',
+      'node.a11yDescription.keyboardDisabled': readOnly
+        ? 'Press Enter or Space to inspect this item. Workbench editing is read only.'
+        : 'Press Enter or Space to select this item. Use the Workbench controls to edit it.',
+      'edge.a11yDescription.default': readOnly
+        ? 'Press Enter or Space to inspect this mapping. Hold Control, Command, or Shift to extend the Workbench selection.'
+        : 'Press Enter or Space to select this mapping. Hold Control, Command, or Shift to extend the Workbench selection.',
+    }),
+    [readOnly],
+  );
   const detailVisible = emptyDetail === 'hint' || selection !== null;
   const sideRailVisible = previewVisible || (detailPresentation === 'rail' && detailVisible);
   const [drafts, setDrafts] = useState<readonly FieldRemapDraftTransform[]>([]);
@@ -637,6 +761,103 @@ function FieldRemapFlowCanvas({
       setInternalSelection((current) => (current?.kind === 'draft' ? null : current));
     }
   }, [readOnly, selectionProp]);
+
+  useEffect(() => {
+    let controlledReset: readonly FieldRemapBulkSelectionRef[] | undefined;
+    if (
+      selectionProp !== undefined &&
+      previousControlledSelectionKeyRef.current !== controlledSelectionKey
+    ) {
+      previousControlledSelectionKeyRef.current = controlledSelectionKey;
+      lastPrimaryCorrectionRef.current = undefined;
+      const pendingAck = pendingPrimaryCorrectionAckRef.current;
+      const acceptsCorrection = pendingAck?.selectionKey === controlledSelectionKey;
+      pendingPrimaryCorrectionAckRef.current = undefined;
+      if (!acceptsCorrection) {
+        pendingBulkCommitRef.current = undefined;
+        const controlledRef = asFieldRemapBulkSelectionRef(selectionProp);
+        const next = controlledRef ? normalizeFieldRemapBulkSelection(edges, [controlledRef]) : [];
+        controlledReset = next;
+        setBulkSelection((current) =>
+          areFieldRemapBulkSelectionsEqual(current, next) ? current : next,
+        );
+        if (!controlledRef || next.length > 0) {
+          return;
+        }
+      }
+    }
+
+    const pendingCommit = pendingBulkCommitRef.current;
+    if (pendingCommit) {
+      const primaryAccepted =
+        fieldRemapSelectionKey(authoritativeSelection) ===
+        fieldRemapSelectionKey(pendingCommit.primary);
+      if (primaryAccepted || bulkDomainKey === pendingCommit.domainKey) {
+        setBulkSelection((current) =>
+          areFieldRemapBulkSelectionsEqual(current, pendingCommit.membership)
+            ? current
+            : pendingCommit.membership,
+        );
+      }
+      if (bulkDomainKey !== pendingCommit.domainKey) {
+        return;
+      }
+      pendingBulkCommitRef.current = undefined;
+    }
+
+    const primaryRef = asFieldRemapBulkSelectionRef(authoritativeSelection);
+    if (!primaryRef) {
+      setBulkSelection((current) => (current.length === 0 ? current : []));
+      return;
+    }
+
+    const primaryKey = fieldRemapBulkSelectionKey(primaryRef);
+    const primaryIsValid = canonicalBulkRefs.some(
+      (ref) => fieldRemapBulkSelectionKey(ref) === primaryKey,
+    );
+    let next = controlledReset ?? normalizeFieldRemapBulkSelection(edges, bulkSelection);
+    if (primaryIsValid && !next.some((ref) => fieldRemapBulkSelectionKey(ref) === primaryKey)) {
+      next = normalizeFieldRemapBulkSelection(edges, [...next, primaryRef]);
+    }
+    setBulkSelection((current) =>
+      areFieldRemapBulkSelectionsEqual(current, next) ? current : next,
+    );
+
+    if (primaryIsValid) {
+      lastPrimaryCorrectionRef.current = undefined;
+      return;
+    }
+
+    const nextPrimary = next[0] ?? null;
+    const correctionKey = `${bulkDomainKey}\u0001${fieldRemapSelectionKey(authoritativeSelection)}\u0001${fieldRemapSelectionKey(nextPrimary)}`;
+    if (lastPrimaryCorrectionRef.current === correctionKey) {
+      return;
+    }
+    lastPrimaryCorrectionRef.current = correctionKey;
+    pendingPrimaryCorrectionAckRef.current = onSelectionChangeProp
+      ? {
+          domainKey: bulkDomainKey,
+          selectionKey: fieldRemapSelectionKey(nextPrimary),
+        }
+      : undefined;
+    if (!selectionExternallyManaged) {
+      setInternalSelection(nextPrimary);
+    } else {
+      setSelection(nextPrimary);
+    }
+  }, [
+    bulkDomainKey,
+    bulkSelection,
+    canonicalBulkRefs,
+    controlledSelectionKey,
+    edges,
+    onSelectionChangeProp,
+    authoritativeSelection,
+    selection,
+    selectionProp,
+    selectionExternallyManaged,
+    setSelection,
+  ]);
 
   useEffect(() => {
     if (!restoreMapperFocusRef.current || selection !== null || drafts.length > 0) {
@@ -694,14 +915,50 @@ function FieldRemapFlowCanvas({
     ],
   );
 
+  const applyBulkSelectionGesture = useCallback(
+    (
+      target: FieldRemapBulkSelectionRef,
+      modifiers: {
+        readonly ctrlKey: boolean;
+        readonly metaKey: boolean;
+        readonly shiftKey: boolean;
+      },
+    ) => {
+      pendingPrimaryCorrectionAckRef.current = undefined;
+      const gesture =
+        modifiers.ctrlKey || modifiers.metaKey ? 'toggle' : modifiers.shiftKey ? 'add' : 'plain';
+      const next = updateFieldRemapBulkSelection({
+        edges,
+        membership: bulkSelection,
+        primary: selection,
+        target,
+        gesture,
+      });
+      const primaryChanged =
+        fieldRemapSelectionKey(next.primary) !== fieldRemapSelectionKey(selection);
+      if (!primaryChanged || !selectionExternallyManaged) {
+        setBulkSelection((current) =>
+          areFieldRemapBulkSelectionsEqual(current, next.membership) ? current : next.membership,
+        );
+      }
+      if (primaryChanged) {
+        setSelection(next.primary);
+      }
+    },
+    [bulkSelection, edges, selection, selectionExternallyManaged, setSelection],
+  );
+
   const nodesWithSelection = useMemo(
     () =>
       graph.nodes.map((node) => {
         if (node.data.kind === 'transform') {
-          const selected =
-            selection?.kind === 'transformStep' &&
-            selection.edgeId === node.data.mappingEdgeId &&
-            selection.stepIndex === node.data.stepIndex;
+          const selected = bulkSelectionKeys.has(
+            fieldRemapBulkSelectionKey({
+              kind: 'transformStep',
+              edgeId: node.data.mappingEdgeId,
+              stepIndex: node.data.stepIndex,
+            }),
+          );
           return {
             ...node,
             data: { ...node.data, selected },
@@ -719,30 +976,124 @@ function FieldRemapFlowCanvas({
         }
         return node;
       }),
-    [graph.nodes, selection],
+    [bulkSelectionKeys, graph.nodes, selection],
+  );
+
+  const flowEdgesWithSelection = useMemo(
+    () =>
+      graph.edges.map((edge) => {
+        const mappingEdgeId = (edge.data as FieldRemapFlowEdgeData | undefined)?.mappingEdgeId;
+        const selected = mappingEdgeId
+          ? bulkSelectionKeys.has(
+              fieldRemapBulkSelectionKey({ kind: 'edge', edgeId: mappingEdgeId }),
+            )
+          : false;
+        return { ...edge, selected };
+      }),
+    [bulkSelectionKeys, graph.edges],
   );
 
   const [nodes, setNodes, onNodesChange] = useNodesState(nodesWithSelection);
-  const [flowEdges, setFlowEdges, onFlowEdgesChange] = useEdgesState(graph.edges);
+  const [flowEdges, setFlowEdges, onFlowEdgesChange] = useEdgesState(flowEdgesWithSelection);
+  const onProjectedNodesChange = useCallback(
+    (changes: Parameters<typeof onNodesChange>[0]) => {
+      onNodesChange(changes.filter((change) => change.type !== 'select'));
+    },
+    [onNodesChange],
+  );
+  const onProjectedFlowEdgesChange = useCallback(
+    (changes: Parameters<typeof onFlowEdgesChange>[0]) => {
+      onFlowEdgesChange(changes.filter((change) => change.type !== 'select'));
+    },
+    [onFlowEdgesChange],
+  );
 
   // Depending directly on `nodesWithSelection` (a new array after each graph
   // calculation) re-enters XYFlow's StoreUpdater. The explicit signature keeps
   // that loop guard while still tracking every value copied into rendered nodes.
   const graphSyncKey = createFieldRemapGraphSyncKey({
     nodes: nodesWithSelection,
-    edges: graph.edges,
+    edges: flowEdgesWithSelection,
     selection,
     transformRegistrySignature,
   });
   const nodesWithSelectionRef = useRef(nodesWithSelection);
-  const graphEdgesRef = useRef(graph.edges);
+  const graphEdgesRef = useRef(flowEdgesWithSelection);
   nodesWithSelectionRef.current = nodesWithSelection;
-  graphEdgesRef.current = graph.edges;
+  graphEdgesRef.current = flowEdgesWithSelection;
 
   useEffect(() => {
     setNodes(nodesWithSelectionRef.current);
     setFlowEdges(graphEdgesRef.current);
   }, [graphSyncKey, setFlowEdges, setNodes]);
+
+  useEffect(() => {
+    const mapper = mapperRef.current;
+    if (!mapper) {
+      return;
+    }
+    const projectGraphSelection = () => {
+      const graphElements = mapper.querySelectorAll<HTMLElement>(
+        '.react-flow__node, .react-flow__edge',
+      );
+      for (const element of Array.from(graphElements)) {
+        const ref = fieldRemapBulkRefFromKeyboardTarget(
+          element,
+          nodesWithSelection,
+          flowEdgesWithSelection,
+        );
+        if (!ref) {
+          element.removeAttribute('aria-pressed');
+          continue;
+        }
+        element.setAttribute('role', 'button');
+        element.setAttribute(
+          'aria-pressed',
+          bulkSelectionKeys.has(fieldRemapBulkSelectionKey(ref)) ? 'true' : 'false',
+        );
+      }
+    };
+    projectGraphSelection();
+    const observer = new MutationObserver(projectGraphSelection);
+    observer.observe(mapper, { childList: true, subtree: true });
+    return () => observer.disconnect();
+  }, [bulkSelectionKeys, flowEdgesWithSelection, graphSyncKey, nodesWithSelection]);
+
+  useEffect(() => {
+    const pending = pendingBulkFocusRef.current;
+    const mapper = mapperRef.current;
+    if (!pending || !mapper || pending.domainKey !== bulkDomainKey) {
+      return;
+    }
+    pendingBulkFocusRef.current = undefined;
+    if (!pending.target) {
+      mapper.focus({ preventScroll: true });
+      return;
+    }
+
+    const targetKey = fieldRemapBulkSelectionKey(pending.target);
+    const explicitTargets = mapper.querySelectorAll<HTMLElement>('[data-field-remap-bulk-kind]');
+    const explicitTarget = Array.from(explicitTargets).find((element) => {
+      const ref = fieldRemapBulkRefFromKeyboardTarget(
+        element,
+        nodesWithSelection,
+        flowEdgesWithSelection,
+      );
+      return ref && fieldRemapBulkSelectionKey(ref) === targetKey;
+    });
+    const graphTargets = mapper.querySelectorAll<HTMLElement>(
+      '.react-flow__node, .react-flow__edge',
+    );
+    const graphTarget = Array.from(graphTargets).find((element) => {
+      const ref = fieldRemapBulkRefFromKeyboardTarget(
+        element,
+        nodesWithSelection,
+        flowEdgesWithSelection,
+      );
+      return ref && fieldRemapBulkSelectionKey(ref) === targetKey;
+    });
+    (explicitTarget ?? graphTarget ?? mapper).focus({ preventScroll: true });
+  }, [bulkDomainKey, flowEdgesWithSelection, nodesWithSelection]);
 
   const connectionContext = useMemo(
     () => ({ sources, targets, edges, transforms, drafts, operators }),
@@ -942,6 +1293,102 @@ function FieldRemapFlowCanvas({
     ],
   );
 
+  const commitBulkDelete = useCallback(
+    (refs: readonly FieldRemapBulkSelectionRef[]): boolean => {
+      const plan = planFieldRemapBulkDelete(edges, refs);
+      if (plan.status !== 'changed') {
+        return false;
+      }
+
+      const removedEdgeIds = new Set(
+        refs.filter((ref) => ref.kind === 'edge').map((ref) => ref.edgeId),
+      );
+      const removedKeys = new Set(refs.map(fieldRemapBulkSelectionKey));
+      let survivingMembership = normalizeFieldRemapBulkSelection(
+        plan.edges,
+        bulkSelection.filter(
+          (ref) =>
+            !removedKeys.has(fieldRemapBulkSelectionKey(ref)) && !removedEdgeIds.has(ref.edgeId),
+        ),
+      );
+      const primaryRef = asFieldRemapBulkSelectionRef(selection);
+      const primaryRemoved = primaryRef
+        ? removedKeys.has(fieldRemapBulkSelectionKey(primaryRef)) ||
+          removedEdgeIds.has(primaryRef.edgeId)
+        : false;
+      const preservesSingleStepFallback =
+        refs.length === 1 &&
+        refs[0]?.kind === 'transformStep' &&
+        primaryRef?.kind === 'transformStep' &&
+        fieldRemapBulkSelectionKey(refs[0]) === fieldRemapBulkSelectionKey(primaryRef);
+      let nextPrimary = primaryRemoved ? (survivingMembership[0] ?? null) : selection;
+      if (preservesSingleStepFallback) {
+        const removedStep = refs[0] as Extract<
+          FieldRemapBulkSelectionRef,
+          { readonly kind: 'transformStep' }
+        >;
+        const nextEdge = plan.edges.find((edge) => edge.id === removedStep.edgeId);
+        nextPrimary =
+          (nextEdge?.transformIds?.length ?? 0) > 0
+            ? {
+                kind: 'transformStep',
+                edgeId: removedStep.edgeId,
+                stepIndex: Math.min(
+                  removedStep.stepIndex,
+                  (nextEdge?.transformIds?.length ?? 1) - 1,
+                ),
+              }
+            : nextEdge
+              ? { kind: 'edge', edgeId: nextEdge.id }
+              : null;
+        const fallbackRef = asFieldRemapBulkSelectionRef(nextPrimary);
+        survivingMembership = fallbackRef
+          ? normalizeFieldRemapBulkSelection(plan.edges, [fallbackRef])
+          : [];
+      }
+      const nextDomainKey = listFieldRemapBulkSelectionRefs(plan.edges)
+        .map(fieldRemapBulkSelectionKey)
+        .join('\u0000');
+
+      pendingBulkCommitRef.current = {
+        domainKey: nextDomainKey,
+        membership: survivingMembership,
+        primary: nextPrimary,
+      };
+      pendingBulkFocusRef.current = {
+        domainKey: nextDomainKey,
+        target: asFieldRemapBulkSelectionRef(nextPrimary) ?? null,
+      };
+      onEdgesChange(plan.edges);
+
+      const primaryKeyChanged =
+        fieldRemapSelectionKey(nextPrimary) !== fieldRemapSelectionKey(selection);
+      if (primaryKeyChanged) {
+        pendingPrimaryCorrectionAckRef.current =
+          onSelectionChangeProp && primaryKeyChanged
+            ? {
+                domainKey: nextDomainKey,
+                selectionKey: fieldRemapSelectionKey(nextPrimary),
+              }
+            : undefined;
+        if (!selectionExternallyManaged) {
+          setInternalSelection(nextPrimary);
+        } else {
+          onSelectionChangeProp?.(nextPrimary);
+        }
+      }
+      return true;
+    },
+    [
+      bulkSelection,
+      edges,
+      onEdgesChange,
+      onSelectionChangeProp,
+      selection,
+      selectionExternallyManaged,
+    ],
+  );
+
   const onEdgesDelete = useCallback(
     (deleted: Edge[]) => {
       if (readOnly) {
@@ -958,16 +1405,9 @@ function FieldRemapFlowCanvas({
       if (mappingIds.size === 0) {
         return;
       }
-      onEdgesChange(edges.filter((edge) => !mappingIds.has(edge.id)));
-      if (
-        selection &&
-        (selection.kind === 'edge' || selection.kind === 'transformStep') &&
-        mappingIds.has(selection.edgeId)
-      ) {
-        setSelection(null);
-      }
+      commitBulkDelete([...mappingIds].map((edgeId) => ({ kind: 'edge' as const, edgeId })));
     },
-    [edges, onEdgesChange, readOnly, selection, setSelection],
+    [commitBulkDelete, readOnly],
   );
 
   const placeDraft = useCallback(
@@ -1022,13 +1462,53 @@ function FieldRemapFlowCanvas({
         );
         return;
       }
-      setSelection({
-        kind: 'transformStep',
-        edgeId: data.mappingEdgeId,
-        stepIndex: data.stepIndex,
-      });
+      applyBulkSelectionGesture(
+        {
+          kind: 'transformStep',
+          edgeId: data.mappingEdgeId,
+          stepIndex: data.stepIndex,
+        },
+        event,
+      );
     },
-    [edges, onEdgesChange, onOperatorsChange, operators, readOnly, selection, setSelection],
+    [
+      applyBulkSelectionGesture,
+      edges,
+      onEdgesChange,
+      onOperatorsChange,
+      operators,
+      readOnly,
+      selection,
+      setSelection,
+    ],
+  );
+
+  const onEdgeClick = useCallback(
+    (event: MouseEvent, edge: Edge) => {
+      const mappingEdgeId = (edge.data as FieldRemapFlowEdgeData | undefined)?.mappingEdgeId;
+      if (!mappingEdgeId) {
+        return;
+      }
+      applyBulkSelectionGesture({ kind: 'edge', edgeId: mappingEdgeId }, event);
+    },
+    [applyBulkSelectionGesture],
+  );
+
+  const onBulkSelectionKeyDownCapture = useCallback(
+    (event: KeyboardEvent<HTMLDivElement>) => {
+      if ((event.key !== 'Enter' && event.key !== ' ') || event.defaultPrevented || event.altKey) {
+        return;
+      }
+      const target = fieldRemapBulkRefFromKeyboardTarget(event.target, nodes, flowEdges);
+      if (!target) {
+        return;
+      }
+      event.preventDefault();
+      event.stopPropagation();
+      pendingPrimaryCorrectionAckRef.current = undefined;
+      applyBulkSelectionGesture(target, event);
+    },
+    [applyBulkSelectionGesture, flowEdges, nodes],
   );
 
   const onKeyDown = useCallback(
@@ -1075,29 +1555,12 @@ function FieldRemapFlowCanvas({
       }
 
       let consumed = false;
-      if (selection.kind === 'edge') {
-        if (edges.some((edge) => edge.id === selection.edgeId)) {
-          onEdgesChange(edges.filter((edge) => edge.id !== selection.edgeId));
-          setSelection(null);
-          consumed = true;
-        }
-      } else if (selection.kind === 'transformStep') {
-        const edge = edges.find((item) => item.id === selection.edgeId);
-        const stepCount = edge?.transformIds?.length ?? 0;
-        if (edge && selection.stepIndex >= 0 && selection.stepIndex < stepCount) {
-          const next = removeTransformStepFromEdge(edge, selection.stepIndex);
-          onEdgesChange(edges.map((item) => (item.id === edge.id ? next : item)));
-          setSelection(
-            (next.transformIds?.length ?? 0) > 0
-              ? {
-                  kind: 'transformStep',
-                  edgeId: edge.id,
-                  stepIndex: Math.min(selection.stepIndex, (next.transformIds?.length ?? 1) - 1),
-                }
-              : { kind: 'edge', edgeId: edge.id },
-          );
-          consumed = true;
-        }
+      if (selection.kind === 'edge' || selection.kind === 'transformStep') {
+        const primaryKey = fieldRemapBulkSelectionKey(selection);
+        const refs = bulkSelection.some((ref) => fieldRemapBulkSelectionKey(ref) === primaryKey)
+          ? bulkSelection
+          : [...bulkSelection, selection];
+        consumed = commitBulkDelete(refs);
       } else if (selection.kind === 'operator') {
         if (
           onOperatorsChange &&
@@ -1122,10 +1585,10 @@ function FieldRemapFlowCanvas({
     },
     [
       drafts,
+      bulkSelection,
+      commitBulkDelete,
       detailPresentation,
-      edges,
       emptyDetail,
-      onEdgesChange,
       onOperatorsChange,
       operators,
       previewVisible,
@@ -1154,33 +1617,6 @@ function FieldRemapFlowCanvas({
       onEdgeContextMenu?.(event, { edgeId: edge.id, selection });
     },
     [onEdgeContextMenu, selection],
-  );
-
-  const handleFlowSelectionChange = useCallback(
-    ({ nodes: selectedNodes, edges: selectedEdges }: OnSelectionChangeParams) => {
-      const nodeData = selectedNodes[0]?.data as FieldRemapFlowNodeData | undefined;
-      if (readOnly && nodeData?.kind === 'transform') {
-        setSelection({
-          kind: 'transformStep',
-          edgeId: nodeData.mappingEdgeId,
-          stepIndex: nodeData.stepIndex,
-        });
-        return;
-      }
-      if (
-        readOnly &&
-        (nodeData?.kind === 'combine-operator' || nodeData?.kind === 'split-operator')
-      ) {
-        setSelection({ kind: 'operator', operatorId: nodeData.operatorId });
-        return;
-      }
-      const mappingEdgeId = (selectedEdges[0]?.data as FieldRemapFlowEdgeData | undefined)
-        ?.mappingEdgeId;
-      if (mappingEdgeId) {
-        setSelection({ kind: 'edge', edgeId: mappingEdgeId });
-      }
-    },
-    [readOnly, setSelection],
   );
 
   const detailPanel = detailVisible ? (
@@ -1224,6 +1660,7 @@ function FieldRemapFlowCanvas({
       data-hidden-fields={includeHidden ? 'on' : 'off'}
       data-preview={previewVisible ? 'on' : 'off'}
       tabIndex={-1}
+      onKeyDownCapture={onBulkSelectionKeyDownCapture}
       onKeyDown={onKeyDown}
     >
       {showFlowHint ? (
@@ -1299,14 +1736,14 @@ function FieldRemapFlowCanvas({
             nodes={nodes}
             edges={flowEdges}
             nodeTypes={nodeTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onFlowEdgesChange}
+            onNodesChange={onProjectedNodesChange}
+            onEdgesChange={onProjectedFlowEdgesChange}
             onConnect={readOnly ? undefined : onConnect}
             onConnectStart={readOnly ? undefined : onConnectStart}
             onConnectEnd={readOnly ? undefined : onConnectEnd}
             onEdgesDelete={readOnly ? undefined : onEdgesDelete}
-            onNodeClick={readOnly ? undefined : onNodeClick}
-            onSelectionChange={handleFlowSelectionChange}
+            onNodeClick={onNodeClick}
+            onEdgeClick={onEdgeClick}
             onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}
             onNodeContextMenu={onNodeContextMenu ? handleNodeContextMenu : undefined}
             onEdgeContextMenu={onEdgeContextMenu ? handleEdgeContextMenu : undefined}
@@ -1314,6 +1751,7 @@ function FieldRemapFlowCanvas({
             nodesDraggable={!readOnly}
             nodesConnectable={!readOnly}
             edgesReconnectable={!readOnly}
+            ariaLabelConfig={flowAriaLabelConfig}
             deleteKeyCode={null}
             fitView
             fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}
@@ -1476,21 +1914,33 @@ function FieldRemapFlowCanvas({
               });
               const defaultAddId = appendCatalog[0]?.id;
               const listContext = canEditListContext(edge, sources, targets);
-              const selected =
-                (selection?.kind === 'edge' || selection?.kind === 'transformStep') &&
-                selection.edgeId === edge.id;
+              const edgeRef = { kind: 'edge', edgeId: edge.id } as const;
+              const edgeSelected = bulkSelectionKeys.has(fieldRemapBulkSelectionKey(edgeRef));
+              const laneSelected = canonicalBulkRefs.some(
+                (ref) =>
+                  ref.edgeId === edge.id && bulkSelectionKeys.has(fieldRemapBulkSelectionKey(ref)),
+              );
+              const edgeIsPrimary = selection?.kind === 'edge' && selection.edgeId === edge.id;
 
               return (
                 <li
                   key={edge.id}
-                  className={selected ? 'is-selected' : undefined}
+                  className={laneSelected ? 'is-selected' : undefined}
                   data-testid={`field-remap-lane-${edge.id}`}
                 >
                   <button
                     type="button"
-                    className="workbench-field-remap-flow__binding-select"
+                    aria-pressed={edgeSelected}
+                    className={
+                      edgeSelected
+                        ? 'workbench-field-remap-flow__binding-select is-selected'
+                        : 'workbench-field-remap-flow__binding-select'
+                    }
+                    data-field-remap-bulk-edge-id={edge.id}
+                    data-field-remap-bulk-kind="edge"
+                    data-primary={edgeIsPrimary ? 'true' : 'false'}
                     data-testid={`field-remap-select-edge-${edge.id}`}
-                    onClick={() => setSelection({ kind: 'edge', edgeId: edge.id })}
+                    onClick={(event) => applyBulkSelectionGesture(edgeRef, event)}
                   >
                     <code>
                       {edge.sourceFieldId} →{' '}
@@ -1555,14 +2005,7 @@ function FieldRemapFlowCanvas({
                         label={chromeLabels.removeBinding}
                         variant="danger"
                         onClick={() => {
-                          onEdgesChange(edges.filter((item) => item.id !== edge.id));
-                          if (
-                            selection &&
-                            (selection.kind === 'edge' || selection.kind === 'transformStep') &&
-                            selection.edgeId === edge.id
-                          ) {
-                            setSelection(null);
-                          }
+                          commitBulkDelete([edgeRef]);
                         }}
                       />
                     </span>
