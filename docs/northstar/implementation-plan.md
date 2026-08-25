@@ -85,7 +85,7 @@ WB-NS-072B DesignSystemPack + Theme/ThemeScope resolver foundation [DONE; depend
         ↓
 WB-NS-072E Canvas/Inspector/provenance integration [DONE; dependencies: WB-NS-072C, WB-NS-072D]
         ↓
-WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [DESIGNING; dependency: WB-NS-072E]
+WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup [READY_FOR_IMPLEMENTATION; dependency: WB-NS-072E]
 
 Projection/GUI-builder architecture
         ↓
@@ -4918,22 +4918,335 @@ unreleased dependency drift.
 
 ## WB-NS-072F - Existing theme compatibility delegation and cleanup
 
-- **Status:** `DESIGNING`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Target:** [`design-system-packs.md`](./design-system-packs.md) section 22
 - **Ownership:** `GENERIC_KIT`
 - **Dependencies:** `WB-NS-072E`
+- **Readiness baseline:** `origin/develop@e312a0aee1028c6289c6ab6dba927b37582736bd`
 
-### Packet
+### Goal and current boundary
 
-Delegate existing theme-registry and shell-appearance paths through the validated resolver boundary, retain compatibility adapters, and remove duplicates only after consumer migration evidence.
+Delegate the existing flat-id shell appearance paths through one immutable compatibility catalog,
+then remove only the duplicate option merge, protection, and application routing that the catalog
+supersedes. The authored Design System and shell appearance remain distinct state domains:
+
+- `DesignSystemPackRegistry` stays canonical for exact versioned Pack/Theme identities used by
+  `UiDocument`, Canvas, Inspector, provenance, and migration planning;
+- `ThemeRegistry` stays the public compatibility registry for legacy host/extension shell themes;
+- shell selection never mutates `UiDocument.designSystem`, and a legacy CSS theme is never
+  persisted or exposed as a fabricated `DesignSystemThemeRef`;
+- this packet adds no product approval, default-selection, persistence, or migration policy.
+
+Current source has three divergent readers of the same compatibility state. Appearance Settings
+merges options with overwrite semantics and applies DOM attributes/legacy CSS overrides;
+theme-selection protection independently rebuilds option lists with exact-uniqueness semantics;
+document and nested Workbench roots can receive presentation through separate effects. The target
+is one catalog snapshot and one application controller, not a second mutable registry or provider.
+
+### Public compatibility contract
+
+Keep these public names, shapes, registration paths, and callback meanings source-compatible:
+
+- `ThemeRegistry`, `WorkbenchThemeContribution`, `registerWorkbenchTheme`, and
+  `registerHostWorkbenchThemes`;
+- SDK `ThemeContributionMode` / `ThemeContribution`, core `ThemeRegistryChangeEvent`,
+  `REQUIRED_THEME_TOKEN_KEYS`, `applyThemeTokenOverrides`, host registration types/functions, and
+  `ExtensionRegistry` theme options/context;
+- extension `contributes.themes`, including router rollback when a registration batch fails;
+- `WorkbenchProvider.hostThemes`, context `themes`, and disposable host registration;
+- `WorkbenchThemeOption` as the existing `{ description?, id, label }` flat option with no
+  required mode;
+- shell/settings `theme`, `lightPreset`, `darkPreset`, `onThemeChange`,
+  `onLightPresetChange`, and `onDarkPresetChange` props;
+- built-in manifests/options/default IDs, writable `WorkbenchThemePresetOption`, resolve hooks and
+  helpers, `WorkbenchThemeProviderProps`, shell appearance storage read/write/hooks, DOM attributes,
+  full sanitized legacy token overrides, and existing public appearance helpers.
+
+`ThemeRegistry.registerTheme()` remains the fail-closed owner for duplicate registered legacy
+IDs. A second registration throws before coexistence, retains the prior registration, and the
+extension contribution router disposes its partial batch. The compatibility catalog must not
+weaken that boundary or retain a parallel pre-registry contribution inventory.
+
+### Immutable shell appearance catalog
+
+Add one framework-neutral, read-only shell compatibility projection in the existing generic
+shell owner. Its exact internal contract is:
+
+```ts
+type WorkbenchAppearanceCatalogSource =
+  'builtin-preset' | 'legacy-host-theme' | 'legacy-extension-theme' | 'host-option';
+
+type WorkbenchAppearanceCatalogMode = 'light' | 'dark' | undefined;
+
+interface WorkbenchAppearanceCatalogEntry {
+  readonly id: string;
+  readonly label: string;
+  readonly description?: string;
+  readonly source: WorkbenchAppearanceCatalogSource;
+  readonly mode: WorkbenchAppearanceCatalogMode;
+  readonly extensionId?: string;
+  readonly hasLegacyCssOverrides: boolean;
+  readonly legacyTokenOverrides?: Readonly<Record<string, string>>;
+}
+
+interface WorkbenchAppearanceCatalogDiagnostic {
+  readonly code: 'appearance-id-conflict';
+  readonly id: string;
+  readonly sources: readonly WorkbenchAppearanceCatalogSource[];
+}
+
+interface WorkbenchAppearanceCatalogSnapshot {
+  readonly themeRegistryRevision: number;
+  readonly entries: readonly WorkbenchAppearanceCatalogEntry[];
+  readonly diagnostics: readonly WorkbenchAppearanceCatalogDiagnostic[];
+}
+
+type WorkbenchAppearanceSelectionTarget = 'flat-theme' | 'light-preset' | 'dark-preset';
+
+type WorkbenchAppearanceSelectionResolution =
+  | { readonly status: 'resolved'; readonly entry: WorkbenchAppearanceCatalogEntry }
+  | { readonly status: 'unresolved'; readonly id: string }
+  | {
+      readonly status: 'conflicted';
+      readonly id: string;
+      readonly candidates: readonly WorkbenchAppearanceCatalogEntry[];
+    }
+  | {
+      readonly status: 'wrong-scheme';
+      readonly id: string;
+      readonly expected: 'light' | 'dark';
+    };
+```
+
+The focused implementation may keep these types/functions package-internal; this packet does not
+require a new public export. One pure snapshot builder consumes canonical built-in preset
+manifests/options, one exact `ThemeRegistry` revision, and the existing optional host flat options.
+One pure resolver performs exact lookup for a supplied target. Settings display, active selection,
+legacy CSS override lookup, and extension lifecycle protection consume that same snapshot shape
+and resolver semantics rather than rebuilding arrays or maps independently.
+
+`ThemeRegistry.registerTheme()` first validates and then own-data-clones and freezes the accepted
+contribution plus its token override record. Registry events and `getTheme()` / `getThemes()` expose
+that stable registered value, never the caller-owned object. Disposal is tied to a private
+registration token rather than caller/reference identity, remains idempotent, and removes only its
+own still-current registration. Mutating either the caller's original object or a returned nested
+reference cannot change registry/catalog truth without a revision event. The catalog snapshot then
+copies and freezes entry metadata plus any legacy override record, so a captured snapshot remains
+independent of later register/unregister or host-input mutation.
+
+Target views retain current ordering: `flat-theme` uses host options in supplied order followed by
+registry order, while Preferred Light/Dark uses the canonical built-in manifest order followed by
+matching registry order. Conflict detection precedes resolved selection inside each target's
+eligible namespace. A single wrong-scheme registered legacy ID reports `wrong-scheme`; missing IDs
+report `unresolved`.
+
+Source truth is explicit:
+
+- built-in presets use the scheme from their canonical manifest;
+- registered host/extension legacy themes use their declared `ThemeContribution.mode` and retain
+  whether a full legacy CSS override set exists;
+- a plain `host-option` has `mode: undefined` because `WorkbenchThemeOption` carries no truthful
+  scheme operand. It participates only in the non-preset flat-theme selector and is excluded from
+  Preferred Light/Dark resolution;
+- no source may infer mode from an ID, current selection, CSS, order, or fallback position.
+
+Catalog conflicts exist only between independently coexisting sources, such as built-in preset
+versus registered legacy theme or plain host option versus registered legacy theme. Two registered
+legacy themes with the same ID cannot coexist because registration already rejects the second one;
+the catalog does not manufacture that impossible conflict state.
+
+### Selection, error, and revision flow
+
+```text
+built-in manifests + host flat options + ThemeRegistry revision/snapshot
+        -> immutable Workbench appearance catalog
+        -> exact target-specific selection resolution
+        -> Settings projection + lifecycle protection + one application controller
+```
+
+Every observed registry/input tuple produces one immutable snapshot. A registry register or
+unregister advances `ThemeRegistry.getRevision()` and invalidates the prior snapshot. Protection
+or mutation that captured an older revision must rebuild/revalidate against the current registry;
+stale protection cannot authorize a soft disable/uninstall.
+
+Missing, duplicated, wrong-scheme, or otherwise unresolved persisted selections preserve the raw
+string value and expose an explicit unresolved/conflicted result. Rendering Settings must not
+substitute the first option or write a fallback preference. A disabled diagnostic placeholder may
+show the unresolved value; recovery requires an explicit user selection. Removing the selected
+contributed theme therefore becomes unresolved and keeps destructive extension lifecycle actions
+fail-closed.
+
+Raw controlled state and derived presentation are handled separately and deterministically:
+
+- a uniquely resolved plain `host-option` preserves existing pass-through behavior by rendering
+  `data-theme=<raw id>` with no inferred preset, scheme or legacy override;
+- an unresolved or conflicted `flat-theme` likewise retains its raw `data-theme` identity for host
+  CSS compatibility, but applies no registered legacy override and synthesizes no preset;
+- an unresolved, conflicted or wrong-scheme preset keeps the raw value in its controlled preset
+  attribute/diagnostic row, clears any previous legacy override, and retains only the independently
+  resolved base light/dark scheme from `themePreference`; it never substitutes another preset;
+- a registered legacy preset uses its declared mode as the base scheme, its raw ID as the preset
+  identity, and its validated override set. Removing it immediately clears those overrides while
+  preserving the raw controlled ID and zero preference writes.
+
+### One appearance application owner
+
+The shared resolver produces one presentation decision:
+
+- a built-in preset continues through the existing `applyWorkbenchAppearance` and provider
+  attribute path;
+- a uniquely resolved registered legacy theme uses its declared base scheme/preset compatibility
+  plus its sanitized full CSS override set;
+- unresolved/conflicted selections perform no fallback write or unreviewed theme substitution.
+
+One shell appearance application controller per mounted outer shell subtree owns the resolved
+presentation decision. A private internal context/ref registration seam lets the active
+`WorkbenchShell` root and nested `WorkbenchThemeProvider` wrappers register their concrete element
+targets with that controller; Settings is projection-only and performs no DOM writes. Only the
+outermost opted-in controller may own `document.documentElement` synchronization. A provider used
+outside any controller keeps the existing standalone helper/effect behavior, while a provider
+inside a controller registers its wrapper and does not independently resolve or write the document.
+
+The controller projects the same resolved scheme, preset, raw identity, and legacy override set to
+every registered target. Registration returns a generation-bound disposable: cleanup restores the
+pre-registration attributes/styles only while that registration token is still the current owner,
+so StrictMode cleanup or an older nested owner cannot overwrite a surviving/newer presentation.
+Selection changes remove the controller's previous legacy override keys before applying the next
+decision; unmount releases every owned target without walking the DOM subtree. The controller does
+not create another public provider/token registry and never remounts the Workbench tree for a
+same-presentation change. Inner roots cannot shadow the selected outer presentation with stale
+base-scheme tokens.
+
+The exact versioned Design System registry is consumed only at a truthful boundary. A future shell
+choice may carry a real `DesignSystemThemeRef` only when an installed Pack/Theme and a renderer
+adapter can resolve and apply that exact identity. Until then, exact Design System themes stay out
+of the legacy flat selector; legacy IDs are not encoded into synthetic pack/version/theme refs.
+
+### Ordered implementation tasks
+
+1. Freeze current public signatures, built-in ordering/default behavior, host/extension registration
+   lifecycle, router rollback, and packed-consumer coverage before changing internal routing.
+2. Harden `ThemeRegistry` registration with validated own-data clone/freeze and token-bound
+   disposal, then add the pure immutable compatibility catalog builder/resolver with explicit
+   source, mode, diagnostics, exact target lookup, and revision capture. Keep the module
+   renderer-neutral and do not widen `WorkbenchThemeOption`.
+3. Build the snapshot once in the shell orchestration path for the current registry/input tuple;
+   pass it to Settings projection and theme-selection protection instead of independently merging
+   options.
+4. Preserve unresolved raw selections in the rendered control, add a non-selecting diagnostic
+   option/state, and remove first-option/`Map.set` fallback behavior. Preference callbacks fire only
+   for explicit user selections.
+5. Add the private controller context/ref registration seam and route built-in attributes, raw
+   host-option identity, unresolved degradation, and registered legacy overrides through that one
+   decision owner across document, active root, nested roots, and previous-override cleanup.
+6. Revalidate protection against the current `ThemeRegistry` revision immediately before a soft
+   extension lifecycle mutation; preserve current fail-closed reload behavior on unknown/stale
+   state.
+7. Delete duplicate merge, uniqueness, and override-routing logic only after focused parity tests
+   prove every existing consumer path uses the shared projection.
+8. Freeze one source candidate, run focused tests during development, collect a fresh
+   producer-distinct source review, apply at most one successor, then run final
+   static/fast/browser gates once on the exact final SHA.
 
 ### Validation
 
-Regression coverage for existing theme behavior, public-export and packed-consumer checks, commit safety, and repository validation on the exact head.
+Pure/component minimum:
+
+- built-in preset IDs/order/defaults and public legacy option shapes remain unchanged;
+- registered host and extension themes register, resolve, select, unregister, and dispose with the
+  declared scheme and sanitized full override set;
+- caller-owned contribution/override mutation after registration and returned-reference mutation
+  cannot change registry or captured snapshot truth without a revision; token-bound disposal
+  removes only its own current registration;
+- duplicate registered legacy ID rejects before coexistence, retains the prior registration, and
+  rolls back a partial extension contribution batch;
+- independently coexisting same-ID sources produce the same explicit conflict result in Settings,
+  apply, and protection, with no map overwrite or first-option divergence;
+- plain `host-option` keeps `mode: undefined`, resolves only for `flat-theme`, and is rejected from
+  `light-preset` / `dark-preset` without a public type change; resolved host options preserve raw
+  `data-theme` pass-through and apply no inferred preset or override;
+- missing, removed, conflicted, and wrong-scheme persisted IDs retain the raw value, emit a visible
+  unresolved result, clear stale overrides, keep the specified raw/base-scheme DOM degradation,
+  and cause zero implicit preference callbacks/writes;
+- registry revision changes rebuild the catalog and stale protection fails closed before lifecycle
+  mutation;
+- switching between built-in and registered legacy themes removes prior overrides and leaves one
+  applied scheme/preset/override identity across every target root;
+- nested target registration and generation-bound cleanup preserve the surviving owner's
+  presentation under StrictMode mount/unmount without subtree scanning;
+- authored Design System resolution and `UiDocument.designSystem` remain byte-equivalent across
+  shell appearance changes, with no fabricated `DesignSystemThemeRef`.
+
+Packed/public compatibility minimum:
+
+- existing imports and assignments for `ThemeRegistry`, theme registration helpers,
+  `WorkbenchProvider.hostThemes`, context `themes`, `WorkbenchThemeOption`, and shell callbacks
+  compile unchanged from packed packages;
+- package export maps do not expose internal catalog/application modules accidentally;
+- extension manifest `contributes.themes` retains its current schema and transactional routing.
+
+Browser/Storybook minimum:
+
+- select built-in light/dark presets and host/extension legacy themes through Settings and confirm
+  the same visible theme on document, active root, nested provider/root, overlays, and editor/main
+  plus sidebar/action bar regions;
+- exercise system/light/dark changes, legacy override replacement/cleanup, and focus preservation
+  without a Workbench remount;
+- render missing, selected-theme removal, wrong-scheme, and independently coexisting collision
+  states without silent fallback or preference mutation;
+- verify explicit recovery selection restores a resolved theme and re-enables eligible lifecycle
+  behavior;
+- confirm source/registration changes invalidate stale protection and that a selected extension
+  theme cannot be disabled/uninstalled through the soft path;
+- assert plain host-option pass-through, unresolved raw attributes/base scheme, registered-theme
+  removal cleanup, zero silent writes, root DOM identity, focus, and computed editor/main plus
+  sidebar/action-bar tokens across pointer and keyboard interaction.
+
+Run `pnpm check:commit-safety`, focused theme/settings/protection/provider tests, then
+`pnpm validate:fast` once (including the repository static, public-export, and packed-consumer
+checks) and the required browser lane once on the exact final source SHA. Electron/native
+validation is not required unless the implementation unexpectedly crosses a native boundary.
+
+### Performance constraints
+
+Snapshot construction and exact lookup must be bounded by the option inputs and must not scan
+Design System Pack/token/component Cartesian products. Memoization keys include the
+`ThemeRegistry` revision and host-option input identity. DOM application updates only the known
+appearance roots and previously applied override keys; it must not walk the rendered subtree.
+Registry registration detaches accepted own data so memoized truth cannot change without revision.
+Record a focused before/after measurement only if the implementation materially changes Settings
+open or theme-switch work. Do not widen a budget silently.
+
+### Non-goals and cleanup gates
+
+- no deletion/deprecation of `ThemeRegistry`, `hostThemes`, public callbacks, built-in presets, or
+  current appearance helpers in this packet;
+- no extension manifest theme-schema change, second mutable theme/token registry, or parallel
+  Settings/protection catalog;
+- no invented legacy version/provenance, CSS-variable-to-typed-token mapping, lossy
+  legacy-to-DesignSystem conversion, or flat/exact identity codec;
+- no shell appearance mutation of canonical authored document state, product-specific default or
+  approval policy, Electron/native API, or Workbench remount;
+- no duplicate logic removal until exact source search, focused tests, packed consumers, and
+  browser parity prove the replacement path owns every current reader.
+
+### Source-review handoff
+
+Freeze the exact implementation SHA before review. A producer-distinct reviewer must inspect the
+diff plus ThemeRegistry registration/disposal, contribution-router rollback, catalog conflict and
+revision behavior, Settings unresolved UX, protection revalidation, DOM root/override cleanup,
+public exports, and packed consumers. Return `PASS`, `CANDIDATE_FAIL`, or `NEEDS_EVIDENCE` with
+P0/P1 findings. A superseding SHA invalidates the verdict. No release, deprecation, or consumer
+migration claim follows merely from source integration.
 
 ### Done criteria
 
-Existing consumers retain supported behavior through one resolver boundary, with explicit adapter-removal criteria and no competing source of theme truth.
+The packet is done when existing public shell appearance consumers retain supported behavior;
+Settings, active lookup, lifecycle protection, and application use one immutable catalog and exact
+selection semantics; unresolved/colliding values remain non-destructive and user-recoverable;
+document, root, and nested roots share one resolved presentation; registry revision drift fails
+closed; legacy CSS themes never become fake Design System identities; and duplicate compatibility
+logic is removed only with exact consumer and parity evidence.
 
 ---
 

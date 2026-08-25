@@ -320,6 +320,13 @@ DesignSystemPackRegistry + resolver
 
 Existing public shell appearance APIs may remain supported during migration. Their implementation should progressively delegate into the generic resolution model where semantics match. Removal/deprecation requires normal public compatibility evidence; it is not required in the first implementation slice.
 
+For `WB-NS-072F`, the validated resolver boundary is narrower than the aspirational diagram above:
+one exact shell-appearance compatibility catalog may project current built-in presets,
+`ThemeRegistry` contributions and host options for shared selection/protection/application behavior,
+but it does not register legacy CSS themes in `DesignSystemPackRegistry`. A generic-registry bridge is
+an additive future boundary that requires a real exact Pack/Theme identity and renderer adapter;
+072F must not fabricate pack version, provenance or typed-token meaning for a legacy theme ID.
+
 ## 11. Explicit DesignSystemPack switch transaction
 
 Switching packs is a query/plan/apply workflow, not a setter with hidden side effects.
@@ -624,6 +631,12 @@ Migration principles:
 5. remove duplicate registry/schema paths only after source review proves all consumers moved;
 6. never require an integrating application to implement a parallel generic resolver while Workbench migrates.
 
+The public legacy `ThemeRegistry`, host-theme, extension-manifest and shell Appearance surfaces stay
+compatibility facades in 072F. Persisted flat shell appearance IDs are not `UiDesignSystemState` and
+must not mutate `UiDocument.designSystem`. Only private merge, protection and application mechanics
+with proven parity may be removed; public removal/deprecation requires a separate breaking-change
+packet plus published-cohort and consumer-migration evidence.
+
 ## 23. Implementation packet readiness
 
 The DesignSystemPack slice is not `READY_FOR_IMPLEMENTATION` as one monolith. High-level ownership and behavior are closed. The exact current-source ownership, adapter and removal map completed producer-distinct review as documentation-only `WB-NS-072A`; 072B+ remain separate bounded packets.
@@ -643,7 +656,7 @@ WB-NS-072E Canvas/Inspector/provenance integration
 WB-NS-072F existing ThemeRegistry/shell appearance compatibility delegation + cleanup
 ```
 
-`WB-NS-072A`, `WB-NS-072B`, and `WB-NS-072C` are `DONE` after producer-distinct `PASS` and integration; the released predecessor remains `0.0.2-prototype.0.2.37` until the next exact cohort is published. Their canonical consolidation map, exact registry/resolver contracts and integration evidence are maintained in `implementation-plan.md`. The bounded `WB-NS-072D` explicit migration planner/transaction packet is `READY_FOR_IMPLEMENTATION`; `072E+` remain `DESIGNING`. WB-NS-040 remains a boundary constraint: extension trust/manifest integration stays blocked on WB-NS-040/072F, while 072C/D consume only pure already-authorized declarative descriptors and never acquire resources or activate extensions.
+`WB-NS-072A` through `WB-NS-072E` are `DONE` after producer-distinct `PASS` and integration. The published `0.0.2-prototype.0.2.41` cohort contains 072A-D; 072E is source-integrated after that cohort and is not claimed as published. Their canonical consolidation map, exact registry/resolver contracts and integration evidence are maintained in `implementation-plan.md`. The bounded `WB-NS-072F` shell-appearance compatibility packet is `READY_FOR_IMPLEMENTATION`. WB-NS-040 remains a boundary constraint: extension trust/manifest integration stays blocked on WB-NS-040/072F, while the integrated 072B-E slices consume only pure already-authorized declarative descriptors and never acquire resources or activate extensions.
 
 Canonical packet gates are maintained in [`implementation-plan.md`](./implementation-plan.md):
 
@@ -652,13 +665,13 @@ Canonical packet gates are maintained in [`implementation-plan.md`](./implementa
 - `WB-NS-072C`: define component-role and typed token/resource resolution; validate classifications and diagnostics; done when role portability is explicit rather than assumed.
 - `WB-NS-072D`: define explicit migration planning and atomic application; validate stale-plan, transaction, and undo behavior; done when cross-pack changes cannot mutate silently.
 - `WB-NS-072E`: integrate Canvas/Inspector and provenance; validate browser projection and focus behavior; done when both surfaces retain command parity.
-- `WB-NS-072F`: delegate legacy theme/appearance paths and remove duplicates only after migration evidence; validate regression, public exports, and packed consumers; done when one resolver boundary remains.
+- `WB-NS-072F`: delegate legacy theme/appearance paths through an adapter-only compatibility catalog with no public removal or fake Design System identity; remove private duplicates only after migration evidence; validate regression, public exports, and packed consumers; done when one exact shell resolver boundary remains.
 
 Cross-chain dependency:
 
 - `WB-NS-070A/B/C/D` provide typed values/layout/components/UiDocument command semantics used by DesignSystem packs;
 - `WB-NS-040` provides extension trust/compatibility semantics for installable contributions;
-- `WB-NS-072B`, `WB-NS-072C`, and `WB-NS-072D` must land and be source-reviewed before an external consumer is told to build product policy against them;
+- `WB-NS-072B` through `WB-NS-072E` must land and be source-reviewed before an external consumer is told to build product policy against their integrated behavior;
 - publish/release approval precedes exact external consumption.
 
 The earlier `WB-NS-070E -> WB-NS-070F -> WB-NS-071A` drawing is not a release dependency.
