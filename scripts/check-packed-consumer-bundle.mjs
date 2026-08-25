@@ -949,6 +949,7 @@ function verifyFocusedCommandHostControllerOutput() {
     '/@workbench-kit/platform/src/commands/command-contributions.ts',
   ];
   const forbiddenSourceSegments = [
+    '/@workbench-kit/shell-react/src/workbench/command-host.tsx',
     '/@workbench-kit/shell-react/src/shell/provider',
     '/@workbench-kit/shell-react/src/extensions/',
     '/@workbench-kit/workbench-core/',

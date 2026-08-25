@@ -147,41 +147,68 @@ describe('WorkbenchCommandHostController', () => {
     }
   });
 
-  it('closes from one asynchronous rejection finalizer without claiming the rejection', async () => {
-    const rejection = new Error('expected asynchronous rejection');
-    const executorResult = { then: () => undefined };
-    const finalizers: Array<() => void> = [];
-    const preservedRejection = { catch: vi.fn(), reason: rejection, then: vi.fn() };
-    const finallySpy = vi.fn((finalizer: () => void) => {
-      finalizers.push(finalizer);
-      return preservedRejection;
-    });
-    const originalResolve = Promise.resolve.bind(Promise);
-    const resolveSpy = vi.spyOn(Promise, 'resolve').mockImplementation(((value: unknown) => {
-      if (value === executorResult) {
-        return { finally: finallySpy };
-      }
-      return originalResolve(value);
-    }) as typeof Promise.resolve);
+  it('assimilates a resolving thenable before closing the overlay', async () => {
+    let resolveThenable: (() => void) | undefined;
+    const thenable = {
+      then(onFulfilled: () => void) {
+        resolveThenable = onFulfilled;
+      },
+    };
     const mounted = await mountController({
       commands: COMMANDS,
-      executeCommand: () => executorResult,
+      executeCommand: () => thenable as unknown as Promise<unknown>,
     });
 
     try {
       await dispatchShortcut('p', { ctrlKey: true, shiftKey: true });
       await clickElement(getCommandButton(mounted.container, 'test.run'));
-      expect(finallySpy).toHaveBeenCalledOnce();
-      expect(finalizers).toHaveLength(1);
-      expect(preservedRejection.catch).not.toHaveBeenCalled();
-      expect(preservedRejection.then).not.toHaveBeenCalled();
-      expect(preservedRejection.reason).toBe(rejection);
+      await flushReactEffects();
+      expect(resolveThenable).toBeTypeOf('function');
       expect(getDialog(mounted.container, 'Command Palette')).toBeDefined();
 
-      await act(async () => finalizers[0]?.());
+      resolveThenable?.();
+      await flushReactEffects();
       expect(mounted.container.querySelector('[role="dialog"]')).toBeNull();
     } finally {
-      resolveSpy.mockRestore();
+      await mounted.dispose();
+    }
+  });
+
+  it('closes from one real rejection finalizer and preserves the rejection', async () => {
+    const rejection = new Error('expected asynchronous rejection');
+    const deferred = createDeferred<void>();
+    const originalFinally = Promise.prototype.finally;
+    let executorFinallyCalls = 0;
+    let finalizedPromise: Promise<unknown> | undefined;
+    const finallySpy = vi.spyOn(Promise.prototype, 'finally').mockImplementation(function (
+      this: Promise<unknown>,
+      onFinally?: (() => void) | null,
+    ) {
+      const result = originalFinally.call(this, onFinally);
+      if (this === deferred.promise) {
+        executorFinallyCalls += 1;
+        finalizedPromise = result;
+      }
+      return result;
+    });
+    const mounted = await mountController({
+      commands: COMMANDS,
+      executeCommand: () => deferred.promise,
+    });
+
+    try {
+      await dispatchShortcut('p', { ctrlKey: true, shiftKey: true });
+      await clickElement(getCommandButton(mounted.container, 'test.run'));
+      expect(executorFinallyCalls).toBe(1);
+      expect(finalizedPromise).toBeDefined();
+      expect(getDialog(mounted.container, 'Command Palette')).toBeDefined();
+
+      deferred.reject(rejection);
+      await expect(finalizedPromise).rejects.toBe(rejection);
+      await flushReactEffects();
+      expect(mounted.container.querySelector('[role="dialog"]')).toBeNull();
+    } finally {
+      finallySpy.mockRestore();
       await mounted.dispose();
     }
   });
@@ -318,9 +345,17 @@ describe('WorkbenchCommandHostController', () => {
       await dispatchShortcut('k', { altKey: true });
       expect(context.calls).toEqual(['shortcut', 'shortcut']);
 
+      await mounted.rerender({
+        commands: [],
+        executeCommand: vi.fn(),
+        shortcutBridge: { context, platform: 'windows', registry },
+      });
+      await dispatchShortcut('k', { ctrlKey: true });
+      expect(context.calls).toEqual(['shortcut', 'shortcut', 'shortcut']);
+
       await mounted.rerender({ commands: [], executeCommand: vi.fn(), shortcutBridge: false });
       await dispatchShortcut('k', { altKey: true });
-      expect(context.calls).toEqual(['shortcut', 'shortcut']);
+      expect(context.calls).toEqual(['shortcut', 'shortcut', 'shortcut']);
     } finally {
       await mounted.dispose();
     }

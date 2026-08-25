@@ -8,7 +8,9 @@
   "type": "module",
   "scripts": {
     "test": "vitest run --config vitest.config.ts src",
-    "typecheck": "tsc -p tsconfig.json --noEmit"
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck:exact-optional": "pnpm --filter @workbench-kit/react exec tsc -p typecheck-exact-optional/tsconfig.emit.json && pnpm typecheck:exact-optional:consumer",
+    "typecheck:exact-optional:consumer": "tsc -p typecheck-exact-optional/tsconfig.emit.json && tsc -p typecheck-exact-optional/tsconfig.json --noEmit"
   },
   "exports": {
     ".": "./src/index.ts",

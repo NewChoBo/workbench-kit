@@ -61,7 +61,7 @@ type Story = StoryObj<typeof meta>;
 const providerFreeCommandHostBootstrap = {
   contract: {
     activities: [{ id: 'home', label: 'Home' }],
-    commandRegistry: createCommandRegistry(),
+    commandRegistry: createCommandRegistry([]),
     initialTheme: 'dark',
     statusSections: [],
   },
@@ -117,7 +117,7 @@ export const ProviderFreeCommandHost: Story = {
     await userEvent.keyboard('{Control>}{Shift>}p{/Control}{/Shift}');
     const palette = await canvas.findByRole('dialog', { name: /Command Palette/ });
     await expect(
-      within(palette).getByRole('option', { name: 'Run standalone command' }),
+      within(palette).getByRole('option', { name: /Run standalone command/ }),
     ).toBeVisible();
 
     await userEvent.keyboard('{Control>}p{/Control}');
@@ -126,7 +126,9 @@ export const ProviderFreeCommandHost: Story = {
     );
     const quickOpen = await canvas.findByRole('dialog', { name: /Quick Open/ });
     const file = await within(quickOpen).findByRole('option', { name: /standalone\.md/ });
-    await userEvent.click(file);
+    within(quickOpen).getByLabelText('Search files by name').focus();
+    await waitFor(() => expect(file).toHaveAttribute('aria-selected', 'true'));
+    await userEvent.keyboard('{Enter}');
 
     await expect(canvas.getByLabelText('Last standalone command')).toHaveTextContent(
       'workspace.open:docs/standalone.md',
