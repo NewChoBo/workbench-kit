@@ -7,7 +7,8 @@ It is not a changelog of the current repository. Current source is recorded only
 ## Evidence baselines
 
 - **Latest source-bearing integration baseline:** `develop@cfd64106a5212d787f5f5ef1e2231b81cb41524a`.
-- **Reviewed documentation reconciliation:** `origin/develop@892499b2a6d24b8e13aef8da56120ff51038961d`; this successor changes no source/API fact, and later documentation-only successors do not invalidate the source-bearing baseline.
+- **Reviewed documentation-only baseline:** `develop@892499b2a6d24b8e13aef8da56120ff51038961d` / PR #365; its diff from the source-bearing baseline changes only this implementation plan and carries no source/API change.
+- **Baseline maintenance:** a later documentation-only integration preserves the source-bearing baseline only after its diff from the named documentation-only baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -2735,7 +2736,8 @@ The packet is complete when a browser- and Electron-free consumer can declare co
 #### `WB-NS-070C` bounded packet — atomic/composite descriptors and immutable catalog projection
 
 - **Status:** `DONE`
-- **Source/API evidence:** source-bearing parent `origin/develop@7b1ba747e709d1b10151bdae585d7c60ea41e318`; readiness successor `2c8e81db3f972b3dd0e085af128a7981e6b0bf23` reviewed `PASS / P0 none / P1 none / P2 none` and integrated through PR #325
+- **Readiness evidence:** source-bearing parent `develop@7b1ba747e709d1b10151bdae585d7c60ea41e318`; readiness successor `2c8e81db3f972b3dd0e085af128a7981e6b0bf23` reviewed `PASS / P0 none / P1 none / P2 none` and integrated through PR #325
+- **Integrated implementation:** PR #326 / source candidate `1e94ed97c70009e36108a1ae8aee435a25f03aeb` / reviewed successor `26c5c4550a4b21a6274c37fcbc3d947c9e31c97e` / merge `156cf741fead48d5c177b157c0e295f8b318df91`; exact source review returned `PASS / P0 none / P1 none / P2 none`, and the frozen static, unit and browser gates passed
 - **Dependencies:** `WB-NS-070A` and `WB-NS-070B` `DONE`
 - **Target owner:** `@workbench-kit/contracts` root export under the existing `ui-authoring` module
 - **Implementation scope:** component descriptor types, pure structural/cross-reference validation, deterministic immutable catalog projection, source-compatible registry/asset metadata attachment, root exports and focused backendless tests
