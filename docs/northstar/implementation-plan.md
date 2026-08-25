@@ -1828,14 +1828,15 @@ review, and is integrated into `develop`; this packet is `DONE`.
   unchanged; package source work starts only after that documentation merge
 - **Public entrypoint:** `@workbench-kit/shell-react/command-host-controller`
 - **Runtime layer:** `PURE_WEB / DOM / backendless`; no Electron or native boundary
-- **Integrated implementation:** PR #358 / reviewed candidate
+- **Integrated implementation:** PR #358 / integrated candidate
   `26055cea059059085ec30d030bdb3bd29a30d9e2` / merge
   `d3dda7168d9496f826696fcf60ace344b353f585`
-- **Completion evidence:** producer-distinct source review returned
-  `PASS / P0 none / P1 none / P2 none`; commit safety, `validate:static`, the 449-file/2,361-test
-  full unit gate, packed focused-subpath import-graph validation and the provider-free Chromium
-  Story passed on the exact candidate with no console errors or warnings. Electron was not run
-  because the packet changed no native boundary.
+- **Completion evidence:** commit safety, `validate:static`, the 449-file/2,361-test full unit gate,
+  packed focused-subpath import-graph validation and the provider-free Chromium Story passed on the
+  exact candidate with no console errors or warnings. A producer-distinct current-source
+  reconciliation review at `origin/develop@5ecbe610164902cf76767922a252cfb78d34e514`
+  returned `PASS / P0 none / P1 none / P2 none` for the frozen source-review checklist. No
+  packet-specific native/Electron E2E was required; hosted Validate's Electron quit guard passed.
 
 ### Goal and user outcome
 
@@ -2036,9 +2037,10 @@ public props, shell/extension/workspace behavior and #253 effective shortcuts. E
 fallback and executor completion path closes exactly once without swallowed errors or a second
 state/descriptor/keybinding authority.
 
-Producer-distinct readiness and source reviews returned `PASS / P0 none / P1 none / P2 none` for
-the frozen contract and exact candidate recorded above. The integrated source satisfies this packet;
-release, package publish and consumer adoption remain separate claims.
+Producer-distinct readiness and current-source reconciliation reviews returned
+`PASS / P0 none / P1 none / P2 none` for the frozen contract and integrated source recorded above.
+The integrated source satisfies this packet; release, package publish and consumer adoption remain
+separate claims.
 
 ### Source-review checklist
 
@@ -4218,10 +4220,12 @@ rollback remains for this packet.
   `fc36883e5870641ce7ccb1491c1d980168871291` / merge
   `5ecbe610164902cf76767922a252cfb78d34e514`
 - **Completion evidence:** three producer-distinct reviews found no blocker. The delivered candidate
-  has the same source tree as exact local test point `1cd2aebc` (`1c459d07`): `validate:static`,
-  `validate:fast` (455 files / 2,393 tests) and `validate:ui` (14 suites / 73 interactions) passed;
-  both hosted Validate runs also passed. Electron was not run because the packet changed no native
-  boundary.
+  has the same source tree as exact local test point
+  `1cd2aebc7a51ebd100065352a27428e9c830d662`
+  (`1c459d07fb87544224a679fdef6861b58ab0fdc2`): `validate:static`, `validate:fast` (455 files /
+  2,393 tests) and `validate:ui` (14 suites / 73 interactions) passed; both hosted Validate runs also
+  passed. No packet-specific native/Electron E2E was required; hosted Validate's Electron quit guard
+  passed.
 
 ### Goal and bounded outcome
 
