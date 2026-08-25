@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Current integration baseline:** `origin/develop@7b1ba747e709d1b10151bdae585d7c60ea41e318`.
+- **Current integration baseline:** `origin/develop@2b31df43a60a0c12a8c4a34958b63287c2a07625`.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the current integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -98,6 +98,8 @@ Backendless/performance + compatibility hardening
 Command/keybinding management parity
         ↓
 WB-NS-080A CommandRegistry effective keybinding management [DONE]
+        ↓
+WB-NS-080B provider-free command-host controller [READY_FOR_IMPLEMENTATION]
 ```
 
 `WB-NS-001A` is intentionally internal-first: it reduces responsibility coupling without requiring a new public service container, package family or extension isolation runtime.
@@ -1813,6 +1815,234 @@ The Issue #253 successor-v3 producer-distinct readiness review closed the target
 modifier compatibility, persistence and non-scope decisions at the exact base above. The source
 successor listed above implemented the packet, passed exact-head validation and producer-distinct
 review, and is integrated into `develop`; this packet is `DONE`.
+
+## WB-NS-080B — Provider-free command-host controller
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Canonical work:** [Issue #252 exact API freeze](https://github.com/NewChoBo/workbench-kit/issues/252#issuecomment-5404324944)
+- **Ownership:** `GENERIC_KIT`; `packages/shell-react`
+- **Dependency:** `WB-NS-080A` (`DONE`)
+- **Reviewed exact source/API baseline:**
+  `origin/develop@2b31df43a60a0c12a8c4a34958b63287c2a07625`
+- **Admissible implementation base:** the first `origin/develop` commit that contains this packet
+  unchanged; package source work starts only after that documentation merge
+- **Public entrypoint:** `@workbench-kit/shell-react/command-host-controller`
+- **Runtime layer:** `PURE_WEB / DOM / backendless`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host that renders `WorkbenchStandaloneShell` can compose the canonical Command
+Palette, Quick Open and optional generic shortcut bridge without mounting `WorkbenchProvider` or
+reimplementing overlay state and window shortcut routing. The existing provider-bound
+`WorkbenchCommandHost` remains source-compatible and becomes a thin adapter over the same
+controller, so provider-free and full-provider hosts share one behavior path.
+
+### Current gap and target boundary
+
+At the reviewed baseline, `packages/shell-react/src/workbench/command-host.tsx` combines two
+responsibilities:
+
+1. provider-only composition through `useWorkbench()`, including context/activity/view/layout
+   resolution, shell command registration, extension command metadata and keybindings, #253
+   effective keybinding operands, workspace state and default workspace-files providers;
+2. reusable Command Palette and Quick Open open/query state, mutual exclusion, hard window shortcut
+   routing, generic shortcut-bridge rendering and run/select completion.
+
+The target extracts only the second responsibility into a focused module. The focused entrypoint
+must not import `useWorkbench`, the shell provider, extension/activity/view/layout/context-key
+services, workspace host-port adapters or `@workbench-kit/workbench-core`, directly or through a
+runtime transitive import. The provider adapter retains the first responsibility and renders the
+controller instead of owning a second overlay state machine.
+
+### Frozen public API
+
+The focused entrypoint exports exactly this additive contract:
+
+```ts
+export type WorkbenchCommandHostExecutor = (
+  commandId: string,
+  ...args: unknown[]
+) => unknown | Promise<unknown>;
+
+export interface WorkbenchCommandHostControllerProps<TContext = unknown> {
+  commands: readonly WorkbenchCommandDescriptor[];
+  executeCommand: WorkbenchCommandHostExecutor;
+
+  commandPaletteCloseLabel?: string;
+  commandPaletteEmptyLabel?: string;
+  commandPalettePlaceholder?: string;
+  commandPaletteTitle?: string;
+  enableCommandPalette?: boolean;
+  enableQuickOpen?: boolean;
+  quickOpenCloseLabel?: string;
+  quickOpenEmptyLabel?: string;
+  quickOpenPlaceholder?: string;
+  quickOpenProviders?: readonly QuickOpenProvider[];
+  quickOpenTitle?: string;
+
+  onOpenQuickOpenItem?: (item: QuickOpenItem, context: QuickOpenSelectContext) => boolean | void;
+  onRunCommand?: (
+    command: WorkbenchCommandDescriptor,
+    context: WorkbenchCommandRunContext,
+  ) => boolean | void;
+
+  shortcutBridge?: false | WorkbenchShortcutCommandBridgeProps<TContext>;
+}
+
+export function WorkbenchCommandHostController<TContext = unknown>(
+  props: WorkbenchCommandHostControllerProps<TContext>,
+): JSX.Element;
+```
+
+`commands` is the sole Command Palette descriptor authority. The controller neither derives nor
+subscribes descriptors from a registry. When shortcut handling is required, the caller passes
+`shortcutBridge`; the existing generic `WorkbenchShortcutCommandBridgeProps<TContext>`
+discriminated binding/projection model remains authoritative. Explicit bindings, an explicit
+keybinding projection with optional overrides, and the bridge's existing internal
+registry/context projection retain their current mutually exclusive semantics and subscription
+behavior. Omitted or `false` `shortcutBridge` disables the bridge.
+
+The controller accepts already-resolved `quickOpenProviders` and does not create providers or own
+recent/workspace projection. Omitted providers therefore produce no controller-invented source.
+The full-provider adapter may continue to construct its existing default workspace-files provider
+and recent-path projection before passing the result to the controller.
+
+The existing `WorkbenchCommandHost`, `WorkbenchCommandHostProps` and provider-bound
+`@workbench-kit/shell-react/command-host` entrypoint remain source-compatible. The focused subpath
+is additive and is not replaced by a root-only export whose runtime graph still evaluates the
+provider wrapper.
+
+### State, event and completion flow
+
+The controller is the only owner of Command Palette and Quick Open open/query React state.
+
+```text
+window hard shortcut
+        ↓
+controller open/query state (one overlay open at most)
+        ↓
+Command Palette run / Quick Open select
+        ↓
+synchronous host claim? ── yes → close once, no fallback
+        └─ no → injected executor / canonical workspace.open fallback
+                        ↓
+             close once after sync return or Promise settlement
+```
+
+- Ctrl/Cmd+Shift+P opens Command Palette and closes Quick Open.
+- Ctrl/Cmd+P opens Quick Open and closes Command Palette; when Quick Open is disabled but Command
+  Palette is enabled, it opens Command Palette without forcing the `>` query.
+- The hard-shortcut window listener is installed once for the enabled configuration and removed on
+  cleanup. It does not duplicate the generic bridge.
+- A truthy `onRunCommand` or `onOpenQuickOpenItem` result claims the action synchronously, closes
+  immediately and skips fallback execution.
+- An unclaimed palette command calls the injected executor. An unclaimed Quick Open file with a
+  resolvable path calls the canonical `workspace.open` command with `{ path }`; an item without a
+  resolvable path closes without execution.
+- A synchronous executor return closes immediately after return. A Promise or thenable closes
+  exactly once in `finally`. A synchronous throw closes once and is rethrown. An asynchronous
+  rejection closes the overlay and remains rejected; the controller does not swallow it.
+- The controller adds no persistence, cancellation, execution queue, command registry, descriptor
+  subscription or error-reporting owner.
+
+### Provider adapter responsibility
+
+The provider-bound adapter continues to own:
+
+- `useWorkbench()` and context-key snapshots;
+- activity/view/layout filtering, shell command derivation and handler registration;
+- extension command metadata and extension-only keybinding routing;
+- the `WB-NS-080A` effective keybinding projection, overrides and platform operands;
+- workspace state and default workspace-files Quick Open provider composition;
+- existing `enableExtensionKeybindings` behavior and all existing public copy/provider override
+  props.
+
+It maps the existing `enableShortcutBridge` option to the controller's `shortcutBridge` prop and
+passes already-resolved palette descriptors and Quick Open providers. `enableExtensionKeybindings`
+remains adapter-only. Generic and extension-only shortcut ownership must remain exactly-once, and
+the existing capture target plus hard Palette/Quick Open shortcuts remain excluded from extension
+dispatch.
+
+### Ordered implementation tasks
+
+1. Add the focused provider-free controller module with the frozen public types and no provider or
+   workbench-core runtime dependency.
+2. Add the `./command-host-controller` package export and focused public/type consumer fixture.
+3. Move only overlay state, mutual exclusion, hard shortcut routing, rendering and run/select
+   completion from the provider host into the controller.
+4. Keep provider resolution, shell registration, workspace projection and extension-only routing
+   in the existing adapter; pass resolved descriptors, providers and shortcut-bridge operands.
+5. Remove the old controller mechanics from the adapter so only one overlay state machine and one
+   hard-shortcut listener remain.
+6. Add provider-free interaction tests, executor lifecycle tests and provider-bound adapter parity
+   regressions, including the completed #253 effective-keybinding behavior.
+7. Add a provider-free `WorkbenchStandaloneShell` sample or Storybook interaction and a packed
+   import-graph assertion for the focused subpath.
+8. Update neutral consumer documentation for provider-free composition without naming any product
+   host or moving product policy into the package.
+9. Freeze one exact source candidate, run the required gates once on that SHA and route it to a
+   producer-distinct source reviewer before integration or release claims.
+
+### Compatibility, migration and cleanup
+
+This is an additive API extraction. Existing provider-bound imports and props require no consumer
+migration. The provider adapter must delegate to the controller in the same source candidate;
+shipping a second standalone implementation beside the old state machine is not an acceptable
+compatibility phase. No persisted data, command grammar, keybinding storage or extension manifest
+changes are introduced.
+
+### Focused and repository validation
+
+Development uses focused shell-react tests only until the candidate is frozen. Required evidence
+on the exact candidate includes:
+
+- provider-free mount without `WorkbenchProvider` or `useWorkbench()`;
+- exact Palette/Quick Open shortcut routing, disabled-Quick-Open fallback, mutual exclusion,
+  listener cleanup and remount behavior;
+- claimed and unclaimed palette/Quick Open paths, `workspace.open`, no-path behavior, synchronous
+  return, Promise/thenable resolve and reject, synchronous throw, exactly-once close and preserved
+  rejection/throw ownership;
+- shortcut bridge disabled plus its existing discriminated binding/projection sources;
+- unchanged `WorkbenchCommandHostProps`, provider-bound command/provider behavior, #253 late
+  registration, exactly-once generic/extension dispatch, capture guard and effective overrides;
+- a packed consumer/import-graph assertion proving the focused subpath includes the controller and
+  required lightweight React/platform code but excludes the shell provider, extension assembly,
+  built-in extension modules and workbench-core extension graph;
+- `pnpm check:commit-safety`, focused shell-react/type checks, exact-optional typecheck,
+  `check:public-exports`, dependency-graph and packed-consumer checks;
+- one exact-head `pnpm validate:static`, `pnpm test` full unit gate and the focused
+  StandaloneShell/Storybook browser interaction.
+
+Electron is not run because this packet changes no main, preload, BrowserWindow, native IPC or
+other native boundary. No independent performance budget is added: the extraction must preserve
+the existing linear descriptor/provider work, install no duplicate listener or subscription and
+add no persistent or background service.
+
+### Acceptance and done criteria
+
+The packet is complete when an integrating host imports the focused subpath, mounts the controller
+without `WorkbenchProvider`, receives the canonical overlays and shortcut behavior from injected
+descriptors/providers, and the packed graph proves that provider/workbench-core extension assembly
+is absent. The provider-bound host must use that same controller while preserving all existing
+public props, shell/extension/workspace behavior and #253 effective shortcuts. Every claim,
+fallback and executor completion path closes exactly once without swallowed errors or a second
+state/descriptor/keybinding authority.
+
+Producer-distinct readiness review returned `PASS / P0 none / P1 none / P2 none` for the frozen
+public contract at the exact baseline above. Source completion still requires an exact-candidate
+producer-distinct review and the listed validation; this READY projection is not a source, release,
+package or publish claim.
+
+### Source-review checklist
+
+Reject a candidate that imports provider, `useWorkbench`, workbench-core, extension/layout/context
+services through the focused entrypoint; exports a nominally focused controller from a runtime graph
+that still evaluates the provider wrapper; independently derives palette descriptors or keybinding
+projections; leaves two overlay state machines or hard listeners; breaks existing wrapper props or
+#253 effective-keybinding behavior; double-dispatches generic and extension shortcuts; changes
+claim, fallback or close-on-error semantics; duplicates workspace provider construction; swallows
+an asynchronous rejection; leaves an overlay stuck; or adds persistence, native or product-policy
+scope.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
