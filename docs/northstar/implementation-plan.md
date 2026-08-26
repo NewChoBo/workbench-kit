@@ -76,7 +76,7 @@ WB-NS-071A graph node type/property-input foundation [DONE; independent after WB
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
         ↓
-WB-NS-071C external static node catalog projection [READY_FOR_IMPLEMENTATION; data-only v1]
+WB-NS-071C external static node catalog projection [DONE; data-only v1]
 
 WB-NS-072A design-system foundation consolidation map [DONE]
         ↓
@@ -3126,7 +3126,7 @@ Support typed graph node descriptors and the useful editor↔connectable-input d
 ```text
 WB-NS-071A NodeTypeDescriptor / typed port + property foundation [DONE]
 WB-NS-071B missing capability -> component/node development requirement [DONE]
-WB-NS-071C external static node catalog projection [READY_FOR_IMPLEMENTATION; data-only v1]
+WB-NS-071C external static node catalog projection [DONE; data-only v1]
 optional ComfyUI adapter experiment
 ```
 
@@ -3654,7 +3654,7 @@ reviewed successor as merge `7051a2e7051838770a4d7d527904aa4a5515db0d`.
 
 ### `WB-NS-071C` bounded readiness packet — external static node catalog projection
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Exact source/API base:** `origin/develop@17e71629526bdb9f4b09246dd227f0d97152b09b`
 - **Dependencies:** `WB-NS-071A` and `WB-NS-071B` `DONE`; existing `NodeTypeDescriptor`, `UiValueSchema`, `NodeTypeCatalogContribution`, `resolveNodeTypeCatalog()` and 071B exact requirement resolution remain canonical
 - **Target owner:** focused public subpath `@workbench-kit/contracts/external-node-catalog`
@@ -4172,6 +4172,18 @@ entries, duplicated node/value/catalog validation, raw or executable provenance,
 workflow widening, document/task/repository mutation, automatic preview/Apply and vendor/product
 coupling. Acceptance requires `PASS / P0 none / P1 none / P2 none` on the exact candidate plus the
 focused, packed and final validation above.
+
+The integrated source implements the focused public leaf under
+`packages/contracts/src/external-node-catalog/`, shares only contracts-private strict admission
+helpers with 071B, and keeps the package root, runtime and extension SDK free of convenience exports
+or registration authority. Candidate `65673c3007092232fb533d459d7f879d7fe17868` established the
+production slice; one batched successor `850735555e59c925aed9d30045abf3d325184a14` closed bounded
+admission, deterministic issue and packed lifecycle review findings. Final exact-candidate
+`pnpm validate:fast` passed every static check plus 462 test files and 2,584 tests;
+`pnpm check:commit-safety` also passed before delivery. Three producer-distinct successor reviews
+returned `PASS / P0 none / P1 none / P2 none`; browser and Electron were not required because no
+renderer or native boundary changed. PR #373 integrated the reviewed source as merge
+`abde7236cb48ebaf3758363ddd3df88bec0e7aa9`.
 
 ### ComfyUI discovery
 
