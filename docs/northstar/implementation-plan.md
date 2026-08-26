@@ -59,6 +59,7 @@ WB-NS-040A extension uninstall compatibility + dependency safety [DONE; independ
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
+        │       └─ WB-NS-030A opt-in invalid-submit focus recovery [READY_FOR_IMPLEMENTATION; bounded current SchemaForm compatibility]
         ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
 
@@ -2078,6 +2079,125 @@ InspectorModel
 ### Source review required
 
 Inventory current field-schema, Field Remap, settings/form/inspector APIs before finalizing new public contracts. Reuse/consolidation is preferred over a parallel schema system.
+
+## WB-NS-030A — Opt-in invalid-submit focus recovery for SchemaForm
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** bounded compatibility enhancement for the current scalar
+  `WorkbenchSchemaForm`; parent `WB-NS-030` remains `DESIGNING`
+- **Ownership:** `GENERIC_KIT`
+- **Exact implementation base:**
+  `b671c7bb9e02900baa6d259f5e0e128f8aecb3eb`
+- **Public owner:** `@workbench-kit/react/workbench/settings`
+- **Native boundary:** none
+
+### Goal
+
+Let an explicitly opted-in form keep its submit action available when validation errors exist so a
+click or Enter attempt can move focus to the first actionable invalid field. Preserve every current
+default, commit, cancel and read-only behavior for existing consumers.
+
+This slice improves the current `WorkbenchSchemaForm`; it does not define the future canonical
+`FormModel`, schema registry or inspector architecture owned by the parent packet.
+
+### Frozen public API
+
+Add one optional prop to `WorkbenchSchemaFormProps`:
+
+```ts
+readonly focusFirstInvalidFieldOnSubmit?: boolean;
+```
+
+No new helper, public type, export subpath or root export is introduced. Omitted and explicit
+`false` are behaviorally identical to the current implementation.
+
+### Frozen behavior and state flow
+
+1. When the option is omitted or `false`, validation errors keep the built-in submit button
+   natively disabled and an invalid submit cannot focus a field or call `onSubmit`.
+2. When the option is `true`, validation errors alone do not natively disable the built-in submit
+   button. Form-level `disabled` or `readOnly` still does.
+3. Click and Enter use the same native form submit path. The submit attempt reads the latest merged
+   computed and external errors synchronously.
+4. If errors remain, `onSubmit` is not called. Focus moves to the first focusable invalid control in
+   `fields` declaration order, skipping disabled or read-only fields and error keys that do not map
+   to a rendered field.
+5. If no invalid control is focusable, focus remains within the form and no fallback global query,
+   timer or listener is installed.
+6. After errors are repaired, a valid submit calls `onSubmit` exactly once with the same values and
+   commit semantics as today.
+7. Invalid controls expose `aria-invalid="true"` and retain their existing error association through
+   `aria-describedby`. Every generated field control, including checkbox inputs, has a stable DOM ID
+   that can be targeted without changing field value ownership.
+8. Cancel, `showActions={false}`, immediate-commit fields and controlled/uncontrolled value flows do
+   not gain a second submit, validation or state authority.
+
+### Scope
+
+- extend `WorkbenchSchemaFormProps` with the single opt-in flag;
+- route invalid click and Enter attempts through the existing form submit handler;
+- keep field-order focus ownership local to the form instance;
+- associate every rendered scalar control with its generated field ID;
+- add focused unit coverage and one required Storybook interaction proof;
+- add exact-optional compilation evidence for the optional prop.
+
+### Non-goals
+
+- canonical `FormModel`, `FieldSchemaRegistry`, `FieldEditorRegistry`, `ValidationService` or
+  `InspectorModel` design;
+- async validation, validation summaries, wizards or cross-form focus management;
+- new field kinds, persistence, command/history, extension, provider or native behavior;
+- implicit behavior changes for existing forms;
+- timers, document-wide selectors, global listeners or a second field registry.
+
+### Ordered implementation tasks
+
+1. Add the exact optional prop and preserve the existing default-disabled calculation.
+2. Give all scalar controls their generated field ID and retain existing label/error relationships.
+3. In the existing submit handler, merge current errors, guard disabled/read-only state, and when the
+   option is enabled focus the first rendered, focusable invalid control in declaration order.
+4. Keep the valid path and `onSubmit` invocation unchanged and singular.
+5. Add focused React tests for default compatibility, opted-in click and Enter attempts, field order,
+   computed/external errors, skipped controls, repair-and-submit and existing form modes.
+6. Add a required Storybook play that exercises real click and Enter focus recovery, plus the
+   exact-optional fixture.
+
+### Verification
+
+During implementation, repeat only the focused `SchemaForm` unit tests and the narrow React
+typecheck needed by the edit. Freeze one candidate before final gates. At the final exact SHA run:
+
+- focused `SchemaForm` unit tests;
+- `pnpm typecheck:react-exact-optional`;
+- `pnpm validate:static`;
+- `pnpm validate:fast`;
+- required Storybook build/play validation containing the new interaction proof;
+- `pnpm check:commit-safety` and `git diff --check` before commit and push.
+
+Electron validation is not required because this packet changes no native, main, preload or package
+boundary.
+
+### Acceptance
+
+- omitted/`false` remains exact current behavior;
+- opted-in click and Enter attempts focus the first eligible invalid field and submit zero times;
+- correcting the errors produces exactly one valid submit;
+- field declaration order wins over external-error object key order;
+- disabled/read-only invalid fields and unknown external keys are skipped safely;
+- computed and external errors share one focus decision;
+- invalid controls preserve `aria-invalid` and their described error relationship;
+- controlled, uncontrolled, Cancel, `showActions={false}` and immediate-commit regressions pass;
+- the public prop remains exactly optional under exact-optional compilation;
+- the required browser interaction proves focus recovery without a native boundary.
+
+### Source-review checklist
+
+Reject a candidate that changes default submit-disable behavior; focuses on validation change rather
+than submit attempt; uses error object order instead of field order; calls `onSubmit` while invalid;
+focuses a disabled/read-only or unrelated control; installs a timer, global listener or
+document-wide focus authority; creates a second value/error store; changes commit/cancel semantics;
+adds a public helper/export beyond the one optional prop; expands into the parent architecture; or
+claims Electron, release or publish completion.
 
 ## WB-NS-040 — Extension capability / trust / compatibility model
 
