@@ -274,6 +274,11 @@ describe('WorkbenchSchemaForm rendering', () => {
         type: 'checkbox',
       },
       {
+        id: 'booleanTrue',
+        label: 'Boolean true',
+        type: 'text',
+      },
+      {
         id: 'mode',
         label: 'Mode',
         options: [{ label: 'Automatic', value: 'automatic' }],
@@ -293,6 +298,7 @@ describe('WorkbenchSchemaForm rendering', () => {
           unknown: 'Unknown error',
           last: 'Last error',
           nonRenderable: null,
+          booleanTrue: true,
           mode: 'Mode error',
           readonly: 'Read-only error',
           disabled: 'Disabled error',
@@ -344,6 +350,73 @@ describe('WorkbenchSchemaForm rendering', () => {
       expect(onSubmit).not.toHaveBeenCalled();
     } finally {
       await rendered.cleanup();
+    }
+  });
+
+  it.each([
+    ['disabled', { disabled: true }],
+    ['readOnly', { readOnly: true }],
+  ] as const)(
+    'keeps an opt-in %s form natively disabled and inert on programmatic submit',
+    async (_label, formState) => {
+      const onSubmit = vi.fn();
+      const outside = document.createElement('button');
+      document.body.append(outside);
+      const rendered = await renderSchemaForm(
+        <WorkbenchSchemaForm
+          focusFirstInvalidFieldOnSubmit
+          fields={[{ id: 'name', label: 'Name', required: true, type: 'text' }]}
+          onSubmit={onSubmit}
+          {...formState}
+        />,
+      );
+
+      try {
+        const form = rendered.container.querySelector('form');
+        const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+        outside.focus();
+
+        expect(submit?.disabled).toBe(true);
+        await act(async () => {
+          form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        });
+
+        expect(document.activeElement).toBe(outside);
+        expect(onSubmit).not.toHaveBeenCalled();
+      } finally {
+        await rendered.cleanup();
+        outside.remove();
+      }
+    },
+  );
+
+  it('keeps explicit false equivalent to the omitted default', async () => {
+    const onSubmit = vi.fn();
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        focusFirstInvalidFieldOnSubmit={false}
+        fields={[{ id: 'name', label: 'Name', required: true, type: 'text' }]}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const form = rendered.container.querySelector('form');
+      const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+      outside.focus();
+
+      expect(submit?.disabled).toBe(true);
+      await act(async () => {
+        form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(document.activeElement).toBe(outside);
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+      outside.remove();
     }
   });
 

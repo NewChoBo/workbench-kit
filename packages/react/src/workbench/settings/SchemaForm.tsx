@@ -215,6 +215,10 @@ function isRenderableWorkbenchSchemaFormError(error: ReactNode) {
   return error !== undefined && error !== null && error !== false && error !== '';
 }
 
+function isFocusableWorkbenchSchemaFormError(error: ReactNode) {
+  return error !== true && isRenderableWorkbenchSchemaFormError(error);
+}
+
 export function WorkbenchSchemaForm({
   cancelLabel = 'Cancel',
   className,
@@ -303,7 +307,7 @@ export function WorkbenchSchemaForm({
     const form = event.currentTarget;
     for (const field of fields) {
       if (field.disabled || field.readOnly) continue;
-      if (!isRenderableWorkbenchSchemaFormError(resolvedErrors[field.id])) continue;
+      if (!isFocusableWorkbenchSchemaFormError(resolvedErrors[field.id])) continue;
 
       const control = form.elements.namedItem(`${generatedId}-${field.id}`);
       if (!(control instanceof HTMLElement)) continue;
