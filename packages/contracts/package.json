@@ -8,6 +8,9 @@
       "authoring-development": [
         "dist/authoring-development.d.ts"
       ],
+      "external-node-catalog": [
+        "dist/external-node-catalog.d.ts"
+      ],
       "theme-presets": [
         "dist/theme-presets.d.ts"
       ]
@@ -30,6 +33,12 @@
       "import": "./dist/authoring-development.js",
       "require": "./dist/authoring-development.cjs",
       "default": "./dist/authoring-development.js"
+    },
+    "./external-node-catalog": {
+      "types": "./dist/external-node-catalog.d.ts",
+      "import": "./dist/external-node-catalog.js",
+      "require": "./dist/external-node-catalog.cjs",
+      "default": "./dist/external-node-catalog.js"
     },
     "./theme-presets": {
       "types": "./dist/theme-presets.d.ts",
