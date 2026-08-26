@@ -19,6 +19,7 @@ import {
 } from '../internal/ui-value-schema-shape';
 import type { UiValueSchema } from '../ui-authoring/types';
 import {
+  EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES,
   EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS,
   EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION,
   type ExternalNodeCatalogProjectionAcceptance,
@@ -34,8 +35,12 @@ type PlainRecord = Readonly<Record<string, unknown>>;
 interface RowSlot {
   readonly index: number;
   readonly path: string;
-  readonly hostile: boolean;
-  readonly value?: unknown;
+  readonly value: unknown;
+}
+
+interface RowArrayHeader {
+  readonly value: readonly unknown[];
+  readonly length: number;
 }
 
 interface Envelope {
@@ -73,24 +78,9 @@ interface DescriptorCandidate {
 
 const EMPTY_ACCEPTED = Object.freeze([]) as readonly [];
 const EMPTY_ISSUES = Object.freeze([]) as readonly [];
-const ISSUE_ORDER = new Map<string, number>([
-  ['unsupported-schema-version', 0],
-  ['invalid-foreign-snapshot', 1],
-  ['invalid-foreign-entry', 2],
-  ['invalid-projection-mapping', 3],
-  ['admission-limit-exceeded', 4],
-  ['duplicate-source-type-key', 5],
-  ['duplicate-identity-mapping', 6],
-  ['missing-identity-mapping', 7],
-  ['duplicate-value-semantic-mapping', 8],
-  ['missing-value-semantic-mapping', 9],
-  ['duplicate-projected-node-ref', 10],
-  ['unsupported-foreign-input', 11],
-  ['unsupported-foreign-output', 12],
-  ['unsupported-dynamic-shape', 13],
-  ['unsafe-foreign-entry', 14],
-  ['projected-descriptor-invalid', 15],
-]);
+const ISSUE_ORDER = new Map<string, number>(
+  EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES.map((code, index) => [code, index]),
+);
 
 function hasOwn(record: PlainRecord, key: string): boolean {
   return Object.prototype.hasOwnProperty.call(record, key);
@@ -113,6 +103,10 @@ function hasOnlyKeys(record: PlainRecord, keys: readonly string[]): boolean {
 
 function isCanonicalText(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value === value.trim();
+}
+
+function isRecognizedSchemaVersion(value: unknown): value is number {
+  return typeof value === 'number' && Number.isSafeInteger(value) && value > 0;
 }
 
 function optionalCanonicalText(record: PlainRecord, key: string): boolean {
@@ -140,7 +134,7 @@ function inspectEnvelope(value: unknown, keys: readonly string[]): Envelope | nu
   return { record: value, values: Object.freeze(values) };
 }
 
-function inspectRowArray(value: unknown, path: string): readonly RowSlot[] | null {
+function inspectRowArrayHeader(value: unknown): RowArrayHeader | null {
   if (!Array.isArray(value) || Object.getPrototypeOf(value) !== Array.prototype) return null;
   const lengthDescriptor = Object.getOwnPropertyDescriptor(value, 'length');
   if (
@@ -152,32 +146,54 @@ function inspectRowArray(value: unknown, path: string): readonly RowSlot[] | nul
   ) {
     return null;
   }
-  const length = lengthDescriptor.value;
-  for (const key of Reflect.ownKeys(value)) {
-    if (key === 'length') continue;
+  return Object.freeze({ value, length: lengthDescriptor.value });
+}
+
+function materializeRowArray(header: RowArrayHeader, path: string): readonly RowSlot[] | null {
+  const keys = Reflect.ownKeys(header.value);
+  if (keys.length !== header.length + 1) return null;
+
+  const slots: RowSlot[] = [];
+  for (let index = 0; index < header.length; index += 1) {
+    const descriptor = Object.getOwnPropertyDescriptor(header.value, String(index));
     if (
-      typeof key !== 'string' ||
-      !/^(0|[1-9]\d*)$/.test(key) ||
-      Number(key) >= length ||
-      String(Number(key)) !== key
+      descriptor === undefined ||
+      !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+      descriptor.enumerable !== true
     ) {
       return null;
     }
+    slots.push(
+      Object.freeze({ index, path: `${path}[${index}]`, value: descriptor.value }) as RowSlot,
+    );
   }
-  return Object.freeze(
-    Array.from({ length }, (_, index): RowSlot => {
-      const descriptor = Object.getOwnPropertyDescriptor(value, String(index));
-      const rowPath = `${path}[${index}]`;
-      if (
-        descriptor === undefined ||
-        !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
-        descriptor.enumerable !== true
-      ) {
-        return Object.freeze({ index, path: rowPath, hostile: true });
-      }
-      return Object.freeze({ index, path: rowPath, hostile: false, value: descriptor.value });
-    }),
-  );
+  return Object.freeze(slots);
+}
+
+const MISSING_OWN_DATA = Symbol('missing-own-data');
+
+function ownEnumerableDataValue(value: object, key: string): unknown | typeof MISSING_OWN_DATA {
+  const descriptor = Object.getOwnPropertyDescriptor(value, key);
+  if (
+    descriptor === undefined ||
+    !Object.prototype.hasOwnProperty.call(descriptor, 'value') ||
+    descriptor.enumerable !== true
+  ) {
+    return MISSING_OWN_DATA;
+  }
+  return descriptor.value;
+}
+
+function preflightStaticPortCount(value: unknown): number | null {
+  if (!isPlainRecord(value)) return null;
+  if (ownEnumerableDataValue(value, 'kind') !== 'static') return null;
+  const inputs = ownEnumerableDataValue(value, 'inputs');
+  const outputs = ownEnumerableDataValue(value, 'outputs');
+  if (inputs === MISSING_OWN_DATA || outputs === MISSING_OWN_DATA) return null;
+  const inputHeader = inspectRowArrayHeader(inputs);
+  const outputHeader = inspectRowArrayHeader(outputs);
+  if (inputHeader === null || outputHeader === null) return null;
+  return inputHeader.length + outputHeader.length;
 }
 
 function issue(
@@ -449,12 +465,26 @@ function parseSourceEntry(value: unknown, index: number): ParsedSourceRow {
   };
 }
 
-function sortSourceIssues(
+function orderSourceIssues(
   issues: readonly ExternalNodeCatalogProjectionIssue[],
 ): ExternalNodeCatalogProjectionIssue[] {
-  return [...issues].sort(
-    (left, right) => (ISSUE_ORDER.get(left.code) ?? 99) - (ISSUE_ORDER.get(right.code) ?? 99),
+  const buckets = EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES.map(
+    () => [] as ExternalNodeCatalogProjectionIssue[],
   );
+  const seen = new Set<string>();
+  for (const entry of issues) {
+    const nested = 'nodeIssue' in entry ? entry.nodeIssue : undefined;
+    const key = JSON.stringify([
+      entry.code,
+      entry.path,
+      nested?.code ?? null,
+      nested?.path ?? null,
+    ]);
+    if (seen.has(key)) continue;
+    seen.add(key);
+    buckets[ISSUE_ORDER.get(entry.code)!]!.push(entry);
+  }
+  return buckets.flat();
 }
 
 function freezeContribution(
@@ -518,65 +548,54 @@ function projectAdmittedRows(
   const valueRows: ParsedValueRow[] = [];
   const mappingIssues: ExternalNodeCatalogProjectionIssue[] = [];
 
-  try {
-    for (const slot of identities) {
-      if (slot.hostile) {
-        identityRows.push({ index: slot.index, invalid: true });
-        continue;
+  for (const slot of identities) {
+    try {
+      const row = snapshotStrictPortableData(slot.value, { ...snapshotOptions, path: slot.path });
+      const key =
+        isPlainRecord(row) && isCanonicalText(row.sourceTypeKey) ? row.sourceTypeKey : undefined;
+      const valid =
+        isPlainRecord(row) &&
+        hasOnlyKeys(row, ['sourceTypeKey', 'target']) &&
+        key !== undefined &&
+        isNodeRef(row.target);
+      identityRows.push({
+        index: slot.index,
+        ...(key === undefined ? {} : { key }),
+        ...(valid ? { target: row.target as NodeTypeRef } : {}),
+        invalid: !valid,
+      });
+    } catch (error) {
+      if (error instanceof StrictPortableDataError && error.kind === 'limit') {
+        return invalidResult('admission-limit-exceeded', slot.path);
       }
-      try {
-        const row = snapshotStrictPortableData(slot.value, { ...snapshotOptions, path: slot.path });
-        const key =
-          isPlainRecord(row) && isCanonicalText(row.sourceTypeKey) ? row.sourceTypeKey : undefined;
-        const valid =
-          isPlainRecord(row) &&
-          hasOnlyKeys(row, ['sourceTypeKey', 'target']) &&
-          key !== undefined &&
-          isNodeRef(row.target);
-        identityRows.push({
-          index: slot.index,
-          ...(key === undefined ? {} : { key }),
-          ...(valid ? { target: row.target as NodeTypeRef } : {}),
-          invalid: !valid,
-        });
-      } catch (error) {
-        if (error instanceof StrictPortableDataError && error.kind === 'limit') throw error;
-        identityRows.push({ index: slot.index, invalid: true });
-      }
+      identityRows.push({ index: slot.index, invalid: true });
     }
-    for (const slot of values) {
-      if (slot.hostile) {
-        valueRows.push({ index: slot.index, invalid: true });
-        continue;
+  }
+  for (const slot of values) {
+    try {
+      const row = snapshotStrictPortableData(slot.value, { ...snapshotOptions, path: slot.path });
+      const key =
+        isPlainRecord(row) && isCanonicalText(row.sourceSemanticId)
+          ? row.sourceSemanticId
+          : undefined;
+      const valid =
+        isPlainRecord(row) &&
+        hasOnlyKeys(row, ['sourceSemanticId', 'target']) &&
+        key !== undefined &&
+        isSupportedUiValueSchemaShape(row.target) &&
+        collectNoncanonicalUiValueSchemaText(row.target).length === 0;
+      valueRows.push({
+        index: slot.index,
+        ...(key === undefined ? {} : { key }),
+        ...(valid ? { target: row.target as UiValueSchema } : {}),
+        invalid: !valid,
+      });
+    } catch (error) {
+      if (error instanceof StrictPortableDataError && error.kind === 'limit') {
+        return invalidResult('admission-limit-exceeded', slot.path);
       }
-      try {
-        const row = snapshotStrictPortableData(slot.value, { ...snapshotOptions, path: slot.path });
-        const key =
-          isPlainRecord(row) && isCanonicalText(row.sourceSemanticId)
-            ? row.sourceSemanticId
-            : undefined;
-        const valid =
-          isPlainRecord(row) &&
-          hasOnlyKeys(row, ['sourceSemanticId', 'target']) &&
-          key !== undefined &&
-          isSupportedUiValueSchemaShape(row.target) &&
-          collectNoncanonicalUiValueSchemaText(row.target).length === 0;
-        valueRows.push({
-          index: slot.index,
-          ...(key === undefined ? {} : { key }),
-          ...(valid ? { target: row.target as UiValueSchema } : {}),
-          invalid: !valid,
-        });
-      } catch (error) {
-        if (error instanceof StrictPortableDataError && error.kind === 'limit') throw error;
-        valueRows.push({ index: slot.index, invalid: true });
-      }
+      valueRows.push({ index: slot.index, invalid: true });
     }
-  } catch (error) {
-    if (error instanceof StrictPortableDataError && error.kind === 'limit') {
-      return invalidResult('admission-limit-exceeded', error.path);
-    }
-    throw error;
   }
 
   const identityCounts = new Map<string, number>();
@@ -635,39 +654,27 @@ function projectAdmittedRows(
   }
 
   const sources: ParsedSourceRow[] = [];
-  try {
-    for (const slot of entries) {
-      if (slot.hostile) {
-        sources.push({
-          index: slot.index,
-          issues: [sourceIssue('unsafe-foreign-entry', { index: slot.index }, slot.path)],
-        });
-        continue;
+  for (const slot of entries) {
+    try {
+      const portCount = preflightStaticPortCount(slot.value);
+      if (
+        portCount !== null &&
+        portCount > EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxPortsPerEntry
+      ) {
+        return invalidResult('admission-limit-exceeded', slot.path);
       }
-      try {
-        const row = snapshotStrictPortableData(slot.value, { ...snapshotOptions, path: slot.path });
-        const parsed = parseSourceEntry(row, slot.index);
-        if (
-          parsed.staticEntry !== undefined &&
-          parsed.staticEntry.inputs.length + parsed.staticEntry.outputs.length >
-            EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxPortsPerEntry
-        ) {
-          return invalidResult('admission-limit-exceeded', slot.path);
-        }
-        sources.push(parsed);
-      } catch (error) {
-        if (error instanceof StrictPortableDataError && error.kind === 'limit') throw error;
-        sources.push({
-          index: slot.index,
-          issues: [sourceIssue('unsafe-foreign-entry', { index: slot.index }, slot.path)],
-        });
+      const row = snapshotStrictPortableData(slot.value, { ...snapshotOptions, path: slot.path });
+      const parsed = parseSourceEntry(row, slot.index);
+      sources.push(parsed);
+    } catch (error) {
+      if (error instanceof StrictPortableDataError && error.kind === 'limit') {
+        return invalidResult('admission-limit-exceeded', slot.path);
       }
+      sources.push({
+        index: slot.index,
+        issues: [sourceIssue('unsafe-foreign-entry', { index: slot.index }, slot.path)],
+      });
     }
-  } catch (error) {
-    if (error instanceof StrictPortableDataError && error.kind === 'limit') {
-      return invalidResult('admission-limit-exceeded', error.path);
-    }
-    throw error;
   }
 
   const sourceCounts = new Map<string, number>();
@@ -771,7 +778,7 @@ function projectAdmittedRows(
     acceptedCandidates.push(candidate);
   }
 
-  const sourceIssues = sources.flatMap((source) => sortSourceIssues(source.issues));
+  const sourceIssues = sources.flatMap((source) => orderSourceIssues(source.issues));
   const issues = Object.freeze([...mappingIssues, ...sourceIssues]);
   const accepted = Object.freeze(
     acceptedCandidates.map((candidate): ExternalNodeCatalogProjectionAcceptance =>
@@ -809,17 +816,27 @@ export function projectExternalNodeCatalogContribution(
   mapping: unknown,
 ): ExternalNodeCatalogProjectionResult {
   let snapshotEnvelope: Envelope | null;
-  let entrySlots: readonly RowSlot[] | null;
+  let entryHeader: RowArrayHeader | null;
   try {
     snapshotEnvelope = inspectEnvelope(snapshot, ['schemaVersion', 'entries']);
-    entrySlots =
-      snapshotEnvelope === null
-        ? null
-        : inspectRowArray(snapshotEnvelope.values.entries, 'snapshot.entries');
+    entryHeader =
+      snapshotEnvelope === null ? null : inspectRowArrayHeader(snapshotEnvelope.values.entries);
   } catch {
     return invalidResult('invalid-foreign-snapshot', 'snapshot');
   }
-  if (snapshotEnvelope === null || entrySlots === null) {
+  if (snapshotEnvelope === null || entryHeader === null) {
+    return invalidResult('invalid-foreign-snapshot', 'snapshot');
+  }
+  let entrySlots: readonly RowSlot[] | null = null;
+  if (entryHeader.length <= EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxEntries) {
+    try {
+      entrySlots = materializeRowArray(entryHeader, 'snapshot.entries');
+    } catch {
+      return invalidResult('invalid-foreign-snapshot', 'snapshot');
+    }
+    if (entrySlots === null) return invalidResult('invalid-foreign-snapshot', 'snapshot');
+  }
+  if (!isRecognizedSchemaVersion(snapshotEnvelope.values.schemaVersion)) {
     return invalidResult('invalid-foreign-snapshot', 'snapshot');
   }
   if (snapshotEnvelope.values.schemaVersion !== EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION) {
@@ -827,8 +844,8 @@ export function projectExternalNodeCatalogContribution(
   }
 
   let mappingEnvelope: Envelope | null;
-  let identitySlots: readonly RowSlot[] | null;
-  let valueSlots: readonly RowSlot[] | null;
+  let identityHeader: RowArrayHeader | null;
+  let valueHeader: RowArrayHeader | null;
   try {
     mappingEnvelope = inspectEnvelope(mapping, [
       'schemaVersion',
@@ -836,22 +853,33 @@ export function projectExternalNodeCatalogContribution(
       'identities',
       'values',
     ]);
-    identitySlots =
-      mappingEnvelope === null
-        ? null
-        : inspectRowArray(mappingEnvelope.values.identities, 'mapping.identities');
-    valueSlots =
-      mappingEnvelope === null
-        ? null
-        : inspectRowArray(mappingEnvelope.values.values, 'mapping.values');
+    identityHeader =
+      mappingEnvelope === null ? null : inspectRowArrayHeader(mappingEnvelope.values.identities);
+    valueHeader =
+      mappingEnvelope === null ? null : inspectRowArrayHeader(mappingEnvelope.values.values);
   } catch {
     return invalidResult('invalid-projection-mapping', 'mapping');
   }
+  if (mappingEnvelope === null || identityHeader === null || valueHeader === null) {
+    return invalidResult('invalid-projection-mapping', 'mapping');
+  }
+  const combinedMappings = identityHeader.length + valueHeader.length;
+  let identitySlots: readonly RowSlot[] | null = null;
+  let valueSlots: readonly RowSlot[] | null = null;
+  if (combinedMappings <= EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxMappings) {
+    try {
+      identitySlots = materializeRowArray(identityHeader, 'mapping.identities');
+      valueSlots = materializeRowArray(valueHeader, 'mapping.values');
+    } catch {
+      return invalidResult('invalid-projection-mapping', 'mapping');
+    }
+    if (identitySlots === null || valueSlots === null) {
+      return invalidResult('invalid-projection-mapping', 'mapping');
+    }
+  }
   if (
-    mappingEnvelope === null ||
-    identitySlots === null ||
-    valueSlots === null ||
-    !isCanonicalText(mappingEnvelope.values.contributorId)
+    !isCanonicalText(mappingEnvelope.values.contributorId) ||
+    !isRecognizedSchemaVersion(mappingEnvelope.values.schemaVersion)
   ) {
     return invalidResult('invalid-projection-mapping', 'mapping');
   }
@@ -859,24 +887,24 @@ export function projectExternalNodeCatalogContribution(
     return unsupportedVersionResult('mapping.schemaVersion');
   }
 
-  const combinedMappings = identitySlots.length + valueSlots.length;
   if (
-    entrySlots.length > EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxEntries ||
+    entryHeader.length > EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxEntries ||
     combinedMappings > EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxMappings ||
     (mappingEnvelope.values.contributorId as string).length >
       EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxStringLength
   ) {
     return invalidResult('admission-limit-exceeded', '$');
   }
-  const envelopeProperties = 2 + entrySlots.length + 4 + identitySlots.length + valueSlots.length;
+  const envelopeProperties =
+    2 + entryHeader.length + 4 + identityHeader.length + valueHeader.length;
   const propertyBudgetLimit =
     EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxPortableProperties - envelopeProperties;
   if (propertyBudgetLimit < 0) return invalidResult('admission-limit-exceeded', '$');
 
   return projectAdmittedRows(
-    entrySlots,
-    identitySlots,
-    valueSlots,
+    entrySlots as readonly RowSlot[],
+    identitySlots as readonly RowSlot[],
+    valueSlots as readonly RowSlot[],
     mappingEnvelope.values.contributorId as string,
     propertyBudgetLimit,
   );

@@ -196,6 +196,72 @@ function entryWithPortCounts(
   };
 }
 
+const HOSTILE_SECRET = 'EXTERNAL_NODE_CATALOG_HOSTILE_SECRET';
+
+interface HostileFixture {
+  readonly value: unknown;
+  readonly getter?: ReturnType<typeof vi.fn>;
+}
+
+const hostileFixtureFactories = [
+  {
+    label: 'function',
+    make: (): HostileFixture => ({
+      value: function EXTERNAL_NODE_CATALOG_HOSTILE_SECRET() {},
+    }),
+  },
+  { label: 'undefined', make: (): HostileFixture => ({ value: undefined }) },
+  { label: 'bigint', make: (): HostileFixture => ({ value: 1n }) },
+  { label: 'symbol primitive', make: (): HostileFixture => ({ value: Symbol(HOSTILE_SECRET) }) },
+  { label: 'NaN', make: (): HostileFixture => ({ value: Number.NaN }) },
+  { label: 'infinity', make: (): HostileFixture => ({ value: Number.POSITIVE_INFINITY }) },
+  { label: 'exotic object', make: (): HostileFixture => ({ value: new Date(0) }) },
+  {
+    label: 'cycle',
+    make: (): HostileFixture => {
+      const value: Record<string, unknown> = { marker: 'cycle' };
+      value.self = value;
+      return { value };
+    },
+  },
+  {
+    label: 'accessor',
+    make: (): HostileFixture => {
+      const getter = vi.fn(() => {
+        throw new Error(HOSTILE_SECRET);
+      });
+      const value: Record<string, unknown> = {};
+      Object.defineProperty(value, 'kind', { enumerable: true, get: getter });
+      return { value, getter };
+    },
+  },
+  {
+    label: 'symbol own key',
+    make: (): HostileFixture => ({
+      value: { sourceTypeKey: FILTER_SOURCE_KEY, [Symbol(HOSTILE_SECRET)]: true },
+    }),
+  },
+] as const;
+
+type MalformedArrayShape = 'sparse' | 'accessor' | 'non-enumerable';
+
+function malformedTopLevelArray(shape: MalformedArrayShape, getter: () => unknown): unknown[] {
+  const value: unknown[] = [];
+  if (shape === 'sparse') {
+    value.length = 1;
+  } else if (shape === 'accessor') {
+    Object.defineProperty(value, '0', { enumerable: true, get: () => getter() });
+  } else {
+    Object.defineProperty(value, '0', {
+      configurable: true,
+      enumerable: false,
+      value: {},
+      writable: true,
+    });
+  }
+  return value;
+}
+
 function expectedFilterDescriptor(): NodeTypeDescriptor {
   return {
     ...FILTER_TARGET,
@@ -586,6 +652,28 @@ describe('external node catalog projection status and survivors', () => {
     expect(result.issues[1]).toMatchObject({ sourceIndex: 1 });
   });
 
+  it('deduplicates repeated invalid-port diagnostics for one rejected source row', () => {
+    const invalidPorts = {
+      ...filterEntry(),
+      inputs: [
+        { kind: 'fixed', id: 'invalid-input-a', valueSemanticId: '' },
+        { kind: 'fixed', id: 'invalid-input-b', valueSemanticId: '' },
+      ],
+      outputs: [{ kind: 'fixed', id: '', valueSemanticId: 'semantic.number' }],
+    };
+
+    const result = projectExternalNodeCatalogContribution(
+      { schemaVersion: 1, entries: [invalidPorts] },
+      mapping(),
+    );
+
+    expect(result.status).toBe('rejected');
+    if (result.status !== 'rejected')
+      throw new Error('Expected the invalid source to be rejected.');
+    expect(issueCodes(result)).toEqual(['invalid-foreign-entry']);
+    expect(result.issues[0]).toMatchObject({ sourceIndex: 0, path: 'snapshot.entries[0]' });
+  });
+
   it('nests canonical descriptor validation and retains an unrelated source', () => {
     const invalidDescriptorEntry = clone(filterEntry());
     (invalidDescriptorEntry.outputs as ExternalStaticNodeCatalogEntry['outputs'][number][])[0] = {
@@ -625,6 +713,278 @@ describe('external node catalog projection status and survivors', () => {
 });
 
 describe('external node catalog projection top-level precedence', () => {
+  it.each([
+    ['undefined', (): unknown => undefined],
+    ['function', (): unknown => function invalidSchemaVersion() {}],
+    ['bigint', (): unknown => 2n],
+    ['symbol', (): unknown => Symbol('schema-version')],
+    ['NaN', (): unknown => Number.NaN],
+    ['infinity', (): unknown => Number.POSITIVE_INFINITY],
+    ['zero', (): unknown => 0],
+    ['negative integer', (): unknown => -1],
+    ['fraction', (): unknown => 1.5],
+    ['boxed number', (): unknown => new Number(2)],
+  ] as const)(
+    'classifies a %s schemaVersion as invalid for both operands',
+    (_label, makeVersion) => {
+      const snapshotResult = projectExternalNodeCatalogContribution(
+        { schemaVersion: makeVersion(), entries: [] },
+        mapping([], []),
+      );
+      expect(snapshotResult.status).toBe('invalid');
+      if (snapshotResult.status !== 'invalid') {
+        throw new Error('Expected a malformed snapshot schemaVersion to be invalid.');
+      }
+      expect(issueCodes(snapshotResult)).toEqual(['invalid-foreign-snapshot']);
+
+      const mappingResult = projectExternalNodeCatalogContribution(snapshot([]), {
+        schemaVersion: makeVersion(),
+        contributorId: 'external.fixture',
+        identities: [],
+        values: [],
+      });
+      expect(mappingResult.status).toBe('invalid');
+      if (mappingResult.status !== 'invalid') {
+        throw new Error('Expected a malformed mapping schemaVersion to be invalid.');
+      }
+      expect(issueCodes(mappingResult)).toEqual(['invalid-projection-mapping']);
+    },
+  );
+
+  it('classifies only a recognized positive integer v2 as unsupported at each operand boundary', () => {
+    const unreadMapping = vi.fn(() => {
+      throw new Error(HOSTILE_SECRET);
+    });
+    const snapshotResult = projectExternalNodeCatalogContribution(
+      { schemaVersion: 2, entries: [] },
+      {
+        get schemaVersion() {
+          return unreadMapping();
+        },
+        contributorId: 'unread',
+        identities: [],
+        values: [],
+      },
+    );
+    expect(snapshotResult.status).toBe('unsupported-version');
+    expect(issueCodes(snapshotResult)).toEqual(['unsupported-schema-version']);
+    expect(unreadMapping).not.toHaveBeenCalled();
+
+    const unreadSource = vi.fn(() => {
+      throw new Error(HOSTILE_SECRET);
+    });
+    const source: Record<string, unknown> = {
+      kind: 'static',
+      inputs: [],
+      outputs: [],
+      designTime: { label: 'Unread' },
+    };
+    Object.defineProperty(source, 'sourceTypeKey', { enumerable: true, get: unreadSource });
+    const mappingResult = projectExternalNodeCatalogContribution(
+      { schemaVersion: 1, entries: [source] },
+      { schemaVersion: 2, contributorId: 'future', identities: [], values: [] },
+    );
+    expect(mappingResult.status).toBe('unsupported-version');
+    expect(issueCodes(mappingResult)).toEqual(['unsupported-schema-version']);
+    expect(unreadSource).not.toHaveBeenCalled();
+  });
+
+  it.each(['sparse', 'accessor', 'non-enumerable'] as const)(
+    'rejects %s top-level row arrays without invoking row or later-operand getters',
+    (shape) => {
+      const entriesGetter = vi.fn(() => {
+        throw new Error(HOSTILE_SECRET);
+      });
+      const mappingGetter = vi.fn(() => {
+        throw new Error(HOSTILE_SECRET);
+      });
+      const entriesResult = projectExternalNodeCatalogContribution(
+        { schemaVersion: 1, entries: malformedTopLevelArray(shape, entriesGetter) },
+        {
+          get schemaVersion() {
+            return mappingGetter();
+          },
+          contributorId: 'unread',
+          identities: [],
+          values: [],
+        },
+      );
+      expect(entriesResult.status).toBe('invalid');
+      expect(issueCodes(entriesResult)).toEqual(['invalid-foreign-snapshot']);
+      expect(entriesGetter).not.toHaveBeenCalled();
+      expect(mappingGetter).not.toHaveBeenCalled();
+
+      for (const field of ['identities', 'values'] as const) {
+        const arrayGetter = vi.fn(() => {
+          throw new Error(HOSTILE_SECRET);
+        });
+        const sourceGetter = vi.fn(() => {
+          throw new Error(HOSTILE_SECRET);
+        });
+        const source: Record<string, unknown> = {
+          kind: 'static',
+          inputs: [],
+          outputs: [],
+          designTime: { label: 'Unread' },
+        };
+        Object.defineProperty(source, 'sourceTypeKey', { enumerable: true, get: sourceGetter });
+        const rawMapping = {
+          schemaVersion: 1,
+          contributorId: 'external.fixture',
+          identities: field === 'identities' ? malformedTopLevelArray(shape, arrayGetter) : [],
+          values: field === 'values' ? malformedTopLevelArray(shape, arrayGetter) : [],
+        };
+        const result = projectExternalNodeCatalogContribution(
+          { schemaVersion: 1, entries: [source] },
+          rawMapping,
+        );
+        expect(result.status).toBe('invalid');
+        expect(issueCodes(result)).toEqual(['invalid-projection-mapping']);
+        expect(arrayGetter).not.toHaveBeenCalled();
+        expect(sourceGetter).not.toHaveBeenCalled();
+      }
+    },
+  );
+
+  it.each([
+    {
+      label: 'v1 snapshot entries',
+      snapshotVersion: 1,
+      mappingVersion: 1,
+      hugeField: 'entries',
+      status: 'invalid',
+      code: 'admission-limit-exceeded',
+    },
+    {
+      label: 'v2 snapshot entries',
+      snapshotVersion: 2,
+      mappingVersion: 1,
+      hugeField: 'entries',
+      status: 'unsupported-version',
+      code: 'unsupported-schema-version',
+    },
+    {
+      label: 'v1 mapping identities',
+      snapshotVersion: 1,
+      mappingVersion: 1,
+      hugeField: 'identities',
+      status: 'invalid',
+      code: 'admission-limit-exceeded',
+    },
+    {
+      label: 'v2 mapping identities',
+      snapshotVersion: 1,
+      mappingVersion: 2,
+      hugeField: 'identities',
+      status: 'unsupported-version',
+      code: 'unsupported-schema-version',
+    },
+  ] as const)(
+    'returns a bounded $status outcome for huge sparse $label without row materialization',
+    ({ snapshotVersion, mappingVersion, hugeField, status, code }) => {
+      const huge = new Array<unknown>(0xffff_ffff);
+      const result = projectExternalNodeCatalogContribution(
+        {
+          schemaVersion: snapshotVersion,
+          entries: hugeField === 'entries' ? huge : [],
+        },
+        {
+          schemaVersion: mappingVersion,
+          contributorId: 'external.fixture',
+          identities: hugeField === 'identities' ? huge : [],
+          values: [],
+        },
+      );
+
+      expect(result.status).toBe(status);
+      expect(issueCodes(result)).toEqual([code]);
+      expect(result.accepted).toEqual([]);
+      expect(result).not.toHaveProperty('contribution');
+    },
+  );
+
+  it('lets the combined-port admission limit win over an invalid static designTime shape', () => {
+    const entry = {
+      ...entryWithPortCounts(EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxPortsPerEntry + 1, 0),
+      designTime: { label: '' },
+    };
+    const result = projectExternalNodeCatalogContribution(
+      { schemaVersion: 1, entries: [entry] },
+      mapping(
+        [
+          identity('source.port-limit@1', {
+            id: 'workbench.external.port-limit',
+            version: '1.0.0',
+          }),
+        ],
+        [value('semantic.number', NUMBER_VALUE)],
+      ),
+    );
+
+    expect(result.status).toBe('invalid');
+    if (result.status !== 'invalid')
+      throw new Error('Expected the port limit to reject the attempt.');
+    expect(issueCodes(result)).toEqual(['admission-limit-exceeded']);
+    expect(result.issues).toHaveLength(1);
+  });
+
+  it('rejects an overlong open-data key without exposing the key in the public issue path', () => {
+    const keyPrefix = 'OPEN_DATA_KEY_SECRET';
+    const overlongKey = keyPrefix.padEnd(
+      EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxStringLength + 1,
+      'x',
+    );
+    const result = projectExternalNodeCatalogContribution(
+      snapshot([]),
+      mapping(
+        [],
+        [
+          value('semantic.overlong-key', {
+            type: 'string',
+            constraints: { [overlongKey]: true },
+          }),
+        ],
+      ),
+    );
+
+    expect(result.status).toBe('invalid');
+    if (result.status !== 'invalid') throw new Error('Expected the open-data key limit to reject.');
+    expect(issueCodes(result)).toEqual(['admission-limit-exceeded']);
+    expect(result.issues[0]!.path).not.toContain(keyPrefix);
+    expect(JSON.stringify(result)).not.toContain(keyPrefix);
+  });
+
+  it.each(hostileFixtureFactories)(
+    'sanitizes hostile $label rows consistently at source and mapping boundaries',
+    ({ make }) => {
+      const sourceFixture = make();
+      const sourceResult = projectExternalNodeCatalogContribution(
+        { schemaVersion: 1, entries: [sourceFixture.value] },
+        mapping([], []),
+      );
+      expect(sourceResult.status).toBe('rejected');
+      expect(issueCodes(sourceResult)).toEqual(['unsafe-foreign-entry']);
+      expect(JSON.stringify(sourceResult)).not.toContain(HOSTILE_SECRET);
+      if (sourceFixture.getter !== undefined) {
+        expect(sourceFixture.getter).not.toHaveBeenCalled();
+      }
+
+      const mappingFixture = make();
+      const mappingResult = projectExternalNodeCatalogContribution(snapshot([]), {
+        schemaVersion: 1,
+        contributorId: 'external.fixture',
+        identities: [mappingFixture.value],
+        values: [],
+      });
+      expect(mappingResult.status).toBe('rejected');
+      expect(issueCodes(mappingResult)).toEqual(['invalid-projection-mapping']);
+      expect(JSON.stringify(mappingResult)).not.toContain(HOSTILE_SECRET);
+      if (mappingFixture.getter !== undefined) {
+        expect(mappingFixture.getter).not.toHaveBeenCalled();
+      }
+    },
+  );
+
   it('returns one invalid snapshot issue without inspecting the mapping operand', () => {
     const mappingVersion = vi.fn(() => 1);
     const hostileMapping = {

@@ -1569,12 +1569,19 @@ for (const subpath of [
   }
 }
 
-const fixedEntry = {
+const firstStaticEntry = {
   kind: 'static',
   sourceTypeKey: 'packed.static-node@1',
   inputs: [{ kind: 'fixed', id: 'input', valueSemanticId: 'packed.text', required: true }],
   outputs: [{ kind: 'fixed', id: 'output', valueSemanticId: 'packed.text' }],
   designTime: { label: 'Packed static node' },
+};
+const secondStaticEntry = {
+  kind: 'static',
+  sourceTypeKey: 'packed.second-static-node@1',
+  inputs: [{ kind: 'fixed', id: 'source', valueSemanticId: 'packed.text' }],
+  outputs: [{ kind: 'fixed', id: 'formatted', valueSemanticId: 'packed.text' }],
+  designTime: { label: 'Packed second static node' },
 };
 const dynamicEntry = {
   kind: 'dynamic',
@@ -1586,29 +1593,55 @@ const mapping = {
   contributorId: 'workbench.consumer.packed-external-node-catalog',
   identities: [
     {
-      sourceTypeKey: fixedEntry.sourceTypeKey,
+      sourceTypeKey: firstStaticEntry.sourceTypeKey,
       target: { id: 'workbench.consumer.packed-static-node', version: '1.0.0' },
     },
     {
       sourceTypeKey: dynamicEntry.sourceTypeKey,
       target: { id: 'workbench.consumer.packed-dynamic-node', version: '1.0.0' },
     },
+    {
+      sourceTypeKey: secondStaticEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-second-static-node', version: '1.0.0' },
+    },
   ],
   values: [{ sourceSemanticId: 'packed.text', target: { type: 'string' } }],
 };
+const callerSentinels = {
+  document: { revision: 7, nodes: ['packed-existing-node-instance'] },
+  history: { entries: ['packed-before-projection'] },
+  task: { status: 'waiting', attempts: 0 },
+};
+const callerSentinelsBefore = JSON.stringify(callerSentinels);
 const project = externalCatalog.projectExternalNodeCatalogContribution;
-const complete = project({ schemaVersion: 1, entries: [fixedEntry] }, mapping);
-const partial = project({ schemaVersion: 1, entries: [fixedEntry, dynamicEntry] }, mapping);
+const complete = project(
+  { schemaVersion: 1, entries: [firstStaticEntry, secondStaticEntry] },
+  mapping,
+);
+const partial = project(
+  { schemaVersion: 1, entries: [firstStaticEntry, dynamicEntry, secondStaticEntry] },
+  mapping,
+);
 const rejected = project({ schemaVersion: 1, entries: [dynamicEntry] }, mapping);
 if (
   complete.status !== 'complete' ||
-  complete.accepted.length !== 1 ||
-  complete.contribution.nodeTypes.length !== 1 ||
+  complete.accepted.length !== 2 ||
+  complete.contribution.nodeTypes.length !== 2 ||
   !Object.isFrozen(complete) ||
   !Object.isFrozen(complete.contribution) ||
   partial.status !== 'partial' ||
-  partial.accepted.length !== 1 ||
-  !partial.issues.some((issue) => issue.code === 'unsupported-dynamic-shape') ||
+  JSON.stringify(partial.accepted.map(({ sourceIndex, sourceTypeKey }) => ({ sourceIndex, sourceTypeKey }))) !==
+    JSON.stringify([
+      { sourceIndex: 0, sourceTypeKey: 'packed.static-node@1' },
+      { sourceIndex: 2, sourceTypeKey: 'packed.second-static-node@1' },
+    ]) ||
+  JSON.stringify(partial.contribution.nodeTypes.map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  partial.issues.length !== 1 ||
+  partial.issues[0]?.code !== 'unsupported-dynamic-shape' ||
   rejected.status !== 'rejected' ||
   rejected.accepted.length !== 0 ||
   'contribution' in rejected
@@ -1619,27 +1652,62 @@ if (
 const requirement = {
   schemaVersion: development.AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
   requirementId: 'packed-external-node-catalog-requirement',
-  target: { kind: 'node-type', descriptor: complete.contribution.nodeTypes[0] },
+  target: {
+    kind: 'node-type',
+    descriptor: {
+      id: 'workbench.consumer.packed-static-node',
+      version: '1.0.0',
+      inputs: [{ id: 'input', required: true, value: { type: 'string' } }],
+      outputs: [{ id: 'output', value: { type: 'string' } }],
+      designTime: { label: 'Packed static node' },
+    },
+  },
   intent: { summary: 'Provide the projected packed node.', acceptance: ['Uses exact ports.'] },
 };
 const components = contracts.resolveUiComponentCatalog([]).catalog;
+const existingContribution = {
+  contributorId: 'workbench.consumer.packed-existing-catalog',
+  nodeTypes: [
+    {
+      id: 'workbench.consumer.packed-existing-node',
+      version: '1.0.0',
+      inputs: [],
+      outputs: [],
+      designTime: { label: 'Packed existing node' },
+    },
+  ],
+};
+const initialCatalog = contracts.resolveNodeTypeCatalog([existingContribution]);
 const missing = development.resolveAuthoringDevelopmentRequirement(requirement, {
   components,
-  nodeTypes: contracts.resolveNodeTypeCatalog([]).catalog,
+  nodeTypes: initialCatalog.catalog,
 });
-const freshCatalog = contracts.resolveNodeTypeCatalog([complete.contribution]);
-const fulfilled = development.resolveAuthoringDevelopmentRequirement(requirement, {
-  components,
-  nodeTypes: freshCatalog.catalog,
-});
-const effects = { apply: 0, activate: 0, preview: 0 };
+const freshCatalog = contracts.resolveNodeTypeCatalog([existingContribution, partial.contribution]);
+let retryCount = 0;
+const retryOnce = () => {
+  retryCount += 1;
+  return development.resolveAuthoringDevelopmentRequirement(requirement, {
+    components,
+    nodeTypes: freshCatalog.catalog,
+  });
+};
+const fulfilled = retryOnce();
 if (
+  initialCatalog.issues.length !== 0 ||
   freshCatalog.issues.length !== 0 ||
+  JSON.stringify(freshCatalog.catalog.nodeTypes().map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-existing-node',
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  initialCatalog.catalog.nodeType(requirement.target.descriptor) !== undefined ||
   missing.status !== 'missing' ||
   fulfilled.status !== 'fulfilled' ||
-  effects.apply !== 0 ||
-  effects.activate !== 0 ||
-  effects.preview !== 0
+  retryCount !== 1 ||
+  fulfilled.existingNodeType === requirement.target.descriptor ||
+  JSON.stringify(fulfilled.existingNodeType) !== JSON.stringify(requirement.target.descriptor) ||
+  JSON.stringify(callerSentinels) !== callerSentinelsBefore
 ) {
   throw new TypeError('Packed external-node-catalog CommonJS explicit handoff failed.');
 }
@@ -1744,12 +1812,19 @@ for (const subpath of [
   }
 }
 
-const fixedEntry = {
+const firstStaticEntry = {
   kind: 'static',
   sourceTypeKey: 'packed.static-node@1',
   inputs: [{ kind: 'fixed', id: 'input', valueSemanticId: 'packed.text', required: true }],
   outputs: [{ kind: 'fixed', id: 'output', valueSemanticId: 'packed.text' }],
   designTime: { label: 'Packed static node' },
+};
+const secondStaticEntry = {
+  kind: 'static',
+  sourceTypeKey: 'packed.second-static-node@1',
+  inputs: [{ kind: 'fixed', id: 'source', valueSemanticId: 'packed.text' }],
+  outputs: [{ kind: 'fixed', id: 'formatted', valueSemanticId: 'packed.text' }],
+  designTime: { label: 'Packed second static node' },
 };
 const dynamicEntry = {
   kind: 'dynamic',
@@ -1761,22 +1836,32 @@ const mapping = {
   contributorId: 'workbench.consumer.packed-external-node-catalog',
   identities: [
     {
-      sourceTypeKey: fixedEntry.sourceTypeKey,
+      sourceTypeKey: firstStaticEntry.sourceTypeKey,
       target: { id: 'workbench.consumer.packed-static-node', version: '1.0.0' },
     },
     {
       sourceTypeKey: dynamicEntry.sourceTypeKey,
       target: { id: 'workbench.consumer.packed-dynamic-node', version: '1.0.0' },
     },
+    {
+      sourceTypeKey: secondStaticEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-second-static-node', version: '1.0.0' },
+    },
   ],
   values: [{ sourceSemanticId: 'packed.text', target: { type: 'string' } }],
 };
+const callerSentinels = {
+  document: { revision: 7, nodes: ['packed-existing-node-instance'] },
+  history: { entries: ['packed-before-projection'] },
+  task: { status: 'waiting', attempts: 0 },
+};
+const callerSentinelsBefore = JSON.stringify(callerSentinels);
 const complete = projectExternalNodeCatalogContribution(
-  { schemaVersion: 1, entries: [fixedEntry] },
+  { schemaVersion: 1, entries: [firstStaticEntry, secondStaticEntry] },
   mapping,
 );
 const partial = projectExternalNodeCatalogContribution(
-  { schemaVersion: 1, entries: [fixedEntry, dynamicEntry] },
+  { schemaVersion: 1, entries: [firstStaticEntry, dynamicEntry, secondStaticEntry] },
   mapping,
 );
 const rejected = projectExternalNodeCatalogContribution(
@@ -1785,13 +1870,23 @@ const rejected = projectExternalNodeCatalogContribution(
 );
 if (
   complete.status !== 'complete' ||
-  complete.accepted.length !== 1 ||
-  complete.contribution.nodeTypes.length !== 1 ||
+  complete.accepted.length !== 2 ||
+  complete.contribution.nodeTypes.length !== 2 ||
   !Object.isFrozen(complete) ||
   !Object.isFrozen(complete.contribution) ||
   partial.status !== 'partial' ||
-  partial.accepted.length !== 1 ||
-  !partial.issues.some((issue) => issue.code === 'unsupported-dynamic-shape') ||
+  JSON.stringify(partial.accepted.map(({ sourceIndex, sourceTypeKey }) => ({ sourceIndex, sourceTypeKey }))) !==
+    JSON.stringify([
+      { sourceIndex: 0, sourceTypeKey: 'packed.static-node@1' },
+      { sourceIndex: 2, sourceTypeKey: 'packed.second-static-node@1' },
+    ]) ||
+  JSON.stringify(partial.contribution.nodeTypes.map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  partial.issues.length !== 1 ||
+  partial.issues[0]?.code !== 'unsupported-dynamic-shape' ||
   rejected.status !== 'rejected' ||
   rejected.accepted.length !== 0 ||
   'contribution' in rejected
@@ -1802,27 +1897,62 @@ if (
 const requirement = {
   schemaVersion: development.AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
   requirementId: 'packed-external-node-catalog-requirement',
-  target: { kind: 'node-type', descriptor: complete.contribution.nodeTypes[0] },
+  target: {
+    kind: 'node-type',
+    descriptor: {
+      id: 'workbench.consumer.packed-static-node',
+      version: '1.0.0',
+      inputs: [{ id: 'input', required: true, value: { type: 'string' } }],
+      outputs: [{ id: 'output', value: { type: 'string' } }],
+      designTime: { label: 'Packed static node' },
+    },
+  },
   intent: { summary: 'Provide the projected packed node.', acceptance: ['Uses exact ports.'] },
 };
 const components = contracts.resolveUiComponentCatalog([]).catalog;
+const existingContribution = {
+  contributorId: 'workbench.consumer.packed-existing-catalog',
+  nodeTypes: [
+    {
+      id: 'workbench.consumer.packed-existing-node',
+      version: '1.0.0',
+      inputs: [],
+      outputs: [],
+      designTime: { label: 'Packed existing node' },
+    },
+  ],
+};
+const initialCatalog = contracts.resolveNodeTypeCatalog([existingContribution]);
 const missing = development.resolveAuthoringDevelopmentRequirement(requirement, {
   components,
-  nodeTypes: contracts.resolveNodeTypeCatalog([]).catalog,
+  nodeTypes: initialCatalog.catalog,
 });
-const freshCatalog = contracts.resolveNodeTypeCatalog([complete.contribution]);
-const fulfilled = development.resolveAuthoringDevelopmentRequirement(requirement, {
-  components,
-  nodeTypes: freshCatalog.catalog,
-});
-const effects = { apply: 0, activate: 0, preview: 0 };
+const freshCatalog = contracts.resolveNodeTypeCatalog([existingContribution, partial.contribution]);
+let retryCount = 0;
+const retryOnce = () => {
+  retryCount += 1;
+  return development.resolveAuthoringDevelopmentRequirement(requirement, {
+    components,
+    nodeTypes: freshCatalog.catalog,
+  });
+};
+const fulfilled = retryOnce();
 if (
+  initialCatalog.issues.length !== 0 ||
   freshCatalog.issues.length !== 0 ||
+  JSON.stringify(freshCatalog.catalog.nodeTypes().map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-existing-node',
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  initialCatalog.catalog.nodeType(requirement.target.descriptor) !== undefined ||
   missing.status !== 'missing' ||
   fulfilled.status !== 'fulfilled' ||
-  effects.apply !== 0 ||
-  effects.activate !== 0 ||
-  effects.preview !== 0
+  retryCount !== 1 ||
+  fulfilled.existingNodeType === requirement.target.descriptor ||
+  JSON.stringify(fulfilled.existingNodeType) !== JSON.stringify(requirement.target.descriptor) ||
+  JSON.stringify(callerSentinels) !== callerSentinelsBefore
 ) {
   throw new TypeError('Packed external-node-catalog ESM explicit handoff failed.');
 }

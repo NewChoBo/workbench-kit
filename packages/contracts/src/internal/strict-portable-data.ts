@@ -79,6 +79,12 @@ function countProperty(context: SnapshotContext, path: string): void {
   }
 }
 
+function checkPropertyKeyLength(context: SnapshotContext, key: string, path: string): void {
+  if (context.maxStringLength !== undefined && key.length > context.maxStringLength) {
+    fail('limit', path);
+  }
+}
+
 function cloneSnapshotValue(
   value: unknown,
   path: string,
@@ -110,6 +116,9 @@ function cloneSnapshotValue(
     if (array) {
       const length = arrayLength(value, path);
       const keys = Reflect.ownKeys(value);
+      for (const key of keys) {
+        if (typeof key === 'string') checkPropertyKeyLength(context, key, path);
+      }
       if (
         keys.some(
           (key) =>
@@ -146,6 +155,7 @@ function cloneSnapshotValue(
     const clone: Record<string, unknown> = Object.create(prototype) as Record<string, unknown>;
     for (const key of Reflect.ownKeys(value)) {
       if (typeof key !== 'string') return fail('unsupported', path);
+      checkPropertyKeyLength(context, key, path);
       const itemPath = propertyPath(path, key, false);
       const descriptor = Object.getOwnPropertyDescriptor(value, key);
       if (
