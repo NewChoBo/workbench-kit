@@ -3,7 +3,11 @@ import type { UiComponentBindingDescriptor, UiComponentRef } from '@workbench-ki
 import { collectWidgetNodes } from '../widget/tree.js';
 import { applyUiDocumentCommandV2 } from './commands-v2.js';
 import { readUiDocumentNodeAuthoring } from './document.js';
-import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutability.js';
+import {
+  cloneUiAuthoringJsonValue,
+  deepFreezeUiAuthoringValue,
+  uiAuthoringDeclarativeEqual,
+} from './immutability.js';
 import type {
   CreateUiAuthoringDetachedPlanInput,
   UiAuthoringDetachedPlan,
@@ -18,32 +22,6 @@ import type {
 
 function isCanonicalText(value: unknown): value is string {
   return typeof value === 'string' && value.length > 0 && value === value.trim();
-}
-
-function declarativeEqual(left: unknown, right: unknown): boolean {
-  if (Object.is(left, right)) return true;
-  if (Array.isArray(left) || Array.isArray(right)) {
-    return (
-      Array.isArray(left) &&
-      Array.isArray(right) &&
-      left.length === right.length &&
-      left.every((entry, index) => declarativeEqual(entry, right[index]))
-    );
-  }
-  if (typeof left !== 'object' || left === null || typeof right !== 'object' || right === null) {
-    return false;
-  }
-  const leftRecord = left as Readonly<Record<string, unknown>>;
-  const rightRecord = right as Readonly<Record<string, unknown>>;
-  const leftKeys = Object.keys(leftRecord).sort();
-  const rightKeys = Object.keys(rightRecord).sort();
-  return (
-    leftKeys.length === rightKeys.length &&
-    leftKeys.every(
-      (key, index) =>
-        key === rightKeys[index] && declarativeEqual(leftRecord[key], rightRecord[key]),
-    )
-  );
 }
 
 function diagnostic(
@@ -246,7 +224,7 @@ export function finalizeUiAuthoringDetachedPlan(
   const currentDesignSystemInput = snapshotDesignSystemInput(context.designSystemInput);
   if (
     currentDesignSystemInput === null ||
-    !declarativeEqual(currentDesignSystemInput, plan.designSystemInput)
+    !uiAuthoringDeclarativeEqual(currentDesignSystemInput, plan.designSystemInput)
   ) {
     diagnostics.push(
       diagnostic(
@@ -278,7 +256,7 @@ export function finalizeUiAuthoringDetachedPlan(
         snapshot.nodeId !== command.nodeId ||
         snapshot.input.id !== command.inputId ||
         input === undefined ||
-        !declarativeEqual(input, snapshot.input)
+        !uiAuthoringDeclarativeEqual(input, snapshot.input)
       ) {
         diagnostics.push(
           diagnostic(

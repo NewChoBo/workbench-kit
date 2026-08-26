@@ -70,6 +70,7 @@ try {
   });
   NPM_PUBLISH_ORDER.forEach(packPackage);
   verifyPackedPackageCohort();
+  verifyJdwPackageManifest();
   linkExternalPackages();
   verifyExternalNodeCatalogPackageManifest();
   writeConsumer();
@@ -79,6 +80,28 @@ try {
     cwd: repoRoot,
     stdio: 'inherit',
   });
+  console.log(
+    '[check-packed-consumer] Typechecking JDW generative UI root exports with exact optional properties...',
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      path.join(consumerDir, 'src', 'ui-generative-plan-types.ts'),
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
   console.log(
     '[check-packed-consumer] Typechecking focused authoring-development exports with exact optional properties...',
   );
@@ -340,6 +363,52 @@ function verifyPackedPackageCohort() {
   console.log(
     `[check-packed-consumer] Packed release cohort OK (${count} packages at ${expectedVersion}).`,
   );
+}
+
+function verifyJdwPackageManifest() {
+  const jdwRoot = packagePath(nodeModulesDir, '@workbench-kit/jdw');
+  const manifest = readJson(path.join(jdwRoot, 'package.json'));
+  const expectedRootExport = {
+    types: './dist/index.d.ts',
+    import: './dist/index.js',
+    require: './dist/index.cjs',
+    default: './dist/index.js',
+  };
+  if (JSON.stringify(manifest.exports?.['.']) !== JSON.stringify(expectedRootExport)) {
+    throw new TypeError(
+      'Packed JDW root must retain exact types/import/require/default conditions.',
+    );
+  }
+  const expectedExportPaths = [
+    '.',
+    './schemas/jdw-node.jdw.schema.json',
+    './schemas/widget-asset-manifest.v1.jdw.schema.json',
+    './schemas/widget-document.v1.jdw.schema.json',
+  ];
+  if (
+    JSON.stringify(Object.keys(manifest.exports ?? {}).sort()) !==
+    JSON.stringify(expectedExportPaths.sort())
+  ) {
+    throw new TypeError('Packed JDW must not expose a generative UI or private deep subpath.');
+  }
+  for (const target of new Set(Object.values(expectedRootExport))) {
+    if (!fs.existsSync(path.join(jdwRoot, target))) {
+      throw new TypeError(`Packed JDW root target is missing: ${target}`);
+    }
+  }
+  const runtimeDependencyNames = new Set(
+    ['dependencies', 'optionalDependencies', 'peerDependencies'].flatMap((field) =>
+      Object.keys(manifest[field] ?? {}),
+    ),
+  );
+  if (
+    runtimeDependencyNames.size !== 1 ||
+    !runtimeDependencyNames.has('@workbench-kit/contracts')
+  ) {
+    throw new TypeError(
+      'Packed JDW generative UI boundary must not add a model/provider runtime dependency.',
+    );
+  }
 }
 
 function verifyExternalNodeCatalogPackageManifest() {
@@ -800,6 +869,175 @@ export function verifyPackedGraphAuthoringRuntime(): {
   }
   return { descriptor, transform };
 }
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'ui-generative-plan-types.ts'),
+    `import {
+  admitUiGenerativeUiRequest,
+  createUiGenerativeUiPlan,
+  finalizeUiGenerativeUiPlan,
+  previewUiGenerativeUiPlan,
+  type AdmitUiGenerativeUiRequestInput,
+  type CreateUiGenerativeUiPlanInput,
+  type GenerativeUiPlannerPort,
+  type UiDocumentAtomicCommandV3,
+  type UiDocumentV3,
+  type UiGenerativeAuthoringContextV1,
+  type UiGenerativeUiBatchCommand,
+  type UiGenerativeUiBlockedPlan,
+  type UiGenerativeUiBlockedPlanPreview,
+  type UiGenerativeUiDiagnostic,
+  type UiGenerativeUiDiagnosticCode,
+  type UiGenerativeUiPlan,
+  type UiGenerativeUiPlanBase,
+  type UiGenerativeUiPlanFinalizeContext,
+  type UiGenerativeUiPlanFinalizeResult,
+  type UiGenerativeUiPlannerDiagnostic,
+  type UiGenerativeUiPlannerResult,
+  type UiGenerativeUiPlanPreview,
+  type UiGenerativeUiProposal,
+  type UiGenerativeUiRequest,
+  type UiGenerativeUiRequestAdmissionResult,
+  type UiGenerativeUiValidPlan,
+  type UiGenerativeUiValidPlanPreview,
+} from '@workbench-kit/jdw';
+
+// @ts-expect-error Strict authoring snapshot helpers remain private to JDW.
+import { cloneUiAuthoringJsonValue } from '@workbench-kit/jdw';
+// @ts-expect-error WB-NS-070F adds no public implementation subpath.
+type PackedPrivateGenerativePlanModule = typeof import('@workbench-kit/jdw/ui-authoring/generative-plan');
+// @ts-expect-error Strict authoring snapshot helpers have no public deep subpath.
+type PackedPrivateUiAuthoringImmutabilityModule = typeof import('@workbench-kit/jdw/ui-authoring/immutability');
+
+declare const packedAtomicCommand: UiDocumentAtomicCommandV3;
+declare const packedCandidateDocument: UiDocumentV3;
+declare const packedRequest: UiGenerativeUiRequest;
+declare const packedPlanBase: UiGenerativeUiPlanBase;
+declare const packedValidPlan: UiGenerativeUiValidPlan;
+declare const packedFinalizeContext: UiGenerativeUiPlanFinalizeContext;
+
+const packedPlannerDiagnostic: UiGenerativeUiPlannerDiagnostic = {
+  code: 'planner-unavailable',
+  message: 'Planner unavailable.',
+  path: 'planner',
+};
+const packedDiagnostic: UiGenerativeUiDiagnostic = {
+  code: 'invalid-proposal',
+  message: 'Invalid proposal.',
+  path: 'proposal',
+};
+const packedProposal = {
+  schemaVersion: 1,
+  proposalId: 'packed-proposal',
+  requestId: packedRequest.requestId,
+  commands: [packedAtomicCommand],
+} satisfies UiGenerativeUiProposal;
+
+export const packedGenerativeUiPlanner: GenerativeUiPlannerPort = {
+  propose: async () => ({ status: 'proposal', proposal: packedProposal }),
+};
+export const packedPlannerProposalResult = {
+  status: 'proposal',
+  proposal: packedProposal,
+} satisfies UiGenerativeUiPlannerResult;
+export const packedPlannerUnavailableResult = {
+  status: 'unavailable',
+  diagnostics: [packedPlannerDiagnostic],
+} satisfies UiGenerativeUiPlannerResult;
+export const packedAdmittedRequest = {
+  status: 'admitted',
+  request: packedRequest,
+  diagnostics: [],
+} satisfies UiGenerativeUiRequestAdmissionResult;
+export const packedRejectedRequest = {
+  status: 'rejected',
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiRequestAdmissionResult;
+
+export const packedBlockedPlan = {
+  ...packedPlanBase,
+  blocked: true,
+  commands: [],
+  referencedComponentSnapshots: [],
+  referencedLayoutStrategySnapshots: [],
+  referencedLayoutPropertySnapshots: [],
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiBlockedPlan;
+export const packedPlan: UiGenerativeUiPlan = packedValidPlan;
+export const packedValidPreview = {
+  blocked: false,
+  planId: packedValidPlan.planId,
+  candidateDocument: packedCandidateDocument,
+  commands: [packedAtomicCommand],
+  diagnostics: [],
+} satisfies UiGenerativeUiValidPlanPreview;
+export const packedBlockedPreview = {
+  blocked: true,
+  planId: packedBlockedPlan.planId,
+  commands: [],
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiBlockedPlanPreview;
+export const packedPreview: UiGenerativeUiPlanPreview = packedValidPreview;
+
+export const packedGenerativeBatch = {
+  type: 'batch',
+  commandId: 'packed-generative-plan',
+  commands: [packedAtomicCommand],
+} satisfies UiGenerativeUiBatchCommand;
+export const packedFinalizeSuccess = {
+  command: packedGenerativeBatch,
+  diagnostics: [],
+} satisfies UiGenerativeUiPlanFinalizeResult;
+export const packedFinalizeFailure = {
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiPlanFinalizeResult;
+
+export type PackedGenerativeUiRootTypes = {
+  admissionInput: AdmitUiGenerativeUiRequestInput;
+  authoringContext: UiGenerativeAuthoringContextV1;
+  blockedPlan: UiGenerativeUiBlockedPlan;
+  blockedPreview: UiGenerativeUiBlockedPlanPreview;
+  createPlanInput: CreateUiGenerativeUiPlanInput;
+  diagnostic: UiGenerativeUiDiagnostic;
+  diagnosticCode: UiGenerativeUiDiagnosticCode;
+  finalizeContext: UiGenerativeUiPlanFinalizeContext;
+  finalizeResult: UiGenerativeUiPlanFinalizeResult;
+  planner: GenerativeUiPlannerPort;
+  plannerDiagnostic: UiGenerativeUiPlannerDiagnostic;
+  plannerResult: UiGenerativeUiPlannerResult;
+  plan: UiGenerativeUiPlan;
+  planBase: UiGenerativeUiPlanBase;
+  preview: UiGenerativeUiPlanPreview;
+  proposal: UiGenerativeUiProposal;
+  request: UiGenerativeUiRequest;
+  requestAdmission: UiGenerativeUiRequestAdmissionResult;
+  validPlan: UiGenerativeUiValidPlan;
+  validPreview: UiGenerativeUiValidPlanPreview;
+};
+export const packedGenerativeUiFunctions = Object.freeze({
+  admitUiGenerativeUiRequest,
+  createUiGenerativeUiPlan,
+  finalizeUiGenerativeUiPlan,
+  previewUiGenerativeUiPlan,
+});
+void packedFinalizeContext;
+void cloneUiAuthoringJsonValue;
+type _PackedPrivateGenerativePlanModule = PackedPrivateGenerativePlanModule;
+type _PackedPrivateUiAuthoringImmutabilityModule = PackedPrivateUiAuthoringImmutabilityModule;
+
+// @ts-expect-error A proposal result cannot also carry diagnostics.
+export const packedInvalidMixedPlannerResult: UiGenerativeUiPlannerResult = { status: 'proposal', proposal: packedProposal, diagnostics: [packedPlannerDiagnostic] };
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined on an impossible field.
+export const packedInvalidUndefinedPlannerDiagnostics: UiGenerativeUiPlannerResult = { status: 'proposal', proposal: packedProposal, diagnostics: undefined };
+// @ts-expect-error A blocked plan cannot expose a candidate document.
+export const packedInvalidMixedBlockedPlan: UiGenerativeUiBlockedPlan = { ...packedBlockedPlan, candidateDocument: packedCandidateDocument };
+// @ts-expect-error A finalize failure cannot also return a command.
+export const packedInvalidMixedFinalizeResult: UiGenerativeUiPlanFinalizeResult = { command: packedGenerativeBatch, diagnostics: [packedDiagnostic] };
+// @ts-expect-error Finalize success requires one outer non-empty batch, never an atomic command.
+export const packedInvalidAtomicFinalizeResult: UiGenerativeUiPlanFinalizeResult = { command: packedAtomicCommand, diagnostics: [] };
+// @ts-expect-error A generative outer batch must contain at least one atomic command.
+export const packedInvalidEmptyGenerativeBatch: UiGenerativeUiBatchCommand = { type: 'batch', commandId: 'packed-empty-plan', commands: [] };
 `,
   );
   fs.writeFileSync(
@@ -2332,6 +2570,7 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
     `const jdw = require('@workbench-kit/jdw');
 
 const requiredFunctions = [
+  'admitUiGenerativeUiRequest',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -2346,8 +2585,11 @@ const requiredFunctions = [
   'createUiAuthoringSessionV2',
   'createUiAuthoringSessionV3',
   'createUiDocumentV3',
+  'createUiGenerativeUiPlan',
   'finalizeUiAuthoringDetachedPlan',
+  'finalizeUiGenerativeUiPlan',
   'previewUiAuthoringDetachedPlan',
+  'previewUiGenerativeUiPlan',
   'projectUiAuthoringDocument',
   'projectUiAuthoringDocumentV3',
   'projectUiDesignSystemDocumentV3',
@@ -2365,6 +2607,25 @@ for (const name of requiredFunctions) {
     throw new TypeError('Packed JDW CommonJS root is missing function export: ' + name);
   }
 }
+for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
+  if (name in jdw) {
+    throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
+  }
+}
+for (const subpath of [
+  '@workbench-kit/jdw/ui-authoring/generative-plan',
+  '@workbench-kit/jdw/ui-authoring/immutability',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    require(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed JDW CommonJS private subpath is exposed: ' + subpath);
+  }
+}
 `,
   );
   fs.writeFileSync(
@@ -2372,6 +2633,7 @@ for (const name of requiredFunctions) {
     `import * as jdw from '@workbench-kit/jdw';
 
 const requiredFunctions = [
+  'admitUiGenerativeUiRequest',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -2386,8 +2648,11 @@ const requiredFunctions = [
   'createUiAuthoringSessionV2',
   'createUiAuthoringSessionV3',
   'createUiDocumentV3',
+  'createUiGenerativeUiPlan',
   'finalizeUiAuthoringDetachedPlan',
+  'finalizeUiGenerativeUiPlan',
   'previewUiAuthoringDetachedPlan',
+  'previewUiGenerativeUiPlan',
   'projectUiAuthoringDocument',
   'projectUiAuthoringDocumentV3',
   'projectUiDesignSystemDocumentV3',
@@ -2403,6 +2668,25 @@ const requiredFunctions = [
 for (const name of requiredFunctions) {
   if (typeof jdw[name] !== 'function') {
     throw new TypeError('Packed JDW ESM root is missing function export: ' + name);
+  }
+}
+for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
+  if (name in jdw) {
+    throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
+  }
+}
+for (const subpath of [
+  '@workbench-kit/jdw/ui-authoring/generative-plan',
+  '@workbench-kit/jdw/ui-authoring/immutability',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    await import(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed JDW ESM private subpath is exposed: ' + subpath);
   }
 }
 `,
@@ -2468,7 +2752,11 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
           strict: true,
           target: 'ES2022',
         },
-        exclude: ['src/authoring-development-types.ts', 'src/external-node-catalog-types.ts'],
+        exclude: [
+          'src/authoring-development-types.ts',
+          'src/external-node-catalog-types.ts',
+          'src/ui-generative-plan-types.ts',
+        ],
         include: ['src/**/*.ts'],
       },
       null,
