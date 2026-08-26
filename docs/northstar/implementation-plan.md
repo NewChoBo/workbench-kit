@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@abde7236cb48ebaf3758363ddd3df88bec0e7aa9`.
+- **Latest source-bearing integration baseline:** `develop@cd29a2cd37d3371d4c9f10e1ae587f538f04bacb`.
 - **Reviewed documentation-only predecessor:** `develop@8c71d49ea7732831695ea03772bf9cd8dff6aa6f` / PR #372; its diff from the preceding source-bearing `develop@7051a2e7051838770a4d7d527904aa4a5515db0d` changes only `implementation-plan.md`, `roadmap.md` and `ui-authoring-and-generative-composition.md` under this Northstar directory and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
@@ -72,7 +72,7 @@ WB-NS-070C atomic component/composite descriptor contract [DONE]
 WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
         ↓
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
-WB-NS-070F provider-neutral generative UI parity [DESIGNING; optional after the manual command chain, not a WB-NS-071A dependency]
+WB-NS-070F provider-neutral generative UI parity [READY_FOR_IMPLEMENTATION; optional after the manual command chain, not a WB-NS-071A dependency]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -3254,10 +3254,468 @@ reported through those packets.
 
 ### `WB-NS-070F` ready gate
 
-Depends on the manual contract, but is not a prerequisite for `WB-NS-071A` or the Design
-System Pack chain. Generative UI may be delegated only after manual commands/validation are
-sufficient to express the same target operations. It emits reviewable proposals/typed patches
-and may not introduce arbitrary JSX/HTML/CSS execution as canonical state.
+#### `WB-NS-070F` bounded packet — provider-neutral V3 generative proposal parity
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
+  sections 7, 13-16
+- **Ownership:** `GENERIC_KIT`
+- **Exact source/API baseline:**
+  `origin/develop@cd29a2cd37d3371d4c9f10e1ae587f538f04bacb`
+- **Dependencies:** `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D` and
+  `WB-NS-072E` are `DONE`; the existing V3 document, command, projection, Design System and
+  session contracts remain canonical
+- **Target owner:** `@workbench-kit/jdw` root export under the existing `ui-authoring` module
+- **Native boundary:** none
+
+##### Goal
+
+Add one provider-neutral proposal lifecycle over the existing `UiDocumentAtomicCommandV3` manual
+command surface. A host may ask an injected planner for a proposal, inspect a mutation-free Preview
+and explicitly accept one validated outer V3 batch. The packet must not create a second patch
+language, document model, history stack, component registry, provider registry or persistence
+format.
+
+Manual authoring remains complete and unchanged when no planner is installed. A generated edit has
+exactly the capabilities and limits of the existing public V3 atomic commands; unsupported intent is
+reported rather than implemented through hidden commands, generated renderer code or automatic
+extension work.
+
+##### Frozen public API
+
+Add these provider-neutral public shapes to `@workbench-kit/jdw`:
+
+```ts
+interface GenerativeUiPlannerPort {
+  propose(request: UiGenerativeUiRequest): Promise<UiGenerativeUiPlannerResult>;
+}
+
+interface UiGenerativeUiRequest {
+  readonly schemaVersion: 1;
+  readonly requestId: string;
+  readonly intent: string;
+  readonly context: UiGenerativeAuthoringContextV1;
+}
+
+interface UiGenerativeAuthoringContextV1 {
+  readonly document: UiDocumentV3;
+  readonly selectedNodeIds: readonly string[];
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentDescriptors: readonly UiComponentDescriptor[];
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+interface UiGenerativeUiProposal {
+  readonly schemaVersion: 1;
+  readonly proposalId: string;
+  readonly requestId: string;
+  readonly commands: readonly UiDocumentAtomicCommandV3[];
+}
+
+type UiGenerativeUiPlannerDiagnostic = Omit<UiGenerativeUiDiagnostic, 'code'> & {
+  readonly code: 'planner-unavailable' | 'planner-failed';
+};
+
+type UiGenerativeUiPlannerResult =
+  | {
+      readonly status: 'proposal';
+      readonly proposal: UiGenerativeUiProposal;
+      readonly diagnostics?: never;
+    }
+  | {
+      readonly status: 'unavailable';
+      readonly proposal?: never;
+      readonly diagnostics: readonly [UiGenerativeUiPlannerDiagnostic];
+    };
+
+interface AdmitUiGenerativeUiRequestInput {
+  /** Runtime-untrusted request assembled from host-approved canonical operands. */
+  readonly request: unknown;
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+type UiGenerativeUiRequestAdmissionResult =
+  | {
+      readonly status: 'admitted';
+      readonly request: UiGenerativeUiRequest;
+      readonly diagnostics: readonly [];
+    }
+  | {
+      readonly status: 'rejected';
+      readonly request?: never;
+      readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+    };
+
+interface CreateUiGenerativeUiPlanInput {
+  readonly planId: string;
+  /** Must be the detached result of admitUiGenerativeUiRequest(). */
+  readonly request: UiGenerativeUiRequest;
+  /** Provider output is runtime-untrusted even when statically typed. */
+  readonly proposal: unknown;
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+interface UiGenerativeUiPlanBase {
+  readonly schemaVersion: 1;
+  readonly planId: string;
+  readonly requestId: string;
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly sourceDocument: UiDocumentV3;
+  readonly selectedNodeIds: readonly string[];
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+interface UiGenerativeUiValidPlan extends UiGenerativeUiPlanBase {
+  readonly blocked: false;
+  readonly proposalId: string;
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+  readonly referencedComponentSnapshots: readonly UiComponentDescriptor[];
+  readonly referencedLayoutStrategySnapshots: readonly UiLayoutStrategyDescriptor[];
+  readonly referencedLayoutPropertySnapshots: readonly UiLayoutPropertyDescriptor[];
+  readonly candidateDocument: UiDocumentV3;
+  readonly diagnostics: readonly [];
+}
+
+interface UiGenerativeUiBlockedPlan extends UiGenerativeUiPlanBase {
+  readonly blocked: true;
+  readonly proposalId?: string;
+  readonly commands: readonly [];
+  readonly referencedComponentSnapshots: readonly [];
+  readonly referencedLayoutStrategySnapshots: readonly [];
+  readonly referencedLayoutPropertySnapshots: readonly [];
+  readonly candidateDocument?: never;
+  readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+}
+
+type UiGenerativeUiPlan = UiGenerativeUiValidPlan | UiGenerativeUiBlockedPlan;
+
+interface UiGenerativeUiValidPlanPreview {
+  readonly blocked: false;
+  readonly planId: string;
+  readonly candidateDocument: UiDocumentV3;
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+  readonly diagnostics: readonly [];
+}
+
+interface UiGenerativeUiBlockedPlanPreview {
+  readonly blocked: true;
+  readonly planId: string;
+  readonly candidateDocument?: never;
+  readonly commands: readonly [];
+  readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+}
+
+type UiGenerativeUiPlanPreview = UiGenerativeUiValidPlanPreview | UiGenerativeUiBlockedPlanPreview;
+
+interface UiGenerativeUiPlanFinalizeContext {
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly acceptAuthorized: boolean;
+}
+
+type UiGenerativeUiBatchCommand = Omit<
+  Extract<UiDocumentCommandV3, { readonly type: 'batch' }>,
+  'commands'
+> & {
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+};
+
+type UiGenerativeUiPlanFinalizeResult =
+  | {
+      readonly command: UiGenerativeUiBatchCommand;
+      readonly diagnostics: readonly [];
+    }
+  | {
+      readonly command?: never;
+      readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+    };
+```
+
+The lifecycle functions are:
+
+```ts
+admitUiGenerativeUiRequest(
+  input: AdmitUiGenerativeUiRequestInput,
+): UiGenerativeUiRequestAdmissionResult;
+createUiGenerativeUiPlan(input: CreateUiGenerativeUiPlanInput): UiGenerativeUiPlan;
+previewUiGenerativeUiPlan(plan: UiGenerativeUiPlan): UiGenerativeUiPlanPreview;
+finalizeUiGenerativeUiPlan(
+  plan: UiGenerativeUiPlan,
+  context: UiGenerativeUiPlanFinalizeContext,
+): UiGenerativeUiPlanFinalizeResult;
+```
+
+`admitUiGenerativeUiRequest()` is the public getter-safe request-snapshot boundary. A host assembles
+one raw request from its approved canonical subset, passes it with the current canonical operands and
+may call `GenerativeUiPlannerPort.propose()` only with the returned `status: 'admitted'` request. It
+is an admission/snapshot operation over the single declared request schema, not a second request
+model or provider coordinator.
+
+`UiGenerativeUiPlannerResult` is a trusted host-adapter envelope, not raw provider/model output. Its
+`proposal` field remains runtime-untrusted. The host adapter passes only that field to
+`createUiGenerativeUiPlan()` and surfaces the sanitized unavailable diagnostic directly. A rejected
+planner Promise is mapped by the adapter to `planner-failed`; the core plan function does not receive
+transport failures or an unavailable arm.
+
+`createUiGenerativeUiPlan()` accepts the admitted detached request, the runtime-untrusted proposal
+arm and separately supplied current canonical operands. It returns a discriminated blocked plan with
+frozen diagnostics or a valid detached plan containing the source/candidate documents, admitted
+atomic commands, only the exact component/layout operands referenced by the proposal and the full
+captured Design System input.
+`previewUiGenerativeUiPlan()` exposes only detached plan data. `finalizeUiGenerativeUiPlan()` returns
+either diagnostics or exactly one `UiDocumentCommandV3` outer `batch`; it never applies the command.
+An unauthorized Finalize returns `finalize-not-authorized` and no command.
+
+All new admission, planner-result, plan, preview, diagnostic, input and finalize types required by
+these four functions are root exports. They are plain immutable data and use existing public V3
+document, command, component, layout and Design System types. The public family carries
+`schemaVersion: 1` on the request, proposal and plan envelopes. No new package or public subpath is
+introduced. Hosts assemble only the declared request and cannot choose Workbench's safe-data,
+equivalence, stale-classification or rebase semantics.
+
+##### Frozen context, admission and stale contract
+
+1. Before invoking the planner, the host passes the raw request and current canonical operands to
+   `admitUiGenerativeUiRequest()`. The admitted result deep-freezes the document, ordered selection,
+   `UiAuthoringProjectionContextV3`, host-approved exact component descriptors, layout
+   strategy/property descriptors and `UiAuthoringDesignSystemInputSnapshot`. It does not invoke
+   accessor values or callable data values. JavaScript reflection may trigger Proxy traps; any trap
+   exception, exotic prototype, sparse/accessor array, symbol, non-finite value or cycle is caught
+   and fails closed with provider call count zero.
+2. At request and create-time admission, every request component descriptor must exact-resolve by
+   `{ id, version }` from the supplied canonical catalog and full strict-detached-equal the captured
+   descriptor. Every request layout strategy/property descriptor must exact-resolve by canonical id
+   from the supplied canonical arrays and full strict-detached-equal its captured descriptor.
+   Duplicate, unresolved or changed entries fail before provider invocation or proposal inspection,
+   respectively. Host-approved omission of unrelated descriptors is allowed and is not a wildcard
+   for supplied descriptors. The only request-admission callback is one
+   `componentCatalog.component(ref)` lookup per unique exact ref; it never calls
+   `componentCatalog.components()` or any request-owned function value.
+3. After the planner returns, plan creation compares the captured request context with separately
+   supplied current canonical operands before proposal parsing or command replay. It rejects stale
+   document id/revision/source, ordered selection, full projection context, supplied component
+   descriptor, supplied layout descriptor or Design System input. It never silently rebases a
+   request against current state.
+4. The host unwraps only `UiGenerativeUiPlannerResult.status === 'proposal'`; provider unavailable
+   and rejected transport never enter plan creation. The proposal arm remains runtime-untrusted even
+   when statically typed. Admission requires strict safe data, `schemaVersion: 1`, canonical non-empty
+   identities, exact `requestId` equality and a non-empty atomic-command list. Provider-authored
+   `batch`, nested batch, unknown command, accessor/exotic value and fabricated
+   component/layout/binding/responsive operand are rejected before a plan can be accepted.
+5. Each admitted atom is replayed in order through the current V3 validators against a detached
+   working document. Every component/layout operand referenced by an atom must also exist in the
+   host-approved request subset before it may resolve from the current canonical operands. A guessed
+   but current-catalog-valid hidden descriptor returns `unsupported`. Any issue blocks the entire
+   proposal and exposes no partial commands, referenced snapshots or candidate document. The live
+   session, history, selection, catalogs and caller-owned descriptors are never mutated.
+6. A valid plan retains detached source and candidate documents, captures only exact component,
+   layout-strategy and layout-property operands semantically referenced by admitted commands, and
+   always retains the full `designSystemInput`, ordered selection and projection context. A newly
+   added unrelated canonical descriptor alone does not stale the plan.
+7. Finalize uses this exact precedence: `acceptAuthorized === false` →
+   `finalize-not-authorized`; `plan.blocked === true` → `finalize-blocked`; then stale document →
+   selection → projection → referenced component in request order → layout strategy in request order
+   → layout property in request order → Design System; then success. It returns only the first
+   applicable diagnostic family, never a command on failure. Success returns one outer V3 batch with
+   `commandId === plan.planId` and detached admitted atoms in proposal order. Plan creation rejects a
+   blank `planId`, a `planId` equal to any child `commandId`, blank or duplicate child ids,
+   and a materially no-op proposal as `proposal-command-invalid`; therefore a successful explicit
+   Apply creates one changed transaction rather than an empty history claim.
+8. Only a caller's later explicit invocation of `applyUiAuthoringSessionCommandV3()` may commit the
+   returned batch, append one existing history transaction and enable ordinary Undo/Redo. Planner
+   completion, plan creation, Preview and Finalize have no mutation authority.
+
+##### Diagnostic contract
+
+Use one `UiGenerativeUiDiagnostic` failure-as-data family with this exact closed code union:
+
+```ts
+type UiGenerativeUiDiagnosticCode =
+  | 'planner-unavailable'
+  | 'planner-failed'
+  | 'invalid-request'
+  | 'invalid-proposal'
+  | 'request-mismatch'
+  | 'unsupported'
+  | 'proposal-command-invalid'
+  | 'plan-blocked'
+  | 'stale-document'
+  | 'stale-selection-context'
+  | 'stale-projection-context'
+  | 'stale-component-descriptor'
+  | 'stale-layout-descriptor'
+  | 'stale-design-system'
+  | 'finalize-not-authorized'
+  | 'finalize-blocked';
+
+interface UiGenerativeUiDiagnostic {
+  readonly code: UiGenerativeUiDiagnosticCode;
+  readonly message: string;
+  readonly path: string;
+  readonly commandId?: string;
+  readonly nodeId?: string;
+  readonly propertyId?: string;
+  readonly inputId?: string;
+  readonly variantId?: string;
+}
+```
+
+Diagnostics must not expose provider credentials, prompts beyond the caller-owned `intent`, network
+payloads or model-specific error objects. The host adapter maps provider absence and transport
+failure to `planner-unavailable` and `planner-failed`; Workbench gains no planner registry,
+controller or service locator. All validation and stale failures are deterministic data results.
+
+For v1, each failed admission/finalization returns exactly one diagnostic. Request admission orders
+`invalid-request` before document, selection, projection, component-in-request-order,
+layout-strategy-in-request-order, layout-property-in-request-order and Design System stale checks.
+Plan creation repeats that request ordering before inspecting the proposal, then orders
+`invalid-proposal` → `request-mismatch` → `unsupported` → `proposal-command-invalid` in proposal
+command order. Finalize uses the precedence frozen above. Paths use deterministic dot/bracket form
+such as `request.context.componentDescriptors[0]` and `proposal.commands[1].commandId`; object key
+enumeration order never changes a verdict.
+
+##### Compatibility and concurrency
+
+- Existing V1/V2/V3 command unions, session functions, detached V2 plan functions and Design System
+  transaction paths are not widened or reinterpreted.
+- Existing consumers gain no provider call, data egress, state, listener, timer or dependency unless
+  they explicitly construct a planner request and invoke a host-owned port.
+- Starting request B does not itself invalidate request A. A late A result may remain visible as
+  stale evidence, but plan creation or Finalize fails if any captured canonical operand changed.
+- Provider cancellation/supersession may save host cost or latency but is not a correctness boundary;
+  exact revalidation is.
+- Text intent and provider explanation are ephemeral authoring/presentation inputs and are not
+  persisted in `UiDocumentV3`, session state or required runtime truth.
+- Design System pack migration remains on the existing explicit Design System transaction path and
+  cannot be embedded in a generative document batch.
+
+##### Scope
+
+- add the public types and four pure lifecycle functions under the existing JDW UI-authoring owner;
+- reuse the current safe-data clone/freeze behavior and V3 command validators instead of duplicating
+  them;
+- add focused backendless tests for context admission, stale checks, invalid provider data, command
+  parity, Preview, Finalize and session Apply/Undo/Redo parity;
+- add packed-tarball public-consumer compilation proving an injected fake planner needs only public
+  provider-neutral types and that no model SDK enters the dependency graph;
+- update root exports and public-export checks for the additive API.
+
+##### Non-goals
+
+- model/provider SDKs, authentication, networking, prompting, rate limits, telemetry or transcript
+  storage;
+- automatic provider invocation, automatic Apply, background mutation or a global planner service;
+- arbitrary JSX, HTML, CSS, script, executable factory or renderer-component generation/execution;
+- a second patch/command/document/history/persistence/component/layout/property system;
+- commands not already representable by `UiDocumentAtomicCommandV3`;
+- Design System migration, extension installation/activation/trust, foreign workflow import,
+  component/node implementation, event/action or composite-definition authoring;
+- React, DOM, Storybook, browser, Electron, native or product-policy behavior.
+
+##### Ordered implementation tasks
+
+1. Add the closed public request/context/admission/proposal/diagnostic/result shapes without modifying
+   existing command or session types.
+2. Expose the strict detached request admission boundary and implement the same exact pre-replay
+   request verification over current document, selection, projection, component, layout and Design
+   System operands.
+3. Keep provider unavailable/failure mapping in the host adapter and implement proposal-arm
+   admission in core. Reject batches and unsafe or malformed proposals through the exact closed
+   diagnostic family before replay.
+4. Replay admitted atoms through existing V3 validators against detached state; build one immutable
+   all-or-nothing discriminated plan and candidate-document Preview while capturing only referenced
+   exact operands from the request-approved subset.
+5. Implement explicit Accept authorization, blocked-plan rejection and the second Finalize stale
+   check; return one detached outer V3 batch without applying it.
+6. Add focused failure, stale, hostile-data and manual/generated parity tests. Prove explicit caller
+   Apply produces one transaction and ordinary Undo/Redo.
+7. Add root exports and packed-tarball fixtures that separately prove TypeScript types under
+   `exactOptionalPropertyTypes`, Node CJS `require`, ESM `import` and the package's existing default
+   condition. Prove mixed planner/plan/finalize arms and an atomic success command do not compile;
+   confirm no provider/model dependency or new package/subpath appears.
+
+##### Verification
+
+During development repeat only focused JDW generative-plan tests and the narrow JDW typecheck/build.
+Freeze one source candidate before final gates. At the exact final SHA run:
+
+- focused generative-plan, hostile-data, V3 command/session parity and stale-operand tests;
+- `pnpm check:public-exports` and focused packed-tarball TypeScript exact-optional, CJS `require`, ESM
+  `import` and default-condition consumption, including negative atomic-finalize and mixed-arm type
+  fixtures;
+- `pnpm validate:static`;
+- `pnpm validate:fast`;
+- the repository browser gate once because the additive public root export participates in the
+  supported consumer surface, while requiring no new browser-only story;
+- `pnpm check:commit-safety` and `git diff --check` before commit and push.
+
+Electron is not required because no renderer, main, preload, native, package dependency or lockfile
+boundary changes. The implementation must not add timers, listeners or repeated full-document scans
+outside explicit request/plan/finalize calls. Each lifecycle call may perform bounded linear passes
+over the supplied document/descriptor/command sets and may reuse the current V3 index/validation
+work; no separate arbitrary bundle budget is introduced.
+
+##### Acceptance
+
+- a browser-, Electron- and AI-free fake planner can receive one detached request and return existing
+  V3 atoms through public provider-neutral types only;
+- a rejected request invokes no request-owned accessor or callable field, sanitizes any
+  reflection/proxy-trap exception, calls only the bounded canonical component lookup described above,
+  invokes the planner zero times and retains no mutable caller-owned object;
+- manual V3 commands and an accepted materially changing generated proposal produce the same final
+  document, one transaction count and identical Undo/Redo result;
+- wrong request identity, malformed output, provider/nested batch, fabricated or invalid operands and
+  any rejected atom block the whole plan without mutation or partial command output;
+- a provider command referencing a component/layout descriptor omitted from the approved request
+  subset is `unsupported` even when the current canonical catalog contains it;
+- stale document, ordered selection, projection, component, layout and Design System inputs are
+  distinguished and block create/finalize; unrelated component/layout descriptor addition does not;
+- Preview is mutation-free; Accept false and blocked plans return their exact diagnostics, while an
+  authorized valid Finalize returns exactly one outer V3 batch with `planId` as its non-conflicting
+  command id and without Apply; materially no-op proposals are blocked;
+- no planner leaves manual authoring unchanged, and late/superseded provider completion has no
+  automatic mutation authority;
+- schema-version, exact-optional and discriminated blocked/valid states prevent invalid mixed output;
+- packed TypeScript, CJS, ESM, default-condition and dependency checks prove a public provider-neutral
+  API with no model SDK, package or subpath addition;
+- focused, static, fast and browser validation pass on the reviewed exact candidate; Electron remains
+  correctly unclaimed.
+
+##### Source-review checklist
+
+Reject a candidate that adds a second patch/document/history/provider registry; widens existing V3
+commands to encode provider-only semantics; calls a provider automatically; trusts returned objects
+without the public strict request admission; parses/replays before the first stale check; silently
+rebases against current state; accepts provider-authored batches or request-hidden descriptors;
+applies partially; invokes request-owned accessors/callable fields, enumerates the component catalog
+or leaks reflection-trap exceptions; retains mutable caller objects; emits a mixed blocked/success
+plan; cannot derive Preview from detached plan data;
+lets Preview or Finalize mutate session/history; applies without a separate explicit caller step;
+omits `acceptAuthorized`, diagnostic precedence, blocked-plan handling or the second stale check;
+reuses `planId` as a conflicting child id; accepts a material no-op as a one-transaction success;
+invalidates on unrelated catalog growth; relies on cancellation for correctness; smuggles Design
+System migration, extension/code implementation or unsupported manual capability into a proposal;
+persists prompt/transcript/model data as runtime truth; leaks a provider SDK,
+React/DOM/native/product dependency; omits exact-optional/CJS/ESM/default packed-consumer or
+public-export proof; or claims release, publish or Electron completion.
 
 ### Acceptance direction
 
