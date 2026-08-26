@@ -76,7 +76,7 @@ WB-NS-071A graph node type/property-input foundation [DONE; independent after WB
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
         ↓
-WB-NS-071C external node ecosystem adapter contract
+WB-NS-071C external static node catalog projection [READY_FOR_IMPLEMENTATION; data-only v1]
 
 WB-NS-072A design-system foundation consolidation map [DONE]
         ↓
@@ -3124,9 +3124,9 @@ Support typed graph node descriptors and the useful editor↔connectable-input d
 ### Target decomposition
 
 ```text
-WB-NS-071A NodeTypeDescriptor / typed port + property foundation
-WB-NS-071B missing capability -> component/node development requirement
-WB-NS-071C external node ecosystem adapter contract
+WB-NS-071A NodeTypeDescriptor / typed port + property foundation [DONE]
+WB-NS-071B missing capability -> component/node development requirement [DONE]
+WB-NS-071C external static node catalog projection [READY_FOR_IMPLEMENTATION; data-only v1]
 optional ComfyUI adapter experiment
 ```
 
@@ -3651,6 +3651,527 @@ passed, and final static plus 461-file/2,523-test fast validation passed on the 
 producer-distinct successor reviews returned `PASS / P0 none / P1 none / P2 none`. Browser and
 Electron were not required because no renderer or native boundary changed. PR #370 integrated the
 reviewed successor as merge `7051a2e7051838770a4d7d527904aa4a5515db0d`.
+
+### `WB-NS-071C` bounded readiness packet — external static node catalog projection
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Exact source/API base:** `origin/develop@17e71629526bdb9f4b09246dd227f0d97152b09b`
+- **Dependencies:** `WB-NS-071A` and `WB-NS-071B` `DONE`; existing `NodeTypeDescriptor`, `UiValueSchema`, `NodeTypeCatalogContribution`, `resolveNodeTypeCatalog()` and 071B exact requirement resolution remain canonical
+- **Target owner:** focused public subpath `@workbench-kit/contracts/external-node-catalog`
+- **Implementation scope:** strict source-neutral static catalog admission, explicit source-key-to-exact-ref and value-semantic-to-`UiValueSchema` mappings, deterministic partial projection, ordinary catalog contribution output and backendless 071B handoff proof
+
+#### Goal and bounded outcome
+
+An AI-, provider-, renderer- and Electron-free consumer can pass one bounded source-neutral snapshot
+of static external node declarations plus one explicit immutable mapping configuration to a pure
+Workbench function. The function accepts only safely representable fixed inputs and outputs,
+constructs canonical `NodeTypeDescriptor` values, and returns one detached frozen
+`NodeTypeCatalogContribution` for the accepted entries plus deterministic diagnostics for every
+rejected entry.
+
+This v1 packet is catalog interoperability only. It does not discover an ecosystem, parse a vendor
+workflow, infer identity from display metadata, install or activate code, invoke a runtime, widen an
+extension manifest, persist adapter state, mutate a graph/document/task, preview a node or Apply an
+authoring command. A returned contribution proves declarative projection only. The caller must still
+pass it through `resolveNodeTypeCatalog()`, satisfy its own trust/integration boundary, provide a
+fresh catalog to 071B, and explicitly retry any preview or authoring action.
+
+#### Canonical ownership and compatibility
+
+| Concern                     | Decision                                                              | Reason / follow-up                                                                                                                                                                                                                                |
+| --------------------------- | --------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Workbench node/value truth  | Reuse `NodeTypeDescriptor`, `NodeTypeRef` and `UiValueSchema` exactly | The adapter adds no second node, port, property, value or catalog schema after admission.                                                                                                                                                         |
+| External input              | One versioned source-neutral adapter snapshot                         | It is inert caller data, not a provider protocol, vendor schema, workflow document or trust assertion.                                                                                                                                            |
+| Exact identity              | Explicit `sourceTypeKey` → exact Workbench `NodeTypeRef` mapping      | Labels, categories, ordering, source URLs, package names, time, nearest versions and AI similarity never create identity.                                                                                                                         |
+| Value meaning               | Explicit `sourceSemanticId` → complete `UiValueSchema` mapping        | The open-ended `UiValueType` cannot make a foreign token self-authorizing. Defaults, constraints and editor metadata cross the same portable-data admission boundary.                                                                             |
+| Static first slice          | Fixed inline value inputs and outputs only                            | Property/widget inference, property-backed inputs, dynamic/variadic ports, list/batch semantics and runtime objects require later explicit contracts.                                                                                             |
+| Accepted output             | One ordinary `NodeTypeCatalogContribution`                            | The projector excludes only within-attempt mapping/source collisions needed to form eligible rows. `resolveNodeTypeCatalog()` remains the only final cross-contribution duplicate-contributor/ref, catalog validation and exact lookup authority. |
+| Cross-refresh compatibility | Mapping-owner exact target version                                    | V1 is stateless. Material schema changes require the mapping owner to choose another target version; the Kit does not remember prior projections or auto-bump identity.                                                                           |
+| Provenance                  | Source ordinal, source type key and mapped exact target only          | This bounded evidence supports diagnostics and explicit retry but does not prove install, trust, runtime or workflow availability.                                                                                                                |
+| Extension/runtime/workflow  | Keep external                                                         | No extension route, loader, callback, module/URL/process handle, workflow import/export or execution surface is added.                                                                                                                            |
+
+Existing contracts root exports remain source-compatible. Every new 071C name is available only from
+the focused subpath. Private strict snapshot helpers remain unexported. The package root, extension
+SDK and runtime packages do not gain a convenience re-export or an adapter registration seam.
+
+#### Frozen public contract
+
+The public names, discriminants, issue-code order, limits and signatures below are frozen for v1.
+Messages may improve without changing status, ordering, path or sanitization semantics.
+
+```ts
+export const EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION = 1 as const;
+
+export const EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS = Object.freeze({
+  maxEntries: 512,
+  maxPortsPerEntry: 256,
+  maxMappings: 2_048,
+  maxPortableDepth: 32,
+  maxPortableProperties: 32_768,
+  maxStringLength: 4_096,
+} as const);
+
+export interface ExternalNodeFixedInputSnapshot {
+  readonly kind: 'fixed';
+  readonly id: string;
+  readonly label?: string;
+  readonly description?: string;
+  readonly valueSemanticId: string;
+  readonly required?: boolean;
+}
+
+export interface ExternalNodeDynamicInputSnapshot {
+  readonly kind: 'dynamic';
+  readonly id: string;
+  readonly label?: string;
+  readonly description?: string;
+}
+
+export type ExternalNodeInputSnapshot =
+  ExternalNodeFixedInputSnapshot | ExternalNodeDynamicInputSnapshot;
+
+export interface ExternalNodeFixedOutputSnapshot {
+  readonly kind: 'fixed';
+  readonly id: string;
+  readonly label?: string;
+  readonly description?: string;
+  readonly valueSemanticId: string;
+}
+
+export interface ExternalNodeDynamicOutputSnapshot {
+  readonly kind: 'dynamic';
+  readonly id: string;
+  readonly label?: string;
+  readonly description?: string;
+}
+
+export type ExternalNodeOutputSnapshot =
+  ExternalNodeFixedOutputSnapshot | ExternalNodeDynamicOutputSnapshot;
+
+export interface ExternalStaticNodeCatalogEntry {
+  readonly kind: 'static';
+  readonly sourceTypeKey: string;
+  readonly inputs: readonly ExternalNodeInputSnapshot[];
+  readonly outputs: readonly ExternalNodeOutputSnapshot[];
+  readonly designTime: NodeTypeDesignTimeMetadata;
+}
+
+export interface ExternalDynamicNodeCatalogEntry {
+  readonly kind: 'dynamic';
+  readonly sourceTypeKey: string;
+  readonly designTime: Pick<NodeTypeDesignTimeMetadata, 'label' | 'description' | 'category'>;
+}
+
+export type ExternalNodeCatalogEntry =
+  ExternalStaticNodeCatalogEntry | ExternalDynamicNodeCatalogEntry;
+
+export interface ExternalNodeCatalogSnapshot {
+  readonly schemaVersion: 1;
+  readonly entries: readonly ExternalNodeCatalogEntry[];
+}
+
+export interface ExternalNodeIdentityMapping {
+  readonly sourceTypeKey: string;
+  readonly target: NodeTypeRef;
+}
+
+export interface ExternalNodeValueSemanticMapping {
+  readonly sourceSemanticId: string;
+  readonly target: UiValueSchema;
+}
+
+export interface ExternalNodeCatalogProjectionMapping {
+  readonly schemaVersion: 1;
+  readonly contributorId: string;
+  readonly identities: readonly ExternalNodeIdentityMapping[];
+  readonly values: readonly ExternalNodeValueSemanticMapping[];
+}
+
+export const EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES = Object.freeze([
+  'unsupported-schema-version',
+  'invalid-foreign-snapshot',
+  'invalid-foreign-entry',
+  'invalid-projection-mapping',
+  'admission-limit-exceeded',
+  'duplicate-source-type-key',
+  'duplicate-identity-mapping',
+  'missing-identity-mapping',
+  'duplicate-value-semantic-mapping',
+  'missing-value-semantic-mapping',
+  'duplicate-projected-node-ref',
+  'unsupported-foreign-input',
+  'unsupported-foreign-output',
+  'unsupported-dynamic-shape',
+  'unsafe-foreign-entry',
+  'projected-descriptor-invalid',
+] as const);
+
+export type ExternalNodeCatalogProjectionIssueCode =
+  (typeof EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES)[number];
+
+interface ExternalNodeCatalogProjectionIssueBase {
+  readonly message: string;
+  readonly path: string;
+}
+
+type ExternalNodeCatalogProjectionUnsupportedVersionIssue =
+  ExternalNodeCatalogProjectionIssueBase & {
+    readonly code: 'unsupported-schema-version';
+    readonly sourceIndex?: never;
+    readonly sourceTypeKey?: never;
+    readonly mappingIndex?: never;
+    readonly nodeIssue?: never;
+  };
+
+type ExternalNodeCatalogProjectionInvalidAttemptIssue =
+  | (ExternalNodeCatalogProjectionIssueBase & {
+      readonly code: 'invalid-foreign-snapshot' | 'admission-limit-exceeded';
+      readonly sourceIndex?: never;
+      readonly sourceTypeKey?: never;
+      readonly mappingIndex?: never;
+      readonly nodeIssue?: never;
+    })
+  | (ExternalNodeCatalogProjectionIssueBase & {
+      readonly code: 'invalid-projection-mapping';
+      readonly sourceIndex?: never;
+      readonly sourceTypeKey?: never;
+      readonly mappingIndex?: never;
+      readonly nodeIssue?: never;
+    });
+
+type ExternalNodeCatalogProjectionMappingIssue = ExternalNodeCatalogProjectionIssueBase & {
+  readonly code:
+    | 'invalid-projection-mapping'
+    | 'duplicate-identity-mapping'
+    | 'duplicate-value-semantic-mapping';
+  readonly sourceIndex?: never;
+  readonly sourceTypeKey?: never;
+  readonly mappingIndex: number;
+  readonly nodeIssue?: never;
+};
+
+type ExternalNodeCatalogProjectionUnkeyedSourceIssue = ExternalNodeCatalogProjectionIssueBase & {
+  readonly code: 'invalid-foreign-entry' | 'unsafe-foreign-entry';
+  readonly sourceIndex: number;
+  readonly sourceTypeKey?: never;
+  readonly mappingIndex?: never;
+  readonly nodeIssue?: never;
+};
+
+type ExternalNodeCatalogProjectionKeyedSourceIssue = ExternalNodeCatalogProjectionIssueBase & {
+  readonly code:
+    | 'duplicate-source-type-key'
+    | 'missing-identity-mapping'
+    | 'missing-value-semantic-mapping'
+    | 'duplicate-projected-node-ref'
+    | 'unsupported-foreign-input'
+    | 'unsupported-foreign-output'
+    | 'unsupported-dynamic-shape';
+  readonly sourceIndex: number;
+  readonly sourceTypeKey: string;
+  readonly mappingIndex?: never;
+  readonly nodeIssue?: never;
+};
+
+type ExternalNodeCatalogProjectionDescriptorIssue = ExternalNodeCatalogProjectionIssueBase & {
+  readonly code: 'projected-descriptor-invalid';
+  readonly sourceIndex: number;
+  readonly sourceTypeKey: string;
+  readonly mappingIndex?: never;
+  readonly nodeIssue: NodeTypeValidationIssue;
+};
+
+type ExternalNodeCatalogProjectionRowIssue =
+  | ExternalNodeCatalogProjectionMappingIssue
+  | ExternalNodeCatalogProjectionUnkeyedSourceIssue
+  | ExternalNodeCatalogProjectionKeyedSourceIssue
+  | ExternalNodeCatalogProjectionDescriptorIssue;
+
+export type ExternalNodeCatalogProjectionIssue =
+  | ExternalNodeCatalogProjectionUnsupportedVersionIssue
+  | ExternalNodeCatalogProjectionInvalidAttemptIssue
+  | ExternalNodeCatalogProjectionRowIssue;
+
+export interface ExternalNodeCatalogProjectionAcceptance {
+  readonly sourceIndex: number;
+  readonly sourceTypeKey: string;
+  readonly target: NodeTypeRef;
+}
+
+export type ExternalNodeCatalogProjectionAcceptances = readonly [
+  ExternalNodeCatalogProjectionAcceptance,
+  ...ExternalNodeCatalogProjectionAcceptance[],
+];
+
+export type ExternalNodeCatalogProjectionIssues = readonly [
+  ExternalNodeCatalogProjectionIssue,
+  ...ExternalNodeCatalogProjectionIssue[],
+];
+
+type ExternalNodeCatalogProjectionRowIssues = readonly [
+  ExternalNodeCatalogProjectionRowIssue,
+  ...ExternalNodeCatalogProjectionRowIssue[],
+];
+
+export type ExternalNodeCatalogProjectionResult =
+  | {
+      readonly status: 'complete';
+      readonly contribution: NodeTypeCatalogContribution;
+      readonly accepted: readonly ExternalNodeCatalogProjectionAcceptance[];
+      readonly issues: readonly [];
+    }
+  | {
+      readonly status: 'partial';
+      readonly contribution: NodeTypeCatalogContribution;
+      readonly accepted: ExternalNodeCatalogProjectionAcceptances;
+      readonly issues: ExternalNodeCatalogProjectionRowIssues;
+    }
+  | {
+      readonly status: 'rejected';
+      readonly contribution?: never;
+      readonly accepted: readonly [];
+      readonly issues: ExternalNodeCatalogProjectionRowIssues;
+    }
+  | {
+      readonly status: 'invalid';
+      readonly contribution?: never;
+      readonly accepted: readonly [];
+      readonly issues: readonly [ExternalNodeCatalogProjectionInvalidAttemptIssue];
+    }
+  | {
+      readonly status: 'unsupported-version';
+      readonly contribution?: never;
+      readonly accepted: readonly [];
+      readonly issues: readonly [ExternalNodeCatalogProjectionUnsupportedVersionIssue];
+    };
+
+export function projectExternalNodeCatalogContribution(
+  snapshot: unknown,
+  mapping: unknown,
+): ExternalNodeCatalogProjectionResult;
+```
+
+Every returned result, acceptance, issue, nested `NodeTypeValidationIssue`, contribution, descriptor
+and portable schema value is detached and deeply frozen. Impossible fields remain absent, not
+present with `undefined`; `exactOptionalPropertyTypes` is part of the packed public proof.
+
+#### Strict portable-data and shape admission
+
+071C does not pass raw inputs to existing typed validators or `resolveNodeTypeCatalog()`. It first
+uses one contracts-private strict portable-data implementation shared with the existing 071B wrapper.
+The implementation is extracted without changing 071B behavior or exposing a private subpath; a
+second or third deep-clone/snapshot engine is rejected in review. The 071B private structural
+`UiValueSchema` own-shape guard and its later canonical-text collector are extracted beside that helper
+as shared private seams. The structural guard validates exact schema and editor-wrapper keys, field
+types and every `allowedSources` member through `isUiValueSourceKind()`; the collector separately
+checks canonical `type`/`id`. The existing 071B wrapper retains its current guard-before-collector
+check order, `noncanonical-requirement-text` code and paths byte-for-behavior, while 071C classifies
+failure of either seam as its own mapping-row `invalid-projection-mapping`. Only `defaultValue`,
+`constraints` and `editor.metadata` remain open portable-data values; their nested own keys are
+admitted, but all their values still cross the same strict portable-data and limit boundary.
+
+Admission is staged so one hostile row does not poison unrelated valid entries:
+
+1. Inspect the snapshot envelope and `entries` array structure through own property descriptors
+   without invoking getters or setters. A malformed/exotic snapshot envelope wins before version or
+   mapping inspection; a recognized non-v1 snapshot version wins next.
+2. Inspect the mapping envelope and its `identities`/`values` arrays by the same rules. A malformed or
+   exotic mapping envelope wins before its version; a recognized non-v1 mapping version wins next.
+3. Strictly snapshot and shape-parse each identity/value mapping row and each source entry at its
+   original ordinal. A bad mapping row is excluded and rejects only dependent sources; unrelated
+   mappings and source entries remain eligible. Entry-local accessors, symbol/non-data keys,
+   inherited/exotic prototypes, functions, `undefined`, bigint, symbol, non-finite numbers,
+   sparse/non-index array properties, cycles or unknown closed-shape fields reject only that row. Raw
+   values, thrown messages and stacks are never retained or echoed.
+
+The exported limits apply inclusively to the combined snapshot and mapping attempt. Limit exhaustion
+is a top-level `admission-limit-exceeded` failure with no contribution; data is never truncated.
+`maxMappings` is `identities.length + values.length`; `maxPortsPerEntry` is
+`inputs.length + outputs.length`. Portable depth starts at zero for each row root and increases by one
+when entering a nested array or plain object, so depth 32 is accepted and 33 is rejected. Every string
+primitive in either operand, including open portable-data records, uses JavaScript `.length` UTF-16
+code units and must be at most `maxStringLength`; canonical text fields are additionally nonblank and
+already trimmed. Portable property count includes own enumerable string data properties; array
+indices count and `length` does not. Within one staged row snapshot, the first traversal of an object
+counts its properties and a repeated acyclic reference reuses the clone without recounting nested
+properties; cycles still fail. All row snapshots draw from one shared property budget, while the same
+object supplied in two independently admitted rows counts once per row. Unknown keys fail closed on
+the exact snapshot, entry, port, mapping and editor-wrapper shapes instead of being stripped.
+
+V1 has no `revision` field and does not accept or store external freshness/correlation data. A caller
+keeps any correlation outside this pure function; an input `revision` key is an unknown closed-shape
+field and is rejected rather than silently dropped or confused with exact identity.
+
+#### Closed classification and survivor policy
+
+| Input condition                                                                                                           | Issue code                                                 | Result/status and retained output                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| Hostile or malformed snapshot envelope/entries array                                                                      | `invalid-foreign-snapshot`                                 | `invalid`; no contribution, acceptance or row inspection                                                                        |
+| Recognized non-v1 snapshot or mapping envelope                                                                            | `unsupported-schema-version`                               | `unsupported-version`; no contribution or acceptance                                                                            |
+| Hostile or malformed mapping envelope/arrays                                                                              | `invalid-projection-mapping`                               | `invalid`; no contribution, acceptance or row inspection                                                                        |
+| Any inclusive attempt limit exceeded                                                                                      | `admission-limit-exceeded`                                 | `invalid`; no truncation, contribution or acceptance                                                                            |
+| Hostile/non-portable source row                                                                                           | `unsafe-foreign-entry`                                     | exclude that source row; unrelated rows survive                                                                                 |
+| Plain portable source row with wrong closed shape or canonical field                                                      | `invalid-foreign-entry`                                    | exclude that source row; unrelated rows survive                                                                                 |
+| Recognized dynamic entry                                                                                                  | `unsupported-dynamic-shape`                                | exclude that source row; unrelated rows survive                                                                                 |
+| Recognized dynamic input or output                                                                                        | `unsupported-foreign-input` / `unsupported-foreign-output` | exclude its source row; unrelated rows survive                                                                                  |
+| Hostile, malformed or semantically invalid identity/value mapping row, including invalid `NodeTypeRef` or `UiValueSchema` | `invalid-projection-mapping`                               | exclude the mapping row and dependent sources; unrelated rows survive; no secondary missing issue for the excluded key          |
+| Duplicate source, identity mapping or value-semantic mapping key                                                          | corresponding `duplicate-*` code                           | exclude every duplicate group member and dependent source; unrelated rows survive; no first/last winner                         |
+| No usable mapping row for a required key                                                                                  | corresponding `missing-*` code                             | exclude the dependent source unless that key already has an authoritative invalid/duplicate mapping issue                       |
+| Multiple eligible sources target one exact Workbench ref                                                                  | `duplicate-projected-node-ref`                             | exclude every actual source member of the within-attempt target group; final cross-contribution conflicts remain resolver-owned |
+| Constructed canonical descriptor fails validation                                                                         | `projected-descriptor-invalid` with required `nodeIssue`   | exclude that source row; unrelated rows survive                                                                                 |
+
+Every non-top-level row condition returns `partial` when at least one acceptance remains and
+`rejected` otherwise. The top-level precedence is snapshot invalid, snapshot unsupported, mapping
+invalid, mapping unsupported, then attempt limit. No later operand or row is inspected once an earlier
+top-level outcome is known.
+
+#### Exact mapping and partial-admission policy
+
+Projection builds maps once for source type keys, identity mappings, value semantic mappings and
+projected exact refs. It does not enumerate an existing Workbench catalog, search by display
+metadata, choose a nearest/latest version or perform pairwise scans.
+
+Successful output order is source-owned and exact: `accepted` and `contribution.nodeTypes` contain
+eligible entries in original source ordinal order, with matching array positions, source evidence and
+targets. Mapping ordinal, target-ref ordering and conflict discovery never reorder surviving output.
+
+- Every static entry requires one exact identity mapping and every fixed port requires one exact
+  value-semantic mapping. A mapping target supplies the complete canonical `UiValueSchema`; foreign
+  type tokens are never copied into `UiValueType` implicitly. `sourceTypeKey` is an opaque, exact,
+  caller-owned external version/cohort key: the Kit never parses or normalizes it, and a material
+  external schema change requires the mapping owner to select another exact target
+  `NodeTypeRef.version`.
+- Dynamic entries and dynamic inputs/outputs are deliberately recognized and rejected with the
+  matching deterministic issue. V1 does not flatten them into misleading fixed ports.
+- Duplicate source type keys reject every source member of that group. Duplicate identity/value
+  mapping keys make the affected source entries ineligible. Multiple source entries mapped to one
+  exact Workbench ref reject every affected member. There is no first/newest/last-writer winner.
+- Missing identity or value mappings, unsafe entries, unsupported shapes and invalid constructed
+  descriptors reject only the affected entry. Unrelated valid entries remain eligible.
+- Constructed descriptors use only mapped exact identity, source fixed port IDs/labels/descriptions,
+  mapped value schemas and source design-time presentation metadata. V1 emits no properties,
+  capabilities, callbacks, runtime locators or workflow fields.
+- Each constructed descriptor passes `validateNodeTypeDescriptor()`. Its frozen
+  `NodeTypeValidationIssue` is nested under `projected-descriptor-invalid`; adapter issue codes do
+  not copy the canonical validator vocabulary.
+
+Issue ordering is stable for the same admitted snapshot/configuration. Top-level issues use the
+precedence above. Otherwise mapping-row/group issues come first: identity rows by mapping ordinal,
+then value rows by mapping ordinal, and each issue carries its own `mappingIndex`. Source/member and
+within-attempt target-collision issues follow in source ordinal, frozen adapter issue-code, then nested
+canonical-validator order. Duplicate target-ref diagnostics are emitted for every actual source
+member; mapping rows themselves are not final catalog-conflict members. An invalid/duplicate mapping
+group is authoritative for its key, so dependents do not also receive a secondary missing-mapping
+issue. Mapping paths and ordinals are diagnostic evidence, never source ordering authority.
+
+Status is exact:
+
+1. Valid empty or all-accepted input returns `complete` and an ordinary, possibly empty contribution.
+2. At least one accepted entry plus any entry/mapping/conflict issue returns `partial`.
+3. Zero accepted entries plus non-top-level issues returns `rejected`.
+4. Unsafe/malformed top-level input, mapping or limit exhaustion returns `invalid`.
+5. Either recognized envelope with a non-v1 schema version returns `unsupported-version`; it is never
+   rewritten to v1.
+
+#### Canonical catalog and explicit 071B lifecycle
+
+```text
+caller-owned external static snapshot + explicit mapping
+  -> strict staged portable admission
+  -> deterministic complete / partial / rejected result
+  -> ordinary NodeTypeCatalogContribution
+  -> existing resolveNodeTypeCatalog()
+  -> external host trust/integration boundary
+  -> fresh caller-owned NodeTypeCatalog
+  -> existing 071B exact requirement resolve
+  -> explicit caller retry / preview decision
+```
+
+`projectExternalNodeCatalogContribution()` never registers its contribution, edits a prior catalog,
+observes a previous projection, stores source revision, installs/activates code, advances an external
+task or resolves an authoring requirement itself. Catalog composition and 071B resolution are
+explicit later calls. A backendless fixture proves `missing -> projected contribution -> fresh
+catalog -> fulfilled -> explicit retry signal` while document state, command history, runtime,
+extension registry, task state and Apply call counts remain zero.
+
+#### Scope and non-scope
+
+In scope: source-neutral versioned static snapshots, explicit exact identity/value mapping, strict
+bounded portable data, fixed inline inputs/outputs, design-time presentation metadata, deterministic
+partial rejection, immutable contribution/result evidence, existing catalog handoff, focused public
+subpath packaging and backendless 071B composition proof.
+
+Not in scope: a vendor raw schema or provider client, source discovery/networking, properties or
+property-backed inputs, widget inference, dynamic/variadic/list/batch semantics, custom executable
+validators, runtime objects, arbitrary code/module/URL/process/RPC fields, extension manifest/router
+widening, install/trust/enable/activation, foreign workflow/document import/export, graph instances or
+edges, mutable refresh history, automatic versioning/migration, renderer UI, preview behavior,
+document persistence, task/repository metadata, automatic Apply or a second node/value/catalog owner.
+
+#### Ordered implementation slice
+
+1. Extract the strict portable snapshot mechanics and exact `UiValueSchema` own-shape guard from the
+   private 071B implementation into contracts-private shared helpers with optional bounded accounting;
+   keep the 071B wrapper, outputs, errors and hostile-input tests byte-for-behavior compatible and
+   export neither helper path.
+2. Add the focused `external-node-catalog` public leaf with the exact v1 types, frozen limits, frozen
+   issue vocabulary and pure projection function above.
+3. Implement staged envelope, mapping-row and source-entry admission, exact maps and conflict-group
+   exclusion without invoking accessors or retaining raw/throwable foreign values. Apply the frozen
+   classification, precedence, survivor and no-secondary-missing rules exactly.
+4. Construct only canonical inline-port `NodeTypeDescriptor` values, reuse
+   `validateNodeTypeDescriptor()`, nest its issues and emit one ordinary contribution for eligible
+   entries. Do not call or reimplement the final catalog resolver inside the projector.
+5. Cover complete, partial, rejected, invalid and unsupported-version result arms; deep immutability;
+   unknown keys; every hostile portable-data class; every exact duplicate group; missing mappings;
+   dynamic input/output rejection; mutation isolation and deterministic issue order.
+6. Add SMALL/TYPICAL/STRESS fixtures at ordinary, high and exact-limit sizes plus one-over-limit
+   rejection. Prove one map build per domain and no quadratic/source-order winner behavior.
+7. Compose the projected contribution through the existing `resolveNodeTypeCatalog()` and 071B
+   resolver in a backendless explicit-retry fixture with zero automatic effect calls.
+8. Add the exact tsup entry, `typesVersions` mapping and package export with
+   `types`/`import`/`require`/`default` conditions for the focused subpath. Packed-tarball evidence must
+   prove every new root name is absent, each actual shared private-helper symbol is absent, the deep
+   private helper subpath is rejected independently, and CJS `require`, ESM `import`,
+   `exactOptionalPropertyTypes`, exact frozen limits/issues and complete/partial/rejected runtime
+   behavior all work from the packed artifact.
+9. Freeze one exact source candidate and obtain producer-distinct core, public-compatibility and
+   lifecycle/UX review before integration.
+
+#### Focused and final validation
+
+- development loop: contracts external-node-catalog tests, 071B snapshot regression and contracts
+  typecheck only;
+- public boundary: package exports/typesVersions/tsup entry, root and private negative proofs, packed
+  TypeScript exact-optional plus CJS/ESM runtime consumption;
+- behavior: staged hostile input, limit matrix, exact maps, duplicate conflict groups, partial
+  survivors, nested canonical validation issues, immutable outputs and explicit 071B retry flow;
+- final exact candidate: `pnpm check:commit-safety`, `pnpm validate:static` and
+  `pnpm validate:fast` once on the same reviewed successor/candidate according to the repository
+  validation cadence;
+- browser and Electron: not required because v1 adds no UI, renderer behavior or native boundary.
+  Any later real preview/effect packet requires real browser interaction, and any native adapter
+  boundary requires Electron evidence.
+
+Projection is linear in admitted entries, mappings, fixed ports and portable-data size, followed by
+existing per-descriptor validation. Exact maps provide constant-time lookups after construction. The
+source review rejects nested source×mapping scans, repeated full-catalog scans, a parallel catalog or
+validator, an additional snapshot engine, runtime dependencies and arbitrary bundle-size gates.
+
+#### Acceptance and source-review gate
+
+The packet is complete when an independent packed consumer can project a source-neutral snapshot
+containing at least two static nodes and deliberately unsupported dynamic entries through explicit
+identity/value mappings; retain unrelated valid entries; reject every duplicate/conflict member;
+pass the resulting ordinary contribution through the existing canonical catalog; and move one 071B
+node requirement from `missing` to `fulfilled` only after a fresh catalog and explicit retry signal.
+
+Producer-distinct source review must reject foreign-token type inference, display/package/time/source
+identity, silent field dropping or lossy dynamic flattening, mutable adapter history, fake catalog
+entries, duplicated node/value/catalog validation, raw or executable provenance, extension/runtime/
+workflow widening, document/task/repository mutation, automatic preview/Apply and vendor/product
+coupling. Acceptance requires `PASS / P0 none / P1 none / P2 none` on the exact candidate plus the
+focused, packed and final validation above.
 
 ### ComfyUI discovery
 
