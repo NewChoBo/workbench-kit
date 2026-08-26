@@ -6,9 +6,9 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@cfd64106a5212d787f5f5ef1e2231b81cb41524a`.
-- **Reviewed documentation-only baseline:** `develop@892499b2a6d24b8e13aef8da56120ff51038961d` / PR #365; its diff from the source-bearing baseline changes only this implementation plan and carries no source/API change.
-- **Baseline maintenance:** a later documentation-only integration preserves the source-bearing baseline only after its diff from the named documentation-only baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
+- **Latest source-bearing integration baseline:** `develop@abde7236cb48ebaf3758363ddd3df88bec0e7aa9`.
+- **Reviewed documentation-only predecessor:** `develop@8c71d49ea7732831695ea03772bf9cd8dff6aa6f` / PR #372; its diff from the preceding source-bearing `develop@7051a2e7051838770a4d7d527904aa4a5515db0d` changes only `implementation-plan.md`, `roadmap.md` and `ui-authoring-and-generative-composition.md` under this Northstar directory and carries no source/API change.
+- **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
