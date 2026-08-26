@@ -93,7 +93,10 @@ export type UiSourceInputIssueCoordinateKey = 'sourceId' | 'nodeId' | 'inputId' 
 
 export type UiSourceInputIssueBase<
   TCode extends UiSourceInputIssueCode,
-  TCoordinates extends Partial<Record<UiSourceInputIssueCoordinateKey, string>> = {},
+  TCoordinates extends Partial<Record<UiSourceInputIssueCoordinateKey, string>> = Record<
+    never,
+    never
+  >,
 > = {
   readonly code: TCode;
   readonly message: string;
@@ -252,7 +255,7 @@ export interface UiSourceInputCompatibilityRequestV1 {
   readonly conversionEvidence?: readonly UiValueConversionEvidence[];
 }
 
-export interface UiSourceInputRequestSnapshotV1 extends UiSourceInputCompatibilityRequestV1 {}
+export type UiSourceInputRequestSnapshotV1 = UiSourceInputCompatibilityRequestV1;
 
 export type UiSourceInputCandidateSetResult =
   | {
