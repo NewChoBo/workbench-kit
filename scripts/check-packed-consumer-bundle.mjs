@@ -71,6 +71,7 @@ try {
   NPM_PUBLISH_ORDER.forEach(packPackage);
   verifyPackedPackageCohort();
   linkExternalPackages();
+  verifyExternalNodeCatalogPackageManifest();
   writeConsumer();
 
   console.log('[check-packed-consumer] Typechecking external TypeScript consumer...');
@@ -100,6 +101,33 @@ try {
     ],
     { cwd: repoRoot, stdio: 'inherit' },
   );
+  console.log(
+    '[check-packed-consumer] Typechecking focused external-node-catalog exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'external-node-catalog-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
   runCommand(
     'pnpm',
     [
@@ -172,6 +200,14 @@ try {
     stdio: 'inherit',
   });
   runCommand('node', [path.join(consumerDir, 'src', 'authoring-development-runtime.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'external-node-catalog-runtime.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'external-node-catalog-runtime.mjs')], {
     cwd: consumerDir,
     stdio: 'inherit',
   });
@@ -304,6 +340,41 @@ function verifyPackedPackageCohort() {
   console.log(
     `[check-packed-consumer] Packed release cohort OK (${count} packages at ${expectedVersion}).`,
   );
+}
+
+function verifyExternalNodeCatalogPackageManifest() {
+  const contractsRoot = packagePath(nodeModulesDir, '@workbench-kit/contracts');
+  const manifest = readJson(path.join(contractsRoot, 'package.json'));
+  const expectedExport = {
+    types: './dist/external-node-catalog.d.ts',
+    import: './dist/external-node-catalog.js',
+    require: './dist/external-node-catalog.cjs',
+    default: './dist/external-node-catalog.js',
+  };
+  const actualExport = manifest.exports?.['./external-node-catalog'];
+  if (JSON.stringify(actualExport) !== JSON.stringify(expectedExport)) {
+    throw new TypeError(
+      'Packed external-node-catalog export must retain exact types/import/require/default conditions.',
+    );
+  }
+  const typeVersions = manifest.typesVersions?.['*']?.['external-node-catalog'];
+  if (
+    !Array.isArray(typeVersions) ||
+    typeVersions.length !== 1 ||
+    typeVersions[0] !== 'dist/external-node-catalog.d.ts'
+  ) {
+    throw new TypeError('Packed external-node-catalog typesVersions mapping is invalid.');
+  }
+  if (
+    Object.keys(manifest.exports ?? {}).some((key) => key.startsWith('./external-node-catalog/'))
+  ) {
+    throw new TypeError('Packed external-node-catalog exposes a private deep subpath.');
+  }
+  for (const target of new Set(Object.values(expectedExport))) {
+    if (!fs.existsSync(path.join(contractsRoot, target))) {
+      throw new TypeError(`Packed external-node-catalog target is missing: ${target}`);
+    }
+  }
 }
 
 function writeConsumer() {
@@ -925,6 +996,242 @@ void UnsupportedAuthoringDevelopmentSnapshotValueError;
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'external-node-catalog-types.ts'),
+    `import {
+  EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES,
+  EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS,
+  EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION,
+  projectExternalNodeCatalogContribution,
+  type ExternalDynamicNodeCatalogEntry,
+  type ExternalNodeCatalogEntry,
+  type ExternalNodeCatalogProjectionAcceptance,
+  type ExternalNodeCatalogProjectionAcceptances,
+  type ExternalNodeCatalogProjectionIssue,
+  type ExternalNodeCatalogProjectionIssueCode,
+  type ExternalNodeCatalogProjectionIssues,
+  type ExternalNodeCatalogProjectionMapping,
+  type ExternalNodeCatalogProjectionResult,
+  type ExternalNodeCatalogSnapshot,
+  type ExternalNodeDynamicInputSnapshot,
+  type ExternalNodeDynamicOutputSnapshot,
+  type ExternalNodeFixedInputSnapshot,
+  type ExternalNodeFixedOutputSnapshot,
+  type ExternalNodeIdentityMapping,
+  type ExternalNodeInputSnapshot,
+  type ExternalNodeOutputSnapshot,
+  type ExternalNodeValueSemanticMapping,
+  type ExternalStaticNodeCatalogEntry,
+} from '@workbench-kit/contracts/external-node-catalog';
+
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import { EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES as RootExternalNodeCatalogIssueCodes } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import { EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS as RootExternalNodeCatalogLimits } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import { EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION as RootExternalNodeCatalogSchemaVersion } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import { projectExternalNodeCatalogContribution as RootProjectExternalNodeCatalogContribution } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalDynamicNodeCatalogEntry as RootExternalDynamicNodeCatalogEntry } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogEntry as RootExternalNodeCatalogEntry } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogProjectionAcceptance as RootExternalNodeCatalogProjectionAcceptance } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogProjectionAcceptances as RootExternalNodeCatalogProjectionAcceptances } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogProjectionIssue as RootExternalNodeCatalogProjectionIssue } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogProjectionIssueCode as RootExternalNodeCatalogProjectionIssueCode } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogProjectionIssues as RootExternalNodeCatalogProjectionIssues } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogProjectionMapping as RootExternalNodeCatalogProjectionMapping } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogProjectionResult as RootExternalNodeCatalogProjectionResult } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeCatalogSnapshot as RootExternalNodeCatalogSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeDynamicInputSnapshot as RootExternalNodeDynamicInputSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeDynamicOutputSnapshot as RootExternalNodeDynamicOutputSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeFixedInputSnapshot as RootExternalNodeFixedInputSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeFixedOutputSnapshot as RootExternalNodeFixedOutputSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeIdentityMapping as RootExternalNodeIdentityMapping } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeInputSnapshot as RootExternalNodeInputSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeOutputSnapshot as RootExternalNodeOutputSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalNodeValueSemanticMapping as RootExternalNodeValueSemanticMapping } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C remains available only from the focused public subpath.
+import type { ExternalStaticNodeCatalogEntry as RootExternalStaticNodeCatalogEntry } from '@workbench-kit/contracts';
+// @ts-expect-error WB-NS-071C implementation modules remain private.
+import { projectExternalNodeCatalogContribution as PrivateExternalNodeCatalogProjector } from '@workbench-kit/contracts/external-node-catalog/projection';
+// @ts-expect-error contracts-private strict portable data symbols never reach the package root.
+import { createStrictPortableDataBudget as RootCreateStrictPortableDataBudget } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private strict portable data symbols never reach the package root.
+import { snapshotStrictPortableData as RootSnapshotStrictPortableData } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private strict portable data symbols never reach the package root.
+import { StrictPortableDataError as RootStrictPortableDataError } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private strict portable data symbols never reach the package root.
+import type { StrictPortableDataBudget as RootStrictPortableDataBudget } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private strict portable data symbols never reach the package root.
+import type { StrictPortableDataFailureKind as RootStrictPortableDataFailureKind } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private strict portable data symbols never reach the package root.
+import type { StrictPortableDataSnapshotOptions as RootStrictPortableDataSnapshotOptions } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private value-schema symbols never reach the package root.
+import { collectNoncanonicalUiValueSchemaText as RootCollectNoncanonicalUiValueSchemaText } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private value-schema symbols never reach the package root.
+import { isSupportedUiValueSchemaShape as RootIsSupportedUiValueSchemaShape } from '@workbench-kit/contracts';
+// @ts-expect-error contracts-private strict portable data symbols never reach the focused public leaf.
+import { createStrictPortableDataBudget as FocusedCreateStrictPortableDataBudget } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private strict portable data symbols never reach the focused public leaf.
+import { snapshotStrictPortableData as FocusedSnapshotStrictPortableData } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private strict portable data symbols never reach the focused public leaf.
+import { StrictPortableDataError as FocusedStrictPortableDataError } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private strict portable data symbols never reach the focused public leaf.
+import type { StrictPortableDataBudget as FocusedStrictPortableDataBudget } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private strict portable data symbols never reach the focused public leaf.
+import type { StrictPortableDataFailureKind as FocusedStrictPortableDataFailureKind } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private strict portable data symbols never reach the focused public leaf.
+import type { StrictPortableDataSnapshotOptions as FocusedStrictPortableDataSnapshotOptions } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private value-schema symbols never reach the focused public leaf.
+import { collectNoncanonicalUiValueSchemaText as FocusedCollectNoncanonicalUiValueSchemaText } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private value-schema symbols never reach the focused public leaf.
+import { isSupportedUiValueSchemaShape as FocusedIsSupportedUiValueSchemaShape } from '@workbench-kit/contracts/external-node-catalog';
+// @ts-expect-error contracts-private strict portable data modules are not packed public subpaths.
+import { snapshotStrictPortableData as PrivateSnapshotStrictPortableData } from '@workbench-kit/contracts/internal/strict-portable-data';
+// @ts-expect-error contracts-private value-schema modules are not packed public subpaths.
+import { isSupportedUiValueSchemaShape as PrivateIsSupportedUiValueSchemaShape } from '@workbench-kit/contracts/internal/ui-value-schema-shape';
+
+export type PackedExternalNodeCatalogTypes = {
+  dynamicEntry: ExternalDynamicNodeCatalogEntry;
+  entry: ExternalNodeCatalogEntry;
+  acceptance: ExternalNodeCatalogProjectionAcceptance;
+  acceptances: ExternalNodeCatalogProjectionAcceptances;
+  issue: ExternalNodeCatalogProjectionIssue;
+  issueCode: ExternalNodeCatalogProjectionIssueCode;
+  issues: ExternalNodeCatalogProjectionIssues;
+  mapping: ExternalNodeCatalogProjectionMapping;
+  result: ExternalNodeCatalogProjectionResult;
+  snapshot: ExternalNodeCatalogSnapshot;
+  dynamicInput: ExternalNodeDynamicInputSnapshot;
+  dynamicOutput: ExternalNodeDynamicOutputSnapshot;
+  fixedInput: ExternalNodeFixedInputSnapshot;
+  fixedOutput: ExternalNodeFixedOutputSnapshot;
+  identity: ExternalNodeIdentityMapping;
+  input: ExternalNodeInputSnapshot;
+  output: ExternalNodeOutputSnapshot;
+  value: ExternalNodeValueSemanticMapping;
+  staticEntry: ExternalStaticNodeCatalogEntry;
+};
+
+export const packedExternalNodeCatalogSnapshot = {
+  schemaVersion: EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION,
+  entries: [
+    {
+      kind: 'static',
+      sourceTypeKey: 'packed.static-node@1',
+      inputs: [
+        {
+          kind: 'fixed',
+          id: 'input',
+          valueSemanticId: 'packed.text',
+          required: true,
+        },
+      ],
+      outputs: [
+        {
+          kind: 'fixed',
+          id: 'output',
+          valueSemanticId: 'packed.text',
+        },
+      ],
+      designTime: { label: 'Packed static node' },
+    },
+  ],
+} satisfies ExternalNodeCatalogSnapshot;
+
+export const packedExternalNodeCatalogMapping = {
+  schemaVersion: EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION,
+  contributorId: 'workbench.consumer.packed-external-node-catalog',
+  identities: [
+    {
+      sourceTypeKey: 'packed.static-node@1',
+      target: { id: 'workbench.consumer.packed-static-node', version: '1.0.0' },
+    },
+  ],
+  values: [{ sourceSemanticId: 'packed.text', target: { type: 'string' } }],
+} satisfies ExternalNodeCatalogProjectionMapping;
+
+export const packedExternalNodeCatalogProjection = projectExternalNodeCatalogContribution(
+  packedExternalNodeCatalogSnapshot,
+  packedExternalNodeCatalogMapping,
+);
+export const packedExternalNodeCatalogIssueCode: ExternalNodeCatalogProjectionIssueCode =
+  'invalid-foreign-entry';
+if (
+  !EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES.includes(packedExternalNodeCatalogIssueCode) ||
+  EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS.maxEntries !== 512
+) {
+  throw new TypeError('Packed external-node-catalog constants are incomplete.');
+}
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined for an optional field.
+export const packedInvalidExternalInputOptional: ExternalNodeFixedInputSnapshot = { kind: 'fixed', id: 'input', label: undefined, valueSemanticId: 'packed.text' };
+// @ts-expect-error top-level issues cannot expose source or mapping coordinates.
+export const packedInvalidExternalTopLevelCoordinate: ExternalNodeCatalogProjectionIssue = { code: 'unsupported-schema-version', message: 'Invalid coordinate', path: '$.schemaVersion', sourceIndex: 0 };
+// @ts-expect-error mapping issues require their exact mapping ordinal.
+export const packedInvalidExternalMappingCoordinate: ExternalNodeCatalogProjectionIssue = { code: 'duplicate-identity-mapping', message: 'Missing coordinate', path: '$.identities' };
+// @ts-expect-error keyed source issues cannot expose a mapping ordinal.
+export const packedInvalidExternalSourceCoordinate: ExternalNodeCatalogProjectionIssue = { code: 'missing-identity-mapping', message: 'Invalid coordinate', path: '$.entries[0]', sourceIndex: 0, sourceTypeKey: 'packed.static-node@1', mappingIndex: 0 };
+// @ts-expect-error partial results require at least one acceptance.
+export const packedInvalidExternalPartial: ExternalNodeCatalogProjectionResult = { status: 'partial', contribution: { contributorId: 'packed', nodeTypes: [] }, accepted: [], issues: [{ code: 'duplicate-identity-mapping', message: 'Duplicate', path: '$.identities[0]', mappingIndex: 0 }] };
+// @ts-expect-error unsupported-version is coupled only to unsupported-schema-version.
+export const packedInvalidExternalUnsupportedStatus: ExternalNodeCatalogProjectionResult = { status: 'unsupported-version', accepted: [], issues: [{ code: 'invalid-foreign-snapshot', message: 'Invalid', path: '$' }] };
+
+export function consumePackedExternalNodeCatalogResult(
+  result: ExternalNodeCatalogProjectionResult,
+): string {
+  switch (result.status) {
+    case 'complete':
+    case 'partial':
+      return result.contribution.contributorId;
+    case 'rejected':
+    case 'invalid':
+    case 'unsupported-version':
+      return result.issues[0].code;
+    default: {
+      const exhaustive: never = result;
+      return exhaustive;
+    }
+  }
+}
+
+void RootExternalNodeCatalogIssueCodes;
+void RootExternalNodeCatalogLimits;
+void RootExternalNodeCatalogSchemaVersion;
+void RootProjectExternalNodeCatalogContribution;
+void PrivateExternalNodeCatalogProjector;
+void RootCreateStrictPortableDataBudget;
+void RootSnapshotStrictPortableData;
+void RootStrictPortableDataError;
+void RootCollectNoncanonicalUiValueSchemaText;
+void RootIsSupportedUiValueSchemaShape;
+void FocusedCreateStrictPortableDataBudget;
+void FocusedSnapshotStrictPortableData;
+void FocusedStrictPortableDataError;
+void FocusedCollectNoncanonicalUiValueSchemaText;
+void FocusedIsSupportedUiValueSchemaShape;
+void PrivateSnapshotStrictPortableData;
+void PrivateIsSupportedUiValueSchemaShape;
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'authoring-development-runtime.cjs'),
     `const contracts = require('@workbench-kit/contracts');
 const development = require('@workbench-kit/contracts/authoring-development');
@@ -1161,6 +1468,493 @@ if (
   conflict.status !== 'identity-conflict'
 ) {
   throw new TypeError('Packed authoring-development ESM resolution contract failed.');
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'external-node-catalog-runtime.cjs'),
+    `const contracts = require('@workbench-kit/contracts');
+const development = require('@workbench-kit/contracts/authoring-development');
+const externalCatalog = require('@workbench-kit/contracts/external-node-catalog');
+
+const runtimeNames = [
+  'EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES',
+  'EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS',
+  'EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION',
+  'projectExternalNodeCatalogContribution',
+];
+for (const name of runtimeNames) {
+  if (name in contracts) {
+    throw new TypeError('External-node-catalog unexpectedly leaked through the contracts root: ' + name);
+  }
+}
+for (const name of [
+  'createStrictPortableDataBudget',
+  'snapshotStrictPortableData',
+  'StrictPortableDataError',
+  'collectNoncanonicalUiValueSchemaText',
+  'isSupportedUiValueSchemaShape',
+]) {
+  if (name in contracts || name in externalCatalog) {
+    throw new TypeError('External-node-catalog private helper unexpectedly leaked: ' + name);
+  }
+}
+if (JSON.stringify(Object.keys(externalCatalog).sort()) !== JSON.stringify([...runtimeNames].sort())) {
+  throw new TypeError('Packed external-node-catalog CommonJS exports are incomplete or expose private helpers.');
+}
+if (
+  externalCatalog.EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION !== 1 ||
+  typeof externalCatalog.projectExternalNodeCatalogContribution !== 'function'
+) {
+  throw new TypeError('Packed external-node-catalog CommonJS runtime exports are invalid.');
+}
+const expectedLimits = {
+  maxEntries: 512,
+  maxPortsPerEntry: 256,
+  maxMappings: 2048,
+  maxPortableDepth: 32,
+  maxPortableProperties: 32768,
+  maxStringLength: 4096,
+};
+const expectedIssueCodes = [
+  'unsupported-schema-version',
+  'invalid-foreign-snapshot',
+  'invalid-foreign-entry',
+  'invalid-projection-mapping',
+  'admission-limit-exceeded',
+  'duplicate-source-type-key',
+  'duplicate-identity-mapping',
+  'missing-identity-mapping',
+  'duplicate-value-semantic-mapping',
+  'missing-value-semantic-mapping',
+  'duplicate-projected-node-ref',
+  'unsupported-foreign-input',
+  'unsupported-foreign-output',
+  'unsupported-dynamic-shape',
+  'unsafe-foreign-entry',
+  'projected-descriptor-invalid',
+];
+if (
+  !Object.isFrozen(externalCatalog.EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS) ||
+  JSON.stringify(externalCatalog.EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS) !==
+    JSON.stringify(expectedLimits) ||
+  !Object.isFrozen(externalCatalog.EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES) ||
+  JSON.stringify(externalCatalog.EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES) !==
+    JSON.stringify(expectedIssueCodes)
+) {
+  throw new TypeError('Packed external-node-catalog CommonJS frozen constants are invalid.');
+}
+
+let privateSubpathRejected = false;
+try {
+  require('@workbench-kit/contracts/external-node-catalog/projection');
+} catch (error) {
+  privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+}
+if (!privateSubpathRejected) {
+  throw new TypeError('Packed external-node-catalog CommonJS private projector subpath is exposed.');
+}
+for (const subpath of [
+  '@workbench-kit/contracts/internal/strict-portable-data',
+  '@workbench-kit/contracts/internal/ui-value-schema-shape',
+]) {
+  let helperSubpathRejected = false;
+  try {
+    require(subpath);
+  } catch (error) {
+    helperSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!helperSubpathRejected) {
+    throw new TypeError('Packed external-node-catalog CommonJS private helper subpath is exposed: ' + subpath);
+  }
+}
+
+const firstStaticEntry = {
+  kind: 'static',
+  sourceTypeKey: 'packed.static-node@1',
+  inputs: [{ kind: 'fixed', id: 'input', valueSemanticId: 'packed.text', required: true }],
+  outputs: [{ kind: 'fixed', id: 'output', valueSemanticId: 'packed.text' }],
+  designTime: { label: 'Packed static node' },
+};
+const secondStaticEntry = {
+  kind: 'static',
+  sourceTypeKey: 'packed.second-static-node@1',
+  inputs: [{ kind: 'fixed', id: 'source', valueSemanticId: 'packed.text' }],
+  outputs: [{ kind: 'fixed', id: 'formatted', valueSemanticId: 'packed.text' }],
+  designTime: { label: 'Packed second static node' },
+};
+const dynamicEntry = {
+  kind: 'dynamic',
+  sourceTypeKey: 'packed.dynamic-node@1',
+  designTime: { label: 'Packed dynamic node' },
+};
+const mapping = {
+  schemaVersion: 1,
+  contributorId: 'workbench.consumer.packed-external-node-catalog',
+  identities: [
+    {
+      sourceTypeKey: firstStaticEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-static-node', version: '1.0.0' },
+    },
+    {
+      sourceTypeKey: dynamicEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-dynamic-node', version: '1.0.0' },
+    },
+    {
+      sourceTypeKey: secondStaticEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-second-static-node', version: '1.0.0' },
+    },
+  ],
+  values: [{ sourceSemanticId: 'packed.text', target: { type: 'string' } }],
+};
+const callerSentinels = {
+  document: { revision: 7, nodes: ['packed-existing-node-instance'] },
+  history: { entries: ['packed-before-projection'] },
+  task: { status: 'waiting', attempts: 0 },
+};
+const callerSentinelsBefore = JSON.stringify(callerSentinels);
+const project = externalCatalog.projectExternalNodeCatalogContribution;
+const complete = project(
+  { schemaVersion: 1, entries: [firstStaticEntry, secondStaticEntry] },
+  mapping,
+);
+const partial = project(
+  { schemaVersion: 1, entries: [firstStaticEntry, dynamicEntry, secondStaticEntry] },
+  mapping,
+);
+const rejected = project({ schemaVersion: 1, entries: [dynamicEntry] }, mapping);
+if (
+  complete.status !== 'complete' ||
+  complete.accepted.length !== 2 ||
+  complete.contribution.nodeTypes.length !== 2 ||
+  !Object.isFrozen(complete) ||
+  !Object.isFrozen(complete.contribution) ||
+  partial.status !== 'partial' ||
+  JSON.stringify(partial.accepted.map(({ sourceIndex, sourceTypeKey }) => ({ sourceIndex, sourceTypeKey }))) !==
+    JSON.stringify([
+      { sourceIndex: 0, sourceTypeKey: 'packed.static-node@1' },
+      { sourceIndex: 2, sourceTypeKey: 'packed.second-static-node@1' },
+    ]) ||
+  JSON.stringify(partial.contribution.nodeTypes.map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  partial.issues.length !== 1 ||
+  partial.issues[0]?.code !== 'unsupported-dynamic-shape' ||
+  rejected.status !== 'rejected' ||
+  rejected.accepted.length !== 0 ||
+  'contribution' in rejected
+) {
+  throw new TypeError('Packed external-node-catalog CommonJS projection matrix failed.');
+}
+
+const requirement = {
+  schemaVersion: development.AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  requirementId: 'packed-external-node-catalog-requirement',
+  target: {
+    kind: 'node-type',
+    descriptor: {
+      id: 'workbench.consumer.packed-static-node',
+      version: '1.0.0',
+      inputs: [{ id: 'input', required: true, value: { type: 'string' } }],
+      outputs: [{ id: 'output', value: { type: 'string' } }],
+      designTime: { label: 'Packed static node' },
+    },
+  },
+  intent: { summary: 'Provide the projected packed node.', acceptance: ['Uses exact ports.'] },
+};
+const components = contracts.resolveUiComponentCatalog([]).catalog;
+const existingContribution = {
+  contributorId: 'workbench.consumer.packed-existing-catalog',
+  nodeTypes: [
+    {
+      id: 'workbench.consumer.packed-existing-node',
+      version: '1.0.0',
+      inputs: [],
+      outputs: [],
+      designTime: { label: 'Packed existing node' },
+    },
+  ],
+};
+const initialCatalog = contracts.resolveNodeTypeCatalog([existingContribution]);
+const missing = development.resolveAuthoringDevelopmentRequirement(requirement, {
+  components,
+  nodeTypes: initialCatalog.catalog,
+});
+const freshCatalog = contracts.resolveNodeTypeCatalog([existingContribution, partial.contribution]);
+let retryCount = 0;
+const retryOnce = () => {
+  retryCount += 1;
+  return development.resolveAuthoringDevelopmentRequirement(requirement, {
+    components,
+    nodeTypes: freshCatalog.catalog,
+  });
+};
+const fulfilled = retryOnce();
+if (
+  initialCatalog.issues.length !== 0 ||
+  freshCatalog.issues.length !== 0 ||
+  JSON.stringify(freshCatalog.catalog.nodeTypes().map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-existing-node',
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  initialCatalog.catalog.nodeType(requirement.target.descriptor) !== undefined ||
+  missing.status !== 'missing' ||
+  fulfilled.status !== 'fulfilled' ||
+  retryCount !== 1 ||
+  fulfilled.existingNodeType === requirement.target.descriptor ||
+  JSON.stringify(fulfilled.existingNodeType) !== JSON.stringify(requirement.target.descriptor) ||
+  JSON.stringify(callerSentinels) !== callerSentinelsBefore
+) {
+  throw new TypeError('Packed external-node-catalog CommonJS explicit handoff failed.');
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'external-node-catalog-runtime.mjs'),
+    `import * as contracts from '@workbench-kit/contracts';
+import * as development from '@workbench-kit/contracts/authoring-development';
+import {
+  EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES,
+  EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS,
+  EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION,
+  projectExternalNodeCatalogContribution,
+} from '@workbench-kit/contracts/external-node-catalog';
+import * as externalCatalog from '@workbench-kit/contracts/external-node-catalog';
+
+const runtimeNames = [
+  'EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES',
+  'EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS',
+  'EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION',
+  'projectExternalNodeCatalogContribution',
+];
+for (const name of runtimeNames) {
+  if (name in contracts) {
+    throw new TypeError('External-node-catalog unexpectedly leaked through the contracts root: ' + name);
+  }
+}
+for (const name of [
+  'createStrictPortableDataBudget',
+  'snapshotStrictPortableData',
+  'StrictPortableDataError',
+  'collectNoncanonicalUiValueSchemaText',
+  'isSupportedUiValueSchemaShape',
+]) {
+  if (name in contracts || name in externalCatalog) {
+    throw new TypeError('External-node-catalog private helper unexpectedly leaked: ' + name);
+  }
+}
+if (JSON.stringify(Object.keys(externalCatalog).sort()) !== JSON.stringify([...runtimeNames].sort())) {
+  throw new TypeError('Packed external-node-catalog ESM exports are incomplete or expose private helpers.');
+}
+const expectedLimits = {
+  maxEntries: 512,
+  maxPortsPerEntry: 256,
+  maxMappings: 2048,
+  maxPortableDepth: 32,
+  maxPortableProperties: 32768,
+  maxStringLength: 4096,
+};
+const expectedIssueCodes = [
+  'unsupported-schema-version',
+  'invalid-foreign-snapshot',
+  'invalid-foreign-entry',
+  'invalid-projection-mapping',
+  'admission-limit-exceeded',
+  'duplicate-source-type-key',
+  'duplicate-identity-mapping',
+  'missing-identity-mapping',
+  'duplicate-value-semantic-mapping',
+  'missing-value-semantic-mapping',
+  'duplicate-projected-node-ref',
+  'unsupported-foreign-input',
+  'unsupported-foreign-output',
+  'unsupported-dynamic-shape',
+  'unsafe-foreign-entry',
+  'projected-descriptor-invalid',
+];
+if (
+  EXTERNAL_NODE_CATALOG_PROJECTION_SCHEMA_VERSION !== 1 ||
+  typeof projectExternalNodeCatalogContribution !== 'function' ||
+  !Object.isFrozen(EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS) ||
+  JSON.stringify(EXTERNAL_NODE_CATALOG_PROJECTION_LIMITS) !== JSON.stringify(expectedLimits) ||
+  !Object.isFrozen(EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES) ||
+  JSON.stringify(EXTERNAL_NODE_CATALOG_PROJECTION_ISSUE_CODES) !==
+    JSON.stringify(expectedIssueCodes)
+) {
+  throw new TypeError('Packed external-node-catalog ESM frozen exports are invalid.');
+}
+
+let privateSubpathRejected = false;
+try {
+  await import('@workbench-kit/contracts/external-node-catalog/projection');
+} catch (error) {
+  privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+}
+if (!privateSubpathRejected) {
+  throw new TypeError('Packed external-node-catalog ESM private projector subpath is exposed.');
+}
+for (const subpath of [
+  '@workbench-kit/contracts/internal/strict-portable-data',
+  '@workbench-kit/contracts/internal/ui-value-schema-shape',
+]) {
+  let helperSubpathRejected = false;
+  try {
+    await import(subpath);
+  } catch (error) {
+    helperSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!helperSubpathRejected) {
+    throw new TypeError('Packed external-node-catalog ESM private helper subpath is exposed: ' + subpath);
+  }
+}
+
+const firstStaticEntry = {
+  kind: 'static',
+  sourceTypeKey: 'packed.static-node@1',
+  inputs: [{ kind: 'fixed', id: 'input', valueSemanticId: 'packed.text', required: true }],
+  outputs: [{ kind: 'fixed', id: 'output', valueSemanticId: 'packed.text' }],
+  designTime: { label: 'Packed static node' },
+};
+const secondStaticEntry = {
+  kind: 'static',
+  sourceTypeKey: 'packed.second-static-node@1',
+  inputs: [{ kind: 'fixed', id: 'source', valueSemanticId: 'packed.text' }],
+  outputs: [{ kind: 'fixed', id: 'formatted', valueSemanticId: 'packed.text' }],
+  designTime: { label: 'Packed second static node' },
+};
+const dynamicEntry = {
+  kind: 'dynamic',
+  sourceTypeKey: 'packed.dynamic-node@1',
+  designTime: { label: 'Packed dynamic node' },
+};
+const mapping = {
+  schemaVersion: 1,
+  contributorId: 'workbench.consumer.packed-external-node-catalog',
+  identities: [
+    {
+      sourceTypeKey: firstStaticEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-static-node', version: '1.0.0' },
+    },
+    {
+      sourceTypeKey: dynamicEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-dynamic-node', version: '1.0.0' },
+    },
+    {
+      sourceTypeKey: secondStaticEntry.sourceTypeKey,
+      target: { id: 'workbench.consumer.packed-second-static-node', version: '1.0.0' },
+    },
+  ],
+  values: [{ sourceSemanticId: 'packed.text', target: { type: 'string' } }],
+};
+const callerSentinels = {
+  document: { revision: 7, nodes: ['packed-existing-node-instance'] },
+  history: { entries: ['packed-before-projection'] },
+  task: { status: 'waiting', attempts: 0 },
+};
+const callerSentinelsBefore = JSON.stringify(callerSentinels);
+const complete = projectExternalNodeCatalogContribution(
+  { schemaVersion: 1, entries: [firstStaticEntry, secondStaticEntry] },
+  mapping,
+);
+const partial = projectExternalNodeCatalogContribution(
+  { schemaVersion: 1, entries: [firstStaticEntry, dynamicEntry, secondStaticEntry] },
+  mapping,
+);
+const rejected = projectExternalNodeCatalogContribution(
+  { schemaVersion: 1, entries: [dynamicEntry] },
+  mapping,
+);
+if (
+  complete.status !== 'complete' ||
+  complete.accepted.length !== 2 ||
+  complete.contribution.nodeTypes.length !== 2 ||
+  !Object.isFrozen(complete) ||
+  !Object.isFrozen(complete.contribution) ||
+  partial.status !== 'partial' ||
+  JSON.stringify(partial.accepted.map(({ sourceIndex, sourceTypeKey }) => ({ sourceIndex, sourceTypeKey }))) !==
+    JSON.stringify([
+      { sourceIndex: 0, sourceTypeKey: 'packed.static-node@1' },
+      { sourceIndex: 2, sourceTypeKey: 'packed.second-static-node@1' },
+    ]) ||
+  JSON.stringify(partial.contribution.nodeTypes.map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  partial.issues.length !== 1 ||
+  partial.issues[0]?.code !== 'unsupported-dynamic-shape' ||
+  rejected.status !== 'rejected' ||
+  rejected.accepted.length !== 0 ||
+  'contribution' in rejected
+) {
+  throw new TypeError('Packed external-node-catalog ESM projection matrix failed.');
+}
+
+const requirement = {
+  schemaVersion: development.AUTHORING_DEVELOPMENT_REQUIREMENT_SCHEMA_VERSION,
+  requirementId: 'packed-external-node-catalog-requirement',
+  target: {
+    kind: 'node-type',
+    descriptor: {
+      id: 'workbench.consumer.packed-static-node',
+      version: '1.0.0',
+      inputs: [{ id: 'input', required: true, value: { type: 'string' } }],
+      outputs: [{ id: 'output', value: { type: 'string' } }],
+      designTime: { label: 'Packed static node' },
+    },
+  },
+  intent: { summary: 'Provide the projected packed node.', acceptance: ['Uses exact ports.'] },
+};
+const components = contracts.resolveUiComponentCatalog([]).catalog;
+const existingContribution = {
+  contributorId: 'workbench.consumer.packed-existing-catalog',
+  nodeTypes: [
+    {
+      id: 'workbench.consumer.packed-existing-node',
+      version: '1.0.0',
+      inputs: [],
+      outputs: [],
+      designTime: { label: 'Packed existing node' },
+    },
+  ],
+};
+const initialCatalog = contracts.resolveNodeTypeCatalog([existingContribution]);
+const missing = development.resolveAuthoringDevelopmentRequirement(requirement, {
+  components,
+  nodeTypes: initialCatalog.catalog,
+});
+const freshCatalog = contracts.resolveNodeTypeCatalog([existingContribution, partial.contribution]);
+let retryCount = 0;
+const retryOnce = () => {
+  retryCount += 1;
+  return development.resolveAuthoringDevelopmentRequirement(requirement, {
+    components,
+    nodeTypes: freshCatalog.catalog,
+  });
+};
+const fulfilled = retryOnce();
+if (
+  initialCatalog.issues.length !== 0 ||
+  freshCatalog.issues.length !== 0 ||
+  JSON.stringify(freshCatalog.catalog.nodeTypes().map(({ id }) => id)) !==
+    JSON.stringify([
+      'workbench.consumer.packed-existing-node',
+      'workbench.consumer.packed-static-node',
+      'workbench.consumer.packed-second-static-node',
+    ]) ||
+  initialCatalog.catalog.nodeType(requirement.target.descriptor) !== undefined ||
+  missing.status !== 'missing' ||
+  fulfilled.status !== 'fulfilled' ||
+  retryCount !== 1 ||
+  fulfilled.existingNodeType === requirement.target.descriptor ||
+  JSON.stringify(fulfilled.existingNodeType) !== JSON.stringify(requirement.target.descriptor) ||
+  JSON.stringify(callerSentinels) !== callerSentinelsBefore
+) {
+  throw new TypeError('Packed external-node-catalog ESM explicit handoff failed.');
 }
 `,
   );
@@ -1655,7 +2449,7 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
           strict: true,
           target: 'ES2022',
         },
-        exclude: ['src/authoring-development-types.ts'],
+        exclude: ['src/authoring-development-types.ts', 'src/external-node-catalog-types.ts'],
         include: ['src/**/*.ts'],
       },
       null,

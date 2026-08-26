@@ -1,4 +1,9 @@
-import { isUiValueSourceKind, normalizeUiAllowedSources } from '../ui-authoring/validation';
+import {
+  collectNoncanonicalUiValueSchemaText,
+  isSupportedUiValueSchemaShape,
+} from '../internal/ui-value-schema-shape';
+import type { UiValueSchema } from '../ui-authoring/types';
+import { normalizeUiAllowedSources } from '../ui-authoring/validation';
 import type { UiComponentDescriptor } from '../ui-authoring/component-types';
 import type { NodeTypeDescriptor } from '../graph-authoring/types';
 import type { AuthoringDevelopmentRequirement } from './types';
@@ -41,30 +46,6 @@ function isRef(value: unknown): boolean {
   );
 }
 
-function isValueEditor(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, ['id', 'metadata']) &&
-    typeof value.id === 'string' &&
-    optionalValueIs(value, 'metadata', isRecord)
-  );
-}
-
-function isValueSchema(value: unknown): boolean {
-  return (
-    isRecord(value) &&
-    hasOnlyKeys(value, ['type', 'defaultValue', 'constraints', 'editor', 'allowedSources']) &&
-    typeof value.type === 'string' &&
-    optionalValueIs(value, 'constraints', isRecord) &&
-    optionalValueIs(value, 'editor', isValueEditor) &&
-    optionalValueIs(
-      value,
-      'allowedSources',
-      (entry) => Array.isArray(entry) && entry.every(isUiValueSourceKind),
-    )
-  );
-}
-
 function isProperty(value: unknown): boolean {
   return (
     isRecord(value) &&
@@ -73,7 +54,7 @@ function isProperty(value: unknown): boolean {
     optionalValueIs(value, 'label', (entry) => typeof entry === 'string') &&
     optionalValueIs(value, 'description', (entry) => typeof entry === 'string') &&
     optionalValueIs(value, 'required', (entry) => typeof entry === 'boolean') &&
-    isValueSchema(value.value)
+    isSupportedUiValueSchemaShape(value.value)
   );
 }
 
@@ -84,7 +65,7 @@ function isEvent(value: unknown): boolean {
     typeof value.id === 'string' &&
     optionalValueIs(value, 'label', (entry) => typeof entry === 'string') &&
     optionalValueIs(value, 'description', (entry) => typeof entry === 'string') &&
-    optionalValueIs(value, 'payload', isValueSchema)
+    optionalValueIs(value, 'payload', isSupportedUiValueSchemaShape)
   );
 }
 
@@ -96,7 +77,7 @@ function isBinding(value: unknown): boolean {
     optionalValueIs(value, 'label', (entry) => typeof entry === 'string') &&
     optionalValueIs(value, 'description', (entry) => typeof entry === 'string') &&
     typeof value.direction === 'string' &&
-    isValueSchema(value.value)
+    isSupportedUiValueSchemaShape(value.value)
   );
 }
 
@@ -199,7 +180,7 @@ function isNodeInput(value: unknown): boolean {
     optionalValueIs(value, 'label', (entry) => typeof entry === 'string') &&
     optionalValueIs(value, 'description', (entry) => typeof entry === 'string') &&
     optionalValueIs(value, 'required', (entry) => typeof entry === 'boolean') &&
-    optionalValueIs(value, 'value', isValueSchema) &&
+    optionalValueIs(value, 'value', isSupportedUiValueSchemaShape) &&
     optionalValueIs(value, 'propertyId', (entry) => typeof entry === 'string')
   );
 }
@@ -211,7 +192,7 @@ function isNodeOutput(value: unknown): boolean {
     typeof value.id === 'string' &&
     optionalValueIs(value, 'label', (entry) => typeof entry === 'string') &&
     optionalValueIs(value, 'description', (entry) => typeof entry === 'string') &&
-    isValueSchema(value.value)
+    isSupportedUiValueSchemaShape(value.value)
   );
 }
 
@@ -257,15 +238,10 @@ function collectOptionalText(
 }
 
 function collectValueSchemaText(value: PlainRecord, path: string, issues: string[]): void {
-  if (!canonical(value.type)) issues.push(`${path}.type`);
-  if (hasOwn(value, 'allowedSources')) {
-    (value.allowedSources as readonly unknown[]).forEach((entry, index) => {
-      if (!canonical(entry)) issues.push(`${path}.allowedSources[${index}]`);
-    });
-  }
-  if (hasOwn(value, 'editor')) {
-    const editor = value.editor as PlainRecord;
-    if (!canonical(editor.id)) issues.push(`${path}.editor.id`);
+  for (const relativePath of collectNoncanonicalUiValueSchemaText(
+    value as unknown as UiValueSchema,
+  )) {
+    issues.push(`${path}.${relativePath}`);
   }
 }
 
