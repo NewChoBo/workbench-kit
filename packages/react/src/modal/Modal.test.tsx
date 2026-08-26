@@ -1,6 +1,6 @@
 /** @vitest-environment jsdom */
 
-import { act } from 'react';
+import { act, startTransition, Suspense } from 'react';
 import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { afterEach, describe, expect, it } from 'vitest';
@@ -297,6 +297,61 @@ describe('Modal', () => {
       );
     });
     expect(closeCalls).toEqual(['latest']);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('keeps the committed close handler when a transition is abandoned', async () => {
+    const closeCalls: string[] = [];
+    const pending = new Promise<void>(() => undefined);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const SuspendedChild = () => {
+      throw pending;
+    };
+    const renderModal = (handlerLabel: string, suspend: boolean) => (
+      <Suspense fallback={<div>Loading</div>}>
+        <Modal title="Focus" onClose={() => closeCalls.push(handlerLabel)}>
+          <button type="button">Committed action</button>
+          {suspend ? <SuspendedChild /> : null}
+        </Modal>
+      </Suspense>
+    );
+
+    await act(async () => {
+      root.render(renderModal('committed', false));
+    });
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
+
+    const committedAction = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Committed action',
+    );
+    committedAction?.focus();
+    expect(document.activeElement).toBe(committedAction);
+
+    await act(async () => {
+      startTransition(() => {
+        root.render(renderModal('uncommitted', true));
+      });
+      await Promise.resolve();
+    });
+
+    expect(document.activeElement).toBe(committedAction);
+    expect(container.textContent).not.toContain('Loading');
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(closeCalls).toEqual(['committed']);
 
     await act(async () => {
       root.unmount();
