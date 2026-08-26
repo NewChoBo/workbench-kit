@@ -250,6 +250,58 @@ describe('Modal', () => {
     });
     expect(document.activeElement).toBe(opener);
   });
+
+  it('preserves focus and uses the latest close handler across rerenders', async () => {
+    const closeCalls: string[] = [];
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <Modal title="Focus" onClose={() => closeCalls.push('first')}>
+          <button type="button">Current action</button>
+        </Modal>,
+      );
+    });
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
+
+    const currentAction = Array.from(container.querySelectorAll('button')).find(
+      (button) => button.textContent === 'Current action',
+    );
+    currentAction?.focus();
+    expect(document.activeElement).toBe(currentAction);
+
+    await act(async () => {
+      root.render(
+        <Modal title="Focus updated" onClose={() => closeCalls.push('latest')}>
+          <button type="button">Current action</button>
+        </Modal>,
+      );
+    });
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
+
+    expect(document.activeElement).toBe(currentAction);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }),
+      );
+    });
+    expect(closeCalls).toEqual(['latest']);
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
 });
 
 function createPointerLikeEvent(
