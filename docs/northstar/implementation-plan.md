@@ -6,8 +6,8 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@04e402f54fbe05e7fab2cbf381107ded448958f7`.
-- **Reviewed documentation-only predecessor:** `develop@8c71d49ea7732831695ea03772bf9cd8dff6aa6f` / PR #372; its diff from the preceding source-bearing `develop@7051a2e7051838770a4d7d527904aa4a5515db0d` changes only `implementation-plan.md`, `roadmap.md` and `ui-authoring-and-generative-composition.md` under this Northstar directory and carries no source/API change.
+- **Latest source-bearing integration baseline:** `develop@cfd752355c00c6b59018a220f2ce22c561a0e984`.
+- **Reviewed documentation-only predecessor:** `develop@bc3cbe2f14850e22b11e6558772a6f39bec0663b` / PR #384; its diff from the preceding source-bearing `develop@04e402f54fbe05e7fab2cbf381107ded448958f7` changes only `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
@@ -73,7 +73,7 @@ WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
         ↓
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
 WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
-WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [READY_FOR_IMPLEMENTATION; independent of 070F]
+WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -3728,7 +3728,18 @@ public-export proof; or claims release, publish or Electron completion.
 
 #### `WB-NS-070G` bounded packet — provider-neutral source-to-input compatibility and V2 candidate planning
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`; source candidate `fffc6ab4bf32e630f7d9bdef38273057766d3764`
+  was integrated through PR #385 at
+  `develop@cfd752355c00c6b59018a220f2ce22c561a0e984`. Producer-distinct core,
+  public-compatibility and independent source reviews found no P0/P1/P2. The exact successor passed
+  46 focused tests, `check:commit-safety`, `validate:static`, `validate:fast` (466 files / 2,657
+  tests), packed 19-package public-consumer checks and the required Chromium lane (15 suites / 82
+  interactions, 8 tag skips). No packet-specific Electron validation was run or claimed because no
+  native boundary changed; hosted CI's generic Electron quit guard nevertheless passed. At the exact
+  PR head, one hosted Validate run passed; a concurrent push run failed one scope-external shell-react
+  focus assertion while all 070G focused tests passed. These candidate runs are supplemental source
+  evidence, not release-tip or promotion evidence. This source is unpublished and release is not
+  claimed.
 - **Target:** the typed value/property and exact endpoint-binding chain in `WB-NS-070A`,
   `WB-NS-070C`, `WB-NS-070D` and `WB-NS-072E`
 - **Ownership:** `GENERIC_KIT`
