@@ -59,7 +59,7 @@ WB-NS-040A extension uninstall compatibility + dependency safety [DONE; independ
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
-        │       └─ WB-NS-030A opt-in invalid-submit focus recovery [READY_FOR_IMPLEMENTATION; bounded current SchemaForm compatibility]
+        │       └─ WB-NS-030A opt-in invalid-submit focus recovery [DONE; bounded current SchemaForm compatibility]
         ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
 
@@ -2231,10 +2231,12 @@ parent architecture; or claims Electron, release or publish completion.
 
 - Exact source candidate `3acac562ba5773a9866d367f52a8a7366d8dcdd1` was integrated through PR #376
   as `develop@a047e056b2917c645bbcc5ad7ff836c391ee1b10`.
-- Final exact-head validation passed `validate:static`, `validate:fast` with 462 files / 2,596 tests,
-  and the required Chromium Storybook lane with 82/82 interactions.
-- Three recorded source reviews returned `PASS / P0 none / P1 none / P2 none` against the frozen
-  packet and final successor.
+- Producer-run final exact-head validation passed `validate:static`, `validate:fast` with 462 files /
+  2,596 tests, and the required Chromium Storybook lane with 82/82 interactions.
+- Three recorded source-review outputs reported `PASS / P0 none / P1 none / P2 none`. Public
+  repository evidence does not independently establish producer-distinct provenance for every output;
+  retain this as a P2 evidence-provenance limitation only. It does not reopen the bounded source
+  acceptance or `DONE` status.
 - The integrated source satisfies this bounded packet. Release, package publication and consumer
   adoption remain separate claims.
 
