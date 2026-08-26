@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@cd29a2cd37d3371d4c9f10e1ae587f538f04bacb`.
+- **Latest source-bearing integration baseline:** `develop@04e402f54fbe05e7fab2cbf381107ded448958f7`.
 - **Reviewed documentation-only predecessor:** `develop@8c71d49ea7732831695ea03772bf9cd8dff6aa6f` / PR #372; its diff from the preceding source-bearing `develop@7051a2e7051838770a4d7d527904aa4a5515db0d` changes only `implementation-plan.md`, `roadmap.md` and `ui-authoring-and-generative-composition.md` under this Northstar directory and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
@@ -72,7 +72,8 @@ WB-NS-070C atomic component/composite descriptor contract [DONE]
 WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
         ↓
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
-WB-NS-070F provider-neutral generative UI parity [READY_FOR_IMPLEMENTATION; optional after the manual command chain, not a WB-NS-071A dependency]
+WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
+WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [READY_FOR_IMPLEMENTATION; independent of 070F]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -3256,7 +3257,13 @@ reported through those packets.
 
 #### `WB-NS-070F` bounded packet — provider-neutral V3 generative proposal parity
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`; source candidate
+  `e0476c338ab185b225cae9e1b0b9aa06623ca0a2` was integrated through PR #383 at
+  `develop@04e402f54fbe05e7fab2cbf381107ded448958f7`. Three exact-source core,
+  behavior and public-compatibility reviews found no P0/P1/P2. The candidate passed 30 focused
+  tests, static, fast (464 files / 2,623 tests), the required Chromium lane (82 interactions,
+  8 skipped), packed public-consumer checks and two hosted Validate runs. This source is not
+  included in the published `.43` cohort and release is not claimed.
 - **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
   sections 7, 13-16
 - **Ownership:** `GENERIC_KIT`
@@ -3716,6 +3723,698 @@ System migration, extension/code implementation or unsupported manual capability
 persists prompt/transcript/model data as runtime truth; leaks a provider SDK,
 React/DOM/native/product dependency; omits exact-optional/CJS/ESM/default packed-consumer or
 public-export proof; or claims release, publish or Electron completion.
+
+### `WB-NS-070G` ready gate
+
+#### `WB-NS-070G` bounded packet — provider-neutral source-to-input compatibility and V2 candidate planning
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** the typed value/property and exact endpoint-binding chain in `WB-NS-070A`,
+  `WB-NS-070C`, `WB-NS-070D` and `WB-NS-072E`
+- **Ownership:** `GENERIC_KIT`
+- **Exact source/API baseline:**
+  `origin/develop@04e402f54fbe05e7fab2cbf381107ded448958f7`
+- **Dependencies:** `WB-NS-070A/C/D` and `WB-NS-072E` are `DONE`; `WB-NS-070F` is
+  independent and neither its planner nor a model/provider is required
+- **Implementation owners:** strict schema compatibility and candidate contracts in the focused
+  `@workbench-kit/contracts/source-input-compatibility` export; document endpoint enumeration,
+  binding-command compilation and detached plan lifecycle in the existing `@workbench-kit/jdw`
+  UI-authoring owner
+- **Native boundary:** none
+
+##### Goal and owner boundary
+
+An integrating host can present one or more immutable source values, compare them with exact
+component input endpoints, inspect a deterministic candidate/Preview result and compile explicitly
+selected exact pairs into the existing V2 `set-input-binding` atoms and one existing detached outer
+batch. The generic layer knows only opaque source/value identities, `UiValueSchema`, optional
+semantic roles and exact document/component/input coordinates.
+
+The host remains the sole owner of acquisition, provider and connection identities, permission and
+authorization, runtime values, product Recipe/Binding/Preset/Content models, persistence, history,
+copy and UI. Workbench does not fetch a sample, execute a conversion, invent a binding identity,
+choose a product target or coordinate a host transaction.
+
+`UiAuthoringRecipeRef` remains one outer authoring-algorithm/catalog identity. Multiple host source
+records are separate data-only operands within one candidate request; they are not additional
+Workbench Recipe owners and are never persisted in `UiDocument`. This preserves the existing V2
+detached-plan and session surface while supporting a bounded multi-source outer batch.
+
+##### Additive component metadata
+
+Add one optional field to the existing component input descriptor:
+
+```ts
+interface UiComponentBindingDescriptor {
+  readonly id: string;
+  readonly label?: string;
+  readonly description?: string;
+  readonly semanticRole?: string;
+  readonly direction: UiBindingDirection;
+  readonly value: UiValueSchema;
+}
+```
+
+`semanticRole` is an opaque canonical matching hint, not a global role registry. Omission preserves
+every current descriptor. Only two present, canonical and equal roles prefer a candidate among
+otherwise exact-compatible pairs; role preference never reorders convertible or incompatible rows,
+two omissions have no preference and a mismatch never makes an unsafe schema compatible. A malformed present role reuses the existing public
+`invalid-binding-value` component issue with path `bindings[index].semanticRole`; no new member is
+added to the closed `UiComponentValidationIssueCode` union. The component descriptor remains the
+only owner of endpoint identity, direction and target schema.
+
+##### Focused compatibility contract
+
+The focused contracts export freezes these renderer-free plain-data names and shapes exactly:
+
+```ts
+interface UiSourceValueDescriptor {
+  readonly id: string;
+  readonly value: UiValueSchema;
+  readonly semanticRole?: string;
+}
+
+interface UiSourceInputTargetDescriptor {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+  readonly input: UiComponentBindingDescriptor;
+  readonly currentBindingId?: string;
+}
+
+interface UiValueCompatibilitySchemaSnapshot {
+  readonly type: UiValueType;
+  readonly constraints?: Readonly<Record<string, unknown>>;
+}
+
+interface UiValueConversionEvidence {
+  readonly id: string;
+  readonly source: UiValueCompatibilitySchemaSnapshot;
+  readonly target: UiValueCompatibilitySchemaSnapshot;
+}
+
+interface UiSourceBindingAssignment {
+  readonly sourceId: string;
+  readonly bindingId: string;
+}
+
+const UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION = 1 as const;
+
+const UI_SOURCE_INPUT_LIMITS = Object.freeze({
+  maxSources: 64,
+  maxDocumentNodes: 1024,
+  maxComponentLookups: 1024,
+  maxTargetEndpoints: 1024,
+  maxConversionEvidence: 1024,
+  maxPairs: 65536,
+  maxPortableDepth: 32,
+  maxPortableValues: 65536,
+  maxArrayItems: 4096,
+  maxObjectKeys: 256,
+  maxStringCodeUnits: 4096,
+} as const);
+
+const UI_SOURCE_INPUT_ISSUE_CODES = Object.freeze([
+  'invalid-request',
+  'unsupported-version',
+  'request-too-large',
+  'invalid-source',
+  'duplicate-source',
+  'invalid-target',
+  'duplicate-target',
+  'component-catalog-unavailable',
+  'invalid-conversion',
+  'duplicate-conversion',
+  'invalid-binding-assignment',
+  'missing-binding-assignment',
+  'extra-binding-assignment',
+  'duplicate-binding-id',
+  'target-output-only',
+  'target-binding-disallowed',
+  'target-occupied',
+  'type-mismatch',
+  'constraint-mismatch',
+  'no-declared-conversion',
+  'no-compatible-target',
+  'ambiguous-exact',
+  'convertible-only',
+  'selection-required',
+  'source-unselected',
+  'invalid-selection',
+  'target-contended',
+  'no-change',
+  'stale-source',
+  'stale-assigned-binding',
+  'stale-target-binding',
+  'stale-conversion-evidence',
+  'stale-selection',
+  'stale-plan',
+  'stale-recipe',
+  'stale-document',
+  'stale-design-system',
+  'stale-component-catalog',
+] as const);
+
+type UiSourceInputIssueCode = (typeof UI_SOURCE_INPUT_ISSUE_CODES)[number];
+
+type UiSourceInputIssueCoordinateKey = 'sourceId' | 'nodeId' | 'inputId' | 'conversionId';
+
+type UiSourceInputIssueBase<
+  TCode extends UiSourceInputIssueCode,
+  TCoordinates extends Partial<Record<UiSourceInputIssueCoordinateKey, string>> = {},
+> = {
+  readonly code: TCode;
+  readonly message: string;
+  readonly path: string;
+} & TCoordinates & {
+    readonly [TKey in Exclude<UiSourceInputIssueCoordinateKey, keyof TCoordinates>]?: never;
+  };
+
+type UiSourceInputAdmissionIssue =
+  | UiSourceInputIssueBase<'invalid-request' | 'unsupported-version' | 'request-too-large'>
+  | UiSourceInputIssueBase<'invalid-source', { readonly sourceId?: string }>
+  | UiSourceInputIssueBase<'duplicate-source', { readonly sourceId: string }>
+  | UiSourceInputIssueBase<
+      'invalid-target',
+      { readonly nodeId?: string; readonly inputId?: string }
+    >
+  | UiSourceInputIssueBase<
+      'duplicate-target',
+      { readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'component-catalog-unavailable', { readonly nodeId: string }>
+  | UiSourceInputIssueBase<'invalid-conversion', { readonly conversionId?: string }>
+  | UiSourceInputIssueBase<'duplicate-conversion', { readonly conversionId: string }>
+  | UiSourceInputIssueBase<'invalid-binding-assignment', { readonly sourceId?: string }>
+  | UiSourceInputIssueBase<
+      'missing-binding-assignment' | 'extra-binding-assignment' | 'duplicate-binding-id',
+      { readonly sourceId: string }
+    >;
+
+type UiSourceInputIncompatibleIssue =
+  | UiSourceInputIssueBase<
+      | 'target-output-only'
+      | 'target-binding-disallowed'
+      | 'target-occupied'
+      | 'type-mismatch'
+      | 'constraint-mismatch'
+      | 'no-declared-conversion',
+      { readonly sourceId: string; readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'no-compatible-target', { readonly sourceId: string }>;
+
+type UiSourceInputRecommendationIssue = UiSourceInputIssueBase<
+  'ambiguous-exact' | 'convertible-only',
+  { readonly sourceId: string }
+>;
+
+type UiSourceInputPlanIssue =
+  | UiSourceInputAdmissionIssue
+  | UiSourceInputIncompatibleIssue
+  | UiSourceInputRecommendationIssue
+  | UiSourceInputIssueBase<
+      'selection-required' | 'source-unselected',
+      { readonly sourceId: string }
+    >
+  | UiSourceInputIssueBase<
+      'invalid-selection',
+      { readonly sourceId?: string; readonly nodeId?: string; readonly inputId?: string }
+    >
+  | UiSourceInputIssueBase<
+      'target-contended',
+      { readonly sourceId: string; readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'no-change'>;
+
+type UiSourceInputStaleIssue =
+  | UiSourceInputIssueBase<'stale-source', { readonly sourceId: string }>
+  | UiSourceInputIssueBase<'stale-assigned-binding', { readonly sourceId: string }>
+  | UiSourceInputIssueBase<
+      'stale-target-binding',
+      { readonly sourceId: string; readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'stale-conversion-evidence', { readonly conversionId?: string }>
+  | UiSourceInputIssueBase<
+      'stale-selection',
+      { readonly sourceId?: string; readonly nodeId?: string; readonly inputId?: string }
+    >
+  | UiSourceInputIssueBase<'stale-plan'>
+  | UiSourceInputIssueBase<
+      'stale-recipe' | 'stale-document' | 'stale-design-system' | 'stale-component-catalog'
+    >;
+
+type UiSourceInputIssue = UiSourceInputPlanIssue | UiSourceInputStaleIssue;
+
+interface UiSourceInputCandidateBase {
+  readonly sourceId: string;
+  readonly target: UiSourceInputTargetDescriptor;
+  readonly semanticRoleMatched: boolean;
+}
+
+interface UiExactSourceInputCandidate extends UiSourceInputCandidateBase {
+  readonly compatibility: { readonly kind: 'exact' };
+}
+
+interface UiConvertibleSourceInputCandidate extends UiSourceInputCandidateBase {
+  readonly compatibility: {
+    readonly kind: 'convertible';
+    readonly conversionIds: readonly [string, ...string[]];
+  };
+}
+
+interface UiIncompatibleSourceInputCandidate extends UiSourceInputCandidateBase {
+  readonly compatibility: {
+    readonly kind: 'incompatible';
+    readonly reason:
+      | 'target-output-only'
+      | 'target-binding-disallowed'
+      | 'target-occupied'
+      | 'type-mismatch'
+      | 'constraint-mismatch'
+      | 'no-declared-conversion';
+  };
+}
+
+type UiSourceInputCandidate =
+  | UiExactSourceInputCandidate
+  | UiConvertibleSourceInputCandidate
+  | UiIncompatibleSourceInputCandidate;
+
+type UiSourceInputResolution =
+  | {
+      readonly sourceId: string;
+      readonly status: 'resolved';
+      readonly candidate: UiExactSourceInputCandidate;
+    }
+  | {
+      readonly sourceId: string;
+      readonly status: 'ambiguous';
+      readonly candidates: readonly [
+        UiExactSourceInputCandidate,
+        UiExactSourceInputCandidate,
+        ...UiExactSourceInputCandidate[],
+      ];
+    }
+  | {
+      readonly sourceId: string;
+      readonly status: 'convertible';
+      readonly candidates: readonly [
+        UiConvertibleSourceInputCandidate,
+        ...UiConvertibleSourceInputCandidate[],
+      ];
+    }
+  | {
+      readonly sourceId: string;
+      readonly status: 'incompatible';
+      readonly issues: readonly [
+        UiSourceInputIncompatibleIssue,
+        ...UiSourceInputIncompatibleIssue[],
+      ];
+    };
+
+interface UiSourceInputCompatibilityRequestV1 {
+  readonly schemaVersion: 1;
+  readonly sources: readonly [UiSourceValueDescriptor, ...UiSourceValueDescriptor[]];
+  readonly targets: readonly UiSourceInputTargetDescriptor[];
+  readonly bindings: readonly [UiSourceBindingAssignment, ...UiSourceBindingAssignment[]];
+  readonly conversionEvidence?: readonly UiValueConversionEvidence[];
+}
+
+interface UiSourceInputRequestSnapshotV1 extends UiSourceInputCompatibilityRequestV1 {}
+
+type UiSourceInputCandidateSetResult =
+  | {
+      readonly status: 'ready';
+      readonly snapshot: UiSourceInputRequestSnapshotV1;
+      readonly candidates: readonly UiSourceInputCandidate[];
+      readonly resolutions: readonly UiSourceInputResolution[];
+    }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputAdmissionIssue, ...UiSourceInputAdmissionIssue[]];
+      readonly snapshot?: never;
+      readonly candidates?: never;
+      readonly resolutions?: never;
+    };
+
+function resolveUiSourceInputCandidates(input: unknown): UiSourceInputCandidateSetResult;
+```
+
+`bindings` is a source-ID-keyed array, not a dynamic record: it contains exactly one canonical,
+nonblank and globally unique binding ID for every admitted source, in source order, with no missing or
+extra source. Source fan-out reuses that same binding ID at every selected target. The snapshot retains
+only strictly admitted cloned/frozen normalized material data. Every snapshotted source `value` is
+exactly `{ type, constraints? }`; omitted/empty constraints normalize to omission. Every snapshotted
+target input retains only `id`, optional `semanticRole`, `direction`, normalized material
+`{ type, constraints?, allowedSources: ['binding'] }`. For this focused slice, only membership of
+`binding` is material: any eligible target canonicalizes to that one-element array regardless of
+declaration order, duplicates or other allowed source kinds. Losing/gaining `binding` is material;
+adding/removing/reordering `literal | token | resource | expression` is not.
+Labels, descriptions, default values, editors and source-side `allowedSources` are discarded before
+candidate/result/plan bytes and stale comparison. Results and issues are cloned/frozen, and no returned
+value contains a callback, registry, catalog lookup or executable transform. Any schema version other
+than exact numeric `1` is `unsupported-version`; it is never normalized forward.
+
+##### Exact, convertible and ambiguous semantics
+
+- Admission accepts only finite, acyclic, own-data plain objects/arrays. Canonical IDs and roles are
+  nonblank/trimmed; source, target coordinate and conversion IDs are unique. Accessors, proxies,
+  symbols, exotic prototypes, sparse arrays, non-finite numbers and reflection failures become
+  sanitized issues and never escape. Admission never invokes an accessor or caller-supplied callable
+  value. Proxy reflection traps may necessarily run while obtaining own keys/descriptors/prototypes;
+  every trap failure is caught and sanitized, and no side-effect-free proxy-detection claim is made.
+- The material live-binding schema is exact only when `type` is equal and `constraints` are equal
+  after getter-safe canonical JSON normalization. Omitted and empty constraints are equivalent;
+  object keys are order-insensitive and array order is material. `defaultValue` and `editor` are
+  authoring metadata and do not change live-value compatibility. Source `allowedSources` describes
+  its own authoring and is not a target capability.
+- A target must be `input | bidirectional` and its normalized `allowedSources` must explicitly contain
+  `binding`. Omitted target `allowedSources` retains the existing literal-only default and is therefore
+  not eligible for an endpoint binding. An eligible snapshot records only `['binding']` as described
+  above; this focused projection does not replace the full component descriptor elsewhere.
+- A different type or material constraint set is never guessed exact. It is `convertible` only when
+  admitted immutable conversion evidence exactly names the same material
+  `UiValueCompatibilitySchemaSnapshot { type, constraints }` pair used for exact comparison.
+  `defaultValue`, `editor` and either side's non-target source allowance are never conversion-evidence
+  operands.
+  The evidence describes availability only; this packet neither executes nor persists transforms.
+  Multiple evidence rows are sorted by canonical ID. Without exact evidence the pair is incompatible.
+- An unbound target is eligible. A target already carrying the exact binding ID assigned to the same
+  source is an exact no-op candidate and its current binding becomes a stale operand. A different
+  current binding is `target-occupied` and is never silently replaced in this packet.
+- For each source, exact candidates with two present equal semantic roles outrank other exact
+  candidates. One best exact candidate becomes a recommendation-only `resolved`; multiple best exact
+  candidates are `ambiguous`. If no exact candidate exists, one or more convertible candidates produce
+  `convertible`. None of these resolution states selects a target or creates a command. Selection is a
+  separate explicit caller step. Explicit selections may fan one source out to multiple exact inputs,
+  but one input has exactly one source and convertible/incompatible pairs cannot be selected.
+- Source order in the admitted request, current document root-first node order and component binding
+  declaration order define stable display order. Source array order is a material public operand and is
+  retained in the snapshot; the host must supply the same canonical source order for equivalent entry
+  paths. Explicit selection array order is non-material: admission canonicalizes it to the candidate
+  order above before snapshotting, selecting or compiling atoms. Conversion IDs and issues use
+  canonical lexical tie-breaks. Object/map/click insertion order cannot change schemas, compatibility,
+  diagnostics, selected commands or plan bytes.
+
+##### Bounds and failure model
+
+Freeze public limits of at most 64 sources, 1,024 document nodes, 1,024 exact component lookups,
+1,024 target endpoints, 1,024 conversion-evidence rows and 65,536 evaluated pairs. Strict plain-data
+admission additionally caps depth at 32, total visited values at 65,536, one array at 4,096 items, one
+object at 256 own string keys and one string at 4,096 UTF-16 code units. Oversize/duplicate
+source/binding/evidence input rejects before document or catalog access. Document traversal stops at
+its node bound; exact request-order component lookups then derive and validate unique target
+coordinates and the endpoint/pair bounds before classification. Work is
+`O(P + V log K + E log E + S log S + I log I)` within the shared visit budget, where `P` is bounded
+source-target pairs, `V` is visited portable values, `K` is the largest admitted object key count,
+`E` conversion rows, `S` explicit selections and `I` safely collected issues. The logarithmic terms
+are the required canonical object-key and lexical ordering work; no false linear-time claim is made.
+There are no timers, listeners, global caches or background scans.
+
+JDW adds one internal iterative `collectUiAuthoringInputTargetsBounded` helper rather than calling the
+current whole-document projection before its bound. It own-data preflights the document header/root,
+walks root-first with an explicit stack up to the node limit, snapshots exact component refs, then
+performs at most one exact `component(ref)` lookup per unique ref and derives input endpoints up to the
+endpoint limit. Only after these bounds pass may existing V2 document, component descriptor, endpoint
+and binding validators run over the bounded snapshots. The helper does not call `components()` or add
+a second public projection.
+
+The runtime request has one intentional non-portable capability: the focused
+`UiSourceInputComponentLookup`. It is deliberately narrower than `UiComponentCatalogContract`; a
+class/prototype catalog remains valid and the host adapts it with an own-data arrow/function field at
+this boundary. Outer request keys are obtained through guarded own-data descriptors; every other
+operand is strict-cloned before catalog access. The lookup handle must expose `component` as an own
+data function. Each unique exact ref is called once in request order under `try/catch`; a throw,
+proxy/reflection failure, accessor member or non-portable/invalid returned descriptor becomes
+sanitized `component-catalog-unavailable` or `invalid-target` and no raw exception escapes. A returned
+descriptor is strict own-data cloned and fully validated before any binding member is read.
+
+Those first guarded results create one package-private frozen exact-ref snapshot adapter. Candidate
+inspection, `createUiAuthoringDetachedPlan`, recreate and `finalizeUiAuthoringDetachedPlan` receive only
+that adapter; the original caller lookup is never delegated or invoked again. Every delegate call is
+also inside the closed-result guard so an unexpected legacy throw becomes a sanitized blocked issue,
+never a raw exception or command based on a different descriptor. `components()` is invoked zero
+times. A preflight/admission failure invokes the lookup zero times.
+
+The exact `UiSourceInputIssueCode` union above is the only new compatibility diagnostic vocabulary.
+Diagnostic precedence is request/version/bounds admission → missing/duplicate identity and binding
+coverage → target eligibility/occupied state → pair compatibility → source recommendation → explicit
+selection/contention/no-change → stale operands. A rejected stage returns no commands or partial
+selection. A failing stage collects every safely discoverable issue in that stage up to the shared
+budget and skips every later stage. Within one stage and within each source resolution, issues sort by
+`path`, then `code`, `sourceId`, `nodeId`, `inputId`, `conversionId`, using empty string for an absent
+coordinate and ordinal string comparison. A valid request with zero eligible endpoints remains a
+ready candidate set whose every nonempty source resolution contains the single
+`no-compatible-target` issue; it is not a structurally blocked request.
+
+##### V2 candidate plan and Preview
+
+JDW exports these exact additive data-only shapes and pure functions from its current root:
+
+```ts
+interface UiSourceInputComponentLookup {
+  readonly component: (ref: UiComponentRef) => unknown;
+}
+
+interface UiAuthoringSourceInputCandidateRequestV1 {
+  readonly schemaVersion: 1;
+  readonly planId: string;
+  readonly recipe: UiAuthoringRecipeRef;
+  readonly state: UiAuthoringSessionStateV2;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly componentCatalog: UiSourceInputComponentLookup;
+  readonly sources: readonly [UiSourceValueDescriptor, ...UiSourceValueDescriptor[]];
+  readonly bindings: readonly [UiSourceBindingAssignment, ...UiSourceBindingAssignment[]];
+  readonly conversionEvidence?: readonly UiValueConversionEvidence[];
+}
+
+interface UiAuthoringSourceInputSelection {
+  readonly sourceId: string;
+  readonly nodeId: string;
+  readonly inputId: string;
+}
+
+interface UiAuthoringSourceInputPlanRequestV1 extends UiAuthoringSourceInputCandidateRequestV1 {
+  readonly selections: readonly [
+    UiAuthoringSourceInputSelection,
+    ...UiAuthoringSourceInputSelection[],
+  ];
+}
+
+interface UiAuthoringSourceInputRequestSnapshotV1 {
+  readonly schemaVersion: 1;
+  readonly planId: string;
+  readonly recipe: UiAuthoringRecipeRef;
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly sources: readonly [UiSourceValueDescriptor, ...UiSourceValueDescriptor[]];
+  readonly targets: readonly UiSourceInputTargetDescriptor[];
+  readonly bindings: readonly [UiSourceBindingAssignment, ...UiSourceBindingAssignment[]];
+  readonly conversionEvidence: readonly UiValueConversionEvidence[];
+  readonly selections?: readonly [
+    UiAuthoringSourceInputSelection,
+    ...UiAuthoringSourceInputSelection[],
+  ];
+}
+
+type UiAuthoringSourceInputCandidateResult =
+  | {
+      readonly status: 'ready';
+      readonly requestSnapshot: UiAuthoringSourceInputRequestSnapshotV1;
+      readonly candidates: readonly UiSourceInputCandidate[];
+      readonly resolutions: readonly UiSourceInputResolution[];
+    }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputAdmissionIssue, ...UiSourceInputAdmissionIssue[]];
+      readonly requestSnapshot?: never;
+      readonly candidates?: never;
+      readonly resolutions?: never;
+    };
+
+interface UiAuthoringSourceInputPlan {
+  readonly requestSnapshot: UiAuthoringSourceInputRequestSnapshotV1 & {
+    readonly selections: readonly [
+      UiAuthoringSourceInputSelection,
+      ...UiAuthoringSourceInputSelection[],
+    ];
+  };
+  readonly candidates: readonly UiSourceInputCandidate[];
+  readonly resolutions: readonly UiSourceInputResolution[];
+  readonly selected: readonly [UiExactSourceInputCandidate, ...UiExactSourceInputCandidate[]];
+  readonly detachedPlan: UiAuthoringDetachedPlan & { readonly blocked: false };
+}
+
+type CreateUiAuthoringSourceInputPlanResult =
+  | { readonly status: 'ready'; readonly plan: UiAuthoringSourceInputPlan }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputPlanIssue, ...UiSourceInputPlanIssue[]];
+      readonly plan?: never;
+    };
+
+interface UiAuthoringSourceInputPlanPreview {
+  readonly requestSnapshot: UiAuthoringSourceInputPlan['requestSnapshot'];
+  readonly candidates: readonly UiSourceInputCandidate[];
+  readonly resolutions: readonly UiSourceInputResolution[];
+  readonly selected: UiAuthoringSourceInputPlan['selected'];
+  readonly commands: UiAuthoringDetachedPlan['commands'];
+}
+
+interface FinalizeUiAuthoringSourceInputPlanInput {
+  readonly plan: UiAuthoringSourceInputPlan;
+  readonly current: UiAuthoringSourceInputPlanRequestV1;
+}
+
+type FinalizeUiAuthoringSourceInputPlanResult =
+  | { readonly status: 'ready'; readonly command: UiDocumentCommandV2 }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputIssue, ...UiSourceInputIssue[]];
+      readonly command?: never;
+    };
+
+function inspectUiAuthoringSourceInputCandidates(
+  input: unknown,
+): UiAuthoringSourceInputCandidateResult;
+
+function createUiAuthoringSourceInputPlan(input: unknown): CreateUiAuthoringSourceInputPlanResult;
+
+function previewUiAuthoringSourceInputPlan(
+  plan: UiAuthoringSourceInputPlan,
+): UiAuthoringSourceInputPlanPreview;
+
+function finalizeUiAuthoringSourceInputPlan(
+  input: FinalizeUiAuthoringSourceInputPlanInput,
+): FinalizeUiAuthoringSourceInputPlanResult;
+```
+
+Target enumeration uses the bounded helper's current V2 document snapshot walk and frozen exact-ref
+component lookup adapter only; it does not call the existing whole-document projection. Missing,
+output-only, occupied or structurally invalid endpoints remain deterministic incompatible candidates
+or request issues. `inspectUiAuthoringSourceInputCandidates` never creates a command or detached plan;
+a `resolved` row is only a recommendation that the host may present or copy into an explicit
+selection.
+
+Plan creation requires a nonempty explicit selection and at least one selected exact input for every
+source in the request. It re-runs candidate inspection, rejects any missing source, non-exact pair,
+duplicate selection or target selected by two different sources, and returns one blocked result with
+zero survivors. A mixed request containing resolved exact sources plus any ambiguous, convertible or
+incompatible source remains wholly blocked until the host explicitly resolves the ambiguity or removes
+that source and submits a fresh candidate request; Advanced conversion is a separate fresh request,
+not a partial basic-plan survivor. Source fan-out reuses that source's one binding assignment. A target carrying that
+same binding is retained as a selected no-op snapshot; a different binding cannot be selected. Only
+changed targets emit `set-input-binding` atoms. If every selected target is already equal, plan
+creation returns only `no-change` and does not call `createUiAuthoringDetachedPlan`; otherwise it
+delegates the nonempty atom list to that existing V2 function. Changed atoms follow canonical selected
+candidate order. Child command IDs are exactly
+`${planId}/source-input/${zeroBasedOrdinal.toString(10)}`; the outer batch ID remains exact `planId`,
+so child IDs are nonblank, mutually unique and cannot equal the outer ID. A plan ID that cannot remain
+within the public string bound after adding the longest child suffix is rejected during admission. It
+introduces no command variant, document field, component catalog, batch language or history.
+
+Preview is a frozen projection of sources, candidates, recommendations, explicit exact selections and
+the existing nonempty atom list. It performs no acquisition, conversion, catalog lookup, Apply or
+callback. Finalize receives the ready plan plus the complete fresh exact plan request, including
+Recipe, source order/schema, binding assignments, conversion evidence, explicit selections, state,
+Design System and component catalog. It first performs only strict fresh admission, bounded target
+enumeration and normalization through the frozen lookup snapshot; it does not classify selections or
+create a new plan yet. It compares the resulting material snapshot with the admitted plan in this
+fixed order: plan ID → outer Recipe → sources → assigned bindings → conversion evidence → document →
+Design System → component catalog/target descriptors/current endpoint bindings → explicit selections.
+Differences return respectively `stale-plan`, `stale-recipe`, `stale-source`,
+`stale-assigned-binding`,
+`stale-conversion-evidence`, `stale-document`, `stale-design-system`,
+`stale-component-catalog | stale-target-binding`, or `stale-selection`; no `no-change`, occupied or selection
+diagnostic may mask an earlier stale result. Only an equal fresh snapshot calls plan creation, compares
+selected atoms, then delegates to `finalizeUiAuthoringDetachedPlan`. Any blocked recreate or difference
+fails closed before delegation.
+A changed sample value is not an operand because sample values are never accepted. Fresh comparison
+uses the normalized material source/target snapshots above; omitted versus empty constraints and drift
+in discarded label/description/default/editor/source-allowance metadata do not stale the plan. Material
+schema/role/binding allowance, source order/identity, current or assigned binding ID, conversion
+evidence, plan ID, outer Recipe, document, selected endpoint, Design System or explicit selection
+drift blocks.
+
+##### Compatibility and package boundary
+
+Existing `UiComponentBindingDescriptor`, V1/V2/V3 commands, projections, detached plans, sessions and
+root exports remain source- and behavior-compatible. The optional semantic role is additive. The new
+contracts focused subpath is an explicit entry in package exports/typesVersions/build and public-export
+checks. It exports the three exact constants `UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION`,
+`UI_SOURCE_INPUT_LIMITS`, `UI_SOURCE_INPUT_ISSUE_CODES`; every declared
+`UiSourceInput*`, `UiSourceValueDescriptor`, `UiSourceBindingAssignment`,
+`UiValueCompatibilitySchemaSnapshot`, `UiValueConversionEvidence`,
+`UiExactSourceInputCandidate`, `UiConvertibleSourceInputCandidate` and
+`UiIncompatibleSourceInputCandidate` type; and `resolveUiSourceInputCandidates`. Those symbols are
+deliberately absent from the contracts root and private deep paths. JDW exports only the exact
+candidate/selection/request/snapshot/plan/Preview/finalize types and four functions above from its
+current root without a private deep import.
+Packed fixtures prove the contracts root does not expose each focused symbol and that the unchanged
+closed component-issue union remains exhaustively consumable after `semanticRole` is added. The
+packages add no runtime dependency, provider SDK or model SDK.
+
+An integrating host may project an existing converter catalog into immutable
+`UiValueConversionEvidence`; that adapter remains outside JDW and compatibility core. The new contract
+cannot become a second transform registry or claim that conversion execution occurred.
+
+Source `DONE`, release-tip validation, tag/publish and npm `@prototype` availability are separate
+states. This packet may record source completion after exact review, but no integrating host may claim
+the new contract until one approved published cohort contains it.
+
+##### Ordered implementation tasks
+
+1. Add optional canonical `semanticRole` validation to component bindings through the existing
+   `invalid-binding-value` code/path without widening the closed component issue union or changing
+   current descriptors/catalog resolution.
+2. Add the focused contracts entry, constants, strict schema/source/target/evidence admission,
+   canonical material-schema equality and pair classification with frozen closed results. Reuse the
+   package-private strict portable-data and UiValueSchema-shape helpers instead of creating a second
+   clone or schema validator.
+3. Add aggregate recommendation, role preference and bounded deterministic ordering; keep candidate
+   inspection separate from explicit selection/compilation.
+4. Add JDW target enumeration through the bounded current V2 snapshot walk, occupied-input snapshots and the strict
+   nonempty explicit-selection compiler into existing atoms plus one existing detached plan.
+5. Add mutation-free Preview and source-aware Finalize revalidation that delegates to the existing
+   V2 finalizer and never applies a command.
+6. Add hostile-data, matrix, bounds, determinism, stale and V2 command/session parity tests.
+7. Add focused contracts/JDW exports and packed TypeScript exact-optional, CJS, ESM, default-condition,
+   root-private negative and no-new-dependency fixtures.
+
+##### Verification
+
+During development repeat only focused compatibility, component-validation, JDW candidate-plan and
+narrow package typecheck/build tests. Freeze one candidate before final gates. At the exact final SHA:
+
+- run the focused hostile/accessor/proxy/cycle, exact/constraint/allowed-source, conversion,
+  recommendation/ambiguity/contention, occupied/no-op, bounds, ordering, staleness and V2 parity suites;
+- run `pnpm check:public-exports` and packed TypeScript exact-optional, CJS `require`, ESM `import`,
+  default-condition, focused-only/root-negative, exhaustive component-issue and forbidden-private-import
+  fixtures;
+- run `pnpm validate:static`, `pnpm validate:fast`, the repository browser gate once for the additive
+  public consumer surface, `pnpm check:commit-safety` and `git diff --check`;
+- do not run Electron: no renderer, main, preload, native or package-dependency boundary changes.
+
+##### Acceptance and source-review gate
+
+Done requires a backendless consumer to supply multiple opaque source values, receive stable
+exact/ambiguous/convertible/incompatible recommendations, explicitly select only exact pairs, Preview one
+mutation-free plan and finalize one existing V2 outer batch. Equivalent canonical operands produce
+the same candidates, diagnostics and commands; candidate-only inspection creates no batch, source
+fan-out is supported, target contention blocks without partial survivors, occupied targets never
+overwrite silently, different explicit click order canonicalizes to identical plan bytes, and a mixed
+exact/unresolved multi-source request produces no partial plan until a fresh all-exact request is
+admitted. Manual V2 Apply still creates exactly one ordinary transaction/history entry.
+
+Reject a candidate that compares only direction or type; ignores material constraints or target
+binding allowance; reads accessors/proxies unsafely; invents conversions; auto-selects convertible or
+ambiguous pairs; turns a recommendation into an implicit command; creates an empty batch for
+candidate-only/no-change; lets two sources own one target; silently overwrites an occupied input; uses label/path guessing; depends on provider/runtime
+values; stores source semantics in `UiDocument`; adds another Recipe/document/batch/history/registry;
+enumerates a catalog instead of exact lookups; retains callbacks or mutable caller objects; performs
+Apply/IO in Preview/finalize; omits bounded hostile and packed-public proof; changes current exports
+incompatibly; leaks React/DOM/product/provider/model/native concerns; or claims release, publish or
+Electron completion.
 
 ### Acceptance direction
 
