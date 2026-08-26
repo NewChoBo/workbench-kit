@@ -59,7 +59,8 @@ WB-NS-040A extension uninstall compatibility + dependency safety [DONE; independ
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
-        │       └─ WB-NS-030A opt-in invalid-submit focus recovery [DONE; bounded current SchemaForm compatibility]
+        │       ├─ WB-NS-030A opt-in invalid-submit focus recovery [DONE; bounded current SchemaForm compatibility]
+        │       └─ WB-NS-030B focused public SchemaForm subpath [READY_FOR_IMPLEMENTATION]
         ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
 
@@ -2240,6 +2241,245 @@ parent architecture; or claims Electron, release or publish completion.
   acceptance or `DONE` status.
 - The integrated source satisfies this bounded packet. Release, package publication and consumer
   adoption remain separate claims.
+
+## WB-NS-030B — Focused public SchemaForm subpath
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** focused public consumability for the current `WorkbenchSchemaForm`; parent
+  `WB-NS-030` remains `DESIGNING`
+- **Ownership:** `GENERIC_KIT`
+- **Exact source-bearing baseline:**
+  `develop@cfd752355c00c6b59018a220f2ce22c561a0e984`
+- **Current documentation baseline:**
+  `develop@af683d09582509234e4dbbf74eb8520a50cd7e4c`; the intervening diff from the source-bearing
+  baseline changes Northstar documentation only
+- **Public owner:** `@workbench-kit/react/schema-form`
+- **Compatibility owner:** `@workbench-kit/react/workbench/settings`
+- **Native boundary:** none
+
+### Goal
+
+Expose the existing generic SchemaForm through one narrow, consumer-neutral public subpath. A
+consumer that needs form rendering must not have to enter the aggregate Settings surface, and the
+new path must not create a second component, form model, schema family or style authority.
+
+This is an additive package-boundary and dependency-isolation slice. It preserves the current
+SchemaForm behavior, including every `WB-NS-030A` focus and accessibility guarantee, and does not
+finalize the parent packet's future `FormModel` or inspector architecture.
+
+### Revalidated current source facts
+
+- `packages/react/package.json` exports `./workbench/settings` but has no `./schema-form` export or
+  classic-resolver `typesVersions` entry.
+- `packages/react/src/workbench/settings/index.ts` re-exports the complete current SchemaForm module
+  beside Settings modal/navigation, StructuredData and extension-settings APIs.
+- `packages/react/src/workbench/settings/SchemaForm.tsx` is the single implementation. Its runtime
+  closure uses React, primitive leaf modules, `cx` and the small `settingsCommit` context seam; it
+  does not import the aggregate Settings barrel.
+- `schema-form.css` is the single SchemaForm style source. `settings.css` currently imports that leaf
+  as part of the legacy Settings CSS aggregate, while `SchemaForm.tsx` does not yet import its leaf.
+- `@workbench-kit/react` already declares `sideEffects: ['**/*.css']`, so a co-located leaf import can
+  remain observable through packing and bundling.
+
+### Frozen module and ownership boundary
+
+Add exactly this public subpath:
+
+```json
+{
+  "./schema-form": "./src/workbench/settings/SchemaForm.tsx"
+}
+```
+
+Add the matching classic TypeScript resolver target without adding a wildcard family:
+
+```json
+{
+  "typesVersions": {
+    "*": {
+      "schema-form": ["src/workbench/settings/SchemaForm.tsx"]
+    }
+  }
+}
+```
+
+`SchemaForm.tsx` remains the implementation and runtime identity for both the focused path and the
+existing Settings re-export. It must import its co-located `./schema-form.css` leaf directly.
+`settings.css` must retain its existing `@import './schema-form.css'` edge as a CSS-only and legacy
+aggregate compatibility path. Bundlers may deduplicate the shared leaf, but no second stylesheet,
+wrapper component or parallel export barrel may become a style or behavior authority.
+
+The existing `settingsCommit` read may remain an internal compatibility seam. The focused public API
+must not export Settings commit concepts, and this edge must not widen into Settings modal, shell,
+provider, runtime or registry composition.
+
+### Frozen public API
+
+The focused subpath exports the complete current public export set of `SchemaForm.tsx` at the exact
+source-bearing baseline.
+
+Runtime exports:
+
+```ts
+WorkbenchSchemaForm;
+coerceWorkbenchSchemaFormFieldValue;
+getWorkbenchSchemaFormErrors;
+getWorkbenchSchemaFormFieldDefaultValue;
+getWorkbenchSchemaFormFieldError;
+isWorkbenchSchemaFormSubmittable;
+normalizeWorkbenchSchemaFormValues;
+```
+
+Type exports:
+
+```ts
+WorkbenchSchemaFormCancelContext;
+WorkbenchSchemaFormCheckboxField;
+WorkbenchSchemaFormErrors;
+WorkbenchSchemaFormField;
+WorkbenchSchemaFormFieldBase;
+WorkbenchSchemaFormFieldChangeContext;
+WorkbenchSchemaFormFieldType;
+WorkbenchSchemaFormFieldValue;
+WorkbenchSchemaFormNumberField;
+WorkbenchSchemaFormOption;
+WorkbenchSchemaFormProps;
+WorkbenchSchemaFormSelectField;
+WorkbenchSchemaFormSubmitContext;
+WorkbenchSchemaFormTextField;
+WorkbenchSchemaFormValues;
+```
+
+The focused contract must not export `WorkbenchSettingsModal`, Settings navigation/section/category/
+scope APIs, `WorkbenchStructuredData*`, extension-setting/spec/category adapters,
+`WorkbenchSettingsCommit*`, shell/provider/runtime/registry APIs or product-specific types.
+The package root remains unchanged. Nested `schema-form/*` and private `src/workbench/settings/*`
+imports remain unexported.
+
+### Behavior, state and compatibility flow
+
+1. Focused and legacy imports resolve to the same `WorkbenchSchemaForm` function and helper/type
+   contracts; there is no wrapper, adapter or copied implementation.
+2. The component retains its existing controlled `values` or internal `defaultValues` ownership.
+   Field changes, merged validation errors, submit/cancel callbacks and optional immediate Settings
+   commit continue through the current single state and event flow.
+3. `WB-NS-030A` remains authoritative for default-disabled behavior, opted-in invalid-submit focus,
+   field-order selection, actual-target ARIA and repaired-submit semantics.
+4. The focused JS import brings the leaf SchemaForm CSS side effect. It does not require
+   `workbench/settings/settings.css`, `styles/core.css` or a consumer-written duplicate CSS import.
+5. Existing `@workbench-kit/react/workbench/settings` imports and the Settings CSS aggregate remain
+   source- and behavior-compatible.
+
+There is no new asynchronous lifecycle, persistence, concurrency, error store or recovery authority.
+Existing render-time validation and callback error behavior are unchanged. This packet adds no
+registry, provider, process boundary or fallback path.
+
+### Bundle isolation contract
+
+A dedicated packed-consumer focused entry must import `@workbench-kit/react/schema-form` directly and
+produce bundle-metafile evidence. Its graph must include `SchemaForm.tsx` and `schema-form.css` and
+must exclude at least:
+
+- `WorkbenchSettingsModal` and Settings navigation/section modules;
+- `StructuredDataSchemaPanel`, `StructuredDataForm` and related StructuredData surfaces;
+- `schemaFormSettingsCategory`, `schemaFormSettingSpec` and `extensionSettingsForm`;
+- `@workbench-kit/shell-react`, `@workbench-kit/workbench-core` and shell/runtime/extension
+  composition modules;
+- the aggregate `workbench/settings/index.ts`, `settings.css` and `styles/core.css` paths.
+
+The small internal `settingsCommit` context module is allowed only while it remains the existing
+non-public compatibility seam. Its presence is not permission to expose commit types or aggregate
+Settings dependencies.
+
+### Scope
+
+- add the direct `./schema-form` package export;
+- make `SchemaForm.tsx` own its leaf CSS import;
+- preserve the legacy Settings TypeScript and CSS re-exports;
+- add packed type/runtime/style-presence and dependency-denial evidence for focused and legacy paths;
+- retain existing focused SchemaForm tests and `WB-NS-030A` required interaction evidence.
+
+### Non-goals
+
+- a new `FormModel`, field-schema registry, inspector model, field kind or validation system;
+- a second SchemaForm core/component, wrapper or stylesheet;
+- Settings information-architecture or extension-settings changes;
+- root-barrel expansion, product adapter or consumer import migration;
+- dependency version change, release, publish, tag or native/Electron work.
+
+### Ordered implementation tasks
+
+1. Revalidate the exact current develop source, package exports, SchemaForm exports and style edges.
+2. Add `./schema-form` to `packages/react/package.json`, targeting the existing `SchemaForm.tsx`
+   module directly, and add the exact non-wildcard `typesVersions` target for classic TypeScript
+   resolution.
+3. Add `import './schema-form.css'` to `SchemaForm.tsx`; retain the same import in `settings.css` and
+   retain CSS-only `sideEffects` metadata.
+4. Preserve the Settings barrel re-export exactly and add a focused-versus-legacy runtime identity
+   assertion without introducing an implementation wrapper.
+5. Extend the packed consumer to compile and import every focused runtime/type export, explicitly
+   including `WorkbenchSchemaFormErrors`, while retaining Settings and workbench legacy-path
+   compatibility fixtures. Prove ESNext/Bundler and CommonJS/Node type resolution, but do not claim a
+   native CommonJS `require()` runtime that the source-shipped ESM package does not provide.
+6. Add a focused bundle entry and metafile assertions for required SchemaForm JS/CSS presence and
+   every aggregate Settings/StructuredData/extension-settings/shell-runtime denylist family above.
+   Assert that nested and private deep imports remain package-path errors.
+7. Run the existing focused SchemaForm unit tests and the `WB-NS-030A` required Storybook interaction
+   unchanged; add only packaging/style assertions not already represented.
+8. Freeze one exact candidate, run final gates once, and obtain producer-distinct source review before
+   integration. Release, publication and consumer migration remain separate later claims.
+
+### Verification
+
+During implementation, repeat only the focused SchemaForm tests and the narrow packed-consumer or
+React type check changed by the edit. At the frozen final exact SHA run once:
+
+- focused `packages/react/src/workbench/settings/SchemaForm.test.tsx` tests;
+- focused package-export, packed-consumer type/runtime/style and bundle-metafile assertions;
+- `pnpm typecheck:react-exact-optional`;
+- `pnpm validate:static`;
+- `pnpm validate:fast`;
+- the existing required SchemaForm Storybook interaction lane;
+- `pnpm check:commit-safety` and `git diff --check` before commit and push.
+
+Browser interaction remains required only for the inherited `WB-NS-030A` scenario and must use the
+existing required Storybook proof. The package boundary itself is covered by backendless packed
+consumer and bundle-graph tests. Runtime identity and styling use the existing Vite/ESM consumer
+lane; CommonJS coverage is type-resolution-only. No main, preload or native boundary changes;
+Electron is not required.
+
+The focused entry must not duplicate implementation or aggregate Settings code. Dependency-graph
+denylist evidence is the performance/bundle acceptance; no arbitrary byte budget is added because
+shared primitive and CSS minifier output may change independently of this boundary.
+
+### Acceptance
+
+- `@workbench-kit/react/schema-form` resolves from the packed tarball and exposes the complete frozen
+  runtime/type surface, including `WorkbenchSchemaFormErrors`;
+- both modern bundler and classic Node TypeScript resolution accept the exact focused subpath while
+  nested/private deep paths remain unexported;
+- focused and legacy paths expose the same component and helpers without a second implementation;
+- focused rendering receives `schema-form.css` without importing aggregate Settings/Core CSS;
+- the Settings barrel and `settings.css` aggregate remain compatible;
+- bundle evidence includes the direct SchemaForm JS/CSS leaf and excludes every frozen denylist
+  family;
+- all `WB-NS-030A` focus, accessibility, validation, callback and state-flow tests remain unchanged
+  and passing;
+- static, fast, packed-consumer, exact-optional and required browser gates pass at one exact candidate;
+- producer-distinct source review reports no blocker before integration;
+- no product migration, release, publish, tag, native or parent-architecture work is claimed.
+
+### Source-review checklist
+
+Reject a candidate that targets the Settings barrel; forks or wraps SchemaForm; omits any current
+module export; exposes Settings commit or product concepts; drops the legacy re-export or CSS hub
+edge; requires aggregate Settings/Core CSS for focused styling; creates a second stylesheet; pulls
+Settings modal/navigation, StructuredData, extension-settings, shell/runtime or extension
+composition into the focused graph; changes controlled/uncontrolled values, validation,
+submit/cancel/immediate-commit behavior or any `WB-NS-030A` focus/ARIA semantic; replaces graph
+evidence with manifest inspection alone; skips packed-tarball proof; expands the parent architecture;
+claims native CommonJS runtime support without a package-wide build contract; or claims consumer
+adoption, Electron, release or publication completion.
 
 ## WB-NS-040 — Extension capability / trust / compatibility model
 
