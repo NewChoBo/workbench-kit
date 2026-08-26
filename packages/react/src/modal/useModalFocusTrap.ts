@@ -1,4 +1,4 @@
-import { useEffect, type RefObject } from 'react';
+import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -53,6 +53,11 @@ export function useModalFocusTrap({
   onClose,
   restoreFocusOnClose = true,
 }: UseModalFocusTrapOptions): void {
+  const onCloseRef = useRef(onClose);
+  useLayoutEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!enabled) {
       return;
@@ -91,7 +96,7 @@ export function useModalFocusTrap({
       if (event.key === 'Escape' && closeOnEscape) {
         event.preventDefault();
         event.stopPropagation();
-        onClose();
+        onCloseRef.current();
         return;
       }
 
@@ -138,5 +143,5 @@ export function useModalFocusTrap({
         previousFocus.focus();
       }
     };
-  }, [closeOnEscape, containerRef, enabled, initialFocusRef, onClose, restoreFocusOnClose]);
+  }, [closeOnEscape, containerRef, enabled, initialFocusRef, restoreFocusOnClose]);
 }
