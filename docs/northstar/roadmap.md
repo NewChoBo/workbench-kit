@@ -4,11 +4,11 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## Current checkpoint
 
-- **Reviewed repository baseline:** `develop@7051a2e7051838770a4d7d527904aa4a5515db0d`. The latest source-bearing integration is the completed `WB-NS-071B` contract at the same merge.
+- **Reviewed repository baseline:** `develop@17e71629526bdb9f4b09246dd227f0d97152b09b`. The latest source-bearing integration remains the completed `WB-NS-071B` contract at `7051a2e7051838770a4d7d527904aa4a5515db0d`; the later `17e71629` integration is its documentation-only DONE reconciliation.
 - The extension-runtime decomposition chain (`WB-NS-001A`, `WB-NS-001B1`, `WB-NS-001B2`) is `DONE`. The compatible `ExtensionRegistry` facade delegates focused runtime roles, and shell consumers use focused services without public aggregate-registry reach-through.
 - The manual authoring foundations (`WB-NS-070A` through `070D`) and graph type/property-input foundation (`WB-NS-071A`) are `DONE`: typed values, layout strategies, component descriptors, one `UiDocument` command/history path, and graph-node metadata now have explicit owners.
 - The design-system foundation and compatibility chain (`WB-NS-072A` through `072F`) is `DONE`: pack/theme resolution, typed token/resource roles, migration planning, Canvas/Inspector provenance, and legacy theme compatibility delegate to one integrated path.
-- Effective keybinding management, the provider-free command host and the inert authoring-development requirement contract (`WB-NS-080A`, `WB-NS-080B`, `WB-NS-071B`) are `DONE`. `WB-NS-071C` remains downstream design work; no source authority is inferred from that horizon.
+- Effective keybinding management, the provider-free command host and the inert authoring-development requirement contract (`WB-NS-080A`, `WB-NS-080B`, `WB-NS-071B`) are `DONE`. The data-only external static node-catalog projection slice of `WB-NS-071C` is the only active Northstar source packet at `READY_FOR_IMPLEMENTATION`; runtime, workflow, install, activation and preview-effect integration remain outside that authority.
 - Existing correctness, UX, release, and lifecycle Issues retain their own ownership. This roadmap does not replace or duplicate their acceptance criteria.
 
 ## Strategic outcomes
@@ -23,14 +23,14 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## NOW
 
-- **Decompose the first human-controlled `WB-NS-071B` vertical without reopening the completed contract.** Plan one requirement-to-external-implementation-to-fresh-catalog-to-preview scenario with explicit provenance, trust and acceptance owners. No new source work begins until its N2 packet is `READY_FOR_IMPLEMENTATION`.
+- **Implement the reviewed data-only `WB-NS-071C` projection without widening effect authority.** Admit one strict external static-catalog snapshot plus explicit exact identity/value mappings into an ordinary `NodeTypeCatalogContribution`, then prove the existing 071B requirement reaches `fulfilled` only after a fresh canonical catalog and an explicit caller retry signal. The packet adds no runtime, workflow, install, activation, preview or Apply behavior.
 - **Maintain one durable roadmap projection.** Keep this file synchronized only when repository truth materially changes the horizon, dependency order, or effect gate. Detailed Issue/packet state stays with its canonical owner.
 - **Finish independently owned high-value work without collapsing ownership.** Correctness, accessibility, Field Remap, JDW, extension-management, and repository-lifecycle work continue through their focused Issues and producer/reviewer lanes.
 
 ## NEXT
 
 - **Graph/document and schema convergence** — close the remaining `WB-NS-010` and `WB-NS-030` decisions by reusing the integrated UI-authoring, node-descriptor, JDW, SchemaForm, and Field Remap contracts rather than introducing parallel document or scalar-schema families.
-- **External node ecosystem boundary** — open `WB-NS-071C` only after the first requirement-to-descriptor-to-preview path proves explicit provenance and human-controlled acceptance without weakening extension trust or Apply ownership.
+- **External node effect boundary** — after the data-only `WB-NS-071C` projection is integrated and its backendless 071B-to-fresh-catalog retry proof passes, separately design runtime invocation, workflow interchange, install/activation and real preview acceptance. Catalog presence must not authorize any of those effects.
 - **Extension ecosystem integration** — mature catalog/install, compatibility, trust, permission, and lifecycle decisions through `WB-NS-040` while keeping declarative design-system inputs separate from executable extension authority.
 - **Projection and workflow architecture** — compose the completed manual authoring and design-system foundations into reusable GUI-builder projections before extracting a broader workflow runtime.
 - **Scenario/performance contract** — use deterministic SMALL/TYPICAL/STRESS fixtures for the same vertical so accessibility, disposal, responsiveness, and memory behavior are architecture constraints rather than release cleanup.

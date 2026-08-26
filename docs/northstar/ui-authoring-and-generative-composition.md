@@ -404,6 +404,18 @@ must not create a second descriptor, catalog, task or execution schema. This v1 
 add component/node contributions to the extension manifest; the `INSTALL_EXTENSION` branch remains
 a later explicit extension-integration contract.
 
+`WB-NS-071C` v1 closes only the data-only external static node-catalog projection seam. A focused
+contracts adapter accepts a bounded, strictly admitted source-neutral snapshot plus explicit
+caller-owned exact identity and value-semantic mappings, then emits an ordinary
+`NodeTypeCatalogContribution`. Existing `NodeTypeDescriptor`, `UiValueSchema`,
+`resolveNodeTypeCatalog()` and 071B exact requirement resolution remain the only canonical owners.
+The external `sourceTypeKey` is an opaque, exact caller-owned version/cohort key: Workbench never
+parses or normalizes it, and the mapping owner selects a new exact target `NodeTypeRef.version` for a
+material external schema change.
+V1 does not discover providers, load executable code, widen extension manifests, import/export
+foreign workflows, invoke a runtime, mutate a document, install or activate anything, or preview or
+Apply a node. Those effect lanes require later independent packets and real interaction evidence.
+
 Flow:
 
 ```text
@@ -481,6 +493,12 @@ external runtime invocation → WorkflowRuntime adapter
 ```
 
 The adapter must preserve external version/compatibility semantics and fail explicitly when an external type/widget/runtime feature has no safe Workbench equivalent.
+
+`WB-NS-071C` v1 admits static node schemas, explicit value semantics and already-mapped portable
+value-level editor metadata as a strict pure projection into the existing descriptor vocabulary. It
+does not infer properties or property-backed inputs from foreign widgets. Foreign widget/property
+inference, workflow interchange and runtime invocation remain separate design horizons; this READY
+packet must not inherit them implicitly.
 
 ### ComfyUI-specific discovery direction
 
@@ -589,12 +607,14 @@ WB-NS-071A graph NodeTypeDescriptor/property-input foundation
         ↓
 WB-NS-071B AI-assisted component/node development requirement flow
         ↓
-WB-NS-071C external node ecosystem adapter contract
+WB-NS-071C external static node catalog projection (data-only v1)
         ↓
 optional ComfyUI adapter experiment
 ```
 
-These packet IDs are target placeholders until the canonical implementation plan completes source/API inventory and closes each ready gate.
+The canonical implementation plan records `WB-NS-071B` as DONE and freezes the bounded data-only
+`WB-NS-071C` v1 packet. Later workflow/runtime adapter horizons remain placeholders until their own
+source/API inventory and ready gates close.
 
 ## 17. Non-goals
 
