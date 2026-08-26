@@ -72,7 +72,7 @@ export function TabbedPanels({
       return;
     }
 
-    let nextIndex: number | null = null;
+    let nextIndex: number;
     switch (event.key) {
       case 'ArrowLeft':
         nextIndex = (currentIndex - 1 + items.length) % items.length;
