@@ -103,6 +103,7 @@ export interface WorkbenchSchemaFormProps extends Omit<
   emptyLabel?: ReactNode;
   errors?: WorkbenchSchemaFormErrors;
   fields: readonly WorkbenchSchemaFormField[];
+  readonly focusFirstInvalidFieldOnSubmit?: boolean;
   onCancel?: (context: WorkbenchSchemaFormCancelContext) => void;
   onFieldChange?: (context: WorkbenchSchemaFormFieldChangeContext) => void;
   onSubmit?: (values: WorkbenchSchemaFormValues, context: WorkbenchSchemaFormSubmitContext) => void;
@@ -214,6 +215,10 @@ function isRenderableWorkbenchSchemaFormError(error: ReactNode) {
   return error !== undefined && error !== null && error !== false && error !== '';
 }
 
+function isFocusableWorkbenchSchemaFormError(error: ReactNode) {
+  return error !== true && isRenderableWorkbenchSchemaFormError(error);
+}
+
 export function WorkbenchSchemaForm({
   cancelLabel = 'Cancel',
   className,
@@ -222,6 +227,7 @@ export function WorkbenchSchemaForm({
   emptyLabel = 'No settings fields',
   errors,
   fields,
+  focusFirstInvalidFieldOnSubmit = false,
   onCancel,
   onFieldChange,
   onSubmit,
@@ -255,6 +261,7 @@ export function WorkbenchSchemaForm({
     errors: resolvedErrors,
     readOnly,
   });
+  const submitDisabled = disabled || readOnly || (!focusFirstInvalidFieldOnSubmit && !submittable);
 
   const updateFieldValue = (
     field: WorkbenchSchemaFormField,
@@ -290,9 +297,24 @@ export function WorkbenchSchemaForm({
 
   const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    if (!submittable) return;
+    if (submittable) {
+      onSubmit?.(resolvedValues, { event, values: resolvedValues });
+      return;
+    }
 
-    onSubmit?.(resolvedValues, { event, values: resolvedValues });
+    if (disabled || readOnly || !focusFirstInvalidFieldOnSubmit) return;
+
+    const form = event.currentTarget;
+    for (const field of fields) {
+      if (field.disabled || field.readOnly) continue;
+      if (!isFocusableWorkbenchSchemaFormError(resolvedErrors[field.id])) continue;
+
+      const control = form.elements.namedItem(`${generatedId}-${field.id}`);
+      if (!(control instanceof HTMLElement)) continue;
+
+      control.focus();
+      if (form.ownerDocument.activeElement === control) return;
+    }
   };
 
   return (
@@ -314,6 +336,7 @@ export function WorkbenchSchemaForm({
             const errorId = isRenderableWorkbenchSchemaFormError(error)
               ? `${fieldInputId}-error`
               : undefined;
+            const invalid = errorId !== undefined;
             const fieldDisabled = disabled || Boolean(field.disabled);
             const fieldReadOnly = readOnly || Boolean(field.readOnly);
 
@@ -329,6 +352,7 @@ export function WorkbenchSchemaForm({
                   errorId,
                   field,
                   id: fieldInputId,
+                  invalid,
                   readOnly: fieldReadOnly,
                   value: resolvedValues[field.id],
                   onChange: (value) => updateFieldValue(field, value),
@@ -348,7 +372,7 @@ export function WorkbenchSchemaForm({
           <Button disabled={disabled} onClick={() => onCancel?.({ values: resolvedValues })}>
             {cancelLabel}
           </Button>
-          <Button disabled={!submittable} type="submit" variant="primary">
+          <Button disabled={submitDisabled} type="submit" variant="primary">
             {submitLabel}
           </Button>
         </div>
@@ -362,6 +386,7 @@ function renderWorkbenchSchemaFormField({
   errorId,
   field,
   id,
+  invalid,
   onChange,
   readOnly,
   value,
@@ -370,6 +395,7 @@ function renderWorkbenchSchemaFormField({
   errorId?: string;
   field: WorkbenchSchemaFormField;
   id: string;
+  invalid: boolean;
   onChange: (value: WorkbenchSchemaFormFieldValue) => void;
   readOnly: boolean;
   value: WorkbenchSchemaFormFieldValue;
@@ -379,8 +405,10 @@ function renderWorkbenchSchemaFormField({
       <Field description={field.description}>
         <Checkbox
           aria-describedby={errorId}
+          aria-invalid={invalid || undefined}
           checked={Boolean(value)}
           disabled={disabled || readOnly}
+          id={id}
           label={field.label}
           onChange={(event) => onChange(event.currentTarget.checked)}
         />
@@ -394,6 +422,7 @@ function renderWorkbenchSchemaFormField({
         <Select
           id={id}
           aria-describedby={errorId}
+          aria-invalid={invalid || undefined}
           controlWidth="full"
           disabled={disabled || readOnly}
           value={String(value)}
@@ -415,6 +444,7 @@ function renderWorkbenchSchemaFormField({
       <TextInput
         id={id}
         aria-describedby={errorId}
+        aria-invalid={invalid || undefined}
         autoComplete={field.type === 'text' ? field.autocomplete : undefined}
         controlWidth="full"
         max={field.type === 'number' ? field.max : undefined}

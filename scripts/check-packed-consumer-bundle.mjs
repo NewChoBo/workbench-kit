@@ -1966,6 +1966,25 @@ export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-types.ts'),
+    `import {
+  WorkbenchSchemaForm,
+  type WorkbenchSchemaFormProps,
+} from '@workbench-kit/react/workbench/settings';
+
+export const packedSchemaFormComponent = WorkbenchSchemaForm;
+export const packedSchemaFormOmitted = { fields: [] } satisfies WorkbenchSchemaFormProps;
+export const packedSchemaFormFalse = {
+  fields: [],
+  focusFirstInvalidFieldOnSubmit: false,
+} satisfies WorkbenchSchemaFormProps;
+export const packedSchemaFormTrue = {
+  fields: [],
+  focusFirstInvalidFieldOnSubmit: true,
+} satisfies WorkbenchSchemaFormProps;
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'node-context-menu-item.ts'),
     `import type { ContextMenuItem } from '@workbench-kit/react/overlay/context-menu-item';
 

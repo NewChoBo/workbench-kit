@@ -18,6 +18,10 @@ import { ChatPanel } from './.tmp-types/workbench/chat/ChatPanel';
 import { ExtensionManagementPanel } from './.tmp-types/workbench/management/ExtensionManagementPanel';
 import { ExtensionManagementSidebar } from './.tmp-types/workbench/management/ExtensionManagementSidebar';
 import type { ExtensionManagementEntry } from './.tmp-types/workbench/management/types';
+import {
+  WorkbenchSchemaForm,
+  type WorkbenchSchemaFormProps,
+} from './.tmp-types/workbench/settings/SchemaForm';
 
 export function ExactOptionalPrimitivesSmoke(): ReactElement {
   return (
@@ -63,6 +67,23 @@ export function ExactOptionalChatSmoke(): ReactElement {
       onSubmit={() => undefined}
       messages={[]}
     />
+  );
+}
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined for an optional prop.
+const invalidSchemaFormProps: WorkbenchSchemaFormProps = {
+  fields: [],
+  focusFirstInvalidFieldOnSubmit: undefined,
+};
+void invalidSchemaFormProps;
+
+export function ExactOptionalSchemaFormSmoke(): ReactElement {
+  return (
+    <>
+      <WorkbenchSchemaForm fields={[]} />
+      <WorkbenchSchemaForm fields={[]} focusFirstInvalidFieldOnSubmit={false} />
+      <WorkbenchSchemaForm fields={[]} focusFirstInvalidFieldOnSubmit />
+    </>
   );
 }
 

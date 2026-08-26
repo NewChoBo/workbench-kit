@@ -1,5 +1,9 @@
+/** @vitest-environment jsdom */
+
+import { act, type ReactElement } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import {
   WorkbenchSchemaForm,
   coerceWorkbenchSchemaFormFieldValue,
@@ -10,6 +14,46 @@ import {
   normalizeWorkbenchSchemaFormValues,
   type WorkbenchSchemaFormField,
 } from './SchemaForm';
+import { WorkbenchSettingsCommitProvider } from './settingsCommit';
+
+const testGlobal = globalThis as typeof globalThis & {
+  IS_REACT_ACT_ENVIRONMENT?: boolean;
+};
+testGlobal.IS_REACT_ACT_ENVIRONMENT = true;
+
+async function renderSchemaForm(element: ReactElement) {
+  const container = document.createElement('div');
+  document.body.append(container);
+  const root = createRoot(container);
+
+  await act(async () => {
+    root.render(element);
+  });
+
+  return {
+    container,
+    rerender: async (nextElement: ReactElement) => {
+      await act(async () => {
+        root.render(nextElement);
+      });
+    },
+    cleanup: async () => {
+      await act(async () => {
+        root.unmount();
+      });
+      container.remove();
+    },
+  };
+}
+
+function changeTextInput(input: HTMLInputElement, value: string) {
+  const nativeValueSetter = Object.getOwnPropertyDescriptor(
+    HTMLInputElement.prototype,
+    'value',
+  )?.set;
+  nativeValueSetter?.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
+}
 
 const fields: WorkbenchSchemaFormField[] = [
   {
@@ -138,5 +182,421 @@ describe('WorkbenchSchemaForm rendering', () => {
     expect(readOnlyMarkup).toContain('readOnly=""');
     expect(readOnlyMarkup).toContain('data-readonly="true"');
     expect(emptyMarkup).toContain('No settings fields');
+  });
+
+  it('associates invalid state and messages with every actual control target', async () => {
+    const invalidFields: WorkbenchSchemaFormField[] = [
+      {
+        id: 'name',
+        label: 'Name',
+        type: 'text',
+        validationMessage: 'Name is invalid.',
+      },
+      {
+        id: 'count',
+        label: 'Count',
+        type: 'number',
+        validationMessage: 'Count is invalid.',
+      },
+      {
+        id: 'enabled',
+        label: 'Enabled',
+        type: 'checkbox',
+        validationMessage: 'Enabled is invalid.',
+      },
+      {
+        id: 'mode',
+        label: 'Mode',
+        options: [{ label: 'Automatic', value: 'automatic' }],
+        type: 'select',
+        validationMessage: 'Mode is invalid.',
+      },
+    ];
+    const onSubmit = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm fields={invalidFields} onSubmit={onSubmit} />,
+    );
+
+    try {
+      const targets = [
+        rendered.container.querySelector<HTMLElement>('[data-field-id="name"] input'),
+        rendered.container.querySelector<HTMLElement>('[data-field-id="count"] input'),
+        rendered.container.querySelector<HTMLElement>('[data-field-id="enabled"] input'),
+        rendered.container.querySelector<HTMLElement>('[data-field-id="mode"] [role="combobox"]'),
+      ];
+
+      for (const target of targets) {
+        expect(target).not.toBeNull();
+        expect(target?.id).not.toBe('');
+        expect(target?.getAttribute('aria-invalid')).toBe('true');
+
+        const errorId = target?.getAttribute('aria-describedby');
+        expect(errorId).toBeTruthy();
+        expect(errorId ? document.getElementById(errorId)?.getAttribute('role') : null).toBe(
+          'alert',
+        );
+      }
+
+      const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+      expect(submit?.disabled).toBe(true);
+
+      targets[0]?.focus();
+      await act(async () => {
+        rendered.container
+          .querySelector('form')
+          ?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(document.activeElement).toBe(targets[0]);
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('focuses the first eligible renderably invalid field in declaration order', async () => {
+    const orderedFields: WorkbenchSchemaFormField[] = [
+      {
+        disabled: true,
+        id: 'disabled',
+        label: 'Disabled',
+        type: 'text',
+      },
+      {
+        id: 'readonly',
+        label: 'Read only',
+        readOnly: true,
+        type: 'number',
+      },
+      {
+        id: 'nonRenderable',
+        label: 'Non-renderable',
+        type: 'checkbox',
+      },
+      {
+        id: 'booleanTrue',
+        label: 'Boolean true',
+        type: 'text',
+      },
+      {
+        id: 'mode',
+        label: 'Mode',
+        options: [{ label: 'Automatic', value: 'automatic' }],
+        type: 'select',
+      },
+      {
+        id: 'last',
+        label: 'Last',
+        type: 'text',
+      },
+    ];
+    const onSubmit = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        focusFirstInvalidFieldOnSubmit
+        errors={{
+          unknown: 'Unknown error',
+          last: 'Last error',
+          nonRenderable: null,
+          booleanTrue: true,
+          mode: 'Mode error',
+          readonly: 'Read-only error',
+          disabled: 'Disabled error',
+        }}
+        fields={orderedFields}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+      const mode = rendered.container.querySelector<HTMLElement>(
+        '[data-field-id="mode"] [role="combobox"]',
+      );
+      expect(submit?.disabled).toBe(false);
+
+      await act(async () => {
+        submit?.click();
+      });
+
+      expect(document.activeElement).toBe(mode);
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('keeps key-based blocking while skipping non-renderable focus candidates', async () => {
+    const onSubmit = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        focusFirstInvalidFieldOnSubmit
+        errors={{ name: null }}
+        fields={[{ id: 'name', label: 'Name', type: 'text' }]}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const input = rendered.container.querySelector<HTMLInputElement>('input');
+      const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+      input?.focus();
+
+      await act(async () => {
+        submit?.click();
+      });
+
+      expect(document.activeElement).toBe(input);
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it.each([
+    ['disabled', { disabled: true }],
+    ['readOnly', { readOnly: true }],
+  ] as const)(
+    'keeps an opt-in %s form natively disabled and inert on programmatic submit',
+    async (_label, formState) => {
+      const onSubmit = vi.fn();
+      const outside = document.createElement('button');
+      document.body.append(outside);
+      const rendered = await renderSchemaForm(
+        <WorkbenchSchemaForm
+          focusFirstInvalidFieldOnSubmit
+          fields={[{ id: 'name', label: 'Name', required: true, type: 'text' }]}
+          onSubmit={onSubmit}
+          {...formState}
+        />,
+      );
+
+      try {
+        const form = rendered.container.querySelector('form');
+        const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+        outside.focus();
+
+        expect(submit?.disabled).toBe(true);
+        await act(async () => {
+          form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+        });
+
+        expect(document.activeElement).toBe(outside);
+        expect(onSubmit).not.toHaveBeenCalled();
+      } finally {
+        await rendered.cleanup();
+        outside.remove();
+      }
+    },
+  );
+
+  it('keeps explicit false equivalent to the omitted default', async () => {
+    const onSubmit = vi.fn();
+    const outside = document.createElement('button');
+    document.body.append(outside);
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        focusFirstInvalidFieldOnSubmit={false}
+        fields={[{ id: 'name', label: 'Name', required: true, type: 'text' }]}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const form = rendered.container.querySelector('form');
+      const submit = rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+      outside.focus();
+
+      expect(submit?.disabled).toBe(true);
+      await act(async () => {
+        form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(document.activeElement).toBe(outside);
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+      outside.remove();
+    }
+  });
+
+  it('submits exactly once after controlled errors are repaired', async () => {
+    const requiredFields: WorkbenchSchemaFormField[] = [
+      { id: 'name', label: 'Name', required: true, type: 'text' },
+    ];
+    const onSubmit = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        focusFirstInvalidFieldOnSubmit
+        fields={requiredFields}
+        values={{ name: '' }}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const invalidSubmit =
+        rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+      await act(async () => {
+        invalidSubmit?.click();
+      });
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      await rendered.rerender(
+        <WorkbenchSchemaForm
+          focusFirstInvalidFieldOnSubmit
+          fields={requiredFields}
+          values={{ name: 'Ready' }}
+          onSubmit={onSubmit}
+        />,
+      );
+
+      const validSubmit =
+        rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]');
+      await act(async () => {
+        validSubmit?.click();
+      });
+
+      expect(onSubmit).toHaveBeenCalledTimes(1);
+      expect(onSubmit).toHaveBeenCalledWith(
+        { name: 'Ready' },
+        expect.objectContaining({ values: { name: 'Ready' } }),
+      );
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('updates uncontrolled values and gives Cancel the current snapshot', async () => {
+    const onCancel = vi.fn();
+    const onSubmit = vi.fn();
+    const onValuesChange = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        defaultValues={{ name: 'Initial' }}
+        fields={[{ id: 'name', label: 'Name', type: 'text' }]}
+        onCancel={onCancel}
+        onSubmit={onSubmit}
+        onValuesChange={onValuesChange}
+      />,
+    );
+
+    try {
+      const input = rendered.container.querySelector<HTMLInputElement>('input');
+      const cancel = Array.from(rendered.container.querySelectorAll('button')).find(
+        (button) => button.textContent === 'Cancel',
+      );
+
+      await act(async () => {
+        if (input) {
+          changeTextInput(input, 'Updated');
+        }
+      });
+
+      expect(onValuesChange).toHaveBeenCalledTimes(1);
+      expect(onValuesChange.mock.calls[0]?.[0]).toEqual({ name: 'Updated' });
+
+      await act(async () => {
+        cancel?.click();
+      });
+
+      expect(onCancel).toHaveBeenCalledTimes(1);
+      expect(onCancel).toHaveBeenCalledWith({ values: { name: 'Updated' } });
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('keeps immediate commit actionless and emits one preference change', async () => {
+    const preferenceChanges: unknown[] = [];
+    const rendered = await renderSchemaForm(
+      <WorkbenchSettingsCommitProvider
+        value={{
+          categoryId: 'appearance',
+          commitMode: 'immediate',
+          onPreferenceChange: (change) => preferenceChanges.push(change),
+          scopeId: 'user',
+        }}
+      >
+        <WorkbenchSchemaForm
+          defaultValues={{ name: 'Initial' }}
+          fields={[{ id: 'name', label: 'Name', type: 'text' }]}
+          showActions
+        />
+      </WorkbenchSettingsCommitProvider>,
+    );
+
+    try {
+      expect(rendered.container.querySelector('.ui-workbench-schema-form__actions')).toBeNull();
+      const input = rendered.container.querySelector<HTMLInputElement>('input');
+
+      await act(async () => {
+        if (input) {
+          changeTextInput(input, 'Updated');
+        }
+      });
+
+      expect(preferenceChanges).toEqual([
+        {
+          categoryId: 'appearance',
+          key: 'name',
+          scopeId: 'user',
+          value: 'Updated',
+        },
+      ]);
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('uses the native submit event path for an Enter-equivalent invalid attempt', async () => {
+    const onSubmit = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        focusFirstInvalidFieldOnSubmit
+        fields={[
+          { id: 'first', label: 'First', required: true, type: 'text' },
+          { id: 'second', label: 'Second', required: true, type: 'number' },
+        ]}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const form = rendered.container.querySelector('form');
+      const first = rendered.container.querySelector<HTMLInputElement>(
+        '[data-field-id="first"] input',
+      );
+      const second = rendered.container.querySelector<HTMLInputElement>(
+        '[data-field-id="second"] input',
+      );
+      second?.focus();
+
+      await act(async () => {
+        form?.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+      });
+
+      expect(document.activeElement).toBe(first);
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('does not add a submitter when actions are hidden', async () => {
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        focusFirstInvalidFieldOnSubmit
+        fields={[{ id: 'name', label: 'Name', required: true, type: 'text' }]}
+        showActions={false}
+      />,
+    );
+
+    try {
+      expect(rendered.container.querySelector('button[type="submit"]')).toBeNull();
+    } finally {
+      await rendered.cleanup();
+    }
   });
 });

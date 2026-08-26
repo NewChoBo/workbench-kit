@@ -20,4 +20,19 @@ describe('Select', () => {
     expect(markup).toContain('Open</option>');
     expect(markup).toContain('aria-expanded="false"');
   });
+
+  it('forwards invalid state to the visible combobox trigger', () => {
+    const markup = renderToStaticMarkup(
+      <Select id="status" aria-describedby="status-error" aria-invalid="true" defaultValue="open">
+        <option value="open">Open</option>
+      </Select>,
+    );
+    const trigger = markup.match(/<button[^>]*>/)?.[0];
+    const nativeSelect = markup.match(/<select[^>]*>/)?.[0];
+
+    expect(trigger).toContain('id="status"');
+    expect(trigger).toContain('aria-describedby="status-error"');
+    expect(trigger).toContain('aria-invalid="true"');
+    expect(nativeSelect).toContain('aria-invalid="true"');
+  });
 });
