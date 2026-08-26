@@ -36,6 +36,7 @@ export function Select({
   value,
   children,
   'aria-describedby': ariaDescribedBy,
+  'aria-invalid': ariaInvalid,
   'aria-label': ariaLabel,
   'aria-labelledby': ariaLabelledBy,
   ...nativeSelectProps
@@ -237,6 +238,7 @@ export function Select({
         aria-describedby={ariaDescribedBy}
         aria-expanded={open}
         aria-haspopup="listbox"
+        aria-invalid={ariaInvalid}
         aria-label={ariaLabel}
         aria-labelledby={ariaLabelledBy}
         className="ui-select__trigger"
@@ -258,6 +260,7 @@ export function Select({
       <select
         ref={nativeSelectRef}
         aria-hidden="true"
+        aria-invalid={ariaInvalid}
         className="ui-select__native"
         disabled={disabled}
         tabIndex={-1}
