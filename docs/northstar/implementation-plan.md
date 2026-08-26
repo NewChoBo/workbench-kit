@@ -2082,12 +2082,15 @@ Inventory current field-schema, Field Remap, settings/form/inspector APIs before
 
 ## WB-NS-030A — Opt-in invalid-submit focus recovery for SchemaForm
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** bounded compatibility enhancement for the current scalar
   `WorkbenchSchemaForm`; parent `WB-NS-030` remains `DESIGNING`
 - **Ownership:** `GENERIC_KIT`
 - **Exact implementation base:**
   `b671c7bb9e02900baa6d259f5e0e128f8aecb3eb`
+- **Current source evidence:**
+  `develop@a047e056b2917c645bbcc5ad7ff836c391ee1b10` (exact source candidate
+  `3acac562ba5773a9866d367f52a8a7366d8dcdd1`, integrated through PR #376)
 - **Public owner:** `@workbench-kit/react/workbench/settings`
 - **Native boundary:** none
 
@@ -2223,6 +2226,17 @@ native element; installs a timer, global listener, keyboard interceptor or docum
 authority; creates a second value/error store; changes commit/cancel semantics; omits exact-optional
 or packed-consumer proof; adds a public helper/export beyond the one optional prop; expands into the
 parent architecture; or claims Electron, release or publish completion.
+
+### Completion evidence
+
+- Exact source candidate `3acac562ba5773a9866d367f52a8a7366d8dcdd1` was integrated through PR #376
+  as `develop@a047e056b2917c645bbcc5ad7ff836c391ee1b10`.
+- Final exact-head validation passed `validate:static`, `validate:fast` with 462 files / 2,596 tests,
+  and the required Chromium Storybook lane with 82/82 interactions.
+- Three recorded source reviews returned `PASS / P0 none / P1 none / P2 none` against the frozen
+  packet and final successor.
+- The integrated source satisfies this bounded packet. Release, package publication and consumer
+  adoption remain separate claims.
 
 ## WB-NS-040 — Extension capability / trust / compatibility model
 
