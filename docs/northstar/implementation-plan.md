@@ -6,9 +6,9 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@cfd64106a5212d787f5f5ef1e2231b81cb41524a`.
-- **Reviewed documentation-only baseline:** `develop@892499b2a6d24b8e13aef8da56120ff51038961d` / PR #365; its diff from the source-bearing baseline changes only this implementation plan and carries no source/API change.
-- **Baseline maintenance:** a later documentation-only integration preserves the source-bearing baseline only after its diff from the named documentation-only baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
+- **Latest source-bearing integration baseline:** `develop@abde7236cb48ebaf3758363ddd3df88bec0e7aa9`.
+- **Reviewed documentation-only predecessor:** `develop@8c71d49ea7732831695ea03772bf9cd8dff6aa6f` / PR #372; its diff from the preceding source-bearing `develop@7051a2e7051838770a4d7d527904aa4a5515db0d` changes only `implementation-plan.md`, `roadmap.md` and `ui-authoring-and-generative-composition.md` under this Northstar directory and carries no source/API change.
+- **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
 ## Status model
@@ -76,7 +76,7 @@ WB-NS-071A graph node type/property-input foundation [DONE; independent after WB
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
         ↓
-WB-NS-071C external static node catalog projection [READY_FOR_IMPLEMENTATION; data-only v1]
+WB-NS-071C external static node catalog projection [DONE; data-only v1]
 
 WB-NS-072A design-system foundation consolidation map [DONE]
         ↓
@@ -3126,7 +3126,7 @@ Support typed graph node descriptors and the useful editor↔connectable-input d
 ```text
 WB-NS-071A NodeTypeDescriptor / typed port + property foundation [DONE]
 WB-NS-071B missing capability -> component/node development requirement [DONE]
-WB-NS-071C external static node catalog projection [READY_FOR_IMPLEMENTATION; data-only v1]
+WB-NS-071C external static node catalog projection [DONE; data-only v1]
 optional ComfyUI adapter experiment
 ```
 
@@ -3654,7 +3654,7 @@ reviewed successor as merge `7051a2e7051838770a4d7d527904aa4a5515db0d`.
 
 ### `WB-NS-071C` bounded readiness packet — external static node catalog projection
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Exact source/API base:** `origin/develop@17e71629526bdb9f4b09246dd227f0d97152b09b`
 - **Dependencies:** `WB-NS-071A` and `WB-NS-071B` `DONE`; existing `NodeTypeDescriptor`, `UiValueSchema`, `NodeTypeCatalogContribution`, `resolveNodeTypeCatalog()` and 071B exact requirement resolution remain canonical
 - **Target owner:** focused public subpath `@workbench-kit/contracts/external-node-catalog`
@@ -4172,6 +4172,18 @@ entries, duplicated node/value/catalog validation, raw or executable provenance,
 workflow widening, document/task/repository mutation, automatic preview/Apply and vendor/product
 coupling. Acceptance requires `PASS / P0 none / P1 none / P2 none` on the exact candidate plus the
 focused, packed and final validation above.
+
+The integrated source implements the focused public leaf under
+`packages/contracts/src/external-node-catalog/`, shares only contracts-private strict admission
+helpers with 071B, and keeps the package root, runtime and extension SDK free of convenience exports
+or registration authority. Candidate `65673c3007092232fb533d459d7f879d7fe17868` established the
+production slice; one batched successor `850735555e59c925aed9d30045abf3d325184a14` closed bounded
+admission, deterministic issue and packed lifecycle review findings. Final exact-candidate
+`pnpm validate:fast` passed every static check plus 462 test files and 2,584 tests;
+`pnpm check:commit-safety` also passed before delivery. Three producer-distinct successor reviews
+returned `PASS / P0 none / P1 none / P2 none`; browser and Electron were not required because no
+renderer or native boundary changed. PR #373 integrated the reviewed source as merge
+`abde7236cb48ebaf3758363ddd3df88bec0e7aa9`.
 
 ### ComfyUI discovery
 
