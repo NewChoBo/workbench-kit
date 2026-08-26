@@ -304,6 +304,25 @@ export {
   finalizeUiAuthoringDetachedPlan,
   previewUiAuthoringDetachedPlan,
 } from './ui-authoring/detached-plan.js';
+export type {
+  CreateUiAuthoringSourceInputPlanResult,
+  FinalizeUiAuthoringSourceInputPlanInput,
+  FinalizeUiAuthoringSourceInputPlanResult,
+  UiAuthoringSourceInputCandidateRequestV1,
+  UiAuthoringSourceInputCandidateResult,
+  UiAuthoringSourceInputPlan,
+  UiAuthoringSourceInputPlanPreview,
+  UiAuthoringSourceInputPlanRequestV1,
+  UiAuthoringSourceInputRequestSnapshotV1,
+  UiAuthoringSourceInputSelection,
+  UiSourceInputComponentLookup,
+} from './ui-authoring/source-input-plan.js';
+export {
+  createUiAuthoringSourceInputPlan,
+  finalizeUiAuthoringSourceInputPlan,
+  inspectUiAuthoringSourceInputCandidates,
+  previewUiAuthoringSourceInputPlan,
+} from './ui-authoring/source-input-plan.js';
 export {
   admitUiGenerativeUiRequest,
   createUiGenerativeUiPlan,

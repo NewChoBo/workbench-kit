@@ -25,6 +25,7 @@ export interface UiComponentBindingDescriptor {
   readonly id: string;
   readonly label?: string;
   readonly description?: string;
+  readonly semanticRole?: string;
   readonly direction: UiBindingDirection;
   readonly value: UiValueSchema;
 }

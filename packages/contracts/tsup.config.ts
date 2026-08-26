@@ -5,6 +5,7 @@ export default defineConfig({
     'authoring-development': 'src/authoring-development/index.ts',
     'external-node-catalog': 'src/external-node-catalog/index.ts',
     index: 'src/index.ts',
+    'source-input-compatibility': 'src/source-input-compatibility/index.ts',
     'theme-presets': 'src/design-system/builtin-theme-presets.ts',
   },
   format: ['esm', 'cjs'],
