@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useId, useLayoutEffect, useRef, useState } from 'react';
 import './tabbed-panels.css';
 import type { ComponentPropsWithRef, KeyboardEvent, ReactNode } from 'react';
 import { cx } from '../../utils/cx';
@@ -24,6 +24,7 @@ export function TabbedPanels({
   onSelect,
   ...props
 }: TabbedPanelsProps) {
+  const instanceId = useId();
   const tabRefs = useRef<Array<HTMLButtonElement | null>>([]);
   const tabFocusOwnedRef = useRef(false);
   const [internalActiveId, setInternalActiveId] = useState<string | null>(null);
@@ -108,11 +109,7 @@ export function TabbedPanels({
         role="tablist"
         onBlurCapture={(event) => {
           const nextTarget = event.relatedTarget;
-          if (
-            nextTarget instanceof Node &&
-            nextTarget !== document.body &&
-            !event.currentTarget.contains(nextTarget)
-          ) {
+          if (!(nextTarget instanceof Node) || !event.currentTarget.contains(nextTarget)) {
             tabFocusOwnedRef.current = false;
           }
         }}
@@ -122,8 +119,8 @@ export function TabbedPanels({
       >
         {items.map((item, index) => {
           const selected = item.id === activeItem?.id;
-          const tabId = `${item.id}:tab`;
-          const panelId = `${item.id}:view`;
+          const tabId = `${instanceId}-${index}-tab`;
+          const panelId = `${instanceId}-${index}-panel`;
           return (
             <button
               key={item.id}
@@ -147,17 +144,18 @@ export function TabbedPanels({
           );
         })}
       </div>
-      {items.map((item) => {
+      {items.map((item, index) => {
         const selected = item.id === activeItem?.id;
         return (
           <div
             key={item.id}
-            aria-labelledby={`${item.id}:tab`}
+            aria-labelledby={`${instanceId}-${index}-tab`}
             className="ui-tabbed-panels__panel"
             hidden={!selected}
-            id={`${item.id}:view`}
+            id={`${instanceId}-${index}-panel`}
             role="tabpanel"
             style={selected ? undefined : { display: 'none' }}
+            tabIndex={selected ? 0 : undefined}
           >
             {selected ? item.panel : null}
           </div>

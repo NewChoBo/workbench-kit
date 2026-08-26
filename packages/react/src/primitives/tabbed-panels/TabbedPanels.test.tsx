@@ -58,6 +58,7 @@ describe('TabbedPanels', () => {
     expect(window.getComputedStyle(panels[0]!).display).toBe('grid');
     expect(window.getComputedStyle(panels[1]!).display).toBe('none');
     expect(window.getComputedStyle(panels[2]!).display).toBe('none');
+    expect(panels.map((panel) => panel.tabIndex)).toEqual([0, -1, -1]);
     expect(new Set(tabs.map((tab) => tab.id)).size).toBe(items.length);
     expect(new Set(panels.map((panel) => panel.id)).size).toBe(items.length);
 
@@ -70,6 +71,40 @@ describe('TabbedPanels', () => {
       root.unmount();
     });
     consumerStyle.remove();
+  });
+
+  it('keeps relationships unique across instances and hostile item ids', async () => {
+    const hostileItems = [
+      { id: 'shared source', label: 'Source', panel: <div>Source panel</div> },
+      { id: 'shared/source', label: 'Defaults', panel: <div>Defaults panel</div> },
+    ] as const;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <>
+          <TabbedPanels items={hostileItems} />
+          <TabbedPanels items={hostileItems} />
+        </>,
+      );
+    });
+
+    const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    const panels = Array.from(container.querySelectorAll<HTMLElement>('[role="tabpanel"]'));
+    const ids = [...tabs, ...panels].map((element) => element.id);
+    expect(new Set(ids).size).toBe(ids.length);
+    expect(ids.every((id) => id.length > 0 && !id.includes(' '))).toBe(true);
+
+    tabs.forEach((tab) => {
+      const panel = document.getElementById(tab.getAttribute('aria-controls') ?? '');
+      expect(panel?.getAttribute('aria-labelledby')).toBe(tab.id);
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
   });
 
   it('wraps Arrow navigation and supports Home and End with automatic activation', async () => {
@@ -200,6 +235,49 @@ describe('TabbedPanels', () => {
     await act(async () => {
       root.unmount();
     });
+  });
+
+  it('returns the roving tab stop to the active tab after focus leaves the tablist', async () => {
+    const container = document.createElement('div');
+    const outside = document.createElement('button');
+    outside.textContent = 'Outside';
+    document.body.append(container, outside);
+    const root = createRoot(container);
+    const renderControlled = (activeId: string) => (
+      <TabbedPanels activeId={activeId} items={items} />
+    );
+
+    await act(async () => {
+      root.render(renderControlled('source'));
+    });
+
+    const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    tabs[0]?.focus();
+    await act(async () => {
+      tabs[0]?.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'ArrowRight',
+        }),
+      );
+    });
+    expect(document.activeElement).toBe(tabs[1]);
+    expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, 0, -1]);
+
+    outside.focus();
+    await act(async () => {
+      root.render(renderControlled('remap'));
+    });
+
+    expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, -1, 0]);
+    tabs.find((tab) => tab.tabIndex === 0)?.focus();
+    expect(document.activeElement).toBe(tabs[2]);
+
+    await act(async () => {
+      root.unmount();
+    });
+    outside.remove();
   });
 
   it('restores focus to the surviving selected tab when the focused item is removed', async () => {
