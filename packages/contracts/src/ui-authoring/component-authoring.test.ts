@@ -54,6 +54,7 @@ const textDescriptor: UiAtomicComponentDescriptor = {
   bindings: [
     {
       id: 'value',
+      semanticRole: 'content.text',
       direction: 'bidirectional',
       value: { type: 'string', allowedSources: ['literal', 'binding'] },
     },
@@ -211,6 +212,24 @@ describe('UI component descriptors', () => {
       }),
     ]);
     expect(validateUiComponentDescriptor(atomicDescriptor('workbench.leaf'))).toEqual([]);
+  });
+
+  it('accepts canonical binding semantic roles and reports malformed roles through the closed issue code', () => {
+    expect(validateUiComponentDescriptor(textDescriptor)).toEqual([]);
+
+    const malformed = {
+      ...textDescriptor,
+      bindings: textDescriptor.bindings?.map((binding) => ({
+        ...binding,
+        semanticRole: ' content ',
+      })),
+    };
+    expect(validateUiComponentDescriptor(malformed)).toEqual([
+      expect.objectContaining({
+        code: 'invalid-binding-value',
+        path: 'bindings[0].semanticRole',
+      }),
+    ]);
   });
 });
 

@@ -299,6 +299,16 @@ export function validateUiComponentDescriptor(
       );
     }
 
+    if (binding.semanticRole !== undefined && !isCanonicalText(binding.semanticRole)) {
+      issues.push(
+        createIssue(descriptor, {
+          code: 'invalid-binding-value',
+          message: 'UI component binding semantic role must be non-blank and already trimmed.',
+          path: `bindings[${index}].semanticRole`,
+        }),
+      );
+    }
+
     issues.push(
       ...validateValueSchema(
         descriptor,

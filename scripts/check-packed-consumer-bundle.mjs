@@ -73,6 +73,7 @@ try {
   verifyJdwPackageManifest();
   linkExternalPackages();
   verifyExternalNodeCatalogPackageManifest();
+  verifySourceInputCompatibilityPackageManifest();
   writeConsumer();
 
   console.log('[check-packed-consumer] Typechecking external TypeScript consumer...');
@@ -147,6 +148,33 @@ try {
         '--target',
         target,
         path.join(consumerDir, 'src', 'external-node-catalog-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
+  console.log(
+    '[check-packed-consumer] Typechecking focused source-input compatibility and JDW plan exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'source-input-compatibility-types.ts'),
       ],
       { cwd: repoRoot, stdio: 'inherit' },
     );
@@ -231,6 +259,14 @@ try {
     stdio: 'inherit',
   });
   runCommand('node', [path.join(consumerDir, 'src', 'external-node-catalog-runtime.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'source-input-compatibility-runtime.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'source-input-compatibility-runtime.mjs')], {
     cwd: consumerDir,
     stdio: 'inherit',
   });
@@ -443,6 +479,53 @@ function verifyExternalNodeCatalogPackageManifest() {
     if (!fs.existsSync(path.join(contractsRoot, target))) {
       throw new TypeError(`Packed external-node-catalog target is missing: ${target}`);
     }
+  }
+}
+
+function verifySourceInputCompatibilityPackageManifest() {
+  const contractsRoot = packagePath(nodeModulesDir, '@workbench-kit/contracts');
+  const manifest = readJson(path.join(contractsRoot, 'package.json'));
+  const expectedExport = {
+    types: './dist/source-input-compatibility.d.ts',
+    import: './dist/source-input-compatibility.js',
+    require: './dist/source-input-compatibility.cjs',
+    default: './dist/source-input-compatibility.js',
+  };
+  const actualExport = manifest.exports?.['./source-input-compatibility'];
+  if (JSON.stringify(actualExport) !== JSON.stringify(expectedExport)) {
+    throw new TypeError(
+      'Packed source-input-compatibility export must retain exact types/import/require/default conditions.',
+    );
+  }
+  const typeVersions = manifest.typesVersions?.['*']?.['source-input-compatibility'];
+  if (
+    !Array.isArray(typeVersions) ||
+    typeVersions.length !== 1 ||
+    typeVersions[0] !== 'dist/source-input-compatibility.d.ts'
+  ) {
+    throw new TypeError('Packed source-input-compatibility typesVersions mapping is invalid.');
+  }
+  if (
+    Object.keys(manifest.exports ?? {}).some((key) =>
+      key.startsWith('./source-input-compatibility/'),
+    )
+  ) {
+    throw new TypeError('Packed source-input-compatibility exposes a private deep subpath.');
+  }
+  for (const target of new Set(Object.values(expectedExport))) {
+    if (!fs.existsSync(path.join(contractsRoot, target))) {
+      throw new TypeError(`Packed source-input-compatibility target is missing: ${target}`);
+    }
+  }
+  const runtimeDependencyNames = new Set(
+    ['dependencies', 'optionalDependencies', 'peerDependencies'].flatMap((field) =>
+      Object.keys(manifest[field] ?? {}),
+    ),
+  );
+  if (runtimeDependencyNames.size !== 0) {
+    throw new TypeError(
+      'Packed source-input-compatibility boundary must remain dependency-free and provider-neutral.',
+    );
   }
 }
 
@@ -1470,6 +1553,228 @@ void PrivateIsSupportedUiValueSchemaShape;
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'source-input-compatibility-types.ts'),
+    `import {
+  UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION,
+  UI_SOURCE_INPUT_ISSUE_CODES,
+  UI_SOURCE_INPUT_LIMITS,
+  resolveUiSourceInputCandidates,
+  type UiConvertibleSourceInputCandidate,
+  type UiExactSourceInputCandidate,
+  type UiIncompatibleSourceInputCandidate,
+  type UiSourceBindingAssignment,
+  type UiSourceInputAdmissionIssue,
+  type UiSourceInputCandidate,
+  type UiSourceInputCandidateBase,
+  type UiSourceInputCandidateSetResult,
+  type UiSourceInputCompatibilityRequestV1,
+  type UiSourceInputIncompatibleIssue,
+  type UiSourceInputIssue,
+  type UiSourceInputIssueBase,
+  type UiSourceInputIssueCode,
+  type UiSourceInputIssueCoordinateKey,
+  type UiSourceInputPlanIssue,
+  type UiSourceInputRecommendationIssue,
+  type UiSourceInputRequestSnapshotV1,
+  type UiSourceInputResolution,
+  type UiSourceInputStaleIssue,
+  type UiSourceInputTargetDescriptor,
+  type UiSourceValueDescriptor,
+  type UiValueCompatibilitySchemaSnapshot,
+  type UiValueConversionEvidence,
+} from '@workbench-kit/contracts/source-input-compatibility';
+import {
+  createUiAuthoringSourceInputPlan,
+  finalizeUiAuthoringSourceInputPlan,
+  inspectUiAuthoringSourceInputCandidates,
+  previewUiAuthoringSourceInputPlan,
+  type CreateUiAuthoringSourceInputPlanResult,
+  type FinalizeUiAuthoringSourceInputPlanInput,
+  type FinalizeUiAuthoringSourceInputPlanResult,
+  type UiAuthoringSourceInputCandidateRequestV1,
+  type UiAuthoringSourceInputCandidateResult,
+  type UiAuthoringSourceInputPlan,
+  type UiAuthoringSourceInputPlanPreview,
+  type UiAuthoringSourceInputPlanRequestV1,
+  type UiAuthoringSourceInputRequestSnapshotV1,
+  type UiAuthoringSourceInputSelection,
+  type UiSourceInputComponentLookup,
+} from '@workbench-kit/jdw';
+
+// @ts-expect-error focused source-input constants do not leak through the contracts root.
+import { UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION as RootSourceInputSchemaVersion } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input constants do not leak through the contracts root.
+import { UI_SOURCE_INPUT_ISSUE_CODES as RootSourceInputIssueCodes } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input constants do not leak through the contracts root.
+import { UI_SOURCE_INPUT_LIMITS as RootSourceInputLimits } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input functions do not leak through the contracts root.
+import { resolveUiSourceInputCandidates as RootResolveSourceInputCandidates } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceValueDescriptor as RootUiSourceValueDescriptor } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputTargetDescriptor as RootUiSourceInputTargetDescriptor } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiValueCompatibilitySchemaSnapshot as RootUiValueCompatibilitySchemaSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiValueConversionEvidence as RootUiValueConversionEvidence } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceBindingAssignment as RootUiSourceBindingAssignment } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssueCoordinateKey as RootUiSourceInputIssueCoordinateKey } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssueBase as RootUiSourceInputIssueBase } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssueCode as RootUiSourceInputIssueCode } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputAdmissionIssue as RootUiSourceInputAdmissionIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIncompatibleIssue as RootUiSourceInputIncompatibleIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputRecommendationIssue as RootUiSourceInputRecommendationIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputPlanIssue as RootUiSourceInputPlanIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputStaleIssue as RootUiSourceInputStaleIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssue as RootUiSourceInputIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCandidateBase as RootUiSourceInputCandidateBase } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiExactSourceInputCandidate as RootUiExactSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiConvertibleSourceInputCandidate as RootUiConvertibleSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiIncompatibleSourceInputCandidate as RootUiIncompatibleSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCandidate as RootUiSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputResolution as RootUiSourceInputResolution } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCompatibilityRequestV1 as RootUiSourceInputCompatibilityRequestV1 } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputRequestSnapshotV1 as RootUiSourceInputRequestSnapshotV1 } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCandidateSetResult as RootUiSourceInputCandidateSetResult } from '@workbench-kit/contracts';
+// @ts-expect-error focused implementation modules remain private package subpaths.
+type PackedPrivateSourceInputCompatibilityModule = typeof import('@workbench-kit/contracts/source-input-compatibility/resolver');
+// @ts-expect-error JDW source-input implementation modules remain private package subpaths.
+type PackedPrivateSourceInputPlanModule = typeof import('@workbench-kit/jdw/ui-authoring/source-input-plan');
+
+const packedSourceValue = {
+  id: 'packed-source',
+  value: { type: 'string' },
+  semanticRole: 'packed.text',
+} satisfies UiSourceValueDescriptor;
+const packedBinding = {
+  sourceId: packedSourceValue.id,
+  bindingId: 'packed-binding',
+} satisfies UiSourceBindingAssignment;
+const packedCompatibilityRequest = {
+  schemaVersion: UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION,
+  sources: [packedSourceValue],
+  targets: [],
+  bindings: [packedBinding],
+} satisfies UiSourceInputCompatibilityRequestV1;
+
+export const packedSourceInputResult = resolveUiSourceInputCandidates(
+  packedCompatibilityRequest,
+);
+export const packedSourceInputConstants = Object.freeze({
+  issueCodes: UI_SOURCE_INPUT_ISSUE_CODES,
+  limits: UI_SOURCE_INPUT_LIMITS,
+});
+
+export type PackedSourceInputCompatibilityTypes = {
+  schema: UiValueCompatibilitySchemaSnapshot;
+  conversion: UiValueConversionEvidence;
+  target: UiSourceInputTargetDescriptor;
+  coordinateKey: UiSourceInputIssueCoordinateKey;
+  issueBase: UiSourceInputIssueBase<'no-change'>;
+  admissionIssue: UiSourceInputAdmissionIssue;
+  incompatibleIssue: UiSourceInputIncompatibleIssue;
+  recommendationIssue: UiSourceInputRecommendationIssue;
+  planIssue: UiSourceInputPlanIssue;
+  staleIssue: UiSourceInputStaleIssue;
+  issue: UiSourceInputIssue;
+  issueCode: UiSourceInputIssueCode;
+  candidateBase: UiSourceInputCandidateBase;
+  exact: UiExactSourceInputCandidate;
+  convertible: UiConvertibleSourceInputCandidate;
+  incompatible: UiIncompatibleSourceInputCandidate;
+  candidate: UiSourceInputCandidate;
+  resolution: UiSourceInputResolution;
+  request: UiSourceInputCompatibilityRequestV1;
+  snapshot: UiSourceInputRequestSnapshotV1;
+  result: UiSourceInputCandidateSetResult;
+  lookup: UiSourceInputComponentLookup;
+  candidateRequest: UiAuthoringSourceInputCandidateRequestV1;
+  selection: UiAuthoringSourceInputSelection;
+  planRequest: UiAuthoringSourceInputPlanRequestV1;
+  requestSnapshot: UiAuthoringSourceInputRequestSnapshotV1;
+  candidateResult: UiAuthoringSourceInputCandidateResult;
+  plan: UiAuthoringSourceInputPlan;
+  createResult: CreateUiAuthoringSourceInputPlanResult;
+  preview: UiAuthoringSourceInputPlanPreview;
+  finalizeInput: FinalizeUiAuthoringSourceInputPlanInput;
+  finalizeResult: FinalizeUiAuthoringSourceInputPlanResult;
+};
+
+declare const packedCandidateRequestWithoutEvidence: Omit<
+  UiAuthoringSourceInputCandidateRequestV1,
+  'conversionEvidence'
+>;
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined for source semanticRole.
+export const packedInvalidSourceOptional: UiSourceValueDescriptor = { id: 'packed-source', value: { type: 'string' }, semanticRole: undefined };
+// @ts-expect-error top-level request issues cannot expose a source coordinate.
+export const packedInvalidAdmissionCoordinate: UiSourceInputAdmissionIssue = { code: 'invalid-request', message: 'Invalid', path: '$', sourceId: 'packed-source' };
+// @ts-expect-error incompatible issues cannot carry recommendation-only codes.
+export const packedInvalidIncompatibleIssue: UiSourceInputIncompatibleIssue = { code: 'ambiguous-exact', message: 'Ambiguous', path: '$.sources[0]', sourceId: 'packed-source' };
+// @ts-expect-error blocked compatibility results cannot expose a snapshot.
+export const packedInvalidBlockedCompatibilityResult: UiSourceInputCandidateSetResult = { status: 'blocked', issues: [{ code: 'invalid-request', message: 'Invalid', path: '$' }], snapshot: packedCompatibilityRequest };
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined for conversionEvidence.
+export const packedInvalidCandidateRequestOptional: UiAuthoringSourceInputCandidateRequestV1 = { ...packedCandidateRequestWithoutEvidence, conversionEvidence: undefined };
+
+export const packedSourceInputRuntime = Object.freeze({
+  createUiAuthoringSourceInputPlan,
+  finalizeUiAuthoringSourceInputPlan,
+  inspectUiAuthoringSourceInputCandidates,
+  previewUiAuthoringSourceInputPlan,
+  resolveUiSourceInputCandidates,
+});
+
+void RootSourceInputSchemaVersion;
+void RootSourceInputIssueCodes;
+void RootSourceInputLimits;
+void RootResolveSourceInputCandidates;
+type _RootUiSourceValueDescriptor = RootUiSourceValueDescriptor;
+type _RootUiSourceInputTargetDescriptor = RootUiSourceInputTargetDescriptor;
+type _RootUiValueCompatibilitySchemaSnapshot = RootUiValueCompatibilitySchemaSnapshot;
+type _RootUiValueConversionEvidence = RootUiValueConversionEvidence;
+type _RootUiSourceBindingAssignment = RootUiSourceBindingAssignment;
+type _RootUiSourceInputIssueCoordinateKey = RootUiSourceInputIssueCoordinateKey;
+type _RootUiSourceInputIssueBase = RootUiSourceInputIssueBase<'no-change'>;
+type _RootUiSourceInputIssueCode = RootUiSourceInputIssueCode;
+type _RootUiSourceInputAdmissionIssue = RootUiSourceInputAdmissionIssue;
+type _RootUiSourceInputIncompatibleIssue = RootUiSourceInputIncompatibleIssue;
+type _RootUiSourceInputRecommendationIssue = RootUiSourceInputRecommendationIssue;
+type _RootUiSourceInputPlanIssue = RootUiSourceInputPlanIssue;
+type _RootUiSourceInputStaleIssue = RootUiSourceInputStaleIssue;
+type _RootUiSourceInputIssue = RootUiSourceInputIssue;
+type _RootUiSourceInputCandidateBase = RootUiSourceInputCandidateBase;
+type _RootUiExactSourceInputCandidate = RootUiExactSourceInputCandidate;
+type _RootUiConvertibleSourceInputCandidate = RootUiConvertibleSourceInputCandidate;
+type _RootUiIncompatibleSourceInputCandidate = RootUiIncompatibleSourceInputCandidate;
+type _RootUiSourceInputCandidate = RootUiSourceInputCandidate;
+type _RootUiSourceInputResolution = RootUiSourceInputResolution;
+type _RootUiSourceInputCompatibilityRequestV1 = RootUiSourceInputCompatibilityRequestV1;
+type _RootUiSourceInputRequestSnapshotV1 = RootUiSourceInputRequestSnapshotV1;
+type _RootUiSourceInputCandidateSetResult = RootUiSourceInputCandidateSetResult;
+type _PackedPrivateSourceInputCompatibilityModule = PackedPrivateSourceInputCompatibilityModule;
+type _PackedPrivateSourceInputPlanModule = PackedPrivateSourceInputPlanModule;
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'authoring-development-runtime.cjs'),
     `const contracts = require('@workbench-kit/contracts');
 const development = require('@workbench-kit/contracts/authoring-development');
@@ -2197,6 +2502,224 @@ if (
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'source-input-compatibility-runtime.cjs'),
+    `const contracts = require('@workbench-kit/contracts');
+const compatibility = require('@workbench-kit/contracts/source-input-compatibility');
+const jdw = require('@workbench-kit/jdw');
+
+const compatibilityRuntimeNames = [
+  'UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION',
+  'UI_SOURCE_INPUT_ISSUE_CODES',
+  'UI_SOURCE_INPUT_LIMITS',
+  'resolveUiSourceInputCandidates',
+];
+for (const name of compatibilityRuntimeNames) {
+  if (name in contracts || !(name in compatibility)) {
+    throw new TypeError('Packed source-input CommonJS focused/root boundary is invalid: ' + name);
+  }
+}
+const jdwRuntimeNames = [
+  'createUiAuthoringSourceInputPlan',
+  'finalizeUiAuthoringSourceInputPlan',
+  'inspectUiAuthoringSourceInputCandidates',
+  'previewUiAuthoringSourceInputPlan',
+];
+for (const name of jdwRuntimeNames) {
+  if (typeof jdw[name] !== 'function') {
+    throw new TypeError('Packed JDW CommonJS source-input export is missing: ' + name);
+  }
+}
+if (
+  compatibility.UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION !== 1 ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_LIMITS) ||
+  typeof compatibility.resolveUiSourceInputCandidates !== 'function'
+) {
+  throw new TypeError('Packed source-input CommonJS runtime exports are invalid.');
+}
+const expectedIssueCodes = ${JSON.stringify([
+      'invalid-request',
+      'unsupported-version',
+      'request-too-large',
+      'invalid-source',
+      'duplicate-source',
+      'invalid-target',
+      'duplicate-target',
+      'component-catalog-unavailable',
+      'invalid-conversion',
+      'duplicate-conversion',
+      'invalid-binding-assignment',
+      'missing-binding-assignment',
+      'extra-binding-assignment',
+      'duplicate-binding-id',
+      'target-output-only',
+      'target-binding-disallowed',
+      'target-occupied',
+      'type-mismatch',
+      'constraint-mismatch',
+      'no-declared-conversion',
+      'no-compatible-target',
+      'ambiguous-exact',
+      'convertible-only',
+      'selection-required',
+      'source-unselected',
+      'invalid-selection',
+      'target-contended',
+      'no-change',
+      'stale-source',
+      'stale-assigned-binding',
+      'stale-target-binding',
+      'stale-conversion-evidence',
+      'stale-selection',
+      'stale-plan',
+      'stale-recipe',
+      'stale-document',
+      'stale-design-system',
+      'stale-component-catalog',
+    ])};
+if (JSON.stringify(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) !== JSON.stringify(expectedIssueCodes)) {
+  throw new TypeError('Packed source-input CommonJS issue vocabulary is invalid.');
+}
+const result = compatibility.resolveUiSourceInputCandidates({
+  schemaVersion: 1,
+  sources: [{ id: 'packed-source', value: { type: 'string' } }],
+  targets: [],
+  bindings: [{ sourceId: 'packed-source', bindingId: 'packed-binding' }],
+});
+if (
+  result.status !== 'ready' ||
+  result.resolutions.length !== 1 ||
+  result.resolutions[0].status !== 'incompatible' ||
+  result.resolutions[0].issues[0].code !== 'no-compatible-target'
+) {
+  throw new TypeError('Packed source-input CommonJS resolution contract failed.');
+}
+for (const subpath of [
+  '@workbench-kit/contracts/source-input-compatibility/resolver',
+  '@workbench-kit/jdw/ui-authoring/source-input-plan',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    require(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed source-input CommonJS private subpath is exposed: ' + subpath);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'source-input-compatibility-runtime.mjs'),
+    `import * as contracts from '@workbench-kit/contracts';
+import * as compatibility from '@workbench-kit/contracts/source-input-compatibility';
+import * as jdw from '@workbench-kit/jdw';
+
+const compatibilityRuntimeNames = [
+  'UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION',
+  'UI_SOURCE_INPUT_ISSUE_CODES',
+  'UI_SOURCE_INPUT_LIMITS',
+  'resolveUiSourceInputCandidates',
+];
+for (const name of compatibilityRuntimeNames) {
+  if (name in contracts || !(name in compatibility)) {
+    throw new TypeError('Packed source-input ESM focused/root boundary is invalid: ' + name);
+  }
+}
+const jdwRuntimeNames = [
+  'createUiAuthoringSourceInputPlan',
+  'finalizeUiAuthoringSourceInputPlan',
+  'inspectUiAuthoringSourceInputCandidates',
+  'previewUiAuthoringSourceInputPlan',
+];
+for (const name of jdwRuntimeNames) {
+  if (typeof jdw[name] !== 'function') {
+    throw new TypeError('Packed JDW ESM source-input export is missing: ' + name);
+  }
+}
+if (
+  compatibility.UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION !== 1 ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_LIMITS) ||
+  typeof compatibility.resolveUiSourceInputCandidates !== 'function'
+) {
+  throw new TypeError('Packed source-input ESM runtime exports are invalid.');
+}
+const expectedIssueCodes = ${JSON.stringify([
+      'invalid-request',
+      'unsupported-version',
+      'request-too-large',
+      'invalid-source',
+      'duplicate-source',
+      'invalid-target',
+      'duplicate-target',
+      'component-catalog-unavailable',
+      'invalid-conversion',
+      'duplicate-conversion',
+      'invalid-binding-assignment',
+      'missing-binding-assignment',
+      'extra-binding-assignment',
+      'duplicate-binding-id',
+      'target-output-only',
+      'target-binding-disallowed',
+      'target-occupied',
+      'type-mismatch',
+      'constraint-mismatch',
+      'no-declared-conversion',
+      'no-compatible-target',
+      'ambiguous-exact',
+      'convertible-only',
+      'selection-required',
+      'source-unselected',
+      'invalid-selection',
+      'target-contended',
+      'no-change',
+      'stale-source',
+      'stale-assigned-binding',
+      'stale-target-binding',
+      'stale-conversion-evidence',
+      'stale-selection',
+      'stale-plan',
+      'stale-recipe',
+      'stale-document',
+      'stale-design-system',
+      'stale-component-catalog',
+    ])};
+if (JSON.stringify(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) !== JSON.stringify(expectedIssueCodes)) {
+  throw new TypeError('Packed source-input ESM issue vocabulary is invalid.');
+}
+const result = compatibility.resolveUiSourceInputCandidates({
+  schemaVersion: 1,
+  sources: [{ id: 'packed-source', value: { type: 'string' } }],
+  targets: [],
+  bindings: [{ sourceId: 'packed-source', bindingId: 'packed-binding' }],
+});
+if (
+  result.status !== 'ready' ||
+  result.resolutions.length !== 1 ||
+  result.resolutions[0].status !== 'incompatible' ||
+  result.resolutions[0].issues[0].code !== 'no-compatible-target'
+) {
+  throw new TypeError('Packed source-input ESM resolution contract failed.');
+}
+for (const subpath of [
+  '@workbench-kit/contracts/source-input-compatibility/resolver',
+  '@workbench-kit/jdw/ui-authoring/source-input-plan',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    await import(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed source-input ESM private subpath is exposed: ' + subpath);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'builtins.ts'),
     `import { BUILTIN_WORKBENCH_EXTENSIONS } from '@workbench-kit/shell-react';
 
@@ -2755,6 +3278,7 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
         exclude: [
           'src/authoring-development-types.ts',
           'src/external-node-catalog-types.ts',
+          'src/source-input-compatibility-types.ts',
           'src/ui-generative-plan-types.ts',
         ],
         include: ['src/**/*.ts'],
