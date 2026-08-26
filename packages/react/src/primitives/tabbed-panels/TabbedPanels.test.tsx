@@ -24,12 +24,22 @@ describe('TabbedPanels', () => {
   });
 
   it('links every tab to a unique panel and keeps one roving tab stop', async () => {
+    const consumerStyle = document.createElement('style');
+    consumerStyle.textContent =
+      '.consumer-panel-layout .ui-tabbed-panels__panel { display: grid; padding: 14px; }';
+    document.head.append(consumerStyle);
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
 
     await act(async () => {
-      root.render(<TabbedPanels ariaLabel="Content sections" items={items} />);
+      root.render(
+        <TabbedPanels
+          ariaLabel="Content sections"
+          className="consumer-panel-layout"
+          items={items}
+        />,
+      );
     });
 
     const tablist = container.querySelector('[role="tablist"]');
@@ -45,6 +55,9 @@ describe('TabbedPanels', () => {
       'false',
     ]);
     expect(panels.map((panel) => panel.hidden)).toEqual([false, true, true]);
+    expect(window.getComputedStyle(panels[0]!).display).toBe('grid');
+    expect(window.getComputedStyle(panels[1]!).display).toBe('none');
+    expect(window.getComputedStyle(panels[2]!).display).toBe('none');
     expect(new Set(tabs.map((tab) => tab.id)).size).toBe(items.length);
     expect(new Set(panels.map((panel) => panel.id)).size).toBe(items.length);
 
@@ -56,6 +69,7 @@ describe('TabbedPanels', () => {
     await act(async () => {
       root.unmount();
     });
+    consumerStyle.remove();
   });
 
   it('wraps Arrow navigation and supports Home and End with automatic activation', async () => {
@@ -115,7 +129,7 @@ describe('TabbedPanels', () => {
         new KeyboardEvent('keydown', {
           bubbles: true,
           cancelable: true,
-          ctrlKey: true,
+          shiftKey: true,
           key: 'ArrowRight',
         }),
       );
@@ -123,6 +137,97 @@ describe('TabbedPanels', () => {
 
     expect(document.activeElement).toBe(firstTab);
     expect(onSelect).not.toHaveBeenCalled();
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('keeps controlled selection and roving focus coherent while a host defers or declines', async () => {
+    const onSelect = vi.fn();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const renderControlled = (activeId: string | undefined) => (
+      <TabbedPanels activeId={activeId} items={items} onSelect={onSelect} />
+    );
+
+    await act(async () => {
+      root.render(renderControlled('source'));
+    });
+
+    const tabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    tabs[0]?.focus();
+    await act(async () => {
+      tabs[0]?.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'ArrowRight',
+        }),
+      );
+    });
+
+    expect(onSelect).toHaveBeenLastCalledWith('defaults');
+    expect(document.activeElement).toBe(tabs[1]);
+    expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, 0, -1]);
+    expect(tabs.map((tab) => tab.getAttribute('aria-selected'))).toEqual([
+      'true',
+      'false',
+      'false',
+    ]);
+
+    await act(async () => {
+      root.render(renderControlled('source'));
+    });
+    expect(document.activeElement).toBe(tabs[1]);
+    expect(tabs.map((tab) => tab.tabIndex)).toEqual([-1, 0, -1]);
+
+    await act(async () => {
+      root.render(renderControlled('defaults'));
+    });
+    expect(tabs.map((tab) => tab.getAttribute('aria-selected'))).toEqual([
+      'false',
+      'true',
+      'false',
+    ]);
+
+    await act(async () => {
+      root.render(renderControlled(undefined));
+    });
+    expect(tabs[1]?.getAttribute('aria-selected')).toBe('true');
+
+    await act(async () => {
+      root.unmount();
+    });
+  });
+
+  it('restores focus to the surviving selected tab when the focused item is removed', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(<TabbedPanels items={items} />);
+    });
+
+    const defaultsTab = Array.from(
+      container.querySelectorAll<HTMLButtonElement>('[role="tab"]'),
+    ).find((tab) => tab.textContent === 'Defaults');
+    await act(async () => {
+      defaultsTab?.click();
+    });
+    defaultsTab?.focus();
+    expect(document.activeElement).toBe(defaultsTab);
+
+    await act(async () => {
+      root.render(<TabbedPanels items={[items[0], items[2]]} />);
+    });
+
+    const survivingTabs = Array.from(container.querySelectorAll<HTMLButtonElement>('[role="tab"]'));
+    expect(document.activeElement).toBe(survivingTabs[0]);
+    expect(survivingTabs.map((tab) => tab.tabIndex)).toEqual([0, -1]);
+    expect(survivingTabs[0]?.getAttribute('aria-selected')).toBe('true');
 
     await act(async () => {
       root.unmount();
