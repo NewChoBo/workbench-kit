@@ -38,6 +38,17 @@ export {
 export type { CreateFieldRemapDocumentOptions } from './domain/document/fieldRemapDocument.js';
 
 export {
+  deserializeFieldRemapImport,
+  FIELD_REMAP_IMPORT_FAILURE_CODES,
+  FieldRemapImportAdmissionError,
+  preflightFieldRemapImport,
+} from './domain/document/fieldRemapImport.js';
+export type {
+  FieldRemapImportContext,
+  FieldRemapImportFailureCode,
+} from './domain/document/fieldRemapImport.js';
+
+export {
   InvalidObjectPathError,
   isSafeObjectPath,
   objectPathHasWildcard,

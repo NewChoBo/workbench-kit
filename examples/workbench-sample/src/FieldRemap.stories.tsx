@@ -187,7 +187,26 @@ export const ReadOnly: Story = {
   tags: ['storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
     await expect(canvas.getByTestId('field-remap-demo')).toHaveAttribute('data-read-only', 'true');
+    const exportDocument = canvas.getByRole('button', { name: 'Export JSON' });
+    await expect(exportDocument).toBeEnabled();
+    exportDocument.focus();
+    await userEvent.keyboard('{Enter}');
+
+    const exportDialog = await body.findByRole('dialog', { name: 'Export mapping document' });
+    const exportText = within(exportDialog).getByRole('textbox', {
+      name: 'Current mapping document JSON',
+    });
+    await waitFor(() => expect(exportText).toHaveFocus());
+    await expect(exportText).toHaveAttribute('readonly');
+    await expect(within(exportDialog).getByRole('button', { name: 'Copy JSON' })).toBeEnabled();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(exportDocument).toHaveFocus());
+
+    await expect(canvas.getByRole('button', { name: 'Import JSON' })).toBeDisabled();
+    await expect(canvas.getByText('Import is unavailable for this mapping.')).toBeVisible();
     await expect(canvas.getByTestId('field-remap-io-browse')).toBeVisible();
     await expect(canvas.queryByTestId('field-remap-shape-io-source')).toBeNull();
     await expect(canvas.queryByTestId('field-remap-convert-palette')).toBeNull();
@@ -448,6 +467,84 @@ export const SemanticHistory: Story = {
 
     await userEvent.click(redo);
     await waitFor(() => expect(canvas.queryByTestId('field-remap-lane-e-name')).toBeNull());
+  },
+};
+
+export const DocumentImportSemanticHistory: Story = {
+  name: 'Keyboard document import / single Undo',
+  args: {
+    sampleId: 'nm-combine-split',
+    showHostChromeDemo: true,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    const exportDocument = canvas.getByRole('button', { name: 'Export JSON' });
+    const importDocument = canvas.getByRole('button', { name: 'Import JSON' });
+    const undo = canvas.getByTestId('field-remap-undo');
+
+    await expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-op-op-address')).toBeVisible();
+    await expect(undo).toBeDisabled();
+
+    exportDocument.focus();
+    await userEvent.tab();
+    await expect(importDocument).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+
+    const dialog = await body.findByRole('dialog', { name: 'Import mapping document' });
+    const documentJson = within(dialog).getByRole('textbox', {
+      name: 'Mapping document JSON',
+    });
+    await waitFor(() => expect(documentJson).toHaveFocus());
+    await userEvent.paste('{"version":2');
+    await userEvent.tab();
+    await userEvent.tab();
+    await expect(within(dialog).getByRole('button', { name: 'Validate and import' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+
+    await expect(within(dialog).getByRole('alert')).toHaveTextContent(
+      'Enter valid mapping document JSON.',
+    );
+    await waitFor(() => expect(documentJson).toHaveFocus());
+    await expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-op-op-address')).toBeVisible();
+    await expect(undo).toBeDisabled();
+
+    await userEvent.keyboard('{Control>}a{/Control}');
+    await userEvent.paste(
+      JSON.stringify({
+        version: 2,
+        edges: [
+          {
+            id: 'imported-first-city',
+            sourceFieldId: 'a.first',
+            targetSlotId: 'b.city',
+          },
+        ],
+        operators: [],
+      }),
+    );
+    await userEvent.tab();
+    await expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus();
+    await userEvent.tab();
+    await expect(within(dialog).getByRole('button', { name: 'Validate and import' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await expect(await canvas.findByTestId('field-remap-lane-imported-first-city')).toBeVisible();
+    await waitFor(() => expect(canvas.queryByTestId('field-remap-op-op-name')).toBeNull());
+    await expect(canvas.queryByTestId('field-remap-op-op-address')).toBeNull();
+    await expect(undo).toBeEnabled();
+
+    await userEvent.click(undo);
+    await waitFor(() =>
+      expect(canvas.queryByTestId('field-remap-lane-imported-first-city')).toBeNull(),
+    );
+    await expect(await canvas.findByTestId('field-remap-op-op-name')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-op-op-address')).toBeVisible();
+    await expect(undo).toBeDisabled();
   },
 };
 

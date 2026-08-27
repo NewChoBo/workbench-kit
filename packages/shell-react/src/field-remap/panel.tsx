@@ -10,12 +10,18 @@ import {
 } from 'react';
 import {
   createBuiltinValueTransformRegistry,
+  createFieldRemapDocument,
+  deserializeFieldRemapImport,
+  FieldRemapImportAdmissionError,
   findParentChildMappingConflicts,
   projectSourceFields,
   projectTargetSlots,
   pruneMappingEdgesForShapes,
+  serializeFieldRemapDocument,
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
+  UnsupportedFieldRemapDocumentVersionError,
+  type FieldRemapDocument,
   type MappingEdge,
   type MappingOperator,
   type SourceField,
@@ -52,6 +58,7 @@ import {
 import { createFieldRemapPreviewController } from './preview-controller.js';
 import type { FieldRemapPreviewState } from './preview.js';
 import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
+import { FieldRemapDocumentIo, type FieldRemapDocumentImportActionResult } from './document-io.js';
 import './view.css';
 
 export type { FieldRemapHistorySnapshot } from './history.js';
@@ -111,6 +118,11 @@ export interface FieldRemapPanelProps {
   /** Optional controlled n→m operators (document v2). */
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
+  /**
+   * Atomic whole-document replacement proposal for controlled or mixed-control imports.
+   * Incremental edge/operator callbacks remain unchanged.
+   */
+  readonly onDocumentReplace?: ((document: FieldRemapDocument) => void) | undefined;
   /**
    * Composite history owner for controlled or mixed-control mapping state. When either durable
    * channel is controlled, the Panel never creates a partial private history.
@@ -264,6 +276,7 @@ export function FieldRemapPanel({
   onEdgesChange,
   operators: operatorsProp,
   onOperatorsChange,
+  onDocumentReplace,
   historyOwner,
   historyActionsRef,
   onHistoryAvailabilityChange,
@@ -435,6 +448,40 @@ export function FieldRemapPanel({
       historyOwner?.record(currentHistorySnapshot, next);
     }
     applyHistorySnapshot(next);
+  };
+
+  const documentImportAvailable =
+    !readOnly && (historyOwnedByPanel || onDocumentReplace !== undefined);
+
+  const importDocumentText = (text: string): FieldRemapDocumentImportActionResult => {
+    let document: FieldRemapDocument;
+    try {
+      document = deserializeFieldRemapImport(text, {
+        sources: sourceFields,
+        targets: targetSlots,
+        transforms: registry,
+      });
+    } catch (error) {
+      if (error instanceof UnsupportedFieldRemapDocumentVersionError) {
+        return { status: 'rejected', code: 'unsupported-version' };
+      }
+      if (error instanceof FieldRemapImportAdmissionError) {
+        return { status: 'rejected', code: error.code };
+      }
+      return { status: 'rejected', code: 'invalid-document' };
+    }
+
+    if (historyOwnedByPanel) {
+      recordSemanticSnapshot(
+        createFieldRemapHistorySnapshot(document.edges, document.operators ?? []),
+      );
+      return { status: 'accepted' };
+    }
+    if (!onDocumentReplace) {
+      return { status: 'rejected', code: 'invalid-document' };
+    }
+    onDocumentReplace(document);
+    return { status: 'accepted' };
   };
 
   const commitFlowEdges = (next: readonly MappingEdge[]) => {
@@ -693,6 +740,19 @@ export function FieldRemapPanel({
       <header className="workbench-field-remap-demo__header">
         <h2 className="workbench-field-remap-demo__title">{sample.title}</h2>
         <p className="workbench-field-remap-demo__intro">{sample.description}</p>
+        <FieldRemapDocumentIo
+          getDocumentJson={() =>
+            serializeFieldRemapDocument(
+              createFieldRemapDocument(edges, {
+                ...(operators.length > 0 ? { operators } : {}),
+              }),
+            )
+          }
+          importAvailable={documentImportAvailable}
+          labels={labels}
+          t={t}
+          onImportText={importDocumentText}
+        />
       </header>
 
       {ioChrome === 'edit' ? (

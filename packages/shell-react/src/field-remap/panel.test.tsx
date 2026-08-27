@@ -56,6 +56,33 @@ async function pressKey(
   return event;
 }
 
+async function setTextAreaValue(textarea: HTMLTextAreaElement, value: string): Promise<void> {
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype, 'value')?.set;
+  await act(async () => {
+    valueSetter?.call(textarea, value);
+    textarea.dispatchEvent(new Event('input', { bubbles: true }));
+    await Promise.resolve();
+  });
+}
+
+async function submitDocumentImport(): Promise<void> {
+  const form = document.body.querySelector<HTMLFormElement>(
+    'form.workbench-field-remap-document-import',
+  );
+  expect(form).toBeTruthy();
+  await act(async () => {
+    form!.dispatchEvent(new Event('submit', { bubbles: true, cancelable: true }));
+    await Promise.resolve();
+  });
+}
+
+function setClipboardWrite(writeText: (text: string) => Promise<void>): void {
+  Object.defineProperty(globalThis.navigator, 'clipboard', {
+    configurable: true,
+    value: { writeText },
+  });
+}
+
 describe('FieldRemapPanel', () => {
   let container: HTMLDivElement | undefined;
   let root: Root | undefined;
@@ -76,6 +103,7 @@ describe('FieldRemapPanel', () => {
     container?.remove();
     root = undefined;
     container = undefined;
+    Reflect.deleteProperty(globalThis.navigator, 'clipboard');
   });
 
   it('keeps uncontrolled sample demos working', async () => {
@@ -96,6 +124,377 @@ describe('FieldRemapPanel', () => {
       container.querySelector('[data-testid="field-remap-result"]')?.textContent ?? '{}',
     );
     expect(output.name).toBe('Ada Lovelace');
+  });
+
+  it('keeps current-v2 export available while read-only import stays unavailable', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const writeText = vi.fn<(text: string) => Promise<void>>().mockResolvedValue();
+    setClipboardWrite(writeText);
+
+    await act(async () => {
+      root!.render(<FieldRemapPanel sample="nested-ab" editableShapes={false} readOnly />);
+    });
+
+    const importButton = container.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-import-document"]',
+    );
+    expect(importButton?.disabled).toBe(true);
+    await clickTestId(container, 'field-remap-export-document');
+    const exportText = document.body.querySelector<HTMLTextAreaElement>(
+      '[data-testid="field-remap-document-export-text"]',
+    );
+    expect(exportText?.readOnly).toBe(true);
+    const exported = JSON.parse(exportText?.value ?? '{}') as {
+      readonly version?: unknown;
+      readonly edges?: readonly unknown[];
+    };
+    expect(exported.version).toBe(2);
+    expect(exported.edges?.length).toBeGreaterThan(0);
+    await clickTestId(document.body, 'field-remap-copy-document');
+    expect(writeText).toHaveBeenCalledOnce();
+    const copied = JSON.parse(writeText.mock.calls[0]?.[0] ?? '{}') as {
+      readonly version?: unknown;
+      readonly edges?: readonly unknown[];
+    };
+    expect(copied).toEqual(exported);
+    expect(document.body.querySelector('[role="status"]')?.textContent).toContain(
+      'Mapping document copied.',
+    );
+  });
+
+  it.each([
+    ['missing API', undefined],
+    [
+      'synchronous throw',
+      () => {
+        throw new Error('denied');
+      },
+    ],
+    ['rejected promise', () => Promise.reject(new Error('denied'))],
+  ] as const)(
+    'keeps manual export available and reports clipboard %s without mutation',
+    async (_case, writeText) => {
+      container = document.createElement('div');
+      document.body.append(container);
+      root = createRoot(container);
+      const historyActionsRef = createRef<FieldRemapHistoryActions | null>();
+      if (writeText) {
+        setClipboardWrite(writeText);
+      }
+
+      await act(async () => {
+        root!.render(
+          <FieldRemapPanel
+            sample="nested-ab"
+            editableShapes={false}
+            historyActionsRef={historyActionsRef}
+          />,
+        );
+      });
+      const before = container.querySelectorAll('[data-testid^="field-remap-lane-"]').length;
+
+      await clickTestId(container, 'field-remap-export-document');
+      const exportText = document.body.querySelector<HTMLTextAreaElement>(
+        '[data-testid="field-remap-document-export-text"]',
+      );
+      expect(exportText?.value).toContain('"version":2');
+      expect(exportText?.readOnly).toBe(true);
+      await clickTestId(document.body, 'field-remap-copy-document');
+      await settle();
+
+      expect(document.body.querySelector('[role="alert"]')?.textContent).toContain(
+        'could not be copied',
+      );
+      expect(exportText?.value).toContain('"version":2');
+      expect(container.querySelectorAll('[data-testid^="field-remap-lane-"]').length).toBe(before);
+      expect(historyActionsRef.current?.canUndo).toBe(false);
+    },
+  );
+
+  it('reports serialization failure for a cyclic option bag without mutation', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const sample = getFieldRemapSample('nested-ab');
+    const cyclicOptions: Record<string, unknown> = {};
+    cyclicOptions.self = cyclicOptions;
+    const edges = [
+      {
+        ...sample.edges[0]!,
+        transformOptionSteps: [cyclicOptions],
+      },
+      ...sample.edges.slice(1),
+    ] satisfies readonly MappingEdge[];
+    const onEdgesChange = vi.fn();
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample={sample}
+          editableShapes={false}
+          edges={edges}
+          onDocumentReplace={() => undefined}
+          onEdgesChange={onEdgesChange}
+        />,
+      );
+    });
+
+    await clickTestId(container, 'field-remap-export-document');
+
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('could not be copied');
+    expect(
+      document.body.querySelector('[data-testid="field-remap-document-export-text"]'),
+    ).toBeNull();
+    expect(onEdgesChange).not.toHaveBeenCalled();
+  });
+
+  it('imports a fully uncontrolled document as one composite history step', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const sample = getFieldRemapSample('nm-combine-split');
+    const importedEdge = {
+      id: 'imported-edge',
+      sourceFieldId: 'a.first',
+      targetSlotId: 'b.city',
+    } satisfies MappingEdge;
+    const importedOperator = sample.operators?.[0];
+    expect(importedOperator).toBeTruthy();
+    const historyActionsRef = createRef<FieldRemapHistoryActions | null>();
+    const onEdgesChange = vi.fn();
+    const onOperatorsChange = vi.fn();
+    const onDocumentReplace = vi.fn();
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample={sample}
+          editableShapes={false}
+          historyActionsRef={historyActionsRef}
+          onDocumentReplace={onDocumentReplace}
+          onEdgesChange={onEdgesChange}
+          onOperatorsChange={onOperatorsChange}
+        />,
+      );
+    });
+
+    await clickTestId(container, 'field-remap-import-document');
+    const textarea = document.body.querySelector<HTMLTextAreaElement>(
+      '[data-testid="field-remap-document-import-text"]',
+    );
+    expect(textarea).toBeTruthy();
+    await setTextAreaValue(
+      textarea!,
+      JSON.stringify({ version: 2, edges: [importedEdge], operators: [importedOperator] }),
+    );
+    await submitDocumentImport();
+    await settle();
+
+    expect(onDocumentReplace).not.toHaveBeenCalled();
+    expect(onEdgesChange).toHaveBeenCalledTimes(1);
+    expect(onEdgesChange).toHaveBeenLastCalledWith([importedEdge]);
+    expect(onOperatorsChange).toHaveBeenCalledTimes(1);
+    expect(onOperatorsChange).toHaveBeenLastCalledWith([importedOperator]);
+    expect(historyActionsRef.current?.canUndo).toBe(true);
+
+    await act(async () => historyActionsRef.current?.undo());
+    expect(onEdgesChange).toHaveBeenCalledTimes(2);
+    expect(onEdgesChange).toHaveBeenLastCalledWith([]);
+    expect(onOperatorsChange).toHaveBeenCalledTimes(2);
+    expect(onOperatorsChange).toHaveBeenLastCalledWith(sample.operators);
+    expect(historyActionsRef.current?.canUndo).toBe(false);
+  });
+
+  it.each(['edges', 'operators', 'both'] as const)(
+    'routes %s-controlled import through one document proposal without partial callbacks',
+    async (mode) => {
+      container = document.createElement('div');
+      document.body.append(container);
+      root = createRoot(container);
+      const sample = getFieldRemapSample('nm-combine-split');
+      const importedEdge = {
+        id: 'imported-edge',
+        sourceFieldId: 'a.first',
+        targetSlotId: 'b.city',
+      } satisfies MappingEdge;
+      const importedOperator = sample.operators?.[0];
+      expect(importedOperator).toBeTruthy();
+      const onEdgesChange = vi.fn();
+      const onOperatorsChange = vi.fn();
+      const onDocumentReplace = vi.fn();
+      const historyRecord = vi.fn();
+      const historyOwner: FieldRemapHistoryOwner = {
+        canUndo: false,
+        canRedo: false,
+        record: historyRecord,
+        reset: vi.fn(),
+        undo: vi.fn(),
+        redo: vi.fn(),
+      };
+      const controlProps = {
+        ...(mode === 'edges' || mode === 'both' ? { edges: sample.edges } : {}),
+        ...(mode === 'operators' || mode === 'both' ? { operators: sample.operators ?? [] } : {}),
+      };
+
+      await act(async () => {
+        root!.render(
+          <FieldRemapPanel
+            sample={sample}
+            editableShapes={false}
+            {...controlProps}
+            historyOwner={historyOwner}
+            onDocumentReplace={onDocumentReplace}
+            onEdgesChange={onEdgesChange}
+            onOperatorsChange={onOperatorsChange}
+          />,
+        );
+      });
+
+      await clickTestId(container, 'field-remap-import-document');
+      const textarea = document.body.querySelector<HTMLTextAreaElement>(
+        '[data-testid="field-remap-document-import-text"]',
+      );
+      expect(textarea).toBeTruthy();
+      await setTextAreaValue(
+        textarea!,
+        JSON.stringify({ version: 2, edges: [importedEdge], operators: [importedOperator] }),
+      );
+      await submitDocumentImport();
+      await settle();
+
+      expect(onDocumentReplace).toHaveBeenCalledOnce();
+      const proposal = onDocumentReplace.mock.lastCall?.[0] as {
+        readonly version: number;
+        readonly edges: readonly MappingEdge[];
+        readonly operators?: readonly MappingOperator[];
+      };
+      expect(proposal).toEqual({
+        version: 2,
+        edges: [importedEdge],
+        operators: [importedOperator],
+      });
+      expect(Object.isFrozen(proposal)).toBe(true);
+      expect(Object.isFrozen(proposal.edges)).toBe(true);
+      expect(Object.isFrozen(proposal.operators)).toBe(true);
+      expect(onEdgesChange).not.toHaveBeenCalled();
+      expect(onOperatorsChange).not.toHaveBeenCalled();
+      expect(historyRecord).not.toHaveBeenCalled();
+      expect(container.querySelector('[data-testid="field-remap-lane-imported-edge"]')).toBeNull();
+    },
+  );
+
+  it.each(['edges', 'operators', 'both'] as const)(
+    'keeps %s-controlled import unavailable without a document replacement callback',
+    async (mode) => {
+      container = document.createElement('div');
+      document.body.append(container);
+      root = createRoot(container);
+      const sample = getFieldRemapSample('nm-combine-split');
+      const controlProps = {
+        ...(mode === 'edges' || mode === 'both' ? { edges: sample.edges } : {}),
+        ...(mode === 'operators' || mode === 'both' ? { operators: sample.operators ?? [] } : {}),
+      };
+
+      await act(async () => {
+        root!.render(<FieldRemapPanel sample={sample} editableShapes={false} {...controlProps} />);
+      });
+
+      expect(
+        container.querySelector<HTMLButtonElement>('[data-testid="field-remap-import-document"]')
+          ?.disabled,
+      ).toBe(true);
+    },
+  );
+
+  it('keeps document, history, and selection unchanged after invalid import', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const historyActionsRef = createRef<FieldRemapHistoryActions | null>();
+    const onEdgesChange = vi.fn();
+    const onOperatorsChange = vi.fn();
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample="nested-ab"
+          editableShapes={false}
+          historyActionsRef={historyActionsRef}
+          onEdgesChange={onEdgesChange}
+          onOperatorsChange={onOperatorsChange}
+        />,
+      );
+    });
+    await clickTestId(container, 'field-remap-select-edge-e-name');
+    await clickTestId(container, 'field-remap-select-edge-e-title', { ctrlKey: true });
+    const nameSelection = container.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    );
+    const titleSelection = container.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-select-edge-e-title"]',
+    );
+    expect(nameSelection?.getAttribute('aria-pressed')).toBe('true');
+    expect(titleSelection?.getAttribute('aria-pressed')).toBe('true');
+    expect(nameSelection?.dataset.primary).toBe('true');
+    expect(container.querySelector('[data-testid="field-remap-detail-binding"]')).toBeTruthy();
+    const before = container.querySelectorAll('[data-testid^="field-remap-lane-"]').length;
+
+    await clickTestId(container, 'field-remap-import-document');
+    const textarea = document.body.querySelector<HTMLTextAreaElement>(
+      '[data-testid="field-remap-document-import-text"]',
+    );
+    expect(textarea).toBeTruthy();
+    await setTextAreaValue(textarea!, '{not-json');
+    await submitDocumentImport();
+    await settle();
+
+    expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('valid');
+    expect(document.activeElement).toBe(textarea);
+    await setTextAreaValue(textarea!, JSON.stringify({ version: 1, edges: [] }));
+    await submitDocumentImport();
+    await settle();
+    expect(document.body.querySelector('[role="alert"]')?.textContent).toContain('not supported');
+    expect(document.activeElement).toBe(textarea);
+    expect(container.querySelectorAll('[data-testid^="field-remap-lane-"]').length).toBe(before);
+    expect(container.querySelector('[data-testid="field-remap-detail-binding"]')).toBeTruthy();
+    expect(nameSelection?.getAttribute('aria-pressed')).toBe('true');
+    expect(titleSelection?.getAttribute('aria-pressed')).toBe('true');
+    expect(nameSelection?.dataset.primary).toBe('true');
+    expect(onEdgesChange).not.toHaveBeenCalled();
+    expect(onOperatorsChange).not.toHaveBeenCalled();
+    expect(historyActionsRef.current?.canUndo).toBe(false);
+  });
+
+  it('leaves native textarea history chords unconsumed while Panel history is available', async () => {
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    const historyActionsRef = createRef<FieldRemapHistoryActions | null>();
+
+    await act(async () => {
+      root!.render(
+        <FieldRemapPanel
+          sample="nested-ab"
+          editableShapes={false}
+          historyActionsRef={historyActionsRef}
+        />,
+      );
+    });
+    await clickTestId(container, 'field-remap-remove-edge-e-name');
+    expect(historyActionsRef.current?.canUndo).toBe(true);
+    await clickTestId(container, 'field-remap-import-document');
+    const textarea = document.body.querySelector<HTMLTextAreaElement>(
+      '[data-testid="field-remap-document-import-text"]',
+    );
+    expect(textarea).toBeTruthy();
+
+    const event = await pressKey(textarea!, 'z', { ctrlKey: true });
+
+    expect(event.defaultPrevented).toBe(false);
+    expect(historyActionsRef.current?.canUndo).toBe(true);
+    expect(container.querySelector('[data-testid="field-remap-lane-e-name"]')).toBeNull();
   });
 
   it('forwards detail presentation to the Flow mapper', async () => {
