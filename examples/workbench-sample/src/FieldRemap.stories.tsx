@@ -13,6 +13,7 @@ import {
 } from '@workbench-kit/shell-react/field-remap';
 
 import { FieldRemapDemo } from './FieldRemapDemo';
+import { FieldRemapKeepAliveFixture } from './storybook/fixtures/FieldRemapKeepAliveFixture';
 import { FieldRemapPropertyStackFixture } from './storybook/fixtures/FieldRemapPropertyStackFixture';
 
 const meta = {
@@ -1226,6 +1227,132 @@ export const EmbedCollapsedDetail: Story = {
     await waitFor(() =>
       expect(document.activeElement).toBe(canvas.getByTestId('field-remap-mapper')),
     );
+  },
+};
+
+export const KeepAliveZeroSize: Story = {
+  name: 'Keep-alive zero-size mount',
+  args: { sampleId: 'nested-ab' },
+  render: () => <FieldRemapKeepAliveFixture />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-keep-alive',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const host = canvas.getByTestId('field-remap-keep-alive-host');
+    const flowCanvas = canvas.getByTestId('field-remap-flow');
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      if (
+        event.error == null &&
+        event.message === 'ResizeObserver loop completed with undelivered notifications.'
+      ) {
+        return;
+      }
+      errors.push(event.error ?? event.message);
+    };
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => errors.push(event.reason);
+    let flowMounts = 0;
+    let viewportObserver: MutationObserver | null = null;
+    const mountObserver = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of Array.from(record.addedNodes)) {
+          if (node instanceof Element && node.matches('.react-flow')) {
+            flowMounts += 1;
+          }
+        }
+      }
+    });
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+    mountObserver.observe(flowCanvas, { childList: true, subtree: true });
+
+    try {
+      await expect(canvas.getByTestId('field-remap-keep-alive-state')).toHaveTextContent(
+        'Host pane hidden',
+      );
+      expect(host.getBoundingClientRect().width).toBe(0);
+      expect(host.getBoundingClientRect().height).toBe(0);
+      expect(flowCanvas.querySelector('.react-flow')).toBeNull();
+      await expect(within(flowCanvas).getByRole('status', { hidden: true })).toHaveTextContent(
+        'Mapping canvas is waiting for available space.',
+      );
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-show'));
+      await waitFor(() => {
+        expect(host.getBoundingClientRect().width).toBeGreaterThan(0);
+        expect(host.getBoundingClientRect().height).toBeGreaterThan(0);
+      });
+
+      const flow = await waitFor(() => {
+        const element = flowCanvas.querySelector<HTMLElement>('.react-flow');
+        expect(element).not.toBeNull();
+        return element!;
+      });
+      const viewport = flow.querySelector<HTMLElement>('.react-flow__viewport');
+      const zoomIn = flow.querySelector<HTMLButtonElement>('.react-flow__controls-zoomin');
+      await expect(viewport).not.toBeNull();
+      await expect(zoomIn).not.toBeNull();
+      await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
+      const initialTransform = viewport!.style.transform;
+      await userEvent.click(zoomIn!);
+      await waitFor(() => expect(viewport!.style.transform).not.toBe(initialTransform));
+      const preservedTransform = viewport!.style.transform;
+
+      const observedViewportTransforms: string[] = [];
+      viewportObserver = new MutationObserver((records) => {
+        for (const record of records) {
+          if (record.type === 'attributes' && record.attributeName === 'style') {
+            observedViewportTransforms.push(viewport!.style.transform);
+          }
+        }
+      });
+      viewportObserver.observe(viewport!, { attributeFilter: ['style'], attributes: true });
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-hide'));
+      await waitFor(() => {
+        expect(host.getBoundingClientRect().width).toBe(0);
+        expect(host.getBoundingClientRect().height).toBe(0);
+      });
+      expect(flow.isConnected).toBe(true);
+      expect(viewport!.isConnected).toBe(true);
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-fit'));
+      await expect(canvas.getByTestId('field-remap-keep-alive-fit-requests')).toHaveTextContent(
+        '1',
+      );
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-show'));
+      await waitFor(() => {
+        expect(host.getBoundingClientRect().width).toBeGreaterThan(0);
+        expect(host.getBoundingClientRect().height).toBeGreaterThan(0);
+      });
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+
+      expect(flowCanvas.querySelector('.react-flow')).toBe(flow);
+      expect(flowCanvas.querySelector('.react-flow__viewport')).toBe(viewport);
+      expect(viewport!.style.transform).toBe(preservedTransform);
+      expect(observedViewportTransforms.every((value) => value === preservedTransform)).toBe(true);
+      expect(flowMounts).toBe(1);
+      expect(flowCanvas.querySelectorAll('.react-flow')).toHaveLength(1);
+      if (errors.length > 0) {
+        throw new Error(
+          `Keep-alive browser errors: ${errors
+            .map((error) => (error instanceof Error ? error.message : String(error)))
+            .join(' | ')}`,
+        );
+      }
+    } finally {
+      viewportObserver?.disconnect();
+      mountObserver.disconnect();
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onUnhandledRejection);
+    }
   },
 };
 
