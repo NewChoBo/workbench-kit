@@ -20,4 +20,8 @@ export type {
   UseWorkbenchEditorTabContextMenuResult,
 } from '../editor/useWorkbenchEditorTabContextMenu';
 export { WorkbenchEditorTabs } from '../editor/WorkbenchEditorTabs';
-export type { WorkbenchEditorTabsProps } from '../editor/WorkbenchEditorTabs';
+export type {
+  WorkbenchEditorTabCommandFocusDisposition,
+  WorkbenchEditorTabCommandFocusEvent,
+  WorkbenchEditorTabsProps,
+} from '../editor/WorkbenchEditorTabs';

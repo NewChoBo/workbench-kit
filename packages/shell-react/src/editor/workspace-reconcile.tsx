@@ -1,19 +1,24 @@
 import { useEffect } from 'react';
+import type { EditorService } from '@workbench-kit/workbench-core';
 
 import { createWorkspaceFileAvailabilityChecker } from './workspace-file-availability.js';
-import { useEditorService } from './use-editor.js';
-import { useWorkbench } from '../shell/provider.js';
 import {
   isWorkspaceResourceService,
   useWorkspaceResourceState,
 } from '../workbench/workspace-view-state.js';
 
+interface EditorWorkspaceReconcilerProps {
+  readonly editorService: EditorService;
+  readonly workspaceHostService?: unknown;
+}
+
 /** Component-only module so Vite Fast Refresh can accept this boundary. */
-export function EditorWorkspaceReconciler(): null {
-  const { workspaceHostPort } = useWorkbench();
-  const editorService = useEditorService();
-  const workspaceService = isWorkspaceResourceService(workspaceHostPort?.service)
-    ? workspaceHostPort.service
+export function EditorWorkspaceReconciler({
+  editorService,
+  workspaceHostService,
+}: EditorWorkspaceReconcilerProps): null {
+  const workspaceService = isWorkspaceResourceService(workspaceHostService)
+    ? workspaceHostService
     : undefined;
   const workspaceState = useWorkspaceResourceState(workspaceService);
 

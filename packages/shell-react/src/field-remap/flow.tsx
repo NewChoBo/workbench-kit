@@ -377,8 +377,10 @@ const DEFAULT_FIT_VIEW_OPTIONS = { padding: 0.12, maxZoom: 1.15 } as const;
  * to the React Flow store (avoids update loops with controlled nodes).
  */
 function FieldRemapFlowActionsBridge({
+  canFitView,
   flowActionsRef,
 }: {
+  readonly canFitView: () => boolean;
   readonly flowActionsRef?: Ref<FieldRemapFlowActions | null> | undefined;
 }): null {
   const { fitView } = useReactFlow();
@@ -386,13 +388,16 @@ function FieldRemapFlowActionsBridge({
     flowActionsRef,
     () => ({
       fitView: (options) => {
+        if (!canFitView()) {
+          return;
+        }
         void fitView({
           padding: options?.padding ?? DEFAULT_FIT_VIEW_OPTIONS.padding,
           maxZoom: options?.maxZoom ?? DEFAULT_FIT_VIEW_OPTIONS.maxZoom,
         });
       },
     }),
-    [fitView],
+    [canFitView, fitView],
   );
   return null;
 }
@@ -700,7 +705,9 @@ function FieldRemapFlowCanvas({
   const showAuthoringPalette = showConvertPalette && !readOnly;
   const emptyDetail = emptyDetailProp ?? (chrome === 'embed' ? 'collapse' : 'hint');
   const mapperRef = useRef<HTMLDivElement>(null);
+  const canvasRef = useRef<HTMLDivElement>(null);
   const restoreMapperFocusRef = useRef(false);
+  const [hasPositiveCanvasSize, setHasPositiveCanvasSize] = useState(false);
   const [workspaceLayout, setWorkspaceLayout] = useState<'wide' | 'medium' | 'narrow'>('wide');
   const [internalSelection, setInternalSelection] = useState<FieldRemapSelection>(null);
   const authoritativeSelection = selectionProp !== undefined ? selectionProp : internalSelection;
@@ -980,6 +987,48 @@ function FieldRemapFlowCanvas({
     const observer = new ResizeObserver(updateLayout);
     observer.observe(element);
     return () => observer.disconnect();
+  }, []);
+
+  const canFitView = useCallback(() => {
+    const bounds = canvasRef.current?.getBoundingClientRect();
+    return bounds !== undefined && bounds.width > 0 && bounds.height > 0;
+  }, []);
+
+  useEffect(() => {
+    const element = canvasRef.current;
+    if (!element) {
+      return;
+    }
+
+    const updateMountEligibility = () => {
+      const bounds = element.getBoundingClientRect();
+      if (bounds.width > 0 && bounds.height > 0) {
+        setHasPositiveCanvasSize(true);
+      }
+    };
+
+    updateMountEligibility();
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    let pendingFrame: number | undefined;
+    const scheduleMountEligibilityUpdate = () => {
+      if (pendingFrame !== undefined) {
+        return;
+      }
+      pendingFrame = requestAnimationFrame(() => {
+        pendingFrame = undefined;
+        updateMountEligibility();
+      });
+    };
+    const observer = new ResizeObserver(scheduleMountEligibilityUpdate);
+    observer.observe(element);
+    return () => {
+      observer.disconnect();
+      if (pendingFrame !== undefined) {
+        cancelAnimationFrame(pendingFrame);
+      }
+    };
   }, []);
 
   const graph = useMemo(
@@ -1837,145 +1886,158 @@ function FieldRemapFlowCanvas({
           ) : null}
         </>
 
-        <div className="workbench-field-remap-flow__canvas" data-testid="field-remap-flow">
-          <ReactFlow
-            nodes={nodes}
-            edges={flowEdges}
-            nodeTypes={nodeTypes}
-            edgeTypes={edgeTypes}
-            onNodesChange={onProjectedNodesChange}
-            onEdgesChange={onProjectedFlowEdgesChange}
-            onConnect={readOnly ? undefined : onConnect}
-            onConnectStart={readOnly ? undefined : onConnectStart}
-            onConnectEnd={readOnly ? undefined : onConnectEnd}
-            onEdgesDelete={readOnly ? undefined : onEdgesDelete}
-            onDragOver={onCanvasDragOver}
-            onDrop={onCanvasDrop}
-            onNodeClick={onNodeClick}
-            onEdgeClick={onEdgeClick}
-            onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}
-            onNodeContextMenu={onNodeContextMenu ? handleNodeContextMenu : undefined}
-            onEdgeContextMenu={onEdgeContextMenu ? handleEdgeContextMenu : undefined}
-            isValidConnection={isValidConnection}
-            nodesDraggable={!readOnly}
-            nodesConnectable={!readOnly}
-            edgesReconnectable={!readOnly}
-            elementsSelectable={false}
-            ariaLabelConfig={flowAriaLabelConfig}
-            deleteKeyCode={null}
-            fitView
-            fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}
-            proOptions={{ hideAttribution: true }}
-          >
-            <FieldRemapFlowActionsBridge flowActionsRef={flowActionsRef} />
-            <Background gap={16} color="var(--xy-background-pattern-color)" />
-            <Controls showInteractive={false} fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}>
-              {onShowMinimapChange ? (
-                <ControlButton
-                  aria-label={showMinimap ? chromeLabels.hideMinimap : chromeLabels.showMinimap}
-                  className={
-                    showMinimap
-                      ? 'workbench-field-remap-flow__minimap-toggle is-active'
-                      : 'workbench-field-remap-flow__minimap-toggle'
-                  }
-                  data-testid="field-remap-toggle-minimap"
-                  title={showMinimap ? chromeLabels.hideMinimap : chromeLabels.showMinimap}
-                  onClick={() => {
-                    onShowMinimapChange(!showMinimap);
-                  }}
-                >
-                  <svg
-                    aria-hidden="true"
-                    fill="none"
-                    height="16"
-                    stroke="currentColor"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="1.75"
-                    viewBox="0 0 24 24"
-                    width="16"
-                  >
-                    <path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z" />
-                    <path d="M9 4v13.5" />
-                    <path d="M15 6.5V20" />
-                  </svg>
-                </ControlButton>
-              ) : null}
-              {onIncludeHiddenChange ? (
-                <ControlButton
-                  aria-label={
-                    includeHidden ? chromeLabels.hideHiddenFields : chromeLabels.showHiddenFields
-                  }
-                  aria-pressed={includeHidden}
-                  className={
-                    includeHidden
-                      ? 'workbench-field-remap-flow__hidden-toggle is-active'
-                      : 'workbench-field-remap-flow__hidden-toggle'
-                  }
-                  data-testid="field-remap-toggle-hidden-fields"
-                  title={
-                    includeHidden ? chromeLabels.hideHiddenFields : chromeLabels.showHiddenFields
-                  }
-                  onClick={() => {
-                    onIncludeHiddenChange(!includeHidden);
-                  }}
-                >
-                  {includeHidden ? (
-                    <svg
-                      aria-hidden="true"
-                      fill="none"
-                      height="16"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.75"
-                      viewBox="0 0 24 24"
-                      width="16"
-                    >
-                      <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
-                      <circle cx="12" cy="12" r="3" />
-                    </svg>
-                  ) : (
-                    <svg
-                      aria-hidden="true"
-                      fill="none"
-                      height="16"
-                      stroke="currentColor"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="1.75"
-                      viewBox="0 0 24 24"
-                      width="16"
-                    >
-                      <path d="M3 3l18 18" />
-                      <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
-                      <path d="M9.9 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.4 17.4 0 0 1-3.2 4.4" />
-                      <path d="M6.1 6.1C3.9 7.7 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.2-.9" />
-                    </svg>
-                  )}
-                </ControlButton>
-              ) : null}
-            </Controls>
-            {showMinimap ? (
-              <MiniMap
-                pannable
-                zoomable
-                bgColor="var(--xy-minimap-background-color)"
-                maskColor="var(--xy-minimap-mask-background-color)"
-                nodeColor={(node) => {
-                  const kind = (node.data as FieldRemapFlowNodeData | undefined)?.kind;
-                  if (kind === 'source-object') {
-                    return 'var(--vscode-charts-blue, #3794ff)';
-                  }
-                  if (kind === 'target-object') {
-                    return 'var(--vscode-charts-green, #89d185)';
-                  }
-                  return 'var(--vscode-focusBorder, var(--color-accent, #3794ff))';
-                }}
-                nodeStrokeColor="var(--xy-minimap-node-stroke-color)"
+        <div
+          ref={canvasRef}
+          className="workbench-field-remap-flow__canvas"
+          data-testid="field-remap-flow"
+        >
+          {hasPositiveCanvasSize ? (
+            <ReactFlow
+              nodes={nodes}
+              edges={flowEdges}
+              nodeTypes={nodeTypes}
+              edgeTypes={edgeTypes}
+              onNodesChange={onProjectedNodesChange}
+              onEdgesChange={onProjectedFlowEdgesChange}
+              onConnect={readOnly ? undefined : onConnect}
+              onConnectStart={readOnly ? undefined : onConnectStart}
+              onConnectEnd={readOnly ? undefined : onConnectEnd}
+              onEdgesDelete={readOnly ? undefined : onEdgesDelete}
+              onDragOver={onCanvasDragOver}
+              onDrop={onCanvasDrop}
+              onNodeClick={onNodeClick}
+              onEdgeClick={onEdgeClick}
+              onPaneContextMenu={onPaneContextMenu ? handlePaneContextMenu : undefined}
+              onNodeContextMenu={onNodeContextMenu ? handleNodeContextMenu : undefined}
+              onEdgeContextMenu={onEdgeContextMenu ? handleEdgeContextMenu : undefined}
+              isValidConnection={isValidConnection}
+              nodesDraggable={!readOnly}
+              nodesConnectable={!readOnly}
+              edgesReconnectable={!readOnly}
+              elementsSelectable={false}
+              ariaLabelConfig={flowAriaLabelConfig}
+              deleteKeyCode={null}
+              fitView
+              fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}
+              proOptions={{ hideAttribution: true }}
+            >
+              <FieldRemapFlowActionsBridge
+                canFitView={canFitView}
+                flowActionsRef={flowActionsRef}
               />
-            ) : null}
-          </ReactFlow>
+              <Background gap={16} color="var(--xy-background-pattern-color)" />
+              <Controls showInteractive={false} fitViewOptions={DEFAULT_FIT_VIEW_OPTIONS}>
+                {onShowMinimapChange ? (
+                  <ControlButton
+                    aria-label={showMinimap ? chromeLabels.hideMinimap : chromeLabels.showMinimap}
+                    className={
+                      showMinimap
+                        ? 'workbench-field-remap-flow__minimap-toggle is-active'
+                        : 'workbench-field-remap-flow__minimap-toggle'
+                    }
+                    data-testid="field-remap-toggle-minimap"
+                    title={showMinimap ? chromeLabels.hideMinimap : chromeLabels.showMinimap}
+                    onClick={() => {
+                      onShowMinimapChange(!showMinimap);
+                    }}
+                  >
+                    <svg
+                      aria-hidden="true"
+                      fill="none"
+                      height="16"
+                      stroke="currentColor"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="1.75"
+                      viewBox="0 0 24 24"
+                      width="16"
+                    >
+                      <path d="M3 6.5 9 4l6 2.5L21 4v13.5L15 20l-6-2.5L3 20z" />
+                      <path d="M9 4v13.5" />
+                      <path d="M15 6.5V20" />
+                    </svg>
+                  </ControlButton>
+                ) : null}
+                {onIncludeHiddenChange ? (
+                  <ControlButton
+                    aria-label={
+                      includeHidden ? chromeLabels.hideHiddenFields : chromeLabels.showHiddenFields
+                    }
+                    aria-pressed={includeHidden}
+                    className={
+                      includeHidden
+                        ? 'workbench-field-remap-flow__hidden-toggle is-active'
+                        : 'workbench-field-remap-flow__hidden-toggle'
+                    }
+                    data-testid="field-remap-toggle-hidden-fields"
+                    title={
+                      includeHidden ? chromeLabels.hideHiddenFields : chromeLabels.showHiddenFields
+                    }
+                    onClick={() => {
+                      onIncludeHiddenChange(!includeHidden);
+                    }}
+                  >
+                    {includeHidden ? (
+                      <svg
+                        aria-hidden="true"
+                        fill="none"
+                        height="16"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.75"
+                        viewBox="0 0 24 24"
+                        width="16"
+                      >
+                        <path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7z" />
+                        <circle cx="12" cy="12" r="3" />
+                      </svg>
+                    ) : (
+                      <svg
+                        aria-hidden="true"
+                        fill="none"
+                        height="16"
+                        stroke="currentColor"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="1.75"
+                        viewBox="0 0 24 24"
+                        width="16"
+                      >
+                        <path d="M3 3l18 18" />
+                        <path d="M10.6 10.6a3 3 0 0 0 4.2 4.2" />
+                        <path d="M9.9 5.1A10.6 10.6 0 0 1 12 5c6.5 0 10 7 10 7a17.4 17.4 0 0 1-3.2 4.4" />
+                        <path d="M6.1 6.1C3.9 7.7 2 12 2 12s3.5 7 10 7a10.4 10.4 0 0 0 4.2-.9" />
+                      </svg>
+                    )}
+                  </ControlButton>
+                ) : null}
+              </Controls>
+              {showMinimap ? (
+                <MiniMap
+                  pannable
+                  zoomable
+                  bgColor="var(--xy-minimap-background-color)"
+                  maskColor="var(--xy-minimap-mask-background-color)"
+                  nodeColor={(node) => {
+                    const kind = (node.data as FieldRemapFlowNodeData | undefined)?.kind;
+                    if (kind === 'source-object') {
+                      return 'var(--vscode-charts-blue, #3794ff)';
+                    }
+                    if (kind === 'target-object') {
+                      return 'var(--vscode-charts-green, #89d185)';
+                    }
+                    return 'var(--vscode-focusBorder, var(--color-accent, #3794ff))';
+                  }}
+                  nodeStrokeColor="var(--xy-minimap-node-stroke-color)"
+                />
+              ) : null}
+            </ReactFlow>
+          ) : (
+            <p className="workbench-field-remap-demo__warn" role="status">
+              Mapping canvas is waiting for available space.
+            </p>
+          )}
         </div>
 
         <div className="workbench-field-remap-flow__side-rail">

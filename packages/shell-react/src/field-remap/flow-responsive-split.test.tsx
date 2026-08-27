@@ -63,6 +63,14 @@ describe('FieldRemapFlowMapper retained responsive splits', () => {
   beforeAll(() => {
     previousResizeObserver = globalThis.ResizeObserver;
     globalThis.ResizeObserver = ResizeObserverStub as unknown as typeof ResizeObserver;
+    const getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      return this.dataset.testid === 'field-remap-flow'
+        ? createRect(960)
+        : getBoundingClientRect.call(this);
+    });
   });
 
   afterAll(() => {

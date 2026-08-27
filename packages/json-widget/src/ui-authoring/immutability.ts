@@ -11,6 +11,33 @@ export function cloneUiAuthoringJsonValue<T>(value: T): T {
   return cloneStrictJsonValue(value, new Set<object>()) as T;
 }
 
+export function uiAuthoringDeclarativeEqual(left: unknown, right: unknown): boolean {
+  if (Object.is(left, right)) return true;
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return (
+      Array.isArray(left) &&
+      Array.isArray(right) &&
+      left.length === right.length &&
+      left.every((entry, index) => uiAuthoringDeclarativeEqual(entry, right[index]))
+    );
+  }
+  if (typeof left !== 'object' || left === null || typeof right !== 'object' || right === null) {
+    return false;
+  }
+  const leftRecord = left as Readonly<Record<string, unknown>>;
+  const rightRecord = right as Readonly<Record<string, unknown>>;
+  const leftKeys = Object.keys(leftRecord);
+  const rightKeys = Object.keys(rightRecord);
+  return (
+    leftKeys.length === rightKeys.length &&
+    leftKeys.every(
+      (key) =>
+        Object.prototype.hasOwnProperty.call(rightRecord, key) &&
+        uiAuthoringDeclarativeEqual(leftRecord[key], rightRecord[key]),
+    )
+  );
+}
+
 function invalidJsonValue(message: string): never {
   throw new TypeError(`UI authoring values must be strict JSON: ${message}.`);
 }

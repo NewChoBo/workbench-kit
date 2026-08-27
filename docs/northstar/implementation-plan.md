@@ -6,8 +6,8 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@abde7236cb48ebaf3758363ddd3df88bec0e7aa9`.
-- **Reviewed documentation-only predecessor:** `develop@8c71d49ea7732831695ea03772bf9cd8dff6aa6f` / PR #372; its diff from the preceding source-bearing `develop@7051a2e7051838770a4d7d527904aa4a5515db0d` changes only `implementation-plan.md`, `roadmap.md` and `ui-authoring-and-generative-composition.md` under this Northstar directory and carries no source/API change.
+- **Latest source-bearing integration baseline:** `develop@ff31a38d3a4e626233a06db34e698c61b7fd1267`.
+- **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
@@ -59,7 +59,8 @@ WB-NS-040A extension uninstall compatibility + dependency safety [DONE; independ
 
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
-        │       └─ WB-NS-030A opt-in invalid-submit focus recovery [DONE; bounded current SchemaForm compatibility]
+        │       ├─ WB-NS-030A opt-in invalid-submit focus recovery [DONE; bounded current SchemaForm compatibility]
+        │       └─ WB-NS-030B focused public SchemaForm subpath [DONE]
         ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
 
@@ -72,7 +73,8 @@ WB-NS-070C atomic component/composite descriptor contract [DONE]
 WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
         ↓
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
-WB-NS-070F provider-neutral generative UI parity [DESIGNING; optional after the manual command chain, not a WB-NS-071A dependency]
+WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
+WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -97,6 +99,10 @@ Workflow runtime + published interfaces
 Host adapter maturation / multi-host validation
         ↓
 Backendless/performance + compatibility hardening
+
+WB-NS-060 backendless scenario + performance harness [DESIGNING]
+        ├─ WB-NS-060A Field Remap deterministic reference workload [DONE]
+        └─ WB-NS-060B SchemaForm deterministic validation-fan-out reference workloads [DONE]
 
 Command/keybinding management parity
         ↓
@@ -2056,6 +2062,779 @@ claim, fallback or close-on-error semantics; duplicates workspace provider const
 an asynchronous rejection; leaves an overlay stuck; or adds persistence, native or product-policy
 scope.
 
+## WB-NS-080C0 — Focused Provider packed context identity prerequisite
+
+- **Status:** `DONE`
+- **Canonical public work:** [Issue #407](https://github.com/NewChoBo/workbench-kit/issues/407)
+- **Exact source/API baseline:** `develop@4c61a2483f3119a8cfd2ccfe28459d4fee3c6bf5`
+- **Source integration:** candidate `258fac78f7c817c5a023f5780fbb6cb04e857361` merged by
+  [PR #409](https://github.com/NewChoBo/workbench-kit/pull/409) as
+  `develop@43fcf8f640698cbda38f89ff1e3e9ca86852fe36`
+- **Completion evidence:** producer-distinct review `PASS` with no P0/P1/P2 findings; final
+  `validate:fast`, `check:packed-shell-react-context`, `check:commit-safety`, and `git diff --check`
+  lanes were green on the source candidate
+- **Ownership:** `GENERIC_KIT / INTERNAL_PROVIDER_COMPOSITION`; `packages/shell-react`
+- **Blocks:** `WB-NS-080C` / Issue #405
+- **Runtime layer:** `PURE_WEB / DOM / packed Vite DEV optimizer`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host can mount the freshly packed focused
+`@workbench-kit/shell-react/provider` entry under Vite's development dependency optimizer without
+the Provider's own internal children observing a foreign `WorkbenchContext`. Provider-only and the
+existing focused `command-host` / `host-shell` combinations must all retain one context identity.
+
+This is a narrow internal composition correction. It does not create a second Context, change the
+public Provider API, move editor reconciliation ownership, or add an optimizer alias/dedupe policy.
+
+### Exact reproduced gap and source cause
+
+The external packed-consumer diagnostic at the current integration fails before any management leaf
+is requested. Importing and mounting `/provider` alone throws:
+
+```text
+useWorkbench must be used inside WorkbenchProvider.
+  at EditorWorkspaceReconciler
+```
+
+Adding `command-host`, `host-shell`, or both produces the same failure. The first proven back-edge is:
+
+```text
+shell/provider.tsx
+  -> imports and mounts editor/workspace-reconcile.tsx inside WorkbenchContext.Provider
+     -> imports useWorkbench from shell/provider.tsx
+     -> imports useEditorService from editor/use-editor.ts
+        -> imports useWorkbench from shell/provider.tsx
+```
+
+Source/workspace tests evaluate one module graph and therefore do not prove this packed Vite DEV
+identity boundary. The diagnostic runner and dirty Issue #405 draft are evidence only; no source
+candidate has been accepted or frozen.
+
+### Frozen internal correction
+
+Keep `WorkbenchContext`, `WorkbenchProvider`, `useWorkbench`, `WorkbenchContextValue`, service
+construction, lifecycle and public exports in `shell/provider.tsx`. Change only the internal
+`EditorWorkspaceReconciler` input boundary:
+
+```ts
+interface EditorWorkspaceReconcilerProps {
+  readonly editorService: EditorService;
+  readonly workspaceHostService?: unknown;
+}
+```
+
+`EditorWorkspaceReconciler` receives `services.editorService` and
+`services.workspaceHostPort?.service` from the already-live Provider. It no longer imports or calls
+`useWorkbench` or `useEditorService`. It continues to validate the supplied unknown service with the
+existing `isWorkspaceResourceService`, subscribe through `useWorkspaceResourceState`, compute the
+same file-path set, and call the same `editorService.reconcileWorkspaceFileTabs` effect.
+
+The props are private module implementation details and are not exported. Passing the narrower
+`workspaceHostService` value avoids a type or runtime back-edge to the Provider module. No service,
+listener, reconciliation pass, Context, owner or public prop is added.
+
+### Packed external matrix and locked toolchain
+
+Add `pnpm check:packed-shell-react-context` as a public-neutral ephemeral external-consumer runner.
+For this prerequisite its source matrix mounts these initial public graphs independently:
+
+```text
+provider
+provider + command-host
+provider + host-shell
+provider + command-host + host-shell
+```
+
+Every case uses freshly packed tarballs as the only Workbench package inputs and a new loopback Vite
+DEV server plus Chromium context. It must use no `resolve.alias`, `resolve.dedupe`, workspace link,
+source path, existing dev server, or production-build substitute.
+
+The runner derives the exact package-instance closure from the repository lock for pnpm, Vite,
+`@vitejs/plugin-react`, React, ReactDOM, Playwright, `playwright-core` and packed-package runtime
+dependencies. Admission is by the complete peer-qualified lock snapshot identity and dependency
+edge, not package name alone. Keep every required version already admitted by that graph. Exact root
+pins cover direct tools; exact `parent@version>child` selectors cover distinct transitive edges when
+one package name legitimately has multiple versions. If the same selector would require different
+child versions or an exact required edge cannot be represented without collapsing two admitted
+snapshot instances, fail closed rather than choose a version.
+
+The runner may generate the external lock offline only under those exact root and scoped constraints.
+It must then prove every generated non-file, non-Workbench peer-qualified snapshot and dependency edge
+belongs to the admitted repository-lock closure, prove every Workbench input is one of the fresh
+tarballs, and perform the actual install with `--offline --frozen-lockfile`. A direct exact pin with
+floating transitives or a global package-name override that collapses a legitimate multi-version graph
+is invalid.
+
+The material browser authority comes from the external consumer's exact installed Playwright package,
+not a repository-root import. Before launch, compare its `playwright-core` browser descriptor and
+Chromium revision with the repository-resolved descriptor, resolve that revision's executable through
+the external Playwright instance, and fail if the identity differs or the executable is absent. No
+browser auto-install/download occurs inside the validation command.
+
+Each matrix case records the page boot count and main-frame navigations, waits for Vite readiness,
+and proves a Provider-owned probe reaches ready state. Any optimizer reload, missing/foreign Context,
+page error, unexpected console warning/error, browser assertion timeout, server failure or cleanup
+failure fails the command. Cleanup attempts every owned page/context/browser/server/temp resource
+and reports all failures without swallowing the primary error.
+
+### Ordered implementation tasks
+
+1. Add direct-prop focused unit coverage for `EditorWorkspaceReconciler`: absent/invalid workspace
+   service, initial files, workspace updates, editor reconciliation and cleanup retain current
+   behavior without a Provider wrapper.
+2. Pass the existing `editorService` and `workspaceHostPort?.service` values from Provider to the
+   reconciler; remove only the reconciler's `useWorkbench` / `useEditorService` imports and calls.
+3. Add the repository-locked, freshly packed external runner and the four initial-entry Vite DEV +
+   Chromium cases above. Prove the pre-fix provider-only case is RED before accepting the correction.
+4. After the prop correction, run the matrix. If any case still splits context, do not add a global
+   singleton, new Context, alias/dedupe or broader provider refactor; return the exact remaining graph
+   to `DESIGNING`.
+5. During development repeat only the reconciler unit/type lane and the focused packed matrix. Freeze
+   one exact source candidate before repository-wide validation.
+6. Obtain producer-distinct source review. Batch all findings into at most one successor, then run
+   the final lanes once on the reviewed SHA.
+
+### Compatibility, scope and non-scope
+
+Provider children, public context values, editor/workspace behavior, persistence, extension startup,
+service disposal and root/focused exports remain compatible. There is no host migration.
+
+Non-scope: a new or global Context; context extraction/canonicalization; public props; changes to
+`useWorkbench`; editor state or workspace policy; a provider-free shell; command/keybinding behavior;
+the Issue #405 management leaf; package versions; release/tag/publish; Electron/native; Vite consumer
+alias/dedupe configuration; unrelated Provider cleanup.
+
+### Focused development and final validation
+
+Development repeats only the affected reconciler unit/type check and focused packed matrix. After
+candidate freeze and producer-distinct review, run each final lane exactly once:
+
+```text
+pnpm validate:fast
+pnpm check:packed-shell-react-context
+pnpm check:commit-safety
+git diff --check
+```
+
+`validate:fast` already contains repository static, packed-consumer and unit gates; do not rerun its
+nested lanes. The dedicated Chromium runner is the material Vite DEV context-identity authority.
+The general UI lane and Electron are omitted because neither exercises this external optimizer
+boundary and no native source changes.
+
+### Acceptance and source-review checklist
+
+Done requires the exact internal Provider back-edge to be absent; direct reconciler tests to preserve
+workspace reconciliation; fresh packed Provider-only and every named sibling combination to mount one
+context without reload or error; a repository-lock-contained frozen external toolchain; no public API,
+Context, owner, behavior, dependency or product-policy change; and producer-distinct review plus every
+final lane green on one exact SHA.
+
+Source review must reject a global/symbol singleton, second Context, public prop, provider barrel hop,
+alias/dedupe workaround, floating install, source/workspace package input, swallowed cleanup failure,
+root/provider/command/host behavior refactor, new persistent state, Electron/native work, or expansion
+after a remaining matrix failure without a new design decision.
+
+## WB-NS-080C — Focused provider-bound keybinding management Settings entrypoint
+
+- **Status:** `DONE`
+- **Resolution packet:** `WB-NS-080C2` is `DONE`; this rejected single late provider-bound leaf
+  contract was superseded rather than implemented
+- **Canonical public work:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405)
+- **Companion internal cause:** [Issue #411](https://github.com/NewChoBo/workbench-kit/issues/411);
+  implemented and closed by the same atomic Issue #405 candidate/PR, not a separate prerequisite
+- **Exact source/API baseline:** `develop@601dd2950bf6c7e60c294afd7f8119001c2e2ac4`
+- **Ownership:** `GENERIC_KIT / PUBLIC_ENTRYPOINT`; `packages/shell-react`
+- **Dependencies:** `WB-NS-080A`, `WB-NS-080B`, and `WB-NS-080C0` are `DONE`
+- **Public entrypoint:** `@workbench-kit/shell-react/keybinding-management-settings`
+- **Runtime layer:** `PURE_WEB / DOM / provider-bound`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host that already composes the focused `provider`, `command-host` and `host-shell`
+entrypoints can render the existing provider-bound keybinding management Settings component without
+importing the broad package root. The focused leaf must observe the same provider context, command
+registry, effective overrides, persistence state and runtime dispatch path as those sibling focused
+entrypoints.
+
+This is an import-boundary correction only. It does not add a second management component, model,
+registry, storage owner or shortcut dispatcher.
+
+The integrated 080C0 initial Provider/command-host/host-shell matrix is green. The retained Issue #405
+draft proves that separately optimizing the late management leaf creates a foreign Provider context:
+the management model throws `useWorkbench must be used inside WorkbenchProvider.` after the initial
+shell is already live. That draft remains unaccepted and has no frozen source candidate. The internal
+cause tracked by Issue #411 and the public leaf/export/test work must be implemented, frozen, reviewed
+and validated together on one exact atomic Issue #405 candidate SHA.
+
+Focused follow-up evidence shows the canonical package self-subpath removes the foreign Provider
+context. The remaining failure is a fixture mismatch: constructing the management module URL at
+runtime and hiding it behind `/* @vite-ignore */` prevents Vite from crawling the declared local lazy
+module and admitting its public bare package dependencies, causes late optimizer hash regeneration,
+and leaves the import pending without a page navigation or page error. That optimizer-opaque loader
+is not the target host contract and is not a source architecture failure.
+
+Later literal-lazy evidence supersedes that provisional conclusion. With ordinary static discovery,
+activation still evaluates a foreign Provider instance and throws
+`useWorkbench must be used inside WorkbenchProvider.` before the command interaction can begin.
+Same-package and separately published Context-owner prototypes reproduce the same RED because Vite
+bundles that owner into the late optimized entry. The uncommitted draft is discarded. The validated
+replacement contract is `WB-NS-080C2` below.
+
+### Current gap and ownership boundary
+
+At the exact baseline, `WorkbenchKeybindingManagementSettings` already exists in
+`packages/shell-react/src/management/keybinding-settings.tsx`. It delegates to the existing
+`useKeybindingManagementModel`, renders the existing React `KeybindingManagementPanel`, and uses the
+same `WorkbenchProvider` context as `WorkbenchCommandHost`. The package root re-exports the component,
+but `packages/shell-react/package.json` has no focused public management leaf.
+
+Hosts that otherwise use:
+
+```ts
+@workbench-kit/shell-react/provider
+@workbench-kit/shell-react/command-host
+@workbench-kit/shell-react/host-shell
+```
+
+must therefore import the broad root only for this component. The target adds one explicit leaf that
+re-exports the existing component directly. Generic keybinding mechanics and every current runtime
+owner remain unchanged.
+
+### Frozen public API and import graph
+
+Add exactly this public subpath:
+
+```json
+{
+  "./keybinding-management-settings": "./src/keybinding-management-settings.ts"
+}
+```
+
+The exact leaf file is `packages/shell-react/src/keybinding-management-settings.ts` and contains only:
+
+```ts
+export { WorkbenchKeybindingManagementSettings } from './management/keybinding-settings.js';
+```
+
+It therefore exposes the existing symbol with no wrapper or replacement implementation:
+
+```ts
+export function WorkbenchKeybindingManagementSettings(): JSX.Element;
+```
+
+The focused consumer import is:
+
+```ts
+import { WorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react/keybinding-management-settings';
+```
+
+The existing root import remains source- and runtime-compatible:
+
+```ts
+import { WorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react';
+```
+
+Both paths resolve to the same component implementation and canonical focused provider entry. Change
+the existing runtime and type import in
+`packages/shell-react/src/management/use-keybinding-management.ts` from:
+
+```ts
+import { useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
+```
+
+to:
+
+```ts
+import { useWorkbench, type WorkbenchContextValue } from '@workbench-kit/shell-react/provider';
+```
+
+This is the only existing source import changed. It makes the separately optimized management graph
+reference the already-mounted canonical public Provider entry instead of owning another relative
+`shell/provider.tsx` graph. Keep `WorkbenchContext`, `WorkbenchProvider`, `useWorkbench` and
+`WorkbenchContextValue` defined and exported by `shell/provider.tsx`; do not add or extract a Context.
+
+The new leaf must not declare another React context, re-export `WorkbenchProvider`, copy the
+management hook, or introduce a package-root hop. Its runtime graph may include the existing
+management model, React panel, platform management helpers and provider context required by the
+component; it must not pull the broad root barrel merely to obtain them. It must not target or
+re-export through the broader `src/management/settings.tsx` aggregator, which also evaluates
+unrelated account, command and extension management surfaces.
+
+### Provider, persistence and runtime parity
+
+```text
+focused provider entrypoint
+  -> one WorkbenchProvider context
+       ├─ focused keybinding-management-settings leaf
+       │    -> existing management model
+       │    -> set/reset provider override operations
+       ├─ focused command-host leaf
+       │    -> same effective override projection
+       │    -> existing runtime command dispatch
+       └─ focused host-shell leaf
+            -> same provider-owned shell registries and layout
+```
+
+Setting an accepted override through the management leaf updates the one provider state and makes
+the new chord effective through the mounted command host. The displaced old chord no longer invokes
+that command. Reset removes only that command's user override and restores the default chord. Current
+persistence eligibility, storage format/key, diagnostics, conflict handling, platform normalization,
+capture behavior and command execution remain the `WB-NS-080A` provider/model owners' responsibility.
+
+The new entrypoint adds no prop, callback, state, effect, listener or lifecycle. Mount/unmount follows
+the existing component. Multiple consumers under one provider observe one provider snapshot; they do
+not synchronize separate stores.
+
+### Packed build fixture and material browser context-identity gate
+
+Extend the existing packed-consumer Vite build/JSDOM fixture so it imports these exact public entries:
+
+```text
+@workbench-kit/shell-react/provider
+@workbench-kit/shell-react/command-host
+@workbench-kit/shell-react/host-shell
+@workbench-kit/shell-react/keybinding-management-settings
+```
+
+The fixture mounts one `WorkbenchProvider`, one `WorkbenchHostShell`, one `WorkbenchCommandHost` and
+one `WorkbenchKeybindingManagementSettings`. It must prove from the packed tarball, not workspace
+source resolution, that:
+
+- every focused entry resolves under one Provider without a missing/foreign-context error;
+- the management leaf lists a command from that exact provider projection;
+- setting a new chord updates the mounted command host and the old chord stops dispatching;
+- resetting restores the default chord and disables the temporary chord;
+- remounting the Settings component does not replace provider state or install duplicate command
+  dispatch;
+- the new leaf is present in the package export map and no private `src` deep import is required.
+
+That build/JSDOM fixture proves the export map, packed resolution and baseline component interaction,
+but it is not the material browser context-identity authority. Add a dedicated public-neutral external
+consumer whose initial application imports and mounts only the focused provider, command-host and
+host-shell entries while declaring the management boundary as a statically analyzable literal lazy
+edge:
+
+```js
+import('./management.jsx');
+```
+
+An equivalent source-declared lazy callback is acceptable. During startup, Vite may crawl that local
+lazy module and admit or prebundle its public bare package dependencies. Static optimizer admission
+of those bare dependencies is not browser or runtime preload. Before explicit activation, the browser
+must not request the management module, the module must not evaluate, and the component must not mount
+or render. On click, the declared lazy edge must request, evaluate and mount the management module
+exactly once beneath the already-live Provider. The runner must detect every optimizer reload so a
+reload cannot replace the live Provider or turn a context failure into a false PASS. Headless Chromium
+via Playwright must then prove no context error and exact-once old/new/reset runtime dispatch.
+
+The fixture must not construct the module URL, use a variable or runtime-unknown specifier, add
+`/* @vite-ignore */`, or otherwise hide the declared management edge from the optimizer. It also must
+not add the management Workbench entry to `optimizeDeps.include`; ordinary static discovery owns its
+admission.
+
+The consumer installs only freshly packed Workbench tarballs. Its external toolchain is frozen to the
+repository lockfile and current resolved package-manager, Vite, `@vitejs/plugin-react`, React and
+ReactDOM versions; it performs no floating install. It uses no `resolve.alias`, `resolve.dedupe`,
+workspace link or source-path workaround.
+
+After startup admission and again after activation, inspect Vite `_metadata.json` and optimized
+outputs. The canonical Provider entry must remain the only owner of `WorkbenchContext`; the
+management output must reference it and contain neither a second `createContext` nor another Provider
+body. If the package self-subpath is instead inlined as a second Provider graph, discard the candidate
+and return `DESIGN_DECISION_REQUIRED` with the exact artifact graph.
+
+The dedicated runner is exactly `pnpm check:packed-shell-react-context`. It owns an ephemeral external
+consumer directory, loopback Vite dev server, browser context and cleanup. Any Vite startup/readiness
+timeout, page error, unexpected console error/warning, browser assertion timeout, missing context,
+duplicate dispatch or cleanup failure fails the command closed. It must not reuse a repository dev
+server or accept a production build as a substitute for the Vite DEV optimizer path.
+
+### Ordered implementation tasks
+
+1. Preserve the exact evidence sequence: four initial focused Provider combinations green; the
+   relative Provider import producing a foreign-context RED; the canonical self-subpath removing that
+   error; and the constructed-URL + `/* @vite-ignore */` fixture causing optimizer hash regeneration
+   and a pending import with no navigation or page error. Record boot count, navigations, request and
+   activation timing, evaluation/mount markers, Vite `_metadata.json`, and optimized outputs
+   containing `WorkbenchContext`, `createContext`, a Provider body or the missing-Provider error.
+2. Change only the value/type Provider import in
+   `packages/shell-react/src/management/use-keybinding-management.ts` to the canonical
+   `@workbench-kit/shell-react/provider` package self-subpath.
+3. Add the exact one-line `packages/shell-react/src/keybinding-management-settings.ts` leaf and map
+   `./keybinding-management-settings` to it in `packages/shell-react/package.json`. Do not target the
+   broad `management/settings.tsx` aggregator.
+4. Preserve the root re-export and all other existing internal imports unchanged; the new leaf
+   contains no wrapper component, state, effect or additional export.
+5. Add focused public-export/type fixtures and an exact package-export mapping assertion proving the
+   leaf maps to `./src/keybinding-management-settings.ts`, while leaf and root imports expose the same
+   component contract under the focused provider entrypoint.
+6. Add focused provider-bound interaction coverage for command listing, set, displaced-old-chord,
+   reset/default restoration, persistence-disabled presentation and cleanup using the existing model
+   and command host.
+7. Extend the existing packed Vite build/JSDOM consumer with the four-entry one-Provider fixture and
+   exact old/new/reset runtime dispatch assertions.
+8. Extend the `WB-NS-080C0` `pnpm check:packed-shell-react-context` external consumer with a literal
+   `import('./management.jsx')` or equivalent statically declared management lazy edge. Allow Vite to
+   crawl the local lazy module and admit/prebundle its public bare package dependencies during startup,
+   but assert before click that its browser request, evaluation marker and mount marker are all zero
+   while boot count and main-frame navigations are one. After click, assert request time follows
+   activation and request, evaluation and mount each occur exactly once while boot/navigation remain
+   one. Preserve the repository-locked toolchain, fresh-tarball inputs and fail-closed
+   server/page/console/timeout/cleanup behavior.
+9. Assert from startup and post-activation optimizer metadata and outputs that one canonical Provider
+   owns `WorkbenchContext`, while the management output references it and contains no second
+   `createContext` or Provider body. If this fails, return `DESIGN_DECISION_REQUIRED`. Do not add an
+   alias, dedupe, exclusion, management `optimizeDeps.include`, browser/runtime preload before click,
+   source path, global singleton or Context extraction; do not construct or hide the module specifier
+   with a variable, runtime URL or `/* @vite-ignore */`.
+10. Update only neutral public entrypoint documentation needed to list the focused leaf. Do not add
+    host-specific composition guidance or a migration requirement.
+11. Before candidate freeze, repeat only the affected import-boundary unit/type tests, focused
+    provider-bound interaction tests, focused packed JSDOM fixture, and the dedicated runner with
+    `WBK_PACKED_CONTEXT_CASE=provider-command-host-host-shell` selecting the late management case.
+    Do not repeat full static/fast, the full packed-consumer gate, or the runner's full four-case
+    browser matrix. Freeze the import correction, leaf/export, tests and runners together as one exact
+    candidate.
+12. Route that combined candidate through producer-distinct source review. Batch all findings into
+    at most one successor, then run the final gates once on that successor or on the reviewed
+    candidate when no successor is required. Issue #411 closes through this same atomic PR.
+
+### Compatibility, scope and non-scope
+
+This change is additive at the public surface and corrects one internal import boundary. Existing
+root, `provider`, `command-host`, `host-shell`, `shell` and `command-host-controller` imports remain
+compatible. No consumer is required to migrate from the root; the focused leaf is available to hosts
+that maintain a focused import graph.
+
+In scope:
+
+- one exact one-line leaf and package export entry targeting that leaf;
+- one exact management-hook value/type import correction to the existing focused Provider
+  self-subpath;
+- focused public type/export checks;
+- packed Vite build/JSDOM plus dedicated Vite DEV optimizer/headless-Chromium one-provider
+  context-identity and old/new/reset parity evidence;
+- neutral entrypoint documentation.
+
+Non-scope:
+
+- component JSX, labels, capture UI or management-model behavior changes;
+- new keybinding types, registry operations, override semantics, persistence schema/key or diagnostics;
+- provider, command-host, host-shell or root-barrel refactoring;
+- Context extraction, a new/second/global Context, or a new public Context export;
+- a provider-free management component;
+- command registration, execution policy, extension routing or OS-global shortcuts;
+- new dependencies, package family, version change, publish-order change or bundle budget;
+- consumer alias, dedupe, optimizer exclusion, management `optimizeDeps.include`, workspace link or
+  source path;
+- management browser/runtime preload, evaluation or mount before activation; Vite may statically
+  crawl the local lazy module and admit/prebundle its public bare package dependencies, which is not
+  runtime preload;
+- arbitrary runtime-unknown plugin/module specifiers, remote module resolution or generic dynamic-
+  import infrastructure;
+- Storybook redesign, Electron, native IPC, release, tag or publish work.
+
+### Focused development and final validation
+
+Before candidate freeze, development repeats only the affected unit/type and provider-bound
+interaction tests, the focused packed JSDOM fixture, and `pnpm check:packed-shell-react-context` with
+`WBK_PACKED_CONTEXT_CASE=provider-command-host-host-shell` set to select the late management case.
+Do not repeat full static/fast, the full packed-consumer gate, or the dedicated runner's full four-case
+browser matrix while iterating.
+
+After the atomic import-correction + leaf/export + evidence candidate is frozen, obtain
+producer-distinct review and batch its findings into at most one successor. On that exact combined
+successor, or on the reviewed combined candidate when there are no findings, run each final lane
+exactly once. Omit or unset `WBK_PACKED_CONTEXT_CASE` for the final dedicated runner so it executes
+the full four-case matrix on the final SHA:
+
+```text
+pnpm validate:fast
+pnpm check:packed-shell-react-context
+pnpm check:commit-safety
+git diff --check
+```
+
+`validate:fast` already contains the repository static, packed-consumer and unit gates; do not rerun
+its nested `validate:static` or `check:packed-consumer` lanes separately. Its public-export checks must
+prove the package export has the exact leaf mapping and root compatibility remains, and its packed
+validation must use the packed tarball and Vite build/JSDOM fixture.
+`check:packed-shell-react-context` is the material browser gate and must exercise the packed external
+consumer through the locked Vite DEV optimizer: mount the initial three-entry shell, wait for Vite to
+crawl the literal local management edge and admit/prebundle its public bare package dependencies,
+prove no management browser request, evaluation or mount occurs before click, invoke that edge beneath
+the still-live Provider, and prove request/evaluation/mount each occur exactly once after activation.
+It must reject optimizer-reload
+false passes, retain one boot and navigation, prove optimizer artifacts retain one canonical Provider
+owner with no second `createContext`/Provider body, and use actual Chromium keyboard events for new,
+displaced and reset chords. The general repository UI lane is not required for this packet
+because it does not exercise that packed external context-identity boundary. Electron is omitted
+because no main, preload, BrowserWindow, native IPC or package-runtime boundary changes.
+
+No independent performance budget is justified. The leaf adds no runtime work beyond evaluating the
+same existing component graph through a direct package export; review must reject duplicate context,
+listener, registry, model or persistence ownership.
+
+### Acceptance and source-review checklist
+
+Done requires:
+
+- the exact management-hook Provider value/type import to use
+  `@workbench-kit/shell-react/provider`, with every other existing management/model import unchanged;
+- the exact focused import resolves from source and the packed package, maps exactly to the one-line
+  `src/keybinding-management-settings.ts` leaf and exports only the existing
+  `WorkbenchKeybindingManagementSettings` contract;
+- the root import remains compatible and refers to the same implementation;
+- provider, command-host, host-shell and management leaf coexist under one focused Provider without
+  context identity failure;
+- one existing command proves exact set, displaced-old-chord, reset/default and cleanup parity through
+  the real provider/model/command-host path;
+- packed Vite build/JSDOM and the dedicated locked-toolchain, no-alias/no-dedupe Vite DEV optimizer +
+  headless-Chromium consumer use only freshly packed public subpaths; the latter declares a literal
+  local lazy edge that Vite may crawl while admitting/prebundling its public bare package dependencies,
+  proves zero browser request/evaluation/mount before click, then proves each exactly once after
+  activation beneath the live three-entry Provider;
+- browser request time follows activation, boot and navigation remain one, optimizer reload false
+  passes are rejected, and artifacts prove one canonical Provider owner with no second `createContext`
+  or Provider body;
+- no generic keybinding mechanic, public prop, persistence format, dependency, package budget or
+  native/release boundary changes;
+- Issue #411 closes through the same atomic Issue #405 candidate/PR rather than a prerequisite merge;
+- final fast, packed-shell-react-context, commit-safety and diff lanes pass exactly once on the exact
+  combined final SHA and producer-distinct review finds no P0/P1/P2 mismatch.
+
+Source review must reject a nominal leaf that imports through the broad root or
+`management/settings.tsx`; contains anything beyond the exact direct re-export; creates a wrapper with
+state or effects; changes the component/model/provider/command-host behavior; drops the root export;
+omits the exact package mapping assertion; resolves a second React/provider context in packed Vite;
+proves only compile-time/build/JSDOM import without the dedicated DEV-optimizer Chromium lazy-leaf
+old/new/reset path; allows optimizer reload to replace the live Provider or produce a false PASS; uses
+floating external tool versions, stale/non-packed Workbench inputs, alias/dedupe/workspace links or
+private deep imports; tolerates page/console/timeout failures;
+adds an alias, dedupe, optimizer exclusion, management `optimizeDeps.include`, browser/runtime preload
+before activation, source path, global singleton, Context extraction or second Context; uses a
+constructed URL, variable/unknown specifier, `/* @vite-ignore */` or another optimizer-opaque module
+path; treats server-side static optimizer admission as runtime preload; expands into arbitrary
+runtime-unknown plugin/module loading; splits Issue #411 into a transient prerequisite candidate that
+cannot run the public late-entry gate on its own SHA; adds unrelated public exports, dependencies or
+mechanics; or claims release, publish, Electron or native completion.
+
+## WB-NS-080C2 — Provider-owned keybinding Settings binding and provider-free lazy view
+
+- **Status:** `DONE`
+- **Canonical public work:** [Issue #414](https://github.com/NewChoBo/workbench-kit/issues/414)
+- **Closes atomically:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405) and
+  [Issue #411](https://github.com/NewChoBo/workbench-kit/issues/411) through the same source PR
+- **Exact source/API baseline:** `develop@815a4d57b92851756abf5e2d97085da1ff25b872`
+- **Source integration:** candidate `42070f66f22c48f3ad49d45acefdf794f1ce0c18` merged by
+  [PR #416](https://github.com/NewChoBo/workbench-kit/pull/416) as
+  `develop@8b35d890527d9bfc517cf8d8e6c218bf0c4630cb`
+- **Completion evidence:** producer-distinct source review `PASS` with no P0/P1/P2 findings; final
+  `validate:fast` passed 473 test files / 2,798 tests; the full
+  `check:packed-shell-react-context` four-case Vite/Chromium matrix, `check:commit-safety`, and
+  `git diff --check` passed on the exact candidate; Issues #414, #405 and #411 are closed
+- **Ownership:** `GENERIC_KIT / PROVIDER_COMPOSITION + PUBLIC_VIEW`; `packages/shell-react`
+- **Dependencies:** `WB-NS-080A`, `WB-NS-080B`, and `WB-NS-080C0` are `DONE`
+- **Public entrypoints:** existing `@workbench-kit/shell-react/provider` plus new
+  `@workbench-kit/shell-react/keybinding-management-settings`
+- **Runtime layer:** `PURE_WEB / DOM / packed Vite DEV optimizer`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host can keep the Provider-dependent keybinding Settings binding in the already-live
+focused Provider graph and literal-lazy load only a provider-free Settings view. The host still uses
+the existing Provider, command registry, override state, persistence policy and shortcut dispatcher;
+the late module cannot create or import another Provider or React Context.
+
+The existing broad-root `WorkbenchKeybindingManagementSettings` remains a compatible zero-prop,
+provider-bound convenience component. The focused late-safe surface is intentionally props-driven;
+the rejected promise that a separately optimized zero-prop provider-bound leaf can be mounted safely
+is not retained.
+
+### Decisive design evidence
+
+The fresh packed external Vite DEV fixture established this sequence:
+
+1. The four initial focused Provider combinations from `WB-NS-080C0` are green.
+2. A literal-lazy provider-bound management leaf is not requested, evaluated or mounted before
+   activation, but activation throws `useWorkbench must be used inside WorkbenchProvider.` with one
+   boot and one navigation.
+3. Moving Context ownership to another same-package public subpath remains RED.
+4. Moving Context ownership to a separately published tiny package also remains RED under ordinary
+   discovery: Vite bundles that dependency into the late optimized management entry.
+5. Moving the binding to its own late-safe package subpath remains RED. The binding must be exported
+   by and evaluated through the already-live `provider` entry.
+6. A Provider-entry binding plus provider-free lazy view is GREEN in a fresh packed Chromium
+   prototype: command listing, set, displaced old chord, new chord exact-once, reset, temporary chord
+   disablement and restored default exact-once all pass without reload or context error.
+
+The GREEN prototype is the architecture authority. A package name, optimized entry label or source
+text location alone is not runtime identity evidence.
+
+### Frozen public API and source graph
+
+The existing `provider` entry adds exactly this hook and type-visible return contract:
+
+```ts
+export function useWorkbenchKeybindingManagementBinding(): WorkbenchKeybindingManagementSettingsViewProps;
+```
+
+The focused Settings leaf exports exactly this provider-free view contract:
+
+```ts
+export interface WorkbenchKeybindingManagementSettingsViewProps {
+  readonly editingDisabledReason?: string | undefined;
+  readonly entries: readonly KeybindingManagementEntry[];
+  readonly overrideCount: number;
+  readonly platform: WorkbenchShortcutPlatform;
+  readonly resetKeybinding: (commandId: string) => void;
+  readonly setKeybinding: (commandId: string, key: string | undefined) => void;
+}
+
+export function WorkbenchKeybindingManagementSettingsView(
+  props: WorkbenchKeybindingManagementSettingsViewProps,
+): JSX.Element;
+```
+
+`packages/shell-react/package.json` maps:
+
+```json
+{
+  "./keybinding-management-settings": "./src/keybinding-management-settings.ts"
+}
+```
+
+The focused leaf re-exports only the View and its props type from
+`management/keybinding-settings-view.tsx`. That View renders the existing
+`KeybindingManagementPanel` and maps `overrideCount`, `resetKeybinding` and `setKeybinding` to the
+existing panel presentation. Its runtime graph has no import from `shell/provider`, the provider
+public subpath, `useWorkbench`, `WorkbenchContext`, `createContext`, registry construction,
+persistence or dispatch.
+
+The existing `useKeybindingManagementModel` remains the single projection, subscription, set/reset
+and summary-data owner, but accepts the already-resolved `WorkbenchContextValue` as its internal
+input instead of importing or calling `useWorkbench`. The `provider` entry calls it from the new
+public binding hook after resolving the canonical live `useWorkbench()` value. A type-only import
+back to the Provider contract is allowed because it is erased from the late runtime graph.
+
+The existing broad-root `WorkbenchKeybindingManagementSettings()` synchronously composes the new
+binding hook and View. It retains its current zero-prop signature and visible behavior. The focused
+leaf does not re-export that provider-bound wrapper, and root/focused symbol identity is no longer an
+acceptance criterion.
+
+```text
+initial focused provider entry
+  -> WorkbenchProvider / one WorkbenchContext
+  -> useWorkbenchKeybindingManagementBinding
+       -> existing keybinding management model
+       -> live Provider entries, overrides, platform and set/reset operations
+
+literal-lazy local module
+  -> focused keybinding-management-settings leaf
+       -> provider-free WorkbenchKeybindingManagementSettingsView(props)
+       -> existing KeybindingManagementPanel
+```
+
+Do not add a second binding subpath. It would be independently optimized and recreate the foreign
+Context boundary proven by the RED prototype.
+
+### Packed and browser validation
+
+The packed build/JSDOM consumer imports the Provider binding hook from `/provider` and the View from
+the new focused leaf, mounts them beneath one Provider and proves command listing, set, displaced old
+shortcut, new shortcut exact-once, Settings-only remount, reset/default restoration and cleanup. It
+also keeps the existing broad-root zero-prop component type/runtime compatibility proof without
+requiring root/focused component identity.
+
+Extend `pnpm check:packed-shell-react-context` with the material browser case. The initial application
+imports only Provider, command-host, host-shell and the binding hook from `/provider`. Its declared
+literal lazy local module imports only the focused View. Before activation, browser request,
+evaluation and mount markers for that module are zero while boot and main-frame navigation are one.
+After activation, request time follows the click and request/evaluation/mount are each exactly one.
+
+After shortcut capture and after reset, the fixture clicks a dedicated focusable dispatch target
+outside management, asserts it is `document.activeElement`, asserts no element has
+`data-workbench-shortcut-capture-recording="true"`, and waits one React effect turn before dispatching
+runtime chords. This prevents the capture listener cleanup race from turning the next chord into a
+false management edit.
+
+The browser proves:
+
+- the live Provider command appears in the lazy View;
+- setting `Ctrl+Shift+F10` updates the visible binding;
+- displaced `Ctrl+Shift+F11` does not dispatch;
+- `Ctrl+Shift+F10` dispatches the focus-mode command exactly once;
+- reset disables `Ctrl+Shift+F10` and restores `Ctrl+Shift+F11` exact-once;
+- boot and main-frame navigation remain one;
+- there is no Provider/context implementation in the actually loaded lazy View graph;
+- no page error, unexpected console message, optimizer reload, timeout or cleanup failure occurs.
+
+The full four-case runner remains the final browser gate. During development select only
+`WBK_PACKED_CONTEXT_CASE=provider-command-host-host-shell`.
+
+### Ordered implementation
+
+1. Preserve the exact literal-lazy RED evidence and the three discarded Context/binding-owner
+   prototypes as design evidence; do not carry their source into the candidate.
+2. Refactor the internal management model to accept an already-resolved `WorkbenchContextValue` and
+   remove its runtime Provider import without changing its mechanics or returned data.
+3. Add `useWorkbenchKeybindingManagementBinding` directly to the existing Provider entry. Do not add
+   a separate binding subpath, Provider prop or second subscription/model owner.
+4. Add the provider-free View, its exact props interface and the focused leaf/export mapping.
+5. Recompose the existing broad-root zero-prop component from the binding hook and View and preserve
+   its current behavior.
+6. Add focused type/export/source-graph checks proving the leaf target, Provider hook presence,
+   provider-free lazy graph and absence of a second Context.
+7. Extend focused unit coverage for binding projection, set/reset, summary, View rendering and root
+   compatibility without duplicating management mechanics.
+8. Replace the retained packed JSDOM draft with binding-plus-View composition and the exact runtime
+   interaction sequence.
+9. Replace the retained browser draft with the literal-lazy provider-free View, focusable dispatch
+   target, timing markers, runtime assertions and loaded-graph context exclusion.
+10. Update only neutral public capability documentation. Do not add product-specific composition.
+11. Run only affected type/unit/export/JSDOM checks and the named focused browser case until green,
+    then freeze one atomic candidate.
+12. Route the exact candidate through producer-distinct review, batch findings into at most one
+    successor, and run final `validate:fast`, the full packed browser runner, commit safety and diff
+    checks once on the final SHA.
+
+### Compatibility, scope and non-scope
+
+Existing root, provider, command-host, host-shell and shell imports remain compatible. The new hook
+and View are additive. Generic keybinding projection, persistence, capture, conflict resolution,
+platform normalization, command registration and runtime dispatch remain with their current owners.
+
+In scope:
+
+- one Provider-entry binding hook over the existing model;
+- one provider-free props-driven View and focused export;
+- internal model input refactor needed to remove the late Provider dependency;
+- root compatibility composition;
+- focused type/unit, packed JSDOM and literal-lazy Chromium evidence;
+- neutral public capability documentation.
+
+Not in scope:
+
+- another package or binding subpath;
+- another Context, raw Context export, Context extraction, global/symbol singleton or Provider prop;
+- alias, dedupe, optimizer include/exclude, preload, source/workspace path or opaque lazy specifier;
+- new management mechanics, panel, registry, storage, persistence format or shortcut dispatcher;
+- product policy, host-specific adapter, Electron/native work, release, tag or publish.
+
+### Acceptance and done criteria
+
+Source review must reject the candidate if the focused View reaches Provider/context code at runtime,
+the binding is not exported from the already-live Provider entry, the internal model is copied, the
+root wrapper changes behavior, capture cleanup is hidden by a timeout-only assertion, or any forbidden
+optimizer/runtime workaround appears.
+
+`DONE` requires one exact atomic candidate, producer-distinct `PASS` with no unresolved P0/P1/P2,
+focused checks green before freeze, final `validate:fast`, full
+`check:packed-shell-react-context`, commit-safety and diff checks green on the final SHA, merge to
+`develop`, remote topic deletion, Issue #414/#405/#411 closure, and exact evidence recorded here.
+Release, npm publication and downstream cohort consumption remain separate approval gates.
+
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
 - **Status:** `DESIGNING`
@@ -2240,6 +3019,258 @@ parent architecture; or claims Electron, release or publish completion.
 - The integrated source satisfies this bounded packet. Release, package publication and consumer
   adoption remain separate claims.
 
+## WB-NS-030B — Focused public SchemaForm subpath
+
+- **Status:** `DONE`
+- **Target:** focused public consumability for the current `WorkbenchSchemaForm`; parent
+  `WB-NS-030` remains `DESIGNING`
+- **Ownership:** `GENERIC_KIT`
+- **Exact source-bearing baseline:**
+  `develop@bc6b7dbbbe575b82b4af811f5890e283e3cac27b`
+- **Reviewed READY packet baseline:**
+  `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388
+- **Integrated implementation:** PR #389 / reviewed candidate
+  `a3cc8dfdfb88bebebfeae59e7ff476e700769338` / merge
+  `bc6b7dbbbe575b82b4af811f5890e283e3cac27b`
+- **Completion evidence:** the exact candidate passed `pnpm validate:fast`, including its single
+  embedded static lane and 467 files / 2,666 tests, plus `pnpm validate:ui` with 15 Chromium suites
+  / 82 interactions and 8 tag-filtered skips. Three producer-distinct exact-candidate reviews
+  reported `PASS / P0 none / P1 none / P2 none`. Commit safety passed before commit and push; the
+  source topic branch was deleted locally and remotely after integration. Electron was not run
+  because no native boundary changed.
+- **Public owner:** `@workbench-kit/react/schema-form`
+- **Compatibility owner:** `@workbench-kit/react/workbench/settings`
+- **Native boundary:** none
+
+### Goal
+
+Expose the existing generic SchemaForm through one narrow, consumer-neutral public subpath. A
+consumer that needs form rendering must not have to enter the aggregate Settings surface, and the
+new path must not create a second component, form model, schema family or style authority.
+
+This is an additive package-boundary and dependency-isolation slice. It preserves the current
+SchemaForm behavior, including every `WB-NS-030A` focus and accessibility guarantee, and does not
+finalize the parent packet's future `FormModel` or inspector architecture.
+
+### Integrated current source facts
+
+- `packages/react/package.json` exposes `./schema-form` at the existing `SchemaForm.tsx` module and
+  maps the exact non-wildcard `typesVersions` path for classic TypeScript resolution.
+- `packages/react/src/workbench/settings/index.ts` still re-exports the complete SchemaForm module
+  beside the legacy Settings surface, and the focused, Settings and workbench paths retain the same
+  seven runtime export identities.
+- `packages/react/src/workbench/settings/SchemaForm.tsx` remains the single implementation. It owns
+  the direct `./schema-form.css` leaf import and retains only React, primitive leaf modules, `cx` and
+  the small internal `settingsCommit` compatibility seam.
+- `schema-form.css` remains the single SchemaForm style source, while `settings.css` retains its
+  legacy aggregate import of that leaf.
+- `@workbench-kit/react` retains CSS-only side-effect metadata. Packed modern/classic type checks,
+  executed Vite/ESM identity, private-path rejection and the focused Settings-subtree allowlist
+  verify the public package boundary without claiming a native CommonJS runtime.
+
+### Frozen module and ownership boundary
+
+Add exactly this public subpath:
+
+```json
+{
+  "./schema-form": "./src/workbench/settings/SchemaForm.tsx"
+}
+```
+
+Add the matching classic TypeScript resolver target without adding a wildcard family:
+
+```json
+{
+  "typesVersions": {
+    "*": {
+      "schema-form": ["src/workbench/settings/SchemaForm.tsx"]
+    }
+  }
+}
+```
+
+`SchemaForm.tsx` remains the implementation and runtime identity for both the focused path and the
+existing Settings re-export. It must import its co-located `./schema-form.css` leaf directly.
+`settings.css` must retain its existing `@import './schema-form.css'` edge as a CSS-only and legacy
+aggregate compatibility path. Bundlers may deduplicate the shared leaf, but no second stylesheet,
+wrapper component or parallel export barrel may become a style or behavior authority.
+
+The existing `settingsCommit` read may remain an internal compatibility seam. The focused public API
+must not export Settings commit concepts, and this edge must not widen into Settings modal, shell,
+provider, runtime or registry composition.
+
+### Frozen public API
+
+The focused subpath exports the complete current public export set of `SchemaForm.tsx` at the exact
+source-bearing baseline.
+
+Runtime exports:
+
+```ts
+WorkbenchSchemaForm;
+coerceWorkbenchSchemaFormFieldValue;
+getWorkbenchSchemaFormErrors;
+getWorkbenchSchemaFormFieldDefaultValue;
+getWorkbenchSchemaFormFieldError;
+isWorkbenchSchemaFormSubmittable;
+normalizeWorkbenchSchemaFormValues;
+```
+
+Type exports:
+
+```ts
+WorkbenchSchemaFormCancelContext;
+WorkbenchSchemaFormCheckboxField;
+WorkbenchSchemaFormErrors;
+WorkbenchSchemaFormField;
+WorkbenchSchemaFormFieldBase;
+WorkbenchSchemaFormFieldChangeContext;
+WorkbenchSchemaFormFieldType;
+WorkbenchSchemaFormFieldValue;
+WorkbenchSchemaFormNumberField;
+WorkbenchSchemaFormOption;
+WorkbenchSchemaFormProps;
+WorkbenchSchemaFormSelectField;
+WorkbenchSchemaFormSubmitContext;
+WorkbenchSchemaFormTextField;
+WorkbenchSchemaFormValues;
+```
+
+The focused contract must not export `WorkbenchSettingsModal`, Settings navigation/section/category/
+scope APIs, `WorkbenchStructuredData*`, extension-setting/spec/category adapters,
+`WorkbenchSettingsCommit*`, shell/provider/runtime/registry APIs or product-specific types.
+The package root remains unchanged. Nested `schema-form/*` and private `src/workbench/settings/*`
+imports remain unexported.
+
+### Behavior, state and compatibility flow
+
+1. Focused and legacy imports resolve to the same `WorkbenchSchemaForm` function and helper/type
+   contracts; there is no wrapper, adapter or copied implementation.
+2. The component retains its existing controlled `values` or internal `defaultValues` ownership.
+   Field changes, merged validation errors, submit/cancel callbacks and optional immediate Settings
+   commit continue through the current single state and event flow.
+3. `WB-NS-030A` remains authoritative for default-disabled behavior, opted-in invalid-submit focus,
+   field-order selection, actual-target ARIA and repaired-submit semantics.
+4. The focused JS import brings the leaf SchemaForm CSS side effect. It does not require
+   `workbench/settings/settings.css`, `styles/core.css` or a consumer-written duplicate CSS import.
+5. Existing `@workbench-kit/react/workbench/settings` imports and the Settings CSS aggregate remain
+   source- and behavior-compatible.
+
+There is no new asynchronous lifecycle, persistence, concurrency, error store or recovery authority.
+Existing render-time validation and callback error behavior are unchanged. This packet adds no
+registry, provider, process boundary or fallback path.
+
+### Bundle isolation contract
+
+A dedicated packed-consumer focused entry must import `@workbench-kit/react/schema-form` directly and
+produce bundle-metafile evidence. Its graph must include `SchemaForm.tsx` and `schema-form.css` and
+must exclude at least:
+
+- `WorkbenchSettingsModal` and Settings navigation/section modules;
+- `StructuredDataSchemaPanel`, `StructuredDataForm` and related StructuredData surfaces;
+- `schemaFormSettingsCategory`, `schemaFormSettingSpec` and `extensionSettingsForm`;
+- `@workbench-kit/shell-react`, `@workbench-kit/workbench-core` and shell/runtime/extension
+  composition modules;
+- the aggregate `workbench/settings/index.ts`, `settings.css` and `styles/core.css` paths.
+
+The small internal `settingsCommit` context module is allowed only while it remains the existing
+non-public compatibility seam. Its presence is not permission to expose commit types or aggregate
+Settings dependencies.
+
+### Scope
+
+- add the direct `./schema-form` package export;
+- make `SchemaForm.tsx` own its leaf CSS import;
+- preserve the legacy Settings TypeScript and CSS re-exports;
+- add packed type/runtime/style-presence and dependency-denial evidence for focused and legacy paths;
+- retain existing focused SchemaForm tests and `WB-NS-030A` required interaction evidence.
+
+### Non-goals
+
+- a new `FormModel`, field-schema registry, inspector model, field kind or validation system;
+- a second SchemaForm core/component, wrapper or stylesheet;
+- Settings information-architecture or extension-settings changes;
+- root-barrel expansion, product adapter or consumer import migration;
+- dependency version change, release, publish, tag or native/Electron work.
+
+### Ordered implementation tasks
+
+1. Revalidate the exact current develop source, package exports, SchemaForm exports and style edges.
+2. Add `./schema-form` to `packages/react/package.json`, targeting the existing `SchemaForm.tsx`
+   module directly, and add the exact non-wildcard `typesVersions` target for classic TypeScript
+   resolution.
+3. Add `import './schema-form.css'` to `SchemaForm.tsx`; retain the same import in `settings.css` and
+   retain CSS-only `sideEffects` metadata.
+4. Preserve the Settings barrel re-export exactly and add a focused-versus-legacy runtime identity
+   assertion without introducing an implementation wrapper.
+5. Extend the packed consumer to compile and import every focused runtime/type export, explicitly
+   including `WorkbenchSchemaFormErrors`, while retaining Settings and workbench legacy-path
+   compatibility fixtures. Prove ESNext/Bundler and CommonJS/Node type resolution, but do not claim a
+   native CommonJS `require()` runtime that the source-shipped ESM package does not provide.
+6. Add a focused bundle entry and metafile assertions for required SchemaForm JS/CSS presence and
+   every aggregate Settings/StructuredData/extension-settings/shell-runtime denylist family above.
+   Assert that nested and private deep imports remain package-path errors.
+7. Run the existing focused SchemaForm unit tests and the `WB-NS-030A` required Storybook interaction
+   unchanged; add only packaging/style assertions not already represented.
+8. Freeze one exact candidate, run final gates once, and obtain producer-distinct source review before
+   integration. Release, publication and consumer migration remain separate later claims.
+
+### Verification
+
+During implementation, repeat only the focused SchemaForm tests and the narrow packed-consumer or
+React type check changed by the edit. At the frozen final exact SHA run once:
+
+- focused `packages/react/src/workbench/settings/SchemaForm.test.tsx` tests;
+- focused package-export, packed-consumer type/runtime/style and bundle-metafile assertions;
+- `pnpm typecheck:react-exact-optional`;
+- `pnpm validate:static`;
+- `pnpm validate:fast`;
+- the existing required SchemaForm Storybook interaction lane;
+- `pnpm check:commit-safety` and `git diff --check` before commit and push.
+
+Browser interaction remains required only for the inherited `WB-NS-030A` scenario and must use the
+existing required Storybook proof. The package boundary itself is covered by backendless packed
+consumer and bundle-graph tests. Runtime identity and styling use the existing Vite/ESM consumer
+lane; CommonJS coverage is type-resolution-only. No main, preload or native boundary changes;
+Electron is not required.
+
+The focused entry must not duplicate implementation or aggregate Settings code. Dependency-graph
+denylist evidence is the performance/bundle acceptance; no arbitrary byte budget is added because
+shared primitive and CSS minifier output may change independently of this boundary.
+
+### Acceptance
+
+- `@workbench-kit/react/schema-form` resolves from the packed tarball and exposes the complete frozen
+  runtime/type surface, including `WorkbenchSchemaFormErrors`;
+- both modern bundler and classic Node TypeScript resolution accept the exact focused subpath while
+  nested/private deep paths remain unexported;
+- focused and legacy paths expose the same component and helpers without a second implementation;
+- focused rendering receives `schema-form.css` without importing aggregate Settings/Core CSS;
+- the Settings barrel and `settings.css` aggregate remain compatible;
+- bundle evidence includes the direct SchemaForm JS/CSS leaf and excludes every frozen denylist
+  family;
+- all `WB-NS-030A` focus, accessibility, validation, callback and state-flow tests remain unchanged
+  and passing;
+- static, fast, packed-consumer, exact-optional and required browser gates pass at one exact candidate;
+- producer-distinct source review reports no blocker before integration;
+- no product migration, release, publish, tag, native or parent-architecture work is claimed.
+
+### Source-review checklist
+
+Reject a candidate that targets the Settings barrel; forks or wraps SchemaForm; omits any current
+module export; exposes Settings commit or product concepts; drops the legacy re-export or CSS hub
+edge; requires aggregate Settings/Core CSS for focused styling; creates a second stylesheet; pulls
+Settings modal/navigation, StructuredData, extension-settings, shell/runtime or extension
+composition into the focused graph; changes controlled/uncontrolled values, validation,
+submit/cancel/immediate-commit behavior or any `WB-NS-030A` focus/ARIA semantic; replaces graph
+evidence with manifest inspection alone; skips packed-tarball proof; expands the parent architecture;
+claims native CommonJS runtime support without a package-wide build contract; or claims consumer
+adoption, Electron, release or publication completion.
+
+The integrated source satisfies this bounded packet. The parent `WB-NS-030` architecture remains
+`DESIGNING`; package release, publication and consumer adoption remain separate claims.
+
 ## WB-NS-040 — Extension capability / trust / compatibility model
 
 - **Status:** `DESIGNING`
@@ -2346,6 +3377,613 @@ Performance workloads + budgets
 ### Ready gate
 
 Define ownership and API boundaries for fixtures without turning production packages into test-framework containers; identify representative workloads from actual hot paths before budgets are standardized.
+
+### WB-NS-060A — Field Remap deterministic reference workload
+
+- **Status:** `DONE`
+- **Target:** `target-architecture.md` §§ Target backendless test architecture, Target performance architecture
+- **Ownership:** `GENERIC_KIT / TEST_ARCHITECTURE`; Field Remap remains the semantic projection and traversal-instrumentation owner
+- **Exact design source/API baseline:** `develop@ff31a38d3a4e626233a06db34e698c61b7fd1267`
+- **Exact implementation base:** `develop@751a6be0105ef3284fa97f0fd414efc41dae4cff`
+- **Exact source candidate:** `4e6eaae880f33c31fd9a497b02fecb8b5a7ba3d9`
+- **Integration:** [PR #399](https://github.com/NewChoBo/workbench-kit/pull/399) merged as `develop@508b2240151b4e0447d2ba5db57cd3504f3500f4`; [Issue #398](https://github.com/NewChoBo/workbench-kit/issues/398) closed
+- **Final validation:** focused `2 files / 61 tests`; `validate:fast` `470 files / 2758 tests`; `validate:ui` `15 suites / 90 interactions` with `8` optional skips; `check:commit-safety` passed
+- **Exact-source review:** three producer-distinct reviews returned `NO_FINDINGS`
+- **Boundary result:** no public API/export, package/dependency/publish-order, release/tag/publish or Electron/native change
+- **Implementation boundary:** private `packages/field-remap/test-support/reference-workloads.ts` plus focused `src/**/*.test.ts` consumers and packed-artifact verification
+- **Public API impact:** none; no package export, public subpath, dependency or publish-order change
+
+#### Goal
+
+Turn the existing ad hoc Field Remap `8 / 100 / 600` traversal test into one deterministic,
+backendless reference-workload source that can prove correctness and structural cost without Electron,
+a browser, wall-clock sleeps or a standardized latency budget. This is the first bounded child of
+`WB-NS-060`; the parent remains `DESIGNING` for cross-surface scenario distribution and standardized
+performance budgets.
+
+The implementation must reuse the real `createFieldRemapProjectionOwner` and its existing
+`onTraversal` instrumentation. It must not copy projection mechanics, introduce a fake projection
+owner or move test-framework concerns into a published package.
+
+#### Private contract and workload manifest
+
+The test-support module is outside `packages/field-remap/src`, is absent from every barrel and is not
+included by the package `files` allowlist. A `src/**/*.test.ts` consumer imports it directly so the
+existing package typecheck and Vitest lane still compile the module. It owns exactly these immutable
+definitions:
+
+| Workload ID                      | sources | targets | edges | operators | operations | aggregate | size      |
+| -------------------------------- | ------: | ------: | ----: | --------: | ---------: | --------: | --------- |
+| `field-remap.projection.small`   |       8 |       8 |     8 |         0 |          1 |        25 | `SMALL`   |
+| `field-remap.projection.typical` |     100 |     100 |   100 |         0 |          1 |       301 | `TYPICAL` |
+| `field-remap.projection.stress`  |     600 |     600 |   600 |         0 |          1 |      1801 | `STRESS`  |
+
+`aggregateEntries` is the current owner formula `sources + targets + edges + operators + operations`.
+The one operation is a real semantic mutation: upsert existing `edge.0`, retain `target.0`, and change
+its source from `source.0` to `source.{N - 1}`. The edge count remains `N`; only `edge.0` changes.
+
+The private module freezes these shapes:
+
+```ts
+type FieldRemapReferenceWorkloadId =
+  | 'field-remap.projection.small'
+  | 'field-remap.projection.typical'
+  | 'field-remap.projection.stress';
+
+interface FieldRemapReferenceRunEvidence {
+  readonly sourceRevision: string; // exact lowercase 40-hex source SHA
+  readonly environment: string; // strict public-safe identifier, not host discovery
+  readonly tool: string; // strict public-safe identifier, not an executable path
+}
+
+interface FieldRemapReferenceStructuralRecord {
+  readonly schemaVersion: 1;
+  readonly fixtureRevision: 'field-remap-reference-v1';
+  readonly workloadId: FieldRemapReferenceWorkloadId;
+  readonly dimensions: {
+    readonly sources: number;
+    readonly targets: number;
+    readonly edges: number;
+    readonly operators: 0;
+    readonly operations: 1;
+    readonly aggregateEntries: number;
+  };
+  readonly operation: 'change-edge-0-source';
+  readonly result: {
+    readonly status: 'applied';
+    readonly documentVersion: 2;
+    readonly documentEdgeCount: number;
+    readonly changedEdge: {
+      readonly id: 'edge.0';
+      readonly sourceFieldId: string;
+      readonly targetSlotId: 'target.0';
+    };
+    readonly historyLength: 1;
+  };
+  readonly traversal: FieldRemapTraversalSample;
+  readonly lifecycle: {
+    readonly retainedBeforeDispose: 1;
+    readonly retainedAfterDispose: 0;
+  };
+}
+
+interface FieldRemapReferenceRunRecord {
+  readonly evidence: FieldRemapReferenceRunEvidence;
+  readonly structural: FieldRemapReferenceStructuralRecord;
+}
+```
+
+`buildFieldRemapReferenceFixture(id)` returns fresh, deeply frozen source, target, edge and operation
+records on every call. `runFieldRemapReferenceWorkload(id, evidence)` returns a deeply frozen record.
+The structural record is the deterministic equality authority; caller evidence is validated and
+echoed but excluded from structural equality.
+
+`sourceRevision` must be an exact lowercase 40-hex SHA. `environment` and `tool` are trimmed,
+non-empty identifiers of at most 64 characters using only ASCII letters, digits, `.`, `_`, `:`, and
+`-`. The runner never discovers or records timestamps, absolute paths, host names, CPU identity or
+secrets. Raw owner `transactionId`, `canonicalRevision`, owner epoch and descriptor/runtime identity
+are never copied into the record because the current owner intentionally includes random/process-local
+identity in those values.
+
+#### State, lifecycle and failure flow
+
+```text
+validate workload ID + evidence
+  -> build one fresh frozen fixture
+  -> create one real Field Remap projection owner + private traversal collector
+  -> capture the pre-operation revision only for an internal changed-revision assertion
+  -> create/apply the exact edge.0 mutation
+  -> require applied + changed revision + exactly one traversal sample
+  -> validate exact document, dimensions, aggregate, size and structural postconditions
+  -> build normalized structural record without random identity
+  -> await owner.dispose() in finally
+  -> require retention size 0
+  -> freeze and return the success record
+```
+
+Every invocation owns its fixture, owner and traversal collector. Sequential and parallel invocations
+share only the immutable manifest. The owner-generated epoch may differ, but normalized structural
+records for the same workload must be equal. After owner creation, disposal is awaited on success and
+every failure; no success record is returned until disposal and the zero-retention postcondition both
+succeed. An `unknown-workload` or `invalid-evidence` admission failure occurs before owner creation,
+calls the owner factory zero times and therefore has no owner to dispose.
+
+The private failure type exposes stable codes:
+
+```text
+unknown-workload
+invalid-evidence
+transaction-not-applied
+revision-not-changed
+missing-traversal-sample
+duplicate-traversal-sample
+structural-mismatch
+dispose-failed
+run-and-dispose-failed
+```
+
+Its exact private shape is:
+
+```ts
+class FieldRemapReferenceWorkloadError extends Error {
+  readonly code: FieldRemapReferenceWorkloadErrorCode;
+  readonly primary?: FieldRemapReferenceWorkloadError;
+  readonly disposeCause?: unknown;
+}
+```
+
+A non-`applied` owner result, missing or duplicate traversal callback, unchanged revision, unexpected
+edge mutation, wrong size/aggregate/stage counters or retention mismatch fails closed and emits no
+success record. An execution-only failure returns its exact execution code. A disposal throw or a
+non-zero post-disposal retention with no execution failure returns `dispose-failed`. If execution and
+disposal both fail, the top-level code is `run-and-dispose-failed`, `primary` retains the exact
+execution error and code, and `disposeCause` retains the disposal throw or retention evidence. Do not
+serialize a platform-dependent `AggregateError`. The normal runner always uses the real owner; a
+narrow private factory seam may be injected only by the dedicated failure-path test.
+
+#### Scope and non-scope
+
+Scope:
+
+- one Field Remap-owned private manifest, fixture builder, one-shot runner and normalized structural
+  record;
+- migration of the existing proportional traversal test to the single manifest/fixture owner;
+- repeatability, fresh-state, parallel isolation, lifecycle and fail-closed regression tests;
+- packed-artifact evidence that `test-support` stays absent.
+
+Non-scope:
+
+- a public `@workbench-kit/testing` or scenario package/subpath;
+- React, Storybook, Playwright, shell/sidebar, editor, form or JDW workloads;
+- a general capability bag, service locator, fake timer or scheduler;
+- elapsed-time, CPU, DOM, memory, gzip or regression budgets; existing packed-consumer budgets remain
+  owned and unchanged by their current gate;
+- browser, Electron, native adapter, release, tag or publish work.
+
+#### Ordered implementation tasks
+
+1. Add the non-packed private manifest, strict evidence validator, fresh deep-frozen fixture builder,
+   stable private error codes and normalized record types.
+2. Add the one-shot runner over the real projection owner. Validate the exact mutation and traversal,
+   normalize random revision/transaction identity out of the result, and await disposal in `finally`.
+3. Replace the local `8 / 100 / 600` construction in `serializedOwner.test.ts` with the shared private
+   fixture definitions while preserving every positive-stage and proportional-cost invariant.
+4. Add a focused `src/projection/referenceWorkloads.test.ts` lane for immutable fresh fixtures,
+   sequential/parallel structural equality, isolated evidence, exact changed-edge postconditions,
+   zero retention and every private failure code. Admission-failure tests require zero owner-factory
+   calls. Do not duplicate the proportional workload test.
+5. Extend packed-consumer artifact inspection so a Field Remap tarball containing `test-support` fails;
+   do not change any package export or bundle budget.
+6. Freeze one source candidate after focused tests and route producer-distinct reviews for workload
+   correctness, lifecycle/error behavior and packed/public compatibility.
+
+#### Validation and acceptance
+
+During development run only the focused Field Remap tests and package typecheck. On the fixed source
+candidate run `pnpm validate:fast` and `pnpm check:commit-safety` once; `validate:fast` includes the
+static, packed-consumer and complete unit lanes. Browser and Electron validation are not required
+because this packet changes neither renderer behavior nor a native boundary.
+
+Done requires:
+
+- the three IDs and exact `25 / 301 / 1801` aggregate classifications are manifest-owned and tested;
+- every run performs the real mutation, yields exactly one traversal sample, changes only `edge.0`,
+  preserves edge count, produces one history entry and retains exactly one settled reservation before
+  disposal clears it;
+- every traversal stage is positive and the existing proportional invariants remain unchanged;
+- fresh and parallel runs produce equal normalized structural records without shared mutable fixture
+  state or random identity leakage;
+- admission failures create no owner; every failure after owner creation disposes it, emits no success
+  record and uses the frozen private codes;
+- no public barrel, package dependency, tarball file, bundle budget or published contract changes;
+- producer-distinct exact-source review returns no P0/P1/P2 target mismatch.
+
+#### Source-review checklist
+
+- Is there exactly one `8 / 100 / 600` fixture owner and no copied projection/traversal mechanic?
+- Is `test-support` physically outside the published `src` allowlist and absent from every barrel and
+  packed tarball?
+- Does the default runner use the real projection owner and one actual mutation?
+- Are owner epoch, transaction ID and canonical revision excluded from deterministic records?
+- Are evidence strings caller-supplied, bounded and public-safe without environment discovery?
+- Are traversal cardinality, document postconditions and disposal checked before success publication?
+- Are sequential and parallel invocations isolated, deeply frozen and structurally repeatable?
+- Did existing proportional assertions remain at least as strong without a new wall-clock budget?
+- Did packed/public exports remain unchanged, with no browser/Electron/release dependency introduced?
+
+### WB-NS-060B — SchemaForm deterministic validation-fan-out reference workloads
+
+- **Status:** `DONE`
+- **Target:** `target-architecture.md` §§ Target backendless test architecture, Target performance architecture
+- **Ownership:** `GENERIC_KIT / TEST_ARCHITECTURE`; the current `WorkbenchSchemaForm` helpers remain the normalization and validation owner
+- **Exact design source/API baseline:** `develop@9d7d35261bb216a35fec4f16b4738906c1fcd8c1`
+- **Exact implementation base:** `develop@b2aab48eac7b0a72913045af6ab3d3d7f81d2053`
+- **Exact source candidate:** `b86e272b0120c32eeedfc39b893f6e9987baa3a0`
+- **Integration:** [PR #403](https://github.com/NewChoBo/workbench-kit/pull/403) merged as `develop@3059e656f657c7e8e0f1d83812e7345efdefb077`; [Issue #402](https://github.com/NewChoBo/workbench-kit/issues/402) closed
+- **Final validation:** focused `2 files / 49 tests`; `validate:fast` `471 files / 2790 tests`; `validate:ui` `15 suites / 90 interactions` with `8` optional skips; `check:commit-safety` and `git diff --check` passed
+- **Exact-source review:** three producer-distinct reviews returned `NO_FINDINGS`
+- **Boundary result:** no public API/export, component behavior, package/dependency/version/publish-order, release/tag/publish or Electron/native change
+- **Implementation boundary:** private `packages/react/test-support/schema-form-reference-workloads.ts`, one direct Node-environment `src/**/*.test.ts` consumer and packed-artifact verification
+- **Public API impact:** none; no component behavior, package export, dependency, version, publish-order or release change
+
+#### Goal and current hot path
+
+Create the second bounded child of `WB-NS-060` around the current generic SchemaForm's actual
+render-time validation fan-out. The parent remains `DESIGNING` for cross-surface scenario distribution,
+renderer/browser harnesses and standardized performance budgets.
+
+`WorkbenchSchemaForm` currently normalizes the complete field set and derives the complete error map
+whenever its resolved field/value inputs change. `getWorkbenchSchemaFormErrors` calls the real
+`normalizeWorkbenchSchemaFormValues` helper and then visits every field through its existing
+`validate(value, values, field)` callback contract. This callback is the only cost witness admitted by
+this packet: an exact callback count proves validation fan-out for the fixed workload, but does not
+measure total traversal, computational complexity, elapsed time or a latency budget.
+
+The implementation must call the real `normalizeWorkbenchSchemaFormValues` and
+`getWorkbenchSchemaFormErrors` helpers. It must not copy their loops, introduce a fake form model,
+extract a second component, add production instrumentation or finalize the future `FormModel`,
+`ValidationService`, field-schema registry or Inspector architecture owned by `WB-NS-030`.
+
+#### Private boundary and exact workload manifest
+
+The test-support module is physically outside `packages/react/src`, absent from every barrel and
+package export, and excluded by the current `files: ["src", ...]` allowlist. A direct
+Node-environment `src/workbench/settings/schemaFormReferenceWorkloads.test.ts` import keeps the
+private module in the existing React package typecheck and Vitest graph without adding a public test
+subpath or requiring jsdom, Storybook, a browser or Electron.
+
+The module owns exactly these deeply frozen definitions:
+
+| Workload ID                      | fields | checkbox | number | select | text | operations | tier      |
+| -------------------------------- | -----: | -------: | -----: | -----: | ---: | ---------: | --------- |
+| `schema-form.validation.small`   |      8 |        2 |      2 |      2 |    2 |          1 | `SMALL`   |
+| `schema-form.validation.typical` |    100 |       25 |     25 |     25 |   25 |          1 | `TYPICAL` |
+| `schema-form.validation.stress`  |    600 |      150 |    150 |    150 |  150 |          1 | `STRESS`  |
+
+The tier names classify only these synthetic fixture cardinalities. They do not claim observed user
+population, equal cost with another surface, a benchmark baseline or an acceptable production budget.
+
+For every zero-based index `i`, the field ID is the exact template-literal result `` `field.${i}` ``,
+the label is `` `Field ${i}` `` and the repeating type order is exactly `checkbox`, `number`,
+`select`, `text`. Every cardinality is divisible by four, so `field.{N - 1}` is always a text field
+and every type owns exactly `N / 4` entries. The complete formulas are frozen:
+
+- checkbox: `defaultValue: false` and raw `beforeValues[field.{i}]: false`;
+- number: `defaultValue: i`, `min: 0`, `step: 1` and `beforeValues[field.{i}]` equal to the
+  exact template-literal string `` `${i}` ``, which normalization must convert to the number `i`;
+- select: `defaultValue` and raw before-value `` `option.${i}.a` ``, with exactly two options
+  ``{ label: `Option A ${i}`, value: `option.${i}.a` }`` and
+  ``{ label: `Option B ${i}`, value: `option.${i}.b` }`` in that order;
+- text: `defaultValue` and raw before-value `` `value.${i}` ``.
+
+Every field has a validator and no field has `required` or `validationMessage`. All literals are
+public-safe and derived only from `i`; no random ID, timestamp, host detail, process state or
+environment discovery enters the fixture or record. The direct workload test must iterate over all N
+fields in every tier and assert every ID, label, type, default, raw before-value, normalized value,
+number constraint and ordered select option against these formulas.
+
+Each fixture owns one operation:
+
+```ts
+{
+  type: 'set-invalid-sentinel';
+  changedFieldId: `field.${N - 1}`;
+  value: '__schema-form-reference-invalid__';
+}
+```
+
+All fields have a workload-owned validator that calls an observer closure bound only by the module's
+internal fixture creator. The observer records the callback's actual `value`, `values` and third-arg
+`field.id`; it must never substitute fixture coordinates for those actual arguments. The exported
+fixture builder binds an inert invocation-local observer, while each runner call binds its own
+observation record. Only the last text field returns the exact error
+`SchemaForm reference value is invalid.` and only when its value equals the invalid sentinel. The
+other validators return `undefined`.
+
+The private module exposes only the manifest, a fresh fixture builder, a one-shot runner and their
+types/error contract, plus one narrow private test-only helper seam. It must not be imported by
+production source and none of these symbols is a package export.
+
+Its exact private API is:
+
+```ts
+export type SchemaFormReferenceWorkloadId =
+  | 'schema-form.validation.small'
+  | 'schema-form.validation.typical'
+  | 'schema-form.validation.stress';
+
+export type SchemaFormReferenceWorkloadTier = 'SMALL' | 'TYPICAL' | 'STRESS';
+
+export interface SchemaFormReferenceWorkloadDefinition {
+  readonly id: SchemaFormReferenceWorkloadId;
+  readonly tier: SchemaFormReferenceWorkloadTier;
+  readonly fieldCount: number;
+  readonly checkboxFieldCount: number;
+  readonly numberFieldCount: number;
+  readonly selectFieldCount: number;
+  readonly textFieldCount: number;
+  readonly operationCount: 1;
+}
+
+export interface SchemaFormReferenceOperation {
+  readonly type: 'set-invalid-sentinel';
+  readonly changedFieldId: string;
+  readonly value: '__schema-form-reference-invalid__';
+}
+
+export interface SchemaFormReferenceFixture {
+  readonly definition: SchemaFormReferenceWorkloadDefinition;
+  readonly fields: readonly WorkbenchSchemaFormField[];
+  readonly beforeValues: Readonly<WorkbenchSchemaFormValues>;
+  readonly operation: SchemaFormReferenceOperation;
+}
+
+export type SchemaFormReferenceWorkloadErrorCode = 'unknown-workload' | 'structural-mismatch';
+
+export class SchemaFormReferenceWorkloadError extends Error {
+  readonly code: SchemaFormReferenceWorkloadErrorCode;
+}
+
+export interface SchemaFormReferenceHelpers {
+  readonly normalize: typeof normalizeWorkbenchSchemaFormValues;
+  readonly getErrors: typeof getWorkbenchSchemaFormErrors;
+}
+
+export const SCHEMA_FORM_REFERENCE_WORKLOADS: readonly SchemaFormReferenceWorkloadDefinition[];
+
+export function buildSchemaFormReferenceFixture(
+  id: SchemaFormReferenceWorkloadId,
+): SchemaFormReferenceFixture;
+
+export function runSchemaFormReferenceWorkload(
+  id: SchemaFormReferenceWorkloadId,
+): SchemaFormReferenceStructuralRecord;
+
+export function runSchemaFormReferenceWorkloadWithHelpers(
+  id: SchemaFormReferenceWorkloadId,
+  helpers: SchemaFormReferenceHelpers,
+): SchemaFormReferenceStructuralRecord;
+```
+
+#### Exact fixture and structural record
+
+`buildSchemaFormReferenceFixture(id)` returns a fresh, deeply frozen field array, nested option data,
+before-values record and operation on every call. Validator functions are fresh per fixture and expose
+no mutable counter object. The exported builder and runner delegate to the same private fixture creator
+with their respective non-observing or runner-local closures. The normal runner always calls the
+private helper seam with the real `normalizeWorkbenchSchemaFormValues` and
+`getWorkbenchSchemaFormErrors` functions. `runSchemaFormReferenceWorkloadWithHelpers` exists only for
+direct failure-path tests outside the published package boundary; it is not a production/public seam,
+an alternative success implementation or permission to copy either real helper loop.
+
+The successful runner returns exactly this deeply frozen structural shape:
+
+```ts
+export interface SchemaFormReferenceStructuralRecord {
+  readonly schemaVersion: 1;
+  readonly fixtureRevision: 'schema-form-reference-v1';
+  readonly workloadId: SchemaFormReferenceWorkloadId;
+  readonly tier: 'SMALL' | 'TYPICAL' | 'STRESS';
+  readonly dimensions: {
+    readonly fields: number;
+    readonly checkboxFields: number;
+    readonly numberFields: number;
+    readonly selectFields: number;
+    readonly textFields: number;
+    readonly operations: 1;
+  };
+  readonly operation: {
+    readonly type: 'set-invalid-sentinel';
+    readonly changedFieldId: string;
+  };
+  readonly result: {
+    readonly validationCalls: number;
+    readonly normalizedKeyCount: number;
+    readonly errorCount: 1;
+    readonly errorFieldId: string;
+  };
+}
+```
+
+The record contains no evidence envelope, timer, duration, environment/tool identity, total traversal
+count, complexity classification, baseline, variance, statistic or budget. If a later performance
+packet compares timings, that separately reviewed recorder must add the environment, baseline,
+candidate, statistic and interpretation required by the target architecture without changing this
+structural equality authority.
+
+`fixtureRevision: 'schema-form-reference-v1'` is the structural equality authority and requires no
+derived hash. Any change to a field formula, type order, default, raw or normalized value, option,
+invalid sentinel, exact error message or operation must change `fixtureRevision` before adoption.
+
+#### State and failure flow
+
+```text
+validate workload ID
+  -> build one fresh deeply frozen fixture with runner-local per-field observation
+  -> call real normalizeWorkbenchSchemaFormValues(fields, beforeValues)
+  -> require Reflect.ownKeys(normalized-before) to be exactly the ordered N expected enumerable string IDs, with no symbol or non-enumerable key
+  -> create expected after-values from normalized-before by changing only field.{N - 1} to the exact invalid sentinel
+  -> call real getWorkbenchSchemaFormErrors(fields, afterValues) exactly once
+  -> for every callback require actual third-arg field.id once, Object.is(value, values[field.id]) and Reflect.ownKeys(values) exactly the expected enumerable IDs
+  -> require every callback values object to exactly match expected after-values and expected after-values to differ from normalized-before only at field.{N - 1}
+  -> require Reflect.ownKeys(errors) to be exactly [field.{N - 1}] and its value to be the exact workload-owned error message
+  -> require fixture fields, before-values and operation remain deeply equal to their pre-run snapshot
+  -> freeze and return the normalized structural record
+```
+
+The private failure codes are exactly:
+
+```text
+unknown-workload
+structural-mismatch
+```
+
+An unknown ID fails before fixture construction and therefore calls injected or real helpers and
+validators zero times. Any helper throw, wrong field/type distribution, wrong or extra normalized own
+key, missing/duplicate/unknown actual callback third-arg field ID, callback value/values mismatch,
+wrong whole after-values map, wrong error own keys/value, fixture mutation or other failed postcondition
+is caught and exposed as `structural-mismatch`; no partial success record is returned.
+
+Dedicated failure tests use only `runSchemaFormReferenceWorkloadWithHelpers` to inject: a normalizer or
+error helper throw; malformed normalization keys; error-helper behavior that invokes validators with
+missing, duplicate or unknown actual third-arg field IDs; callback value/values mismatches; or a wrong
+error map. These adversarial stubs are failure stimuli, never success evidence, and must not reproduce
+the real normalization or validation loops. They may delegate to a real helper and perturb only the
+targeted failure coordinate. The normal runner always passes the real helpers.
+
+The runner and both real helpers are synchronous. They own no listener, subscription, retained resource
+or disposable, so this packet adds no parallel/concurrency claim, lifecycle/disposal counter, cleanup
+fiction or combined-failure precedence.
+
+#### Scope and non-scope
+
+Scope:
+
+- one React-package-private manifest, fresh fixture builder, one-shot runner, minimal failure contract
+  and normalized structural record, plus one private test-only helper seam outside `src`;
+- exact `8 / 100 / 600` type distribution and one last-field invalidation operation;
+- exact per-field validation observations, normalization/error postconditions, repeatability,
+  freshness and interleaved success → injected failure → success isolation regressions;
+- packed-artifact rejection if `@workbench-kit/react` contains any `test-support` path.
+
+Non-scope:
+
+- public `@workbench-kit/testing`, React testing or SchemaForm test subpaths;
+- changes to `WorkbenchSchemaForm`, its helper behavior, CSS, focused/legacy runtime identity,
+  package exports, dependencies, version or bundle budgets;
+- a production/public helper injection seam or copied normalizer/error-loop implementation;
+- a new `FormModel`, validation scheduler/cache, incremental-validation policy, async validator,
+  Inspector model, field kind, schema registry or Settings integration;
+- renderer/component performance, DOM/memory growth, accessibility interaction, Storybook,
+  Playwright, browser, Electron or native validation;
+- elapsed time, environment evidence, total traversal/complexity claims, performance thresholds,
+  release, publish, tag or consumer migration.
+
+#### Ordered implementation tasks
+
+1. Add the private manifest, exact type distribution, fresh deep-frozen fixture builder, two-code error
+   contract and structural record types outside `packages/react/src`.
+2. Add the one-shot normal runner over the real normalization and error helpers plus the narrow private
+   `WithHelpers` failure seam. Keep actual callback arguments invocation-local, perform the exact
+   last-field change and fail closed on every helper throw or structural mismatch.
+3. Add the direct Node-environment focused test. Iterate through all N fields in all tiers to prove every
+   field/default/raw/normalized/option formula; prove exact operation/sentinel, exact own keys, callback
+   third-arg ID/value/whole-values coordinates, one exact error, unchanged fixture, stable failures,
+   fresh/repeated equality and interleaved success → injected failure → success isolation. Use the
+   private helper seam for all failure stimuli; do not use module mocking.
+4. Keep the existing component/jsdom `SchemaForm.test.tsx` unchanged, but run it during focused
+   development to prove the private workload did not alter the current component/helper contract.
+5. Extend packed-consumer artifact inspection so any `@workbench-kit/react` tarball path containing
+   `test-support` fails. Do not change a package export, files allowlist, bundle graph or budget.
+6. After focused development validation, freeze one source candidate.
+7. Route that frozen candidate through producer-distinct review before any final repository-wide gate.
+8. Batch all review findings into at most one successor candidate. On the resulting final SHA, run
+   `validate:fast`, `validate:ui`, commit safety and diff check exactly once each.
+
+#### Validation and acceptance
+
+During development repeat only:
+
+```text
+pnpm exec vitest run --config vitest.config.ts packages/react/src/workbench/settings/schemaFormReferenceWorkloads.test.ts packages/react/src/workbench/settings/SchemaForm.test.tsx
+pnpm --filter @workbench-kit/react typecheck
+pnpm --filter @workbench-kit/react typecheck:exact-optional
+```
+
+The gate order is exact: finish focused development validation, freeze the candidate, obtain
+producer-distinct review, batch every review finding into at most one successor, and only then run the
+following commands on the resulting final SHA once each:
+
+```text
+pnpm validate:fast
+pnpm validate:ui
+pnpm check:commit-safety
+git diff --check
+```
+
+`validate:ui` is final compatibility evidence for the unchanged UI cohort, not proof of this private
+Node workload's structural callback count. Electron is not run because the packet changes no native,
+main, preload or renderer boundary. No release, tag or publish validation is authorized.
+
+Done requires:
+
+- the exact three IDs, `8 / 100 / 600` field counts, equal `N / 4` type distributions, cyclic type
+  order, every per-index field/label/default/raw/normalized/options formula, last-field identity,
+  invalid sentinel and one operation are manifest-owned and tested by iterating every field in every
+  tier;
+- the runner calls the two real SchemaForm helpers, changes only `field.{N - 1}`, observes every field
+  validator exactly once by its actual callback third-arg `field.id` and accepts no missing, duplicate
+  or unknown observation;
+- every callback satisfies `Object.is(value, values[field.id])`; its `values` has exactly the expected
+  N enumerable own string IDs, no symbol/non-enumerable key and exact whole-map equality with expected
+  after-values by own data rather than reference identity; expected after-values differs from
+  normalized-before only at the last field;
+- normalization has exactly the ordered N expected enumerable own string IDs and no other own key;
+  `Reflect.ownKeys(errors)` is exactly the last field ID and the value is the exact workload-owned
+  message;
+- fixture fields/options/before-values/operation remain unchanged, and fresh/repeated records are deeply
+  frozen, isolated and structurally equal;
+- interleaved success → injected failure → success produces equal success records with no observation
+  leakage from the failed run; this synchronous runner makes no parallel/concurrency claim;
+- unknown admission invokes injected/real helpers and validators zero times; helper throws, malformed
+  normalization keys, bad actual callback coordinates and wrong errors map to `structural-mismatch`
+  and emit no success record through the private `WithHelpers` seam;
+- normal success always uses the real helpers; failure stubs neither become success evidence nor copy
+  the real normalization/validation loops;
+- any field formula, type order, default, raw/normalized value, option, sentinel, error message or
+  operation change also changes `fixtureRevision`; no derived hash is required;
+- callback count is reported only as a validation fan-out witness, never as total traversal,
+  complexity, latency, environment comparison or a performance budget;
+- existing SchemaForm component/helper tests remain unchanged and passing;
+- no public barrel/subpath, component behavior, CSS, package dependency/version/files allowlist,
+  bundle budget, packed private file, release or browser/native/Electron contract changes;
+- producer-distinct exact-source review reports no unresolved P0/P1/P2 target mismatch.
+
+#### Source-review checklist
+
+- Is `WorkbenchSchemaForm` still the single current implementation with no copied helper loop or new
+  future `FormModel` decision?
+- Is the workload module outside `src`, absent from every barrel/export and rejected from the packed
+  React artifact?
+- Does the manifest own exactly `8 / 100 / 600`, the equal four-type distribution, cyclic order and
+  every exact per-index label/default/raw/normalized/options formula?
+- Is `fixtureRevision` changed whenever any frozen formula, sentinel, message or operation changes,
+  without inventing a hash authority?
+- Does the runner call the real normalization and error helpers exactly as specified?
+- Is every validator observed once by its actual third-arg field ID, actual value and whole values map?
+- Are normalized/callback/error `Reflect.ownKeys`, enumerability, symbols, exact maps, one exact error,
+  operation semantics and before-fixture immutability checked before success publication?
+- Does only the package-private `WithHelpers` seam inject failures, while normal success always passes
+  the real helpers and no real helper loop is copied?
+- Are fresh/repeated and interleaved success → failure → success runs deeply frozen and isolated without
+  a parallel/concurrency claim?
+- Do only `unknown-workload` and `structural-mismatch` exist, with admission preceding fixture work and
+  helper/validator calls, and do all injected malformed outcomes fail closed?
+- Is callback fan-out carefully distinguished from total traversal, complexity, timing or a budget?
+- Did focused validation precede candidate freeze, review precede the single batched successor, and all
+  final SHA gates run only after review resolution?
+- Did the existing SchemaForm component behavior, package/public boundary, packed bundle budget,
+  release state and browser/native/Electron boundary remain unchanged?
 
 ## WB-NS-070 — Manual-first UI layout/style authoring foundation
 
@@ -3254,10 +4892,1177 @@ reported through those packets.
 
 ### `WB-NS-070F` ready gate
 
-Depends on the manual contract, but is not a prerequisite for `WB-NS-071A` or the Design
-System Pack chain. Generative UI may be delegated only after manual commands/validation are
-sufficient to express the same target operations. It emits reviewable proposals/typed patches
-and may not introduce arbitrary JSX/HTML/CSS execution as canonical state.
+#### `WB-NS-070F` bounded packet — provider-neutral V3 generative proposal parity
+
+- **Status:** `DONE`; source candidate
+  `e0476c338ab185b225cae9e1b0b9aa06623ca0a2` was integrated through PR #383 at
+  `develop@04e402f54fbe05e7fab2cbf381107ded448958f7`. Three exact-source core,
+  behavior and public-compatibility reviews found no P0/P1/P2. The candidate passed 30 focused
+  tests, static, fast (464 files / 2,623 tests), the required Chromium lane (82 interactions,
+  8 skipped), packed public-consumer checks and two hosted Validate runs. This source is not
+  included in the published `.43` cohort and release is not claimed.
+- **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
+  sections 7, 13-16
+- **Ownership:** `GENERIC_KIT`
+- **Exact source/API baseline:**
+  `origin/develop@cd29a2cd37d3371d4c9f10e1ae587f538f04bacb`
+- **Dependencies:** `WB-NS-070A`, `WB-NS-070B`, `WB-NS-070C`, `WB-NS-070D` and
+  `WB-NS-072E` are `DONE`; the existing V3 document, command, projection, Design System and
+  session contracts remain canonical
+- **Target owner:** `@workbench-kit/jdw` root export under the existing `ui-authoring` module
+- **Native boundary:** none
+
+##### Goal
+
+Add one provider-neutral proposal lifecycle over the existing `UiDocumentAtomicCommandV3` manual
+command surface. A host may ask an injected planner for a proposal, inspect a mutation-free Preview
+and explicitly accept one validated outer V3 batch. The packet must not create a second patch
+language, document model, history stack, component registry, provider registry or persistence
+format.
+
+Manual authoring remains complete and unchanged when no planner is installed. A generated edit has
+exactly the capabilities and limits of the existing public V3 atomic commands; unsupported intent is
+reported rather than implemented through hidden commands, generated renderer code or automatic
+extension work.
+
+##### Frozen public API
+
+Add these provider-neutral public shapes to `@workbench-kit/jdw`:
+
+```ts
+interface GenerativeUiPlannerPort {
+  propose(request: UiGenerativeUiRequest): Promise<UiGenerativeUiPlannerResult>;
+}
+
+interface UiGenerativeUiRequest {
+  readonly schemaVersion: 1;
+  readonly requestId: string;
+  readonly intent: string;
+  readonly context: UiGenerativeAuthoringContextV1;
+}
+
+interface UiGenerativeAuthoringContextV1 {
+  readonly document: UiDocumentV3;
+  readonly selectedNodeIds: readonly string[];
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentDescriptors: readonly UiComponentDescriptor[];
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+interface UiGenerativeUiProposal {
+  readonly schemaVersion: 1;
+  readonly proposalId: string;
+  readonly requestId: string;
+  readonly commands: readonly UiDocumentAtomicCommandV3[];
+}
+
+type UiGenerativeUiPlannerDiagnostic = Omit<UiGenerativeUiDiagnostic, 'code'> & {
+  readonly code: 'planner-unavailable' | 'planner-failed';
+};
+
+type UiGenerativeUiPlannerResult =
+  | {
+      readonly status: 'proposal';
+      readonly proposal: UiGenerativeUiProposal;
+      readonly diagnostics?: never;
+    }
+  | {
+      readonly status: 'unavailable';
+      readonly proposal?: never;
+      readonly diagnostics: readonly [UiGenerativeUiPlannerDiagnostic];
+    };
+
+interface AdmitUiGenerativeUiRequestInput {
+  /** Runtime-untrusted request assembled from host-approved canonical operands. */
+  readonly request: unknown;
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+type UiGenerativeUiRequestAdmissionResult =
+  | {
+      readonly status: 'admitted';
+      readonly request: UiGenerativeUiRequest;
+      readonly diagnostics: readonly [];
+    }
+  | {
+      readonly status: 'rejected';
+      readonly request?: never;
+      readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+    };
+
+interface CreateUiGenerativeUiPlanInput {
+  readonly planId: string;
+  /** Must be the detached result of admitUiGenerativeUiRequest(). */
+  readonly request: UiGenerativeUiRequest;
+  /** Provider output is runtime-untrusted even when statically typed. */
+  readonly proposal: unknown;
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+interface UiGenerativeUiPlanBase {
+  readonly schemaVersion: 1;
+  readonly planId: string;
+  readonly requestId: string;
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly sourceDocument: UiDocumentV3;
+  readonly selectedNodeIds: readonly string[];
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+interface UiGenerativeUiValidPlan extends UiGenerativeUiPlanBase {
+  readonly blocked: false;
+  readonly proposalId: string;
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+  readonly referencedComponentSnapshots: readonly UiComponentDescriptor[];
+  readonly referencedLayoutStrategySnapshots: readonly UiLayoutStrategyDescriptor[];
+  readonly referencedLayoutPropertySnapshots: readonly UiLayoutPropertyDescriptor[];
+  readonly candidateDocument: UiDocumentV3;
+  readonly diagnostics: readonly [];
+}
+
+interface UiGenerativeUiBlockedPlan extends UiGenerativeUiPlanBase {
+  readonly blocked: true;
+  readonly proposalId?: string;
+  readonly commands: readonly [];
+  readonly referencedComponentSnapshots: readonly [];
+  readonly referencedLayoutStrategySnapshots: readonly [];
+  readonly referencedLayoutPropertySnapshots: readonly [];
+  readonly candidateDocument?: never;
+  readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+}
+
+type UiGenerativeUiPlan = UiGenerativeUiValidPlan | UiGenerativeUiBlockedPlan;
+
+interface UiGenerativeUiValidPlanPreview {
+  readonly blocked: false;
+  readonly planId: string;
+  readonly candidateDocument: UiDocumentV3;
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+  readonly diagnostics: readonly [];
+}
+
+interface UiGenerativeUiBlockedPlanPreview {
+  readonly blocked: true;
+  readonly planId: string;
+  readonly candidateDocument?: never;
+  readonly commands: readonly [];
+  readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+}
+
+type UiGenerativeUiPlanPreview = UiGenerativeUiValidPlanPreview | UiGenerativeUiBlockedPlanPreview;
+
+interface UiGenerativeUiPlanFinalizeContext {
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly acceptAuthorized: boolean;
+}
+
+type UiGenerativeUiBatchCommand = Omit<
+  Extract<UiDocumentCommandV3, { readonly type: 'batch' }>,
+  'commands'
+> & {
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+};
+
+type UiGenerativeUiPlanFinalizeResult =
+  | {
+      readonly command: UiGenerativeUiBatchCommand;
+      readonly diagnostics: readonly [];
+    }
+  | {
+      readonly command?: never;
+      readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+    };
+```
+
+The lifecycle functions are:
+
+```ts
+admitUiGenerativeUiRequest(
+  input: AdmitUiGenerativeUiRequestInput,
+): UiGenerativeUiRequestAdmissionResult;
+createUiGenerativeUiPlan(input: CreateUiGenerativeUiPlanInput): UiGenerativeUiPlan;
+previewUiGenerativeUiPlan(plan: UiGenerativeUiPlan): UiGenerativeUiPlanPreview;
+finalizeUiGenerativeUiPlan(
+  plan: UiGenerativeUiPlan,
+  context: UiGenerativeUiPlanFinalizeContext,
+): UiGenerativeUiPlanFinalizeResult;
+```
+
+`admitUiGenerativeUiRequest()` is the public getter-safe request-snapshot boundary. A host assembles
+one raw request from its approved canonical subset, passes it with the current canonical operands and
+may call `GenerativeUiPlannerPort.propose()` only with the returned `status: 'admitted'` request. It
+is an admission/snapshot operation over the single declared request schema, not a second request
+model or provider coordinator.
+
+`UiGenerativeUiPlannerResult` is a trusted host-adapter envelope, not raw provider/model output. Its
+`proposal` field remains runtime-untrusted. The host adapter passes only that field to
+`createUiGenerativeUiPlan()` and surfaces the sanitized unavailable diagnostic directly. A rejected
+planner Promise is mapped by the adapter to `planner-failed`; the core plan function does not receive
+transport failures or an unavailable arm.
+
+`createUiGenerativeUiPlan()` accepts the admitted detached request, the runtime-untrusted proposal
+arm and separately supplied current canonical operands. It returns a discriminated blocked plan with
+frozen diagnostics or a valid detached plan containing the source/candidate documents, admitted
+atomic commands, only the exact component/layout operands referenced by the proposal and the full
+captured Design System input.
+`previewUiGenerativeUiPlan()` exposes only detached plan data. `finalizeUiGenerativeUiPlan()` returns
+either diagnostics or exactly one `UiDocumentCommandV3` outer `batch`; it never applies the command.
+An unauthorized Finalize returns `finalize-not-authorized` and no command.
+
+All new admission, planner-result, plan, preview, diagnostic, input and finalize types required by
+these four functions are root exports. They are plain immutable data and use existing public V3
+document, command, component, layout and Design System types. The public family carries
+`schemaVersion: 1` on the request, proposal and plan envelopes. No new package or public subpath is
+introduced. Hosts assemble only the declared request and cannot choose Workbench's safe-data,
+equivalence, stale-classification or rebase semantics.
+
+##### Frozen context, admission and stale contract
+
+1. Before invoking the planner, the host passes the raw request and current canonical operands to
+   `admitUiGenerativeUiRequest()`. The admitted result deep-freezes the document, ordered selection,
+   `UiAuthoringProjectionContextV3`, host-approved exact component descriptors, layout
+   strategy/property descriptors and `UiAuthoringDesignSystemInputSnapshot`. It does not invoke
+   accessor values or callable data values. JavaScript reflection may trigger Proxy traps; any trap
+   exception, exotic prototype, sparse/accessor array, symbol, non-finite value or cycle is caught
+   and fails closed with provider call count zero.
+2. At request and create-time admission, every request component descriptor must exact-resolve by
+   `{ id, version }` from the supplied canonical catalog and full strict-detached-equal the captured
+   descriptor. Every request layout strategy/property descriptor must exact-resolve by canonical id
+   from the supplied canonical arrays and full strict-detached-equal its captured descriptor.
+   Duplicate, unresolved or changed entries fail before provider invocation or proposal inspection,
+   respectively. Host-approved omission of unrelated descriptors is allowed and is not a wildcard
+   for supplied descriptors. The only request-admission callback is one
+   `componentCatalog.component(ref)` lookup per unique exact ref; it never calls
+   `componentCatalog.components()` or any request-owned function value.
+3. After the planner returns, plan creation compares the captured request context with separately
+   supplied current canonical operands before proposal parsing or command replay. It rejects stale
+   document id/revision/source, ordered selection, full projection context, supplied component
+   descriptor, supplied layout descriptor or Design System input. It never silently rebases a
+   request against current state.
+4. The host unwraps only `UiGenerativeUiPlannerResult.status === 'proposal'`; provider unavailable
+   and rejected transport never enter plan creation. The proposal arm remains runtime-untrusted even
+   when statically typed. Admission requires strict safe data, `schemaVersion: 1`, canonical non-empty
+   identities, exact `requestId` equality and a non-empty atomic-command list. Provider-authored
+   `batch`, nested batch, unknown command, accessor/exotic value and fabricated
+   component/layout/binding/responsive operand are rejected before a plan can be accepted.
+5. Each admitted atom is replayed in order through the current V3 validators against a detached
+   working document. Every component/layout operand referenced by an atom must also exist in the
+   host-approved request subset before it may resolve from the current canonical operands. A guessed
+   but current-catalog-valid hidden descriptor returns `unsupported`. Any issue blocks the entire
+   proposal and exposes no partial commands, referenced snapshots or candidate document. The live
+   session, history, selection, catalogs and caller-owned descriptors are never mutated.
+6. A valid plan retains detached source and candidate documents, captures only exact component,
+   layout-strategy and layout-property operands semantically referenced by admitted commands, and
+   always retains the full `designSystemInput`, ordered selection and projection context. A newly
+   added unrelated canonical descriptor alone does not stale the plan.
+7. Finalize uses this exact precedence: `acceptAuthorized === false` →
+   `finalize-not-authorized`; `plan.blocked === true` → `finalize-blocked`; then stale document →
+   selection → projection → referenced component in request order → layout strategy in request order
+   → layout property in request order → Design System; then success. It returns only the first
+   applicable diagnostic family, never a command on failure. Success returns one outer V3 batch with
+   `commandId === plan.planId` and detached admitted atoms in proposal order. Plan creation rejects a
+   blank `planId`, a `planId` equal to any child `commandId`, blank or duplicate child ids,
+   and a materially no-op proposal as `proposal-command-invalid`; therefore a successful explicit
+   Apply creates one changed transaction rather than an empty history claim.
+8. Only a caller's later explicit invocation of `applyUiAuthoringSessionCommandV3()` may commit the
+   returned batch, append one existing history transaction and enable ordinary Undo/Redo. Planner
+   completion, plan creation, Preview and Finalize have no mutation authority.
+
+##### Diagnostic contract
+
+Use one `UiGenerativeUiDiagnostic` failure-as-data family with this exact closed code union:
+
+```ts
+type UiGenerativeUiDiagnosticCode =
+  | 'planner-unavailable'
+  | 'planner-failed'
+  | 'invalid-request'
+  | 'invalid-proposal'
+  | 'request-mismatch'
+  | 'unsupported'
+  | 'proposal-command-invalid'
+  | 'plan-blocked'
+  | 'stale-document'
+  | 'stale-selection-context'
+  | 'stale-projection-context'
+  | 'stale-component-descriptor'
+  | 'stale-layout-descriptor'
+  | 'stale-design-system'
+  | 'finalize-not-authorized'
+  | 'finalize-blocked';
+
+interface UiGenerativeUiDiagnostic {
+  readonly code: UiGenerativeUiDiagnosticCode;
+  readonly message: string;
+  readonly path: string;
+  readonly commandId?: string;
+  readonly nodeId?: string;
+  readonly propertyId?: string;
+  readonly inputId?: string;
+  readonly variantId?: string;
+}
+```
+
+Diagnostics must not expose provider credentials, prompts beyond the caller-owned `intent`, network
+payloads or model-specific error objects. The host adapter maps provider absence and transport
+failure to `planner-unavailable` and `planner-failed`; Workbench gains no planner registry,
+controller or service locator. All validation and stale failures are deterministic data results.
+
+For v1, each failed admission/finalization returns exactly one diagnostic. Request admission orders
+`invalid-request` before document, selection, projection, component-in-request-order,
+layout-strategy-in-request-order, layout-property-in-request-order and Design System stale checks.
+Plan creation repeats that request ordering before inspecting the proposal, then orders
+`invalid-proposal` → `request-mismatch` → `unsupported` → `proposal-command-invalid` in proposal
+command order. Finalize uses the precedence frozen above. Paths use deterministic dot/bracket form
+such as `request.context.componentDescriptors[0]` and `proposal.commands[1].commandId`; object key
+enumeration order never changes a verdict.
+
+##### Compatibility and concurrency
+
+- Existing V1/V2/V3 command unions, session functions, detached V2 plan functions and Design System
+  transaction paths are not widened or reinterpreted.
+- Existing consumers gain no provider call, data egress, state, listener, timer or dependency unless
+  they explicitly construct a planner request and invoke a host-owned port.
+- Starting request B does not itself invalidate request A. A late A result may remain visible as
+  stale evidence, but plan creation or Finalize fails if any captured canonical operand changed.
+- Provider cancellation/supersession may save host cost or latency but is not a correctness boundary;
+  exact revalidation is.
+- Text intent and provider explanation are ephemeral authoring/presentation inputs and are not
+  persisted in `UiDocumentV3`, session state or required runtime truth.
+- Design System pack migration remains on the existing explicit Design System transaction path and
+  cannot be embedded in a generative document batch.
+
+##### Scope
+
+- add the public types and four pure lifecycle functions under the existing JDW UI-authoring owner;
+- reuse the current safe-data clone/freeze behavior and V3 command validators instead of duplicating
+  them;
+- add focused backendless tests for context admission, stale checks, invalid provider data, command
+  parity, Preview, Finalize and session Apply/Undo/Redo parity;
+- add packed-tarball public-consumer compilation proving an injected fake planner needs only public
+  provider-neutral types and that no model SDK enters the dependency graph;
+- update root exports and public-export checks for the additive API.
+
+##### Non-goals
+
+- model/provider SDKs, authentication, networking, prompting, rate limits, telemetry or transcript
+  storage;
+- automatic provider invocation, automatic Apply, background mutation or a global planner service;
+- arbitrary JSX, HTML, CSS, script, executable factory or renderer-component generation/execution;
+- a second patch/command/document/history/persistence/component/layout/property system;
+- commands not already representable by `UiDocumentAtomicCommandV3`;
+- Design System migration, extension installation/activation/trust, foreign workflow import,
+  component/node implementation, event/action or composite-definition authoring;
+- React, DOM, Storybook, browser, Electron, native or product-policy behavior.
+
+##### Ordered implementation tasks
+
+1. Add the closed public request/context/admission/proposal/diagnostic/result shapes without modifying
+   existing command or session types.
+2. Expose the strict detached request admission boundary and implement the same exact pre-replay
+   request verification over current document, selection, projection, component, layout and Design
+   System operands.
+3. Keep provider unavailable/failure mapping in the host adapter and implement proposal-arm
+   admission in core. Reject batches and unsafe or malformed proposals through the exact closed
+   diagnostic family before replay.
+4. Replay admitted atoms through existing V3 validators against detached state; build one immutable
+   all-or-nothing discriminated plan and candidate-document Preview while capturing only referenced
+   exact operands from the request-approved subset.
+5. Implement explicit Accept authorization, blocked-plan rejection and the second Finalize stale
+   check; return one detached outer V3 batch without applying it.
+6. Add focused failure, stale, hostile-data and manual/generated parity tests. Prove explicit caller
+   Apply produces one transaction and ordinary Undo/Redo.
+7. Add root exports and packed-tarball fixtures that separately prove TypeScript types under
+   `exactOptionalPropertyTypes`, Node CJS `require`, ESM `import` and the package's existing default
+   condition. Prove mixed planner/plan/finalize arms and an atomic success command do not compile;
+   confirm no provider/model dependency or new package/subpath appears.
+
+##### Verification
+
+During development repeat only focused JDW generative-plan tests and the narrow JDW typecheck/build.
+Freeze one source candidate before final gates. At the exact final SHA run:
+
+- focused generative-plan, hostile-data, V3 command/session parity and stale-operand tests;
+- `pnpm check:public-exports` and focused packed-tarball TypeScript exact-optional, CJS `require`, ESM
+  `import` and default-condition consumption, including negative atomic-finalize and mixed-arm type
+  fixtures;
+- `pnpm validate:static`;
+- `pnpm validate:fast`;
+- the repository browser gate once because the additive public root export participates in the
+  supported consumer surface, while requiring no new browser-only story;
+- `pnpm check:commit-safety` and `git diff --check` before commit and push.
+
+Electron is not required because no renderer, main, preload, native, package dependency or lockfile
+boundary changes. The implementation must not add timers, listeners or repeated full-document scans
+outside explicit request/plan/finalize calls. Each lifecycle call may perform bounded linear passes
+over the supplied document/descriptor/command sets and may reuse the current V3 index/validation
+work; no separate arbitrary bundle budget is introduced.
+
+##### Acceptance
+
+- a browser-, Electron- and AI-free fake planner can receive one detached request and return existing
+  V3 atoms through public provider-neutral types only;
+- a rejected request invokes no request-owned accessor or callable field, sanitizes any
+  reflection/proxy-trap exception, calls only the bounded canonical component lookup described above,
+  invokes the planner zero times and retains no mutable caller-owned object;
+- manual V3 commands and an accepted materially changing generated proposal produce the same final
+  document, one transaction count and identical Undo/Redo result;
+- wrong request identity, malformed output, provider/nested batch, fabricated or invalid operands and
+  any rejected atom block the whole plan without mutation or partial command output;
+- a provider command referencing a component/layout descriptor omitted from the approved request
+  subset is `unsupported` even when the current canonical catalog contains it;
+- stale document, ordered selection, projection, component, layout and Design System inputs are
+  distinguished and block create/finalize; unrelated component/layout descriptor addition does not;
+- Preview is mutation-free; Accept false and blocked plans return their exact diagnostics, while an
+  authorized valid Finalize returns exactly one outer V3 batch with `planId` as its non-conflicting
+  command id and without Apply; materially no-op proposals are blocked;
+- no planner leaves manual authoring unchanged, and late/superseded provider completion has no
+  automatic mutation authority;
+- schema-version, exact-optional and discriminated blocked/valid states prevent invalid mixed output;
+- packed TypeScript, CJS, ESM, default-condition and dependency checks prove a public provider-neutral
+  API with no model SDK, package or subpath addition;
+- focused, static, fast and browser validation pass on the reviewed exact candidate; Electron remains
+  correctly unclaimed.
+
+##### Source-review checklist
+
+Reject a candidate that adds a second patch/document/history/provider registry; widens existing V3
+commands to encode provider-only semantics; calls a provider automatically; trusts returned objects
+without the public strict request admission; parses/replays before the first stale check; silently
+rebases against current state; accepts provider-authored batches or request-hidden descriptors;
+applies partially; invokes request-owned accessors/callable fields, enumerates the component catalog
+or leaks reflection-trap exceptions; retains mutable caller objects; emits a mixed blocked/success
+plan; cannot derive Preview from detached plan data;
+lets Preview or Finalize mutate session/history; applies without a separate explicit caller step;
+omits `acceptAuthorized`, diagnostic precedence, blocked-plan handling or the second stale check;
+reuses `planId` as a conflicting child id; accepts a material no-op as a one-transaction success;
+invalidates on unrelated catalog growth; relies on cancellation for correctness; smuggles Design
+System migration, extension/code implementation or unsupported manual capability into a proposal;
+persists prompt/transcript/model data as runtime truth; leaks a provider SDK,
+React/DOM/native/product dependency; omits exact-optional/CJS/ESM/default packed-consumer or
+public-export proof; or claims release, publish or Electron completion.
+
+### `WB-NS-070G` ready gate
+
+#### `WB-NS-070G` bounded packet — provider-neutral source-to-input compatibility and V2 candidate planning
+
+- **Status:** `DONE`; source candidate `fffc6ab4bf32e630f7d9bdef38273057766d3764`
+  was integrated through PR #385 at
+  `develop@cfd752355c00c6b59018a220f2ce22c561a0e984`. Producer-distinct core,
+  public-compatibility and independent source reviews found no P0/P1/P2. The exact successor passed
+  46 focused tests, `check:commit-safety`, `validate:static`, `validate:fast` (466 files / 2,657
+  tests), packed 19-package public-consumer checks and the required Chromium lane (15 suites / 82
+  interactions, 8 tag skips). No packet-specific Electron validation was run or claimed because no
+  native boundary changed; hosted CI's generic Electron quit guard nevertheless passed. At the exact
+  PR head, one hosted Validate run passed; a concurrent push run failed one scope-external shell-react
+  focus assertion while all 070G focused tests passed. These candidate runs are supplemental source
+  evidence, not release-tip or promotion evidence. This source is unpublished and release is not
+  claimed.
+- **Target:** the typed value/property and exact endpoint-binding chain in `WB-NS-070A`,
+  `WB-NS-070C`, `WB-NS-070D` and `WB-NS-072E`
+- **Ownership:** `GENERIC_KIT`
+- **Exact source/API baseline:**
+  `origin/develop@04e402f54fbe05e7fab2cbf381107ded448958f7`
+- **Dependencies:** `WB-NS-070A/C/D` and `WB-NS-072E` are `DONE`; `WB-NS-070F` is
+  independent and neither its planner nor a model/provider is required
+- **Implementation owners:** strict schema compatibility and candidate contracts in the focused
+  `@workbench-kit/contracts/source-input-compatibility` export; document endpoint enumeration,
+  binding-command compilation and detached plan lifecycle in the existing `@workbench-kit/jdw`
+  UI-authoring owner
+- **Native boundary:** none
+
+##### Goal and owner boundary
+
+An integrating host can present one or more immutable source values, compare them with exact
+component input endpoints, inspect a deterministic candidate/Preview result and compile explicitly
+selected exact pairs into the existing V2 `set-input-binding` atoms and one existing detached outer
+batch. The generic layer knows only opaque source/value identities, `UiValueSchema`, optional
+semantic roles and exact document/component/input coordinates.
+
+The host remains the sole owner of acquisition, provider and connection identities, permission and
+authorization, runtime values, product Recipe/Binding/Preset/Content models, persistence, history,
+copy and UI. Workbench does not fetch a sample, execute a conversion, invent a binding identity,
+choose a product target or coordinate a host transaction.
+
+`UiAuthoringRecipeRef` remains one outer authoring-algorithm/catalog identity. Multiple host source
+records are separate data-only operands within one candidate request; they are not additional
+Workbench Recipe owners and are never persisted in `UiDocument`. This preserves the existing V2
+detached-plan and session surface while supporting a bounded multi-source outer batch.
+
+##### Additive component metadata
+
+Add one optional field to the existing component input descriptor:
+
+```ts
+interface UiComponentBindingDescriptor {
+  readonly id: string;
+  readonly label?: string;
+  readonly description?: string;
+  readonly semanticRole?: string;
+  readonly direction: UiBindingDirection;
+  readonly value: UiValueSchema;
+}
+```
+
+`semanticRole` is an opaque canonical matching hint, not a global role registry. Omission preserves
+every current descriptor. Only two present, canonical and equal roles prefer a candidate among
+otherwise exact-compatible pairs; role preference never reorders convertible or incompatible rows,
+two omissions have no preference and a mismatch never makes an unsafe schema compatible. A malformed present role reuses the existing public
+`invalid-binding-value` component issue with path `bindings[index].semanticRole`; no new member is
+added to the closed `UiComponentValidationIssueCode` union. The component descriptor remains the
+only owner of endpoint identity, direction and target schema.
+
+##### Focused compatibility contract
+
+The focused contracts export freezes these renderer-free plain-data names and shapes exactly:
+
+```ts
+interface UiSourceValueDescriptor {
+  readonly id: string;
+  readonly value: UiValueSchema;
+  readonly semanticRole?: string;
+}
+
+interface UiSourceInputTargetDescriptor {
+  readonly nodeId: string;
+  readonly component: UiComponentRef;
+  readonly input: UiComponentBindingDescriptor;
+  readonly currentBindingId?: string;
+}
+
+interface UiValueCompatibilitySchemaSnapshot {
+  readonly type: UiValueType;
+  readonly constraints?: Readonly<Record<string, unknown>>;
+}
+
+interface UiValueConversionEvidence {
+  readonly id: string;
+  readonly source: UiValueCompatibilitySchemaSnapshot;
+  readonly target: UiValueCompatibilitySchemaSnapshot;
+}
+
+interface UiSourceBindingAssignment {
+  readonly sourceId: string;
+  readonly bindingId: string;
+}
+
+const UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION = 1 as const;
+
+const UI_SOURCE_INPUT_LIMITS = Object.freeze({
+  maxSources: 64,
+  maxDocumentNodes: 1024,
+  maxComponentLookups: 1024,
+  maxTargetEndpoints: 1024,
+  maxConversionEvidence: 1024,
+  maxPairs: 65536,
+  maxPortableDepth: 32,
+  maxPortableValues: 65536,
+  maxArrayItems: 4096,
+  maxObjectKeys: 256,
+  maxStringCodeUnits: 4096,
+} as const);
+
+const UI_SOURCE_INPUT_ISSUE_CODES = Object.freeze([
+  'invalid-request',
+  'unsupported-version',
+  'request-too-large',
+  'invalid-source',
+  'duplicate-source',
+  'invalid-target',
+  'duplicate-target',
+  'component-catalog-unavailable',
+  'invalid-conversion',
+  'duplicate-conversion',
+  'invalid-binding-assignment',
+  'missing-binding-assignment',
+  'extra-binding-assignment',
+  'duplicate-binding-id',
+  'target-output-only',
+  'target-binding-disallowed',
+  'target-occupied',
+  'type-mismatch',
+  'constraint-mismatch',
+  'no-declared-conversion',
+  'no-compatible-target',
+  'ambiguous-exact',
+  'convertible-only',
+  'selection-required',
+  'source-unselected',
+  'invalid-selection',
+  'target-contended',
+  'no-change',
+  'stale-source',
+  'stale-assigned-binding',
+  'stale-target-binding',
+  'stale-conversion-evidence',
+  'stale-selection',
+  'stale-plan',
+  'stale-recipe',
+  'stale-document',
+  'stale-design-system',
+  'stale-component-catalog',
+] as const);
+
+type UiSourceInputIssueCode = (typeof UI_SOURCE_INPUT_ISSUE_CODES)[number];
+
+type UiSourceInputIssueCoordinateKey = 'sourceId' | 'nodeId' | 'inputId' | 'conversionId';
+
+type UiSourceInputIssueBase<
+  TCode extends UiSourceInputIssueCode,
+  TCoordinates extends Partial<Record<UiSourceInputIssueCoordinateKey, string>> = {},
+> = {
+  readonly code: TCode;
+  readonly message: string;
+  readonly path: string;
+} & TCoordinates & {
+    readonly [TKey in Exclude<UiSourceInputIssueCoordinateKey, keyof TCoordinates>]?: never;
+  };
+
+type UiSourceInputAdmissionIssue =
+  | UiSourceInputIssueBase<'invalid-request' | 'unsupported-version' | 'request-too-large'>
+  | UiSourceInputIssueBase<'invalid-source', { readonly sourceId?: string }>
+  | UiSourceInputIssueBase<'duplicate-source', { readonly sourceId: string }>
+  | UiSourceInputIssueBase<
+      'invalid-target',
+      { readonly nodeId?: string; readonly inputId?: string }
+    >
+  | UiSourceInputIssueBase<
+      'duplicate-target',
+      { readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'component-catalog-unavailable', { readonly nodeId: string }>
+  | UiSourceInputIssueBase<'invalid-conversion', { readonly conversionId?: string }>
+  | UiSourceInputIssueBase<'duplicate-conversion', { readonly conversionId: string }>
+  | UiSourceInputIssueBase<'invalid-binding-assignment', { readonly sourceId?: string }>
+  | UiSourceInputIssueBase<
+      'missing-binding-assignment' | 'extra-binding-assignment' | 'duplicate-binding-id',
+      { readonly sourceId: string }
+    >;
+
+type UiSourceInputIncompatibleIssue =
+  | UiSourceInputIssueBase<
+      | 'target-output-only'
+      | 'target-binding-disallowed'
+      | 'target-occupied'
+      | 'type-mismatch'
+      | 'constraint-mismatch'
+      | 'no-declared-conversion',
+      { readonly sourceId: string; readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'no-compatible-target', { readonly sourceId: string }>;
+
+type UiSourceInputRecommendationIssue = UiSourceInputIssueBase<
+  'ambiguous-exact' | 'convertible-only',
+  { readonly sourceId: string }
+>;
+
+type UiSourceInputPlanIssue =
+  | UiSourceInputAdmissionIssue
+  | UiSourceInputIncompatibleIssue
+  | UiSourceInputRecommendationIssue
+  | UiSourceInputIssueBase<
+      'selection-required' | 'source-unselected',
+      { readonly sourceId: string }
+    >
+  | UiSourceInputIssueBase<
+      'invalid-selection',
+      { readonly sourceId?: string; readonly nodeId?: string; readonly inputId?: string }
+    >
+  | UiSourceInputIssueBase<
+      'target-contended',
+      { readonly sourceId: string; readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'no-change'>;
+
+type UiSourceInputStaleIssue =
+  | UiSourceInputIssueBase<'stale-source', { readonly sourceId: string }>
+  | UiSourceInputIssueBase<'stale-assigned-binding', { readonly sourceId: string }>
+  | UiSourceInputIssueBase<
+      'stale-target-binding',
+      { readonly sourceId: string; readonly nodeId: string; readonly inputId: string }
+    >
+  | UiSourceInputIssueBase<'stale-conversion-evidence', { readonly conversionId?: string }>
+  | UiSourceInputIssueBase<
+      'stale-selection',
+      { readonly sourceId?: string; readonly nodeId?: string; readonly inputId?: string }
+    >
+  | UiSourceInputIssueBase<'stale-plan'>
+  | UiSourceInputIssueBase<
+      'stale-recipe' | 'stale-document' | 'stale-design-system' | 'stale-component-catalog'
+    >;
+
+type UiSourceInputIssue = UiSourceInputPlanIssue | UiSourceInputStaleIssue;
+
+interface UiSourceInputCandidateBase {
+  readonly sourceId: string;
+  readonly target: UiSourceInputTargetDescriptor;
+  readonly semanticRoleMatched: boolean;
+}
+
+interface UiExactSourceInputCandidate extends UiSourceInputCandidateBase {
+  readonly compatibility: { readonly kind: 'exact' };
+}
+
+interface UiConvertibleSourceInputCandidate extends UiSourceInputCandidateBase {
+  readonly compatibility: {
+    readonly kind: 'convertible';
+    readonly conversionIds: readonly [string, ...string[]];
+  };
+}
+
+interface UiIncompatibleSourceInputCandidate extends UiSourceInputCandidateBase {
+  readonly compatibility: {
+    readonly kind: 'incompatible';
+    readonly reason:
+      | 'target-output-only'
+      | 'target-binding-disallowed'
+      | 'target-occupied'
+      | 'type-mismatch'
+      | 'constraint-mismatch'
+      | 'no-declared-conversion';
+  };
+}
+
+type UiSourceInputCandidate =
+  | UiExactSourceInputCandidate
+  | UiConvertibleSourceInputCandidate
+  | UiIncompatibleSourceInputCandidate;
+
+type UiSourceInputResolution =
+  | {
+      readonly sourceId: string;
+      readonly status: 'resolved';
+      readonly candidate: UiExactSourceInputCandidate;
+    }
+  | {
+      readonly sourceId: string;
+      readonly status: 'ambiguous';
+      readonly candidates: readonly [
+        UiExactSourceInputCandidate,
+        UiExactSourceInputCandidate,
+        ...UiExactSourceInputCandidate[],
+      ];
+    }
+  | {
+      readonly sourceId: string;
+      readonly status: 'convertible';
+      readonly candidates: readonly [
+        UiConvertibleSourceInputCandidate,
+        ...UiConvertibleSourceInputCandidate[],
+      ];
+    }
+  | {
+      readonly sourceId: string;
+      readonly status: 'incompatible';
+      readonly issues: readonly [
+        UiSourceInputIncompatibleIssue,
+        ...UiSourceInputIncompatibleIssue[],
+      ];
+    };
+
+interface UiSourceInputCompatibilityRequestV1 {
+  readonly schemaVersion: 1;
+  readonly sources: readonly [UiSourceValueDescriptor, ...UiSourceValueDescriptor[]];
+  readonly targets: readonly UiSourceInputTargetDescriptor[];
+  readonly bindings: readonly [UiSourceBindingAssignment, ...UiSourceBindingAssignment[]];
+  readonly conversionEvidence?: readonly UiValueConversionEvidence[];
+}
+
+interface UiSourceInputRequestSnapshotV1 extends UiSourceInputCompatibilityRequestV1 {}
+
+type UiSourceInputCandidateSetResult =
+  | {
+      readonly status: 'ready';
+      readonly snapshot: UiSourceInputRequestSnapshotV1;
+      readonly candidates: readonly UiSourceInputCandidate[];
+      readonly resolutions: readonly UiSourceInputResolution[];
+    }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputAdmissionIssue, ...UiSourceInputAdmissionIssue[]];
+      readonly snapshot?: never;
+      readonly candidates?: never;
+      readonly resolutions?: never;
+    };
+
+function resolveUiSourceInputCandidates(input: unknown): UiSourceInputCandidateSetResult;
+```
+
+`bindings` is a source-ID-keyed array, not a dynamic record: it contains exactly one canonical,
+nonblank and globally unique binding ID for every admitted source, in source order, with no missing or
+extra source. Source fan-out reuses that same binding ID at every selected target. The snapshot retains
+only strictly admitted cloned/frozen normalized material data. Every snapshotted source `value` is
+exactly `{ type, constraints? }`; omitted/empty constraints normalize to omission. Every snapshotted
+target input retains only `id`, optional `semanticRole`, `direction`, normalized material
+`{ type, constraints?, allowedSources: ['binding'] }`. For this focused slice, only membership of
+`binding` is material: any eligible target canonicalizes to that one-element array regardless of
+declaration order, duplicates or other allowed source kinds. Losing/gaining `binding` is material;
+adding/removing/reordering `literal | token | resource | expression` is not.
+Labels, descriptions, default values, editors and source-side `allowedSources` are discarded before
+candidate/result/plan bytes and stale comparison. Results and issues are cloned/frozen, and no returned
+value contains a callback, registry, catalog lookup or executable transform. Any schema version other
+than exact numeric `1` is `unsupported-version`; it is never normalized forward.
+
+##### Exact, convertible and ambiguous semantics
+
+- Admission accepts only finite, acyclic, own-data plain objects/arrays. Canonical IDs and roles are
+  nonblank/trimmed; source, target coordinate and conversion IDs are unique. Accessors, proxies,
+  symbols, exotic prototypes, sparse arrays, non-finite numbers and reflection failures become
+  sanitized issues and never escape. Admission never invokes an accessor or caller-supplied callable
+  value. Proxy reflection traps may necessarily run while obtaining own keys/descriptors/prototypes;
+  every trap failure is caught and sanitized, and no side-effect-free proxy-detection claim is made.
+- The material live-binding schema is exact only when `type` is equal and `constraints` are equal
+  after getter-safe canonical JSON normalization. Omitted and empty constraints are equivalent;
+  object keys are order-insensitive and array order is material. `defaultValue` and `editor` are
+  authoring metadata and do not change live-value compatibility. Source `allowedSources` describes
+  its own authoring and is not a target capability.
+- A target must be `input | bidirectional` and its normalized `allowedSources` must explicitly contain
+  `binding`. Omitted target `allowedSources` retains the existing literal-only default and is therefore
+  not eligible for an endpoint binding. An eligible snapshot records only `['binding']` as described
+  above; this focused projection does not replace the full component descriptor elsewhere.
+- A different type or material constraint set is never guessed exact. It is `convertible` only when
+  admitted immutable conversion evidence exactly names the same material
+  `UiValueCompatibilitySchemaSnapshot { type, constraints }` pair used for exact comparison.
+  `defaultValue`, `editor` and either side's non-target source allowance are never conversion-evidence
+  operands.
+  The evidence describes availability only; this packet neither executes nor persists transforms.
+  Multiple evidence rows are sorted by canonical ID. Without exact evidence the pair is incompatible.
+- An unbound target is eligible. A target already carrying the exact binding ID assigned to the same
+  source is an exact no-op candidate and its current binding becomes a stale operand. A different
+  current binding is `target-occupied` and is never silently replaced in this packet.
+- For each source, exact candidates with two present equal semantic roles outrank other exact
+  candidates. One best exact candidate becomes a recommendation-only `resolved`; multiple best exact
+  candidates are `ambiguous`. If no exact candidate exists, one or more convertible candidates produce
+  `convertible`. None of these resolution states selects a target or creates a command. Selection is a
+  separate explicit caller step. Explicit selections may fan one source out to multiple exact inputs,
+  but one input has exactly one source and convertible/incompatible pairs cannot be selected.
+- Source order in the admitted request, current document root-first node order and component binding
+  declaration order define stable display order. Source array order is a material public operand and is
+  retained in the snapshot; the host must supply the same canonical source order for equivalent entry
+  paths. Explicit selection array order is non-material: admission canonicalizes it to the candidate
+  order above before snapshotting, selecting or compiling atoms. Conversion IDs and issues use
+  canonical lexical tie-breaks. Object/map/click insertion order cannot change schemas, compatibility,
+  diagnostics, selected commands or plan bytes.
+
+##### Bounds and failure model
+
+Freeze public limits of at most 64 sources, 1,024 document nodes, 1,024 exact component lookups,
+1,024 target endpoints, 1,024 conversion-evidence rows and 65,536 evaluated pairs. Strict plain-data
+admission additionally caps depth at 32, total visited values at 65,536, one array at 4,096 items, one
+object at 256 own string keys and one string at 4,096 UTF-16 code units. Oversize/duplicate
+source/binding/evidence input rejects before document or catalog access. Document traversal stops at
+its node bound; exact request-order component lookups then derive and validate unique target
+coordinates and the endpoint/pair bounds before classification. Work is
+`O(P + V log K + E log E + S log S + I log I)` within the shared visit budget, where `P` is bounded
+source-target pairs, `V` is visited portable values, `K` is the largest admitted object key count,
+`E` conversion rows, `S` explicit selections and `I` safely collected issues. The logarithmic terms
+are the required canonical object-key and lexical ordering work; no false linear-time claim is made.
+There are no timers, listeners, global caches or background scans.
+
+JDW adds one internal iterative `collectUiAuthoringInputTargetsBounded` helper rather than calling the
+current whole-document projection before its bound. It own-data preflights the document header/root,
+walks root-first with an explicit stack up to the node limit, snapshots exact component refs, then
+performs at most one exact `component(ref)` lookup per unique ref and derives input endpoints up to the
+endpoint limit. Only after these bounds pass may existing V2 document, component descriptor, endpoint
+and binding validators run over the bounded snapshots. The helper does not call `components()` or add
+a second public projection.
+
+The runtime request has one intentional non-portable capability: the focused
+`UiSourceInputComponentLookup`. It is deliberately narrower than `UiComponentCatalogContract`; a
+class/prototype catalog remains valid and the host adapts it with an own-data arrow/function field at
+this boundary. Outer request keys are obtained through guarded own-data descriptors; every other
+operand is strict-cloned before catalog access. The lookup handle must expose `component` as an own
+data function. Each unique exact ref is called once in request order under `try/catch`; a throw,
+proxy/reflection failure, accessor member or non-portable/invalid returned descriptor becomes
+sanitized `component-catalog-unavailable` or `invalid-target` and no raw exception escapes. A returned
+descriptor is strict own-data cloned and fully validated before any binding member is read.
+
+Those first guarded results create one package-private frozen exact-ref snapshot adapter. Candidate
+inspection, `createUiAuthoringDetachedPlan`, recreate and `finalizeUiAuthoringDetachedPlan` receive only
+that adapter; the original caller lookup is never delegated or invoked again. Every delegate call is
+also inside the closed-result guard so an unexpected legacy throw becomes a sanitized blocked issue,
+never a raw exception or command based on a different descriptor. `components()` is invoked zero
+times. A preflight/admission failure invokes the lookup zero times.
+
+The exact `UiSourceInputIssueCode` union above is the only new compatibility diagnostic vocabulary.
+Diagnostic precedence is request/version/bounds admission → missing/duplicate identity and binding
+coverage → target eligibility/occupied state → pair compatibility → source recommendation → explicit
+selection/contention/no-change → stale operands. A rejected stage returns no commands or partial
+selection. A failing stage collects every safely discoverable issue in that stage up to the shared
+budget and skips every later stage. Within one stage and within each source resolution, issues sort by
+`path`, then `code`, `sourceId`, `nodeId`, `inputId`, `conversionId`, using empty string for an absent
+coordinate and ordinal string comparison. A valid request with zero eligible endpoints remains a
+ready candidate set whose every nonempty source resolution contains the single
+`no-compatible-target` issue; it is not a structurally blocked request.
+
+##### V2 candidate plan and Preview
+
+JDW exports these exact additive data-only shapes and pure functions from its current root:
+
+```ts
+interface UiSourceInputComponentLookup {
+  readonly component: (ref: UiComponentRef) => unknown;
+}
+
+interface UiAuthoringSourceInputCandidateRequestV1 {
+  readonly schemaVersion: 1;
+  readonly planId: string;
+  readonly recipe: UiAuthoringRecipeRef;
+  readonly state: UiAuthoringSessionStateV2;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly componentCatalog: UiSourceInputComponentLookup;
+  readonly sources: readonly [UiSourceValueDescriptor, ...UiSourceValueDescriptor[]];
+  readonly bindings: readonly [UiSourceBindingAssignment, ...UiSourceBindingAssignment[]];
+  readonly conversionEvidence?: readonly UiValueConversionEvidence[];
+}
+
+interface UiAuthoringSourceInputSelection {
+  readonly sourceId: string;
+  readonly nodeId: string;
+  readonly inputId: string;
+}
+
+interface UiAuthoringSourceInputPlanRequestV1 extends UiAuthoringSourceInputCandidateRequestV1 {
+  readonly selections: readonly [
+    UiAuthoringSourceInputSelection,
+    ...UiAuthoringSourceInputSelection[],
+  ];
+}
+
+interface UiAuthoringSourceInputRequestSnapshotV1 {
+  readonly schemaVersion: 1;
+  readonly planId: string;
+  readonly recipe: UiAuthoringRecipeRef;
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly sources: readonly [UiSourceValueDescriptor, ...UiSourceValueDescriptor[]];
+  readonly targets: readonly UiSourceInputTargetDescriptor[];
+  readonly bindings: readonly [UiSourceBindingAssignment, ...UiSourceBindingAssignment[]];
+  readonly conversionEvidence: readonly UiValueConversionEvidence[];
+  readonly selections?: readonly [
+    UiAuthoringSourceInputSelection,
+    ...UiAuthoringSourceInputSelection[],
+  ];
+}
+
+type UiAuthoringSourceInputCandidateResult =
+  | {
+      readonly status: 'ready';
+      readonly requestSnapshot: UiAuthoringSourceInputRequestSnapshotV1;
+      readonly candidates: readonly UiSourceInputCandidate[];
+      readonly resolutions: readonly UiSourceInputResolution[];
+    }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputAdmissionIssue, ...UiSourceInputAdmissionIssue[]];
+      readonly requestSnapshot?: never;
+      readonly candidates?: never;
+      readonly resolutions?: never;
+    };
+
+interface UiAuthoringSourceInputPlan {
+  readonly requestSnapshot: UiAuthoringSourceInputRequestSnapshotV1 & {
+    readonly selections: readonly [
+      UiAuthoringSourceInputSelection,
+      ...UiAuthoringSourceInputSelection[],
+    ];
+  };
+  readonly candidates: readonly UiSourceInputCandidate[];
+  readonly resolutions: readonly UiSourceInputResolution[];
+  readonly selected: readonly [UiExactSourceInputCandidate, ...UiExactSourceInputCandidate[]];
+  readonly detachedPlan: UiAuthoringDetachedPlan & { readonly blocked: false };
+}
+
+type CreateUiAuthoringSourceInputPlanResult =
+  | { readonly status: 'ready'; readonly plan: UiAuthoringSourceInputPlan }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputPlanIssue, ...UiSourceInputPlanIssue[]];
+      readonly plan?: never;
+    };
+
+interface UiAuthoringSourceInputPlanPreview {
+  readonly requestSnapshot: UiAuthoringSourceInputPlan['requestSnapshot'];
+  readonly candidates: readonly UiSourceInputCandidate[];
+  readonly resolutions: readonly UiSourceInputResolution[];
+  readonly selected: UiAuthoringSourceInputPlan['selected'];
+  readonly commands: UiAuthoringDetachedPlan['commands'];
+}
+
+interface FinalizeUiAuthoringSourceInputPlanInput {
+  readonly plan: UiAuthoringSourceInputPlan;
+  readonly current: UiAuthoringSourceInputPlanRequestV1;
+}
+
+type FinalizeUiAuthoringSourceInputPlanResult =
+  | { readonly status: 'ready'; readonly command: UiDocumentCommandV2 }
+  | {
+      readonly status: 'blocked';
+      readonly issues: readonly [UiSourceInputIssue, ...UiSourceInputIssue[]];
+      readonly command?: never;
+    };
+
+function inspectUiAuthoringSourceInputCandidates(
+  input: unknown,
+): UiAuthoringSourceInputCandidateResult;
+
+function createUiAuthoringSourceInputPlan(input: unknown): CreateUiAuthoringSourceInputPlanResult;
+
+function previewUiAuthoringSourceInputPlan(
+  plan: UiAuthoringSourceInputPlan,
+): UiAuthoringSourceInputPlanPreview;
+
+function finalizeUiAuthoringSourceInputPlan(
+  input: FinalizeUiAuthoringSourceInputPlanInput,
+): FinalizeUiAuthoringSourceInputPlanResult;
+```
+
+Target enumeration uses the bounded helper's current V2 document snapshot walk and frozen exact-ref
+component lookup adapter only; it does not call the existing whole-document projection. Missing,
+output-only, occupied or structurally invalid endpoints remain deterministic incompatible candidates
+or request issues. `inspectUiAuthoringSourceInputCandidates` never creates a command or detached plan;
+a `resolved` row is only a recommendation that the host may present or copy into an explicit
+selection.
+
+Plan creation requires a nonempty explicit selection and at least one selected exact input for every
+source in the request. It re-runs candidate inspection, rejects any missing source, non-exact pair,
+duplicate selection or target selected by two different sources, and returns one blocked result with
+zero survivors. A mixed request containing resolved exact sources plus any ambiguous, convertible or
+incompatible source remains wholly blocked until the host explicitly resolves the ambiguity or removes
+that source and submits a fresh candidate request; Advanced conversion is a separate fresh request,
+not a partial basic-plan survivor. Source fan-out reuses that source's one binding assignment. A target carrying that
+same binding is retained as a selected no-op snapshot; a different binding cannot be selected. Only
+changed targets emit `set-input-binding` atoms. If every selected target is already equal, plan
+creation returns only `no-change` and does not call `createUiAuthoringDetachedPlan`; otherwise it
+delegates the nonempty atom list to that existing V2 function. Changed atoms follow canonical selected
+candidate order. Child command IDs are exactly
+`${planId}/source-input/${zeroBasedOrdinal.toString(10)}`; the outer batch ID remains exact `planId`,
+so child IDs are nonblank, mutually unique and cannot equal the outer ID. A plan ID that cannot remain
+within the public string bound after adding the longest child suffix is rejected during admission. It
+introduces no command variant, document field, component catalog, batch language or history.
+
+Preview is a frozen projection of sources, candidates, recommendations, explicit exact selections and
+the existing nonempty atom list. It performs no acquisition, conversion, catalog lookup, Apply or
+callback. Finalize receives the ready plan plus the complete fresh exact plan request, including
+Recipe, source order/schema, binding assignments, conversion evidence, explicit selections, state,
+Design System and component catalog. It first performs only strict fresh admission, bounded target
+enumeration and normalization through the frozen lookup snapshot; it does not classify selections or
+create a new plan yet. It compares the resulting material snapshot with the admitted plan in this
+fixed order: plan ID → outer Recipe → sources → assigned bindings → conversion evidence → document →
+Design System → component catalog/target descriptors/current endpoint bindings → explicit selections.
+Differences return respectively `stale-plan`, `stale-recipe`, `stale-source`,
+`stale-assigned-binding`,
+`stale-conversion-evidence`, `stale-document`, `stale-design-system`,
+`stale-component-catalog | stale-target-binding`, or `stale-selection`; no `no-change`, occupied or selection
+diagnostic may mask an earlier stale result. Only an equal fresh snapshot calls plan creation, compares
+selected atoms, then delegates to `finalizeUiAuthoringDetachedPlan`. Any blocked recreate or difference
+fails closed before delegation.
+A changed sample value is not an operand because sample values are never accepted. Fresh comparison
+uses the normalized material source/target snapshots above; omitted versus empty constraints and drift
+in discarded label/description/default/editor/source-allowance metadata do not stale the plan. Material
+schema/role/binding allowance, source order/identity, current or assigned binding ID, conversion
+evidence, plan ID, outer Recipe, document, selected endpoint, Design System or explicit selection
+drift blocks.
+
+##### Compatibility and package boundary
+
+Existing `UiComponentBindingDescriptor`, V1/V2/V3 commands, projections, detached plans, sessions and
+root exports remain source- and behavior-compatible. The optional semantic role is additive. The new
+contracts focused subpath is an explicit entry in package exports/typesVersions/build and public-export
+checks. It exports the three exact constants `UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION`,
+`UI_SOURCE_INPUT_LIMITS`, `UI_SOURCE_INPUT_ISSUE_CODES`; every declared
+`UiSourceInput*`, `UiSourceValueDescriptor`, `UiSourceBindingAssignment`,
+`UiValueCompatibilitySchemaSnapshot`, `UiValueConversionEvidence`,
+`UiExactSourceInputCandidate`, `UiConvertibleSourceInputCandidate` and
+`UiIncompatibleSourceInputCandidate` type; and `resolveUiSourceInputCandidates`. Those symbols are
+deliberately absent from the contracts root and private deep paths. JDW exports only the exact
+candidate/selection/request/snapshot/plan/Preview/finalize types and four functions above from its
+current root without a private deep import.
+Packed fixtures prove the contracts root does not expose each focused symbol and that the unchanged
+closed component-issue union remains exhaustively consumable after `semanticRole` is added. The
+packages add no runtime dependency, provider SDK or model SDK.
+
+An integrating host may project an existing converter catalog into immutable
+`UiValueConversionEvidence`; that adapter remains outside JDW and compatibility core. The new contract
+cannot become a second transform registry or claim that conversion execution occurred.
+
+Source `DONE`, release-tip validation, tag/publish and npm `@prototype` availability are separate
+states. This packet may record source completion after exact review, but no integrating host may claim
+the new contract until one approved published cohort contains it.
+
+##### Ordered implementation tasks
+
+1. Add optional canonical `semanticRole` validation to component bindings through the existing
+   `invalid-binding-value` code/path without widening the closed component issue union or changing
+   current descriptors/catalog resolution.
+2. Add the focused contracts entry, constants, strict schema/source/target/evidence admission,
+   canonical material-schema equality and pair classification with frozen closed results. Reuse the
+   package-private strict portable-data and UiValueSchema-shape helpers instead of creating a second
+   clone or schema validator.
+3. Add aggregate recommendation, role preference and bounded deterministic ordering; keep candidate
+   inspection separate from explicit selection/compilation.
+4. Add JDW target enumeration through the bounded current V2 snapshot walk, occupied-input snapshots and the strict
+   nonempty explicit-selection compiler into existing atoms plus one existing detached plan.
+5. Add mutation-free Preview and source-aware Finalize revalidation that delegates to the existing
+   V2 finalizer and never applies a command.
+6. Add hostile-data, matrix, bounds, determinism, stale and V2 command/session parity tests.
+7. Add focused contracts/JDW exports and packed TypeScript exact-optional, CJS, ESM, default-condition,
+   root-private negative and no-new-dependency fixtures.
+
+##### Verification
+
+During development repeat only focused compatibility, component-validation, JDW candidate-plan and
+narrow package typecheck/build tests. Freeze one candidate before final gates. At the exact final SHA:
+
+- run the focused hostile/accessor/proxy/cycle, exact/constraint/allowed-source, conversion,
+  recommendation/ambiguity/contention, occupied/no-op, bounds, ordering, staleness and V2 parity suites;
+- run `pnpm check:public-exports` and packed TypeScript exact-optional, CJS `require`, ESM `import`,
+  default-condition, focused-only/root-negative, exhaustive component-issue and forbidden-private-import
+  fixtures;
+- run `pnpm validate:static`, `pnpm validate:fast`, the repository browser gate once for the additive
+  public consumer surface, `pnpm check:commit-safety` and `git diff --check`;
+- do not run Electron: no renderer, main, preload, native or package-dependency boundary changes.
+
+##### Acceptance and source-review gate
+
+Done requires a backendless consumer to supply multiple opaque source values, receive stable
+exact/ambiguous/convertible/incompatible recommendations, explicitly select only exact pairs, Preview one
+mutation-free plan and finalize one existing V2 outer batch. Equivalent canonical operands produce
+the same candidates, diagnostics and commands; candidate-only inspection creates no batch, source
+fan-out is supported, target contention blocks without partial survivors, occupied targets never
+overwrite silently, different explicit click order canonicalizes to identical plan bytes, and a mixed
+exact/unresolved multi-source request produces no partial plan until a fresh all-exact request is
+admitted. Manual V2 Apply still creates exactly one ordinary transaction/history entry.
+
+Reject a candidate that compares only direction or type; ignores material constraints or target
+binding allowance; reads accessors/proxies unsafely; invents conversions; auto-selects convertible or
+ambiguous pairs; turns a recommendation into an implicit command; creates an empty batch for
+candidate-only/no-change; lets two sources own one target; silently overwrites an occupied input; uses label/path guessing; depends on provider/runtime
+values; stores source semantics in `UiDocument`; adds another Recipe/document/batch/history/registry;
+enumerates a catalog instead of exact lookups; retains callbacks or mutable caller objects; performs
+Apply/IO in Preview/finalize; omits bounded hostile and packed-public proof; changes current exports
+incompatibly; leaks React/DOM/product/provider/model/native concerns; or claims release, publish or
+Electron completion.
 
 ### Acceptance direction
 

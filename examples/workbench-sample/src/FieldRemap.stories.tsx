@@ -13,6 +13,9 @@ import {
 } from '@workbench-kit/shell-react/field-remap';
 
 import { FieldRemapDemo } from './FieldRemapDemo';
+import { FieldRemapKeepAliveFixture } from './storybook/fixtures/FieldRemapKeepAliveFixture';
+import { FieldRemapOperatorEmbedFixture } from './storybook/fixtures/FieldRemapOperatorEmbedFixture';
+import { FieldRemapPropertyStackFixture } from './storybook/fixtures/FieldRemapPropertyStackFixture';
 
 const meta = {
   title: 'Workbench Sample/Field Remap',
@@ -114,6 +117,122 @@ async function findVisibleFlowHandle(
   return findVisibleFlowElement<HTMLElement>(canvasElement, selector);
 }
 
+function readOperatorEmbedState(element: HTMLElement): {
+  readonly operatorCommits: number;
+  readonly operators: readonly { readonly id: string; readonly kind: string }[];
+} {
+  return JSON.parse(element.textContent ?? '{}') as {
+    readonly operatorCommits: number;
+    readonly operators: readonly { readonly id: string; readonly kind: string }[];
+  };
+}
+
+async function openPropertyOptions(
+  canvasElement: HTMLElement,
+  presentation: 'rail' | 'modal',
+): Promise<{ readonly editor: HTMLElement; readonly scope: ReturnType<typeof within> }> {
+  const canvas = within(canvasElement);
+  const body = within(canvasElement.ownerDocument.body);
+  const selectEdge = canvas.getByTestId('field-remap-select-edge-property-options');
+  selectEdge.focus();
+  await userEvent.click(selectEdge);
+
+  const detailScope =
+    presentation === 'modal'
+      ? within(await body.findByRole('dialog', { name: 'Mapping details' }))
+      : canvas;
+  const step = await detailScope.findByTestId('field-remap-detail-step-0');
+  await expect(step).toHaveAccessibleName(/Property options/);
+  await userEvent.click(step);
+
+  const editor = await detailScope.findByTestId('field-remap-convert-note');
+  await expect(editor).toBeVisible();
+  return { editor, scope: within(editor) };
+}
+
+async function choosePropertyTransform(
+  canvasElement: HTMLElement,
+  scope: ReturnType<typeof within>,
+  label: string,
+): Promise<void> {
+  const canvas = within(canvasElement);
+  const body = within(canvasElement.ownerDocument.body);
+  const state = canvas.getByTestId('field-remap-property-transform-state');
+  const registry = scope.getByRole('combobox', { name: 'Convert transform id' });
+
+  registry.focus();
+  await expect(registry).toHaveFocus();
+  await userEvent.keyboard('{Enter}');
+  const listbox = await body.findByRole('listbox');
+  await userEvent.click(within(listbox).getByRole('option', { name: label }));
+
+  await expect(registry).toHaveFocus();
+  await expect(registry).toHaveTextContent(label);
+  await waitFor(() => expect(state).toHaveTextContent('story:identity'));
+}
+
+async function exercisePropertyOptions(
+  canvasElement: HTMLElement,
+  editor: HTMLElement,
+  scope: ReturnType<typeof within>,
+): Promise<void> {
+  const canvas = within(canvasElement);
+  const state = canvas.getByTestId('field-remap-property-options-state');
+
+  expect(editor.querySelector('.ui-workbench-property-stack')).not.toBeNull();
+  expect(editor.querySelector('.ui-workbench-property-section')).not.toBeNull();
+  expect(editor.querySelector('.ui-workbench-property-row')).not.toBeNull();
+
+  const prefix = scope.getByRole('textbox', { name: 'Prefix' });
+  await expect(prefix).toHaveAttribute('data-testid', 'field-remap-option-prefix');
+  await userEvent.clear(prefix);
+  await userEvent.type(prefix, 'After');
+  await expect(prefix).toHaveFocus();
+  await waitFor(() => expect(state).toHaveTextContent('"prefix":"After"'));
+
+  const maxLength = scope.getByRole('spinbutton', { name: 'Max length' });
+  await expect(maxLength).toHaveAttribute('data-testid', 'field-remap-option-maxLength');
+  await userEvent.clear(maxLength);
+  await waitFor(() => expect(state).not.toHaveTextContent('"maxLength"'));
+  await userEvent.type(maxLength, '7');
+  await waitFor(() => expect(state).toHaveTextContent('"maxLength":7'));
+
+  const enabled = scope.getByRole('checkbox', { name: 'Enabled' });
+  await expect(enabled).toHaveAttribute('data-testid', 'field-remap-option-enabled');
+  await userEvent.click(enabled);
+  await waitFor(() => expect(state).toHaveTextContent('"enabled":false'));
+
+  const codeLabels = scope.getByTestId('field-remap-option-codeLabels');
+  const codeLabelsScope = within(codeLabels);
+  await userEvent.type(codeLabelsScope.getByRole('textbox', { name: 'New Code labels key' }), 'B');
+  await userEvent.type(
+    codeLabelsScope.getByRole('textbox', { name: 'New Code labels value' }),
+    'Beta',
+  );
+  await userEvent.click(codeLabelsScope.getByRole('button', { name: 'Add' }));
+  await waitFor(() => expect(state).toHaveTextContent('"B":"Beta"'));
+  await expect(
+    codeLabelsScope.getByRole('textbox', { name: 'Code labels value for B' }),
+  ).toHaveValue('Beta');
+
+  const meta = scope.getByRole('textbox', { name: 'Meta' });
+  await expect(meta).toHaveAttribute('data-testid', 'field-remap-option-meta');
+  await userEvent.click(meta);
+  fireEvent.change(meta, { target: { value: '{bad' } });
+  await userEvent.tab();
+  await expect(await scope.findByRole('alert')).toHaveTextContent('Invalid JSON.');
+  await expect(state).toHaveTextContent('"meta":{"mode":"strict"}');
+
+  await userEvent.click(meta);
+  fireEvent.change(meta, { target: { value: '{"mode":"loose"}' } });
+  await userEvent.tab();
+  await waitFor(() => expect(scope.queryByRole('alert')).toBeNull());
+  await waitFor(() => expect(state).toHaveTextContent('"meta":{"mode":"loose"}'));
+  await expect(meta).toHaveValue('{\n  "mode": "loose"\n}');
+
+  await choosePropertyTransform(canvasElement, scope, 'Identity');
+}
+
 const rewireSources: readonly SourceField[] = [
   { id: 'src.name', label: 'Current name', dataType: 'string' },
   { id: 'src.other', label: 'Other name', dataType: 'string' },
@@ -187,7 +306,26 @@ export const ReadOnly: Story = {
   tags: ['storybook-play-required', 'storybook-play-sample'],
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
     await expect(canvas.getByTestId('field-remap-demo')).toHaveAttribute('data-read-only', 'true');
+    const exportDocument = canvas.getByRole('button', { name: 'Export JSON' });
+    await expect(exportDocument).toBeEnabled();
+    exportDocument.focus();
+    await userEvent.keyboard('{Enter}');
+
+    const exportDialog = await body.findByRole('dialog', { name: 'Export mapping document' });
+    const exportText = within(exportDialog).getByRole('textbox', {
+      name: 'Current mapping document JSON',
+    });
+    await waitFor(() => expect(exportText).toHaveFocus());
+    await expect(exportText).toHaveAttribute('readonly');
+    await expect(within(exportDialog).getByRole('button', { name: 'Copy JSON' })).toBeEnabled();
+    await userEvent.keyboard('{Escape}');
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(exportDocument).toHaveFocus());
+
+    await expect(canvas.getByRole('button', { name: 'Import JSON' })).toBeDisabled();
+    await expect(canvas.getByText('Import is unavailable for this mapping.')).toBeVisible();
     await expect(canvas.getByTestId('field-remap-io-browse')).toBeVisible();
     await expect(canvas.queryByTestId('field-remap-shape-io-source')).toBeNull();
     await expect(canvas.queryByTestId('field-remap-convert-palette')).toBeNull();
@@ -198,7 +336,7 @@ export const ReadOnly: Story = {
     await expect(canvas.queryByTestId('field-remap-add-node-e-name')).toBeNull();
     await expect(canvas.queryByTestId('field-remap-remove-edge-e-name')).toBeNull();
     await userEvent.click(canvas.getByTestId('field-remap-detail-step-0'));
-    await expect(canvas.getByTestId('field-remap-step-id')).toBeDisabled();
+    await expect(canvas.getByRole('combobox', { name: 'Convert transform id' })).toBeDisabled();
     await expect(canvas.queryByTestId('field-remap-convert-note-remove')).toBeNull();
   },
 };
@@ -226,7 +364,7 @@ export const ReadOnlyEmbed: Story = {
     await expect(transformNode).toHaveFocus();
     await userEvent.keyboard('{Enter}');
     await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
-    await expect(canvas.getByTestId('field-remap-step-id')).toBeDisabled();
+    await expect(canvas.getByRole('combobox', { name: 'Convert transform id' })).toBeDisabled();
     await expect(
       await findVisibleFlowElement<HTMLElement>(
         canvasElement,
@@ -448,6 +586,84 @@ export const SemanticHistory: Story = {
 
     await userEvent.click(redo);
     await waitFor(() => expect(canvas.queryByTestId('field-remap-lane-e-name')).toBeNull());
+  },
+};
+
+export const DocumentImportSemanticHistory: Story = {
+  name: 'Keyboard document import / single Undo',
+  args: {
+    sampleId: 'nm-combine-split',
+    showHostChromeDemo: true,
+  },
+  tags: ['storybook-play-required', 'storybook-play-sample'],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    const exportDocument = canvas.getByRole('button', { name: 'Export JSON' });
+    const importDocument = canvas.getByRole('button', { name: 'Import JSON' });
+    const undo = canvas.getByTestId('field-remap-undo');
+
+    await expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-op-op-address')).toBeVisible();
+    await expect(undo).toBeDisabled();
+
+    exportDocument.focus();
+    await userEvent.tab();
+    await expect(importDocument).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+
+    const dialog = await body.findByRole('dialog', { name: 'Import mapping document' });
+    const documentJson = within(dialog).getByRole('textbox', {
+      name: 'Mapping document JSON',
+    });
+    await waitFor(() => expect(documentJson).toHaveFocus());
+    await userEvent.paste('{"version":2');
+    await userEvent.tab();
+    await userEvent.tab();
+    await expect(within(dialog).getByRole('button', { name: 'Validate and import' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+
+    await expect(within(dialog).getByRole('alert')).toHaveTextContent(
+      'Enter valid mapping document JSON.',
+    );
+    await waitFor(() => expect(documentJson).toHaveFocus());
+    await expect(canvas.getByTestId('field-remap-op-op-name')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-op-op-address')).toBeVisible();
+    await expect(undo).toBeDisabled();
+
+    await userEvent.keyboard('{Control>}a{/Control}');
+    await userEvent.paste(
+      JSON.stringify({
+        version: 2,
+        edges: [
+          {
+            id: 'imported-first-city',
+            sourceFieldId: 'a.first',
+            targetSlotId: 'b.city',
+          },
+        ],
+        operators: [],
+      }),
+    );
+    await userEvent.tab();
+    await expect(within(dialog).getByRole('button', { name: 'Cancel' })).toHaveFocus();
+    await userEvent.tab();
+    await expect(within(dialog).getByRole('button', { name: 'Validate and import' })).toHaveFocus();
+    await userEvent.keyboard('{Enter}');
+
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await expect(await canvas.findByTestId('field-remap-lane-imported-first-city')).toBeVisible();
+    await waitFor(() => expect(canvas.queryByTestId('field-remap-op-op-name')).toBeNull());
+    await expect(canvas.queryByTestId('field-remap-op-op-address')).toBeNull();
+    await expect(undo).toBeEnabled();
+
+    await userEvent.click(undo);
+    await waitFor(() =>
+      expect(canvas.queryByTestId('field-remap-lane-imported-first-city')).toBeNull(),
+    );
+    await expect(await canvas.findByTestId('field-remap-op-op-name')).toBeVisible();
+    await expect(canvas.getByTestId('field-remap-op-op-address')).toBeVisible();
+    await expect(undo).toBeDisabled();
   },
 };
 
@@ -756,6 +972,108 @@ export const ModalDetail: Story = {
   },
 };
 
+export const PropertyStackRail: Story = {
+  name: 'Property stack options (rail)',
+  args: { sampleId: 'nested-ab' },
+  render: () => <FieldRemapPropertyStackFixture detailPresentation="rail" />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-property-stack',
+  ],
+  play: async ({ canvasElement }) => {
+    const { editor, scope } = await openPropertyOptions(canvasElement, 'rail');
+    await exercisePropertyOptions(canvasElement, editor, scope);
+  },
+};
+
+export const PropertyStackLightRail: Story = {
+  name: 'Property stack options (light rail)',
+  args: { sampleId: 'nested-ab' },
+  render: () => (
+    <div
+      data-theme="light"
+      data-testid="field-remap-property-stack-light-host"
+      style={{ background: 'var(--color-bg)', color: 'var(--color-text)', padding: '1rem' }}
+    >
+      <FieldRemapPropertyStackFixture detailPresentation="rail" />
+    </div>
+  ),
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-property-stack',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-property-stack-light-host')).toHaveAttribute(
+      'data-theme',
+      'light',
+    );
+    const { editor, scope } = await openPropertyOptions(canvasElement, 'rail');
+    await expect(editor).toBeVisible();
+    await expect(scope.getByRole('textbox', { name: 'Prefix' })).toBeVisible();
+    await choosePropertyTransform(canvasElement, scope, 'Identity');
+  },
+};
+
+export const PropertyStackModal: Story = {
+  name: 'Property stack options (modal)',
+  args: { sampleId: 'nested-ab' },
+  render: () => <FieldRemapPropertyStackFixture detailPresentation="modal" />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-property-stack',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const body = within(canvasElement.ownerDocument.body);
+    const selectEdge = canvas.getByTestId('field-remap-select-edge-property-options');
+    const { editor, scope } = await openPropertyOptions(canvasElement, 'modal');
+    await exercisePropertyOptions(canvasElement, editor, scope);
+
+    const dialog = body.getByRole('dialog', { name: 'Mapping details' });
+    await expect(dialog.contains(document.activeElement)).toBe(true);
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Close details' }));
+    await waitFor(() => expect(body.queryByRole('dialog')).toBeNull());
+    await waitFor(() => expect(selectEdge).toHaveFocus());
+  },
+};
+
+export const PropertyStackReadOnly: Story = {
+  name: 'Property stack options (read-only)',
+  args: { sampleId: 'nested-ab' },
+  render: () => <FieldRemapPropertyStackFixture detailPresentation="rail" readOnly />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-property-stack',
+  ],
+  play: async ({ canvasElement }) => {
+    const { editor, scope } = await openPropertyOptions(canvasElement, 'rail');
+    expect(editor.querySelector('.ui-workbench-property-stack')).not.toBeNull();
+    expect(editor.querySelector('.ui-workbench-property-section')).not.toBeNull();
+    expect(editor.querySelector('.ui-workbench-property-row')).not.toBeNull();
+
+    await expect(scope.getByRole('combobox', { name: 'Convert transform id' })).toBeDisabled();
+    await expect(scope.getByRole('textbox', { name: 'Prefix' })).toBeDisabled();
+    await expect(scope.getByRole('spinbutton', { name: 'Max length' })).toBeDisabled();
+    await expect(scope.getByRole('checkbox', { name: 'Enabled' })).toBeDisabled();
+    await expect(scope.getByRole('textbox', { name: 'Meta' })).toBeDisabled();
+
+    const codeLabels = within(scope.getByTestId('field-remap-option-codeLabels'));
+    await expect(codeLabels.getByRole('textbox', { name: 'Code labels key' })).toBeDisabled();
+    await expect(
+      codeLabels.getByRole('textbox', { name: 'Code labels value for A' }),
+    ).toBeDisabled();
+    await expect(codeLabels.getByRole('textbox', { name: 'New Code labels key' })).toBeDisabled();
+    await expect(codeLabels.getByRole('textbox', { name: 'New Code labels value' })).toBeDisabled();
+    await expect(codeLabels.getByRole('button', { name: 'Add' })).toBeDisabled();
+    await expect(scope.queryByTestId('field-remap-convert-note-remove')).toBeNull();
+  },
+};
+
 export const ModalNodeDetail: Story = {
   name: 'Modal node detail',
   args: {
@@ -907,13 +1225,161 @@ export const EmbedCollapsedDetail: Story = {
 
     await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
     await userEvent.click(canvas.getByTestId('field-remap-detail-step-0'));
-    const stepEditor = canvas.getByTestId('field-remap-step-id');
+    const stepEditor = canvas.getByRole('combobox', { name: 'Convert transform id' });
     stepEditor.focus();
+    await expect(stepEditor).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
+    await expect(stepEditor).toHaveFocus();
+    const bindingButton = canvas.getByTestId('field-remap-convert-note-back');
+    bindingButton.focus();
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(canvas.queryByTestId('field-remap-convert-note')).toBeNull());
     await waitFor(() =>
       expect(document.activeElement).toBe(canvas.getByTestId('field-remap-mapper')),
     );
+  },
+};
+
+export const KeepAliveZeroSize: Story = {
+  name: 'Keep-alive zero-size mount',
+  args: { sampleId: 'nested-ab' },
+  render: () => <FieldRemapKeepAliveFixture />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-keep-alive',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const host = canvas.getByTestId('field-remap-keep-alive-host');
+    const flowCanvas = canvas.getByTestId('field-remap-flow');
+    const errors: unknown[] = [];
+    const onError = (event: ErrorEvent) => {
+      if (
+        event.error == null &&
+        event.message === 'ResizeObserver loop completed with undelivered notifications.'
+      ) {
+        return;
+      }
+      errors.push(event.error ?? event.message);
+    };
+    const onUnhandledRejection = (event: PromiseRejectionEvent) => errors.push(event.reason);
+    let flowMounts = 0;
+    let viewportObserver: MutationObserver | null = null;
+    const mountObserver = new MutationObserver((records) => {
+      for (const record of records) {
+        for (const node of Array.from(record.addedNodes)) {
+          if (node instanceof Element && node.matches('.react-flow')) {
+            flowMounts += 1;
+          }
+        }
+      }
+    });
+
+    window.addEventListener('error', onError);
+    window.addEventListener('unhandledrejection', onUnhandledRejection);
+    mountObserver.observe(flowCanvas, { childList: true, subtree: true });
+
+    try {
+      await expect(canvas.getByTestId('field-remap-keep-alive-state')).toHaveTextContent(
+        'Host pane hidden',
+      );
+      expect(host.getBoundingClientRect().width).toBe(0);
+      expect(host.getBoundingClientRect().height).toBe(0);
+      expect(flowCanvas.querySelector('.react-flow')).toBeNull();
+      await expect(within(flowCanvas).getByRole('status', { hidden: true })).toHaveTextContent(
+        'Mapping canvas is waiting for available space.',
+      );
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-show'));
+      await waitFor(() => {
+        expect(host.getBoundingClientRect().width).toBeGreaterThan(0);
+        expect(host.getBoundingClientRect().height).toBeGreaterThan(0);
+      });
+
+      const flow = await waitFor(() => {
+        const element = flowCanvas.querySelector<HTMLElement>('.react-flow');
+        expect(element).not.toBeNull();
+        return element!;
+      });
+      const viewport = flow.querySelector<HTMLElement>('.react-flow__viewport');
+      const zoomIn = flow.querySelector<HTMLButtonElement>('.react-flow__controls-zoomin');
+      await expect(viewport).not.toBeNull();
+      await expect(zoomIn).not.toBeNull();
+      await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
+      const initialTransform = viewport!.style.transform;
+      await userEvent.click(zoomIn!);
+      let settledTransform = viewport!.style.transform;
+      let stableTransformFrames = 0;
+      await waitFor(
+        async () => {
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          const currentTransform = viewport!.style.transform;
+          expect(currentTransform).not.toBe(initialTransform);
+          if (currentTransform === settledTransform) {
+            stableTransformFrames += 1;
+          } else {
+            settledTransform = currentTransform;
+            stableTransformFrames = 0;
+          }
+          expect(stableTransformFrames).toBeGreaterThanOrEqual(6);
+        },
+        { interval: 16, timeout: 3_000 },
+      );
+      const preservedTransform = settledTransform;
+
+      const observedViewportTransforms: string[] = [];
+      viewportObserver = new MutationObserver((records) => {
+        for (const record of records) {
+          if (record.type === 'attributes' && record.attributeName === 'style') {
+            observedViewportTransforms.push(viewport!.style.transform);
+          }
+        }
+      });
+      viewportObserver.observe(viewport!, { attributeFilter: ['style'], attributes: true });
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-hide'));
+      await waitFor(() => {
+        expect(host.getBoundingClientRect().width).toBe(0);
+        expect(host.getBoundingClientRect().height).toBe(0);
+      });
+      expect(flow.isConnected).toBe(true);
+      expect(viewport!.isConnected).toBe(true);
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-fit'));
+      await expect(canvas.getByTestId('field-remap-keep-alive-fit-requests')).toHaveTextContent(
+        '1',
+      );
+
+      await userEvent.click(canvas.getByTestId('field-remap-keep-alive-show'));
+      await waitFor(() => {
+        expect(host.getBoundingClientRect().width).toBeGreaterThan(0);
+        expect(host.getBoundingClientRect().height).toBeGreaterThan(0);
+      });
+      await new Promise<void>((resolve) => {
+        requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
+      });
+
+      expect(flowCanvas.querySelector('.react-flow')).toBe(flow);
+      expect(flowCanvas.querySelector('.react-flow__viewport')).toBe(viewport);
+      expect(viewport!.style.transform).toBe(preservedTransform);
+      expect(observedViewportTransforms.every((value) => value === preservedTransform)).toBe(true);
+      expect(flowMounts).toBe(1);
+      expect(flowCanvas.querySelectorAll('.react-flow')).toHaveLength(1);
+      if (errors.length > 0) {
+        throw new Error(
+          `Keep-alive browser errors: ${errors
+            .map((error) => (error instanceof Error ? error.message : String(error)))
+            .join(' | ')}`,
+        );
+      }
+    } finally {
+      viewportObserver?.disconnect();
+      mountObserver.disconnect();
+      window.removeEventListener('error', onError);
+      window.removeEventListener('unhandledrejection', onUnhandledRejection);
+    }
   },
 };
 
@@ -990,6 +1456,82 @@ export const EmpDept: Story = {
 export const ProductCatalog: Story = {
   name: 'T_PRODUCT → T_CATALOG_ITEM',
   args: { sampleId: 't-product-catalog' },
+};
+
+export const OperatorEmbedAuthoring: Story = {
+  name: 'Operator embed authoring',
+  args: { sampleId: 'nm-combine-split' },
+  render: () => <FieldRemapOperatorEmbedFixture mode="author" />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-operator-embed',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const state = canvas.getByTestId('field-remap-operator-embed-state');
+    const addCombine = canvas.getByTestId('field-remap-add-combine');
+    const addSplit = canvas.getByTestId('field-remap-add-split');
+
+    await expect(addCombine).toBeVisible();
+    await expect(addCombine).toHaveAccessibleName('Add combine');
+    await expect(addSplit).toBeVisible();
+    await expect(addSplit).toHaveAccessibleName('Add split');
+    expect(readOperatorEmbedState(state)).toEqual({ operatorCommits: 0, operators: [] });
+
+    await userEvent.click(addCombine);
+    await waitFor(() => expect(readOperatorEmbedState(state).operatorCommits).toBe(1));
+    const committed = readOperatorEmbedState(state).operators;
+    expect(committed).toHaveLength(1);
+    expect(committed[0]).toMatchObject({ kind: 'combine' });
+    const createdOperator = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id^="op:op-combine-"]',
+    );
+    await expect(canvas.getByTestId('field-remap-detail-operator-id')).toHaveTextContent(
+      'op-combine-',
+    );
+
+    await userEvent.dblClick(createdOperator);
+    await expect(canvas.getByTestId('field-remap-detail-operator-id')).toBeVisible();
+    await userEvent.click(canvas.getByTestId('field-remap-detail-delete-operator'));
+    await waitFor(() => expect(readOperatorEmbedState(state).operatorCommits).toBe(2));
+    expect(readOperatorEmbedState(state).operators).toEqual([]);
+    await waitFor(() =>
+      expect(
+        canvasElement.querySelector('.react-flow__node[data-id^="op:op-combine-"]'),
+      ).toBeNull(),
+    );
+  },
+};
+
+export const OperatorEmbedInspectOnly: Story = {
+  name: 'Operator embed inspect only',
+  args: { sampleId: 'nm-combine-split' },
+  render: () => <FieldRemapOperatorEmbedFixture mode="inspect" />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-operator-embed',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByTestId('field-remap-operator-palette')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-add-combine')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-add-split')).toBeNull();
+    await expect(canvas.getByTestId('field-remap-detail-operator-id')).toHaveTextContent(
+      'story-inspect-combine',
+    );
+    await expect(canvas.queryByTestId('field-remap-detail-delete-operator')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-operator-add-input')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-operator-bind-input')).toBeNull();
+    await expect(
+      await findVisibleFlowElement<HTMLElement>(
+        canvasElement,
+        '.react-flow__node[data-id="op:story-inspect-combine"]',
+      ),
+    ).toBeVisible();
+  },
 };
 
 export const CombineSplit: Story = {

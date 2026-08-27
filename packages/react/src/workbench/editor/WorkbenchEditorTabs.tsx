@@ -1,6 +1,15 @@
 import { EditorTabs, type EditorTabsProps } from '../../primitives/workbench-editor';
 import type { ContextMenuItem } from '../../overlay/ContextMenu';
-import { useWorkbenchEditorTabContextMenu } from './useWorkbenchEditorTabContextMenu';
+import {
+  useWorkbenchEditorTabContextMenu,
+  type WorkbenchEditorTabCommandFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent,
+} from './useWorkbenchEditorTabContextMenu';
+
+export type {
+  WorkbenchEditorTabCommandFocusDisposition,
+  WorkbenchEditorTabCommandFocusEvent,
+} from './useWorkbenchEditorTabContextMenu';
 
 export interface WorkbenchEditorTabsProps extends EditorTabsProps {
   /** Additional host actions appended after the built-in close group. */
@@ -16,6 +25,21 @@ export interface WorkbenchEditorTabsProps extends EditorTabsProps {
   readonly onCloseOthers?: ((tabId: string) => void) | undefined;
   /** Optional close-to-right override. Defaults to closing each later closable tab. */
   readonly onCloseToRight?: ((tabId: string) => void) | undefined;
+  /**
+   * Optional host-readiness handshake for focus after a context-menu command. Resolve a returned
+   * Promise only after controlled tab state is committed. `active-tab` focuses the currently
+   * selected surviving tab, or the programmatically focusable tablist when no selected tab
+   * survives. `none`, throws, and rejections fail closed without moving focus. Built-ins and extra
+   * items with a stable non-empty `id` participate; unidentified extras retain current behavior.
+   * Omission preserves the existing command-activation focus behavior.
+   */
+  readonly resolveContextMenuCommandFocus?:
+    | ((
+        event: WorkbenchEditorTabCommandFocusEvent,
+      ) =>
+        | WorkbenchEditorTabCommandFocusDisposition
+        | PromiseLike<WorkbenchEditorTabCommandFocusDisposition>)
+    | undefined;
 }
 
 /**
@@ -31,6 +55,7 @@ export function WorkbenchEditorTabs({
   onCloseToRight,
   onSelect,
   onTabContextMenu,
+  resolveContextMenuCommandFocus,
   tabs,
   ...props
 }: WorkbenchEditorTabsProps) {
@@ -41,6 +66,7 @@ export function WorkbenchEditorTabs({
     onCloseOthers,
     onCloseToRight,
     onSelectTab: onSelect,
+    resolveContextMenuCommandFocus,
     tabs,
   });
 
@@ -49,7 +75,7 @@ export function WorkbenchEditorTabs({
       <EditorTabs
         {...props}
         onClose={onClose}
-        onSelect={onSelect}
+        onSelect={tabContextMenu.onSelectTab ?? onSelect}
         onTabContextMenu={(tabId, event) => {
           tabContextMenu.onTabContextMenu(tabId, event);
           onTabContextMenu?.(tabId, event);

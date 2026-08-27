@@ -45,6 +45,42 @@ describe('ConvertNoteEditor', () => {
     });
   };
 
+  const chooseVisibleTransform = (label: string) => {
+    const combobox = container!.querySelector<HTMLButtonElement>(
+      '[role="combobox"][aria-label="Convert transform id"]',
+    )!;
+    vi.spyOn(combobox, 'getBoundingClientRect').mockReturnValue({
+      bottom: 44,
+      height: 28,
+      left: 16,
+      right: 216,
+      top: 16,
+      width: 200,
+      x: 16,
+      y: 16,
+      toJSON: () => ({}),
+    });
+
+    act(() => {
+      combobox.focus();
+      combobox.dispatchEvent(
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+      );
+    });
+    expect(combobox).toBe(document.activeElement);
+    expect(combobox.getAttribute('aria-expanded')).toBe('true');
+
+    const option = Array.from(document.body.querySelectorAll<HTMLElement>('[role="option"]')).find(
+      (item) => item.textContent?.trim() === label,
+    );
+    expect(option).toBeTruthy();
+    act(() => {
+      option!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+    expect(combobox).toBe(document.activeElement);
+    return combobox;
+  };
+
   it('edits convert registry id and options', () => {
     const edges: MappingEdge[] = [
       {
@@ -72,14 +108,22 @@ describe('ConvertNoteEditor', () => {
 
     expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeTruthy();
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
+    expect(
+      container!.querySelector('[data-testid="field-remap-convert-note"]')?.firstElementChild
+        ?.classList,
+    ).toContain('ui-workbench-property-stack');
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-step-settings"]')
+        ?.classList.contains('ui-workbench-property-section'),
+    ).toBe(true);
 
-    const select = container!.querySelector(
+    const compatibilitySelect = container!.querySelector(
       '[data-testid="field-remap-step-id"]',
     ) as HTMLSelectElement;
-    act(() => {
-      select.value = 'string:trim';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    expect(compatibilitySelect.getAttribute('aria-hidden')).toBe('true');
+    expect(compatibilitySelect.closest('.ui-workbench-property-row')).toBeTruthy();
+    chooseVisibleTransform('Trim');
     let nextEdges = onEdgesChange.mock.calls[
       onEdgesChange.mock.calls.length - 1
     ]?.[0] as MappingEdge[];
@@ -160,5 +204,49 @@ describe('ConvertNoteEditor', () => {
       ).click();
     });
     expect(onSelectionChange).toHaveBeenCalledWith({ kind: 'edge', edgeId: 'e-name' });
+  });
+
+  it('keeps shared convert controls disabled and removal unavailable when read only', () => {
+    const edges: MappingEdge[] = [
+      {
+        id: 'e-name',
+        sourceFieldId: 'a.user_name',
+        targetSlotId: 'b.name',
+        transformIds: ['expr:jsonata'],
+        transformOptionSteps: [{ expression: '$' }],
+      },
+    ];
+
+    mount(
+      <ConvertNoteEditor
+        readOnly
+        edge={edges[0]!}
+        stepIndex={0}
+        sources={sources}
+        targets={targets}
+        transforms={transforms}
+        edges={edges}
+        onEdgesChange={() => undefined}
+        onSelectionChange={() => undefined}
+      />,
+    );
+
+    expect(
+      container!.querySelector<HTMLButtonElement>(
+        '[role="combobox"][aria-label="Convert transform id"]',
+      )!.disabled,
+    ).toBe(true);
+    expect(
+      (container!.querySelector('[data-testid="field-remap-step-id"]') as HTMLSelectElement)
+        .disabled,
+    ).toBe(true);
+    expect(
+      (
+        container!.querySelector(
+          '[data-testid="field-remap-option-expression"]',
+        ) as HTMLInputElement
+      ).disabled,
+    ).toBe(true);
+    expect(container!.querySelector('[data-testid="field-remap-convert-note-remove"]')).toBeNull();
   });
 });

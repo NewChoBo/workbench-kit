@@ -35,6 +35,7 @@
     "check:extension-manifests": "node ./scripts/check-workbench-extension-manifests.mjs",
     "check:public-exports": "node ./scripts/check-public-package-exports.mjs",
     "check:packed-consumer": "node ./scripts/check-packed-consumer-bundle.mjs",
+    "check:packed-shell-react-context": "node ./scripts/check-packed-shell-react-context.mjs",
     "check:platform-cjs-leaves": "node ./scripts/check-platform-cjs-leaves.mjs",
     "check:dependency-graph": "node ./scripts/check-workbench-dependency-graph.mjs",
     "check:launch-boundary": "node ./scripts/check-launch-boundary.mjs",

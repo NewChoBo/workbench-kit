@@ -720,10 +720,17 @@ function applyAtomicCommand(
     : applyInheritedCommand(document, command, context);
 }
 
-export function applyUiDocumentCommandV3(
+type UiDocumentCommandV3ReplayObserver = (
+  document: UiDocumentV3,
+  command: UiDocumentAtomicCommandV3,
+  index: number,
+) => boolean;
+
+function applyUiDocumentCommandV3Internal(
   document: UiDocumentV3,
   command: UiDocumentCommandV3,
   context: UiDocumentCommandV3Context,
+  observer?: UiDocumentCommandV3ReplayObserver,
 ): ApplyUiDocumentCommandV3Result {
   const existingIssues = validateUiDocumentRootV3(document.root);
   if (existingIssues.length > 0) return fail(document, ...existingIssues);
@@ -741,12 +748,58 @@ export function applyUiDocumentCommandV3(
       ),
     );
   }
-  const commandIssues = validateCommand(safeCommand);
+  const observedBatch = observer !== undefined && safeCommand.type === 'batch';
+  const commandIssues = observedBatch
+    ? !isCanonicalText(safeCommand.commandId)
+      ? Object.freeze([
+          commandIssue('blank-command-id', 'V3 command ids must be canonical.', safeCommand),
+        ])
+      : safeCommand.type === 'batch' && safeCommand.commands.length === 0
+        ? Object.freeze([
+            commandIssue(
+              'empty-batch',
+              'A V3 batch requires at least one atomic command.',
+              safeCommand,
+            ),
+          ])
+        : Object.freeze([])
+    : validateCommand(safeCommand);
   if (commandIssues.length > 0) return fail(document, ...commandIssues);
 
   const atomicCommands = safeCommand.type === 'batch' ? safeCommand.commands : [safeCommand];
+  const observedCommandIds = observedBatch ? new Set([safeCommand.commandId]) : null;
   let working = document;
-  for (const child of atomicCommands) {
+  for (let index = 0; index < atomicCommands.length; index += 1) {
+    const child = atomicCommands[index]!;
+    if (observer !== undefined) {
+      let accepted: boolean;
+      try {
+        accepted = observer(working, child, index);
+      } catch {
+        accepted = false;
+      }
+      if (!accepted) {
+        return fail(
+          document,
+          commandIssue(
+            'operation-failed',
+            `V3 operation "${child.commandId}" was rejected before replay.`,
+            child,
+          ),
+        );
+      }
+      if (observedBatch) {
+        const childIssues = validateCommand(child);
+        if (childIssues.length > 0) return fail(document, ...childIssues);
+        if (observedCommandIds!.has(child.commandId)) {
+          return fail(
+            document,
+            commandIssue('duplicate-command-id', 'V3 command ids must be unique.', child),
+          );
+        }
+        observedCommandIds!.add(child.commandId);
+      }
+    }
     const result = applyAtomicCommand(working, child, context);
     if (result.issues.length > 0) {
       return fail(
@@ -796,4 +849,21 @@ export function applyUiDocumentCommandV3(
     issues: Object.freeze([]),
     changed: true,
   });
+}
+
+export function applyUiDocumentCommandV3WithReplayObserver(
+  document: UiDocumentV3,
+  command: UiDocumentCommandV3,
+  context: UiDocumentCommandV3Context,
+  observer: UiDocumentCommandV3ReplayObserver,
+): ApplyUiDocumentCommandV3Result {
+  return applyUiDocumentCommandV3Internal(document, command, context, observer);
+}
+
+export function applyUiDocumentCommandV3(
+  document: UiDocumentV3,
+  command: UiDocumentCommandV3,
+  context: UiDocumentCommandV3Context,
+): ApplyUiDocumentCommandV3Result {
+  return applyUiDocumentCommandV3Internal(document, command, context);
 }

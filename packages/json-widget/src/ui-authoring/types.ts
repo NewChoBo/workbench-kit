@@ -5,6 +5,7 @@ import type {
   DesignSystemPackChangeMutation,
   UiComponentBindingDescriptor,
   UiComponentCatalogContract,
+  UiComponentDescriptor,
   UiComponentRef,
   UiDesignSystemState,
   UiLayoutPropertyDescriptor,
@@ -512,6 +513,195 @@ export interface UiAuthoringDesignSystemInputSnapshot {
   readonly registryRevision: number;
   readonly hostWidth?: number;
 }
+
+export interface GenerativeUiPlannerPort {
+  propose(request: UiGenerativeUiRequest): Promise<UiGenerativeUiPlannerResult>;
+}
+
+export interface UiGenerativeUiRequest {
+  readonly schemaVersion: 1;
+  readonly requestId: string;
+  readonly intent: string;
+  readonly context: UiGenerativeAuthoringContextV1;
+}
+
+export interface UiGenerativeAuthoringContextV1 {
+  readonly document: UiDocumentV3;
+  readonly selectedNodeIds: readonly string[];
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentDescriptors: readonly UiComponentDescriptor[];
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+export interface UiGenerativeUiProposal {
+  readonly schemaVersion: 1;
+  readonly proposalId: string;
+  readonly requestId: string;
+  readonly commands: readonly UiDocumentAtomicCommandV3[];
+}
+
+export type UiGenerativeUiDiagnosticCode =
+  | 'planner-unavailable'
+  | 'planner-failed'
+  | 'invalid-request'
+  | 'invalid-proposal'
+  | 'request-mismatch'
+  | 'unsupported'
+  | 'proposal-command-invalid'
+  | 'plan-blocked'
+  | 'stale-document'
+  | 'stale-selection-context'
+  | 'stale-projection-context'
+  | 'stale-component-descriptor'
+  | 'stale-layout-descriptor'
+  | 'stale-design-system'
+  | 'finalize-not-authorized'
+  | 'finalize-blocked';
+
+export interface UiGenerativeUiDiagnostic {
+  readonly code: UiGenerativeUiDiagnosticCode;
+  readonly message: string;
+  readonly path: string;
+  readonly commandId?: string;
+  readonly nodeId?: string;
+  readonly propertyId?: string;
+  readonly inputId?: string;
+  readonly variantId?: string;
+}
+
+export type UiGenerativeUiPlannerDiagnostic = Omit<UiGenerativeUiDiagnostic, 'code'> & {
+  readonly code: 'planner-unavailable' | 'planner-failed';
+};
+
+export type UiGenerativeUiPlannerResult =
+  | {
+      readonly status: 'proposal';
+      readonly proposal: UiGenerativeUiProposal;
+      readonly diagnostics?: never;
+    }
+  | {
+      readonly status: 'unavailable';
+      readonly proposal?: never;
+      readonly diagnostics: readonly [UiGenerativeUiPlannerDiagnostic];
+    };
+
+export interface AdmitUiGenerativeUiRequestInput {
+  readonly request: unknown;
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+export type UiGenerativeUiRequestAdmissionResult =
+  | {
+      readonly status: 'admitted';
+      readonly request: UiGenerativeUiRequest;
+      readonly diagnostics: readonly [];
+    }
+  | {
+      readonly status: 'rejected';
+      readonly request?: never;
+      readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+    };
+
+export interface CreateUiGenerativeUiPlanInput {
+  readonly planId: string;
+  readonly request: UiGenerativeUiRequest;
+  readonly proposal: unknown;
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+export interface UiGenerativeUiPlanBase {
+  readonly schemaVersion: 1;
+  readonly planId: string;
+  readonly requestId: string;
+  readonly documentId: string;
+  readonly documentRevision: number;
+  readonly sourceDocument: UiDocumentV3;
+  readonly selectedNodeIds: readonly string[];
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+}
+
+export interface UiGenerativeUiValidPlan extends UiGenerativeUiPlanBase {
+  readonly blocked: false;
+  readonly proposalId: string;
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+  readonly referencedComponentSnapshots: readonly UiComponentDescriptor[];
+  readonly referencedLayoutStrategySnapshots: readonly UiLayoutStrategyDescriptor[];
+  readonly referencedLayoutPropertySnapshots: readonly UiLayoutPropertyDescriptor[];
+  readonly candidateDocument: UiDocumentV3;
+  readonly diagnostics: readonly [];
+}
+
+export interface UiGenerativeUiBlockedPlan extends UiGenerativeUiPlanBase {
+  readonly blocked: true;
+  readonly proposalId?: string;
+  readonly commands: readonly [];
+  readonly referencedComponentSnapshots: readonly [];
+  readonly referencedLayoutStrategySnapshots: readonly [];
+  readonly referencedLayoutPropertySnapshots: readonly [];
+  readonly candidateDocument?: never;
+  readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+}
+
+export type UiGenerativeUiPlan = UiGenerativeUiValidPlan | UiGenerativeUiBlockedPlan;
+
+export interface UiGenerativeUiValidPlanPreview {
+  readonly blocked: false;
+  readonly planId: string;
+  readonly candidateDocument: UiDocumentV3;
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+  readonly diagnostics: readonly [];
+}
+
+export interface UiGenerativeUiBlockedPlanPreview {
+  readonly blocked: true;
+  readonly planId: string;
+  readonly candidateDocument?: never;
+  readonly commands: readonly [];
+  readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+}
+
+export type UiGenerativeUiPlanPreview =
+  UiGenerativeUiValidPlanPreview | UiGenerativeUiBlockedPlanPreview;
+
+export interface UiGenerativeUiPlanFinalizeContext {
+  readonly state: UiAuthoringSessionStateV3;
+  readonly projectionContext: UiAuthoringProjectionContextV3;
+  readonly componentCatalog: UiComponentCatalogContract;
+  readonly layoutStrategies: readonly UiLayoutStrategyDescriptor[];
+  readonly layoutProperties: readonly UiLayoutPropertyDescriptor[];
+  readonly designSystemInput: UiAuthoringDesignSystemInputSnapshot;
+  readonly acceptAuthorized: boolean;
+}
+
+export type UiGenerativeUiBatchCommand = Omit<
+  Extract<UiDocumentCommandV3, { readonly type: 'batch' }>,
+  'commands'
+> & {
+  readonly commands: readonly [UiDocumentAtomicCommandV3, ...UiDocumentAtomicCommandV3[]];
+};
+
+export type UiGenerativeUiPlanFinalizeResult =
+  | {
+      readonly command: UiGenerativeUiBatchCommand;
+      readonly diagnostics: readonly [];
+    }
+  | {
+      readonly command?: never;
+      readonly diagnostics: readonly [UiGenerativeUiDiagnostic];
+    };
 
 export type UiAuthoringPlanDiagnosticCode =
   | 'stale-document'

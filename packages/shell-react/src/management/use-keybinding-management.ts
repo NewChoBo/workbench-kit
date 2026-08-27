@@ -2,11 +2,11 @@ import { useLayoutEffect, useMemo, useState } from 'react';
 import { createKeybindingManagementModel } from '@workbench-kit/platform';
 import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
 
-import { useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
+import type { WorkbenchContextValue } from '../shell/provider.js';
 import { resolveShellCommandActivities } from '../workbench/command-palette.js';
 import { normalizeExtensionKeybindingCandidates } from '../workbench/keybinding-bridge.js';
 
-export function useKeybindingManagementModel() {
+export function useKeybindingManagementModel(context: WorkbenchContextValue) {
   const {
     activities,
     commands,
@@ -19,7 +19,7 @@ export function useKeybindingManagementModel() {
     resetCommandKeybindingOverride,
     setCommandKeybindingOverride,
     views,
-  } = useWorkbench();
+  } = context;
 
   const [keybindingRevision, setKeybindingRevision] = useState(() => keybindings.revision);
   useLayoutEffect(() => {

@@ -8,6 +8,7 @@ import {
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
   type MappingEdge,
+  type MappingOperator,
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapDetailPanel } from './detail-panel.js';
@@ -57,6 +58,131 @@ describe('FieldRemapDetailPanel', () => {
     });
   };
 
+  const chooseVisibleTransform = (label: string) => {
+    const combobox = container!.querySelector<HTMLButtonElement>(
+      '[role="combobox"][aria-label="Convert transform id"]',
+    )!;
+    vi.spyOn(combobox, 'getBoundingClientRect').mockReturnValue({
+      bottom: 44,
+      height: 28,
+      left: 16,
+      right: 216,
+      top: 16,
+      width: 200,
+      x: 16,
+      y: 16,
+      toJSON: () => ({}),
+    });
+    act(() => {
+      combobox.focus();
+      combobox.dispatchEvent(
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+      );
+    });
+    const option = Array.from(document.body.querySelectorAll<HTMLElement>('[role="option"]')).find(
+      (item) => item.textContent?.trim() === label,
+    );
+    expect(option).toBeTruthy();
+    act(() => {
+      option!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+    expect(combobox).toBe(document.activeElement);
+  };
+
+  const expectDetailPropertyStack = () => {
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail"] > .ui-workbench-property-stack'),
+    ).toBeTruthy();
+  };
+
+  const expectVisibleCombobox = (name: string) => {
+    const combobox = Array.from(container!.querySelectorAll<HTMLElement>('[role="combobox"]')).find(
+      (element) => element.getAttribute('aria-label') === name,
+    );
+    expect(combobox).toBeTruthy();
+    expect(combobox!.tagName).toBe('BUTTON');
+    expect(combobox!.id).not.toBe('');
+    expect(
+      combobox!.closest('.ui-workbench-property-row')?.querySelector<HTMLLabelElement>('label')
+        ?.htmlFor,
+    ).toBe(combobox!.id);
+    return combobox!;
+  };
+
+  it('uses the shared property stack for informational, draft, and operator branches', () => {
+    const combine: MappingOperator = {
+      kind: 'combine',
+      id: 'combine-name',
+      inputFieldIds: ['a.user_name'],
+      outputSlotId: 'b.name',
+    };
+    const split: MappingOperator = {
+      kind: 'split',
+      id: 'split-name',
+      inputFieldId: 'a.user_name',
+      outputSlotIds: ['b.name'],
+    };
+    const common = {
+      edges: [] as readonly MappingEdge[],
+      sources,
+      targets,
+      transforms,
+      onEdgesChange: () => undefined,
+      onSelectionChange: () => undefined,
+    };
+
+    mount(<FieldRemapDetailPanel {...common} selection={null} />);
+    expectDetailPropertyStack();
+    expect(container!.querySelector('.ui-workbench-property-hint')).toBeTruthy();
+
+    act(() => {
+      root!.render(
+        <FieldRemapDetailPanel
+          {...common}
+          selection={{ kind: 'draft', localId: 'draft-trim' }}
+          drafts={[{ localId: 'draft-trim', transformId: 'string:trim' }]}
+        />,
+      );
+    });
+    expectDetailPropertyStack();
+    expect(container!.querySelector('[data-testid="field-remap-detail-draft-ports"]')).toBeTruthy();
+
+    for (const operator of [combine, split]) {
+      act(() => {
+        root!.render(
+          <FieldRemapDetailPanel
+            {...common}
+            selection={{ kind: 'operator', operatorId: operator.id }}
+            operators={[operator]}
+            onOperatorsChange={() => undefined}
+          />,
+        );
+      });
+      expectDetailPropertyStack();
+      expect(
+        container!.querySelector('[data-testid="field-remap-detail-operator-id"]'),
+      ).toBeTruthy();
+      expect(container!.querySelectorAll('.ui-workbench-property-section').length).toBeGreaterThan(
+        1,
+      );
+      if (operator.kind === 'combine') {
+        expectVisibleCombobox('Add input');
+        expectVisibleCombobox('Output slot');
+      } else {
+        expectVisibleCombobox('Input field');
+        expectVisibleCombobox('Add output');
+      }
+    }
+
+    act(() => {
+      root!.render(
+        <FieldRemapDetailPanel {...common} selection={{ kind: 'edge', edgeId: 'missing-edge' }} />,
+      );
+    });
+    expectDetailPropertyStack();
+    expect(container!.querySelector('.ui-workbench-property-hint')).toBeTruthy();
+  });
+
   it('gates convert note editor to transformStep selection only', () => {
     const edges: MappingEdge[] = [
       {
@@ -80,6 +206,7 @@ describe('FieldRemapDetailPanel', () => {
     );
 
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expectDetailPropertyStack();
     expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-step-settings"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-step-id"]')).toBeNull();
@@ -99,6 +226,9 @@ describe('FieldRemapDetailPanel', () => {
     });
 
     expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeTruthy();
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail-transform-step"]'),
+    ).toBeTruthy();
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-list-context"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-transform-palette"]')).toBeNull();
@@ -163,13 +293,10 @@ describe('FieldRemapDetailPanel', () => {
     );
 
     expect(container!.querySelector('[data-testid="field-remap-step-settings"]')).toBeTruthy();
-    const select = container!.querySelector(
-      '[data-testid="field-remap-step-id"]',
-    ) as HTMLSelectElement;
-    act(() => {
-      select.value = 'string:upper';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    expect(
+      container!.querySelector('[data-testid="field-remap-step-id"]')?.getAttribute('aria-hidden'),
+    ).toBe('true');
+    chooseVisibleTransform('Uppercase');
     const nextEdges = onEdgesChange.mock.calls[
       onEdgesChange.mock.calls.length - 1
     ]?.[0] as MappingEdge[];
@@ -202,6 +329,8 @@ describe('FieldRemapDetailPanel', () => {
     const select = container!.querySelector(
       '[data-testid="field-remap-palette-select"]',
     ) as HTMLSelectElement;
+    expectVisibleCombobox('Convert palette');
+    expect(select.getAttribute('aria-hidden')).toBe('true');
     const add = container!.querySelector(
       '[data-testid="field-remap-palette-add"]',
     ) as HTMLButtonElement;
@@ -246,6 +375,14 @@ describe('FieldRemapDetailPanel', () => {
     );
 
     expect(container!.querySelector('[data-testid="field-remap-list-context"]')).toBeTruthy();
+    expectDetailPropertyStack();
+    expect(
+      container!.querySelectorAll(
+        '[data-testid="field-remap-list-context"] .ui-workbench-property-row',
+      ).length,
+    ).toBe(2);
+    expectVisibleCombobox('Source item field');
+    expectVisibleCombobox('Target item field');
     const sourceSelect = container!.querySelector(
       '[data-testid="field-remap-item-source"]',
     ) as HTMLSelectElement;

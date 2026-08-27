@@ -1949,6 +1949,11 @@ describe('WorkbenchProvider', () => {
       };
     };
     const unresolvedControl = findColorThemeControl();
+    await act(async () => {
+      await new Promise<void>((resolve) => {
+        window.requestAnimationFrame(() => resolve());
+      });
+    });
     const diagnosticId = unresolvedControl.combobox?.getAttribute('aria-describedby');
     const diagnostic = diagnosticId
       ? container.querySelector<HTMLElement>(`#${diagnosticId}`)

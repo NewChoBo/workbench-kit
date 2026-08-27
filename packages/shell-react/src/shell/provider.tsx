@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import type { WorkbenchKeybindingManagementSettingsViewProps } from '../management/keybinding-settings-view.js';
+import { useKeybindingManagementModel } from '../management/use-keybinding-management.js';
 import {
   collectConfigurationDefaults,
   createEditorService,
@@ -1048,7 +1050,10 @@ export function WorkbenchProvider({
     <WorkbenchPersistenceDiagnosticContext.Provider value={onPersistenceDiagnostic}>
       <WorkbenchContext.Provider value={value}>
         <ExtensionEnablementContext.Provider value={services.extensionEnablement}>
-          <EditorWorkspaceReconciler />
+          <EditorWorkspaceReconciler
+            editorService={services.editorService}
+            workspaceHostService={services.workspaceHostPort?.service}
+          />
           {children}
         </ExtensionEnablementContext.Provider>
       </WorkbenchContext.Provider>
@@ -1063,4 +1068,8 @@ export function useWorkbench(): WorkbenchContextValue {
   }
 
   return value;
+}
+
+export function useWorkbenchKeybindingManagementBinding(): WorkbenchKeybindingManagementSettingsViewProps {
+  return useKeybindingManagementModel(useWorkbench());
 }

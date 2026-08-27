@@ -11,6 +11,9 @@
       "external-node-catalog": [
         "dist/external-node-catalog.d.ts"
       ],
+      "source-input-compatibility": [
+        "dist/source-input-compatibility.d.ts"
+      ],
       "theme-presets": [
         "dist/theme-presets.d.ts"
       ]
@@ -39,6 +42,12 @@
       "import": "./dist/external-node-catalog.js",
       "require": "./dist/external-node-catalog.cjs",
       "default": "./dist/external-node-catalog.js"
+    },
+    "./source-input-compatibility": {
+      "types": "./dist/source-input-compatibility.d.ts",
+      "import": "./dist/source-input-compatibility.js",
+      "require": "./dist/source-input-compatibility.cjs",
+      "default": "./dist/source-input-compatibility.js"
     },
     "./theme-presets": {
       "types": "./dist/theme-presets.d.ts",

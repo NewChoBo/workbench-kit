@@ -66,6 +66,8 @@ describe('TransformOptionsEditor', () => {
     const expression = container!.querySelector(
       '[data-testid="field-remap-option-expression"]',
     ) as HTMLInputElement;
+    expect(expression.tagName).toBe('INPUT');
+    expect(expression.closest('.ui-workbench-property-row')).toBeTruthy();
     act(() => {
       setInputValue(expression, '$.name');
     });
@@ -74,14 +76,23 @@ describe('TransformOptionsEditor', () => {
     const maxLength = container!.querySelector(
       '[data-testid="field-remap-option-maxLength"]',
     ) as HTMLInputElement;
+    expect(maxLength.tagName).toBe('INPUT');
+    expect(maxLength.closest('.ui-workbench-property-row')).toBeTruthy();
     act(() => {
       setInputValue(maxLength, '12');
     });
     expect(onChange).toHaveBeenLastCalledWith(expect.objectContaining({ maxLength: 12 }));
 
+    act(() => {
+      setInputValue(maxLength, '');
+    });
+    expect(onChange).toHaveBeenLastCalledWith({ expression: '$', showSeconds: false });
+
     const checkbox = container!.querySelector(
       '[data-testid="field-remap-option-showSeconds"]',
     ) as HTMLInputElement;
+    expect(checkbox.tagName).toBe('INPUT');
+    expect(checkbox.closest('.ui-workbench-property-row')).toBeTruthy();
     act(() => {
       checkbox.click();
     });
@@ -95,6 +106,7 @@ describe('TransformOptionsEditor', () => {
     const textarea = container!.querySelector(
       '[data-testid="field-remap-option-meta"]',
     ) as HTMLTextAreaElement;
+    expect(textarea.closest('.ui-workbench-property-row')).toBeTruthy();
     act(() => {
       setInputValue(textarea, '{bad');
       // React root delegation listens to focusout for onBlur.
@@ -123,6 +135,11 @@ describe('TransformOptionsEditor', () => {
     const keyInput = container!.querySelector(
       '[aria-label="New Code labels key"]',
     ) as HTMLInputElement;
+    expect(
+      container!
+        .querySelector('[data-testid="field-remap-option-codeLabels"]')
+        ?.closest('.ui-workbench-property-row'),
+    ).toBeTruthy();
     const valueInput = container!.querySelector(
       '[aria-label="New Code labels value"]',
     ) as HTMLInputElement;
@@ -144,5 +161,23 @@ describe('TransformOptionsEditor', () => {
   it('shows empty state when there are no option fields', () => {
     mount(<TransformOptionsEditor fields={[]} value={{}} onChange={() => undefined} />);
     expect(container!.querySelector('[data-testid="field-remap-option-empty"]')).toBeTruthy();
+  });
+
+  it('preserves disabled state on every interactive option control', () => {
+    mount(
+      <TransformOptionsEditor
+        disabled
+        fields={fields}
+        value={{ codeLabels: { A: 'Alpha' }, meta: { a: 1 } }}
+        onChange={() => undefined}
+      />,
+    );
+
+    expect(container!.querySelector('.ui-workbench-property-stack')).toBeTruthy();
+    for (const control of Array.from(container!.querySelectorAll('input, textarea, button'))) {
+      expect((control as HTMLInputElement | HTMLTextAreaElement | HTMLButtonElement).disabled).toBe(
+        true,
+      );
+    }
   });
 });

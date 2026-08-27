@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { validatePackedPackageCohort } from './lib/packed-package-cohort.mjs';
@@ -21,16 +21,24 @@ const focusedCommandHostControllerOutputDir = path.join(
   'dist-focused-command-host-controller',
 );
 const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
+const schemaFormIdentityOutputDir = path.join(consumerDir, 'dist-schema-form-identity');
+const focusedSchemaFormOutputDir = path.join(consumerDir, 'dist-focused-schema-form');
+const focusedShellContextOutputDir = path.join(consumerDir, 'dist-focused-shell-context');
+const focusedKeybindingManagementViewOutputDir = path.join(
+  consumerDir,
+  'dist-focused-keybinding-management-view',
+);
 
 // Keep a little deliberate headroom for normal fixes, while forcing larger
 // public-surface growth to include an explicit bundle-budget review.
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
   focusedOverlayCssGzipBytes: 11_500,
-  // The exact pre-semantic-multi-selection baseline consumed 244,912 bytes. Field Remap's semantic
-  // membership, atomic Remove, and accessibility/focus projection add 2,659 bytes while retaining
-  // the same 1,878-module / one-static-chunk graph; keep deliberate repair headroom.
-  initialGzipBytes: 250_000,
+  // Exact develop before the Field Remap property-stack migration consumed 249,124 bytes. Replacing
+  // its bespoke detail controls with the existing shared property/control primitives consumes
+  // 251,806 bytes while retaining the same 1,882-module / one-static-chunk graph; keep deliberate
+  // repair headroom without hiding another dependency-surface jump.
+  initialGzipBytes: 253_000,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.
@@ -70,8 +78,13 @@ try {
   });
   NPM_PUBLISH_ORDER.forEach(packPackage);
   verifyPackedPackageCohort();
+  verifyPrivateTestSupportFilesExcluded('@workbench-kit/field-remap');
+  verifyPrivateTestSupportFilesExcluded('@workbench-kit/react');
+  verifyJdwPackageManifest();
   linkExternalPackages();
+  verifyReactSchemaFormPackageManifest();
   verifyExternalNodeCatalogPackageManifest();
+  verifySourceInputCompatibilityPackageManifest();
   writeConsumer();
 
   console.log('[check-packed-consumer] Typechecking external TypeScript consumer...');
@@ -79,6 +92,28 @@ try {
     cwd: repoRoot,
     stdio: 'inherit',
   });
+  console.log(
+    '[check-packed-consumer] Typechecking JDW generative UI root exports with exact optional properties...',
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      path.join(consumerDir, 'src', 'ui-generative-plan-types.ts'),
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
   console.log(
     '[check-packed-consumer] Typechecking focused authoring-development exports with exact optional properties...',
   );
@@ -124,6 +159,62 @@ try {
         '--target',
         target,
         path.join(consumerDir, 'src', 'external-node-catalog-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
+  console.log(
+    '[check-packed-consumer] Typechecking focused SchemaForm exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--jsx',
+        'react-jsx',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'schema-form-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
+  console.log(
+    '[check-packed-consumer] Typechecking focused source-input compatibility and JDW plan exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'source-input-compatibility-types.ts'),
       ],
       { cwd: repoRoot, stdio: 'inherit' },
     );
@@ -211,6 +302,22 @@ try {
     cwd: consumerDir,
     stdio: 'inherit',
   });
+  runCommand('node', [path.join(consumerDir, 'src', 'source-input-compatibility-runtime.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'source-input-compatibility-runtime.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'schema-form-private-paths.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'schema-form-private-paths.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
 
   console.log('[check-packed-consumer] Building external production consumer...');
   runCommand(
@@ -223,6 +330,18 @@ try {
 
   buildFocusedConsumer('focused-command-host-controller');
   verifyFocusedCommandHostControllerOutput();
+
+  buildFocusedConsumer('focused-schema-form');
+  verifyFocusedSchemaFormOutput();
+
+  buildFocusedConsumer('schema-form-identity');
+  await executeFocusedConsumer('SchemaForm identity', schemaFormIdentityOutputDir);
+
+  buildFocusedConsumer('focused-shell-context');
+  await executeFocusedConsumer('focused shell context', focusedShellContextOutputDir);
+
+  buildFocusedConsumer('focused-keybinding-management-view');
+  verifyFocusedKeybindingManagementViewOutput();
 
   buildFocusedConsumer('focused-overlay');
   verifyFocusedStyleOutput({
@@ -342,6 +461,103 @@ function verifyPackedPackageCohort() {
   );
 }
 
+function verifyPrivateTestSupportFilesExcluded(packageName) {
+  const packageRoot = packagePath(nodeModulesDir, packageName);
+  const privatePath = fs
+    .readdirSync(packageRoot, { recursive: true })
+    .find((relativePath) => relativePath.split(path.sep).includes('test-support'));
+
+  if (privatePath !== undefined) {
+    throw new TypeError(
+      `Packed ${packageName} must exclude private test-support files: ${privatePath}`,
+    );
+  }
+}
+
+function verifyJdwPackageManifest() {
+  const jdwRoot = packagePath(nodeModulesDir, '@workbench-kit/jdw');
+  const manifest = readJson(path.join(jdwRoot, 'package.json'));
+  const expectedRootExport = {
+    types: './dist/index.d.ts',
+    import: './dist/index.js',
+    require: './dist/index.cjs',
+    default: './dist/index.js',
+  };
+  if (JSON.stringify(manifest.exports?.['.']) !== JSON.stringify(expectedRootExport)) {
+    throw new TypeError(
+      'Packed JDW root must retain exact types/import/require/default conditions.',
+    );
+  }
+  const expectedExportPaths = [
+    '.',
+    './schemas/jdw-node.jdw.schema.json',
+    './schemas/widget-asset-manifest.v1.jdw.schema.json',
+    './schemas/widget-document.v1.jdw.schema.json',
+  ];
+  if (
+    JSON.stringify(Object.keys(manifest.exports ?? {}).sort()) !==
+    JSON.stringify(expectedExportPaths.sort())
+  ) {
+    throw new TypeError('Packed JDW must not expose a generative UI or private deep subpath.');
+  }
+  for (const target of new Set(Object.values(expectedRootExport))) {
+    if (!fs.existsSync(path.join(jdwRoot, target))) {
+      throw new TypeError(`Packed JDW root target is missing: ${target}`);
+    }
+  }
+  const runtimeDependencyNames = new Set(
+    ['dependencies', 'optionalDependencies', 'peerDependencies'].flatMap((field) =>
+      Object.keys(manifest[field] ?? {}),
+    ),
+  );
+  if (
+    runtimeDependencyNames.size !== 1 ||
+    !runtimeDependencyNames.has('@workbench-kit/contracts')
+  ) {
+    throw new TypeError(
+      'Packed JDW generative UI boundary must not add a model/provider runtime dependency.',
+    );
+  }
+}
+
+function verifyReactSchemaFormPackageManifest() {
+  const reactRoot = packagePath(nodeModulesDir, '@workbench-kit/react');
+  const manifest = readJson(path.join(reactRoot, 'package.json'));
+  const expectedTarget = './src/workbench/settings/SchemaForm.tsx';
+  if (manifest.exports?.['./schema-form'] !== expectedTarget) {
+    throw new TypeError(
+      'Packed React schema-form export must retain its exact focused source target.',
+    );
+  }
+  const typeVersions = manifest.typesVersions?.['*']?.['schema-form'];
+  if (
+    !Array.isArray(typeVersions) ||
+    typeVersions.length !== 1 ||
+    typeVersions[0] !== 'src/workbench/settings/SchemaForm.tsx'
+  ) {
+    throw new TypeError('Packed React schema-form typesVersions mapping is invalid.');
+  }
+  if (Object.keys(manifest.exports ?? {}).some((key) => key.startsWith('./schema-form/'))) {
+    throw new TypeError('Packed React schema-form exposes a private nested subpath.');
+  }
+  if (
+    manifest.exports?.['./workbench/settings'] !== './src/workbench/settings/index.ts' ||
+    manifest.exports?.['./workbench'] !== './src/workbench/index.ts'
+  ) {
+    throw new TypeError('Packed React schema-form changed a legacy Workbench export target.');
+  }
+  if (!fs.existsSync(path.join(reactRoot, expectedTarget))) {
+    throw new TypeError(`Packed React schema-form target is missing: ${expectedTarget}`);
+  }
+  if (
+    !Array.isArray(manifest.sideEffects) ||
+    manifest.sideEffects.length !== 1 ||
+    manifest.sideEffects[0] !== '**/*.css'
+  ) {
+    throw new TypeError('Packed React schema-form must retain CSS-only side effects.');
+  }
+}
+
 function verifyExternalNodeCatalogPackageManifest() {
   const contractsRoot = packagePath(nodeModulesDir, '@workbench-kit/contracts');
   const manifest = readJson(path.join(contractsRoot, 'package.json'));
@@ -374,6 +590,53 @@ function verifyExternalNodeCatalogPackageManifest() {
     if (!fs.existsSync(path.join(contractsRoot, target))) {
       throw new TypeError(`Packed external-node-catalog target is missing: ${target}`);
     }
+  }
+}
+
+function verifySourceInputCompatibilityPackageManifest() {
+  const contractsRoot = packagePath(nodeModulesDir, '@workbench-kit/contracts');
+  const manifest = readJson(path.join(contractsRoot, 'package.json'));
+  const expectedExport = {
+    types: './dist/source-input-compatibility.d.ts',
+    import: './dist/source-input-compatibility.js',
+    require: './dist/source-input-compatibility.cjs',
+    default: './dist/source-input-compatibility.js',
+  };
+  const actualExport = manifest.exports?.['./source-input-compatibility'];
+  if (JSON.stringify(actualExport) !== JSON.stringify(expectedExport)) {
+    throw new TypeError(
+      'Packed source-input-compatibility export must retain exact types/import/require/default conditions.',
+    );
+  }
+  const typeVersions = manifest.typesVersions?.['*']?.['source-input-compatibility'];
+  if (
+    !Array.isArray(typeVersions) ||
+    typeVersions.length !== 1 ||
+    typeVersions[0] !== 'dist/source-input-compatibility.d.ts'
+  ) {
+    throw new TypeError('Packed source-input-compatibility typesVersions mapping is invalid.');
+  }
+  if (
+    Object.keys(manifest.exports ?? {}).some((key) =>
+      key.startsWith('./source-input-compatibility/'),
+    )
+  ) {
+    throw new TypeError('Packed source-input-compatibility exposes a private deep subpath.');
+  }
+  for (const target of new Set(Object.values(expectedExport))) {
+    if (!fs.existsSync(path.join(contractsRoot, target))) {
+      throw new TypeError(`Packed source-input-compatibility target is missing: ${target}`);
+    }
+  }
+  const runtimeDependencyNames = new Set(
+    ['dependencies', 'optionalDependencies', 'peerDependencies'].flatMap((field) =>
+      Object.keys(manifest[field] ?? {}),
+    ),
+  );
+  if (runtimeDependencyNames.size !== 0) {
+    throw new TypeError(
+      'Packed source-input-compatibility boundary must remain dependency-free and provider-neutral.',
+    );
   }
 }
 
@@ -447,11 +710,23 @@ import {
   type FieldRemapSelection,
 } from '@workbench-kit/shell-react/field-remap';
 import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
-import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
+import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
+import {
+  WorkbenchProvider,
+  useWorkbenchKeybindingManagementBinding,
+} from '@workbench-kit/shell-react/provider';
+import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
 import { useExtensionRegistryCommandDescriptors } from '@workbench-kit/shell-react/registry-command-descriptors';
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
+const packedFocusedShellEntries = Object.freeze({
+  WorkbenchCommandHost,
+  WorkbenchHostShell,
+  WorkbenchKeybindingManagementSettingsView,
+  WorkbenchProvider,
+  useWorkbenchKeybindingManagementBinding,
+});
 type ExtensionRegistryRemoved = 'extensionRegistry' extends keyof WorkbenchContextValue
   ? never
   : true;
@@ -800,6 +1075,175 @@ export function verifyPackedGraphAuthoringRuntime(): {
   }
   return { descriptor, transform };
 }
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'ui-generative-plan-types.ts'),
+    `import {
+  admitUiGenerativeUiRequest,
+  createUiGenerativeUiPlan,
+  finalizeUiGenerativeUiPlan,
+  previewUiGenerativeUiPlan,
+  type AdmitUiGenerativeUiRequestInput,
+  type CreateUiGenerativeUiPlanInput,
+  type GenerativeUiPlannerPort,
+  type UiDocumentAtomicCommandV3,
+  type UiDocumentV3,
+  type UiGenerativeAuthoringContextV1,
+  type UiGenerativeUiBatchCommand,
+  type UiGenerativeUiBlockedPlan,
+  type UiGenerativeUiBlockedPlanPreview,
+  type UiGenerativeUiDiagnostic,
+  type UiGenerativeUiDiagnosticCode,
+  type UiGenerativeUiPlan,
+  type UiGenerativeUiPlanBase,
+  type UiGenerativeUiPlanFinalizeContext,
+  type UiGenerativeUiPlanFinalizeResult,
+  type UiGenerativeUiPlannerDiagnostic,
+  type UiGenerativeUiPlannerResult,
+  type UiGenerativeUiPlanPreview,
+  type UiGenerativeUiProposal,
+  type UiGenerativeUiRequest,
+  type UiGenerativeUiRequestAdmissionResult,
+  type UiGenerativeUiValidPlan,
+  type UiGenerativeUiValidPlanPreview,
+} from '@workbench-kit/jdw';
+
+// @ts-expect-error Strict authoring snapshot helpers remain private to JDW.
+import { cloneUiAuthoringJsonValue } from '@workbench-kit/jdw';
+// @ts-expect-error WB-NS-070F adds no public implementation subpath.
+type PackedPrivateGenerativePlanModule = typeof import('@workbench-kit/jdw/ui-authoring/generative-plan');
+// @ts-expect-error Strict authoring snapshot helpers have no public deep subpath.
+type PackedPrivateUiAuthoringImmutabilityModule = typeof import('@workbench-kit/jdw/ui-authoring/immutability');
+
+declare const packedAtomicCommand: UiDocumentAtomicCommandV3;
+declare const packedCandidateDocument: UiDocumentV3;
+declare const packedRequest: UiGenerativeUiRequest;
+declare const packedPlanBase: UiGenerativeUiPlanBase;
+declare const packedValidPlan: UiGenerativeUiValidPlan;
+declare const packedFinalizeContext: UiGenerativeUiPlanFinalizeContext;
+
+const packedPlannerDiagnostic: UiGenerativeUiPlannerDiagnostic = {
+  code: 'planner-unavailable',
+  message: 'Planner unavailable.',
+  path: 'planner',
+};
+const packedDiagnostic: UiGenerativeUiDiagnostic = {
+  code: 'invalid-proposal',
+  message: 'Invalid proposal.',
+  path: 'proposal',
+};
+const packedProposal = {
+  schemaVersion: 1,
+  proposalId: 'packed-proposal',
+  requestId: packedRequest.requestId,
+  commands: [packedAtomicCommand],
+} satisfies UiGenerativeUiProposal;
+
+export const packedGenerativeUiPlanner: GenerativeUiPlannerPort = {
+  propose: async () => ({ status: 'proposal', proposal: packedProposal }),
+};
+export const packedPlannerProposalResult = {
+  status: 'proposal',
+  proposal: packedProposal,
+} satisfies UiGenerativeUiPlannerResult;
+export const packedPlannerUnavailableResult = {
+  status: 'unavailable',
+  diagnostics: [packedPlannerDiagnostic],
+} satisfies UiGenerativeUiPlannerResult;
+export const packedAdmittedRequest = {
+  status: 'admitted',
+  request: packedRequest,
+  diagnostics: [],
+} satisfies UiGenerativeUiRequestAdmissionResult;
+export const packedRejectedRequest = {
+  status: 'rejected',
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiRequestAdmissionResult;
+
+export const packedBlockedPlan = {
+  ...packedPlanBase,
+  blocked: true,
+  commands: [],
+  referencedComponentSnapshots: [],
+  referencedLayoutStrategySnapshots: [],
+  referencedLayoutPropertySnapshots: [],
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiBlockedPlan;
+export const packedPlan: UiGenerativeUiPlan = packedValidPlan;
+export const packedValidPreview = {
+  blocked: false,
+  planId: packedValidPlan.planId,
+  candidateDocument: packedCandidateDocument,
+  commands: [packedAtomicCommand],
+  diagnostics: [],
+} satisfies UiGenerativeUiValidPlanPreview;
+export const packedBlockedPreview = {
+  blocked: true,
+  planId: packedBlockedPlan.planId,
+  commands: [],
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiBlockedPlanPreview;
+export const packedPreview: UiGenerativeUiPlanPreview = packedValidPreview;
+
+export const packedGenerativeBatch = {
+  type: 'batch',
+  commandId: 'packed-generative-plan',
+  commands: [packedAtomicCommand],
+} satisfies UiGenerativeUiBatchCommand;
+export const packedFinalizeSuccess = {
+  command: packedGenerativeBatch,
+  diagnostics: [],
+} satisfies UiGenerativeUiPlanFinalizeResult;
+export const packedFinalizeFailure = {
+  diagnostics: [packedDiagnostic],
+} satisfies UiGenerativeUiPlanFinalizeResult;
+
+export type PackedGenerativeUiRootTypes = {
+  admissionInput: AdmitUiGenerativeUiRequestInput;
+  authoringContext: UiGenerativeAuthoringContextV1;
+  blockedPlan: UiGenerativeUiBlockedPlan;
+  blockedPreview: UiGenerativeUiBlockedPlanPreview;
+  createPlanInput: CreateUiGenerativeUiPlanInput;
+  diagnostic: UiGenerativeUiDiagnostic;
+  diagnosticCode: UiGenerativeUiDiagnosticCode;
+  finalizeContext: UiGenerativeUiPlanFinalizeContext;
+  finalizeResult: UiGenerativeUiPlanFinalizeResult;
+  planner: GenerativeUiPlannerPort;
+  plannerDiagnostic: UiGenerativeUiPlannerDiagnostic;
+  plannerResult: UiGenerativeUiPlannerResult;
+  plan: UiGenerativeUiPlan;
+  planBase: UiGenerativeUiPlanBase;
+  preview: UiGenerativeUiPlanPreview;
+  proposal: UiGenerativeUiProposal;
+  request: UiGenerativeUiRequest;
+  requestAdmission: UiGenerativeUiRequestAdmissionResult;
+  validPlan: UiGenerativeUiValidPlan;
+  validPreview: UiGenerativeUiValidPlanPreview;
+};
+export const packedGenerativeUiFunctions = Object.freeze({
+  admitUiGenerativeUiRequest,
+  createUiGenerativeUiPlan,
+  finalizeUiGenerativeUiPlan,
+  previewUiGenerativeUiPlan,
+});
+void packedFinalizeContext;
+void cloneUiAuthoringJsonValue;
+type _PackedPrivateGenerativePlanModule = PackedPrivateGenerativePlanModule;
+type _PackedPrivateUiAuthoringImmutabilityModule = PackedPrivateUiAuthoringImmutabilityModule;
+
+// @ts-expect-error A proposal result cannot also carry diagnostics.
+export const packedInvalidMixedPlannerResult: UiGenerativeUiPlannerResult = { status: 'proposal', proposal: packedProposal, diagnostics: [packedPlannerDiagnostic] };
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined on an impossible field.
+export const packedInvalidUndefinedPlannerDiagnostics: UiGenerativeUiPlannerResult = { status: 'proposal', proposal: packedProposal, diagnostics: undefined };
+// @ts-expect-error A blocked plan cannot expose a candidate document.
+export const packedInvalidMixedBlockedPlan: UiGenerativeUiBlockedPlan = { ...packedBlockedPlan, candidateDocument: packedCandidateDocument };
+// @ts-expect-error A finalize failure cannot also return a command.
+export const packedInvalidMixedFinalizeResult: UiGenerativeUiPlanFinalizeResult = { command: packedGenerativeBatch, diagnostics: [packedDiagnostic] };
+// @ts-expect-error Finalize success requires one outer non-empty batch, never an atomic command.
+export const packedInvalidAtomicFinalizeResult: UiGenerativeUiPlanFinalizeResult = { command: packedAtomicCommand, diagnostics: [] };
+// @ts-expect-error A generative outer batch must contain at least one atomic command.
+export const packedInvalidEmptyGenerativeBatch: UiGenerativeUiBatchCommand = { type: 'batch', commandId: 'packed-empty-plan', commands: [] };
 `,
   );
   fs.writeFileSync(
@@ -1229,6 +1673,228 @@ void FocusedCollectNoncanonicalUiValueSchemaText;
 void FocusedIsSupportedUiValueSchemaShape;
 void PrivateSnapshotStrictPortableData;
 void PrivateIsSupportedUiValueSchemaShape;
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'source-input-compatibility-types.ts'),
+    `import {
+  UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION,
+  UI_SOURCE_INPUT_ISSUE_CODES,
+  UI_SOURCE_INPUT_LIMITS,
+  resolveUiSourceInputCandidates,
+  type UiConvertibleSourceInputCandidate,
+  type UiExactSourceInputCandidate,
+  type UiIncompatibleSourceInputCandidate,
+  type UiSourceBindingAssignment,
+  type UiSourceInputAdmissionIssue,
+  type UiSourceInputCandidate,
+  type UiSourceInputCandidateBase,
+  type UiSourceInputCandidateSetResult,
+  type UiSourceInputCompatibilityRequestV1,
+  type UiSourceInputIncompatibleIssue,
+  type UiSourceInputIssue,
+  type UiSourceInputIssueBase,
+  type UiSourceInputIssueCode,
+  type UiSourceInputIssueCoordinateKey,
+  type UiSourceInputPlanIssue,
+  type UiSourceInputRecommendationIssue,
+  type UiSourceInputRequestSnapshotV1,
+  type UiSourceInputResolution,
+  type UiSourceInputStaleIssue,
+  type UiSourceInputTargetDescriptor,
+  type UiSourceValueDescriptor,
+  type UiValueCompatibilitySchemaSnapshot,
+  type UiValueConversionEvidence,
+} from '@workbench-kit/contracts/source-input-compatibility';
+import {
+  createUiAuthoringSourceInputPlan,
+  finalizeUiAuthoringSourceInputPlan,
+  inspectUiAuthoringSourceInputCandidates,
+  previewUiAuthoringSourceInputPlan,
+  type CreateUiAuthoringSourceInputPlanResult,
+  type FinalizeUiAuthoringSourceInputPlanInput,
+  type FinalizeUiAuthoringSourceInputPlanResult,
+  type UiAuthoringSourceInputCandidateRequestV1,
+  type UiAuthoringSourceInputCandidateResult,
+  type UiAuthoringSourceInputPlan,
+  type UiAuthoringSourceInputPlanPreview,
+  type UiAuthoringSourceInputPlanRequestV1,
+  type UiAuthoringSourceInputRequestSnapshotV1,
+  type UiAuthoringSourceInputSelection,
+  type UiSourceInputComponentLookup,
+} from '@workbench-kit/jdw';
+
+// @ts-expect-error focused source-input constants do not leak through the contracts root.
+import { UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION as RootSourceInputSchemaVersion } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input constants do not leak through the contracts root.
+import { UI_SOURCE_INPUT_ISSUE_CODES as RootSourceInputIssueCodes } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input constants do not leak through the contracts root.
+import { UI_SOURCE_INPUT_LIMITS as RootSourceInputLimits } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input functions do not leak through the contracts root.
+import { resolveUiSourceInputCandidates as RootResolveSourceInputCandidates } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceValueDescriptor as RootUiSourceValueDescriptor } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputTargetDescriptor as RootUiSourceInputTargetDescriptor } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiValueCompatibilitySchemaSnapshot as RootUiValueCompatibilitySchemaSnapshot } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiValueConversionEvidence as RootUiValueConversionEvidence } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceBindingAssignment as RootUiSourceBindingAssignment } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssueCoordinateKey as RootUiSourceInputIssueCoordinateKey } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssueBase as RootUiSourceInputIssueBase } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssueCode as RootUiSourceInputIssueCode } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputAdmissionIssue as RootUiSourceInputAdmissionIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIncompatibleIssue as RootUiSourceInputIncompatibleIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputRecommendationIssue as RootUiSourceInputRecommendationIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputPlanIssue as RootUiSourceInputPlanIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputStaleIssue as RootUiSourceInputStaleIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputIssue as RootUiSourceInputIssue } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCandidateBase as RootUiSourceInputCandidateBase } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiExactSourceInputCandidate as RootUiExactSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiConvertibleSourceInputCandidate as RootUiConvertibleSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiIncompatibleSourceInputCandidate as RootUiIncompatibleSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCandidate as RootUiSourceInputCandidate } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputResolution as RootUiSourceInputResolution } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCompatibilityRequestV1 as RootUiSourceInputCompatibilityRequestV1 } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputRequestSnapshotV1 as RootUiSourceInputRequestSnapshotV1 } from '@workbench-kit/contracts';
+// @ts-expect-error focused source-input types do not leak through the contracts root.
+import type { UiSourceInputCandidateSetResult as RootUiSourceInputCandidateSetResult } from '@workbench-kit/contracts';
+// @ts-expect-error focused implementation modules remain private package subpaths.
+type PackedPrivateSourceInputCompatibilityModule = typeof import('@workbench-kit/contracts/source-input-compatibility/resolver');
+// @ts-expect-error JDW source-input implementation modules remain private package subpaths.
+type PackedPrivateSourceInputPlanModule = typeof import('@workbench-kit/jdw/ui-authoring/source-input-plan');
+
+const packedSourceValue = {
+  id: 'packed-source',
+  value: { type: 'string' },
+  semanticRole: 'packed.text',
+} satisfies UiSourceValueDescriptor;
+const packedBinding = {
+  sourceId: packedSourceValue.id,
+  bindingId: 'packed-binding',
+} satisfies UiSourceBindingAssignment;
+const packedCompatibilityRequest = {
+  schemaVersion: UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION,
+  sources: [packedSourceValue],
+  targets: [],
+  bindings: [packedBinding],
+} satisfies UiSourceInputCompatibilityRequestV1;
+
+export const packedSourceInputResult = resolveUiSourceInputCandidates(
+  packedCompatibilityRequest,
+);
+export const packedSourceInputConstants = Object.freeze({
+  issueCodes: UI_SOURCE_INPUT_ISSUE_CODES,
+  limits: UI_SOURCE_INPUT_LIMITS,
+});
+
+export type PackedSourceInputCompatibilityTypes = {
+  schema: UiValueCompatibilitySchemaSnapshot;
+  conversion: UiValueConversionEvidence;
+  target: UiSourceInputTargetDescriptor;
+  coordinateKey: UiSourceInputIssueCoordinateKey;
+  issueBase: UiSourceInputIssueBase<'no-change'>;
+  admissionIssue: UiSourceInputAdmissionIssue;
+  incompatibleIssue: UiSourceInputIncompatibleIssue;
+  recommendationIssue: UiSourceInputRecommendationIssue;
+  planIssue: UiSourceInputPlanIssue;
+  staleIssue: UiSourceInputStaleIssue;
+  issue: UiSourceInputIssue;
+  issueCode: UiSourceInputIssueCode;
+  candidateBase: UiSourceInputCandidateBase;
+  exact: UiExactSourceInputCandidate;
+  convertible: UiConvertibleSourceInputCandidate;
+  incompatible: UiIncompatibleSourceInputCandidate;
+  candidate: UiSourceInputCandidate;
+  resolution: UiSourceInputResolution;
+  request: UiSourceInputCompatibilityRequestV1;
+  snapshot: UiSourceInputRequestSnapshotV1;
+  result: UiSourceInputCandidateSetResult;
+  lookup: UiSourceInputComponentLookup;
+  candidateRequest: UiAuthoringSourceInputCandidateRequestV1;
+  selection: UiAuthoringSourceInputSelection;
+  planRequest: UiAuthoringSourceInputPlanRequestV1;
+  requestSnapshot: UiAuthoringSourceInputRequestSnapshotV1;
+  candidateResult: UiAuthoringSourceInputCandidateResult;
+  plan: UiAuthoringSourceInputPlan;
+  createResult: CreateUiAuthoringSourceInputPlanResult;
+  preview: UiAuthoringSourceInputPlanPreview;
+  finalizeInput: FinalizeUiAuthoringSourceInputPlanInput;
+  finalizeResult: FinalizeUiAuthoringSourceInputPlanResult;
+};
+
+declare const packedCandidateRequestWithoutEvidence: Omit<
+  UiAuthoringSourceInputCandidateRequestV1,
+  'conversionEvidence'
+>;
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined for source semanticRole.
+export const packedInvalidSourceOptional: UiSourceValueDescriptor = { id: 'packed-source', value: { type: 'string' }, semanticRole: undefined };
+// @ts-expect-error top-level request issues cannot expose a source coordinate.
+export const packedInvalidAdmissionCoordinate: UiSourceInputAdmissionIssue = { code: 'invalid-request', message: 'Invalid', path: '$', sourceId: 'packed-source' };
+// @ts-expect-error incompatible issues cannot carry recommendation-only codes.
+export const packedInvalidIncompatibleIssue: UiSourceInputIncompatibleIssue = { code: 'ambiguous-exact', message: 'Ambiguous', path: '$.sources[0]', sourceId: 'packed-source' };
+// @ts-expect-error blocked compatibility results cannot expose a snapshot.
+export const packedInvalidBlockedCompatibilityResult: UiSourceInputCandidateSetResult = { status: 'blocked', issues: [{ code: 'invalid-request', message: 'Invalid', path: '$' }], snapshot: packedCompatibilityRequest };
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined for conversionEvidence.
+export const packedInvalidCandidateRequestOptional: UiAuthoringSourceInputCandidateRequestV1 = { ...packedCandidateRequestWithoutEvidence, conversionEvidence: undefined };
+
+export const packedSourceInputRuntime = Object.freeze({
+  createUiAuthoringSourceInputPlan,
+  finalizeUiAuthoringSourceInputPlan,
+  inspectUiAuthoringSourceInputCandidates,
+  previewUiAuthoringSourceInputPlan,
+  resolveUiSourceInputCandidates,
+});
+
+void RootSourceInputSchemaVersion;
+void RootSourceInputIssueCodes;
+void RootSourceInputLimits;
+void RootResolveSourceInputCandidates;
+type _RootUiSourceValueDescriptor = RootUiSourceValueDescriptor;
+type _RootUiSourceInputTargetDescriptor = RootUiSourceInputTargetDescriptor;
+type _RootUiValueCompatibilitySchemaSnapshot = RootUiValueCompatibilitySchemaSnapshot;
+type _RootUiValueConversionEvidence = RootUiValueConversionEvidence;
+type _RootUiSourceBindingAssignment = RootUiSourceBindingAssignment;
+type _RootUiSourceInputIssueCoordinateKey = RootUiSourceInputIssueCoordinateKey;
+type _RootUiSourceInputIssueBase = RootUiSourceInputIssueBase<'no-change'>;
+type _RootUiSourceInputIssueCode = RootUiSourceInputIssueCode;
+type _RootUiSourceInputAdmissionIssue = RootUiSourceInputAdmissionIssue;
+type _RootUiSourceInputIncompatibleIssue = RootUiSourceInputIncompatibleIssue;
+type _RootUiSourceInputRecommendationIssue = RootUiSourceInputRecommendationIssue;
+type _RootUiSourceInputPlanIssue = RootUiSourceInputPlanIssue;
+type _RootUiSourceInputStaleIssue = RootUiSourceInputStaleIssue;
+type _RootUiSourceInputIssue = RootUiSourceInputIssue;
+type _RootUiSourceInputCandidateBase = RootUiSourceInputCandidateBase;
+type _RootUiExactSourceInputCandidate = RootUiExactSourceInputCandidate;
+type _RootUiConvertibleSourceInputCandidate = RootUiConvertibleSourceInputCandidate;
+type _RootUiIncompatibleSourceInputCandidate = RootUiIncompatibleSourceInputCandidate;
+type _RootUiSourceInputCandidate = RootUiSourceInputCandidate;
+type _RootUiSourceInputResolution = RootUiSourceInputResolution;
+type _RootUiSourceInputCompatibilityRequestV1 = RootUiSourceInputCompatibilityRequestV1;
+type _RootUiSourceInputRequestSnapshotV1 = RootUiSourceInputRequestSnapshotV1;
+type _RootUiSourceInputCandidateSetResult = RootUiSourceInputCandidateSetResult;
+type _PackedPrivateSourceInputCompatibilityModule = PackedPrivateSourceInputCompatibilityModule;
+type _PackedPrivateSourceInputPlanModule = PackedPrivateSourceInputPlanModule;
 `,
   );
   fs.writeFileSync(
@@ -1959,6 +2625,224 @@ if (
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'source-input-compatibility-runtime.cjs'),
+    `const contracts = require('@workbench-kit/contracts');
+const compatibility = require('@workbench-kit/contracts/source-input-compatibility');
+const jdw = require('@workbench-kit/jdw');
+
+const compatibilityRuntimeNames = [
+  'UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION',
+  'UI_SOURCE_INPUT_ISSUE_CODES',
+  'UI_SOURCE_INPUT_LIMITS',
+  'resolveUiSourceInputCandidates',
+];
+for (const name of compatibilityRuntimeNames) {
+  if (name in contracts || !(name in compatibility)) {
+    throw new TypeError('Packed source-input CommonJS focused/root boundary is invalid: ' + name);
+  }
+}
+const jdwRuntimeNames = [
+  'createUiAuthoringSourceInputPlan',
+  'finalizeUiAuthoringSourceInputPlan',
+  'inspectUiAuthoringSourceInputCandidates',
+  'previewUiAuthoringSourceInputPlan',
+];
+for (const name of jdwRuntimeNames) {
+  if (typeof jdw[name] !== 'function') {
+    throw new TypeError('Packed JDW CommonJS source-input export is missing: ' + name);
+  }
+}
+if (
+  compatibility.UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION !== 1 ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_LIMITS) ||
+  typeof compatibility.resolveUiSourceInputCandidates !== 'function'
+) {
+  throw new TypeError('Packed source-input CommonJS runtime exports are invalid.');
+}
+const expectedIssueCodes = ${JSON.stringify([
+      'invalid-request',
+      'unsupported-version',
+      'request-too-large',
+      'invalid-source',
+      'duplicate-source',
+      'invalid-target',
+      'duplicate-target',
+      'component-catalog-unavailable',
+      'invalid-conversion',
+      'duplicate-conversion',
+      'invalid-binding-assignment',
+      'missing-binding-assignment',
+      'extra-binding-assignment',
+      'duplicate-binding-id',
+      'target-output-only',
+      'target-binding-disallowed',
+      'target-occupied',
+      'type-mismatch',
+      'constraint-mismatch',
+      'no-declared-conversion',
+      'no-compatible-target',
+      'ambiguous-exact',
+      'convertible-only',
+      'selection-required',
+      'source-unselected',
+      'invalid-selection',
+      'target-contended',
+      'no-change',
+      'stale-source',
+      'stale-assigned-binding',
+      'stale-target-binding',
+      'stale-conversion-evidence',
+      'stale-selection',
+      'stale-plan',
+      'stale-recipe',
+      'stale-document',
+      'stale-design-system',
+      'stale-component-catalog',
+    ])};
+if (JSON.stringify(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) !== JSON.stringify(expectedIssueCodes)) {
+  throw new TypeError('Packed source-input CommonJS issue vocabulary is invalid.');
+}
+const result = compatibility.resolveUiSourceInputCandidates({
+  schemaVersion: 1,
+  sources: [{ id: 'packed-source', value: { type: 'string' } }],
+  targets: [],
+  bindings: [{ sourceId: 'packed-source', bindingId: 'packed-binding' }],
+});
+if (
+  result.status !== 'ready' ||
+  result.resolutions.length !== 1 ||
+  result.resolutions[0].status !== 'incompatible' ||
+  result.resolutions[0].issues[0].code !== 'no-compatible-target'
+) {
+  throw new TypeError('Packed source-input CommonJS resolution contract failed.');
+}
+for (const subpath of [
+  '@workbench-kit/contracts/source-input-compatibility/resolver',
+  '@workbench-kit/jdw/ui-authoring/source-input-plan',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    require(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed source-input CommonJS private subpath is exposed: ' + subpath);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'source-input-compatibility-runtime.mjs'),
+    `import * as contracts from '@workbench-kit/contracts';
+import * as compatibility from '@workbench-kit/contracts/source-input-compatibility';
+import * as jdw from '@workbench-kit/jdw';
+
+const compatibilityRuntimeNames = [
+  'UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION',
+  'UI_SOURCE_INPUT_ISSUE_CODES',
+  'UI_SOURCE_INPUT_LIMITS',
+  'resolveUiSourceInputCandidates',
+];
+for (const name of compatibilityRuntimeNames) {
+  if (name in contracts || !(name in compatibility)) {
+    throw new TypeError('Packed source-input ESM focused/root boundary is invalid: ' + name);
+  }
+}
+const jdwRuntimeNames = [
+  'createUiAuthoringSourceInputPlan',
+  'finalizeUiAuthoringSourceInputPlan',
+  'inspectUiAuthoringSourceInputCandidates',
+  'previewUiAuthoringSourceInputPlan',
+];
+for (const name of jdwRuntimeNames) {
+  if (typeof jdw[name] !== 'function') {
+    throw new TypeError('Packed JDW ESM source-input export is missing: ' + name);
+  }
+}
+if (
+  compatibility.UI_SOURCE_INPUT_COMPATIBILITY_SCHEMA_VERSION !== 1 ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) ||
+  !Object.isFrozen(compatibility.UI_SOURCE_INPUT_LIMITS) ||
+  typeof compatibility.resolveUiSourceInputCandidates !== 'function'
+) {
+  throw new TypeError('Packed source-input ESM runtime exports are invalid.');
+}
+const expectedIssueCodes = ${JSON.stringify([
+      'invalid-request',
+      'unsupported-version',
+      'request-too-large',
+      'invalid-source',
+      'duplicate-source',
+      'invalid-target',
+      'duplicate-target',
+      'component-catalog-unavailable',
+      'invalid-conversion',
+      'duplicate-conversion',
+      'invalid-binding-assignment',
+      'missing-binding-assignment',
+      'extra-binding-assignment',
+      'duplicate-binding-id',
+      'target-output-only',
+      'target-binding-disallowed',
+      'target-occupied',
+      'type-mismatch',
+      'constraint-mismatch',
+      'no-declared-conversion',
+      'no-compatible-target',
+      'ambiguous-exact',
+      'convertible-only',
+      'selection-required',
+      'source-unselected',
+      'invalid-selection',
+      'target-contended',
+      'no-change',
+      'stale-source',
+      'stale-assigned-binding',
+      'stale-target-binding',
+      'stale-conversion-evidence',
+      'stale-selection',
+      'stale-plan',
+      'stale-recipe',
+      'stale-document',
+      'stale-design-system',
+      'stale-component-catalog',
+    ])};
+if (JSON.stringify(compatibility.UI_SOURCE_INPUT_ISSUE_CODES) !== JSON.stringify(expectedIssueCodes)) {
+  throw new TypeError('Packed source-input ESM issue vocabulary is invalid.');
+}
+const result = compatibility.resolveUiSourceInputCandidates({
+  schemaVersion: 1,
+  sources: [{ id: 'packed-source', value: { type: 'string' } }],
+  targets: [],
+  bindings: [{ sourceId: 'packed-source', bindingId: 'packed-binding' }],
+});
+if (
+  result.status !== 'ready' ||
+  result.resolutions.length !== 1 ||
+  result.resolutions[0].status !== 'incompatible' ||
+  result.resolutions[0].issues[0].code !== 'no-compatible-target'
+) {
+  throw new TypeError('Packed source-input ESM resolution contract failed.');
+}
+for (const subpath of [
+  '@workbench-kit/contracts/source-input-compatibility/resolver',
+  '@workbench-kit/jdw/ui-authoring/source-input-plan',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    await import(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed source-input ESM private subpath is exposed: ' + subpath);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'builtins.ts'),
     `import { BUILTIN_WORKBENCH_EXTENSIONS } from '@workbench-kit/shell-react';
 
@@ -1969,8 +2853,28 @@ export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
     path.join(consumerDir, 'src', 'schema-form-types.ts'),
     `import {
   WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+  type WorkbenchSchemaFormCancelContext,
+  type WorkbenchSchemaFormCheckboxField,
+  type WorkbenchSchemaFormErrors,
+  type WorkbenchSchemaFormField,
+  type WorkbenchSchemaFormFieldBase,
+  type WorkbenchSchemaFormFieldChangeContext,
+  type WorkbenchSchemaFormFieldType,
+  type WorkbenchSchemaFormFieldValue,
+  type WorkbenchSchemaFormNumberField,
+  type WorkbenchSchemaFormOption,
   type WorkbenchSchemaFormProps,
-} from '@workbench-kit/react/workbench/settings';
+  type WorkbenchSchemaFormSelectField,
+  type WorkbenchSchemaFormSubmitContext,
+  type WorkbenchSchemaFormTextField,
+  type WorkbenchSchemaFormValues,
+} from '@workbench-kit/react/schema-form';
 
 export const packedSchemaFormComponent = WorkbenchSchemaForm;
 export const packedSchemaFormOmitted = { fields: [] } satisfies WorkbenchSchemaFormProps;
@@ -1982,6 +2886,313 @@ export const packedSchemaFormTrue = {
   fields: [],
   focusFirstInvalidFieldOnSubmit: true,
 } satisfies WorkbenchSchemaFormProps;
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined.
+const packedSchemaFormExplicitUndefined: WorkbenchSchemaFormProps = {
+  fields: [],
+  focusFirstInvalidFieldOnSubmit: undefined,
+};
+void packedSchemaFormExplicitUndefined;
+
+export const packedSchemaFormRuntime = Object.freeze({
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+});
+
+export type PackedSchemaFormPublicTypes = readonly [
+  WorkbenchSchemaFormCancelContext,
+  WorkbenchSchemaFormCheckboxField,
+  WorkbenchSchemaFormErrors,
+  WorkbenchSchemaFormField,
+  WorkbenchSchemaFormFieldBase,
+  WorkbenchSchemaFormFieldChangeContext,
+  WorkbenchSchemaFormFieldType,
+  WorkbenchSchemaFormFieldValue,
+  WorkbenchSchemaFormNumberField,
+  WorkbenchSchemaFormOption,
+  WorkbenchSchemaFormProps,
+  WorkbenchSchemaFormSelectField,
+  WorkbenchSchemaFormSubmitContext,
+  WorkbenchSchemaFormTextField,
+  WorkbenchSchemaFormValues,
+];
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-legacy-types.ts'),
+    `import * as FocusedSchemaForm from '@workbench-kit/react/schema-form';
+import * as LegacySettingsSchemaForm from '@workbench-kit/react/workbench/settings';
+import * as LegacyWorkbenchSchemaForm from '@workbench-kit/react/workbench';
+
+export const packedLegacySettingsSchemaForm: typeof FocusedSchemaForm.WorkbenchSchemaForm =
+  LegacySettingsSchemaForm.WorkbenchSchemaForm;
+export const packedLegacyWorkbenchSchemaForm: typeof FocusedSchemaForm.WorkbenchSchemaForm =
+  LegacyWorkbenchSchemaForm.WorkbenchSchemaForm;
+export const packedLegacySettingsHelpers = {
+  coerceWorkbenchSchemaFormFieldValue:
+    LegacySettingsSchemaForm.coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors: LegacySettingsSchemaForm.getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue:
+    LegacySettingsSchemaForm.getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError: LegacySettingsSchemaForm.getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable:
+    LegacySettingsSchemaForm.isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues:
+    LegacySettingsSchemaForm.normalizeWorkbenchSchemaFormValues,
+} satisfies Pick<
+  typeof FocusedSchemaForm,
+  | 'coerceWorkbenchSchemaFormFieldValue'
+  | 'getWorkbenchSchemaFormErrors'
+  | 'getWorkbenchSchemaFormFieldDefaultValue'
+  | 'getWorkbenchSchemaFormFieldError'
+  | 'isWorkbenchSchemaFormSubmittable'
+  | 'normalizeWorkbenchSchemaFormValues'
+>;
+export const packedLegacyWorkbenchHelpers: typeof packedLegacySettingsHelpers = {
+  coerceWorkbenchSchemaFormFieldValue:
+    LegacyWorkbenchSchemaForm.coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors: LegacyWorkbenchSchemaForm.getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue:
+    LegacyWorkbenchSchemaForm.getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError: LegacyWorkbenchSchemaForm.getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable:
+    LegacyWorkbenchSchemaForm.isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues:
+    LegacyWorkbenchSchemaForm.normalizeWorkbenchSchemaFormValues,
+};
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-schema-form.ts'),
+    `import {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+} from '@workbench-kit/react/schema-form';
+
+const focusedRuntime = Object.freeze({
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+});
+
+(globalThis as typeof globalThis & { __workbenchKitFocusedSchemaForm?: unknown })
+  .__workbenchKitFocusedSchemaForm = focusedRuntime;
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-identity.ts'),
+    `import {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+} from '@workbench-kit/react/schema-form';
+import {
+  WorkbenchSchemaForm as SettingsSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue as settingsCoerce,
+  getWorkbenchSchemaFormErrors as settingsGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue as settingsGetDefault,
+  getWorkbenchSchemaFormFieldError as settingsGetFieldError,
+  isWorkbenchSchemaFormSubmittable as settingsIsSubmittable,
+  normalizeWorkbenchSchemaFormValues as settingsNormalize,
+} from '@workbench-kit/react/workbench/settings';
+import {
+  WorkbenchSchemaForm as WorkbenchSchemaFormLegacy,
+  coerceWorkbenchSchemaFormFieldValue as workbenchCoerce,
+  getWorkbenchSchemaFormErrors as workbenchGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue as workbenchGetDefault,
+  getWorkbenchSchemaFormFieldError as workbenchGetFieldError,
+  isWorkbenchSchemaFormSubmittable as workbenchIsSubmittable,
+  normalizeWorkbenchSchemaFormValues as workbenchNormalize,
+} from '@workbench-kit/react/workbench';
+
+const focusedRuntime = {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+};
+const settingsRuntime: typeof focusedRuntime = {
+  WorkbenchSchemaForm: SettingsSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue: settingsCoerce,
+  getWorkbenchSchemaFormErrors: settingsGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue: settingsGetDefault,
+  getWorkbenchSchemaFormFieldError: settingsGetFieldError,
+  isWorkbenchSchemaFormSubmittable: settingsIsSubmittable,
+  normalizeWorkbenchSchemaFormValues: settingsNormalize,
+};
+const workbenchRuntime: typeof focusedRuntime = {
+  WorkbenchSchemaForm: WorkbenchSchemaFormLegacy,
+  coerceWorkbenchSchemaFormFieldValue: workbenchCoerce,
+  getWorkbenchSchemaFormErrors: workbenchGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue: workbenchGetDefault,
+  getWorkbenchSchemaFormFieldError: workbenchGetFieldError,
+  isWorkbenchSchemaFormSubmittable: workbenchIsSubmittable,
+  normalizeWorkbenchSchemaFormValues: workbenchNormalize,
+};
+
+for (const exportName of Object.keys(focusedRuntime) as (keyof typeof focusedRuntime)[]) {
+  if (
+    focusedRuntime[exportName] !== settingsRuntime[exportName] ||
+    focusedRuntime[exportName] !== workbenchRuntime[exportName]
+  ) {
+    throw new TypeError('Packed SchemaForm runtime identity diverged for ' + exportName);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-private-paths.cjs'),
+    `const privateSubpaths = [
+  '@workbench-kit/react/schema-form/SchemaForm',
+  '@workbench-kit/react/schema-form/settingsCommit',
+  '@workbench-kit/react/workbench/settings/SchemaForm',
+  '@workbench-kit/react/src/workbench/settings/SchemaForm',
+];
+for (const subpath of privateSubpaths) {
+  let rejected = false;
+  try {
+    require(subpath);
+  } catch (error) {
+    rejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!rejected) {
+    throw new TypeError('Packed SchemaForm CommonJS private subpath is exposed: ' + subpath);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-private-paths.mjs'),
+    `const privateSubpaths = [
+  '@workbench-kit/react/schema-form/SchemaForm',
+  '@workbench-kit/react/schema-form/settingsCommit',
+  '@workbench-kit/react/workbench/settings/SchemaForm',
+  '@workbench-kit/react/src/workbench/settings/SchemaForm',
+];
+for (const subpath of privateSubpaths) {
+  let rejected = false;
+  try {
+    await import(subpath);
+  } catch (error) {
+    rejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!rejected) {
+    throw new TypeError('Packed SchemaForm ESM private subpath is exposed: ' + subpath);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'editor-tabs-compatibility-types.ts'),
+    `import {
+  WorkbenchEditorTabs as RootWorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as RootFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as RootFocusEvent,
+  type WorkbenchEditorTabsProps as RootEditorTabsProps,
+} from '@workbench-kit/react';
+import type { ContextMenuItem } from '@workbench-kit/react/overlay';
+import {
+  WorkbenchEditorTabs as WorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as WorkbenchFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as WorkbenchFocusEvent,
+  type WorkbenchEditorTabsProps as WorkbenchEditorTabsProps,
+} from '@workbench-kit/react/workbench';
+import {
+  WorkbenchEditorTabs as ShellWorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as ShellFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as ShellFocusEvent,
+  type WorkbenchEditorTabsProps as ShellEditorTabsProps,
+} from '@workbench-kit/react/workbench/shell';
+import {
+  WorkbenchEditorTabs as FocusedWorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as FocusedFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as FocusedFocusEvent,
+  type WorkbenchEditorTabsProps as FocusedEditorTabsProps,
+  type UseWorkbenchEditorTabContextMenuResult as FocusedEditorTabContextMenuResult,
+} from '@workbench-kit/react/editor-tabs';
+
+const legacyExtraItem = {
+  label: 'Inspect tab',
+  onSelect: () => undefined,
+} satisfies ContextMenuItem;
+const legacyProps = {
+  activeId: 'library',
+  getExtraTabContextMenuItems: () => [legacyExtraItem],
+  onClose: () => undefined,
+  onSelect: () => undefined,
+  tabs: [{ id: 'library', label: 'Library' }],
+} satisfies RootEditorTabsProps;
+const legacyEditorTabContextMenuResult = {
+  contextMenu: null,
+  onTabContextMenu: () => undefined,
+} satisfies FocusedEditorTabContextMenuResult;
+
+const rootProps: RootEditorTabsProps = legacyProps;
+const workbenchProps: WorkbenchEditorTabsProps = legacyProps;
+const shellProps: ShellEditorTabsProps = legacyProps;
+const focusedProps: FocusedEditorTabsProps = legacyProps;
+const components: readonly [
+  typeof RootWorkbenchEditorTabs,
+  typeof WorkbenchEditorTabs,
+  typeof ShellWorkbenchEditorTabs,
+  typeof FocusedWorkbenchEditorTabs,
+] = [
+  RootWorkbenchEditorTabs,
+  WorkbenchEditorTabs,
+  ShellWorkbenchEditorTabs,
+  FocusedWorkbenchEditorTabs,
+];
+
+declare const rootFocusEvent: RootFocusEvent;
+declare const rootFocusDisposition: RootFocusDisposition;
+const workbenchFocusEvent: WorkbenchFocusEvent = rootFocusEvent;
+const shellFocusEvent: ShellFocusEvent = rootFocusEvent;
+const focusedFocusEvent: FocusedFocusEvent = rootFocusEvent;
+const workbenchFocusDisposition: WorkbenchFocusDisposition = rootFocusDisposition;
+const shellFocusDisposition: ShellFocusDisposition = rootFocusDisposition;
+const focusedFocusDisposition: FocusedFocusDisposition = rootFocusDisposition;
+declare const resolver: NonNullable<RootEditorTabsProps['resolveContextMenuCommandFocus']>;
+const optedInProps = {
+  ...legacyProps,
+  resolveContextMenuCommandFocus: resolver,
+} satisfies FocusedEditorTabsProps;
+
+void [
+  components,
+  focusedFocusDisposition,
+  focusedFocusEvent,
+  focusedProps,
+  legacyEditorTabContextMenuResult,
+  optedInProps,
+  rootProps,
+  shellFocusDisposition,
+  shellFocusEvent,
+  shellProps,
+  workbenchFocusDisposition,
+  workbenchFocusEvent,
+  workbenchProps,
+];
 `,
   );
   fs.writeFileSync(
@@ -2332,6 +3543,7 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
     `const jdw = require('@workbench-kit/jdw');
 
 const requiredFunctions = [
+  'admitUiGenerativeUiRequest',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -2346,8 +3558,11 @@ const requiredFunctions = [
   'createUiAuthoringSessionV2',
   'createUiAuthoringSessionV3',
   'createUiDocumentV3',
+  'createUiGenerativeUiPlan',
   'finalizeUiAuthoringDetachedPlan',
+  'finalizeUiGenerativeUiPlan',
   'previewUiAuthoringDetachedPlan',
+  'previewUiGenerativeUiPlan',
   'projectUiAuthoringDocument',
   'projectUiAuthoringDocumentV3',
   'projectUiDesignSystemDocumentV3',
@@ -2365,6 +3580,25 @@ for (const name of requiredFunctions) {
     throw new TypeError('Packed JDW CommonJS root is missing function export: ' + name);
   }
 }
+for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
+  if (name in jdw) {
+    throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
+  }
+}
+for (const subpath of [
+  '@workbench-kit/jdw/ui-authoring/generative-plan',
+  '@workbench-kit/jdw/ui-authoring/immutability',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    require(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed JDW CommonJS private subpath is exposed: ' + subpath);
+  }
+}
 `,
   );
   fs.writeFileSync(
@@ -2372,6 +3606,7 @@ for (const name of requiredFunctions) {
     `import * as jdw from '@workbench-kit/jdw';
 
 const requiredFunctions = [
+  'admitUiGenerativeUiRequest',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -2386,8 +3621,11 @@ const requiredFunctions = [
   'createUiAuthoringSessionV2',
   'createUiAuthoringSessionV3',
   'createUiDocumentV3',
+  'createUiGenerativeUiPlan',
   'finalizeUiAuthoringDetachedPlan',
+  'finalizeUiGenerativeUiPlan',
   'previewUiAuthoringDetachedPlan',
+  'previewUiGenerativeUiPlan',
   'projectUiAuthoringDocument',
   'projectUiAuthoringDocumentV3',
   'projectUiDesignSystemDocumentV3',
@@ -2403,6 +3641,25 @@ const requiredFunctions = [
 for (const name of requiredFunctions) {
   if (typeof jdw[name] !== 'function') {
     throw new TypeError('Packed JDW ESM root is missing function export: ' + name);
+  }
+}
+for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
+  if (name in jdw) {
+    throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
+  }
+}
+for (const subpath of [
+  '@workbench-kit/jdw/ui-authoring/generative-plan',
+  '@workbench-kit/jdw/ui-authoring/immutability',
+]) {
+  let privateSubpathRejected = false;
+  try {
+    await import(subpath);
+  } catch (error) {
+    privateSubpathRejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!privateSubpathRejected) {
+    throw new TypeError('Packed JDW ESM private subpath is exposed: ' + subpath);
   }
 }
 `,
@@ -2455,6 +3712,162 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-shell-context.ts'),
+    `import * as React from 'react';
+import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import { WorkbenchKeybindingManagementSettings as RootWorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react';
+import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
+import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
+import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
+import {
+  WorkbenchProvider,
+  useWorkbench,
+  useWorkbenchKeybindingManagementBinding,
+} from '@workbench-kit/shell-react/provider';
+
+const { createElement, useLayoutEffect } = React;
+
+const rootCompatibleManagementSettings: () => React.ReactNode =
+  RootWorkbenchKeybindingManagementSettings;
+void rootCompatibleManagementSettings;
+
+const commandId = 'packed.focused.command';
+let dispatchCount = 0;
+let setOverride: ((commandId: string, key: string) => void) | undefined;
+let resetOverride: ((commandId: string) => void) | undefined;
+
+function PackedCommandRegistration() {
+  const { commands } = useWorkbench();
+  useLayoutEffect(() => {
+    const command = commands.registerCommand({
+      handler: () => {
+        dispatchCount += 1;
+      },
+      id: commandId,
+      run: () => {
+        dispatchCount += 1;
+      },
+      shortcut: 'ctrl+e',
+      title: 'Packed focused command',
+    });
+    return () => {
+      command.dispose();
+    };
+  }, [commands]);
+  return null;
+}
+
+function PackedManagementSettings() {
+  const binding = useWorkbenchKeybindingManagementBinding();
+  useLayoutEffect(() => {
+    setOverride = binding.setKeybinding;
+    resetOverride = binding.resetKeybinding;
+    return () => {
+      setOverride = undefined;
+      resetOverride = undefined;
+    };
+  }, [binding.resetKeybinding, binding.setKeybinding]);
+  return createElement(WorkbenchKeybindingManagementSettingsView, binding);
+}
+
+function dispatchShortcut(key: string, modifiers: { altKey?: boolean; ctrlKey?: boolean }) {
+  window.dispatchEvent(
+    new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key, ...modifiers }),
+  );
+}
+
+function assertDispatchCount(expected: number, message: string) {
+  if (dispatchCount !== expected) throw new TypeError(message);
+}
+
+const container = document.createElement('div');
+document.body.append(container);
+const root = createRoot(container);
+function createPackedApp(settingsKey: string) {
+  return createElement(
+    WorkbenchProvider,
+    {
+      children: [
+        createElement(PackedCommandRegistration, { key: 'registration' }),
+        createElement(WorkbenchHostShell, {
+          editorArea: createElement('main', null, 'Packed editor'),
+          key: 'shell',
+          overlays: createElement(PackedManagementSettings, { key: settingsKey }),
+        }),
+        createElement(WorkbenchCommandHost, {
+          enableCommandPalette: false,
+          enableQuickOpen: false,
+          enableShortcutBridge: true,
+          key: 'commands',
+          onOpenSettings: () => undefined,
+        }),
+      ],
+      persistEditorState: false,
+      persistKeybindingOverrides: false,
+      persistLayout: false,
+      persistLocalPreferences: false,
+    },
+  );
+}
+
+flushSync(() => root.render(createPackedApp('settings:first')));
+await new Promise((resolve) => setTimeout(resolve, 0));
+await new Promise((resolve) => setTimeout(resolve, 0));
+if (!container.textContent?.includes('Keyboard Shortcuts')) {
+  throw new TypeError('Packed focused management leaf did not render under the live Provider.');
+}
+if (!container.textContent.includes('Packed editor')) {
+  throw new TypeError('Packed focused host shell did not share the live Provider.');
+}
+if (!container.textContent.includes('Packed focused command')) {
+  throw new TypeError('Packed management leaf did not list the live Provider command projection.');
+}
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(1, 'Packed default key did not dispatch exactly once.');
+flushSync(() => setOverride?.(commandId, 'alt+e'));
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(1, 'Packed displaced key remained active.');
+flushSync(() => root.render(createPackedApp('settings:remounted')));
+if (!container.textContent.includes('1 user override')) {
+  throw new TypeError('Packed Settings-only remount did not retain the live Provider override.');
+}
+dispatchShortcut('e', { altKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(2, 'Packed override key did not dispatch exactly once.');
+flushSync(() => resetOverride?.(commandId));
+dispatchShortcut('e', { altKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(2, 'Packed reset left the override key active.');
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(3, 'Packed reset did not restore exact-once dispatch.');
+flushSync(() => root.unmount());
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(3, 'Packed cleanup left a duplicate shortcut dispatcher active.');
+container.remove();
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-keybinding-management-view.ts'),
+    `import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
+
+(globalThis as typeof globalThis & { __workbenchKitFocusedKeybindingManagementView?: unknown })
+  .__workbenchKitFocusedKeybindingManagementView = Object.freeze({
+    WorkbenchKeybindingManagementSettingsView,
+  });
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'tsconfig.json'),
     `${JSON.stringify(
       {
@@ -2468,7 +3881,13 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
           strict: true,
           target: 'ES2022',
         },
-        exclude: ['src/authoring-development-types.ts', 'src/external-node-catalog-types.ts'],
+        exclude: [
+          'src/authoring-development-types.ts',
+          'src/external-node-catalog-types.ts',
+          'src/schema-form-types.ts',
+          'src/source-input-compatibility-types.ts',
+          'src/ui-generative-plan-types.ts',
+        ],
         include: ['src/**/*.ts'],
       },
       null,
@@ -2498,18 +3917,55 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
     path.join(consumerDir, 'src', 'focused-overlay.ts'),
     focusedOverlayOutputDir,
   );
+  writeFocusedViteConfig(
+    'focused-schema-form',
+    path.join(consumerDir, 'src', 'focused-schema-form.ts'),
+    focusedSchemaFormOutputDir,
+  );
+  writeFocusedViteConfig(
+    'schema-form-identity',
+    path.join(consumerDir, 'src', 'schema-form-identity.ts'),
+    schemaFormIdentityOutputDir,
+    true,
+  );
+  writeFocusedViteConfig(
+    'focused-shell-context',
+    path.join(consumerDir, 'src', 'focused-shell-context.ts'),
+    focusedShellContextOutputDir,
+    true,
+  );
+  writeFocusedViteConfig(
+    'focused-keybinding-management-view',
+    path.join(consumerDir, 'src', 'focused-keybinding-management-view.ts'),
+    focusedKeybindingManagementViewOutputDir,
+  );
 }
 
-function writeFocusedViteConfig(name, input, outputDirectory) {
+function writeFocusedViteConfig(name, input, outputDirectory, nodeExecutable = false) {
   fs.writeFileSync(
     path.join(consumerDir, `vite.${name}.config.mjs`),
     `export default {
   root: ${JSON.stringify(consumerDir)},
+  plugins: [{
+    name: 'workbench-kit-focused-module-graph',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'module-graph.json',
+        source: JSON.stringify([...this.getModuleIds()].sort(), null, 2),
+      });
+    },
+  }],
   build: {
+    ${nodeExecutable ? "target: 'esnext'," : ''}
     emptyOutDir: true,
     manifest: true,
     outDir: ${JSON.stringify(outputDirectory)},
-    rollupOptions: { input: ${JSON.stringify(input)} },
+    rollupOptions: {
+      input: ${JSON.stringify(input)},
+      ${nodeExecutable ? 'treeshake: { moduleSideEffects: false },' : ''}
+      ${nodeExecutable ? "output: { entryFileNames: 'assets/[name]-[hash].mjs' }," : ''}
+    },
     sourcemap: true,
   },
 };
@@ -2524,6 +3980,50 @@ function buildFocusedConsumer(name) {
     ['exec', 'vite', 'build', '--config', path.join(consumerDir, `vite.${name}.config.mjs`)],
     { cwd: repoRoot, stdio: 'inherit' },
   );
+}
+
+async function executeFocusedConsumer(label, outputDirectory) {
+  const manifest = readJson(path.join(outputDirectory, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((candidate) => candidate.isEntry);
+  if (!entry?.file) throw new Error(`${label} consumer emitted no Vite entry.`);
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+    url: 'http://127.0.0.1/',
+  });
+  const browserGlobals = {
+    React: await import('react'),
+    CustomEvent: dom.window.CustomEvent,
+    customElements: dom.window.customElements,
+    document: dom.window.document,
+    Event: dom.window.Event,
+    HTMLElement: dom.window.HTMLElement,
+    HTMLInputElement: dom.window.HTMLInputElement,
+    KeyboardEvent: dom.window.KeyboardEvent,
+    MutationObserver: dom.window.MutationObserver,
+    navigator: dom.window.navigator,
+    Node: dom.window.Node,
+    window: dom.window,
+  };
+  const previousDescriptors = new Map(
+    Object.keys(browserGlobals).map((key) => [
+      key,
+      Object.getOwnPropertyDescriptor(globalThis, key),
+    ]),
+  );
+
+  try {
+    for (const [key, value] of Object.entries(browserGlobals)) {
+      Object.defineProperty(globalThis, key, { configurable: true, value, writable: true });
+    }
+    await import(`${pathToFileURL(path.join(outputDirectory, entry.file)).href}?packed-consumer`);
+    console.log(`[check-packed-consumer] ${label} runtime OK.`);
+  } finally {
+    dom.window.close();
+    for (const [key, descriptor] of previousDescriptors) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+  }
 }
 
 function collectInitialJavaScriptSources(outputDirectory, label) {
@@ -2587,6 +4087,161 @@ function verifyFocusedCommandHostControllerOutput() {
 
   console.log(
     `[check-packed-consumer] focused command-host controller graph OK (${sources.length} source-map entries).`,
+  );
+}
+
+function verifyFocusedKeybindingManagementViewOutput() {
+  const moduleIds = readJson(
+    path.join(focusedKeybindingManagementViewOutputDir, 'module-graph.json'),
+  );
+  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+    throw new Error('Focused keybinding management View emitted no module-graph evidence.');
+  }
+  const normalizedModuleIds = moduleIds.map((moduleId) =>
+    `/${moduleId.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const requiredModuleSegments = [
+    '/@workbench-kit/shell-react/src/keybinding-management-settings.ts',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings-view.tsx',
+    '/@workbench-kit/react/src/workbench/management/keybindingmanagementpanel.tsx',
+  ];
+  const forbiddenModuleSegments = [
+    '/@workbench-kit/shell-react/src/shell/provider',
+    '/@workbench-kit/shell-react/src/management/use-keybinding-management',
+    '/@workbench-kit/shell-react/src/workbench/command-host',
+    '/@workbench-kit/shell-react/src/workbench/keybinding-bridge',
+    '/@workbench-kit/workbench-core/',
+  ];
+
+  for (const requiredSegment of requiredModuleSegments) {
+    if (!normalizedModuleIds.some((moduleId) => moduleId.includes(requiredSegment))) {
+      throw new Error(
+        `Focused keybinding management View is missing retained module ${requiredSegment}.`,
+      );
+    }
+  }
+  const forbiddenModules = normalizedModuleIds.filter((moduleId) =>
+    forbiddenModuleSegments.some((segment) => moduleId.includes(segment)),
+  );
+  if (forbiddenModules.length > 0) {
+    throw new Error(
+      `Focused keybinding management View pulled the Provider/runtime graph:\n${[
+        ...new Set(forbiddenModules),
+      ].join('\n')}`,
+    );
+  }
+
+  console.log(
+    `[check-packed-consumer] focused keybinding management View graph OK (${moduleIds.length} modules).`,
+  );
+}
+
+function verifyFocusedSchemaFormOutput() {
+  const sources = collectInitialJavaScriptSources(focusedSchemaFormOutputDir, 'focused SchemaForm');
+  const moduleIds = readJson(path.join(focusedSchemaFormOutputDir, 'module-graph.json'));
+  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+    throw new Error('Focused SchemaForm emitted no module-graph evidence.');
+  }
+  const normalizedModuleIds = moduleIds.map((moduleId) =>
+    `/${moduleId.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const requiredModuleSegments = [
+    '/@workbench-kit/react/src/workbench/settings/schemaform.tsx',
+    '/@workbench-kit/react/src/workbench/settings/schema-form.css',
+    '/@workbench-kit/react/src/workbench/settings/settingscommit.tsx',
+    '/@workbench-kit/react/src/primitives/button/button.tsx',
+    '/@workbench-kit/react/src/primitives/checkbox/checkbox.tsx',
+    '/@workbench-kit/react/src/primitives/empty-state/emptystate.tsx',
+    '/@workbench-kit/react/src/primitives/field/field.tsx',
+    '/@workbench-kit/react/src/primitives/select/select.tsx',
+    '/@workbench-kit/react/src/primitives/text-input/textinput.tsx',
+  ];
+  const settingsModuleRoot = '/@workbench-kit/react/src/workbench/settings/';
+  const allowedSettingsModules = new Set([
+    `${settingsModuleRoot}schemaform.tsx`,
+    `${settingsModuleRoot}schema-form.css`,
+    `${settingsModuleRoot}settingscommit.tsx`,
+  ]);
+  const forbiddenModuleSegments = [
+    '/@workbench-kit/react/src/workbench/index.ts',
+    '/@workbench-kit/react/src/styles/core.css',
+    '/@workbench-kit/react/src/workbench/shell/',
+    '/@workbench-kit/react/src/workbench/extensions/',
+    '/@workbench-kit/react/src/workbench/provider',
+    '/@workbench-kit/shell-react/',
+    '/@workbench-kit/runtime/',
+    '/@workbench-kit/workbench-core/',
+    '/@workbench-kit/workbench-extension-sdk/',
+    '/@workbench-kit/platform/src/extensions/',
+    '/@workbench-kit/monaco/',
+    '/packages/runtime/',
+    '/packages/workbench-core/',
+    '/packages/workbench-extension-sdk/',
+    '/packages/monaco/',
+  ];
+
+  for (const requiredSegment of requiredModuleSegments) {
+    if (!normalizedModuleIds.some((moduleId) => moduleId.includes(requiredSegment))) {
+      throw new Error(`Focused SchemaForm consumer is missing retained module ${requiredSegment}.`);
+    }
+  }
+
+  const unexpectedSettingsModules = normalizedModuleIds.filter((moduleId) => {
+    const settingsModuleIndex = moduleId.indexOf(settingsModuleRoot);
+    if (settingsModuleIndex === -1) return false;
+    return !allowedSettingsModules.has(moduleId.slice(settingsModuleIndex));
+  });
+  const forbiddenModules = [
+    ...unexpectedSettingsModules,
+    ...normalizedModuleIds.filter((moduleId) =>
+      forbiddenModuleSegments.some((segment) => moduleId.includes(segment)),
+    ),
+  ];
+  if (forbiddenModules.length > 0) {
+    throw new Error(
+      `Focused SchemaForm pulled a broad Settings/shell runtime graph:\n${[
+        ...new Set(forbiddenModules),
+      ].join('\n')}`,
+    );
+  }
+
+  const manifest = readJson(path.join(focusedSchemaFormOutputDir, '.vite', 'manifest.json'));
+  const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
+  if (!entryKey) throw new Error('Focused SchemaForm consumer emitted no Vite entry.');
+  const staticEntries = collectStaticEntries(manifest, entryKey);
+  const cssFiles = new Set(staticEntries.flatMap((entry) => entry.css ?? []));
+  if (cssFiles.size === 0) throw new Error('Focused SchemaForm consumer emitted no CSS.');
+  const css = [...cssFiles]
+    .map((file) => fs.readFileSync(path.join(focusedSchemaFormOutputDir, file), 'utf8'))
+    .join('\n');
+  for (const selector of [
+    '.ui-workbench-schema-form',
+    '.ui-workbench-schema-form__error',
+    '.ui-workbench-schema-form__actions',
+    '.ui-button',
+    '.ui-checkbox',
+    '.ui-empty-state',
+    '.ui-field',
+    '.ui-select',
+    '.ui-input',
+  ]) {
+    if (!css.includes(selector)) throw new Error(`Focused SchemaForm CSS is missing ${selector}.`);
+  }
+  for (const selector of [
+    '.workbench-settings-modal',
+    '.ui-workbench-navigation-panel',
+    '.ui-workbench-sectioned-panel',
+    '.ui-workbench-section-tab-panel',
+    '.ui-workbench-structured-data-form',
+    '.ui-workbench-structured-data-schema-panel',
+  ]) {
+    if (css.includes(selector)) {
+      throw new Error(`Focused SchemaForm CSS unexpectedly includes ${selector}.`);
+    }
+  }
+
+  console.log(
+    `[check-packed-consumer] focused SchemaForm graph/CSS OK (${moduleIds.length} module IDs, ${sources.length} source-map entries, ${cssFiles.size} CSS assets).`,
   );
 }
 

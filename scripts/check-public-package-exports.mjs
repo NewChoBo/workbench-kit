@@ -1,6 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import ts from 'typescript';
 
 import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
 import {
@@ -75,6 +76,8 @@ for (const workspacePackage of workspacePackages) {
 
 validateCssOnlySideEffects();
 validateReactStyleExports();
+validateReactSchemaFormExport();
+validateShellReactKeybindingManagementSettingsExport();
 validateReactPrivateStorySurfaces();
 
 if (violations.length > 0) {
@@ -83,6 +86,84 @@ if (violations.length > 0) {
     console.error(`${violation.location} [${violation.rule}] ${violation.message}`);
   }
   process.exit(1);
+}
+
+function validateShellReactKeybindingManagementSettingsExport() {
+  const workspacePackage = packageByName.get('@workbench-kit/shell-react');
+  const expectedTarget = './src/keybinding-management-settings.ts';
+  const actualTarget = workspacePackage?.packageJson.exports?.['./keybinding-management-settings'];
+  const providerPath = path.join(repoRoot, 'packages/shell-react/src/shell/provider.tsx');
+  const focusedLeafPath = path.join(
+    repoRoot,
+    'packages/shell-react/src/keybinding-management-settings.ts',
+  );
+  const focusedViewPath = path.join(
+    repoRoot,
+    'packages/shell-react/src/management/keybinding-settings-view.tsx',
+  );
+
+  if (actualTarget !== expectedTarget) {
+    violations.push({
+      location: 'packages/shell-react/package.json#exports./keybinding-management-settings',
+      message: `@workbench-kit/shell-react/keybinding-management-settings must map exactly to "${expectedTarget}".`,
+      rule: 'shell-react-keybinding-management-settings-export',
+    });
+  }
+
+  const providerSource = readSourceOrReport(providerPath, 'Provider binding source');
+  if (!providerSource.includes('export function useWorkbenchKeybindingManagementBinding(')) {
+    violations.push({
+      location: 'packages/shell-react/src/shell/provider.tsx',
+      message: 'The focused Provider entry must export useWorkbenchKeybindingManagementBinding.',
+      rule: 'shell-react-keybinding-management-provider-binding',
+    });
+  }
+
+  const focusedLeafSource = readSourceOrReport(focusedLeafPath, 'focused Settings View leaf');
+  const normalizedFocusedLeafSource = focusedLeafSource.replaceAll('\r\n', '\n');
+  if (
+    !normalizedFocusedLeafSource.includes('WorkbenchKeybindingManagementSettingsView,') ||
+    !normalizedFocusedLeafSource.includes('type WorkbenchKeybindingManagementSettingsViewProps,') ||
+    !normalizedFocusedLeafSource.includes("from './management/keybinding-settings-view.js';") ||
+    [...normalizedFocusedLeafSource.matchAll(/from\s+['"]([^'"]+)['"]/g)].some(
+      ([, specifier]) => specifier !== './management/keybinding-settings-view.js',
+    )
+  ) {
+    violations.push({
+      location: 'packages/shell-react/src/keybinding-management-settings.ts',
+      message:
+        'The focused Settings entry must re-export only the provider-free View and its props type.',
+      rule: 'shell-react-keybinding-management-focused-leaf',
+    });
+  }
+
+  const focusedViewSource = readSourceOrReport(focusedViewPath, 'provider-free Settings View');
+  const forbiddenViewPatterns = [
+    ['useWorkbench', 'useWorkbench'],
+    ['WorkbenchContext', 'WorkbenchContext'],
+    ['createContext', 'createContext'],
+    ['shell/provider', 'shell/provider'],
+    ['/provider', 'provider public subpath'],
+  ];
+  for (const [pattern, label] of forbiddenViewPatterns) {
+    if (focusedViewSource.includes(pattern)) {
+      violations.push({
+        location: 'packages/shell-react/src/management/keybinding-settings-view.tsx',
+        message: `The focused Settings View must not reference ${label}.`,
+        rule: 'shell-react-keybinding-management-provider-free-view',
+      });
+    }
+  }
+}
+
+function readSourceOrReport(sourcePath, label) {
+  if (fs.existsSync(sourcePath)) return fs.readFileSync(sourcePath, 'utf8');
+  violations.push({
+    location: path.relative(repoRoot, sourcePath).replaceAll('\\', '/'),
+    message: `${label} is missing.`,
+    rule: 'shell-react-keybinding-management-source-presence',
+  });
+  return '';
 }
 
 console.log(`Public package export check passed (${NPM_PUBLISH_ORDER.length} publish packages).`);
@@ -344,6 +425,179 @@ function validateReactStyleExports() {
       });
     }
   }
+}
+
+function validateReactSchemaFormExport() {
+  const reactPackage = packageByName.get('@workbench-kit/react');
+  if (!reactPackage) {
+    return;
+  }
+
+  const { packageJson } = reactPackage;
+  const location = relativePath(reactPackage.packageJsonPath);
+  const exports = packageJson.exports ?? {};
+  const schemaFormExportPath = './schema-form';
+  const schemaFormTarget = './src/workbench/settings/SchemaForm.tsx';
+  const privateSchemaFormExportPaths = [
+    schemaFormExportPath,
+    './workbench/settings/SchemaForm',
+    './workbench/settings/schema-form',
+  ];
+  const stableSurfaceTargets = {
+    '.': './src/index.ts',
+    './workbench': './src/workbench/index.ts',
+    './workbench/settings': './src/workbench/settings/index.ts',
+    [schemaFormExportPath]: schemaFormTarget,
+  };
+
+  for (const [exportPath, expectedTarget] of Object.entries(stableSurfaceTargets)) {
+    if (exports[exportPath] !== expectedTarget) {
+      violations.push({
+        location: `${location}#exports`,
+        message: `${exportPath} must target ${expectedTarget}.`,
+        rule: 'react-schema-form-export-contract',
+      });
+    }
+  }
+
+  for (const [exportPath, target] of Object.entries(exports)) {
+    if (exportPath === schemaFormExportPath) {
+      continue;
+    }
+
+    const exposesFocusedPath =
+      privateSchemaFormExportPaths.some((privatePath) =>
+        exportPatternMatches(exportPath, privatePath),
+      ) ||
+      isSchemaFormReference(exportPath) ||
+      collectExportTargets(target).some(
+        (exportTarget) =>
+          isSchemaFormReference(exportTarget) ||
+          exportPatternMatches(exportTarget, schemaFormTarget),
+      );
+    if (exposesFocusedPath) {
+      violations.push({
+        location: `${location}#exports`,
+        message: `${exportPath} must not expose a wildcard, alias, or private SchemaForm path beside ${schemaFormExportPath}.`,
+        rule: 'react-schema-form-private-export',
+      });
+    }
+  }
+
+  const expectedTypesVersionTargets = ['src/workbench/settings/SchemaForm.tsx'];
+  const privateSchemaFormTypesPaths = privateSchemaFormExportPaths.map((exportPath) =>
+    exportPath.slice(2),
+  );
+  const typesVersions = packageJson.typesVersions;
+  const schemaFormTypes = typesVersions?.['*']?.['schema-form'];
+  if (JSON.stringify(schemaFormTypes) !== JSON.stringify(expectedTypesVersionTargets)) {
+    violations.push({
+      location: `${location}#typesVersions`,
+      message: `schema-form must map exactly to ${expectedTypesVersionTargets[0]}.`,
+      rule: 'react-schema-form-types-versions-contract',
+    });
+  }
+
+  for (const [versionRange, mappings] of Object.entries(typesVersions ?? {})) {
+    if (!mappings || typeof mappings !== 'object' || Array.isArray(mappings)) {
+      continue;
+    }
+
+    for (const [mappingPath, targets] of Object.entries(mappings)) {
+      if (versionRange === '*' && mappingPath === 'schema-form') {
+        continue;
+      }
+
+      const exposesFocusedPath =
+        privateSchemaFormTypesPaths.some((privatePath) =>
+          typesVersionPatternMatches(mappingPath, privatePath),
+        ) ||
+        isSchemaFormReference(mappingPath) ||
+        (Array.isArray(targets) &&
+          targets.some(
+            (target) =>
+              typeof target === 'string' &&
+              (isSchemaFormReference(target) ||
+                typesVersionPatternMatches(target, expectedTypesVersionTargets[0])),
+          ));
+      if (exposesFocusedPath) {
+        violations.push({
+          location: `${location}#typesVersions`,
+          message: `${versionRange}:${mappingPath} must not expose a wildcard, alias, or private SchemaForm type path.`,
+          rule: 'react-schema-form-private-types-version',
+        });
+      }
+    }
+  }
+
+  if (!Array.isArray(packageJson.sideEffects) || !packageJson.sideEffects.includes('**/*.css')) {
+    violations.push({
+      location: `${location}#sideEffects`,
+      message: `${schemaFormExportPath} must retain imported CSS through the package CSS side-effect pattern.`,
+      rule: 'react-schema-form-css-side-effects',
+    });
+  }
+
+  const rootIndexPath = path.join(reactPackage.directory, 'src/index.ts');
+  const schemaFormSourcePath = path.join(
+    reactPackage.directory,
+    'src/workbench/settings/SchemaForm.tsx',
+  );
+  const schemaFormProgram = ts.createProgram([rootIndexPath, schemaFormSourcePath], {
+    jsx: ts.JsxEmit.ReactJSX,
+    module: ts.ModuleKind.ESNext,
+    moduleResolution: ts.ModuleResolutionKind.Bundler,
+    noEmit: true,
+    skipLibCheck: true,
+    target: ts.ScriptTarget.ESNext,
+  });
+  const rootExportNames = collectTypeScriptModuleExportNames(schemaFormProgram, rootIndexPath);
+  const schemaFormExportNames = collectTypeScriptModuleExportNames(
+    schemaFormProgram,
+    schemaFormSourcePath,
+  );
+  const leakedSchemaFormExports = schemaFormExportNames.filter((exportName) =>
+    rootExportNames.includes(exportName),
+  );
+  if (leakedSchemaFormExports.length > 0) {
+    violations.push({
+      location: relativePath(rootIndexPath),
+      message: `@workbench-kit/react root must not re-export the focused SchemaForm surface: ${leakedSchemaFormExports.join(', ')}.`,
+      rule: 'react-schema-form-root-re-export',
+    });
+  }
+}
+
+function collectTypeScriptModuleExportNames(program, sourcePath) {
+  const sourceFile = program.getSourceFile(sourcePath);
+  const moduleSymbol = sourceFile ? program.getTypeChecker().getSymbolAtLocation(sourceFile) : null;
+  return moduleSymbol
+    ? program
+        .getTypeChecker()
+        .getExportsOfModule(moduleSymbol)
+        .map((exportSymbol) => exportSymbol.getName())
+        .sort()
+    : [];
+}
+
+function isSchemaFormReference(value) {
+  return typeof value === 'string' && /schema[-_]?form/iu.test(value);
+}
+
+function exportPatternMatches(pattern, exportPath) {
+  if (!pattern.includes('*')) {
+    return false;
+  }
+
+  const expression = pattern
+    .split('*')
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/gu, '\\$&'))
+    .join('.*');
+  return new RegExp(`^${expression}$`, 'u').test(exportPath);
+}
+
+function typesVersionPatternMatches(pattern, exportPath) {
+  return exportPatternMatches(`./${pattern}`, `./${exportPath}`);
 }
 
 function validateReactPrivateStorySurfaces() {
