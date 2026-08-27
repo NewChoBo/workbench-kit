@@ -2237,7 +2237,9 @@ after a remaining matrix failure without a new design decision.
 
 ## WB-NS-080C — Focused provider-bound keybinding management Settings entrypoint
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DESIGN_DECISION_REQUIRED`
+- **Resolution packet:** `WB-NS-080C2`; do not implement this rejected single late
+  provider-bound leaf contract
 - **Canonical public work:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405)
 - **Companion internal cause:** [Issue #411](https://github.com/NewChoBo/workbench-kit/issues/411);
   implemented and closed by the same atomic Issue #405 candidate/PR, not a separate prerequisite
@@ -2271,6 +2273,13 @@ runtime and hiding it behind `/* @vite-ignore */` prevents Vite from crawling th
 module and admitting its public bare package dependencies, causes late optimizer hash regeneration,
 and leaves the import pending without a page navigation or page error. That optimizer-opaque loader
 is not the target host contract and is not a source architecture failure.
+
+Later literal-lazy evidence supersedes that provisional conclusion. With ordinary static discovery,
+activation still evaluates a foreign Provider instance and throws
+`useWorkbench must be used inside WorkbenchProvider.` before the command interaction can begin.
+Same-package and separately published Context-owner prototypes reproduce the same RED because Vite
+bundles that owner into the late optimized entry. The uncommitted draft is discarded. The validated
+replacement contract is `WB-NS-080C2` below.
 
 ### Current gap and ownership boundary
 
@@ -2610,6 +2619,214 @@ path; treats server-side static optimizer admission as runtime preload; expands 
 runtime-unknown plugin/module loading; splits Issue #411 into a transient prerequisite candidate that
 cannot run the public late-entry gate on its own SHA; adds unrelated public exports, dependencies or
 mechanics; or claims release, publish, Electron or native completion.
+
+## WB-NS-080C2 — Provider-owned keybinding Settings binding and provider-free lazy view
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Canonical public work:** [Issue #414](https://github.com/NewChoBo/workbench-kit/issues/414)
+- **Closes atomically:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405) and
+  [Issue #411](https://github.com/NewChoBo/workbench-kit/issues/411) through the same source PR
+- **Exact source/API baseline:** `develop@815a4d57b92851756abf5e2d97085da1ff25b872`
+- **Ownership:** `GENERIC_KIT / PROVIDER_COMPOSITION + PUBLIC_VIEW`; `packages/shell-react`
+- **Dependencies:** `WB-NS-080A`, `WB-NS-080B`, and `WB-NS-080C0` are `DONE`
+- **Public entrypoints:** existing `@workbench-kit/shell-react/provider` plus new
+  `@workbench-kit/shell-react/keybinding-management-settings`
+- **Runtime layer:** `PURE_WEB / DOM / packed Vite DEV optimizer`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host can keep the Provider-dependent keybinding Settings binding in the already-live
+focused Provider graph and literal-lazy load only a provider-free Settings view. The host still uses
+the existing Provider, command registry, override state, persistence policy and shortcut dispatcher;
+the late module cannot create or import another Provider or React Context.
+
+The existing broad-root `WorkbenchKeybindingManagementSettings` remains a compatible zero-prop,
+provider-bound convenience component. The focused late-safe surface is intentionally props-driven;
+the rejected promise that a separately optimized zero-prop provider-bound leaf can be mounted safely
+is not retained.
+
+### Decisive design evidence
+
+The fresh packed external Vite DEV fixture established this sequence:
+
+1. The four initial focused Provider combinations from `WB-NS-080C0` are green.
+2. A literal-lazy provider-bound management leaf is not requested, evaluated or mounted before
+   activation, but activation throws `useWorkbench must be used inside WorkbenchProvider.` with one
+   boot and one navigation.
+3. Moving Context ownership to another same-package public subpath remains RED.
+4. Moving Context ownership to a separately published tiny package also remains RED under ordinary
+   discovery: Vite bundles that dependency into the late optimized management entry.
+5. Moving the binding to its own late-safe package subpath remains RED. The binding must be exported
+   by and evaluated through the already-live `provider` entry.
+6. A Provider-entry binding plus provider-free lazy view is GREEN in a fresh packed Chromium
+   prototype: command listing, set, displaced old chord, new chord exact-once, reset, temporary chord
+   disablement and restored default exact-once all pass without reload or context error.
+
+The GREEN prototype is the architecture authority. A package name, optimized entry label or source
+text location alone is not runtime identity evidence.
+
+### Frozen public API and source graph
+
+The existing `provider` entry adds exactly this hook and type-visible return contract:
+
+```ts
+export function useWorkbenchKeybindingManagementBinding(): WorkbenchKeybindingManagementSettingsViewProps;
+```
+
+The focused Settings leaf exports exactly this provider-free view contract:
+
+```ts
+export interface WorkbenchKeybindingManagementSettingsViewProps {
+  readonly editingDisabledReason?: string | undefined;
+  readonly entries: readonly KeybindingManagementEntry[];
+  readonly overrideCount: number;
+  readonly platform: WorkbenchShortcutPlatform;
+  readonly resetKeybinding: (commandId: string) => void;
+  readonly setKeybinding: (commandId: string, key: string | undefined) => void;
+}
+
+export function WorkbenchKeybindingManagementSettingsView(
+  props: WorkbenchKeybindingManagementSettingsViewProps,
+): JSX.Element;
+```
+
+`packages/shell-react/package.json` maps:
+
+```json
+{
+  "./keybinding-management-settings": "./src/keybinding-management-settings.ts"
+}
+```
+
+The focused leaf re-exports only the View and its props type from
+`management/keybinding-settings-view.tsx`. That View renders the existing
+`KeybindingManagementPanel` and maps `overrideCount`, `resetKeybinding` and `setKeybinding` to the
+existing panel presentation. Its runtime graph has no import from `shell/provider`, the provider
+public subpath, `useWorkbench`, `WorkbenchContext`, `createContext`, registry construction,
+persistence or dispatch.
+
+The existing `useKeybindingManagementModel` remains the single projection, subscription, set/reset
+and summary-data owner, but accepts the already-resolved `WorkbenchContextValue` as its internal
+input instead of importing or calling `useWorkbench`. The `provider` entry calls it from the new
+public binding hook after resolving the canonical live `useWorkbench()` value. A type-only import
+back to the Provider contract is allowed because it is erased from the late runtime graph.
+
+The existing broad-root `WorkbenchKeybindingManagementSettings()` synchronously composes the new
+binding hook and View. It retains its current zero-prop signature and visible behavior. The focused
+leaf does not re-export that provider-bound wrapper, and root/focused symbol identity is no longer an
+acceptance criterion.
+
+```text
+initial focused provider entry
+  -> WorkbenchProvider / one WorkbenchContext
+  -> useWorkbenchKeybindingManagementBinding
+       -> existing keybinding management model
+       -> live Provider entries, overrides, platform and set/reset operations
+
+literal-lazy local module
+  -> focused keybinding-management-settings leaf
+       -> provider-free WorkbenchKeybindingManagementSettingsView(props)
+       -> existing KeybindingManagementPanel
+```
+
+Do not add a second binding subpath. It would be independently optimized and recreate the foreign
+Context boundary proven by the RED prototype.
+
+### Packed and browser validation
+
+The packed build/JSDOM consumer imports the Provider binding hook from `/provider` and the View from
+the new focused leaf, mounts them beneath one Provider and proves command listing, set, displaced old
+shortcut, new shortcut exact-once, Settings-only remount, reset/default restoration and cleanup. It
+also keeps the existing broad-root zero-prop component type/runtime compatibility proof without
+requiring root/focused component identity.
+
+Extend `pnpm check:packed-shell-react-context` with the material browser case. The initial application
+imports only Provider, command-host, host-shell and the binding hook from `/provider`. Its declared
+literal lazy local module imports only the focused View. Before activation, browser request,
+evaluation and mount markers for that module are zero while boot and main-frame navigation are one.
+After activation, request time follows the click and request/evaluation/mount are each exactly one.
+
+After shortcut capture and after reset, the fixture clicks a dedicated focusable dispatch target
+outside management, asserts it is `document.activeElement`, asserts no element has
+`data-workbench-shortcut-capture-recording="true"`, and waits one React effect turn before dispatching
+runtime chords. This prevents the capture listener cleanup race from turning the next chord into a
+false management edit.
+
+The browser proves:
+
+- the live Provider command appears in the lazy View;
+- setting `Ctrl+Shift+F10` updates the visible binding;
+- displaced `Ctrl+Shift+F11` does not dispatch;
+- `Ctrl+Shift+F10` dispatches the focus-mode command exactly once;
+- reset disables `Ctrl+Shift+F10` and restores `Ctrl+Shift+F11` exact-once;
+- boot and main-frame navigation remain one;
+- there is no Provider/context implementation in the actually loaded lazy View graph;
+- no page error, unexpected console message, optimizer reload, timeout or cleanup failure occurs.
+
+The full four-case runner remains the final browser gate. During development select only
+`WBK_PACKED_CONTEXT_CASE=provider-command-host-host-shell`.
+
+### Ordered implementation
+
+1. Preserve the exact literal-lazy RED evidence and the three discarded Context/binding-owner
+   prototypes as design evidence; do not carry their source into the candidate.
+2. Refactor the internal management model to accept an already-resolved `WorkbenchContextValue` and
+   remove its runtime Provider import without changing its mechanics or returned data.
+3. Add `useWorkbenchKeybindingManagementBinding` directly to the existing Provider entry. Do not add
+   a separate binding subpath, Provider prop or second subscription/model owner.
+4. Add the provider-free View, its exact props interface and the focused leaf/export mapping.
+5. Recompose the existing broad-root zero-prop component from the binding hook and View and preserve
+   its current behavior.
+6. Add focused type/export/source-graph checks proving the leaf target, Provider hook presence,
+   provider-free lazy graph and absence of a second Context.
+7. Extend focused unit coverage for binding projection, set/reset, summary, View rendering and root
+   compatibility without duplicating management mechanics.
+8. Replace the retained packed JSDOM draft with binding-plus-View composition and the exact runtime
+   interaction sequence.
+9. Replace the retained browser draft with the literal-lazy provider-free View, focusable dispatch
+   target, timing markers, runtime assertions and loaded-graph context exclusion.
+10. Update only neutral public capability documentation. Do not add product-specific composition.
+11. Run only affected type/unit/export/JSDOM checks and the named focused browser case until green,
+    then freeze one atomic candidate.
+12. Route the exact candidate through producer-distinct review, batch findings into at most one
+    successor, and run final `validate:fast`, the full packed browser runner, commit safety and diff
+    checks once on the final SHA.
+
+### Compatibility, scope and non-scope
+
+Existing root, provider, command-host, host-shell and shell imports remain compatible. The new hook
+and View are additive. Generic keybinding projection, persistence, capture, conflict resolution,
+platform normalization, command registration and runtime dispatch remain with their current owners.
+
+In scope:
+
+- one Provider-entry binding hook over the existing model;
+- one provider-free props-driven View and focused export;
+- internal model input refactor needed to remove the late Provider dependency;
+- root compatibility composition;
+- focused type/unit, packed JSDOM and literal-lazy Chromium evidence;
+- neutral public capability documentation.
+
+Not in scope:
+
+- another package or binding subpath;
+- another Context, raw Context export, Context extraction, global/symbol singleton or Provider prop;
+- alias, dedupe, optimizer include/exclude, preload, source/workspace path or opaque lazy specifier;
+- new management mechanics, panel, registry, storage, persistence format or shortcut dispatcher;
+- product policy, host-specific adapter, Electron/native work, release, tag or publish.
+
+### Acceptance and done criteria
+
+Source review must reject the candidate if the focused View reaches Provider/context code at runtime,
+the binding is not exported from the already-live Provider entry, the internal model is copied, the
+root wrapper changes behavior, capture cleanup is hidden by a timeout-only assertion, or any forbidden
+optimizer/runtime workaround appears.
+
+`DONE` requires one exact atomic candidate, producer-distinct `PASS` with no unresolved P0/P1/P2,
+focused checks green before freeze, final `validate:fast`, full
+`check:packed-shell-react-context`, commit-safety and diff checks green on the final SHA, merge to
+`develop`, remote topic deletion, Issue #414/#405/#411 closure, and exact evidence recorded here.
+Release, npm publication and downstream cohort consumption remain separate approval gates.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
