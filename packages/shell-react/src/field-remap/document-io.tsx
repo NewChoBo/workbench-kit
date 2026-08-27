@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type JSX } from 'react';
+import { useEffect, useId, useMemo, useRef, useState, type FormEvent, type JSX } from 'react';
 import { Modal } from '@workbench-kit/react/modal';
 import { Button, TextArea } from '@workbench-kit/react/primitives';
 import { WorkbenchModalPortal } from '@workbench-kit/react/workbench/modal-portal';
@@ -68,6 +68,10 @@ export function FieldRemapDocumentIo({
   const [draft, setDraft] = useState('');
   const [importError, setImportError] = useState<string | null>(null);
   const [status, setStatus] = useState<DocumentIoStatus | null>(null);
+  const instanceId = useId();
+  const exportTextId = `field-remap-document-export-text-${instanceId}`;
+  const importTextId = `field-remap-document-import-text-${instanceId}`;
+  const importErrorId = `field-remap-document-import-error-${instanceId}`;
   const exportTextareaRef = useRef<HTMLTextAreaElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -201,15 +205,12 @@ export function FieldRemapDocumentIo({
             <p className="workbench-field-remap-document-export__description">
               {labels.exportDocumentDescription}
             </p>
-            <label
-              className="workbench-field-remap-document-export__label"
-              htmlFor="field-remap-document-export-text"
-            >
+            <label className="workbench-field-remap-document-export__label" htmlFor={exportTextId}>
               {labels.exportDocumentLabel}
             </label>
             <TextArea
               ref={exportTextareaRef}
-              id="field-remap-document-export-text"
+              id={exportTextId}
               controlWidth="full"
               data-testid="field-remap-document-export-text"
               monospace
@@ -262,16 +263,13 @@ export function FieldRemapDocumentIo({
             <p className="workbench-field-remap-document-import__description">
               {labels.importDocumentDescription}
             </p>
-            <label
-              className="workbench-field-remap-document-import__label"
-              htmlFor="field-remap-document-import-text"
-            >
+            <label className="workbench-field-remap-document-import__label" htmlFor={importTextId}>
               {labels.importDocumentLabel}
             </label>
             <TextArea
               ref={textareaRef}
-              id="field-remap-document-import-text"
-              aria-describedby={importError ? 'field-remap-document-import-error' : undefined}
+              id={importTextId}
+              aria-describedby={importError ? importErrorId : undefined}
               aria-invalid={importError ? true : undefined}
               controlWidth="full"
               data-testid="field-remap-document-import-text"
@@ -286,7 +284,7 @@ export function FieldRemapDocumentIo({
             />
             {importError ? (
               <p
-                id="field-remap-document-import-error"
+                id={importErrorId}
                 className="workbench-field-remap-document-import__error"
                 role="alert"
               >

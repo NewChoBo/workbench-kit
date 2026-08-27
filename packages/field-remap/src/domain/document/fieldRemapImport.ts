@@ -70,14 +70,13 @@ function fail(
   throw new FieldRemapImportAdmissionError(code, path);
 }
 
-function reflectOwnData(
-  value: object,
-  path: string,
-): {
+type ReflectedOwnData = {
   readonly keys: readonly PropertyKey[];
   readonly descriptors: PropertyDescriptorMap;
   readonly prototype: object | null;
-} {
+};
+
+function reflectOwnData(value: object, path: string): ReflectedOwnData {
   try {
     return {
       keys: Reflect.ownKeys(value),
@@ -93,6 +92,7 @@ function strictPortableSnapshot(
   value: unknown,
   path: string,
   ancestors: Set<object> = new Set(),
+  observed?: { readonly array: boolean; readonly reflected: ReflectedOwnData },
 ): unknown {
   if (value === null || typeof value === 'string' || typeof value === 'boolean') {
     return value;
@@ -107,15 +107,21 @@ function strictPortableSnapshot(
     return fail('invalid-document', path);
   }
 
-  let array = false;
-  try {
-    array = Array.isArray(value);
-  } catch {
-    return fail('invalid-document', path);
+  let array: boolean;
+  let reflected: ReflectedOwnData;
+  if (observed) {
+    array = observed.array;
+    reflected = observed.reflected;
+  } else {
+    try {
+      array = Array.isArray(value);
+    } catch {
+      return fail('invalid-document', path);
+    }
+    reflected = reflectOwnData(value, path);
   }
 
   ancestors.add(value);
-  const reflected = reflectOwnData(value, path);
 
   if (array) {
     if (reflected.prototype !== Array.prototype) {
@@ -194,11 +200,14 @@ function strictPortableSnapshot(
   return Object.freeze(clone);
 }
 
-function strictTopLevelRecord(value: unknown, path: string): PropertyDescriptorMap {
+function strictTopLevelRecord(
+  value: unknown,
+  path: string,
+): { readonly value: object; readonly reflected: ReflectedOwnData } {
   if (value === null || typeof value !== 'object') {
     return fail('invalid-document', path);
   }
-  let array = false;
+  let array: boolean;
   try {
     array = Array.isArray(value);
   } catch {
@@ -211,7 +220,7 @@ function strictTopLevelRecord(value: unknown, path: string): PropertyDescriptorM
   if (reflected.prototype !== Object.prototype && reflected.prototype !== null) {
     return fail('invalid-document', path);
   }
-  return reflected.descriptors;
+  return { value, reflected };
 }
 
 function isRecord(value: unknown): value is StrictRecord {
@@ -409,10 +418,11 @@ function parseOperator(value: unknown, path: string): MappingOperator {
 
 function parseStrictDocument(raw: unknown): FieldRemapDocument {
   const topLevel = strictTopLevelRecord(raw, '$');
-  if (!topLevel.version || !('value' in topLevel.version)) {
+  const versionDescriptor = topLevel.reflected.descriptors.version;
+  if (!versionDescriptor || !('value' in versionDescriptor)) {
     return fail('invalid-document', '$.version');
   }
-  const version = topLevel.version.value;
+  const version = versionDescriptor.value;
   if (version !== FIELD_REMAP_DOCUMENT_VERSION) {
     if (
       version === null ||
@@ -424,7 +434,10 @@ function parseStrictDocument(raw: unknown): FieldRemapDocument {
     }
     return fail('invalid-document', '$.version');
   }
-  const snapshot = strictPortableSnapshot(raw, '$');
+  const snapshot = strictPortableSnapshot(topLevel.value, '$', new Set(), {
+    array: false,
+    reflected: topLevel.reflected,
+  });
   if (!isRecord(snapshot)) {
     return fail('invalid-document', '$');
   }
@@ -628,7 +641,7 @@ function assertCompatibility(
     const source = sources.get(edge.sourceFieldId)!;
     const target = targets.get(edge.targetSlotId)!;
     const activeChain = edge.itemEdges && edge.itemEdges.length > 0 ? [] : edge.transformIds;
-    let compatible = false;
+    let compatible: boolean;
     try {
       compatible = arePortsCompatible({
         sourceType: source.dataType,
@@ -647,7 +660,7 @@ function assertCompatibility(
   for (const { operator, path } of operators) {
     if (operator.kind === 'combine') {
       const target = targets.get(operator.outputSlotId)!;
-      let compatible = false;
+      let compatible: boolean;
       try {
         compatible = arePortsCompatible({
           sourceType: 'object',
@@ -664,7 +677,7 @@ function assertCompatibility(
       continue;
     }
     const source = sources.get(operator.inputFieldId)!;
-    let compatible = false;
+    let compatible: boolean;
     try {
       compatible = arePortsCompatible({
         sourceType: source.dataType,

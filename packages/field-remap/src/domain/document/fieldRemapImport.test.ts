@@ -233,6 +233,30 @@ describe('Field Remap strict import admission', () => {
     expect(getterCalls).toBe(0);
   });
 
+  it('observes a mutable top-level proxy only once before freezing its snapshot', () => {
+    let versionDescriptorReads = 0;
+    const raw = new Proxy(
+      { version: 2, edges: [] },
+      {
+        getOwnPropertyDescriptor(target, key) {
+          if (key === 'version') {
+            versionDescriptorReads += 1;
+            return {
+              configurable: true,
+              enumerable: true,
+              value: versionDescriptorReads === 1 ? 2 : 3,
+              writable: true,
+            };
+          }
+          return Reflect.getOwnPropertyDescriptor(target, key);
+        },
+      },
+    );
+
+    expect(preflightFieldRemapImport(raw, createContext())).toEqual({ version: 2, edges: [] });
+    expect(versionDescriptorReads).toBe(1);
+  });
+
   it('does not execute coercion hooks on an invalid version value', () => {
     const toString = vi.fn(() => '3');
     expectFailure(
