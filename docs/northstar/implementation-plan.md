@@ -2265,6 +2265,13 @@ shell is already live. That draft remains unaccepted and has no frozen source ca
 cause tracked by Issue #411 and the public leaf/export/test work must be implemented, frozen, reviewed
 and validated together on one exact atomic Issue #405 candidate SHA.
 
+Focused follow-up evidence shows the canonical package self-subpath removes the foreign Provider
+context. The remaining failure is a fixture mismatch: constructing the management module URL at
+runtime and hiding it behind `/* @vite-ignore */` prevents Vite from crawling the declared local lazy
+module and admitting its public bare package dependencies, causes late optimizer hash regeneration,
+and leaves the import pending without a page navigation or page error. That optimizer-opaque loader
+is not the target host contract and is not a source architecture failure.
+
 ### Current gap and ownership boundary
 
 At the exact baseline, `WorkbenchKeybindingManagementSettings` already exists in
@@ -2396,22 +2403,37 @@ source resolution, that:
 That build/JSDOM fixture proves the export map, packed resolution and baseline component interaction,
 but it is not the material browser context-identity authority. Add a dedicated public-neutral external
 consumer whose initial application imports and mounts only the focused provider, command-host and
-host-shell entries. After the page and Vite **development optimizer** settle, it must dynamically
-import a separate lazy module for `/keybinding-management-settings` and mount that leaf beneath the
-already-live Provider. The runner must detect and explicitly handle every optimizer reload so a reload
-cannot replace the live Provider or turn a context failure into a false PASS. Headless Chromium via
-Playwright must then prove no context error and exact-once old/new/reset runtime dispatch.
+host-shell entries while declaring the management boundary as a statically analyzable literal lazy
+edge:
+
+```js
+import('./management.jsx');
+```
+
+An equivalent source-declared lazy callback is acceptable. During startup, Vite may crawl that local
+lazy module and admit or prebundle its public bare package dependencies. Static optimizer admission
+of those bare dependencies is not browser or runtime preload. Before explicit activation, the browser
+must not request the management module, the module must not evaluate, and the component must not mount
+or render. On click, the declared lazy edge must request, evaluate and mount the management module
+exactly once beneath the already-live Provider. The runner must detect every optimizer reload so a
+reload cannot replace the live Provider or turn a context failure into a false PASS. Headless Chromium
+via Playwright must then prove no context error and exact-once old/new/reset runtime dispatch.
+
+The fixture must not construct the module URL, use a variable or runtime-unknown specifier, add
+`/* @vite-ignore */`, or otherwise hide the declared management edge from the optimizer. It also must
+not add the management Workbench entry to `optimizeDeps.include`; ordinary static discovery owns its
+admission.
 
 The consumer installs only freshly packed Workbench tarballs. Its external toolchain is frozen to the
 repository lockfile and current resolved package-manager, Vite, `@vitejs/plugin-react`, React and
 ReactDOM versions; it performs no floating install. It uses no `resolve.alias`, `resolve.dedupe`,
 workspace link or source-path workaround.
 
-After late activation, inspect Vite `_metadata.json` and optimized outputs. The initial canonical
-Provider entry must remain the only owner of `WorkbenchContext`; the late management output must
-reference it and contain neither a second `createContext` nor another Provider body. If the package
-self-subpath is instead inlined as a second Provider graph, discard the candidate and return
-`DESIGN_DECISION_REQUIRED` with the exact artifact graph.
+After startup admission and again after activation, inspect Vite `_metadata.json` and optimized
+outputs. The canonical Provider entry must remain the only owner of `WorkbenchContext`; the
+management output must reference it and contain neither a second `createContext` nor another Provider
+body. If the package self-subpath is instead inlined as a second Provider graph, discard the candidate
+and return `DESIGN_DECISION_REQUIRED` with the exact artifact graph.
 
 The dedicated runner is exactly `pnpm check:packed-shell-react-context`. It owns an ephemeral external
 consumer directory, loopback Vite dev server, browser context and cleanup. Any Vite startup/readiness
@@ -2421,10 +2443,12 @@ server or accept a production build as a substitute for the Vite DEV optimizer p
 
 ### Ordered implementation tasks
 
-1. Preserve the exact baseline evidence: four initial focused Provider combinations green, followed
-   by the separate late management entry RED. Record request ordering, boot count, navigations,
-   page-error stack, Vite `_metadata.json`, and optimized outputs containing `WorkbenchContext` or the
-   missing-Provider error.
+1. Preserve the exact evidence sequence: four initial focused Provider combinations green; the
+   relative Provider import producing a foreign-context RED; the canonical self-subpath removing that
+   error; and the constructed-URL + `/* @vite-ignore */` fixture causing optimizer hash regeneration
+   and a pending import with no navigation or page error. Record boot count, navigations, request and
+   activation timing, evaluation/mount markers, Vite `_metadata.json`, and optimized outputs
+   containing `WorkbenchContext`, `createContext`, a Provider body or the missing-Provider error.
 2. Change only the value/type Provider import in
    `packages/shell-react/src/management/use-keybinding-management.ts` to the canonical
    `@workbench-kit/shell-react/provider` package self-subpath.
@@ -2441,15 +2465,20 @@ server or accept a production build as a substitute for the Vite DEV optimizer p
    and command host.
 7. Extend the existing packed Vite build/JSDOM consumer with the four-entry one-Provider fixture and
    exact old/new/reset runtime dispatch assertions.
-8. Extend the `WB-NS-080C0` `pnpm check:packed-shell-react-context` external consumer with the
-   management phase. After the initial three-entry Provider graph and optimizer settle,
-   dynamically import the separate management leaf module beneath the live Provider. Preserve its
-   repository-locked toolchain, fresh-tarball inputs, reload handling, no-alias/no-dedupe rule and
-   fail-closed server/page/console/timeout/cleanup behavior.
-9. Assert from post-activation optimizer metadata and outputs that one canonical Provider owns
-   `WorkbenchContext`, while the late management output references it and contains no second
-   `createContext` or Provider body. If this fails, return `DESIGN_DECISION_REQUIRED`; do not add an
-   alias, dedupe, exclusion, preload, source path, global singleton or Context extraction.
+8. Extend the `WB-NS-080C0` `pnpm check:packed-shell-react-context` external consumer with a literal
+   `import('./management.jsx')` or equivalent statically declared management lazy edge. Allow Vite to
+   crawl the local lazy module and admit/prebundle its public bare package dependencies during startup,
+   but assert before click that its browser request, evaluation marker and mount marker are all zero
+   while boot count and main-frame navigations are one. After click, assert request time follows
+   activation and request, evaluation and mount each occur exactly once while boot/navigation remain
+   one. Preserve the repository-locked toolchain, fresh-tarball inputs and fail-closed
+   server/page/console/timeout/cleanup behavior.
+9. Assert from startup and post-activation optimizer metadata and outputs that one canonical Provider
+   owns `WorkbenchContext`, while the management output references it and contains no second
+   `createContext` or Provider body. If this fails, return `DESIGN_DECISION_REQUIRED`. Do not add an
+   alias, dedupe, exclusion, management `optimizeDeps.include`, browser/runtime preload before click,
+   source path, global singleton or Context extraction; do not construct or hide the module specifier
+   with a variable, runtime URL or `/* @vite-ignore */`.
 10. Update only neutral public entrypoint documentation needed to list the focused leaf. Do not add
     host-specific composition guidance or a migration requirement.
 11. Before candidate freeze, repeat only the affected import-boundary unit/type tests, focused
@@ -2488,7 +2517,13 @@ Non-scope:
 - a provider-free management component;
 - command registration, execution policy, extension routing or OS-global shortcuts;
 - new dependencies, package family, version change, publish-order change or bundle budget;
-- consumer alias, dedupe, optimizer exclusion, management preload, workspace link or source path;
+- consumer alias, dedupe, optimizer exclusion, management `optimizeDeps.include`, workspace link or
+  source path;
+- management browser/runtime preload, evaluation or mount before activation; Vite may statically
+  crawl the local lazy module and admit/prebundle its public bare package dependencies, which is not
+  runtime preload;
+- arbitrary runtime-unknown plugin/module specifiers, remote module resolution or generic dynamic-
+  import infrastructure;
 - Storybook redesign, Electron, native IPC, release, tag or publish work.
 
 ### Focused development and final validation
@@ -2517,11 +2552,14 @@ its nested `validate:static` or `check:packed-consumer` lanes separately. Its pu
 prove the package export has the exact leaf mapping and root compatibility remains, and its packed
 validation must use the packed tarball and Vite build/JSDOM fixture.
 `check:packed-shell-react-context` is the material browser gate and must exercise the packed external
-consumer through the locked Vite DEV optimizer: mount the initial three-entry shell, wait for optimizer
-settle, lazily import the fourth management entry beneath the still-live Provider, reject optimizer
-reload false passes, prove optimizer artifacts retain one canonical Provider owner with no second
-`createContext`/Provider body, and use actual Chromium keyboard events for new, displaced and reset
-chords. The general repository UI lane is not required for this packet
+consumer through the locked Vite DEV optimizer: mount the initial three-entry shell, wait for Vite to
+crawl the literal local management edge and admit/prebundle its public bare package dependencies,
+prove no management browser request, evaluation or mount occurs before click, invoke that edge beneath
+the still-live Provider, and prove request/evaluation/mount each occur exactly once after activation.
+It must reject optimizer-reload
+false passes, retain one boot and navigation, prove optimizer artifacts retain one canonical Provider
+owner with no second `createContext`/Provider body, and use actual Chromium keyboard events for new,
+displaced and reset chords. The general repository UI lane is not required for this packet
 because it does not exercise that packed external context-identity boundary. Electron is omitted
 because no main, preload, BrowserWindow, native IPC or package-runtime boundary changes.
 
@@ -2544,9 +2582,13 @@ Done requires:
 - one existing command proves exact set, displaced-old-chord, reset/default and cleanup parity through
   the real provider/model/command-host path;
 - packed Vite build/JSDOM and the dedicated locked-toolchain, no-alias/no-dedupe Vite DEV optimizer +
-  headless-Chromium consumer use only freshly packed public subpaths; the latter lazily adds the fourth
-  entry beneath the live three-entry Provider, rejects optimizer-reload false passes, and proves one
-  canonical Provider owner with no second `createContext` or Provider body in the late output;
+  headless-Chromium consumer use only freshly packed public subpaths; the latter declares a literal
+  local lazy edge that Vite may crawl while admitting/prebundling its public bare package dependencies,
+  proves zero browser request/evaluation/mount before click, then proves each exactly once after
+  activation beneath the live three-entry Provider;
+- browser request time follows activation, boot and navigation remain one, optimizer reload false
+  passes are rejected, and artifacts prove one canonical Provider owner with no second `createContext`
+  or Provider body;
 - no generic keybinding mechanic, public prop, persistence format, dependency, package budget or
   native/release boundary changes;
 - Issue #411 closes through the same atomic Issue #405 candidate/PR rather than a prerequisite merge;
@@ -2561,8 +2603,11 @@ proves only compile-time/build/JSDOM import without the dedicated DEV-optimizer 
 old/new/reset path; allows optimizer reload to replace the live Provider or produce a false PASS; uses
 floating external tool versions, stale/non-packed Workbench inputs, alias/dedupe/workspace links or
 private deep imports; tolerates page/console/timeout failures;
-adds an alias, dedupe, optimizer exclusion, management preload, source path, global singleton,
-Context extraction or second Context; splits Issue #411 into a transient prerequisite candidate that
+adds an alias, dedupe, optimizer exclusion, management `optimizeDeps.include`, browser/runtime preload
+before activation, source path, global singleton, Context extraction or second Context; uses a
+constructed URL, variable/unknown specifier, `/* @vite-ignore */` or another optimizer-opaque module
+path; treats server-side static optimizer admission as runtime preload; expands into arbitrary
+runtime-unknown plugin/module loading; splits Issue #411 into a transient prerequisite candidate that
 cannot run the public late-entry gate on its own SHA; adds unrelated public exports, dependencies or
 mechanics; or claims release, publish, Electron or native completion.
 
