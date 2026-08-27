@@ -14,6 +14,7 @@ import {
 
 import { FieldRemapDemo } from './FieldRemapDemo';
 import { FieldRemapKeepAliveFixture } from './storybook/fixtures/FieldRemapKeepAliveFixture';
+import { FieldRemapOperatorEmbedFixture } from './storybook/fixtures/FieldRemapOperatorEmbedFixture';
 import { FieldRemapPropertyStackFixture } from './storybook/fixtures/FieldRemapPropertyStackFixture';
 
 const meta = {
@@ -114,6 +115,16 @@ async function findVisibleFlowHandle(
   selector: string,
 ): Promise<HTMLElement> {
   return findVisibleFlowElement<HTMLElement>(canvasElement, selector);
+}
+
+function readOperatorEmbedState(element: HTMLElement): {
+  readonly operatorCommits: number;
+  readonly operators: readonly { readonly id: string; readonly kind: string }[];
+} {
+  return JSON.parse(element.textContent ?? '{}') as {
+    readonly operatorCommits: number;
+    readonly operators: readonly { readonly id: string; readonly kind: string }[];
+  };
 }
 
 async function openPropertyOptions(
@@ -1299,8 +1310,24 @@ export const KeepAliveZeroSize: Story = {
       await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
       const initialTransform = viewport!.style.transform;
       await userEvent.click(zoomIn!);
-      await waitFor(() => expect(viewport!.style.transform).not.toBe(initialTransform));
-      const preservedTransform = viewport!.style.transform;
+      let settledTransform = viewport!.style.transform;
+      let stableTransformFrames = 0;
+      await waitFor(
+        async () => {
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          const currentTransform = viewport!.style.transform;
+          expect(currentTransform).not.toBe(initialTransform);
+          if (currentTransform === settledTransform) {
+            stableTransformFrames += 1;
+          } else {
+            settledTransform = currentTransform;
+            stableTransformFrames = 0;
+          }
+          expect(stableTransformFrames).toBeGreaterThanOrEqual(6);
+        },
+        { interval: 16, timeout: 3_000 },
+      );
+      const preservedTransform = settledTransform;
 
       const observedViewportTransforms: string[] = [];
       viewportObserver = new MutationObserver((records) => {
@@ -1429,6 +1456,82 @@ export const EmpDept: Story = {
 export const ProductCatalog: Story = {
   name: 'T_PRODUCT → T_CATALOG_ITEM',
   args: { sampleId: 't-product-catalog' },
+};
+
+export const OperatorEmbedAuthoring: Story = {
+  name: 'Operator embed authoring',
+  args: { sampleId: 'nm-combine-split' },
+  render: () => <FieldRemapOperatorEmbedFixture mode="author" />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-operator-embed',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    const state = canvas.getByTestId('field-remap-operator-embed-state');
+    const addCombine = canvas.getByTestId('field-remap-add-combine');
+    const addSplit = canvas.getByTestId('field-remap-add-split');
+
+    await expect(addCombine).toBeVisible();
+    await expect(addCombine).toHaveAccessibleName('Add combine');
+    await expect(addSplit).toBeVisible();
+    await expect(addSplit).toHaveAccessibleName('Add split');
+    expect(readOperatorEmbedState(state)).toEqual({ operatorCommits: 0, operators: [] });
+
+    await userEvent.click(addCombine);
+    await waitFor(() => expect(readOperatorEmbedState(state).operatorCommits).toBe(1));
+    const committed = readOperatorEmbedState(state).operators;
+    expect(committed).toHaveLength(1);
+    expect(committed[0]).toMatchObject({ kind: 'combine' });
+    const createdOperator = await findVisibleFlowElement<HTMLElement>(
+      canvasElement,
+      '.react-flow__node[data-id^="op:op-combine-"]',
+    );
+    await expect(canvas.getByTestId('field-remap-detail-operator-id')).toHaveTextContent(
+      'op-combine-',
+    );
+
+    await userEvent.dblClick(createdOperator);
+    await expect(canvas.getByTestId('field-remap-detail-operator-id')).toBeVisible();
+    await userEvent.click(canvas.getByTestId('field-remap-detail-delete-operator'));
+    await waitFor(() => expect(readOperatorEmbedState(state).operatorCommits).toBe(2));
+    expect(readOperatorEmbedState(state).operators).toEqual([]);
+    await waitFor(() =>
+      expect(
+        canvasElement.querySelector('.react-flow__node[data-id^="op:op-combine-"]'),
+      ).toBeNull(),
+    );
+  },
+};
+
+export const OperatorEmbedInspectOnly: Story = {
+  name: 'Operator embed inspect only',
+  args: { sampleId: 'nm-combine-split' },
+  render: () => <FieldRemapOperatorEmbedFixture mode="inspect" />,
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-operator-embed',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.queryByTestId('field-remap-operator-palette')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-add-combine')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-add-split')).toBeNull();
+    await expect(canvas.getByTestId('field-remap-detail-operator-id')).toHaveTextContent(
+      'story-inspect-combine',
+    );
+    await expect(canvas.queryByTestId('field-remap-detail-delete-operator')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-operator-add-input')).toBeNull();
+    await expect(canvas.queryByTestId('field-remap-operator-bind-input')).toBeNull();
+    await expect(
+      await findVisibleFlowElement<HTMLElement>(
+        canvasElement,
+        '.react-flow__node[data-id="op:story-inspect-combine"]',
+      ),
+    ).toBeVisible();
+  },
 };
 
 export const CombineSplit: Story = {
