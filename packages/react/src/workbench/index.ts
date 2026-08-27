@@ -599,7 +599,11 @@ export type {
   WorkbenchViewEditorProps,
 } from './shell/WorkbenchViewEditor';
 export { WorkbenchEditorTabs } from './editor/WorkbenchEditorTabs';
-export type { WorkbenchEditorTabsProps } from './editor/WorkbenchEditorTabs';
+export type {
+  WorkbenchEditorTabCommandFocusDisposition,
+  WorkbenchEditorTabCommandFocusEvent,
+  WorkbenchEditorTabsProps,
+} from './editor/WorkbenchEditorTabs';
 export {
   createWorkbenchStandaloneEditorTabCommandContext,
   createWorkbenchStandaloneEditorTabContextMenuItems,
