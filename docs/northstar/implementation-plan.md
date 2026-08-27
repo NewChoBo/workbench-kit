@@ -6,8 +6,8 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@cfd752355c00c6b59018a220f2ce22c561a0e984`.
-- **Reviewed documentation-only predecessor:** `develop@bc3cbe2f14850e22b11e6558772a6f39bec0663b` / PR #384; its diff from the preceding source-bearing `develop@04e402f54fbe05e7fab2cbf381107ded448958f7` changes only `docs/northstar/implementation-plan.md` and carries no source/API change.
+- **Latest source-bearing integration baseline:** `develop@bc6b7dbbbe575b82b4af811f5890e283e3cac27b`.
+- **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
@@ -60,7 +60,7 @@ WB-NS-040A extension uninstall compatibility + dependency safety [DONE; independ
 Document + state ownership foundations
         ├─ WB-NS-030 schema/form/inspector model
         │       ├─ WB-NS-030A opt-in invalid-submit focus recovery [DONE; bounded current SchemaForm compatibility]
-        │       └─ WB-NS-030B focused public SchemaForm subpath [READY_FOR_IMPLEMENTATION]
+        │       └─ WB-NS-030B focused public SchemaForm subpath [DONE]
         ├─ WB-NS-010 graph document/controller split
         └─ extension capability/trust contracts
 
@@ -2244,15 +2244,23 @@ parent architecture; or claims Electron, release or publish completion.
 
 ## WB-NS-030B — Focused public SchemaForm subpath
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** focused public consumability for the current `WorkbenchSchemaForm`; parent
   `WB-NS-030` remains `DESIGNING`
 - **Ownership:** `GENERIC_KIT`
 - **Exact source-bearing baseline:**
-  `develop@cfd752355c00c6b59018a220f2ce22c561a0e984`
-- **Current documentation baseline:**
-  `develop@af683d09582509234e4dbbf74eb8520a50cd7e4c`; the intervening diff from the source-bearing
-  baseline changes Northstar documentation only
+  `develop@bc6b7dbbbe575b82b4af811f5890e283e3cac27b`
+- **Reviewed READY packet baseline:**
+  `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388
+- **Integrated implementation:** PR #389 / reviewed candidate
+  `a3cc8dfdfb88bebebfeae59e7ff476e700769338` / merge
+  `bc6b7dbbbe575b82b4af811f5890e283e3cac27b`
+- **Completion evidence:** the exact candidate passed `pnpm validate:fast`, including its single
+  embedded static lane and 467 files / 2,666 tests, plus `pnpm validate:ui` with 15 Chromium suites
+  / 82 interactions and 8 tag-filtered skips. Three producer-distinct exact-candidate reviews
+  reported `PASS / P0 none / P1 none / P2 none`. Commit safety passed before commit and push; the
+  source topic branch was deleted locally and remotely after integration. Electron was not run
+  because no native boundary changed.
 - **Public owner:** `@workbench-kit/react/schema-form`
 - **Compatibility owner:** `@workbench-kit/react/workbench/settings`
 - **Native boundary:** none
@@ -2267,19 +2275,21 @@ This is an additive package-boundary and dependency-isolation slice. It preserve
 SchemaForm behavior, including every `WB-NS-030A` focus and accessibility guarantee, and does not
 finalize the parent packet's future `FormModel` or inspector architecture.
 
-### Revalidated current source facts
+### Integrated current source facts
 
-- `packages/react/package.json` exports `./workbench/settings` but has no `./schema-form` export or
-  classic-resolver `typesVersions` entry.
-- `packages/react/src/workbench/settings/index.ts` re-exports the complete current SchemaForm module
-  beside Settings modal/navigation, StructuredData and extension-settings APIs.
-- `packages/react/src/workbench/settings/SchemaForm.tsx` is the single implementation. Its runtime
-  closure uses React, primitive leaf modules, `cx` and the small `settingsCommit` context seam; it
-  does not import the aggregate Settings barrel.
-- `schema-form.css` is the single SchemaForm style source. `settings.css` currently imports that leaf
-  as part of the legacy Settings CSS aggregate, while `SchemaForm.tsx` does not yet import its leaf.
-- `@workbench-kit/react` already declares `sideEffects: ['**/*.css']`, so a co-located leaf import can
-  remain observable through packing and bundling.
+- `packages/react/package.json` exposes `./schema-form` at the existing `SchemaForm.tsx` module and
+  maps the exact non-wildcard `typesVersions` path for classic TypeScript resolution.
+- `packages/react/src/workbench/settings/index.ts` still re-exports the complete SchemaForm module
+  beside the legacy Settings surface, and the focused, Settings and workbench paths retain the same
+  seven runtime export identities.
+- `packages/react/src/workbench/settings/SchemaForm.tsx` remains the single implementation. It owns
+  the direct `./schema-form.css` leaf import and retains only React, primitive leaf modules, `cx` and
+  the small internal `settingsCommit` compatibility seam.
+- `schema-form.css` remains the single SchemaForm style source, while `settings.css` retains its
+  legacy aggregate import of that leaf.
+- `@workbench-kit/react` retains CSS-only side-effect metadata. Packed modern/classic type checks,
+  executed Vite/ESM identity, private-path rejection and the focused Settings-subtree allowlist
+  verify the public package boundary without claiming a native CommonJS runtime.
 
 ### Frozen module and ownership boundary
 
@@ -2480,6 +2490,9 @@ submit/cancel/immediate-commit behavior or any `WB-NS-030A` focus/ARIA semantic;
 evidence with manifest inspection alone; skips packed-tarball proof; expands the parent architecture;
 claims native CommonJS runtime support without a package-wide build contract; or claims consumer
 adoption, Electron, release or publication completion.
+
+The integrated source satisfies this bounded packet. The parent `WB-NS-030` architecture remains
+`DESIGNING`; package release, publication and consumer adoption remain separate claims.
 
 ## WB-NS-040 — Extension capability / trust / compatibility model
 
