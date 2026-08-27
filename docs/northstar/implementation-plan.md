@@ -101,7 +101,8 @@ Host adapter maturation / multi-host validation
 Backendless/performance + compatibility hardening
 
 WB-NS-060 backendless scenario + performance harness [DESIGNING]
-        └─ WB-NS-060A Field Remap deterministic reference workload [DONE]
+        ├─ WB-NS-060A Field Remap deterministic reference workload [DONE]
+        └─ WB-NS-060B SchemaForm deterministic validation-fan-out reference workloads [READY_FOR_IMPLEMENTATION]
 
 Command/keybinding management parity
         ↓
@@ -2836,6 +2837,374 @@ Done requires:
 - Are sequential and parallel invocations isolated, deeply frozen and structurally repeatable?
 - Did existing proportional assertions remain at least as strong without a new wall-clock budget?
 - Did packed/public exports remain unchanged, with no browser/Electron/release dependency introduced?
+
+### WB-NS-060B — SchemaForm deterministic validation-fan-out reference workloads
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** `target-architecture.md` §§ Target backendless test architecture, Target performance architecture
+- **Ownership:** `GENERIC_KIT / TEST_ARCHITECTURE`; the current `WorkbenchSchemaForm` helpers remain the normalization and validation owner
+- **Exact source/API baseline:** `develop@9d7d35261bb216a35fec4f16b4738906c1fcd8c1`
+- **Implementation boundary:** private `packages/react/test-support/schema-form-reference-workloads.ts`, one direct Node-environment `src/**/*.test.ts` consumer and packed-artifact verification
+- **Public API impact:** none; no component behavior, package export, dependency, version, publish-order or release change
+
+#### Goal and current hot path
+
+Create the second bounded child of `WB-NS-060` around the current generic SchemaForm's actual
+render-time validation fan-out. The parent remains `DESIGNING` for cross-surface scenario distribution,
+renderer/browser harnesses and standardized performance budgets.
+
+`WorkbenchSchemaForm` currently normalizes the complete field set and derives the complete error map
+whenever its resolved field/value inputs change. `getWorkbenchSchemaFormErrors` calls the real
+`normalizeWorkbenchSchemaFormValues` helper and then visits every field through its existing
+`validate(value, values, field)` callback contract. This callback is the only cost witness admitted by
+this packet: an exact callback count proves validation fan-out for the fixed workload, but does not
+measure total traversal, computational complexity, elapsed time or a latency budget.
+
+The implementation must call the real `normalizeWorkbenchSchemaFormValues` and
+`getWorkbenchSchemaFormErrors` helpers. It must not copy their loops, introduce a fake form model,
+extract a second component, add production instrumentation or finalize the future `FormModel`,
+`ValidationService`, field-schema registry or Inspector architecture owned by `WB-NS-030`.
+
+#### Private boundary and exact workload manifest
+
+The test-support module is physically outside `packages/react/src`, absent from every barrel and
+package export, and excluded by the current `files: ["src", ...]` allowlist. A direct
+Node-environment `src/workbench/settings/schemaFormReferenceWorkloads.test.ts` import keeps the
+private module in the existing React package typecheck and Vitest graph without adding a public test
+subpath or requiring jsdom, Storybook, a browser or Electron.
+
+The module owns exactly these deeply frozen definitions:
+
+| Workload ID                      | fields | checkbox | number | select | text | operations | tier      |
+| -------------------------------- | -----: | -------: | -----: | -----: | ---: | ---------: | --------- |
+| `schema-form.validation.small`   |      8 |        2 |      2 |      2 |    2 |          1 | `SMALL`   |
+| `schema-form.validation.typical` |    100 |       25 |     25 |     25 |   25 |          1 | `TYPICAL` |
+| `schema-form.validation.stress`  |    600 |      150 |    150 |    150 |  150 |          1 | `STRESS`  |
+
+The tier names classify only these synthetic fixture cardinalities. They do not claim observed user
+population, equal cost with another surface, a benchmark baseline or an acceptable production budget.
+
+For every zero-based index `i`, the field ID is the exact template-literal result `` `field.${i}` ``,
+the label is `` `Field ${i}` `` and the repeating type order is exactly `checkbox`, `number`,
+`select`, `text`. Every cardinality is divisible by four, so `field.{N - 1}` is always a text field
+and every type owns exactly `N / 4` entries. The complete formulas are frozen:
+
+- checkbox: `defaultValue: false` and raw `beforeValues[field.{i}]: false`;
+- number: `defaultValue: i`, `min: 0`, `step: 1` and `beforeValues[field.{i}]` equal to the
+  exact template-literal string `` `${i}` ``, which normalization must convert to the number `i`;
+- select: `defaultValue` and raw before-value `` `option.${i}.a` ``, with exactly two options
+  ``{ label: `Option A ${i}`, value: `option.${i}.a` }`` and
+  ``{ label: `Option B ${i}`, value: `option.${i}.b` }`` in that order;
+- text: `defaultValue` and raw before-value `` `value.${i}` ``.
+
+Every field has a validator and no field has `required` or `validationMessage`. All literals are
+public-safe and derived only from `i`; no random ID, timestamp, host detail, process state or
+environment discovery enters the fixture or record. The direct workload test must iterate over all N
+fields in every tier and assert every ID, label, type, default, raw before-value, normalized value,
+number constraint and ordered select option against these formulas.
+
+Each fixture owns one operation:
+
+```ts
+{
+  type: 'set-invalid-sentinel';
+  changedFieldId: `field.${N - 1}`;
+  value: '__schema-form-reference-invalid__';
+}
+```
+
+All fields have a workload-owned validator that calls an observer closure bound only by the module's
+internal fixture creator. The observer records the callback's actual `value`, `values` and third-arg
+`field.id`; it must never substitute fixture coordinates for those actual arguments. The exported
+fixture builder binds an inert invocation-local observer, while each runner call binds its own
+observation record. Only the last text field returns the exact error
+`SchemaForm reference value is invalid.` and only when its value equals the invalid sentinel. The
+other validators return `undefined`.
+
+The private module exposes only the manifest, a fresh fixture builder, a one-shot runner and their
+types/error contract, plus one narrow private test-only helper seam. It must not be imported by
+production source and none of these symbols is a package export.
+
+Its exact private API is:
+
+```ts
+export type SchemaFormReferenceWorkloadId =
+  | 'schema-form.validation.small'
+  | 'schema-form.validation.typical'
+  | 'schema-form.validation.stress';
+
+export type SchemaFormReferenceWorkloadTier = 'SMALL' | 'TYPICAL' | 'STRESS';
+
+export interface SchemaFormReferenceWorkloadDefinition {
+  readonly id: SchemaFormReferenceWorkloadId;
+  readonly tier: SchemaFormReferenceWorkloadTier;
+  readonly fieldCount: number;
+  readonly checkboxFieldCount: number;
+  readonly numberFieldCount: number;
+  readonly selectFieldCount: number;
+  readonly textFieldCount: number;
+  readonly operationCount: 1;
+}
+
+export interface SchemaFormReferenceOperation {
+  readonly type: 'set-invalid-sentinel';
+  readonly changedFieldId: string;
+  readonly value: '__schema-form-reference-invalid__';
+}
+
+export interface SchemaFormReferenceFixture {
+  readonly definition: SchemaFormReferenceWorkloadDefinition;
+  readonly fields: readonly WorkbenchSchemaFormField[];
+  readonly beforeValues: Readonly<WorkbenchSchemaFormValues>;
+  readonly operation: SchemaFormReferenceOperation;
+}
+
+export type SchemaFormReferenceWorkloadErrorCode = 'unknown-workload' | 'structural-mismatch';
+
+export class SchemaFormReferenceWorkloadError extends Error {
+  readonly code: SchemaFormReferenceWorkloadErrorCode;
+}
+
+export interface SchemaFormReferenceHelpers {
+  readonly normalize: typeof normalizeWorkbenchSchemaFormValues;
+  readonly getErrors: typeof getWorkbenchSchemaFormErrors;
+}
+
+export const SCHEMA_FORM_REFERENCE_WORKLOADS: readonly SchemaFormReferenceWorkloadDefinition[];
+
+export function buildSchemaFormReferenceFixture(
+  id: SchemaFormReferenceWorkloadId,
+): SchemaFormReferenceFixture;
+
+export function runSchemaFormReferenceWorkload(
+  id: SchemaFormReferenceWorkloadId,
+): SchemaFormReferenceStructuralRecord;
+
+export function runSchemaFormReferenceWorkloadWithHelpers(
+  id: SchemaFormReferenceWorkloadId,
+  helpers: SchemaFormReferenceHelpers,
+): SchemaFormReferenceStructuralRecord;
+```
+
+#### Exact fixture and structural record
+
+`buildSchemaFormReferenceFixture(id)` returns a fresh, deeply frozen field array, nested option data,
+before-values record and operation on every call. Validator functions are fresh per fixture and expose
+no mutable counter object. The exported builder and runner delegate to the same private fixture creator
+with their respective non-observing or runner-local closures. The normal runner always calls the
+private helper seam with the real `normalizeWorkbenchSchemaFormValues` and
+`getWorkbenchSchemaFormErrors` functions. `runSchemaFormReferenceWorkloadWithHelpers` exists only for
+direct failure-path tests outside the published package boundary; it is not a production/public seam,
+an alternative success implementation or permission to copy either real helper loop.
+
+The successful runner returns exactly this deeply frozen structural shape:
+
+```ts
+export interface SchemaFormReferenceStructuralRecord {
+  readonly schemaVersion: 1;
+  readonly fixtureRevision: 'schema-form-reference-v1';
+  readonly workloadId: SchemaFormReferenceWorkloadId;
+  readonly tier: 'SMALL' | 'TYPICAL' | 'STRESS';
+  readonly dimensions: {
+    readonly fields: number;
+    readonly checkboxFields: number;
+    readonly numberFields: number;
+    readonly selectFields: number;
+    readonly textFields: number;
+    readonly operations: 1;
+  };
+  readonly operation: {
+    readonly type: 'set-invalid-sentinel';
+    readonly changedFieldId: string;
+  };
+  readonly result: {
+    readonly validationCalls: number;
+    readonly normalizedKeyCount: number;
+    readonly errorCount: 1;
+    readonly errorFieldId: string;
+  };
+}
+```
+
+The record contains no evidence envelope, timer, duration, environment/tool identity, total traversal
+count, complexity classification, baseline, variance, statistic or budget. If a later performance
+packet compares timings, that separately reviewed recorder must add the environment, baseline,
+candidate, statistic and interpretation required by the target architecture without changing this
+structural equality authority.
+
+`fixtureRevision: 'schema-form-reference-v1'` is the structural equality authority and requires no
+derived hash. Any change to a field formula, type order, default, raw or normalized value, option,
+invalid sentinel, exact error message or operation must change `fixtureRevision` before adoption.
+
+#### State and failure flow
+
+```text
+validate workload ID
+  -> build one fresh deeply frozen fixture with runner-local per-field observation
+  -> call real normalizeWorkbenchSchemaFormValues(fields, beforeValues)
+  -> require Reflect.ownKeys(normalized-before) to be exactly the ordered N expected enumerable string IDs, with no symbol or non-enumerable key
+  -> create expected after-values from normalized-before by changing only field.{N - 1} to the exact invalid sentinel
+  -> call real getWorkbenchSchemaFormErrors(fields, afterValues) exactly once
+  -> for every callback require actual third-arg field.id once, Object.is(value, values[field.id]) and Reflect.ownKeys(values) exactly the expected enumerable IDs
+  -> require every callback values object to exactly match expected after-values and expected after-values to differ from normalized-before only at field.{N - 1}
+  -> require Reflect.ownKeys(errors) to be exactly [field.{N - 1}] and its value to be the exact workload-owned error message
+  -> require fixture fields, before-values and operation remain deeply equal to their pre-run snapshot
+  -> freeze and return the normalized structural record
+```
+
+The private failure codes are exactly:
+
+```text
+unknown-workload
+structural-mismatch
+```
+
+An unknown ID fails before fixture construction and therefore calls injected or real helpers and
+validators zero times. Any helper throw, wrong field/type distribution, wrong or extra normalized own
+key, missing/duplicate/unknown actual callback third-arg field ID, callback value/values mismatch,
+wrong whole after-values map, wrong error own keys/value, fixture mutation or other failed postcondition
+is caught and exposed as `structural-mismatch`; no partial success record is returned.
+
+Dedicated failure tests use only `runSchemaFormReferenceWorkloadWithHelpers` to inject: a normalizer or
+error helper throw; malformed normalization keys; error-helper behavior that invokes validators with
+missing, duplicate or unknown actual third-arg field IDs; callback value/values mismatches; or a wrong
+error map. These adversarial stubs are failure stimuli, never success evidence, and must not reproduce
+the real normalization or validation loops. They may delegate to a real helper and perturb only the
+targeted failure coordinate. The normal runner always passes the real helpers.
+
+The runner and both real helpers are synchronous. They own no listener, subscription, retained resource
+or disposable, so this packet adds no parallel/concurrency claim, lifecycle/disposal counter, cleanup
+fiction or combined-failure precedence.
+
+#### Scope and non-scope
+
+Scope:
+
+- one React-package-private manifest, fresh fixture builder, one-shot runner, minimal failure contract
+  and normalized structural record, plus one private test-only helper seam outside `src`;
+- exact `8 / 100 / 600` type distribution and one last-field invalidation operation;
+- exact per-field validation observations, normalization/error postconditions, repeatability,
+  freshness and interleaved success → injected failure → success isolation regressions;
+- packed-artifact rejection if `@workbench-kit/react` contains any `test-support` path.
+
+Non-scope:
+
+- public `@workbench-kit/testing`, React testing or SchemaForm test subpaths;
+- changes to `WorkbenchSchemaForm`, its helper behavior, CSS, focused/legacy runtime identity,
+  package exports, dependencies, version or bundle budgets;
+- a production/public helper injection seam or copied normalizer/error-loop implementation;
+- a new `FormModel`, validation scheduler/cache, incremental-validation policy, async validator,
+  Inspector model, field kind, schema registry or Settings integration;
+- renderer/component performance, DOM/memory growth, accessibility interaction, Storybook,
+  Playwright, browser, Electron or native validation;
+- elapsed time, environment evidence, total traversal/complexity claims, performance thresholds,
+  release, publish, tag or consumer migration.
+
+#### Ordered implementation tasks
+
+1. Add the private manifest, exact type distribution, fresh deep-frozen fixture builder, two-code error
+   contract and structural record types outside `packages/react/src`.
+2. Add the one-shot normal runner over the real normalization and error helpers plus the narrow private
+   `WithHelpers` failure seam. Keep actual callback arguments invocation-local, perform the exact
+   last-field change and fail closed on every helper throw or structural mismatch.
+3. Add the direct Node-environment focused test. Iterate through all N fields in all tiers to prove every
+   field/default/raw/normalized/option formula; prove exact operation/sentinel, exact own keys, callback
+   third-arg ID/value/whole-values coordinates, one exact error, unchanged fixture, stable failures,
+   fresh/repeated equality and interleaved success → injected failure → success isolation. Use the
+   private helper seam for all failure stimuli; do not use module mocking.
+4. Keep the existing component/jsdom `SchemaForm.test.tsx` unchanged, but run it during focused
+   development to prove the private workload did not alter the current component/helper contract.
+5. Extend packed-consumer artifact inspection so any `@workbench-kit/react` tarball path containing
+   `test-support` fails. Do not change a package export, files allowlist, bundle graph or budget.
+6. After focused development validation, freeze one source candidate.
+7. Route that frozen candidate through producer-distinct review before any final repository-wide gate.
+8. Batch all review findings into at most one successor candidate. On the resulting final SHA, run
+   `validate:fast`, `validate:ui`, commit safety and diff check exactly once each.
+
+#### Validation and acceptance
+
+During development repeat only:
+
+```text
+pnpm exec vitest run --config vitest.config.ts packages/react/src/workbench/settings/schemaFormReferenceWorkloads.test.ts packages/react/src/workbench/settings/SchemaForm.test.tsx
+pnpm --filter @workbench-kit/react typecheck
+pnpm --filter @workbench-kit/react typecheck:exact-optional
+```
+
+The gate order is exact: finish focused development validation, freeze the candidate, obtain
+producer-distinct review, batch every review finding into at most one successor, and only then run the
+following commands on the resulting final SHA once each:
+
+```text
+pnpm validate:fast
+pnpm validate:ui
+pnpm check:commit-safety
+git diff --check
+```
+
+`validate:ui` is final compatibility evidence for the unchanged UI cohort, not proof of this private
+Node workload's structural callback count. Electron is not run because the packet changes no native,
+main, preload or renderer boundary. No release, tag or publish validation is authorized.
+
+Done requires:
+
+- the exact three IDs, `8 / 100 / 600` field counts, equal `N / 4` type distributions, cyclic type
+  order, every per-index field/label/default/raw/normalized/options formula, last-field identity,
+  invalid sentinel and one operation are manifest-owned and tested by iterating every field in every
+  tier;
+- the runner calls the two real SchemaForm helpers, changes only `field.{N - 1}`, observes every field
+  validator exactly once by its actual callback third-arg `field.id` and accepts no missing, duplicate
+  or unknown observation;
+- every callback satisfies `Object.is(value, values[field.id])`; its `values` has exactly the expected
+  N enumerable own string IDs, no symbol/non-enumerable key and exact whole-map equality with expected
+  after-values by own data rather than reference identity; expected after-values differs from
+  normalized-before only at the last field;
+- normalization has exactly the ordered N expected enumerable own string IDs and no other own key;
+  `Reflect.ownKeys(errors)` is exactly the last field ID and the value is the exact workload-owned
+  message;
+- fixture fields/options/before-values/operation remain unchanged, and fresh/repeated records are deeply
+  frozen, isolated and structurally equal;
+- interleaved success → injected failure → success produces equal success records with no observation
+  leakage from the failed run; this synchronous runner makes no parallel/concurrency claim;
+- unknown admission invokes injected/real helpers and validators zero times; helper throws, malformed
+  normalization keys, bad actual callback coordinates and wrong errors map to `structural-mismatch`
+  and emit no success record through the private `WithHelpers` seam;
+- normal success always uses the real helpers; failure stubs neither become success evidence nor copy
+  the real normalization/validation loops;
+- any field formula, type order, default, raw/normalized value, option, sentinel, error message or
+  operation change also changes `fixtureRevision`; no derived hash is required;
+- callback count is reported only as a validation fan-out witness, never as total traversal,
+  complexity, latency, environment comparison or a performance budget;
+- existing SchemaForm component/helper tests remain unchanged and passing;
+- no public barrel/subpath, component behavior, CSS, package dependency/version/files allowlist,
+  bundle budget, packed private file, release or browser/native/Electron contract changes;
+- producer-distinct exact-source review reports no unresolved P0/P1/P2 target mismatch.
+
+#### Source-review checklist
+
+- Is `WorkbenchSchemaForm` still the single current implementation with no copied helper loop or new
+  future `FormModel` decision?
+- Is the workload module outside `src`, absent from every barrel/export and rejected from the packed
+  React artifact?
+- Does the manifest own exactly `8 / 100 / 600`, the equal four-type distribution, cyclic order and
+  every exact per-index label/default/raw/normalized/options formula?
+- Is `fixtureRevision` changed whenever any frozen formula, sentinel, message or operation changes,
+  without inventing a hash authority?
+- Does the runner call the real normalization and error helpers exactly as specified?
+- Is every validator observed once by its actual third-arg field ID, actual value and whole values map?
+- Are normalized/callback/error `Reflect.ownKeys`, enumerability, symbols, exact maps, one exact error,
+  operation semantics and before-fixture immutability checked before success publication?
+- Does only the package-private `WithHelpers` seam inject failures, while normal success always passes
+  the real helpers and no real helper loop is copied?
+- Are fresh/repeated and interleaved success → failure → success runs deeply frozen and isolated without
+  a parallel/concurrency claim?
+- Do only `unknown-workload` and `structural-mismatch` exist, with admission preceding fixture work and
+  helper/validator calls, and do all injected malformed outcomes fail closed?
+- Is callback fan-out carefully distinguished from total traversal, complexity, timing or a budget?
+- Did focused validation precede candidate freeze, review precede the single batched successor, and all
+  final SHA gates run only after review resolution?
+- Did the existing SchemaForm component behavior, package/public boundary, packed bundle budget,
+  release state and browser/native/Electron boundary remain unchanged?
 
 ## WB-NS-070 — Manual-first UI layout/style authoring foundation
 
