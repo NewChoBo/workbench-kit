@@ -2237,9 +2237,9 @@ after a remaining matrix failure without a new design decision.
 
 ## WB-NS-080C — Focused provider-bound keybinding management Settings entrypoint
 
-- **Status:** `DESIGN_DECISION_REQUIRED`
-- **Resolution packet:** `WB-NS-080C2`; do not implement this rejected single late
-  provider-bound leaf contract
+- **Status:** `DONE`
+- **Resolution packet:** `WB-NS-080C2` is `DONE`; this rejected single late provider-bound leaf
+  contract was superseded rather than implemented
 - **Canonical public work:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405)
 - **Companion internal cause:** [Issue #411](https://github.com/NewChoBo/workbench-kit/issues/411);
   implemented and closed by the same atomic Issue #405 candidate/PR, not a separate prerequisite
@@ -2622,11 +2622,18 @@ mechanics; or claims release, publish, Electron or native completion.
 
 ## WB-NS-080C2 — Provider-owned keybinding Settings binding and provider-free lazy view
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Canonical public work:** [Issue #414](https://github.com/NewChoBo/workbench-kit/issues/414)
 - **Closes atomically:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405) and
   [Issue #411](https://github.com/NewChoBo/workbench-kit/issues/411) through the same source PR
 - **Exact source/API baseline:** `develop@815a4d57b92851756abf5e2d97085da1ff25b872`
+- **Source integration:** candidate `42070f66f22c48f3ad49d45acefdf794f1ce0c18` merged by
+  [PR #416](https://github.com/NewChoBo/workbench-kit/pull/416) as
+  `develop@8b35d890527d9bfc517cf8d8e6c218bf0c4630cb`
+- **Completion evidence:** producer-distinct source review `PASS` with no P0/P1/P2 findings; final
+  `validate:fast` passed 473 test files / 2,798 tests; the full
+  `check:packed-shell-react-context` four-case Vite/Chromium matrix, `check:commit-safety`, and
+  `git diff --check` passed on the exact candidate; Issues #414, #405 and #411 are closed
 - **Ownership:** `GENERIC_KIT / PROVIDER_COMPOSITION + PUBLIC_VIEW`; `packages/shell-react`
 - **Dependencies:** `WB-NS-080A`, `WB-NS-080B`, and `WB-NS-080C0` are `DONE`
 - **Public entrypoints:** existing `@workbench-kit/shell-react/provider` plus new
