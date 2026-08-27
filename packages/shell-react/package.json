@@ -22,6 +22,7 @@
     "./field-remap": "./src/field-remap/index.ts",
     "./field-remap/view.css": "./src/field-remap/view.css",
     "./host-shell": "./src/shell/host-shell.tsx",
+    "./keybinding-management-settings": "./src/keybinding-management-settings.ts",
     "./layout-storage": "./src/workbench/layout-storage.ts",
     "./provider": "./src/shell/provider.tsx",
     "./shell": "./src/shell/shell.tsx"

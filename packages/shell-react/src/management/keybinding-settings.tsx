@@ -1,25 +1,8 @@
-import { KeybindingManagementPanel } from '@workbench-kit/react/workbench/management';
-
-import { useKeybindingManagementModel } from './use-keybinding-management.js';
+import { useWorkbenchKeybindingManagementBinding } from '../shell/provider.js';
+import { WorkbenchKeybindingManagementSettingsView } from './keybinding-settings-view.js';
 
 export function WorkbenchKeybindingManagementSettings() {
-  const {
-    editingDisabledReason,
-    entries,
-    overrideCount,
-    platform,
-    resetKeybinding,
-    setKeybinding,
-  } = useKeybindingManagementModel();
+  const binding = useWorkbenchKeybindingManagementBinding();
 
-  return (
-    <KeybindingManagementPanel
-      editingDisabledReason={editingDisabledReason}
-      entries={entries}
-      platform={platform}
-      summaryLabel={`${entries.length} command${entries.length === 1 ? '' : 's'} · ${overrideCount} user override${overrideCount === 1 ? '' : 's'}`}
-      onResetKeybinding={resetKeybinding}
-      onSetKeybinding={setKeybinding}
-    />
-  );
+  return <WorkbenchKeybindingManagementSettingsView {...binding} />;
 }

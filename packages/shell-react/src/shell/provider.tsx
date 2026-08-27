@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from 'react';
+import type { WorkbenchKeybindingManagementSettingsViewProps } from '../management/keybinding-settings-view.js';
+import { useKeybindingManagementModel } from '../management/use-keybinding-management.js';
 import {
   collectConfigurationDefaults,
   createEditorService,
@@ -1066,4 +1068,8 @@ export function useWorkbench(): WorkbenchContextValue {
   }
 
   return value;
+}
+
+export function useWorkbenchKeybindingManagementBinding(): WorkbenchKeybindingManagementSettingsViewProps {
+  return useKeybindingManagementModel(useWorkbench());
 }

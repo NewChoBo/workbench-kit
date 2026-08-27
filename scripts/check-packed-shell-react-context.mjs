@@ -19,6 +19,7 @@ const cases = [
   ['provider-host-shell', false, true],
   ['provider-command-host-host-shell', true, true],
 ];
+const managementCaseName = 'provider-command-host-host-shell';
 const selectedCases = process.env.WBK_PACKED_CONTEXT_CASE
   ? cases.filter(([name]) => name === process.env.WBK_PACKED_CONTEXT_CASE)
   : cases;
@@ -338,6 +339,21 @@ function chromiumIdentity(resolver) {
 }
 
 function writeCases() {
+  fs.writeFileSync(
+    path.join(source, 'management.jsx'),
+    `import React, { useEffect } from 'react';
+import { WorkbenchKeybindingManagementSettingsView as ProductManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
+const evaluationKey = 'wbk-management-evaluations';
+sessionStorage.setItem(evaluationKey, String(Number(sessionStorage.getItem(evaluationKey) ?? '0') + 1));
+export function LazyKeybindingManagementSettingsView(props) {
+  useEffect(() => {
+    const mountKey = 'wbk-management-mounts';
+    sessionStorage.setItem(mountKey, String(Number(sessionStorage.getItem(mountKey) ?? '0') + 1));
+  }, []);
+  return <ProductManagementSettingsView {...props} />;
+}
+`,
+  );
   for (const [name, commandHost, hostShell] of cases) {
     fs.writeFileSync(
       path.join(consumer, `${name}.html`),
@@ -349,14 +365,29 @@ function writeCases() {
     const shellImport = hostShell
       ? "import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';"
       : '';
+    const management = name === managementCaseName;
     const commandElement = commandHost
-      ? '<WorkbenchCommandHost enableCommandPalette={false} enableQuickOpen={false} onOpenSettings={() => undefined} />'
+      ? `<WorkbenchCommandHost enableCommandPalette={false} ${management ? 'enableExtensionKeybindings={false} enableShortcutBridge ' : ''}enableQuickOpen={false} onOpenSettings={() => undefined} />`
       : '';
-    const content = '<><output data-testid="ready">ready</output><Probe /></>';
+    const content = management
+      ? '<><output data-testid="ready">ready</output><Probe /><button data-testid="dispatch-target" type="button">Dispatch target</button>{ManagementView ? <ManagementView {...managementBinding} /> : <button type="button" onClick={loadManagement}>Load keyboard management</button>}</>'
+      : '<><output data-testid="ready">ready</output><Probe /></>';
     const body = hostShell ? `<WorkbenchHostShell editorArea={${content}} />` : content;
+    const reactImport = management
+      ? "import React, { useEffect, useState } from 'react';"
+      : "import React from 'react';";
+    const probe = management
+      ? `function Probe() { const { layoutService } = useWorkbench(); const [state, setState] = useState(() => ({ active: layoutService.isFocusModeActive(), transitions: 0 })); useEffect(() => { const disposable = layoutService.onDidChangeLayout(() => setState((current) => ({ active: layoutService.isFocusModeActive(), transitions: current.transitions + 1 }))); return () => disposable.dispose(); }, [layoutService]); return <output data-active={String(state.active)} data-testid="probe" data-transitions={state.transitions}>{String(state.active)}</output>; }`
+      : `function Probe() { const { layoutService } = useWorkbench(); return <output data-testid="probe">{String(layoutService.isFocusModeActive())}</output>; }`;
+    const managementState = management
+      ? `const managementBinding = useWorkbenchKeybindingManagementBinding(); const [ManagementView, setManagementView] = useState(null); const loadManagement = async () => { const module = await import('./management.jsx'); setManagementView(() => module.LazyKeybindingManagementSettingsView); };`
+      : '';
+    const providerImport = management
+      ? 'WorkbenchProvider, useWorkbench, useWorkbenchKeybindingManagementBinding'
+      : 'WorkbenchProvider, useWorkbench';
     fs.writeFileSync(
       path.join(source, `${name}.jsx`),
-      `import React from 'react';\nimport { createRoot } from 'react-dom/client';\n${commandImport}\n${shellImport}\nimport { WorkbenchProvider, useWorkbench } from '@workbench-kit/shell-react/provider';\nconst key = 'wbk-boots-${name}'; sessionStorage.setItem(key, String(Number(sessionStorage.getItem(key) ?? '0') + 1));\nfunction Probe() { const { layoutService } = useWorkbench(); return <output data-testid="probe">{String(layoutService.isFocusModeActive())}</output>; }\nfunction App() { return <WorkbenchProvider availableExtensions={[]} persistEditorState={false} persistKeybindingOverrides={false} persistLayout={false} persistLocalPreferences={false}>${commandElement}${body}</WorkbenchProvider>; }\ncreateRoot(document.getElementById('root')).render(<App />);\n`,
+      `${reactImport}\nimport { createRoot } from 'react-dom/client';\n${commandImport}\n${shellImport}\nimport { ${providerImport} } from '@workbench-kit/shell-react/provider';\nconst key = 'wbk-boots-${name}'; sessionStorage.setItem(key, String(Number(sessionStorage.getItem(key) ?? '0') + 1));\n${probe}\nfunction ProviderChildren() { ${managementState} return <React.Fragment>${commandElement}${body}</React.Fragment>; }\nfunction App() { return <WorkbenchProvider availableExtensions={[]} persistEditorState={false} persistKeybindingOverrides={false} persistLayout={false} persistLocalPreferences={false}><ProviderChildren /></WorkbenchProvider>; }\ncreateRoot(document.getElementById('root')).render(<App />);\n`,
     );
   }
 }
@@ -367,6 +398,9 @@ async function runCase([name], browser) {
   let page;
   let failure;
   const observed = [];
+  let managementRequestCount = 0;
+  const managementRequestTimes = [];
+  let managementRequestAllowed = false;
   try {
     const vite = await externalImport('vite');
     const reactPlugin = (await externalImport('@vitejs/plugin-react')).default;
@@ -396,6 +430,13 @@ async function runCase([name], browser) {
       if (frame === page.mainFrame()) navigations += 1;
     });
     page.on('pageerror', (error) => observed.push(`pageerror: ${error.message}`));
+    page.on('request', (request) => {
+      if (!request.url().includes('/src/management.jsx')) return;
+      managementRequestCount += 1;
+      managementRequestTimes.push(Date.now());
+      if (!managementRequestAllowed)
+        observed.push('Management entry was requested before explicit activation.');
+    });
     page.on('console', (message) => {
       const text = message.text();
       const allowed =
@@ -420,6 +461,41 @@ async function runCase([name], browser) {
         `${name}: optimizer reload false-pass (${boots} boots, ${navigations} navigations).`,
       );
     if (observed.length) throw new Error(`${name}:\n${observed.join('\n')}`);
+    if (name === managementCaseName) {
+      const initialMarkers = await managementMarkers(page);
+      if (
+        managementRequestCount !== 0 ||
+        initialMarkers.evaluations !== 0 ||
+        initialMarkers.mounts !== 0
+      )
+        throw new Error(
+          `${name}: management ran before activation (requests=${managementRequestCount}, evaluations=${initialMarkers.evaluations}, mounts=${initialMarkers.mounts}).`,
+        );
+      assertLazyViewOptimizerIsolation(path.join(consumer, `.vite-${name}`));
+      managementRequestAllowed = true;
+      const activationTimestamp = Date.now();
+      await runManagementPhase(page, name);
+      assertLazyViewOptimizerIsolation(path.join(consumer, `.vite-${name}`));
+      const bootsAfterManagement = await page.evaluate(
+        (key) => Number(sessionStorage.getItem(key)),
+        `wbk-boots-${name}`,
+      );
+      if (bootsAfterManagement !== 1 || navigations !== 1)
+        throw new Error(
+          `${name}: lazy management optimizer reload false-pass (${bootsAfterManagement} boots, ${navigations} navigations).`,
+        );
+      const activatedMarkers = await managementMarkers(page);
+      if (
+        managementRequestCount !== 1 ||
+        managementRequestTimes[0] < activationTimestamp ||
+        activatedMarkers.evaluations !== 1 ||
+        activatedMarkers.mounts !== 1
+      )
+        throw new Error(
+          `${name}: invalid lazy activation evidence (requests=${managementRequestCount}, requestTimes=${managementRequestTimes.join(',') || 'none'}, activation=${activationTimestamp}, evaluations=${activatedMarkers.evaluations}, mounts=${activatedMarkers.mounts}).`,
+        );
+      if (observed.length) throw new Error(`${name}:\n${observed.join('\n')}`);
+    }
   } catch (error) {
     const optimizer = collectOptimizerEvidence(path.join(consumer, `.vite-${name}`));
     failure = new Error(`${name}: ${error.message}\n${observed.join('\n')}\n${optimizer}`, {
@@ -444,6 +520,210 @@ async function runCase([name], browser) {
       throw new AggregateError([...(failure ? [failure] : []), ...errors], `${name} failed.`);
     /* eslint-enable no-unsafe-finally */
   }
+}
+
+async function managementMarkers(page) {
+  return page.evaluate(() => ({
+    evaluations: Number(sessionStorage.getItem('wbk-management-evaluations') ?? '0'),
+    mounts: Number(sessionStorage.getItem('wbk-management-mounts') ?? '0'),
+  }));
+}
+
+function assertLazyViewOptimizerIsolation(cacheDir) {
+  const depsDir = path.join(cacheDir, 'deps');
+  const metadataPath = path.join(depsDir, '_metadata.json');
+  if (!fs.existsSync(metadataPath))
+    throw new Error(`Focused optimizer metadata is missing: ${metadataPath}.`);
+  const metadata = json(metadataPath);
+  const providerKey = '@workbench-kit/shell-react/provider';
+  const managementKey = '@workbench-kit/shell-react/keybinding-management-settings';
+  const providerFile = optionalOptimizedEntryFile(metadata, depsDir, providerKey);
+  const managementFile = optimizedEntryFile(metadata, depsDir, managementKey);
+  const providerGraph = providerFile ? optimizedImportGraph(providerFile, depsDir) : undefined;
+  const managementGraph = optimizedImportGraph(managementFile, depsDir);
+  const missingProviderMarker = 'useWorkbench must be used inside WorkbenchProvider.';
+  const optimizedFiles = fs
+    .readdirSync(depsDir)
+    .filter((entry) => entry.endsWith('.js'))
+    .map((entry) => path.join(depsDir, entry));
+  const ownerFiles = optimizedFiles.filter((file) =>
+    fs.readFileSync(file, 'utf8').includes(missingProviderMarker),
+  );
+  if (ownerFiles.length > 1)
+    throw new Error(
+      `Expected at most one optimized Provider owner; found ${ownerFiles.length}: ${optimizerFilesEvidence(ownerFiles, depsDir)}.`,
+    );
+  const ownerFile = ownerFiles[0];
+  if (providerGraph && (!ownerFile || !providerGraph.has(ownerFile)))
+    throw new Error(
+      `Focused Provider optimizer entry does not reach exactly one canonical owner: provider=${optimizerFilesEvidence(providerGraph, depsDir)}; owner=${ownerFile ? path.basename(ownerFile) : 'none'}.`,
+    );
+  if (ownerFile && managementGraph.has(ownerFile))
+    throw new Error(
+      `Lazy Settings View graph reaches the Provider owner: management=${optimizerFilesEvidence(managementGraph, depsDir)}; owner=${path.basename(ownerFile)}.`,
+    );
+
+  const providerContextFiles = [...managementGraph].filter((file) => {
+    const text = fs.readFileSync(file, 'utf8');
+    return (
+      text.includes(missingProviderMarker) ||
+      (text.includes('WorkbenchContext') && text.includes('createContext')) ||
+      (text.includes('WorkbenchProvider') && text.includes('createContext'))
+    );
+  });
+  if (providerContextFiles.length)
+    throw new Error(
+      `Lazy Settings View optimizer graph contains a Provider/context body: ${optimizerFilesEvidence(providerContextFiles, depsDir)}.`,
+    );
+}
+
+function optionalOptimizedEntryFile(metadata, depsDir, key) {
+  if (metadata.optimized?.[key] === undefined) return undefined;
+  return optimizedEntryFile(metadata, depsDir, key);
+}
+
+function optimizedEntryFile(metadata, depsDir, key) {
+  const relative = metadata.optimized?.[key]?.file;
+  if (typeof relative !== 'string' || !relative.endsWith('.js'))
+    throw new Error(
+      `Focused optimized entry is missing for ${key}; available=${Object.keys(metadata.optimized ?? {}).join(', ') || 'none'}.`,
+    );
+  const file = path.resolve(depsDir, relative);
+  if (path.dirname(file) !== path.resolve(depsDir) || !fs.existsSync(file))
+    throw new Error(`Unsafe or missing optimized entry for ${key}: ${relative}.`);
+  return file;
+}
+
+function optimizedImportGraph(entryFile, depsDir) {
+  const graph = new Set();
+  const pending = [entryFile];
+  while (pending.length) {
+    const file = pending.pop();
+    if (graph.has(file)) continue;
+    graph.add(file);
+    const text = fs.readFileSync(file, 'utf8');
+    for (const match of text.matchAll(
+      /(?:\bfrom\s*|\bimport\s*)["'](?<specifier>\.[^"']+)["']/gu,
+    )) {
+      const specifier = match.groups.specifier.split(/[?#]/u, 1)[0];
+      if (!specifier.endsWith('.js')) continue;
+      const imported = path.resolve(path.dirname(file), specifier);
+      if (path.dirname(imported) !== path.resolve(depsDir) || !imported.endsWith('.js'))
+        throw new Error(
+          `Optimized entry escaped its cache directory: ${file} -> ${match.groups.specifier}.`,
+        );
+      if (!fs.existsSync(imported))
+        throw new Error(`Optimized import is missing: ${file} -> ${match.groups.specifier}.`);
+      pending.push(imported);
+    }
+  }
+  return graph;
+}
+
+function optimizerFilesEvidence(files, depsDir) {
+  return (
+    [...files].map((file) => path.relative(depsDir, file).replaceAll('\\', '/')).join(', ') ||
+    'none'
+  );
+}
+
+async function runManagementPhase(page, name) {
+  await page.getByRole('button', { name: 'Load keyboard management' }).click();
+  const shortcut = page.getByRole('button', {
+    name: 'Keyboard shortcut for workbench.toggleFocusMode',
+  });
+  try {
+    await shortcut.waitFor({ state: 'visible', timeout: 15_000 });
+  } catch (error) {
+    const diagnostic = await page.locator('body').evaluate((body) => ({
+      buttons: [...body.querySelectorAll('button')].map((button) => ({
+        ariaLabel: button.getAttribute('aria-label'),
+        text: button.textContent?.trim(),
+      })),
+      html: body.innerHTML,
+      text: body.textContent?.trim(),
+    }));
+    throw new Error(
+      `${name}: management did not render the expected command.\n${JSON.stringify(diagnostic)}`,
+      {
+        cause: error,
+      },
+    );
+  }
+  await page.waitForTimeout(500);
+
+  await shortcut.click();
+  await page.keyboard.press('Control+Shift+F10');
+  await expectText(shortcut, 'Ctrl+Shift+F10', name);
+  await settleCaptureBeforeDispatch(page, name, 'capture');
+
+  await assertTransitionCount(page, 0, false, name);
+  await page.keyboard.press('Control+Shift+F11');
+  await awaitReactEffectTurn(page);
+  await assertTransitionCount(page, 0, false, name);
+  await page.keyboard.press('Control+Shift+F10');
+  await awaitReactEffectTurn(page);
+  await assertTransitionCount(page, 1, true, name);
+
+  await page.getByRole('button', { name: 'Reset to default' }).click();
+  await expectText(shortcut, 'Ctrl+Shift+F11', name);
+  await settleCaptureBeforeDispatch(page, name, 'reset');
+  await page.keyboard.press('Control+Shift+F10');
+  await awaitReactEffectTurn(page);
+  await assertTransitionCount(page, 1, true, name);
+  await page.keyboard.press('Control+Shift+F11');
+  await awaitReactEffectTurn(page);
+  await assertTransitionCount(page, 2, false, name);
+}
+
+async function settleCaptureBeforeDispatch(page, name, phase) {
+  const target = page.getByTestId('dispatch-target');
+  await target.click();
+  await assertDispatchTargetState(page, target, name, phase);
+  await awaitReactEffectTurn(page);
+  await assertDispatchTargetState(page, target, name, `${phase} effect`);
+}
+
+async function assertDispatchTargetState(page, target, name, phase) {
+  const state = await target.evaluate((element) => ({
+    active: globalThis.document.activeElement === element,
+    recording: globalThis.document.querySelectorAll(
+      '[data-workbench-shortcut-capture-recording="true"]',
+    ).length,
+  }));
+  if (!state.active || state.recording !== 0)
+    throw new Error(
+      `${name}: ${phase} cleanup did not leave the dispatch target focused with capture inactive (active=${state.active}, recording=${state.recording}).`,
+    );
+  if (page.isClosed()) throw new Error(`${name}: page closed during ${phase} cleanup.`);
+}
+
+async function awaitReactEffectTurn(page) {
+  await page.evaluate(() => new Promise((resolve) => globalThis.setTimeout(resolve, 0)));
+}
+
+async function expectText(locator, expected, name) {
+  await locator.waitFor({ state: 'visible', timeout: 5_000 });
+  const actual = (await locator.textContent())?.trim();
+  if (actual !== expected)
+    throw new Error(`${name}: expected text ${expected}; received ${actual}.`);
+}
+
+async function assertTransitionCount(page, transitions, active, name) {
+  await page.waitForFunction(
+    ({ active: expectedActive, transitions: expectedTransitions }) => {
+      const element = globalThis.document.querySelector('[data-testid="probe"]');
+      return (
+        element?.getAttribute('data-active') === String(expectedActive) &&
+        element?.getAttribute('data-transitions') === String(expectedTransitions)
+      );
+    },
+    { active, transitions },
+    { timeout: 5_000 },
+  );
+  const actual = Number(await page.getByTestId('probe').getAttribute('data-transitions'));
+  if (actual !== transitions)
+    throw new Error(`${name}: expected ${transitions} transitions; received ${actual}.`);
 }
 
 function collectOptimizerEvidence(cacheDir) {

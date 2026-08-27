@@ -5,9 +5,13 @@ import { createRoot } from 'react-dom/client';
 import { describe, expect, it, vi } from 'vitest';
 import type { WorkbenchExtensionDescription } from '@workbench-kit/workbench-core';
 
-import { WorkbenchProvider, useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
+import {
+  WorkbenchProvider,
+  useWorkbench,
+  useWorkbenchKeybindingManagementBinding,
+  type WorkbenchContextValue,
+} from '../shell/provider.js';
 import { useCommandManagementModel } from '../management/use-command-management.js';
-import { useKeybindingManagementModel } from '../management/use-keybinding-management.js';
 import { WorkbenchCommandHost } from './command-host.js';
 
 (
@@ -68,7 +72,7 @@ function CommandManagementProbe() {
 }
 
 function KeybindingManagementProbe({ commandId }: { commandId: string }) {
-  const { entries } = useKeybindingManagementModel();
+  const { entries } = useWorkbenchKeybindingManagementBinding();
   const entry = entries.find((candidate) => candidate.commandId === commandId);
 
   return (
