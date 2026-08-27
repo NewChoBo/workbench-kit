@@ -6,7 +6,7 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@bc6b7dbbbe575b82b4af811f5890e283e3cac27b`.
+- **Latest source-bearing integration baseline:** `develop@ff31a38d3a4e626233a06db34e698c61b7fd1267`.
 - **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
@@ -99,6 +99,9 @@ Workflow runtime + published interfaces
 Host adapter maturation / multi-host validation
         ↓
 Backendless/performance + compatibility hardening
+
+WB-NS-060 backendless scenario + performance harness [DESIGNING]
+        └─ WB-NS-060A Field Remap deterministic reference workload [READY_FOR_IMPLEMENTATION]
 
 Command/keybinding management parity
         ↓
@@ -2600,6 +2603,233 @@ Performance workloads + budgets
 ### Ready gate
 
 Define ownership and API boundaries for fixtures without turning production packages into test-framework containers; identify representative workloads from actual hot paths before budgets are standardized.
+
+### WB-NS-060A — Field Remap deterministic reference workload
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Target:** `target-architecture.md` §§ Target backendless test architecture, Target performance architecture
+- **Ownership:** `GENERIC_KIT / TEST_ARCHITECTURE`; Field Remap remains the semantic projection and traversal-instrumentation owner
+- **Exact source/API baseline:** `develop@ff31a38d3a4e626233a06db34e698c61b7fd1267`
+- **Implementation boundary:** private `packages/field-remap/test-support/reference-workloads.ts` plus focused `src/**/*.test.ts` consumers and packed-artifact verification
+- **Public API impact:** none; no package export, public subpath, dependency or publish-order change
+
+#### Goal
+
+Turn the existing ad hoc Field Remap `8 / 100 / 600` traversal test into one deterministic,
+backendless reference-workload source that can prove correctness and structural cost without Electron,
+a browser, wall-clock sleeps or a standardized latency budget. This is the first bounded child of
+`WB-NS-060`; the parent remains `DESIGNING` for cross-surface scenario distribution and standardized
+performance budgets.
+
+The implementation must reuse the real `createFieldRemapProjectionOwner` and its existing
+`onTraversal` instrumentation. It must not copy projection mechanics, introduce a fake projection
+owner or move test-framework concerns into a published package.
+
+#### Private contract and workload manifest
+
+The test-support module is outside `packages/field-remap/src`, is absent from every barrel and is not
+included by the package `files` allowlist. A `src/**/*.test.ts` consumer imports it directly so the
+existing package typecheck and Vitest lane still compile the module. It owns exactly these immutable
+definitions:
+
+| Workload ID                      | sources | targets | edges | operators | operations | aggregate | size      |
+| -------------------------------- | ------: | ------: | ----: | --------: | ---------: | --------: | --------- |
+| `field-remap.projection.small`   |       8 |       8 |     8 |         0 |          1 |        25 | `SMALL`   |
+| `field-remap.projection.typical` |     100 |     100 |   100 |         0 |          1 |       301 | `TYPICAL` |
+| `field-remap.projection.stress`  |     600 |     600 |   600 |         0 |          1 |      1801 | `STRESS`  |
+
+`aggregateEntries` is the current owner formula `sources + targets + edges + operators + operations`.
+The one operation is a real semantic mutation: upsert existing `edge.0`, retain `target.0`, and change
+its source from `source.0` to `source.{N - 1}`. The edge count remains `N`; only `edge.0` changes.
+
+The private module freezes these shapes:
+
+```ts
+type FieldRemapReferenceWorkloadId =
+  | 'field-remap.projection.small'
+  | 'field-remap.projection.typical'
+  | 'field-remap.projection.stress';
+
+interface FieldRemapReferenceRunEvidence {
+  readonly sourceRevision: string; // exact lowercase 40-hex source SHA
+  readonly environment: string; // strict public-safe identifier, not host discovery
+  readonly tool: string; // strict public-safe identifier, not an executable path
+}
+
+interface FieldRemapReferenceStructuralRecord {
+  readonly schemaVersion: 1;
+  readonly fixtureRevision: 'field-remap-reference-v1';
+  readonly workloadId: FieldRemapReferenceWorkloadId;
+  readonly dimensions: {
+    readonly sources: number;
+    readonly targets: number;
+    readonly edges: number;
+    readonly operators: 0;
+    readonly operations: 1;
+    readonly aggregateEntries: number;
+  };
+  readonly operation: 'change-edge-0-source';
+  readonly result: {
+    readonly status: 'applied';
+    readonly documentVersion: 2;
+    readonly documentEdgeCount: number;
+    readonly changedEdge: {
+      readonly id: 'edge.0';
+      readonly sourceFieldId: string;
+      readonly targetSlotId: 'target.0';
+    };
+    readonly historyLength: 1;
+  };
+  readonly traversal: FieldRemapTraversalSample;
+  readonly lifecycle: {
+    readonly retainedBeforeDispose: 1;
+    readonly retainedAfterDispose: 0;
+  };
+}
+
+interface FieldRemapReferenceRunRecord {
+  readonly evidence: FieldRemapReferenceRunEvidence;
+  readonly structural: FieldRemapReferenceStructuralRecord;
+}
+```
+
+`buildFieldRemapReferenceFixture(id)` returns fresh, deeply frozen source, target, edge and operation
+records on every call. `runFieldRemapReferenceWorkload(id, evidence)` returns a deeply frozen record.
+The structural record is the deterministic equality authority; caller evidence is validated and
+echoed but excluded from structural equality.
+
+`sourceRevision` must be an exact lowercase 40-hex SHA. `environment` and `tool` are trimmed,
+non-empty identifiers of at most 64 characters using only ASCII letters, digits, `.`, `_`, `:`, and
+`-`. The runner never discovers or records timestamps, absolute paths, host names, CPU identity or
+secrets. Raw owner `transactionId`, `canonicalRevision`, owner epoch and descriptor/runtime identity
+are never copied into the record because the current owner intentionally includes random/process-local
+identity in those values.
+
+#### State, lifecycle and failure flow
+
+```text
+validate workload ID + evidence
+  -> build one fresh frozen fixture
+  -> create one real Field Remap projection owner + private traversal collector
+  -> capture the pre-operation revision only for an internal changed-revision assertion
+  -> create/apply the exact edge.0 mutation
+  -> require applied + changed revision + exactly one traversal sample
+  -> validate exact document, dimensions, aggregate, size and structural postconditions
+  -> build normalized structural record without random identity
+  -> await owner.dispose() in finally
+  -> require retention size 0
+  -> freeze and return the success record
+```
+
+Every invocation owns its fixture, owner and traversal collector. Sequential and parallel invocations
+share only the immutable manifest. The owner-generated epoch may differ, but normalized structural
+records for the same workload must be equal. After owner creation, disposal is awaited on success and
+every failure; no success record is returned until disposal and the zero-retention postcondition both
+succeed. An `unknown-workload` or `invalid-evidence` admission failure occurs before owner creation,
+calls the owner factory zero times and therefore has no owner to dispose.
+
+The private failure type exposes stable codes:
+
+```text
+unknown-workload
+invalid-evidence
+transaction-not-applied
+revision-not-changed
+missing-traversal-sample
+duplicate-traversal-sample
+structural-mismatch
+dispose-failed
+run-and-dispose-failed
+```
+
+Its exact private shape is:
+
+```ts
+class FieldRemapReferenceWorkloadError extends Error {
+  readonly code: FieldRemapReferenceWorkloadErrorCode;
+  readonly primary?: FieldRemapReferenceWorkloadError;
+  readonly disposeCause?: unknown;
+}
+```
+
+A non-`applied` owner result, missing or duplicate traversal callback, unchanged revision, unexpected
+edge mutation, wrong size/aggregate/stage counters or retention mismatch fails closed and emits no
+success record. An execution-only failure returns its exact execution code. A disposal throw or a
+non-zero post-disposal retention with no execution failure returns `dispose-failed`. If execution and
+disposal both fail, the top-level code is `run-and-dispose-failed`, `primary` retains the exact
+execution error and code, and `disposeCause` retains the disposal throw or retention evidence. Do not
+serialize a platform-dependent `AggregateError`. The normal runner always uses the real owner; a
+narrow private factory seam may be injected only by the dedicated failure-path test.
+
+#### Scope and non-scope
+
+Scope:
+
+- one Field Remap-owned private manifest, fixture builder, one-shot runner and normalized structural
+  record;
+- migration of the existing proportional traversal test to the single manifest/fixture owner;
+- repeatability, fresh-state, parallel isolation, lifecycle and fail-closed regression tests;
+- packed-artifact evidence that `test-support` stays absent.
+
+Non-scope:
+
+- a public `@workbench-kit/testing` or scenario package/subpath;
+- React, Storybook, Playwright, shell/sidebar, editor, form or JDW workloads;
+- a general capability bag, service locator, fake timer or scheduler;
+- elapsed-time, CPU, DOM, memory, gzip or regression budgets; existing packed-consumer budgets remain
+  owned and unchanged by their current gate;
+- browser, Electron, native adapter, release, tag or publish work.
+
+#### Ordered implementation tasks
+
+1. Add the non-packed private manifest, strict evidence validator, fresh deep-frozen fixture builder,
+   stable private error codes and normalized record types.
+2. Add the one-shot runner over the real projection owner. Validate the exact mutation and traversal,
+   normalize random revision/transaction identity out of the result, and await disposal in `finally`.
+3. Replace the local `8 / 100 / 600` construction in `serializedOwner.test.ts` with the shared private
+   fixture definitions while preserving every positive-stage and proportional-cost invariant.
+4. Add a focused `src/projection/referenceWorkloads.test.ts` lane for immutable fresh fixtures,
+   sequential/parallel structural equality, isolated evidence, exact changed-edge postconditions,
+   zero retention and every private failure code. Admission-failure tests require zero owner-factory
+   calls. Do not duplicate the proportional workload test.
+5. Extend packed-consumer artifact inspection so a Field Remap tarball containing `test-support` fails;
+   do not change any package export or bundle budget.
+6. Freeze one source candidate after focused tests and route producer-distinct reviews for workload
+   correctness, lifecycle/error behavior and packed/public compatibility.
+
+#### Validation and acceptance
+
+During development run only the focused Field Remap tests and package typecheck. On the fixed source
+candidate run `pnpm validate:fast` and `pnpm check:commit-safety` once; `validate:fast` includes the
+static, packed-consumer and complete unit lanes. Browser and Electron validation are not required
+because this packet changes neither renderer behavior nor a native boundary.
+
+Done requires:
+
+- the three IDs and exact `25 / 301 / 1801` aggregate classifications are manifest-owned and tested;
+- every run performs the real mutation, yields exactly one traversal sample, changes only `edge.0`,
+  preserves edge count, produces one history entry and retains exactly one settled reservation before
+  disposal clears it;
+- every traversal stage is positive and the existing proportional invariants remain unchanged;
+- fresh and parallel runs produce equal normalized structural records without shared mutable fixture
+  state or random identity leakage;
+- admission failures create no owner; every failure after owner creation disposes it, emits no success
+  record and uses the frozen private codes;
+- no public barrel, package dependency, tarball file, bundle budget or published contract changes;
+- producer-distinct exact-source review returns no P0/P1/P2 target mismatch.
+
+#### Source-review checklist
+
+- Is there exactly one `8 / 100 / 600` fixture owner and no copied projection/traversal mechanic?
+- Is `test-support` physically outside the published `src` allowlist and absent from every barrel and
+  packed tarball?
+- Does the default runner use the real projection owner and one actual mutation?
+- Are owner epoch, transaction ID and canonical revision excluded from deterministic records?
+- Are evidence strings caller-supplied, bounded and public-safe without environment discovery?
+- Are traversal cardinality, document postconditions and disposal checked before success publication?
+- Are sequential and parallel invocations isolated, deeply frozen and structurally repeatable?
+- Did existing proportional assertions remain at least as strong without a new wall-clock budget?
+- Did packed/public exports remain unchanged, with no browser/Electron/release dependency introduced?
 
 ## WB-NS-070 — Manual-first UI layout/style authoring foundation
 
