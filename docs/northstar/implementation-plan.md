@@ -102,7 +102,7 @@ Backendless/performance + compatibility hardening
 
 WB-NS-060 backendless scenario + performance harness [DESIGNING]
         ├─ WB-NS-060A Field Remap deterministic reference workload [DONE]
-        └─ WB-NS-060B SchemaForm deterministic validation-fan-out reference workloads [READY_FOR_IMPLEMENTATION]
+        └─ WB-NS-060B SchemaForm deterministic validation-fan-out reference workloads [DONE]
 
 Command/keybinding management parity
         ↓
@@ -2840,10 +2840,16 @@ Done requires:
 
 ### WB-NS-060B — SchemaForm deterministic validation-fan-out reference workloads
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** `target-architecture.md` §§ Target backendless test architecture, Target performance architecture
 - **Ownership:** `GENERIC_KIT / TEST_ARCHITECTURE`; the current `WorkbenchSchemaForm` helpers remain the normalization and validation owner
-- **Exact source/API baseline:** `develop@9d7d35261bb216a35fec4f16b4738906c1fcd8c1`
+- **Exact design source/API baseline:** `develop@9d7d35261bb216a35fec4f16b4738906c1fcd8c1`
+- **Exact implementation base:** `develop@b2aab48eac7b0a72913045af6ab3d3d7f81d2053`
+- **Exact source candidate:** `b86e272b0120c32eeedfc39b893f6e9987baa3a0`
+- **Integration:** [PR #403](https://github.com/NewChoBo/workbench-kit/pull/403) merged as `develop@3059e656f657c7e8e0f1d83812e7345efdefb077`; [Issue #402](https://github.com/NewChoBo/workbench-kit/issues/402) closed
+- **Final validation:** focused `2 files / 49 tests`; `validate:fast` `471 files / 2790 tests`; `validate:ui` `15 suites / 90 interactions` with `8` optional skips; `check:commit-safety` and `git diff --check` passed
+- **Exact-source review:** three producer-distinct reviews returned `NO_FINDINGS`
+- **Boundary result:** no public API/export, component behavior, package/dependency/version/publish-order, release/tag/publish or Electron/native change
 - **Implementation boundary:** private `packages/react/test-support/schema-form-reference-workloads.ts`, one direct Node-environment `src/**/*.test.ts` consumer and packed-artifact verification
 - **Public API impact:** none; no component behavior, package export, dependency, version, publish-order or release change
 
