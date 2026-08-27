@@ -120,6 +120,7 @@ import {
   FieldRemapFlowMapper,
   createJsonataValueTransform,
 } from '@workbench-kit/shell-react/field-remap';
+import type { FieldRemapDocument } from '@workbench-kit/field-remap';
 import '@workbench-kit/shell-react/field-remap/view.css';
 
 // Uncontrolled demo:
@@ -132,6 +133,44 @@ import '@workbench-kit/shell-react/field-remap/view.css';
 `FieldRemapFlowMapper` side-imports the same CSS; the explicit CSS export remains
 for Flow-only embeds and custom bundler setups. The full barrel
 `import { FieldRemapPanel } from '@workbench-kit/shell-react'` stays supported.
+
+### n→m operators in direct Flow embeds
+
+`FieldRemapFlowMapper` keeps durable edges and document-v2 combine/split operators
+controlled. A host that enables operator authoring owns both arrays and commits each
+complete next operator array through the same persistence/history boundary:
+
+```tsx
+const [document, setDocument] = useState(initialDocument);
+const commitDocumentChange = (next: FieldRemapDocument) => {
+  setDocument(next);
+  hostHistory.record(next);
+  persist(next);
+};
+
+<FieldRemapFlowMapper
+  sources={sources}
+  targets={targets}
+  transforms={registry}
+  edges={document.edges}
+  onEdgesChange={(next) => commitDocumentChange({ ...document, edges: next })}
+  operators={document.operators ?? []}
+  onOperatorsChange={(next) => commitDocumentChange({ ...document, operators: next })}
+/>;
+```
+
+The presence of `onOperatorsChange` is the operator-authoring capability signal: it
+enables the existing Add combine / Add split actions and routes operator wiring, detail,
+and deletion mutations through that callback. Omitting the callback is intentional
+inspect-only projection; supplied operators can still render and be selected, but operator
+mutation chrome is absent. Do not infer writability from operator count, sample, chrome, or
+labels. `readOnly` suppresses Flow authoring even when mutation callbacks are present.
+
+`FieldRemapPanel` already supplies this wiring for its fully uncontrolled composite
+`{ edges, operators }` state. If either durable channel is controlled, its existing
+composite `historyOwner` contract applies as described below; consumers do not add a second
+operator state layer merely to enable Panel authoring. Direct operator inventory drag/drop
+and double-click placement are deferred to [#219](https://github.com/NewChoBo/workbench-kit/issues/219).
 
 ### Semantic history ownership
 

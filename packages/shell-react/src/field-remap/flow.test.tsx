@@ -360,6 +360,141 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(onSelectionChange).toHaveBeenCalledWith(null);
   });
 
+  it('commits complete operator arrays for a direct controlled Flow embed', async () => {
+    const sample = getFieldRemapSample('nm-combine-split');
+    const sources = sourceFieldsFromPlainObject(sample.source, {
+      idPrefix: sample.sourceIdPrefix,
+    });
+    const targets = targetSlotsFromPlainObject(sample.targetShape, {
+      idPrefix: sample.targetIdPrefix,
+    });
+    const initialOperators = sample.operators ?? [];
+    const proposals: (readonly MappingOperator[])[] = [];
+
+    function ControlledEmbed() {
+      const [operators, setOperators] = useState<readonly MappingOperator[]>(initialOperators);
+      return (
+        <FieldRemapFlowMapper
+          sources={sources}
+          targets={targets}
+          edges={[]}
+          transforms={createBuiltinValueTransformRegistry()}
+          operators={operators}
+          onEdgesChange={() => {}}
+          onOperatorsChange={(next) => {
+            proposals.push(next);
+            setOperators(next);
+          }}
+        />
+      );
+    }
+
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => {
+      root!.render(<ControlledEmbed />);
+      await vi.dynamicImportSettled();
+      await Promise.resolve();
+    });
+
+    const addCombine = container.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-add-combine"]',
+    );
+    const addSplit = container.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-add-split"]',
+    );
+    expect(addCombine).toBeTruthy();
+    expect(addSplit).toBeTruthy();
+
+    await act(async () => addCombine!.click());
+    const afterCombine = proposals[0]!;
+    const createdCombine = afterCombine[afterCombine.length - 1]!;
+    expect(afterCombine.slice(0, initialOperators.length)).toEqual(initialOperators);
+    expect(afterCombine).toHaveLength(initialOperators.length + 1);
+    expect(createdCombine.kind).toBe('combine');
+    expect(
+      container.querySelector('[data-testid="field-remap-detail-operator-id"]')?.textContent,
+    ).toBe(createdCombine.id);
+
+    await act(async () => addSplit!.click());
+    const afterSplit = proposals[1]!;
+    const createdSplit = afterSplit[afterSplit.length - 1]!;
+    expect(afterSplit.slice(0, afterCombine.length)).toEqual(afterCombine);
+    expect(afterSplit).toHaveLength(afterCombine.length + 1);
+    expect(createdSplit.kind).toBe('split');
+    expect(
+      container.querySelector('[data-testid="field-remap-detail-operator-id"]')?.textContent,
+    ).toBe(createdSplit.id);
+
+    const existingOperator = container.querySelector<HTMLElement>(
+      '[data-testid="field-remap-op-op-name"]',
+    );
+    expect(existingOperator).toBeTruthy();
+    await clickWithModifiers(existingOperator!);
+    expect(
+      container.querySelector('[data-testid="field-remap-detail-operator-id"]')?.textContent,
+    ).toBe('op-name');
+
+    const deleteOperator = container.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-detail-delete-operator"]',
+    );
+    expect(deleteOperator).toBeTruthy();
+    await act(async () => deleteOperator!.click());
+    const afterDelete = proposals[2]!;
+    expect(afterDelete).toEqual(afterSplit.filter((operator) => operator.id !== 'op-name'));
+    expect(container.querySelector('[data-testid="field-remap-op-op-name"]')).toBeNull();
+  });
+
+  it('keeps direct operator embeds inspect-only without a callback and suppresses them in read-only', async () => {
+    const sample = getFieldRemapSample('nm-combine-split');
+    const sources = sourceFieldsFromPlainObject(sample.source, {
+      idPrefix: sample.sourceIdPrefix,
+    });
+    const targets = targetSlotsFromPlainObject(sample.targetShape, {
+      idPrefix: sample.targetIdPrefix,
+    });
+    const onOperatorsChange = vi.fn();
+
+    await renderMapper({
+      sources,
+      targets,
+      edges: [],
+      operators: sample.operators,
+    });
+
+    expect(container!.querySelector('[data-testid="field-remap-add-combine"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-add-split"]')).toBeNull();
+    const existingOperator = container!.querySelector<HTMLElement>(
+      '[data-testid="field-remap-op-op-name"]',
+    );
+    expect(existingOperator).toBeTruthy();
+    await clickWithModifiers(existingOperator!);
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail-operator-id"]')?.textContent,
+    ).toBe('op-name');
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail-delete-operator"]'),
+    ).toBeNull();
+    expect(container!.textContent).toContain('Host must wire onOperatorsChange for authoring.');
+
+    await rerenderMapper({
+      readOnly: true,
+      sources,
+      targets,
+      edges: [],
+      operators: sample.operators,
+      onOperatorsChange,
+    });
+    expect(container!.querySelector('[data-testid="field-remap-add-combine"]')).toBeNull();
+    expect(container!.querySelector('[data-testid="field-remap-add-split"]')).toBeNull();
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail-delete-operator"]'),
+    ).toBeNull();
+    await clickWithModifiers(existingOperator!, { altKey: true });
+    expect(onOperatorsChange).not.toHaveBeenCalled();
+  });
+
   it('omits MiniMap when showMinimap is false', async () => {
     await renderMapper({ showMinimap: false });
 
