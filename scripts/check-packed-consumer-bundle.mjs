@@ -29,10 +29,11 @@ const focusedSchemaFormOutputDir = path.join(consumerDir, 'dist-focused-schema-f
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
   focusedOverlayCssGzipBytes: 11_500,
-  // The exact pre-semantic-multi-selection baseline consumed 244,912 bytes. Field Remap's semantic
-  // membership, atomic Remove, and accessibility/focus projection add 2,659 bytes while retaining
-  // the same 1,878-module / one-static-chunk graph; keep deliberate repair headroom.
-  initialGzipBytes: 250_000,
+  // Exact develop before the Field Remap property-stack migration consumed 249,124 bytes. Replacing
+  // its bespoke detail controls with the existing shared property/control primitives consumes
+  // 251,806 bytes while retaining the same 1,882-module / one-static-chunk graph; keep deliberate
+  // repair headroom without hiding another dependency-surface jump.
+  initialGzipBytes: 253_000,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.

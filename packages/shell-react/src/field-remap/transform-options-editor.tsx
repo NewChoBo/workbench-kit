@@ -1,5 +1,12 @@
 import { useEffect, useId, useState, type JSX } from 'react';
-import { Button } from '@workbench-kit/react/primitives';
+import {
+  Button,
+  Checkbox,
+  NumberInput,
+  TextInput,
+  WorkbenchPropertyRow,
+  WorkbenchPropertyStack,
+} from '@workbench-kit/react/primitives';
 import type { TransformOptionField } from '@workbench-kit/field-remap';
 
 export interface TransformOptionsEditorProps {
@@ -128,12 +135,14 @@ function StringMapEditor({
 }
 
 function JsonOptionEditor({
+  controlId,
   field,
   value,
   disabled,
   onChange,
   testId,
 }: {
+  readonly controlId: string;
   readonly field: TransformOptionField;
   readonly value: unknown;
   readonly disabled: boolean;
@@ -153,6 +162,7 @@ function JsonOptionEditor({
   return (
     <div className="workbench-field-remap-options__json">
       <textarea
+        id={controlId}
         aria-label={field.label}
         data-testid={testId}
         disabled={disabled}
@@ -225,69 +235,71 @@ export function TransformOptionsEditor({
   };
 
   return (
-    <div
+    <WorkbenchPropertyStack
       className="workbench-field-remap-options"
       data-field-remap-shortcuts="ignore"
       data-testid={`${testIdPrefix}-editor`}
+      gap="sm"
     >
       {fields.map((field) => {
         const controlId = `${baseId}-${field.key}`;
         const testId = `${testIdPrefix}-${field.key}`;
         const current = value[field.key];
 
-        return (
-          <label
-            key={field.key}
-            className="workbench-field-remap-options__field"
-            htmlFor={field.kind === 'boolean' ? controlId : undefined}
-          >
-            <span className="workbench-field-remap-options__label">{field.label}</span>
-            {field.kind === 'string' ? (
-              <input
+        if (field.kind === 'string') {
+          return (
+            <WorkbenchPropertyRow key={field.key} htmlFor={controlId} label={field.label}>
+              <TextInput
                 id={controlId}
-                type="text"
+                controlWidth="full"
                 data-testid={testId}
                 disabled={disabled}
                 aria-label={field.label}
                 value={
                   typeof current === 'string' ? current : current == null ? '' : String(current)
                 }
-                onChange={(event) => setKey(field.key, event.target.value)}
+                onValueChange={(next) => setKey(field.key, next)}
               />
-            ) : null}
-            {field.kind === 'number' ? (
-              <input
+            </WorkbenchPropertyRow>
+          );
+        }
+
+        if (field.kind === 'number') {
+          return (
+            <WorkbenchPropertyRow key={field.key} htmlFor={controlId} label={field.label}>
+              <NumberInput
                 id={controlId}
-                type="number"
+                controlWidth="full"
                 data-testid={testId}
                 disabled={disabled}
                 aria-label={field.label}
-                value={typeof current === 'number' ? current : ''}
-                onChange={(event) => {
-                  const raw = event.target.value;
-                  if (raw === '') {
-                    setKey(field.key, undefined);
-                    return;
-                  }
-                  const parsed = Number(raw);
-                  if (Number.isFinite(parsed)) {
-                    setKey(field.key, parsed);
-                  }
-                }}
+                nullable
+                value={typeof current === 'number' ? current : undefined}
+                onEmptyValue={() => setKey(field.key, undefined)}
+                onValueChange={(next) => setKey(field.key, next)}
               />
-            ) : null}
-            {field.kind === 'boolean' ? (
-              <input
+            </WorkbenchPropertyRow>
+          );
+        }
+
+        if (field.kind === 'boolean') {
+          return (
+            <WorkbenchPropertyRow key={field.key} htmlFor={controlId} label={field.label}>
+              <Checkbox
                 id={controlId}
-                type="checkbox"
                 data-testid={testId}
                 disabled={disabled}
                 aria-label={field.label}
                 checked={Boolean(current)}
-                onChange={(event) => setKey(field.key, event.target.checked)}
+                onCheckedChange={(next) => setKey(field.key, next)}
               />
-            ) : null}
-            {field.kind === 'stringMap' ? (
+            </WorkbenchPropertyRow>
+          );
+        }
+
+        if (field.kind === 'stringMap') {
+          return (
+            <WorkbenchPropertyRow key={field.key} label={field.label}>
               <StringMapEditor
                 field={field}
                 value={current}
@@ -297,19 +309,23 @@ export function TransformOptionsEditor({
                   setKey(field.key, Object.keys(next).length > 0 ? next : undefined)
                 }
               />
-            ) : null}
-            {field.kind === 'json' ? (
-              <JsonOptionEditor
-                field={field}
-                value={current}
-                disabled={disabled}
-                testId={testId}
-                onChange={(next) => setKey(field.key, next)}
-              />
-            ) : null}
-          </label>
+            </WorkbenchPropertyRow>
+          );
+        }
+
+        return (
+          <WorkbenchPropertyRow key={field.key} htmlFor={controlId} label={field.label}>
+            <JsonOptionEditor
+              controlId={controlId}
+              field={field}
+              value={current}
+              disabled={disabled}
+              testId={testId}
+              onChange={(next) => setKey(field.key, next)}
+            />
+          </WorkbenchPropertyRow>
         );
       })}
-    </div>
+    </WorkbenchPropertyStack>
   );
 }

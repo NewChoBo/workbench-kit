@@ -1,5 +1,12 @@
-import { useMemo, type JSX } from 'react';
-import { Button } from '@workbench-kit/react/primitives';
+import { useId, useMemo, type JSX } from 'react';
+import {
+  Button,
+  Select,
+  WorkbenchPropertyHint,
+  WorkbenchPropertyRow,
+  WorkbenchPropertySection,
+  WorkbenchPropertyStack,
+} from '@workbench-kit/react/primitives';
 import {
   optionFieldsForStep,
   resolveOptionSteps,
@@ -46,6 +53,7 @@ export function ConvertNoteEditor({
   onSelectionChange,
   readOnly = false,
 }: ConvertNoteEditorProps): JSX.Element | null {
+  const transformSelectId = useId();
   const chain = edge.transformIds ?? [];
   const transformId = chain[stepIndex];
 
@@ -91,115 +99,116 @@ export function ConvertNoteEditor({
       data-testid="field-remap-convert-note"
       aria-label="Convert note editor"
     >
-      <div className="workbench-field-remap-convert-note__header">
-        <div>
-          <p className="workbench-field-remap-convert-note__eyebrow">Convert</p>
-          <h4 data-testid="field-remap-convert-note-title">{stepLabel}</h4>
-          <code
-            className="workbench-field-remap-convert-note__binding"
-            data-testid="field-remap-convert-note-binding"
-          >
-            {edge.sourceFieldId} → {edge.targetSlotId}
-          </code>
-          <p className="workbench-field-remap-convert-note__muted">
+      <WorkbenchPropertyStack gap="sm">
+        <WorkbenchPropertySection
+          title="Convert"
+          actions={
+            <div className="workbench-field-remap-convert-note__actions">
+              <Button
+                compact
+                type="button"
+                data-testid="field-remap-convert-note-back"
+                onClick={() => onSelectionChange({ kind: 'edge', edgeId: edge.id })}
+              >
+                Binding
+              </Button>
+              <Button
+                compact
+                type="button"
+                data-testid="field-remap-convert-note-clear"
+                onClick={() => onSelectionChange(null)}
+              >
+                Close
+              </Button>
+            </div>
+          }
+        >
+          <WorkbenchPropertyRow label="Transform">
+            <strong data-testid="field-remap-convert-note-title">{stepLabel}</strong>
+          </WorkbenchPropertyRow>
+          <WorkbenchPropertyRow label="Binding">
+            <code
+              className="workbench-field-remap-convert-note__binding"
+              data-testid="field-remap-convert-note-binding"
+            >
+              {edge.sourceFieldId} → {edge.targetSlotId}
+            </code>
+          </WorkbenchPropertyRow>
+          <WorkbenchPropertyHint className="workbench-field-remap-convert-note__muted">
             Step {stepIndex + 1} of {chain.length} on this binding
-          </p>
-        </div>
-        <div className="workbench-field-remap-convert-note__actions">
-          <Button
-            compact
-            type="button"
-            data-testid="field-remap-convert-note-back"
-            onClick={() => onSelectionChange({ kind: 'edge', edgeId: edge.id })}
-          >
-            Binding
-          </Button>
-          <Button
-            compact
-            type="button"
-            data-testid="field-remap-convert-note-clear"
-            onClick={() => onSelectionChange(null)}
-          >
-            Close
-          </Button>
-        </div>
-      </div>
+          </WorkbenchPropertyHint>
+        </WorkbenchPropertySection>
 
-      <section
-        className="workbench-field-remap-convert-note__section"
-        aria-labelledby="field-remap-convert-note-registry"
-        data-testid="field-remap-step-settings"
-      >
-        <h5 id="field-remap-convert-note-registry">Transform</h5>
-        <label className="workbench-field-remap-convert-note__field">
-          <span>Registry id</span>
-          <select
-            aria-label="Convert transform id"
-            data-testid="field-remap-step-id"
-            value={transformId}
+        <WorkbenchPropertySection title="Transform" data-testid="field-remap-step-settings">
+          <WorkbenchPropertyRow htmlFor={transformSelectId} label="Registry id">
+            <Select
+              id={transformSelectId}
+              aria-label="Convert transform id"
+              controlWidth="full"
+              data-testid="field-remap-step-id"
+              value={transformId}
+              disabled={readOnly}
+              onValueChange={(nextTransformId) => {
+                applyEdge(
+                  setTransformStepIdOnEdge(edge, stepIndex, nextTransformId, {
+                    registry: transforms,
+                    sourceType: portTypes.sourceType,
+                    targetType: portTypes.targetType,
+                  }),
+                );
+              }}
+            >
+              {!replaceCatalog.some((item) => item.id === transformId) ? (
+                <option value={transformId}>{transformId}</option>
+              ) : null}
+              {replaceCatalog.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.label}
+                </option>
+              ))}
+            </Select>
+          </WorkbenchPropertyRow>
+        </WorkbenchPropertySection>
+
+        <WorkbenchPropertySection title="Options">
+          <TransformOptionsEditor
+            fields={optionFields}
+            value={optionValue}
             disabled={readOnly}
-            onChange={(event) => {
-              applyEdge(
-                setTransformStepIdOnEdge(edge, stepIndex, event.target.value, {
-                  registry: transforms,
-                  sourceType: portTypes.sourceType,
-                  targetType: portTypes.targetType,
-                }),
-              );
+            onChange={(nextOptions) => {
+              applyEdge(replaceTransformStepOptionsOnEdge(edge, stepIndex, nextOptions));
             }}
-          >
-            {!replaceCatalog.some((item) => item.id === transformId) ? (
-              <option value={transformId}>{transformId}</option>
-            ) : null}
-            {replaceCatalog.map((item) => (
-              <option key={item.id} value={item.id}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-      </section>
+          />
+        </WorkbenchPropertySection>
 
-      <section
-        className="workbench-field-remap-convert-note__section"
-        aria-labelledby="field-remap-convert-note-options"
-      >
-        <h5 id="field-remap-convert-note-options">Options</h5>
-        <TransformOptionsEditor
-          fields={optionFields}
-          value={optionValue}
-          disabled={readOnly}
-          onChange={(nextOptions) => {
-            applyEdge(replaceTransformStepOptionsOnEdge(edge, stepIndex, nextOptions));
-          }}
-        />
-      </section>
-
-      {!readOnly ? (
-        <div className="workbench-field-remap-convert-note__footer">
-          <Button
-            compact
-            type="button"
-            data-testid="field-remap-convert-note-remove"
-            onClick={() => {
-              const next = removeTransformStepFromEdge(edge, stepIndex);
-              applyEdge(next);
-              const nextLen = next.transformIds?.length ?? 0;
-              if (nextLen === 0) {
-                onSelectionChange({ kind: 'edge', edgeId: edge.id });
-              } else {
-                onSelectionChange({
-                  kind: 'transformStep',
-                  edgeId: edge.id,
-                  stepIndex: Math.min(stepIndex, nextLen - 1),
-                });
-              }
-            }}
-          >
-            Remove convert
-          </Button>
-        </div>
-      ) : null}
+        {!readOnly ? (
+          <WorkbenchPropertySection title="Actions">
+            <WorkbenchPropertyRow label="Convert step">
+              <Button
+                compact
+                type="button"
+                data-testid="field-remap-convert-note-remove"
+                onClick={() => {
+                  const next = removeTransformStepFromEdge(edge, stepIndex);
+                  applyEdge(next);
+                  const nextLen = next.transformIds?.length ?? 0;
+                  if (nextLen === 0) {
+                    onSelectionChange({ kind: 'edge', edgeId: edge.id });
+                  } else {
+                    onSelectionChange({
+                      kind: 'transformStep',
+                      edgeId: edge.id,
+                      stepIndex: Math.min(stepIndex, nextLen - 1),
+                    });
+                  }
+                }}
+              >
+                Remove convert
+              </Button>
+            </WorkbenchPropertyRow>
+          </WorkbenchPropertySection>
+        ) : null}
+      </WorkbenchPropertyStack>
     </aside>
   );
 }
