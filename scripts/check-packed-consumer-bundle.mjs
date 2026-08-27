@@ -3066,6 +3066,98 @@ for (const subpath of privateSubpaths) {
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'editor-tabs-compatibility-types.ts'),
+    `import {
+  WorkbenchEditorTabs as RootWorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as RootFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as RootFocusEvent,
+  type WorkbenchEditorTabsProps as RootEditorTabsProps,
+} from '@workbench-kit/react';
+import type { ContextMenuItem } from '@workbench-kit/react/overlay';
+import {
+  WorkbenchEditorTabs as WorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as WorkbenchFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as WorkbenchFocusEvent,
+  type WorkbenchEditorTabsProps as WorkbenchEditorTabsProps,
+} from '@workbench-kit/react/workbench';
+import {
+  WorkbenchEditorTabs as ShellWorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as ShellFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as ShellFocusEvent,
+  type WorkbenchEditorTabsProps as ShellEditorTabsProps,
+} from '@workbench-kit/react/workbench/shell';
+import {
+  WorkbenchEditorTabs as FocusedWorkbenchEditorTabs,
+  type WorkbenchEditorTabCommandFocusDisposition as FocusedFocusDisposition,
+  type WorkbenchEditorTabCommandFocusEvent as FocusedFocusEvent,
+  type WorkbenchEditorTabsProps as FocusedEditorTabsProps,
+  type UseWorkbenchEditorTabContextMenuResult as FocusedEditorTabContextMenuResult,
+} from '@workbench-kit/react/editor-tabs';
+
+const legacyExtraItem = {
+  label: 'Inspect tab',
+  onSelect: () => undefined,
+} satisfies ContextMenuItem;
+const legacyProps = {
+  activeId: 'library',
+  getExtraTabContextMenuItems: () => [legacyExtraItem],
+  onClose: () => undefined,
+  onSelect: () => undefined,
+  tabs: [{ id: 'library', label: 'Library' }],
+} satisfies RootEditorTabsProps;
+const legacyEditorTabContextMenuResult = {
+  contextMenu: null,
+  onTabContextMenu: () => undefined,
+} satisfies FocusedEditorTabContextMenuResult;
+
+const rootProps: RootEditorTabsProps = legacyProps;
+const workbenchProps: WorkbenchEditorTabsProps = legacyProps;
+const shellProps: ShellEditorTabsProps = legacyProps;
+const focusedProps: FocusedEditorTabsProps = legacyProps;
+const components: readonly [
+  typeof RootWorkbenchEditorTabs,
+  typeof WorkbenchEditorTabs,
+  typeof ShellWorkbenchEditorTabs,
+  typeof FocusedWorkbenchEditorTabs,
+] = [
+  RootWorkbenchEditorTabs,
+  WorkbenchEditorTabs,
+  ShellWorkbenchEditorTabs,
+  FocusedWorkbenchEditorTabs,
+];
+
+declare const rootFocusEvent: RootFocusEvent;
+declare const rootFocusDisposition: RootFocusDisposition;
+const workbenchFocusEvent: WorkbenchFocusEvent = rootFocusEvent;
+const shellFocusEvent: ShellFocusEvent = rootFocusEvent;
+const focusedFocusEvent: FocusedFocusEvent = rootFocusEvent;
+const workbenchFocusDisposition: WorkbenchFocusDisposition = rootFocusDisposition;
+const shellFocusDisposition: ShellFocusDisposition = rootFocusDisposition;
+const focusedFocusDisposition: FocusedFocusDisposition = rootFocusDisposition;
+declare const resolver: NonNullable<RootEditorTabsProps['resolveContextMenuCommandFocus']>;
+const optedInProps = {
+  ...legacyProps,
+  resolveContextMenuCommandFocus: resolver,
+} satisfies FocusedEditorTabsProps;
+
+void [
+  components,
+  focusedFocusDisposition,
+  focusedFocusEvent,
+  focusedProps,
+  legacyEditorTabContextMenuResult,
+  optedInProps,
+  rootProps,
+  shellFocusDisposition,
+  shellFocusEvent,
+  shellProps,
+  workbenchFocusDisposition,
+  workbenchFocusEvent,
+  workbenchProps,
+];
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'node-context-menu-item.ts'),
     `import type { ContextMenuItem } from '@workbench-kit/react/overlay/context-menu-item';
 

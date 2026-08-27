@@ -13,6 +13,7 @@ import { IconButton } from './.tmp-types/primitives/icon-button/IconButton';
 import { ScrollArea } from './.tmp-types/primitives/scroll-area/ScrollArea';
 import { TextInput } from './.tmp-types/primitives/text-input/TextInput';
 import { Modal } from './.tmp-types/modal/Modal';
+import { WorkbenchEditorTabs } from './.tmp-types/workbench/editor/WorkbenchEditorTabs';
 import { WorkbenchShell } from './.tmp-types/workbench/shell/WorkbenchShell';
 import { ChatPanel } from './.tmp-types/workbench/chat/ChatPanel';
 import { ExtensionManagementPanel } from './.tmp-types/workbench/management/ExtensionManagementPanel';
@@ -54,6 +55,18 @@ export function ExactOptionalShellSmoke(): ReactElement {
       secondaryArea={<div>Editor</div>}
       statusSections={[]}
       theme="dark"
+    />
+  );
+}
+
+export function ExactOptionalWorkbenchEditorTabsCompatibilitySmoke(): ReactElement {
+  return (
+    <WorkbenchEditorTabs
+      activeId="library"
+      getExtraTabContextMenuItems={() => [{ label: 'Inspect tab', onSelect: () => undefined }]}
+      onClose={() => undefined}
+      onSelect={() => undefined}
+      tabs={[{ id: 'library', label: 'Library' }]}
     />
   );
 }

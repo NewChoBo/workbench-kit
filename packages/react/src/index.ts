@@ -745,7 +745,11 @@ export type {
   UseEditorTabsStripDndResult,
 } from './workbench/editor/useEditorTabsStripDnd';
 export { WorkbenchEditorTabs } from './workbench/editor/WorkbenchEditorTabs';
-export type { WorkbenchEditorTabsProps } from './workbench/editor/WorkbenchEditorTabs';
+export type {
+  WorkbenchEditorTabCommandFocusDisposition,
+  WorkbenchEditorTabCommandFocusEvent,
+  WorkbenchEditorTabsProps,
+} from './workbench/editor/WorkbenchEditorTabs';
 export {
   createWorkbenchStandaloneEditorTabCommandContext,
   createWorkbenchStandaloneEditorTabContextMenuItems,
