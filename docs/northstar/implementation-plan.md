@@ -2062,13 +2062,182 @@ claim, fallback or close-on-error semantics; duplicates workspace provider const
 an asynchronous rejection; leaves an overlay stuck; or adds persistence, native or product-policy
 scope.
 
-## WB-NS-080C — Focused provider-bound keybinding management Settings entrypoint
+## WB-NS-080C0 — Focused Provider packed context identity prerequisite
 
 - **Status:** `READY_FOR_IMPLEMENTATION`
+- **Canonical public work:** [Issue #407](https://github.com/NewChoBo/workbench-kit/issues/407)
+- **Exact source/API baseline:** `develop@4c61a2483f3119a8cfd2ccfe28459d4fee3c6bf5`
+- **Current documentation-only integration:** `develop@f38035a8131ce1ebe3093f92818eec03c878c832`;
+  its diff from the exact source/API baseline changes only this implementation plan
+- **Ownership:** `GENERIC_KIT / INTERNAL_PROVIDER_COMPOSITION`; `packages/shell-react`
+- **Blocks:** `WB-NS-080C` / Issue #405
+- **Runtime layer:** `PURE_WEB / DOM / packed Vite DEV optimizer`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host can mount the freshly packed focused
+`@workbench-kit/shell-react/provider` entry under Vite's development dependency optimizer without
+the Provider's own internal children observing a foreign `WorkbenchContext`. Provider-only and the
+existing focused `command-host` / `host-shell` combinations must all retain one context identity.
+
+This is a narrow internal composition correction. It does not create a second Context, change the
+public Provider API, move editor reconciliation ownership, or add an optimizer alias/dedupe policy.
+
+### Exact reproduced gap and source cause
+
+The external packed-consumer diagnostic at the current integration fails before any management leaf
+is requested. Importing and mounting `/provider` alone throws:
+
+```text
+useWorkbench must be used inside WorkbenchProvider.
+  at EditorWorkspaceReconciler
+```
+
+Adding `command-host`, `host-shell`, or both produces the same failure. The first proven back-edge is:
+
+```text
+shell/provider.tsx
+  -> imports and mounts editor/workspace-reconcile.tsx inside WorkbenchContext.Provider
+     -> imports useWorkbench from shell/provider.tsx
+     -> imports useEditorService from editor/use-editor.ts
+        -> imports useWorkbench from shell/provider.tsx
+```
+
+Source/workspace tests evaluate one module graph and therefore do not prove this packed Vite DEV
+identity boundary. The diagnostic runner and dirty Issue #405 draft are evidence only; no source
+candidate has been accepted or frozen.
+
+### Frozen internal correction
+
+Keep `WorkbenchContext`, `WorkbenchProvider`, `useWorkbench`, `WorkbenchContextValue`, service
+construction, lifecycle and public exports in `shell/provider.tsx`. Change only the internal
+`EditorWorkspaceReconciler` input boundary:
+
+```ts
+interface EditorWorkspaceReconcilerProps {
+  readonly editorService: EditorService;
+  readonly workspaceHostService?: unknown;
+}
+```
+
+`EditorWorkspaceReconciler` receives `services.editorService` and
+`services.workspaceHostPort?.service` from the already-live Provider. It no longer imports or calls
+`useWorkbench` or `useEditorService`. It continues to validate the supplied unknown service with the
+existing `isWorkspaceResourceService`, subscribe through `useWorkspaceResourceState`, compute the
+same file-path set, and call the same `editorService.reconcileWorkspaceFileTabs` effect.
+
+The props are private module implementation details and are not exported. Passing the narrower
+`workspaceHostService` value avoids a type or runtime back-edge to the Provider module. No service,
+listener, reconciliation pass, Context, owner or public prop is added.
+
+### Packed external matrix and locked toolchain
+
+Add `pnpm check:packed-shell-react-context` as a public-neutral ephemeral external-consumer runner.
+For this prerequisite its source matrix mounts these initial public graphs independently:
+
+```text
+provider
+provider + command-host
+provider + host-shell
+provider + command-host + host-shell
+```
+
+Every case uses freshly packed tarballs as the only Workbench package inputs and a new loopback Vite
+DEV server plus Chromium context. It must use no `resolve.alias`, `resolve.dedupe`, workspace link,
+source path, existing dev server, or production-build substitute.
+
+The runner derives the exact package-instance closure from the repository lock for pnpm, Vite,
+`@vitejs/plugin-react`, React, ReactDOM, Playwright, `playwright-core` and packed-package runtime
+dependencies. Admission is by the complete peer-qualified lock snapshot identity and dependency
+edge, not package name alone. Keep every required version already admitted by that graph. Exact root
+pins cover direct tools; exact `parent@version>child` selectors cover distinct transitive edges when
+one package name legitimately has multiple versions. If the same selector would require different
+child versions or an exact required edge cannot be represented without collapsing two admitted
+snapshot instances, fail closed rather than choose a version.
+
+The runner may generate the external lock offline only under those exact root and scoped constraints.
+It must then prove every generated non-file, non-Workbench peer-qualified snapshot and dependency edge
+belongs to the admitted repository-lock closure, prove every Workbench input is one of the fresh
+tarballs, and perform the actual install with `--offline --frozen-lockfile`. A direct exact pin with
+floating transitives or a global package-name override that collapses a legitimate multi-version graph
+is invalid.
+
+The material browser authority comes from the external consumer's exact installed Playwright package,
+not a repository-root import. Before launch, compare its `playwright-core` browser descriptor and
+Chromium revision with the repository-resolved descriptor, resolve that revision's executable through
+the external Playwright instance, and fail if the identity differs or the executable is absent. No
+browser auto-install/download occurs inside the validation command.
+
+Each matrix case records the page boot count and main-frame navigations, waits for Vite readiness,
+and proves a Provider-owned probe reaches ready state. Any optimizer reload, missing/foreign Context,
+page error, unexpected console warning/error, browser assertion timeout, server failure or cleanup
+failure fails the command. Cleanup attempts every owned page/context/browser/server/temp resource
+and reports all failures without swallowing the primary error.
+
+### Ordered implementation tasks
+
+1. Add direct-prop focused unit coverage for `EditorWorkspaceReconciler`: absent/invalid workspace
+   service, initial files, workspace updates, editor reconciliation and cleanup retain current
+   behavior without a Provider wrapper.
+2. Pass the existing `editorService` and `workspaceHostPort?.service` values from Provider to the
+   reconciler; remove only the reconciler's `useWorkbench` / `useEditorService` imports and calls.
+3. Add the repository-locked, freshly packed external runner and the four initial-entry Vite DEV +
+   Chromium cases above. Prove the pre-fix provider-only case is RED before accepting the correction.
+4. After the prop correction, run the matrix. If any case still splits context, do not add a global
+   singleton, new Context, alias/dedupe or broader provider refactor; return the exact remaining graph
+   to `DESIGNING`.
+5. During development repeat only the reconciler unit/type lane and the focused packed matrix. Freeze
+   one exact source candidate before repository-wide validation.
+6. Obtain producer-distinct source review. Batch all findings into at most one successor, then run
+   the final lanes once on the reviewed SHA.
+
+### Compatibility, scope and non-scope
+
+Provider children, public context values, editor/workspace behavior, persistence, extension startup,
+service disposal and root/focused exports remain compatible. There is no host migration.
+
+Non-scope: a new or global Context; context extraction/canonicalization; public props; changes to
+`useWorkbench`; editor state or workspace policy; a provider-free shell; command/keybinding behavior;
+the Issue #405 management leaf; package versions; release/tag/publish; Electron/native; Vite consumer
+alias/dedupe configuration; unrelated Provider cleanup.
+
+### Focused development and final validation
+
+Development repeats only the affected reconciler unit/type check and focused packed matrix. After
+candidate freeze and producer-distinct review, run each final lane exactly once:
+
+```text
+pnpm validate:fast
+pnpm check:packed-shell-react-context
+pnpm check:commit-safety
+git diff --check
+```
+
+`validate:fast` already contains repository static, packed-consumer and unit gates; do not rerun its
+nested lanes. The dedicated Chromium runner is the material Vite DEV context-identity authority.
+The general UI lane and Electron are omitted because neither exercises this external optimizer
+boundary and no native source changes.
+
+### Acceptance and source-review checklist
+
+Done requires the exact internal Provider back-edge to be absent; direct reconciler tests to preserve
+workspace reconciliation; fresh packed Provider-only and every named sibling combination to mount one
+context without reload or error; a repository-lock-contained frozen external toolchain; no public API,
+Context, owner, behavior, dependency or product-policy change; and producer-distinct review plus every
+final lane green on one exact SHA.
+
+Source review must reject a global/symbol singleton, second Context, public prop, provider barrel hop,
+alias/dedupe workaround, floating install, source/workspace package input, swallowed cleanup failure,
+root/provider/command/host behavior refactor, new persistent state, Electron/native work, or expansion
+after a remaining matrix failure without a new design decision.
+
+## WB-NS-080C — Focused provider-bound keybinding management Settings entrypoint
+
+- **Status:** `BLOCKED`
 - **Canonical public work:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405)
 - **Exact source/API baseline:** `develop@4c61a2483f3119a8cfd2ccfe28459d4fee3c6bf5`
 - **Ownership:** `GENERIC_KIT / PUBLIC_ENTRYPOINT`; `packages/shell-react`
-- **Dependencies:** `WB-NS-080A` and `WB-NS-080B` are `DONE`
+- **Dependencies:** `WB-NS-080A` and `WB-NS-080B` are `DONE`; `WB-NS-080C0` must be `DONE`
 - **Public entrypoint:** `@workbench-kit/shell-react/keybinding-management-settings`
 - **Runtime layer:** `PURE_WEB / DOM / provider-bound`; no Electron or native boundary
 
@@ -2082,6 +2251,12 @@ entrypoints.
 
 This is an import-boundary correction only. It does not add a second management component, model,
 registry, storage owner or shortcut dispatcher.
+
+Source implementation is blocked before candidate freeze because the fresh packed focused Provider
+entry itself fails the required Vite DEV context-identity boundary before the management leaf is
+requested. `WB-NS-080C0` owns that internal prerequisite. The Issue #405 topic branch and claim stay
+reserved, but no 080C source may be committed, reviewed as a candidate or integrated until the
+prerequisite is `DONE` on `develop`.
 
 ### Current gap and ownership boundary
 
@@ -2228,11 +2403,11 @@ server or accept a production build as a substitute for the Vite DEV optimizer p
    and command host.
 5. Extend the existing packed Vite build/JSDOM consumer with the four-entry one-Provider fixture and
    exact old/new/reset runtime dispatch assertions.
-6. Add `pnpm check:packed-shell-react-context`: a freshly packed external consumer using the
-   repository-locked toolchain, Vite DEV optimizer and headless Chromium/Playwright. Initially mount
-   only provider, command-host and host-shell; after optimizer settle dynamically import the separate
-   management leaf module beneath the live Provider. Explicitly handle optimizer reloads, use no
-   alias/dedupe workaround and fail closed on server, reload, page, console, timeout and cleanup.
+6. Extend the `WB-NS-080C0` `pnpm check:packed-shell-react-context` external consumer with the
+   management phase. After the prerequisite's three-entry Provider graph and optimizer settle,
+   dynamically import the separate management leaf module beneath the live Provider. Preserve its
+   repository-locked toolchain, fresh-tarball inputs, reload handling, no-alias/no-dedupe rule and
+   fail-closed server/page/console/timeout/cleanup behavior.
 7. Update only neutral public entrypoint documentation needed to list the focused leaf. Do not add
    host-specific composition guidance or a migration requirement.
 8. During development repeat only the focused shell-react and packed-fixture tests affected by the
