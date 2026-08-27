@@ -73,6 +73,7 @@ try {
   });
   NPM_PUBLISH_ORDER.forEach(packPackage);
   verifyPackedPackageCohort();
+  verifyFieldRemapPrivateFilesExcluded();
   verifyJdwPackageManifest();
   linkExternalPackages();
   verifyReactSchemaFormPackageManifest();
@@ -446,6 +447,19 @@ function verifyPackedPackageCohort() {
   console.log(
     `[check-packed-consumer] Packed release cohort OK (${count} packages at ${expectedVersion}).`,
   );
+}
+
+function verifyFieldRemapPrivateFilesExcluded() {
+  const fieldRemapRoot = packagePath(nodeModulesDir, '@workbench-kit/field-remap');
+  const privatePath = fs
+    .readdirSync(fieldRemapRoot, { recursive: true })
+    .find((relativePath) => relativePath.split(path.sep).includes('test-support'));
+
+  if (privatePath !== undefined) {
+    throw new TypeError(
+      `Packed Field Remap must exclude private test-support files: ${privatePath}`,
+    );
+  }
 }
 
 function verifyJdwPackageManifest() {

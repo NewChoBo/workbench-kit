@@ -8,6 +8,10 @@ import {
   type FieldRemapProjectionOperation,
   type FieldRemapTraversalSample,
 } from './serializedOwner.js';
+import {
+  buildFieldRemapReferenceFixture,
+  FIELD_REMAP_REFERENCE_WORKLOADS,
+} from '../../test-support/reference-workloads.js';
 
 const sources: readonly SourceField[] = [
   { id: 'source.visible', label: 'Visible source' },
@@ -782,42 +786,20 @@ describe('package-internal Field Remap projection owner', () => {
 
   it('keeps SMALL/TYPICAL/STRESS reference traversals proportional to aggregate size', async () => {
     const samples: FieldRemapTraversalSample[] = [];
-    for (const count of [8, 100, 600]) {
-      const fixtureSources = Array.from({ length: count }, (_, index) => ({
-        id: `source.${index}`,
-        label: `Source ${index}`,
-      }));
-      const fixtureTargets = Array.from({ length: count }, (_, index) => ({
-        id: `target.${index}`,
-        label: `Target ${index}`,
-      }));
-      const fixtureEdges = Array.from({ length: count }, (_, index) => ({
-        id: `edge.${index}`,
-        sourceFieldId: `source.${index}`,
-        targetSlotId: `target.${index}`,
-      }));
+    for (const definition of FIELD_REMAP_REFERENCE_WORKLOADS) {
+      const fixture = buildFieldRemapReferenceFixture(definition.id);
       const owner = createFieldRemapProjectionOwner({
-        id: `traversal-${count}`,
-        document: { version: 2, edges: fixtureEdges },
-        sources: fixtureSources,
-        targets: fixtureTargets,
+        id: definition.id,
+        document: fixture.document,
+        sources: fixture.sources,
+        targets: fixture.targets,
         sourceShapeRevision: 'source:1',
         targetShapeRevision: 'target:1',
         onTraversal: (sample) => samples.push(sample),
       });
 
-      await owner.port.applyTransaction(
-        owner.port.createTransaction([
-          {
-            type: 'upsert-edge',
-            edge: {
-              id: 'edge.0',
-              sourceFieldId: 'source.0',
-              targetSlotId: 'target.0',
-            },
-          },
-        ]),
-      );
+      await owner.port.applyTransaction(owner.port.createTransaction(fixture.operations));
+      await owner.dispose();
     }
 
     expect(samples.map((sample) => sample.size)).toEqual(['SMALL', 'TYPICAL', 'STRESS']);
