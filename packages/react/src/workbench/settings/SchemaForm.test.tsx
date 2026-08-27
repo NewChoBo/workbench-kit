@@ -575,7 +575,9 @@ describe('WorkbenchSchemaForm rendering', () => {
       });
 
       expect(preferenceChanges).toHaveLength(1);
-      expect(Object.hasOwn(preferenceChanges[0] as object, 'scopeId')).toBe(true);
+      expect(Object.prototype.hasOwnProperty.call(preferenceChanges[0] as object, 'scopeId')).toBe(
+        true,
+      );
       expect(preferenceChanges[0]).toMatchObject({ scopeId: undefined });
     } finally {
       await rendered.cleanup();
