@@ -2064,11 +2064,15 @@ scope.
 
 ## WB-NS-080C0 — Focused Provider packed context identity prerequisite
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Canonical public work:** [Issue #407](https://github.com/NewChoBo/workbench-kit/issues/407)
 - **Exact source/API baseline:** `develop@4c61a2483f3119a8cfd2ccfe28459d4fee3c6bf5`
-- **Current documentation-only integration:** `develop@f38035a8131ce1ebe3093f92818eec03c878c832`;
-  its diff from the exact source/API baseline changes only this implementation plan
+- **Source integration:** candidate `258fac78f7c817c5a023f5780fbb6cb04e857361` merged by
+  [PR #409](https://github.com/NewChoBo/workbench-kit/pull/409) as
+  `develop@43fcf8f640698cbda38f89ff1e3e9ca86852fe36`
+- **Completion evidence:** producer-distinct review `PASS` with no P0/P1/P2 findings; final
+  `validate:fast`, `check:packed-shell-react-context`, `check:commit-safety`, and `git diff --check`
+  lanes were green on the source candidate
 - **Ownership:** `GENERIC_KIT / INTERNAL_PROVIDER_COMPOSITION`; `packages/shell-react`
 - **Blocks:** `WB-NS-080C` / Issue #405
 - **Runtime layer:** `PURE_WEB / DOM / packed Vite DEV optimizer`; no Electron or native boundary
@@ -2233,11 +2237,12 @@ after a remaining matrix failure without a new design decision.
 
 ## WB-NS-080C — Focused provider-bound keybinding management Settings entrypoint
 
-- **Status:** `BLOCKED`
+- **Status:** `READY_FOR_IMPLEMENTATION`
 - **Canonical public work:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405)
 - **Exact source/API baseline:** `develop@4c61a2483f3119a8cfd2ccfe28459d4fee3c6bf5`
 - **Ownership:** `GENERIC_KIT / PUBLIC_ENTRYPOINT`; `packages/shell-react`
-- **Dependencies:** `WB-NS-080A` and `WB-NS-080B` are `DONE`; `WB-NS-080C0` must be `DONE`
+- **Dependencies:** `WB-NS-080A`, `WB-NS-080B`, and `WB-NS-080C0` are `DONE`; the 080C0
+  prerequisite is integrated at `develop@43fcf8f640698cbda38f89ff1e3e9ca86852fe36`
 - **Public entrypoint:** `@workbench-kit/shell-react/keybinding-management-settings`
 - **Runtime layer:** `PURE_WEB / DOM / provider-bound`; no Electron or native boundary
 
@@ -2252,11 +2257,10 @@ entrypoints.
 This is an import-boundary correction only. It does not add a second management component, model,
 registry, storage owner or shortcut dispatcher.
 
-Source implementation is blocked before candidate freeze because the fresh packed focused Provider
-entry itself fails the required Vite DEV context-identity boundary before the management leaf is
-requested. `WB-NS-080C0` owns that internal prerequisite. The Issue #405 topic branch and claim stay
-reserved, but no 080C source may be committed, reviewed as a candidate or integrated until the
-prerequisite is `DONE` on `develop`.
+The focused Provider context-identity prerequisite is integrated on `develop`. The retained Issue
+#405 implementation draft may resume on the latest `develop`, but it must still freeze one exact
+candidate, obtain producer-distinct review, and run its final gates on the reviewed SHA before
+integration.
 
 ### Current gap and ownership boundary
 
