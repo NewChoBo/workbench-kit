@@ -10,6 +10,9 @@
     "*": {
       "overlay/context-menu-item": [
         "src/overlay/context-menu-item.ts"
+      ],
+      "schema-form": [
+        "src/workbench/settings/SchemaForm.tsx"
       ]
     }
   },
@@ -30,6 +33,7 @@
     "./overlay/context-menu-item": "./src/overlay/context-menu-item.ts",
     "./primitives": "./src/primitives/index.ts",
     "./primitives.css": "./src/primitives/styles.css",
+    "./schema-form": "./src/workbench/settings/SchemaForm.tsx",
     "./workbench/auth": "./src/workbench/auth/index.ts",
     "./workbench/bootstrap": "./src/workbench/bootstrap/index.ts",
     "./workbench/chat": "./src/workbench/chat/index.ts",

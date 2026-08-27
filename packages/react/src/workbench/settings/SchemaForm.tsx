@@ -1,3 +1,4 @@
+import './schema-form.css';
 import {
   useId,
   useMemo,
@@ -13,7 +14,10 @@ import { Field } from '../../primitives/field';
 import { Select } from '../../primitives/select';
 import { TextInput } from '../../primitives/text-input';
 import { cx } from '../../utils/cx';
-import { useWorkbenchSettingsCommit } from './settingsCommit';
+import {
+  useWorkbenchSettingsCommit,
+  type WorkbenchSettingsPreferenceChange,
+} from './settingsCommit';
 
 export type WorkbenchSchemaFormFieldType = 'checkbox' | 'number' | 'select' | 'text';
 
@@ -286,12 +290,15 @@ export function WorkbenchSchemaForm({
     onValuesChange?.(nextValues, context);
 
     if (isImmediateSettingsCommit) {
-      settingsCommit?.onPreferenceChange?.({
+      // Preserve the legacy enumerable scopeId key while exact-optional consumers compile the
+      // source-shipped focused entrypoint.
+      const preferenceChange = {
         categoryId: settingsCommit.categoryId,
         key: field.id,
         scopeId: settingsCommit.scopeId || undefined,
         value: nextValues[field.id],
-      });
+      } as WorkbenchSettingsPreferenceChange;
+      settingsCommit?.onPreferenceChange?.(preferenceChange);
     }
   };
 
@@ -349,7 +356,7 @@ export function WorkbenchSchemaForm({
               >
                 {renderWorkbenchSchemaFormField({
                   disabled: fieldDisabled,
-                  errorId,
+                  ...(errorId === undefined ? {} : { errorId }),
                   field,
                   id: fieldInputId,
                   invalid,
@@ -449,7 +456,7 @@ function renderWorkbenchSchemaFormField({
         controlWidth="full"
         max={field.type === 'number' ? field.max : undefined}
         min={field.type === 'number' ? field.min : undefined}
-        monospace={field.type === 'text' ? field.monospace : false}
+        monospace={field.type === 'text' && Boolean(field.monospace)}
         placeholder={field.placeholder}
         readOnly={readOnly}
         step={field.type === 'number' ? field.step : undefined}

@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { validatePackedPackageCohort } from './lib/packed-package-cohort.mjs';
@@ -21,6 +21,8 @@ const focusedCommandHostControllerOutputDir = path.join(
   'dist-focused-command-host-controller',
 );
 const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
+const schemaFormIdentityOutputDir = path.join(consumerDir, 'dist-schema-form-identity');
+const focusedSchemaFormOutputDir = path.join(consumerDir, 'dist-focused-schema-form');
 
 // Keep a little deliberate headroom for normal fixes, while forcing larger
 // public-surface growth to include an explicit bundle-budget review.
@@ -72,6 +74,7 @@ try {
   verifyPackedPackageCohort();
   verifyJdwPackageManifest();
   linkExternalPackages();
+  verifyReactSchemaFormPackageManifest();
   verifyExternalNodeCatalogPackageManifest();
   verifySourceInputCompatibilityPackageManifest();
   writeConsumer();
@@ -148,6 +151,35 @@ try {
         '--target',
         target,
         path.join(consumerDir, 'src', 'external-node-catalog-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
+  console.log(
+    '[check-packed-consumer] Typechecking focused SchemaForm exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--jsx',
+        'react-jsx',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'schema-form-types.ts'),
       ],
       { cwd: repoRoot, stdio: 'inherit' },
     );
@@ -270,6 +302,14 @@ try {
     cwd: consumerDir,
     stdio: 'inherit',
   });
+  runCommand('node', [path.join(consumerDir, 'src', 'schema-form-private-paths.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'schema-form-private-paths.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
 
   console.log('[check-packed-consumer] Building external production consumer...');
   runCommand(
@@ -282,6 +322,12 @@ try {
 
   buildFocusedConsumer('focused-command-host-controller');
   verifyFocusedCommandHostControllerOutput();
+
+  buildFocusedConsumer('focused-schema-form');
+  verifyFocusedSchemaFormOutput();
+
+  buildFocusedConsumer('schema-form-identity');
+  await executeFocusedConsumer('SchemaForm identity', schemaFormIdentityOutputDir);
 
   buildFocusedConsumer('focused-overlay');
   verifyFocusedStyleOutput({
@@ -444,6 +490,44 @@ function verifyJdwPackageManifest() {
     throw new TypeError(
       'Packed JDW generative UI boundary must not add a model/provider runtime dependency.',
     );
+  }
+}
+
+function verifyReactSchemaFormPackageManifest() {
+  const reactRoot = packagePath(nodeModulesDir, '@workbench-kit/react');
+  const manifest = readJson(path.join(reactRoot, 'package.json'));
+  const expectedTarget = './src/workbench/settings/SchemaForm.tsx';
+  if (manifest.exports?.['./schema-form'] !== expectedTarget) {
+    throw new TypeError(
+      'Packed React schema-form export must retain its exact focused source target.',
+    );
+  }
+  const typeVersions = manifest.typesVersions?.['*']?.['schema-form'];
+  if (
+    !Array.isArray(typeVersions) ||
+    typeVersions.length !== 1 ||
+    typeVersions[0] !== 'src/workbench/settings/SchemaForm.tsx'
+  ) {
+    throw new TypeError('Packed React schema-form typesVersions mapping is invalid.');
+  }
+  if (Object.keys(manifest.exports ?? {}).some((key) => key.startsWith('./schema-form/'))) {
+    throw new TypeError('Packed React schema-form exposes a private nested subpath.');
+  }
+  if (
+    manifest.exports?.['./workbench/settings'] !== './src/workbench/settings/index.ts' ||
+    manifest.exports?.['./workbench'] !== './src/workbench/index.ts'
+  ) {
+    throw new TypeError('Packed React schema-form changed a legacy Workbench export target.');
+  }
+  if (!fs.existsSync(path.join(reactRoot, expectedTarget))) {
+    throw new TypeError(`Packed React schema-form target is missing: ${expectedTarget}`);
+  }
+  if (
+    !Array.isArray(manifest.sideEffects) ||
+    manifest.sideEffects.length !== 1 ||
+    manifest.sideEffects[0] !== '**/*.css'
+  ) {
+    throw new TypeError('Packed React schema-form must retain CSS-only side effects.');
   }
 }
 
@@ -2730,8 +2814,28 @@ export const packedBuiltins = BUILTIN_WORKBENCH_EXTENSIONS;
     path.join(consumerDir, 'src', 'schema-form-types.ts'),
     `import {
   WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+  type WorkbenchSchemaFormCancelContext,
+  type WorkbenchSchemaFormCheckboxField,
+  type WorkbenchSchemaFormErrors,
+  type WorkbenchSchemaFormField,
+  type WorkbenchSchemaFormFieldBase,
+  type WorkbenchSchemaFormFieldChangeContext,
+  type WorkbenchSchemaFormFieldType,
+  type WorkbenchSchemaFormFieldValue,
+  type WorkbenchSchemaFormNumberField,
+  type WorkbenchSchemaFormOption,
   type WorkbenchSchemaFormProps,
-} from '@workbench-kit/react/workbench/settings';
+  type WorkbenchSchemaFormSelectField,
+  type WorkbenchSchemaFormSubmitContext,
+  type WorkbenchSchemaFormTextField,
+  type WorkbenchSchemaFormValues,
+} from '@workbench-kit/react/schema-form';
 
 export const packedSchemaFormComponent = WorkbenchSchemaForm;
 export const packedSchemaFormOmitted = { fields: [] } satisfies WorkbenchSchemaFormProps;
@@ -2743,6 +2847,221 @@ export const packedSchemaFormTrue = {
   fields: [],
   focusFirstInvalidFieldOnSubmit: true,
 } satisfies WorkbenchSchemaFormProps;
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined.
+const packedSchemaFormExplicitUndefined: WorkbenchSchemaFormProps = {
+  fields: [],
+  focusFirstInvalidFieldOnSubmit: undefined,
+};
+void packedSchemaFormExplicitUndefined;
+
+export const packedSchemaFormRuntime = Object.freeze({
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+});
+
+export type PackedSchemaFormPublicTypes = readonly [
+  WorkbenchSchemaFormCancelContext,
+  WorkbenchSchemaFormCheckboxField,
+  WorkbenchSchemaFormErrors,
+  WorkbenchSchemaFormField,
+  WorkbenchSchemaFormFieldBase,
+  WorkbenchSchemaFormFieldChangeContext,
+  WorkbenchSchemaFormFieldType,
+  WorkbenchSchemaFormFieldValue,
+  WorkbenchSchemaFormNumberField,
+  WorkbenchSchemaFormOption,
+  WorkbenchSchemaFormProps,
+  WorkbenchSchemaFormSelectField,
+  WorkbenchSchemaFormSubmitContext,
+  WorkbenchSchemaFormTextField,
+  WorkbenchSchemaFormValues,
+];
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-legacy-types.ts'),
+    `import * as FocusedSchemaForm from '@workbench-kit/react/schema-form';
+import * as LegacySettingsSchemaForm from '@workbench-kit/react/workbench/settings';
+import * as LegacyWorkbenchSchemaForm from '@workbench-kit/react/workbench';
+
+export const packedLegacySettingsSchemaForm: typeof FocusedSchemaForm.WorkbenchSchemaForm =
+  LegacySettingsSchemaForm.WorkbenchSchemaForm;
+export const packedLegacyWorkbenchSchemaForm: typeof FocusedSchemaForm.WorkbenchSchemaForm =
+  LegacyWorkbenchSchemaForm.WorkbenchSchemaForm;
+export const packedLegacySettingsHelpers = {
+  coerceWorkbenchSchemaFormFieldValue:
+    LegacySettingsSchemaForm.coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors: LegacySettingsSchemaForm.getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue:
+    LegacySettingsSchemaForm.getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError: LegacySettingsSchemaForm.getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable:
+    LegacySettingsSchemaForm.isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues:
+    LegacySettingsSchemaForm.normalizeWorkbenchSchemaFormValues,
+} satisfies Pick<
+  typeof FocusedSchemaForm,
+  | 'coerceWorkbenchSchemaFormFieldValue'
+  | 'getWorkbenchSchemaFormErrors'
+  | 'getWorkbenchSchemaFormFieldDefaultValue'
+  | 'getWorkbenchSchemaFormFieldError'
+  | 'isWorkbenchSchemaFormSubmittable'
+  | 'normalizeWorkbenchSchemaFormValues'
+>;
+export const packedLegacyWorkbenchHelpers: typeof packedLegacySettingsHelpers = {
+  coerceWorkbenchSchemaFormFieldValue:
+    LegacyWorkbenchSchemaForm.coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors: LegacyWorkbenchSchemaForm.getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue:
+    LegacyWorkbenchSchemaForm.getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError: LegacyWorkbenchSchemaForm.getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable:
+    LegacyWorkbenchSchemaForm.isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues:
+    LegacyWorkbenchSchemaForm.normalizeWorkbenchSchemaFormValues,
+};
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-schema-form.ts'),
+    `import {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+} from '@workbench-kit/react/schema-form';
+
+const focusedRuntime = Object.freeze({
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+});
+
+(globalThis as typeof globalThis & { __workbenchKitFocusedSchemaForm?: unknown })
+  .__workbenchKitFocusedSchemaForm = focusedRuntime;
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-identity.ts'),
+    `import {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+} from '@workbench-kit/react/schema-form';
+import {
+  WorkbenchSchemaForm as SettingsSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue as settingsCoerce,
+  getWorkbenchSchemaFormErrors as settingsGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue as settingsGetDefault,
+  getWorkbenchSchemaFormFieldError as settingsGetFieldError,
+  isWorkbenchSchemaFormSubmittable as settingsIsSubmittable,
+  normalizeWorkbenchSchemaFormValues as settingsNormalize,
+} from '@workbench-kit/react/workbench/settings';
+import {
+  WorkbenchSchemaForm as WorkbenchSchemaFormLegacy,
+  coerceWorkbenchSchemaFormFieldValue as workbenchCoerce,
+  getWorkbenchSchemaFormErrors as workbenchGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue as workbenchGetDefault,
+  getWorkbenchSchemaFormFieldError as workbenchGetFieldError,
+  isWorkbenchSchemaFormSubmittable as workbenchIsSubmittable,
+  normalizeWorkbenchSchemaFormValues as workbenchNormalize,
+} from '@workbench-kit/react/workbench';
+
+const focusedRuntime = {
+  WorkbenchSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue,
+  getWorkbenchSchemaFormErrors,
+  getWorkbenchSchemaFormFieldDefaultValue,
+  getWorkbenchSchemaFormFieldError,
+  isWorkbenchSchemaFormSubmittable,
+  normalizeWorkbenchSchemaFormValues,
+};
+const settingsRuntime: typeof focusedRuntime = {
+  WorkbenchSchemaForm: SettingsSchemaForm,
+  coerceWorkbenchSchemaFormFieldValue: settingsCoerce,
+  getWorkbenchSchemaFormErrors: settingsGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue: settingsGetDefault,
+  getWorkbenchSchemaFormFieldError: settingsGetFieldError,
+  isWorkbenchSchemaFormSubmittable: settingsIsSubmittable,
+  normalizeWorkbenchSchemaFormValues: settingsNormalize,
+};
+const workbenchRuntime: typeof focusedRuntime = {
+  WorkbenchSchemaForm: WorkbenchSchemaFormLegacy,
+  coerceWorkbenchSchemaFormFieldValue: workbenchCoerce,
+  getWorkbenchSchemaFormErrors: workbenchGetErrors,
+  getWorkbenchSchemaFormFieldDefaultValue: workbenchGetDefault,
+  getWorkbenchSchemaFormFieldError: workbenchGetFieldError,
+  isWorkbenchSchemaFormSubmittable: workbenchIsSubmittable,
+  normalizeWorkbenchSchemaFormValues: workbenchNormalize,
+};
+
+for (const exportName of Object.keys(focusedRuntime) as (keyof typeof focusedRuntime)[]) {
+  if (
+    focusedRuntime[exportName] !== settingsRuntime[exportName] ||
+    focusedRuntime[exportName] !== workbenchRuntime[exportName]
+  ) {
+    throw new TypeError('Packed SchemaForm runtime identity diverged for ' + exportName);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-private-paths.cjs'),
+    `const privateSubpaths = [
+  '@workbench-kit/react/schema-form/SchemaForm',
+  '@workbench-kit/react/schema-form/settingsCommit',
+  '@workbench-kit/react/workbench/settings/SchemaForm',
+  '@workbench-kit/react/src/workbench/settings/SchemaForm',
+];
+for (const subpath of privateSubpaths) {
+  let rejected = false;
+  try {
+    require(subpath);
+  } catch (error) {
+    rejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!rejected) {
+    throw new TypeError('Packed SchemaForm CommonJS private subpath is exposed: ' + subpath);
+  }
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'schema-form-private-paths.mjs'),
+    `const privateSubpaths = [
+  '@workbench-kit/react/schema-form/SchemaForm',
+  '@workbench-kit/react/schema-form/settingsCommit',
+  '@workbench-kit/react/workbench/settings/SchemaForm',
+  '@workbench-kit/react/src/workbench/settings/SchemaForm',
+];
+for (const subpath of privateSubpaths) {
+  let rejected = false;
+  try {
+    await import(subpath);
+  } catch (error) {
+    rejected = error?.code === 'ERR_PACKAGE_PATH_NOT_EXPORTED';
+  }
+  if (!rejected) {
+    throw new TypeError('Packed SchemaForm ESM private subpath is exposed: ' + subpath);
+  }
+}
 `,
   );
   fs.writeFileSync(
@@ -3278,6 +3597,7 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
         exclude: [
           'src/authoring-development-types.ts',
           'src/external-node-catalog-types.ts',
+          'src/schema-form-types.ts',
           'src/source-input-compatibility-types.ts',
           'src/ui-generative-plan-types.ts',
         ],
@@ -3310,18 +3630,43 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
     path.join(consumerDir, 'src', 'focused-overlay.ts'),
     focusedOverlayOutputDir,
   );
+  writeFocusedViteConfig(
+    'focused-schema-form',
+    path.join(consumerDir, 'src', 'focused-schema-form.ts'),
+    focusedSchemaFormOutputDir,
+  );
+  writeFocusedViteConfig(
+    'schema-form-identity',
+    path.join(consumerDir, 'src', 'schema-form-identity.ts'),
+    schemaFormIdentityOutputDir,
+    true,
+  );
 }
 
-function writeFocusedViteConfig(name, input, outputDirectory) {
+function writeFocusedViteConfig(name, input, outputDirectory, nodeExecutable = false) {
   fs.writeFileSync(
     path.join(consumerDir, `vite.${name}.config.mjs`),
     `export default {
   root: ${JSON.stringify(consumerDir)},
+  plugins: [{
+    name: 'workbench-kit-focused-module-graph',
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'module-graph.json',
+        source: JSON.stringify([...this.getModuleIds()].sort(), null, 2),
+      });
+    },
+  }],
   build: {
     emptyOutDir: true,
     manifest: true,
     outDir: ${JSON.stringify(outputDirectory)},
-    rollupOptions: { input: ${JSON.stringify(input)} },
+    rollupOptions: {
+      input: ${JSON.stringify(input)},
+      ${nodeExecutable ? 'treeshake: { moduleSideEffects: false },' : ''}
+      ${nodeExecutable ? "output: { entryFileNames: 'assets/[name]-[hash].mjs' }," : ''}
+    },
     sourcemap: true,
   },
 };
@@ -3336,6 +3681,48 @@ function buildFocusedConsumer(name) {
     ['exec', 'vite', 'build', '--config', path.join(consumerDir, `vite.${name}.config.mjs`)],
     { cwd: repoRoot, stdio: 'inherit' },
   );
+}
+
+async function executeFocusedConsumer(label, outputDirectory) {
+  const manifest = readJson(path.join(outputDirectory, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((candidate) => candidate.isEntry);
+  if (!entry?.file) throw new Error(`${label} consumer emitted no Vite entry.`);
+  const { JSDOM } = await import('jsdom');
+  const dom = new JSDOM('<!doctype html><html><body></body></html>', {
+    url: 'http://127.0.0.1/',
+  });
+  const browserGlobals = {
+    CustomEvent: dom.window.CustomEvent,
+    customElements: dom.window.customElements,
+    document: dom.window.document,
+    Event: dom.window.Event,
+    HTMLElement: dom.window.HTMLElement,
+    HTMLInputElement: dom.window.HTMLInputElement,
+    MutationObserver: dom.window.MutationObserver,
+    navigator: dom.window.navigator,
+    Node: dom.window.Node,
+    window: dom.window,
+  };
+  const previousDescriptors = new Map(
+    Object.keys(browserGlobals).map((key) => [
+      key,
+      Object.getOwnPropertyDescriptor(globalThis, key),
+    ]),
+  );
+
+  try {
+    for (const [key, value] of Object.entries(browserGlobals)) {
+      Object.defineProperty(globalThis, key, { configurable: true, value, writable: true });
+    }
+    await import(`${pathToFileURL(path.join(outputDirectory, entry.file)).href}?packed-consumer`);
+    console.log(`[check-packed-consumer] ${label} runtime OK.`);
+  } finally {
+    dom.window.close();
+    for (const [key, descriptor] of previousDescriptors) {
+      if (descriptor) Object.defineProperty(globalThis, key, descriptor);
+      else Reflect.deleteProperty(globalThis, key);
+    }
+  }
 }
 
 function collectInitialJavaScriptSources(outputDirectory, label) {
@@ -3399,6 +3786,115 @@ function verifyFocusedCommandHostControllerOutput() {
 
   console.log(
     `[check-packed-consumer] focused command-host controller graph OK (${sources.length} source-map entries).`,
+  );
+}
+
+function verifyFocusedSchemaFormOutput() {
+  const sources = collectInitialJavaScriptSources(focusedSchemaFormOutputDir, 'focused SchemaForm');
+  const moduleIds = readJson(path.join(focusedSchemaFormOutputDir, 'module-graph.json'));
+  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+    throw new Error('Focused SchemaForm emitted no module-graph evidence.');
+  }
+  const normalizedModuleIds = moduleIds.map((moduleId) =>
+    `/${moduleId.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const requiredModuleSegments = [
+    '/@workbench-kit/react/src/workbench/settings/schemaform.tsx',
+    '/@workbench-kit/react/src/workbench/settings/schema-form.css',
+    '/@workbench-kit/react/src/workbench/settings/settingscommit.tsx',
+    '/@workbench-kit/react/src/primitives/button/button.tsx',
+    '/@workbench-kit/react/src/primitives/checkbox/checkbox.tsx',
+    '/@workbench-kit/react/src/primitives/empty-state/emptystate.tsx',
+    '/@workbench-kit/react/src/primitives/field/field.tsx',
+    '/@workbench-kit/react/src/primitives/select/select.tsx',
+    '/@workbench-kit/react/src/primitives/text-input/textinput.tsx',
+  ];
+  const settingsModuleRoot = '/@workbench-kit/react/src/workbench/settings/';
+  const allowedSettingsModules = new Set([
+    `${settingsModuleRoot}schemaform.tsx`,
+    `${settingsModuleRoot}schema-form.css`,
+    `${settingsModuleRoot}settingscommit.tsx`,
+  ]);
+  const forbiddenModuleSegments = [
+    '/@workbench-kit/react/src/workbench/index.ts',
+    '/@workbench-kit/react/src/styles/core.css',
+    '/@workbench-kit/react/src/workbench/shell/',
+    '/@workbench-kit/react/src/workbench/extensions/',
+    '/@workbench-kit/react/src/workbench/provider',
+    '/@workbench-kit/shell-react/',
+    '/@workbench-kit/runtime/',
+    '/@workbench-kit/workbench-core/',
+    '/@workbench-kit/workbench-extension-sdk/',
+    '/@workbench-kit/platform/src/extensions/',
+    '/@workbench-kit/monaco/',
+    '/packages/runtime/',
+    '/packages/workbench-core/',
+    '/packages/workbench-extension-sdk/',
+    '/packages/monaco/',
+  ];
+
+  for (const requiredSegment of requiredModuleSegments) {
+    if (!normalizedModuleIds.some((moduleId) => moduleId.includes(requiredSegment))) {
+      throw new Error(`Focused SchemaForm consumer is missing retained module ${requiredSegment}.`);
+    }
+  }
+
+  const unexpectedSettingsModules = normalizedModuleIds.filter((moduleId) => {
+    const settingsModuleIndex = moduleId.indexOf(settingsModuleRoot);
+    if (settingsModuleIndex === -1) return false;
+    return !allowedSettingsModules.has(moduleId.slice(settingsModuleIndex));
+  });
+  const forbiddenModules = [
+    ...unexpectedSettingsModules,
+    ...normalizedModuleIds.filter((moduleId) =>
+      forbiddenModuleSegments.some((segment) => moduleId.includes(segment)),
+    ),
+  ];
+  if (forbiddenModules.length > 0) {
+    throw new Error(
+      `Focused SchemaForm pulled a broad Settings/shell runtime graph:\n${[
+        ...new Set(forbiddenModules),
+      ].join('\n')}`,
+    );
+  }
+
+  const manifest = readJson(path.join(focusedSchemaFormOutputDir, '.vite', 'manifest.json'));
+  const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
+  if (!entryKey) throw new Error('Focused SchemaForm consumer emitted no Vite entry.');
+  const staticEntries = collectStaticEntries(manifest, entryKey);
+  const cssFiles = new Set(staticEntries.flatMap((entry) => entry.css ?? []));
+  if (cssFiles.size === 0) throw new Error('Focused SchemaForm consumer emitted no CSS.');
+  const css = [...cssFiles]
+    .map((file) => fs.readFileSync(path.join(focusedSchemaFormOutputDir, file), 'utf8'))
+    .join('\n');
+  for (const selector of [
+    '.ui-workbench-schema-form',
+    '.ui-workbench-schema-form__error',
+    '.ui-workbench-schema-form__actions',
+    '.ui-button',
+    '.ui-checkbox',
+    '.ui-empty-state',
+    '.ui-field',
+    '.ui-select',
+    '.ui-input',
+  ]) {
+    if (!css.includes(selector)) throw new Error(`Focused SchemaForm CSS is missing ${selector}.`);
+  }
+  for (const selector of [
+    '.workbench-settings-modal',
+    '.ui-workbench-navigation-panel',
+    '.ui-workbench-sectioned-panel',
+    '.ui-workbench-section-tab-panel',
+    '.ui-workbench-structured-data-form',
+    '.ui-workbench-structured-data-schema-panel',
+  ]) {
+    if (css.includes(selector)) {
+      throw new Error(`Focused SchemaForm CSS unexpectedly includes ${selector}.`);
+    }
+  }
+
+  console.log(
+    `[check-packed-consumer] focused SchemaForm graph/CSS OK (${moduleIds.length} module IDs, ${sources.length} source-map entries, ${cssFiles.size} CSS assets).`,
   );
 }
 
