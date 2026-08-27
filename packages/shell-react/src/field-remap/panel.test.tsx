@@ -88,6 +88,25 @@ describe('FieldRemapPanel', () => {
   let root: Root | undefined;
 
   beforeAll(() => {
+    const getBoundingClientRect = HTMLElement.prototype.getBoundingClientRect;
+    vi.spyOn(HTMLElement.prototype, 'getBoundingClientRect').mockImplementation(function (
+      this: HTMLElement,
+    ) {
+      if (this.dataset.testid !== 'field-remap-flow') {
+        return getBoundingClientRect.call(this);
+      }
+      return {
+        x: 0,
+        y: 0,
+        width: 960,
+        height: 640,
+        top: 0,
+        right: 960,
+        bottom: 640,
+        left: 0,
+        toJSON: () => ({}),
+      } as DOMRect;
+    });
     class ResizeObserverStub {
       observe(): void {}
       unobserve(): void {}
