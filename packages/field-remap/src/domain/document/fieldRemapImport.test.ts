@@ -257,6 +257,49 @@ describe('Field Remap strict import admission', () => {
     expect(versionDescriptorReads).toBe(1);
   });
 
+  it('enumerates a changing ownKeys source once without hiding valid structural state', () => {
+    const expected = document({
+      operators: [
+        {
+          kind: 'split',
+          id: 'split-name',
+          inputFieldId: 'source.object',
+          outputSlotIds: ['target.first', 'target.last'],
+        },
+      ],
+    });
+    let ownKeysCalls = 0;
+    let getterCalls = 0;
+    const raw = new Proxy(expected, {
+      get() {
+        getterCalls += 1;
+        throw new Error('Import preflight must not read through getters.');
+      },
+      ownKeys(target) {
+        ownKeysCalls += 1;
+        // The former Reflect.ownKeys + Object.getOwnPropertyDescriptors pair made a
+        // second source enumeration. A legal extensible proxy can expose new state
+        // then; the first key list would silently omit it from the frozen snapshot.
+        if (ownKeysCalls > 1) {
+          Object.defineProperty(target, 'unexpected', {
+            configurable: true,
+            enumerable: true,
+            value: 'must-not-be-hidden',
+          });
+        }
+        return Reflect.ownKeys(target);
+      },
+    });
+
+    const admitted = preflightFieldRemapImport(raw, createContext());
+
+    expect(ownKeysCalls).toBe(1);
+    expect(getterCalls).toBe(0);
+    expect(Object.prototype.hasOwnProperty.call(expected, 'unexpected')).toBe(false);
+    expect(admitted).toEqual(expected);
+    expect(admitted.operators).toEqual(expected.operators);
+  });
+
   it('does not execute coercion hooks on an invalid version value', () => {
     const toString = vi.fn(() => '3');
     expectFailure(

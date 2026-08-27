@@ -72,15 +72,24 @@ function fail(
 
 type ReflectedOwnData = {
   readonly keys: readonly PropertyKey[];
-  readonly descriptors: PropertyDescriptorMap;
+  readonly descriptors: ReadonlyMap<PropertyKey, PropertyDescriptor>;
   readonly prototype: object | null;
 };
 
 function reflectOwnData(value: object, path: string): ReflectedOwnData {
   try {
+    const keys = Reflect.ownKeys(value);
+    const descriptors = new Map<PropertyKey, PropertyDescriptor>();
+    for (const key of keys) {
+      const descriptor = Reflect.getOwnPropertyDescriptor(value, key);
+      if (!descriptor) {
+        return fail('invalid-document', path);
+      }
+      descriptors.set(key, descriptor);
+    }
     return {
-      keys: Reflect.ownKeys(value),
-      descriptors: Object.getOwnPropertyDescriptors(value),
+      keys,
+      descriptors,
       prototype: Object.getPrototypeOf(value),
     };
   } catch {
@@ -128,7 +137,7 @@ function strictPortableSnapshot(
       ancestors.delete(value);
       return fail('invalid-document', path);
     }
-    const lengthDescriptor = reflected.descriptors.length;
+    const lengthDescriptor = reflected.descriptors.get('length');
     if (
       !lengthDescriptor ||
       !('value' in lengthDescriptor) ||
@@ -150,7 +159,7 @@ function strictPortableSnapshot(
         continue;
       }
       const index = Number(key);
-      const descriptor = reflected.descriptors[key];
+      const descriptor = reflected.descriptors.get(key);
       if (
         !Number.isInteger(index) ||
         index < 0 ||
@@ -172,7 +181,7 @@ function strictPortableSnapshot(
 
     const clone: unknown[] = new Array(length);
     for (const key of indexKeys) {
-      const descriptor = reflected.descriptors[key]!;
+      const descriptor = reflected.descriptors.get(key)!;
       clone[Number(key)] = strictPortableSnapshot(descriptor.value, `${path}[${key}]`, ancestors);
     }
     ancestors.delete(value);
@@ -189,7 +198,7 @@ function strictPortableSnapshot(
       ancestors.delete(value);
       return fail('invalid-document', path);
     }
-    const descriptor = reflected.descriptors[key];
+    const descriptor = reflected.descriptors.get(key);
     if (!descriptor || !descriptor.enumerable || !('value' in descriptor)) {
       ancestors.delete(value);
       return fail('invalid-document', path);
@@ -418,7 +427,7 @@ function parseOperator(value: unknown, path: string): MappingOperator {
 
 function parseStrictDocument(raw: unknown): FieldRemapDocument {
   const topLevel = strictTopLevelRecord(raw, '$');
-  const versionDescriptor = topLevel.reflected.descriptors.version;
+  const versionDescriptor = topLevel.reflected.descriptors.get('version');
   if (!versionDescriptor || !('value' in versionDescriptor)) {
     return fail('invalid-document', '$.version');
   }
