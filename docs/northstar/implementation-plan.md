@@ -2062,6 +2062,272 @@ claim, fallback or close-on-error semantics; duplicates workspace provider const
 an asynchronous rejection; leaves an overlay stuck; or adds persistence, native or product-policy
 scope.
 
+## WB-NS-080C — Focused provider-bound keybinding management Settings entrypoint
+
+- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Canonical public work:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405)
+- **Exact source/API baseline:** `develop@4c61a2483f3119a8cfd2ccfe28459d4fee3c6bf5`
+- **Ownership:** `GENERIC_KIT / PUBLIC_ENTRYPOINT`; `packages/shell-react`
+- **Dependencies:** `WB-NS-080A` and `WB-NS-080B` are `DONE`
+- **Public entrypoint:** `@workbench-kit/shell-react/keybinding-management-settings`
+- **Runtime layer:** `PURE_WEB / DOM / provider-bound`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host that already composes the focused `provider`, `command-host` and `host-shell`
+entrypoints can render the existing provider-bound keybinding management Settings component without
+importing the broad package root. The focused leaf must observe the same provider context, command
+registry, effective overrides, persistence state and runtime dispatch path as those sibling focused
+entrypoints.
+
+This is an import-boundary correction only. It does not add a second management component, model,
+registry, storage owner or shortcut dispatcher.
+
+### Current gap and ownership boundary
+
+At the exact baseline, `WorkbenchKeybindingManagementSettings` already exists in
+`packages/shell-react/src/management/keybinding-settings.tsx`. It delegates to the existing
+`useKeybindingManagementModel`, renders the existing React `KeybindingManagementPanel`, and uses the
+same `WorkbenchProvider` context as `WorkbenchCommandHost`. The package root re-exports the component,
+but `packages/shell-react/package.json` has no focused public management leaf.
+
+Hosts that otherwise use:
+
+```ts
+@workbench-kit/shell-react/provider
+@workbench-kit/shell-react/command-host
+@workbench-kit/shell-react/host-shell
+```
+
+must therefore import the broad root only for this component. The target adds one explicit leaf that
+re-exports the existing component directly. Generic keybinding mechanics and every current runtime
+owner remain unchanged.
+
+### Frozen public API and import graph
+
+Add exactly this public subpath:
+
+```json
+{
+  "./keybinding-management-settings": "./src/keybinding-management-settings.ts"
+}
+```
+
+The exact leaf file is `packages/shell-react/src/keybinding-management-settings.ts` and contains only:
+
+```ts
+export { WorkbenchKeybindingManagementSettings } from './management/keybinding-settings.js';
+```
+
+It therefore exposes the existing symbol with no wrapper or replacement implementation:
+
+```ts
+export function WorkbenchKeybindingManagementSettings(): JSX.Element;
+```
+
+The focused consumer import is:
+
+```ts
+import { WorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react/keybinding-management-settings';
+```
+
+The existing root import remains source- and runtime-compatible:
+
+```ts
+import { WorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react';
+```
+
+Both paths resolve to the same component implementation and internal provider module. The new leaf
+must not declare another React context, re-export `WorkbenchProvider`, copy the management hook, or
+introduce a package-root hop. Its runtime graph may include the existing management model, React
+panel, platform management helpers and provider context required by the component; it must not pull
+the broad root barrel merely to obtain them. It must not target or re-export through the broader
+`src/management/settings.tsx` aggregator, which also evaluates unrelated account, command and
+extension management surfaces.
+
+### Provider, persistence and runtime parity
+
+```text
+focused provider entrypoint
+  -> one WorkbenchProvider context
+       ├─ focused keybinding-management-settings leaf
+       │    -> existing management model
+       │    -> set/reset provider override operations
+       ├─ focused command-host leaf
+       │    -> same effective override projection
+       │    -> existing runtime command dispatch
+       └─ focused host-shell leaf
+            -> same provider-owned shell registries and layout
+```
+
+Setting an accepted override through the management leaf updates the one provider state and makes
+the new chord effective through the mounted command host. The displaced old chord no longer invokes
+that command. Reset removes only that command's user override and restores the default chord. Current
+persistence eligibility, storage format/key, diagnostics, conflict handling, platform normalization,
+capture behavior and command execution remain the `WB-NS-080A` provider/model owners' responsibility.
+
+The new entrypoint adds no prop, callback, state, effect, listener or lifecycle. Mount/unmount follows
+the existing component. Multiple consumers under one provider observe one provider snapshot; they do
+not synchronize separate stores.
+
+### Packed build fixture and material browser context-identity gate
+
+Extend the existing packed-consumer Vite build/JSDOM fixture so it imports these exact public entries:
+
+```text
+@workbench-kit/shell-react/provider
+@workbench-kit/shell-react/command-host
+@workbench-kit/shell-react/host-shell
+@workbench-kit/shell-react/keybinding-management-settings
+```
+
+The fixture mounts one `WorkbenchProvider`, one `WorkbenchHostShell`, one `WorkbenchCommandHost` and
+one `WorkbenchKeybindingManagementSettings`. It must prove from the packed tarball, not workspace
+source resolution, that:
+
+- every focused entry resolves under one Provider without a missing/foreign-context error;
+- the management leaf lists a command from that exact provider projection;
+- setting a new chord updates the mounted command host and the old chord stops dispatching;
+- resetting restores the default chord and disables the temporary chord;
+- remounting the Settings component does not replace provider state or install duplicate command
+  dispatch;
+- the new leaf is present in the package export map and no private `src` deep import is required.
+
+That build/JSDOM fixture proves the export map, packed resolution and baseline component interaction,
+but it is not the material browser context-identity authority. Add a dedicated public-neutral external
+consumer whose initial application imports and mounts only the focused provider, command-host and
+host-shell entries. After the page and Vite **development optimizer** settle, it must dynamically
+import a separate lazy module for `/keybinding-management-settings` and mount that leaf beneath the
+already-live Provider. The runner must detect and explicitly handle every optimizer reload so a reload
+cannot replace the live Provider or turn a context failure into a false PASS. Headless Chromium via
+Playwright must then prove no context error and exact-once old/new/reset runtime dispatch.
+
+The consumer installs only freshly packed Workbench tarballs. Its external toolchain is frozen to the
+repository lockfile and current resolved package-manager, Vite, `@vitejs/plugin-react`, React and
+ReactDOM versions; it performs no floating install. It uses no `resolve.alias`, `resolve.dedupe`,
+workspace link or source-path workaround.
+
+The dedicated runner is exactly `pnpm check:packed-shell-react-context`. It owns an ephemeral external
+consumer directory, loopback Vite dev server, browser context and cleanup. Any Vite startup/readiness
+timeout, page error, unexpected console error/warning, browser assertion timeout, missing context,
+duplicate dispatch or cleanup failure fails the command closed. It must not reuse a repository dev
+server or accept a production build as a substitute for the Vite DEV optimizer path.
+
+### Ordered implementation tasks
+
+1. Add the exact one-line `packages/shell-react/src/keybinding-management-settings.ts` leaf and map
+   `./keybinding-management-settings` to it in `packages/shell-react/package.json`. Do not target the
+   broad `management/settings.tsx` aggregator.
+2. Preserve the root re-export and existing internal imports unchanged; the new leaf contains no
+   wrapper component, state, effect or additional export.
+3. Add focused public-export/type fixtures and an exact package-export mapping assertion proving the
+   leaf maps to `./src/keybinding-management-settings.ts`, while leaf and root imports expose the same
+   component contract under the focused provider entrypoint.
+4. Add focused provider-bound interaction coverage for command listing, set, displaced-old-chord,
+   reset/default restoration, persistence-disabled presentation and cleanup using the existing model
+   and command host.
+5. Extend the existing packed Vite build/JSDOM consumer with the four-entry one-Provider fixture and
+   exact old/new/reset runtime dispatch assertions.
+6. Add `pnpm check:packed-shell-react-context`: a freshly packed external consumer using the
+   repository-locked toolchain, Vite DEV optimizer and headless Chromium/Playwright. Initially mount
+   only provider, command-host and host-shell; after optimizer settle dynamically import the separate
+   management leaf module beneath the live Provider. Explicitly handle optimizer reloads, use no
+   alias/dedupe workaround and fail closed on server, reload, page, console, timeout and cleanup.
+7. Update only neutral public entrypoint documentation needed to list the focused leaf. Do not add
+   host-specific composition guidance or a migration requirement.
+8. During development repeat only the focused shell-react and packed-fixture tests affected by the
+   edit. Freeze one exact candidate before repository-wide gates.
+9. Route the candidate through producer-distinct source review. Batch all findings into at most one
+   successor, then run the final gates once on that successor or on the reviewed candidate when no
+   successor is required.
+
+### Compatibility, scope and non-scope
+
+This change is strictly additive. Existing root, `provider`, `command-host`, `host-shell`, `shell` and
+`command-host-controller` imports remain compatible. No consumer is required to migrate from the root;
+the focused leaf is available to hosts that maintain a focused import graph.
+
+In scope:
+
+- one exact one-line leaf and package export entry targeting that leaf;
+- focused public type/export checks;
+- packed Vite build/JSDOM plus dedicated Vite DEV optimizer/headless-Chromium one-provider
+  context-identity and old/new/reset parity evidence;
+- neutral entrypoint documentation.
+
+Non-scope:
+
+- component JSX, labels, capture UI or management-model behavior changes;
+- new keybinding types, registry operations, override semantics, persistence schema/key or diagnostics;
+- provider, command-host, host-shell or root-barrel refactoring;
+- a provider-free management component;
+- command registration, execution policy, extension routing or OS-global shortcuts;
+- new dependencies, package family, version change, publish-order change or bundle budget;
+- Storybook redesign, Electron, native IPC, release, tag or publish work.
+
+### Focused development and final validation
+
+Development repeats only the affected shell-react entrypoint/model interaction and packed fixture
+tests. Do not repeat static, fast, packed or browser repository gates while iterating.
+
+After the candidate is frozen, obtain producer-distinct review and batch its findings into at most
+one successor. On that successor, or on the reviewed candidate when there are no findings, run each
+final lane exactly once:
+
+```text
+pnpm validate:fast
+pnpm check:packed-shell-react-context
+pnpm check:commit-safety
+git diff --check
+```
+
+`validate:fast` already contains the repository static, packed-consumer and unit gates; do not rerun
+its nested `validate:static` or `check:packed-consumer` lanes separately. Its public-export checks must
+prove the package export has the exact leaf mapping and root compatibility remains, and its packed
+validation must use the packed tarball and Vite build/JSDOM fixture.
+`check:packed-shell-react-context` is the material browser gate and must exercise the packed external
+consumer through the locked Vite DEV optimizer: mount the initial three-entry shell, wait for optimizer
+settle, lazily import the fourth management entry beneath the still-live Provider, reject optimizer
+reload false passes, and use actual Chromium keyboard events for new, displaced and reset chords. The
+general repository UI lane is not required for this packet
+because it does not exercise that packed external context-identity boundary. Electron is omitted
+because no main, preload, BrowserWindow, native IPC or package-runtime boundary changes.
+
+No independent performance budget is justified. The leaf adds no runtime work beyond evaluating the
+same existing component graph through a direct package export; review must reject duplicate context,
+listener, registry, model or persistence ownership.
+
+### Acceptance and source-review checklist
+
+Done requires:
+
+- the exact focused import resolves from source and the packed package, maps exactly to the one-line
+  `src/keybinding-management-settings.ts` leaf and exports only the existing
+  `WorkbenchKeybindingManagementSettings` contract;
+- the root import remains compatible and refers to the same implementation;
+- provider, command-host, host-shell and management leaf coexist under one focused Provider without
+  context identity failure;
+- one existing command proves exact set, displaced-old-chord, reset/default and cleanup parity through
+  the real provider/model/command-host path;
+- packed Vite build/JSDOM and the dedicated locked-toolchain, no-alias/no-dedupe Vite DEV optimizer +
+  headless-Chromium consumer use only freshly packed public subpaths; the latter lazily adds the fourth
+  entry beneath the live three-entry Provider and rejects optimizer-reload false passes;
+- no generic keybinding mechanic, public prop, persistence format, dependency, package budget or
+  native/release boundary changes;
+- final fast, packed-shell-react-context, commit-safety and diff lanes pass exactly once on one exact
+  final SHA and producer-distinct review finds no P0/P1/P2 mismatch.
+
+Source review must reject a nominal leaf that imports through the broad root or
+`management/settings.tsx`; contains anything beyond the exact direct re-export; creates a wrapper with
+state or effects; changes the component/model/provider/command-host behavior; drops the root export;
+omits the exact package mapping assertion; resolves a second React/provider context in packed Vite;
+proves only compile-time/build/JSDOM import without the dedicated DEV-optimizer Chromium lazy-leaf
+old/new/reset path; allows optimizer reload to replace the live Provider or produce a false PASS; uses
+floating external tool versions, stale/non-packed Workbench inputs, alias/dedupe/workspace links or
+private deep imports; tolerates page/console/timeout failures;
+adds unrelated public exports, dependencies or mechanics; or claims release, publish, Electron or
+native completion.
+
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
 - **Status:** `DESIGNING`
