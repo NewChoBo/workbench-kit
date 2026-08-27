@@ -53,6 +53,50 @@
   font-size: 0.8em;
 }
 
+.workbench-field-remap-document-io {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+  margin-top: 0.25rem;
+}
+
+.workbench-field-remap-document-io__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.workbench-field-remap-document-io__availability,
+.workbench-field-remap-document-io__status {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+  font-size: 0.8rem;
+}
+
+.workbench-field-remap-document-io__status[data-status='error'],
+.workbench-field-remap-document-import__error {
+  color: var(--vscode-errorForeground, var(--color-danger));
+}
+
+.workbench-field-remap-document-export__description,
+.workbench-field-remap-document-import__description,
+.workbench-field-remap-document-import__error {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+}
+
+.workbench-field-remap-document-export__label,
+.workbench-field-remap-document-import__label {
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.workbench-field-remap-document-export__body textarea,
+.workbench-field-remap-document-import__body textarea {
+  min-height: 14rem;
+}
+
 .workbench-field-remap-demo__error {
   margin: 0;
   color: var(--vscode-errorForeground, var(--color-danger));

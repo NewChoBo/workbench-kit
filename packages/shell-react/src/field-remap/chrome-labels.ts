@@ -43,6 +43,31 @@ export interface FieldRemapChromeLabels {
   /** Additive selection-detail Modal copy. Omitted legacy label objects use English defaults. */
   readonly detailModalTitle?: string;
   readonly closeDetailModal?: string;
+  /** Additive current-v2 document import/export chrome copy. */
+  readonly exportDocumentJson?: string;
+  readonly copyDocumentJson?: string;
+  readonly exportDocumentTitle?: string;
+  readonly closeDocumentExport?: string;
+  readonly exportDocumentDescription?: string;
+  readonly exportDocumentLabel?: string;
+  readonly importDocumentJson?: string;
+  readonly importDocumentTitle?: string;
+  readonly closeDocumentImport?: string;
+  readonly importDocumentDescription?: string;
+  readonly importDocumentLabel?: string;
+  readonly importDocumentPlaceholder?: string;
+  readonly applyDocumentImport?: string;
+  readonly cancelDocumentImport?: string;
+  readonly documentCopied?: string;
+  readonly documentCopyFailed?: string;
+  readonly documentImportUnavailable?: string;
+  readonly documentImportInvalidJson?: string;
+  readonly documentImportUnsupportedVersion?: string;
+  readonly documentImportInvalidDocument?: string;
+  readonly documentImportDuplicateId?: string;
+  readonly documentImportIncompatibleSource?: string;
+  readonly documentImportIncompatibleTarget?: string;
+  readonly documentImportUnavailableTransform?: string;
   /** Additive Flow preview copy. Omitted legacy label objects use English defaults. */
   readonly previewTitle?: string;
   readonly previewLoading?: string;
@@ -86,6 +111,32 @@ export const defaultFieldRemapChromeLabels = {
   readOnlyEmptyDetailDescription: 'Select a mapping to inspect its details.',
   detailModalTitle: 'Mapping details',
   closeDetailModal: 'Close details',
+  exportDocumentJson: 'Export JSON',
+  copyDocumentJson: 'Copy JSON',
+  exportDocumentTitle: 'Export mapping document',
+  closeDocumentExport: 'Close export',
+  exportDocumentDescription:
+    'Copy the current version 2 mapping document or select the JSON manually.',
+  exportDocumentLabel: 'Current mapping document JSON',
+  importDocumentJson: 'Import JSON',
+  importDocumentTitle: 'Import mapping document',
+  closeDocumentImport: 'Close import',
+  importDocumentDescription:
+    'Paste a current version 2 mapping document. A valid import replaces the complete mapping in one step.',
+  importDocumentLabel: 'Mapping document JSON',
+  importDocumentPlaceholder: 'Paste mapping document JSON',
+  applyDocumentImport: 'Validate and import',
+  cancelDocumentImport: 'Cancel',
+  documentCopied: 'Mapping document copied.',
+  documentCopyFailed: 'The mapping document could not be copied.',
+  documentImportUnavailable: 'Import is unavailable for this mapping.',
+  documentImportInvalidJson: 'Enter valid mapping document JSON.',
+  documentImportUnsupportedVersion: 'This mapping document version is not supported.',
+  documentImportInvalidDocument: 'This mapping document is invalid.',
+  documentImportDuplicateId: 'This mapping document contains duplicate identities.',
+  documentImportIncompatibleSource: 'This mapping document uses an unavailable source field.',
+  documentImportIncompatibleTarget: 'This mapping document uses an unavailable target field.',
+  documentImportUnavailableTransform: 'This mapping document uses an unavailable convert.',
   previewTitle: 'Sample preview',
   previewLoading: 'Updating preview…',
   previewError: 'Preview failed',
@@ -128,6 +179,30 @@ export const fieldRemapChromeLabelKeys = {
   readOnlyEmptyDetailDescription: 'fieldRemap.readOnlyEmptyDetailDescription',
   detailModalTitle: 'fieldRemap.detailModalTitle',
   closeDetailModal: 'fieldRemap.closeDetailModal',
+  exportDocumentJson: 'fieldRemap.exportDocumentJson',
+  copyDocumentJson: 'fieldRemap.copyDocumentJson',
+  exportDocumentTitle: 'fieldRemap.exportDocumentTitle',
+  closeDocumentExport: 'fieldRemap.closeDocumentExport',
+  exportDocumentDescription: 'fieldRemap.exportDocumentDescription',
+  exportDocumentLabel: 'fieldRemap.exportDocumentLabel',
+  importDocumentJson: 'fieldRemap.importDocumentJson',
+  importDocumentTitle: 'fieldRemap.importDocumentTitle',
+  closeDocumentImport: 'fieldRemap.closeDocumentImport',
+  importDocumentDescription: 'fieldRemap.importDocumentDescription',
+  importDocumentLabel: 'fieldRemap.importDocumentLabel',
+  importDocumentPlaceholder: 'fieldRemap.importDocumentPlaceholder',
+  applyDocumentImport: 'fieldRemap.applyDocumentImport',
+  cancelDocumentImport: 'fieldRemap.cancelDocumentImport',
+  documentCopied: 'fieldRemap.documentCopied',
+  documentCopyFailed: 'fieldRemap.documentCopyFailed',
+  documentImportUnavailable: 'fieldRemap.documentImportUnavailable',
+  documentImportInvalidJson: 'fieldRemap.documentImportInvalidJson',
+  documentImportUnsupportedVersion: 'fieldRemap.documentImportUnsupportedVersion',
+  documentImportInvalidDocument: 'fieldRemap.documentImportInvalidDocument',
+  documentImportDuplicateId: 'fieldRemap.documentImportDuplicateId',
+  documentImportIncompatibleSource: 'fieldRemap.documentImportIncompatibleSource',
+  documentImportIncompatibleTarget: 'fieldRemap.documentImportIncompatibleTarget',
+  documentImportUnavailableTransform: 'fieldRemap.documentImportUnavailableTransform',
   previewTitle: 'fieldRemap.previewTitle',
   previewLoading: 'fieldRemap.previewLoading',
   previewError: 'fieldRemap.previewError',
@@ -180,6 +255,30 @@ export function resolveFieldRemapChromeLabels(
     readOnlyEmptyDetailDescription: resolve('readOnlyEmptyDetailDescription'),
     detailModalTitle: resolve('detailModalTitle'),
     closeDetailModal: resolve('closeDetailModal'),
+    exportDocumentJson: resolve('exportDocumentJson'),
+    copyDocumentJson: resolve('copyDocumentJson'),
+    exportDocumentTitle: resolve('exportDocumentTitle'),
+    closeDocumentExport: resolve('closeDocumentExport'),
+    exportDocumentDescription: resolve('exportDocumentDescription'),
+    exportDocumentLabel: resolve('exportDocumentLabel'),
+    importDocumentJson: resolve('importDocumentJson'),
+    importDocumentTitle: resolve('importDocumentTitle'),
+    closeDocumentImport: resolve('closeDocumentImport'),
+    importDocumentDescription: resolve('importDocumentDescription'),
+    importDocumentLabel: resolve('importDocumentLabel'),
+    importDocumentPlaceholder: resolve('importDocumentPlaceholder'),
+    applyDocumentImport: resolve('applyDocumentImport'),
+    cancelDocumentImport: resolve('cancelDocumentImport'),
+    documentCopied: resolve('documentCopied'),
+    documentCopyFailed: resolve('documentCopyFailed'),
+    documentImportUnavailable: resolve('documentImportUnavailable'),
+    documentImportInvalidJson: resolve('documentImportInvalidJson'),
+    documentImportUnsupportedVersion: resolve('documentImportUnsupportedVersion'),
+    documentImportInvalidDocument: resolve('documentImportInvalidDocument'),
+    documentImportDuplicateId: resolve('documentImportDuplicateId'),
+    documentImportIncompatibleSource: resolve('documentImportIncompatibleSource'),
+    documentImportIncompatibleTarget: resolve('documentImportIncompatibleTarget'),
+    documentImportUnavailableTransform: resolve('documentImportUnavailableTransform'),
     previewTitle: resolve('previewTitle'),
     previewLoading: resolve('previewLoading'),
     previewError: resolve('previewError'),
