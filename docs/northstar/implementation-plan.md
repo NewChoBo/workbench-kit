@@ -101,7 +101,7 @@ Host adapter maturation / multi-host validation
 Backendless/performance + compatibility hardening
 
 WB-NS-060 backendless scenario + performance harness [DESIGNING]
-        └─ WB-NS-060A Field Remap deterministic reference workload [READY_FOR_IMPLEMENTATION]
+        └─ WB-NS-060A Field Remap deterministic reference workload [DONE]
 
 Command/keybinding management parity
         ↓
@@ -2606,10 +2606,16 @@ Define ownership and API boundaries for fixtures without turning production pack
 
 ### WB-NS-060A — Field Remap deterministic reference workload
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Target:** `target-architecture.md` §§ Target backendless test architecture, Target performance architecture
 - **Ownership:** `GENERIC_KIT / TEST_ARCHITECTURE`; Field Remap remains the semantic projection and traversal-instrumentation owner
-- **Exact source/API baseline:** `develop@ff31a38d3a4e626233a06db34e698c61b7fd1267`
+- **Exact design source/API baseline:** `develop@ff31a38d3a4e626233a06db34e698c61b7fd1267`
+- **Exact implementation base:** `develop@751a6be0105ef3284fa97f0fd414efc41dae4cff`
+- **Exact source candidate:** `4e6eaae880f33c31fd9a497b02fecb8b5a7ba3d9`
+- **Integration:** [PR #399](https://github.com/NewChoBo/workbench-kit/pull/399) merged as `develop@508b2240151b4e0447d2ba5db57cd3504f3500f4`; [Issue #398](https://github.com/NewChoBo/workbench-kit/issues/398) closed
+- **Final validation:** focused `2 files / 61 tests`; `validate:fast` `470 files / 2758 tests`; `validate:ui` `15 suites / 90 interactions` with `8` optional skips; `check:commit-safety` passed
+- **Exact-source review:** three producer-distinct reviews returned `NO_FINDINGS`
+- **Boundary result:** no public API/export, package/dependency/publish-order, release/tag/publish or Electron/native change
 - **Implementation boundary:** private `packages/field-remap/test-support/reference-workloads.ts` plus focused `src/**/*.test.ts` consumers and packed-artifact verification
 - **Public API impact:** none; no package export, public subpath, dependency or publish-order change
 
