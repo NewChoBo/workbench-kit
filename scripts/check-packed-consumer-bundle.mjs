@@ -73,7 +73,8 @@ try {
   });
   NPM_PUBLISH_ORDER.forEach(packPackage);
   verifyPackedPackageCohort();
-  verifyFieldRemapPrivateFilesExcluded();
+  verifyPrivateTestSupportFilesExcluded('@workbench-kit/field-remap');
+  verifyPrivateTestSupportFilesExcluded('@workbench-kit/react');
   verifyJdwPackageManifest();
   linkExternalPackages();
   verifyReactSchemaFormPackageManifest();
@@ -449,15 +450,15 @@ function verifyPackedPackageCohort() {
   );
 }
 
-function verifyFieldRemapPrivateFilesExcluded() {
-  const fieldRemapRoot = packagePath(nodeModulesDir, '@workbench-kit/field-remap');
+function verifyPrivateTestSupportFilesExcluded(packageName) {
+  const packageRoot = packagePath(nodeModulesDir, packageName);
   const privatePath = fs
-    .readdirSync(fieldRemapRoot, { recursive: true })
+    .readdirSync(packageRoot, { recursive: true })
     .find((relativePath) => relativePath.split(path.sep).includes('test-support'));
 
   if (privatePath !== undefined) {
     throw new TypeError(
-      `Packed Field Remap must exclude private test-support files: ${privatePath}`,
+      `Packed ${packageName} must exclude private test-support files: ${privatePath}`,
     );
   }
 }
