@@ -530,22 +530,6 @@
   gap: 0.35rem;
 }
 
-.workbench-field-remap-detail__draft-ports {
-  display: grid;
-  gap: 0.5rem;
-  margin: 0;
-}
-
-.workbench-field-remap-detail__draft-ports dt {
-  font-size: 0.7rem;
-  text-transform: uppercase;
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-}
-
-.workbench-field-remap-detail__draft-ports dd {
-  margin: 0;
-}
-
 .workbench-field-remap-flow__canvas {
   height: min(40rem, 70vh);
   min-height: 26rem;
@@ -908,39 +892,6 @@
   background: var(--vscode-editor-background, var(--color-bg));
 }
 
-.workbench-field-remap-convert-note__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.workbench-field-remap-convert-note__eyebrow {
-  margin: 0 0 0.2rem;
-  font-size: 0.7rem;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--vscode-focusBorder, var(--color-accent, #3794ff));
-}
-
-.workbench-field-remap-convert-note__header h4,
-.workbench-field-remap-convert-note__section h5 {
-  margin: 0 0 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-}
-
-.workbench-field-remap-convert-note__header h4 {
-  font-size: 1rem;
-  text-transform: none;
-  letter-spacing: normal;
-  color: var(--vscode-foreground, var(--color-text));
-}
-
 .workbench-field-remap-convert-note__binding,
 .workbench-field-remap-convert-note__muted {
   display: block;
@@ -956,66 +907,13 @@
   gap: 0.35rem;
 }
 
-.workbench-field-remap-convert-note__section,
-.workbench-field-remap-convert-note__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.workbench-field-remap-convert-note__field {
-  gap: 0.2rem;
-}
-
-.workbench-field-remap-convert-note select {
-  box-sizing: border-box;
-  width: 100%;
-  margin-top: 0.2rem;
-  padding: 0.3rem 0.4rem;
-  border: 1px solid var(--vscode-panel-border, var(--color-border));
-  border-radius: 0.25rem;
-  background: var(--vscode-input-background, var(--color-bg));
-  color: var(--vscode-input-foreground, var(--color-text));
-  font: inherit;
-}
-
-.workbench-field-remap-convert-note__footer {
-  margin-top: auto;
-  padding-top: 0.5rem;
-  border-top: 1px solid var(--vscode-panel-border, var(--color-border));
-}
-
 .workbench-field-remap-detail--empty {
   color: var(--vscode-descriptionForeground, var(--color-text-muted));
 }
 
-.workbench-field-remap-detail__header {
-  display: flex;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 0.5rem;
-}
-
-.workbench-field-remap-detail__header h4,
-.workbench-field-remap-detail__section h5 {
-  margin: 0 0 0.35rem;
-  font-size: 0.75rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.03em;
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
-}
-
-.workbench-field-remap-detail__header code,
 .workbench-field-remap-detail__steps code {
   font-size: 0.75rem;
   word-break: break-all;
-}
-
-.workbench-field-remap-detail__section {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
 }
 
 .workbench-field-remap-detail__muted {
@@ -1064,31 +962,12 @@
   color: var(--vscode-descriptionForeground, var(--color-text-muted));
 }
 
-.workbench-field-remap-detail__palette,
-.workbench-field-remap-detail__item-pickers,
-.workbench-field-remap-detail__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.35rem;
-}
-
 .workbench-field-remap-detail__palette {
-  flex-direction: row;
   flex-wrap: wrap;
-  align-items: flex-end;
 }
 
-.workbench-field-remap-detail__palette label,
-.workbench-field-remap-detail__item-pickers label,
-.workbench-field-remap-detail__field {
-  flex: 1 1 10rem;
-  min-width: 0;
-}
-
-.workbench-field-remap-detail select,
-.workbench-field-remap-options input[type='text'],
-.workbench-field-remap-options input[type='number'],
-.workbench-field-remap-options textarea {
+.workbench-field-remap-options__string-map input[type='text'],
+.workbench-field-remap-options__json textarea {
   box-sizing: border-box;
   width: 100%;
   margin-top: 0.2rem;
@@ -1098,13 +977,6 @@
   background: var(--vscode-input-background, var(--color-bg));
   color: var(--vscode-input-foreground, var(--color-text));
   font: inherit;
-}
-
-.workbench-field-remap-detail__list-context-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 0.5rem;
 }
 
 .workbench-field-remap-detail__item-edges {
@@ -1121,23 +993,6 @@
   align-items: center;
   justify-content: space-between;
   gap: 0.35rem;
-}
-
-.workbench-field-remap-options {
-  display: flex;
-  flex-direction: column;
-  gap: 0.55rem;
-}
-
-.workbench-field-remap-options__field {
-  display: flex;
-  flex-direction: column;
-  gap: 0.2rem;
-}
-
-.workbench-field-remap-options__label {
-  font-size: 0.75rem;
-  color: var(--vscode-descriptionForeground, var(--color-text-muted));
 }
 
 .workbench-field-remap-options__empty,

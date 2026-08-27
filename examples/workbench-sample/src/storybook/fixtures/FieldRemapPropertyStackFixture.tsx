@@ -48,6 +48,13 @@ const transforms = createValueTransformRegistry([
     ],
     apply: (value) => value,
   },
+  {
+    id: 'story:identity',
+    label: 'Identity',
+    inputTypes: ['string'],
+    outputType: 'string',
+    apply: (value) => value,
+  },
 ]);
 
 export interface FieldRemapPropertyStackFixtureProps {
@@ -61,6 +68,7 @@ export function FieldRemapPropertyStackFixture({
 }: FieldRemapPropertyStackFixtureProps): JSX.Element {
   const [edges, setEdges] = useState(initialEdges);
   const options = edges[0]?.transformOptionSteps?.[0] ?? {};
+  const transformId = edges[0]?.transformIds?.[0] ?? '';
 
   return (
     <div
@@ -83,6 +91,9 @@ export function FieldRemapPropertyStackFixture({
       />
       <output hidden data-testid="field-remap-property-options-state">
         {JSON.stringify(options)}
+      </output>
+      <output hidden data-testid="field-remap-property-transform-state">
+        {transformId}
       </output>
     </div>
   );

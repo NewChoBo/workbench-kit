@@ -1009,10 +1009,11 @@ describe('FieldRemapFlowMapper host chrome', () => {
       onSelectionChange,
     });
 
-    expect(container!.querySelector('[data-testid="field-remap-step-id"]')).toHaveProperty(
-      'disabled',
-      true,
-    );
+    expect(
+      container!.querySelector<HTMLButtonElement>(
+        '[role="combobox"][aria-label="Convert transform id"]',
+      )?.disabled,
+    ).toBe(true);
     expect(container!.querySelector('[data-testid="field-remap-convert-note-remove"]')).toBeNull();
     expect(
       container!.querySelector('[data-testid="field-remap-lane-e-title"]')?.textContent,
@@ -1728,7 +1729,7 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(document.activeElement).toBe(mapper);
   });
 
-  it('restores focus when a focused convert editor is removed by Escape', async () => {
+  it('respects the visible convert selector Escape boundary before restoring mapper focus', async () => {
     await renderMapper({ chrome: 'embed', showBindingsList: true });
     const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
     const selectEdge = container!.querySelector<HTMLButtonElement>(
@@ -1740,11 +1741,21 @@ describe('FieldRemapFlowMapper host chrome', () => {
     )!;
     await act(async () => selectStep.click());
 
-    const stepEditor = container!.querySelector<HTMLSelectElement>(
-      '[data-testid="field-remap-step-id"]',
+    const stepEditor = container!.querySelector<HTMLButtonElement>(
+      '[role="combobox"][aria-label="Convert transform id"]',
     )!;
     stepEditor.focus();
-    const event = await pressKey(stepEditor, 'Escape');
+    const nestedEscape = await pressKey(stepEditor, 'Escape');
+
+    expect(nestedEscape.defaultPrevented).toBe(true);
+    expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeTruthy();
+    expect(document.activeElement).toBe(stepEditor);
+
+    const bindingButton = container!.querySelector<HTMLButtonElement>(
+      '[data-testid="field-remap-convert-note-back"]',
+    )!;
+    bindingButton.focus();
+    const event = await pressKey(bindingButton, 'Escape');
 
     expect(event.defaultPrevented).toBe(true);
     expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeNull();

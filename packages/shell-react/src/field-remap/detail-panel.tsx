@@ -1,12 +1,13 @@
 import { useId, useMemo, useState, type JSX } from 'react';
+import { WorkbenchPropertyInline } from '@workbench-kit/react/layout';
 import {
+  Button,
+  Select,
   WorkbenchPropertyHint,
-  WorkbenchPropertyInline,
   WorkbenchPropertyRow,
   WorkbenchPropertySection,
   WorkbenchPropertyStack,
-} from '@workbench-kit/react';
-import { Button } from '@workbench-kit/react/primitives';
+} from '@workbench-kit/react/primitives';
 import {
   MAX_TRANSFORM_CHAIN,
   findSourceField,
@@ -289,12 +290,13 @@ export function FieldRemapDetailPanel({
                 {!readOnly ? (
                   <WorkbenchPropertyRow label="Add input" htmlFor={operatorAddInputId}>
                     <WorkbenchPropertyInline>
-                      <select
+                      <Select
                         id={operatorAddInputId}
                         aria-label="Add input"
+                        controlWidth="full"
                         data-testid="field-remap-operator-add-input"
                         value={pendingOperatorFieldId}
-                        onChange={(event) => setPendingOperatorFieldId(event.target.value)}
+                        onValueChange={setPendingOperatorFieldId}
                       >
                         <option value="">Select…</option>
                         {flatSources.map((field) => (
@@ -302,7 +304,7 @@ export function FieldRemapDetailPanel({
                             {field.path ?? field.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       <Button
                         compact
                         type="button"
@@ -324,14 +326,14 @@ export function FieldRemapDetailPanel({
                   </WorkbenchPropertyRow>
                 ) : null}
                 <WorkbenchPropertyRow label="Output slot" htmlFor={operatorOutputId}>
-                  <select
+                  <Select
                     id={operatorOutputId}
                     aria-label="Output slot"
+                    controlWidth="full"
                     data-testid="field-remap-operator-output"
                     value={operator.outputSlotId}
                     disabled={readOnly}
-                    onChange={(event) => {
-                      const slotId = event.target.value;
+                    onValueChange={(slotId) => {
                       commitOperators(
                         updateMappingOperator(operators, operator.id, (current) =>
                           slotId
@@ -347,7 +349,7 @@ export function FieldRemapDetailPanel({
                         {slot.path ?? slot.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </WorkbenchPropertyRow>
               </WorkbenchPropertyStack>
             </WorkbenchPropertySection>
@@ -355,14 +357,14 @@ export function FieldRemapDetailPanel({
             <WorkbenchPropertySection level="group" title="Outputs">
               <WorkbenchPropertyStack gap="sm">
                 <WorkbenchPropertyRow label="Input field" htmlFor={operatorInputId}>
-                  <select
+                  <Select
                     id={operatorInputId}
                     aria-label="Input field"
+                    controlWidth="full"
                     data-testid="field-remap-operator-input"
                     value={operator.inputFieldId}
                     disabled={readOnly}
-                    onChange={(event) => {
-                      const fieldId = event.target.value;
+                    onValueChange={(fieldId) => {
                       commitOperators(
                         updateMappingOperator(operators, operator.id, (current) =>
                           fieldId
@@ -378,7 +380,7 @@ export function FieldRemapDetailPanel({
                         {field.path ?? field.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                 </WorkbenchPropertyRow>
                 <ul className="workbench-field-remap-detail__item-edges">
                   {operator.outputSlotIds.map((slotId) => (
@@ -407,12 +409,13 @@ export function FieldRemapDetailPanel({
                 {!readOnly ? (
                   <WorkbenchPropertyRow label="Add output" htmlFor={operatorAddOutputId}>
                     <WorkbenchPropertyInline>
-                      <select
+                      <Select
                         id={operatorAddOutputId}
                         aria-label="Add output"
+                        controlWidth="full"
                         data-testid="field-remap-operator-add-output"
                         value={pendingOperatorSlotId}
-                        onChange={(event) => setPendingOperatorSlotId(event.target.value)}
+                        onValueChange={setPendingOperatorSlotId}
                       >
                         <option value="">Select…</option>
                         {flatTargets.map((slot) => (
@@ -420,7 +423,7 @@ export function FieldRemapDetailPanel({
                             {slot.path ?? slot.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                       <Button
                         compact
                         type="button"
@@ -599,13 +602,14 @@ export function FieldRemapDetailPanel({
                   className="workbench-field-remap-detail__palette"
                   data-testid="field-remap-transform-palette"
                 >
-                  <select
+                  <Select
                     id={paletteSelectId}
                     aria-label="Convert palette"
+                    controlWidth="full"
                     data-testid="field-remap-palette-select"
                     value={effectivePaletteId}
                     disabled={appendCatalog.length === 0}
-                    onChange={(event) => setPaletteId(event.target.value)}
+                    onValueChange={setPaletteId}
                   >
                     {appendCatalog.length === 0 ? (
                       <option value="">No compatible converts</option>
@@ -615,7 +619,7 @@ export function FieldRemapDetailPanel({
                         {item.label}
                       </option>
                     ))}
-                  </select>
+                  </Select>
                   <Button
                     compact
                     type="button"
@@ -679,12 +683,13 @@ export function FieldRemapDetailPanel({
                     gap="xs"
                   >
                     <WorkbenchPropertyRow label="Source item field" htmlFor={itemSourceId}>
-                      <select
+                      <Select
                         id={itemSourceId}
                         aria-label="Source item field"
+                        controlWidth="full"
                         data-testid="field-remap-item-source"
                         value={pendingItemSourceId ?? ''}
-                        onChange={(event) => setPendingItemSourceId(event.target.value || null)}
+                        onValueChange={(sourceId) => setPendingItemSourceId(sourceId || null)}
                       >
                         <option value="">Select…</option>
                         {itemSourceChildren.map((child) => (
@@ -692,17 +697,17 @@ export function FieldRemapDetailPanel({
                             {child.path ?? child.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </WorkbenchPropertyRow>
                     <WorkbenchPropertyRow label="Target item field" htmlFor={itemTargetId}>
-                      <select
+                      <Select
                         id={itemTargetId}
                         aria-label="Target item field"
+                        controlWidth="full"
                         data-testid="field-remap-item-target"
                         value=""
                         disabled={!pendingItemSourceId}
-                        onChange={(event) => {
-                          const targetId = event.target.value;
+                        onValueChange={(targetId) => {
                           if (!pendingItemSourceId || !targetId) {
                             return;
                           }
@@ -721,7 +726,7 @@ export function FieldRemapDetailPanel({
                             {child.path ?? child.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </WorkbenchPropertyRow>
                   </WorkbenchPropertyStack>
                 ) : null}

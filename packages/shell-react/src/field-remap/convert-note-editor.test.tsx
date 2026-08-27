@@ -45,6 +45,42 @@ describe('ConvertNoteEditor', () => {
     });
   };
 
+  const chooseVisibleTransform = (label: string) => {
+    const combobox = container!.querySelector<HTMLButtonElement>(
+      '[role="combobox"][aria-label="Convert transform id"]',
+    )!;
+    vi.spyOn(combobox, 'getBoundingClientRect').mockReturnValue({
+      bottom: 44,
+      height: 28,
+      left: 16,
+      right: 216,
+      top: 16,
+      width: 200,
+      x: 16,
+      y: 16,
+      toJSON: () => ({}),
+    });
+
+    act(() => {
+      combobox.focus();
+      combobox.dispatchEvent(
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+      );
+    });
+    expect(combobox).toBe(document.activeElement);
+    expect(combobox.getAttribute('aria-expanded')).toBe('true');
+
+    const option = Array.from(document.body.querySelectorAll<HTMLElement>('[role="option"]')).find(
+      (item) => item.textContent?.trim() === label,
+    );
+    expect(option).toBeTruthy();
+    act(() => {
+      option!.dispatchEvent(new MouseEvent('click', { bubbles: true, cancelable: true }));
+    });
+    expect(combobox).toBe(document.activeElement);
+    return combobox;
+  };
+
   it('edits convert registry id and options', () => {
     const edges: MappingEdge[] = [
       {
@@ -82,14 +118,12 @@ describe('ConvertNoteEditor', () => {
         ?.classList.contains('ui-workbench-property-section'),
     ).toBe(true);
 
-    const select = container!.querySelector(
+    const compatibilitySelect = container!.querySelector(
       '[data-testid="field-remap-step-id"]',
     ) as HTMLSelectElement;
-    expect(select.closest('.ui-workbench-property-row')).toBeTruthy();
-    act(() => {
-      select.value = 'string:trim';
-      select.dispatchEvent(new Event('change', { bubbles: true }));
-    });
+    expect(compatibilitySelect.getAttribute('aria-hidden')).toBe('true');
+    expect(compatibilitySelect.closest('.ui-workbench-property-row')).toBeTruthy();
+    chooseVisibleTransform('Trim');
     let nextEdges = onEdgesChange.mock.calls[
       onEdgesChange.mock.calls.length - 1
     ]?.[0] as MappingEdge[];
@@ -197,6 +231,11 @@ describe('ConvertNoteEditor', () => {
       />,
     );
 
+    expect(
+      container!.querySelector<HTMLButtonElement>(
+        '[role="combobox"][aria-label="Convert transform id"]',
+      )!.disabled,
+    ).toBe(true);
     expect(
       (container!.querySelector('[data-testid="field-remap-step-id"]') as HTMLSelectElement)
         .disabled,

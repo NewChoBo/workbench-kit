@@ -138,6 +138,27 @@ async function openPropertyOptions(
   return { editor, scope: within(editor) };
 }
 
+async function choosePropertyTransform(
+  canvasElement: HTMLElement,
+  scope: ReturnType<typeof within>,
+  label: string,
+): Promise<void> {
+  const canvas = within(canvasElement);
+  const body = within(canvasElement.ownerDocument.body);
+  const state = canvas.getByTestId('field-remap-property-transform-state');
+  const registry = scope.getByRole('combobox', { name: 'Convert transform id' });
+
+  registry.focus();
+  await expect(registry).toHaveFocus();
+  await userEvent.keyboard('{Enter}');
+  const listbox = await body.findByRole('listbox');
+  await userEvent.click(within(listbox).getByRole('option', { name: label }));
+
+  await expect(registry).toHaveFocus();
+  await expect(registry).toHaveTextContent(label);
+  await waitFor(() => expect(state).toHaveTextContent('story:identity'));
+}
+
 async function exercisePropertyOptions(
   canvasElement: HTMLElement,
   editor: HTMLElement,
@@ -196,6 +217,8 @@ async function exercisePropertyOptions(
   await waitFor(() => expect(scope.queryByRole('alert')).toBeNull());
   await waitFor(() => expect(state).toHaveTextContent('"meta":{"mode":"loose"}'));
   await expect(meta).toHaveValue('{\n  "mode": "loose"\n}');
+
+  await choosePropertyTransform(canvasElement, scope, 'Identity');
 }
 
 const rewireSources: readonly SourceField[] = [
@@ -301,7 +324,7 @@ export const ReadOnly: Story = {
     await expect(canvas.queryByTestId('field-remap-add-node-e-name')).toBeNull();
     await expect(canvas.queryByTestId('field-remap-remove-edge-e-name')).toBeNull();
     await userEvent.click(canvas.getByTestId('field-remap-detail-step-0'));
-    await expect(canvas.getByTestId('field-remap-step-id')).toBeDisabled();
+    await expect(canvas.getByRole('combobox', { name: 'Convert transform id' })).toBeDisabled();
     await expect(canvas.queryByTestId('field-remap-convert-note-remove')).toBeNull();
   },
 };
@@ -329,7 +352,7 @@ export const ReadOnlyEmbed: Story = {
     await expect(transformNode).toHaveFocus();
     await userEvent.keyboard('{Enter}');
     await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
-    await expect(canvas.getByTestId('field-remap-step-id')).toBeDisabled();
+    await expect(canvas.getByRole('combobox', { name: 'Convert transform id' })).toBeDisabled();
     await expect(
       await findVisibleFlowElement<HTMLElement>(
         canvasElement,
@@ -952,6 +975,36 @@ export const PropertyStackRail: Story = {
   },
 };
 
+export const PropertyStackLightRail: Story = {
+  name: 'Property stack options (light rail)',
+  args: { sampleId: 'nested-ab' },
+  render: () => (
+    <div
+      data-theme="light"
+      data-testid="field-remap-property-stack-light-host"
+      style={{ background: 'var(--color-bg)', color: 'var(--color-text)', padding: '1rem' }}
+    >
+      <FieldRemapPropertyStackFixture detailPresentation="rail" />
+    </div>
+  ),
+  tags: [
+    'storybook-play-required',
+    'storybook-play-sample',
+    'storybook-play-field-remap-property-stack',
+  ],
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await expect(canvas.getByTestId('field-remap-property-stack-light-host')).toHaveAttribute(
+      'data-theme',
+      'light',
+    );
+    const { editor, scope } = await openPropertyOptions(canvasElement, 'rail');
+    await expect(editor).toBeVisible();
+    await expect(scope.getByRole('textbox', { name: 'Prefix' })).toBeVisible();
+    await choosePropertyTransform(canvasElement, scope, 'Identity');
+  },
+};
+
 export const PropertyStackModal: Story = {
   name: 'Property stack options (modal)',
   args: { sampleId: 'nested-ab' },
@@ -991,7 +1044,7 @@ export const PropertyStackReadOnly: Story = {
     expect(editor.querySelector('.ui-workbench-property-section')).not.toBeNull();
     expect(editor.querySelector('.ui-workbench-property-row')).not.toBeNull();
 
-    await expect(scope.getByTestId('field-remap-step-id')).toBeDisabled();
+    await expect(scope.getByRole('combobox', { name: 'Convert transform id' })).toBeDisabled();
     await expect(scope.getByRole('textbox', { name: 'Prefix' })).toBeDisabled();
     await expect(scope.getByRole('spinbutton', { name: 'Max length' })).toBeDisabled();
     await expect(scope.getByRole('checkbox', { name: 'Enabled' })).toBeDisabled();
@@ -1160,8 +1213,14 @@ export const EmbedCollapsedDetail: Story = {
 
     await userEvent.click(canvas.getByTestId('field-remap-select-edge-e-name'));
     await userEvent.click(canvas.getByTestId('field-remap-detail-step-0'));
-    const stepEditor = canvas.getByTestId('field-remap-step-id');
+    const stepEditor = canvas.getByRole('combobox', { name: 'Convert transform id' });
     stepEditor.focus();
+    await expect(stepEditor).toHaveFocus();
+    await userEvent.keyboard('{Escape}');
+    await expect(canvas.getByTestId('field-remap-convert-note')).toBeVisible();
+    await expect(stepEditor).toHaveFocus();
+    const bindingButton = canvas.getByTestId('field-remap-convert-note-back');
+    bindingButton.focus();
     await userEvent.keyboard('{Escape}');
     await waitFor(() => expect(canvas.queryByTestId('field-remap-convert-note')).toBeNull());
     await waitFor(() =>
