@@ -8,6 +8,7 @@ import {
   sourceFieldsFromPlainObject,
   targetSlotsFromPlainObject,
   type MappingEdge,
+  type MappingOperator,
 } from '@workbench-kit/field-remap';
 
 import { FieldRemapDetailPanel } from './detail-panel.js';
@@ -57,6 +58,79 @@ describe('FieldRemapDetailPanel', () => {
     });
   };
 
+  const expectDetailPropertyStack = () => {
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail"] > .ui-workbench-property-stack'),
+    ).toBeTruthy();
+  };
+
+  it('uses the shared property stack for informational, draft, and operator branches', () => {
+    const combine: MappingOperator = {
+      kind: 'combine',
+      id: 'combine-name',
+      inputFieldIds: ['a.user_name'],
+      outputSlotId: 'b.name',
+    };
+    const split: MappingOperator = {
+      kind: 'split',
+      id: 'split-name',
+      inputFieldId: 'a.user_name',
+      outputSlotIds: ['b.name'],
+    };
+    const common = {
+      edges: [] as readonly MappingEdge[],
+      sources,
+      targets,
+      transforms,
+      onEdgesChange: () => undefined,
+      onSelectionChange: () => undefined,
+    };
+
+    mount(<FieldRemapDetailPanel {...common} selection={null} />);
+    expectDetailPropertyStack();
+    expect(container!.querySelector('.ui-workbench-property-hint')).toBeTruthy();
+
+    act(() => {
+      root!.render(
+        <FieldRemapDetailPanel
+          {...common}
+          selection={{ kind: 'draft', localId: 'draft-trim' }}
+          drafts={[{ localId: 'draft-trim', transformId: 'string:trim' }]}
+        />,
+      );
+    });
+    expectDetailPropertyStack();
+    expect(container!.querySelector('[data-testid="field-remap-detail-draft-ports"]')).toBeTruthy();
+
+    for (const operator of [combine, split]) {
+      act(() => {
+        root!.render(
+          <FieldRemapDetailPanel
+            {...common}
+            selection={{ kind: 'operator', operatorId: operator.id }}
+            operators={[operator]}
+            onOperatorsChange={() => undefined}
+          />,
+        );
+      });
+      expectDetailPropertyStack();
+      expect(
+        container!.querySelector('[data-testid="field-remap-detail-operator-id"]'),
+      ).toBeTruthy();
+      expect(container!.querySelectorAll('.ui-workbench-property-section').length).toBeGreaterThan(
+        1,
+      );
+    }
+
+    act(() => {
+      root!.render(
+        <FieldRemapDetailPanel {...common} selection={{ kind: 'edge', edgeId: 'missing-edge' }} />,
+      );
+    });
+    expectDetailPropertyStack();
+    expect(container!.querySelector('.ui-workbench-property-hint')).toBeTruthy();
+  });
+
   it('gates convert note editor to transformStep selection only', () => {
     const edges: MappingEdge[] = [
       {
@@ -80,6 +154,7 @@ describe('FieldRemapDetailPanel', () => {
     );
 
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeTruthy();
+    expectDetailPropertyStack();
     expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-step-settings"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-step-id"]')).toBeNull();
@@ -99,6 +174,9 @@ describe('FieldRemapDetailPanel', () => {
     });
 
     expect(container!.querySelector('[data-testid="field-remap-convert-note"]')).toBeTruthy();
+    expect(
+      container!.querySelector('[data-testid="field-remap-detail-transform-step"]'),
+    ).toBeTruthy();
     expect(container!.querySelector('[data-testid="field-remap-detail"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-list-context"]')).toBeNull();
     expect(container!.querySelector('[data-testid="field-remap-transform-palette"]')).toBeNull();
@@ -246,6 +324,12 @@ describe('FieldRemapDetailPanel', () => {
     );
 
     expect(container!.querySelector('[data-testid="field-remap-list-context"]')).toBeTruthy();
+    expectDetailPropertyStack();
+    expect(
+      container!.querySelectorAll(
+        '[data-testid="field-remap-list-context"] .ui-workbench-property-row',
+      ).length,
+    ).toBe(2);
     const sourceSelect = container!.querySelector(
       '[data-testid="field-remap-item-source"]',
     ) as HTMLSelectElement;
