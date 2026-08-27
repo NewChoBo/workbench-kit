@@ -188,6 +188,16 @@ describe('FieldRemapFlowMapper zero-size keep-alive', () => {
     expect(canvas.querySelector('[data-testid="mock-react-flow"]')).toBeNull();
     expect(flowHarness.mounts).toBe(0);
 
+    for (const [width, height] of [
+      [960, 0],
+      [0, 640],
+    ] as const) {
+      await emitSize([mapper, canvas], width, height);
+      expect(canvas.querySelector('[role="status"]')).toBeTruthy();
+      expect(canvas.querySelector('[data-testid="mock-react-flow"]')).toBeNull();
+      expect(flowHarness.mounts).toBe(0);
+    }
+
     await emitSize([mapper, canvas], 960, 640);
 
     const mountedFlow = canvas.querySelector('[data-testid="mock-react-flow"]');
