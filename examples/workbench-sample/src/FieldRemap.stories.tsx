@@ -1310,8 +1310,24 @@ export const KeepAliveZeroSize: Story = {
       await waitFor(() => expect(viewport!.style.transform).not.toBe(''));
       const initialTransform = viewport!.style.transform;
       await userEvent.click(zoomIn!);
-      await waitFor(() => expect(viewport!.style.transform).not.toBe(initialTransform));
-      const preservedTransform = viewport!.style.transform;
+      let settledTransform = viewport!.style.transform;
+      let stableTransformFrames = 0;
+      await waitFor(
+        async () => {
+          await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+          const currentTransform = viewport!.style.transform;
+          expect(currentTransform).not.toBe(initialTransform);
+          if (currentTransform === settledTransform) {
+            stableTransformFrames += 1;
+          } else {
+            settledTransform = currentTransform;
+            stableTransformFrames = 0;
+          }
+          expect(stableTransformFrames).toBeGreaterThanOrEqual(6);
+        },
+        { interval: 16, timeout: 3_000 },
+      );
+      const preservedTransform = settledTransform;
 
       const observedViewportTransforms: string[] = [];
       viewportObserver = new MutationObserver((records) => {
