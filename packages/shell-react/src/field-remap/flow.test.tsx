@@ -491,7 +491,12 @@ describe('FieldRemapFlowMapper host chrome', () => {
     expect(
       container!.querySelector('[data-testid="field-remap-detail-delete-operator"]'),
     ).toBeNull();
-    await clickWithModifiers(existingOperator!, { altKey: true });
+    const readOnlyOperator = container!.querySelector<HTMLElement>(
+      '[data-testid="field-remap-op-op-name"]',
+    );
+    expect(readOnlyOperator).toBeTruthy();
+    expect(readOnlyOperator!.isConnected).toBe(true);
+    await clickWithModifiers(readOnlyOperator!, { altKey: true });
     expect(onOperatorsChange).not.toHaveBeenCalled();
   });
 
