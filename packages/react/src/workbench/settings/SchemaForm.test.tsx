@@ -550,6 +550,38 @@ describe('WorkbenchSchemaForm rendering', () => {
     }
   });
 
+  it('preserves the enumerable undefined scope key for an unscoped immediate commit', async () => {
+    const preferenceChanges: unknown[] = [];
+    const rendered = await renderSchemaForm(
+      <WorkbenchSettingsCommitProvider
+        value={{
+          categoryId: 'appearance',
+          commitMode: 'immediate',
+          onPreferenceChange: (change) => preferenceChanges.push(change),
+          scopeId: '',
+        }}
+      >
+        <WorkbenchSchemaForm
+          defaultValues={{ name: 'Initial' }}
+          fields={[{ id: 'name', label: 'Name', type: 'text' }]}
+        />
+      </WorkbenchSettingsCommitProvider>,
+    );
+
+    try {
+      const input = rendered.container.querySelector<HTMLInputElement>('input');
+      await act(async () => {
+        if (input) changeTextInput(input, 'Updated');
+      });
+
+      expect(preferenceChanges).toHaveLength(1);
+      expect(Object.hasOwn(preferenceChanges[0] as object, 'scopeId')).toBe(true);
+      expect(preferenceChanges[0]).toMatchObject({ scopeId: undefined });
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
   it('uses the native submit event path for an Enter-equivalent invalid attempt', async () => {
     const onSubmit = vi.fn();
     const rendered = await renderSchemaForm(
