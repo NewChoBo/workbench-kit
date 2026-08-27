@@ -2239,10 +2239,11 @@ after a remaining matrix failure without a new design decision.
 
 - **Status:** `READY_FOR_IMPLEMENTATION`
 - **Canonical public work:** [Issue #405](https://github.com/NewChoBo/workbench-kit/issues/405)
-- **Exact source/API baseline:** `develop@4c61a2483f3119a8cfd2ccfe28459d4fee3c6bf5`
+- **Companion internal cause:** [Issue #411](https://github.com/NewChoBo/workbench-kit/issues/411);
+  implemented and closed by the same atomic Issue #405 candidate/PR, not a separate prerequisite
+- **Exact source/API baseline:** `develop@601dd2950bf6c7e60c294afd7f8119001c2e2ac4`
 - **Ownership:** `GENERIC_KIT / PUBLIC_ENTRYPOINT`; `packages/shell-react`
-- **Dependencies:** `WB-NS-080A`, `WB-NS-080B`, and `WB-NS-080C0` are `DONE`; the 080C0
-  prerequisite is integrated at `develop@43fcf8f640698cbda38f89ff1e3e9ca86852fe36`
+- **Dependencies:** `WB-NS-080A`, `WB-NS-080B`, and `WB-NS-080C0` are `DONE`
 - **Public entrypoint:** `@workbench-kit/shell-react/keybinding-management-settings`
 - **Runtime layer:** `PURE_WEB / DOM / provider-bound`; no Electron or native boundary
 
@@ -2257,10 +2258,12 @@ entrypoints.
 This is an import-boundary correction only. It does not add a second management component, model,
 registry, storage owner or shortcut dispatcher.
 
-The focused Provider context-identity prerequisite is integrated on `develop`. The retained Issue
-#405 implementation draft may resume on the latest `develop`, but it must still freeze one exact
-candidate, obtain producer-distinct review, and run its final gates on the reviewed SHA before
-integration.
+The integrated 080C0 initial Provider/command-host/host-shell matrix is green. The retained Issue #405
+draft proves that separately optimizing the late management leaf creates a foreign Provider context:
+the management model throws `useWorkbench must be used inside WorkbenchProvider.` after the initial
+shell is already live. That draft remains unaccepted and has no frozen source candidate. The internal
+cause tracked by Issue #411 and the public leaf/export/test work must be implemented, frozen, reviewed
+and validated together on one exact atomic Issue #405 candidate SHA.
 
 ### Current gap and ownership boundary
 
@@ -2316,13 +2319,31 @@ The existing root import remains source- and runtime-compatible:
 import { WorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react';
 ```
 
-Both paths resolve to the same component implementation and internal provider module. The new leaf
-must not declare another React context, re-export `WorkbenchProvider`, copy the management hook, or
-introduce a package-root hop. Its runtime graph may include the existing management model, React
-panel, platform management helpers and provider context required by the component; it must not pull
-the broad root barrel merely to obtain them. It must not target or re-export through the broader
-`src/management/settings.tsx` aggregator, which also evaluates unrelated account, command and
-extension management surfaces.
+Both paths resolve to the same component implementation and canonical focused provider entry. Change
+the existing runtime and type import in
+`packages/shell-react/src/management/use-keybinding-management.ts` from:
+
+```ts
+import { useWorkbench, type WorkbenchContextValue } from '../shell/provider.js';
+```
+
+to:
+
+```ts
+import { useWorkbench, type WorkbenchContextValue } from '@workbench-kit/shell-react/provider';
+```
+
+This is the only existing source import changed. It makes the separately optimized management graph
+reference the already-mounted canonical public Provider entry instead of owning another relative
+`shell/provider.tsx` graph. Keep `WorkbenchContext`, `WorkbenchProvider`, `useWorkbench` and
+`WorkbenchContextValue` defined and exported by `shell/provider.tsx`; do not add or extract a Context.
+
+The new leaf must not declare another React context, re-export `WorkbenchProvider`, copy the
+management hook, or introduce a package-root hop. Its runtime graph may include the existing
+management model, React panel, platform management helpers and provider context required by the
+component; it must not pull the broad root barrel merely to obtain them. It must not target or
+re-export through the broader `src/management/settings.tsx` aggregator, which also evaluates
+unrelated account, command and extension management surfaces.
 
 ### Provider, persistence and runtime parity
 
@@ -2386,6 +2407,12 @@ repository lockfile and current resolved package-manager, Vite, `@vitejs/plugin-
 ReactDOM versions; it performs no floating install. It uses no `resolve.alias`, `resolve.dedupe`,
 workspace link or source-path workaround.
 
+After late activation, inspect Vite `_metadata.json` and optimized outputs. The initial canonical
+Provider entry must remain the only owner of `WorkbenchContext`; the late management output must
+reference it and contain neither a second `createContext` nor another Provider body. If the package
+self-subpath is instead inlined as a second Provider graph, discard the candidate and return
+`DESIGN_DECISION_REQUIRED` with the exact artifact graph.
+
 The dedicated runner is exactly `pnpm check:packed-shell-react-context`. It owns an ephemeral external
 consumer directory, loopback Vite dev server, browser context and cleanup. Any Vite startup/readiness
 timeout, page error, unexpected console error/warning, browser assertion timeout, missing context,
@@ -2394,41 +2421,59 @@ server or accept a production build as a substitute for the Vite DEV optimizer p
 
 ### Ordered implementation tasks
 
-1. Add the exact one-line `packages/shell-react/src/keybinding-management-settings.ts` leaf and map
+1. Preserve the exact baseline evidence: four initial focused Provider combinations green, followed
+   by the separate late management entry RED. Record request ordering, boot count, navigations,
+   page-error stack, Vite `_metadata.json`, and optimized outputs containing `WorkbenchContext` or the
+   missing-Provider error.
+2. Change only the value/type Provider import in
+   `packages/shell-react/src/management/use-keybinding-management.ts` to the canonical
+   `@workbench-kit/shell-react/provider` package self-subpath.
+3. Add the exact one-line `packages/shell-react/src/keybinding-management-settings.ts` leaf and map
    `./keybinding-management-settings` to it in `packages/shell-react/package.json`. Do not target the
    broad `management/settings.tsx` aggregator.
-2. Preserve the root re-export and existing internal imports unchanged; the new leaf contains no
-   wrapper component, state, effect or additional export.
-3. Add focused public-export/type fixtures and an exact package-export mapping assertion proving the
+4. Preserve the root re-export and all other existing internal imports unchanged; the new leaf
+   contains no wrapper component, state, effect or additional export.
+5. Add focused public-export/type fixtures and an exact package-export mapping assertion proving the
    leaf maps to `./src/keybinding-management-settings.ts`, while leaf and root imports expose the same
    component contract under the focused provider entrypoint.
-4. Add focused provider-bound interaction coverage for command listing, set, displaced-old-chord,
+6. Add focused provider-bound interaction coverage for command listing, set, displaced-old-chord,
    reset/default restoration, persistence-disabled presentation and cleanup using the existing model
    and command host.
-5. Extend the existing packed Vite build/JSDOM consumer with the four-entry one-Provider fixture and
+7. Extend the existing packed Vite build/JSDOM consumer with the four-entry one-Provider fixture and
    exact old/new/reset runtime dispatch assertions.
-6. Extend the `WB-NS-080C0` `pnpm check:packed-shell-react-context` external consumer with the
-   management phase. After the prerequisite's three-entry Provider graph and optimizer settle,
+8. Extend the `WB-NS-080C0` `pnpm check:packed-shell-react-context` external consumer with the
+   management phase. After the initial three-entry Provider graph and optimizer settle,
    dynamically import the separate management leaf module beneath the live Provider. Preserve its
    repository-locked toolchain, fresh-tarball inputs, reload handling, no-alias/no-dedupe rule and
    fail-closed server/page/console/timeout/cleanup behavior.
-7. Update only neutral public entrypoint documentation needed to list the focused leaf. Do not add
-   host-specific composition guidance or a migration requirement.
-8. During development repeat only the focused shell-react and packed-fixture tests affected by the
-   edit. Freeze one exact candidate before repository-wide gates.
-9. Route the candidate through producer-distinct source review. Batch all findings into at most one
-   successor, then run the final gates once on that successor or on the reviewed candidate when no
-   successor is required.
+9. Assert from post-activation optimizer metadata and outputs that one canonical Provider owns
+   `WorkbenchContext`, while the late management output references it and contains no second
+   `createContext` or Provider body. If this fails, return `DESIGN_DECISION_REQUIRED`; do not add an
+   alias, dedupe, exclusion, preload, source path, global singleton or Context extraction.
+10. Update only neutral public entrypoint documentation needed to list the focused leaf. Do not add
+    host-specific composition guidance or a migration requirement.
+11. Before candidate freeze, repeat only the affected import-boundary unit/type tests, focused
+    provider-bound interaction tests, focused packed JSDOM fixture, and the dedicated runner with
+    `WBK_PACKED_CONTEXT_CASE=provider-command-host-host-shell` selecting the late management case.
+    Do not repeat full static/fast, the full packed-consumer gate, or the runner's full four-case
+    browser matrix. Freeze the import correction, leaf/export, tests and runners together as one exact
+    candidate.
+12. Route that combined candidate through producer-distinct source review. Batch all findings into
+    at most one successor, then run the final gates once on that successor or on the reviewed
+    candidate when no successor is required. Issue #411 closes through this same atomic PR.
 
 ### Compatibility, scope and non-scope
 
-This change is strictly additive. Existing root, `provider`, `command-host`, `host-shell`, `shell` and
-`command-host-controller` imports remain compatible. No consumer is required to migrate from the root;
-the focused leaf is available to hosts that maintain a focused import graph.
+This change is additive at the public surface and corrects one internal import boundary. Existing
+root, `provider`, `command-host`, `host-shell`, `shell` and `command-host-controller` imports remain
+compatible. No consumer is required to migrate from the root; the focused leaf is available to hosts
+that maintain a focused import graph.
 
 In scope:
 
 - one exact one-line leaf and package export entry targeting that leaf;
+- one exact management-hook value/type import correction to the existing focused Provider
+  self-subpath;
 - focused public type/export checks;
 - packed Vite build/JSDOM plus dedicated Vite DEV optimizer/headless-Chromium one-provider
   context-identity and old/new/reset parity evidence;
@@ -2439,19 +2484,26 @@ Non-scope:
 - component JSX, labels, capture UI or management-model behavior changes;
 - new keybinding types, registry operations, override semantics, persistence schema/key or diagnostics;
 - provider, command-host, host-shell or root-barrel refactoring;
+- Context extraction, a new/second/global Context, or a new public Context export;
 - a provider-free management component;
 - command registration, execution policy, extension routing or OS-global shortcuts;
 - new dependencies, package family, version change, publish-order change or bundle budget;
+- consumer alias, dedupe, optimizer exclusion, management preload, workspace link or source path;
 - Storybook redesign, Electron, native IPC, release, tag or publish work.
 
 ### Focused development and final validation
 
-Development repeats only the affected shell-react entrypoint/model interaction and packed fixture
-tests. Do not repeat static, fast, packed or browser repository gates while iterating.
+Before candidate freeze, development repeats only the affected unit/type and provider-bound
+interaction tests, the focused packed JSDOM fixture, and `pnpm check:packed-shell-react-context` with
+`WBK_PACKED_CONTEXT_CASE=provider-command-host-host-shell` set to select the late management case.
+Do not repeat full static/fast, the full packed-consumer gate, or the dedicated runner's full four-case
+browser matrix while iterating.
 
-After the candidate is frozen, obtain producer-distinct review and batch its findings into at most
-one successor. On that successor, or on the reviewed candidate when there are no findings, run each
-final lane exactly once:
+After the atomic import-correction + leaf/export + evidence candidate is frozen, obtain
+producer-distinct review and batch its findings into at most one successor. On that exact combined
+successor, or on the reviewed combined candidate when there are no findings, run each final lane
+exactly once. Omit or unset `WBK_PACKED_CONTEXT_CASE` for the final dedicated runner so it executes
+the full four-case matrix on the final SHA:
 
 ```text
 pnpm validate:fast
@@ -2467,8 +2519,9 @@ validation must use the packed tarball and Vite build/JSDOM fixture.
 `check:packed-shell-react-context` is the material browser gate and must exercise the packed external
 consumer through the locked Vite DEV optimizer: mount the initial three-entry shell, wait for optimizer
 settle, lazily import the fourth management entry beneath the still-live Provider, reject optimizer
-reload false passes, and use actual Chromium keyboard events for new, displaced and reset chords. The
-general repository UI lane is not required for this packet
+reload false passes, prove optimizer artifacts retain one canonical Provider owner with no second
+`createContext`/Provider body, and use actual Chromium keyboard events for new, displaced and reset
+chords. The general repository UI lane is not required for this packet
 because it does not exercise that packed external context-identity boundary. Electron is omitted
 because no main, preload, BrowserWindow, native IPC or package-runtime boundary changes.
 
@@ -2480,6 +2533,8 @@ listener, registry, model or persistence ownership.
 
 Done requires:
 
+- the exact management-hook Provider value/type import to use
+  `@workbench-kit/shell-react/provider`, with every other existing management/model import unchanged;
 - the exact focused import resolves from source and the packed package, maps exactly to the one-line
   `src/keybinding-management-settings.ts` leaf and exports only the existing
   `WorkbenchKeybindingManagementSettings` contract;
@@ -2490,11 +2545,13 @@ Done requires:
   the real provider/model/command-host path;
 - packed Vite build/JSDOM and the dedicated locked-toolchain, no-alias/no-dedupe Vite DEV optimizer +
   headless-Chromium consumer use only freshly packed public subpaths; the latter lazily adds the fourth
-  entry beneath the live three-entry Provider and rejects optimizer-reload false passes;
+  entry beneath the live three-entry Provider, rejects optimizer-reload false passes, and proves one
+  canonical Provider owner with no second `createContext` or Provider body in the late output;
 - no generic keybinding mechanic, public prop, persistence format, dependency, package budget or
   native/release boundary changes;
-- final fast, packed-shell-react-context, commit-safety and diff lanes pass exactly once on one exact
-  final SHA and producer-distinct review finds no P0/P1/P2 mismatch.
+- Issue #411 closes through the same atomic Issue #405 candidate/PR rather than a prerequisite merge;
+- final fast, packed-shell-react-context, commit-safety and diff lanes pass exactly once on the exact
+  combined final SHA and producer-distinct review finds no P0/P1/P2 mismatch.
 
 Source review must reject a nominal leaf that imports through the broad root or
 `management/settings.tsx`; contains anything beyond the exact direct re-export; creates a wrapper with
@@ -2504,8 +2561,10 @@ proves only compile-time/build/JSDOM import without the dedicated DEV-optimizer 
 old/new/reset path; allows optimizer reload to replace the live Provider or produce a false PASS; uses
 floating external tool versions, stale/non-packed Workbench inputs, alias/dedupe/workspace links or
 private deep imports; tolerates page/console/timeout failures;
-adds unrelated public exports, dependencies or mechanics; or claims release, publish, Electron or
-native completion.
+adds an alias, dedupe, optimizer exclusion, management preload, source path, global singleton,
+Context extraction or second Context; splits Issue #411 into a transient prerequisite candidate that
+cannot run the public late-entry gate on its own SHA; adds unrelated public exports, dependencies or
+mechanics; or claims release, publish, Electron or native completion.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
