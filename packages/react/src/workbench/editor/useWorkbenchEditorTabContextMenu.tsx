@@ -14,8 +14,10 @@ import {
   type WorkbenchStandaloneEditorTabLike,
 } from './editorTabContextMenu';
 
+/** Host-selected focus disposition after its controlled command state is ready. */
 export type WorkbenchEditorTabCommandFocusDisposition = 'active-tab' | 'none';
 
+/** Stable editor-tab-local identity for one activated built-in or identified extra command. */
 export interface WorkbenchEditorTabCommandFocusEvent {
   readonly source: 'builtin' | 'extra';
   readonly itemId: string;
@@ -28,6 +30,11 @@ type PendingFocusSettlement = {
   readonly token: number;
 };
 
+type PendingConnectivityObservation = {
+  readonly observer: MutationObserver;
+  readonly token: number;
+};
+
 export interface UseWorkbenchEditorTabContextMenuOptions {
   readonly getExtraTabContextMenuItems?:
     ((tabId: string) => readonly ContextMenuItem[] | undefined) | undefined;
@@ -36,6 +43,13 @@ export interface UseWorkbenchEditorTabContextMenuOptions {
   readonly onCloseOthers?: ((tabId: string) => void) | undefined;
   readonly onCloseToRight?: ((tabId: string) => void) | undefined;
   readonly onSelectTab?: ((tabId: string) => void) | undefined;
+  /**
+   * Runs after the existing menu action. A Promise is a host-readiness signal and should resolve
+   * only after controlled tabs and selection are committed. `active-tab` focuses the current
+   * selected tab or the tablist fallback; `none`, throws, and rejections do not move focus. Only
+   * built-ins and extra items with a stable non-empty `id` participate. Omission preserves the
+   * existing command-activation behavior.
+   */
   readonly resolveContextMenuCommandFocus?:
     | ((
         event: WorkbenchEditorTabCommandFocusEvent,
@@ -48,8 +62,11 @@ export interface UseWorkbenchEditorTabContextMenuOptions {
 
 export interface UseWorkbenchEditorTabContextMenuResult {
   readonly contextMenu: ReactNode;
-  /** Invalidates pending command focus settlement before forwarding the supplied selection. */
-  readonly onSelectTab: (tabId: string) => void;
+  /**
+   * Invalidates pending command focus settlement before forwarding the supplied selection.
+   * Additive and optional for source compatibility; the hook currently always supplies it.
+   */
+  readonly onSelectTab?: ((tabId: string) => void) | undefined;
   readonly onTabContextMenu: (tabId: string, event: ReactMouseEvent<HTMLElement>) => void;
 }
 
@@ -65,6 +82,7 @@ export function useWorkbenchEditorTabContextMenu({
 }: UseWorkbenchEditorTabContextMenuOptions): UseWorkbenchEditorTabContextMenuResult {
   const settlementGenerationRef = useRef(0);
   const capturedTablistRef = useRef<HTMLElement | null>(null);
+  const connectivityObservationRef = useRef<PendingConnectivityObservation | null>(null);
   const [resolvedSettlement, setResolvedSettlement] = useState<PendingFocusSettlement | null>(null);
   const [menuState, setMenuState] = useState<{
     returnFocusTarget: HTMLElement;
@@ -74,16 +92,61 @@ export function useWorkbenchEditorTabContextMenu({
     y: number;
   } | null>(null);
 
+  const stopConnectivityObservation = useCallback((token?: number) => {
+    const observation = connectivityObservationRef.current;
+    if (!observation || (token !== undefined && observation.token !== token)) {
+      return;
+    }
+    observation.observer.disconnect();
+    connectivityObservationRef.current = null;
+  }, []);
+
   const invalidatePendingSettlement = useCallback(() => {
     settlementGenerationRef.current += 1;
-  }, []);
+    stopConnectivityObservation();
+    setResolvedSettlement(null);
+  }, [stopConnectivityObservation]);
+
+  const observeCapturedTablist = useCallback(
+    (tablist: HTMLElement | null, token: number) => {
+      stopConnectivityObservation();
+      const MutationObserverConstructor = tablist?.ownerDocument.defaultView?.MutationObserver;
+      if (!tablist?.isConnected || !MutationObserverConstructor) {
+        return;
+      }
+      const capturedAncestorChain = new Set<Node>();
+      for (let ancestor: Node | null = tablist; ancestor; ancestor = ancestor.parentNode) {
+        capturedAncestorChain.add(ancestor);
+      }
+      const observer = new MutationObserverConstructor((records) => {
+        const capturedTablistWasRemoved = records.some((record) =>
+          Array.from(record.removedNodes).some(
+            (removedNode) =>
+              removedNode === tablist ||
+              capturedAncestorChain.has(removedNode) ||
+              removedNode.contains(tablist),
+          ),
+        );
+        if (!capturedTablistWasRemoved || settlementGenerationRef.current !== token) {
+          return;
+        }
+        settlementGenerationRef.current += 1;
+        stopConnectivityObservation(token);
+        setResolvedSettlement((current) => (current?.token === token ? null : current));
+      });
+      observer.observe(tablist.ownerDocument, { childList: true, subtree: true });
+      connectivityObservationRef.current = { observer, token };
+    },
+    [stopConnectivityObservation],
+  );
 
   useEffect(
     () => () => {
       settlementGenerationRef.current += 1;
+      stopConnectivityObservation();
       capturedTablistRef.current = null;
     },
-    [],
+    [stopConnectivityObservation],
   );
 
   useLayoutEffect(() => {
@@ -91,11 +154,16 @@ export function useWorkbenchEditorTabContextMenu({
       return;
     }
     const { menu, tablist, token } = resolvedSettlement;
+    const finish = () => {
+      stopConnectivityObservation(token);
+      setResolvedSettlement((current) => (current?.token === token ? null : current));
+    };
     if (
       settlementGenerationRef.current !== token ||
       capturedTablistRef.current !== tablist ||
       !tablist.isConnected
     ) {
+      finish();
       return;
     }
 
@@ -108,17 +176,20 @@ export function useWorkbenchEditorTabContextMenu({
       !tablist.contains(activeElement) &&
       !menu?.contains(activeElement)
     ) {
+      finish();
       return;
     }
 
     const activeTab = tablist.querySelector<HTMLElement>('[role="tab"][aria-selected="true"]');
     if (activeTab?.isConnected) {
       activeTab.focus();
+      finish();
       return;
     }
     tablist.tabIndex = -1;
     tablist.focus();
-  }, [resolvedSettlement]);
+    finish();
+  }, [resolvedSettlement, stopConnectivityObservation]);
 
   const handleSelectTab = useCallback(
     (tabId: string) => {
@@ -174,9 +245,17 @@ export function useWorkbenchEditorTabContextMenu({
             activeElement instanceof HTMLElement
               ? activeElement.closest<HTMLElement>('[role="menu"]')
               : null;
-          item.onSelect();
-
           const itemId = typeof item.id === 'string' && item.id.trim() !== '' ? item.id : null;
+          if (resolveContextMenuCommandFocus && itemId) {
+            observeCapturedTablist(menuState.tablist, token);
+          }
+          try {
+            item.onSelect();
+          } catch (error) {
+            stopConnectivityObservation(token);
+            throw error;
+          }
+
           if (!resolveContextMenuCommandFocus || !itemId) {
             return;
           }
@@ -191,6 +270,7 @@ export function useWorkbenchEditorTabContextMenu({
               targetTabId: menuState.tabId,
             });
           } catch {
+            stopConnectivityObservation(token);
             return;
           }
           void Promise.resolve(disposition).then(
@@ -202,11 +282,12 @@ export function useWorkbenchEditorTabContextMenu({
                 capturedTablistRef.current !== menuState.tablist ||
                 !menuState.tablist.isConnected
               ) {
+                stopConnectivityObservation(token);
                 return;
               }
               setResolvedSettlement({ menu, tablist: menuState.tablist, token });
             },
-            () => undefined,
+            () => stopConnectivityObservation(token),
           );
         },
       };

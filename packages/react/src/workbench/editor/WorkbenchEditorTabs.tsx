@@ -26,8 +26,12 @@ export interface WorkbenchEditorTabsProps extends EditorTabsProps {
   /** Optional close-to-right override. Defaults to closing each later closable tab. */
   readonly onCloseToRight?: ((tabId: string) => void) | undefined;
   /**
-   * Optional host-readiness handshake for focus after a context-menu command. Omission preserves
-   * the existing command-activation focus behavior.
+   * Optional host-readiness handshake for focus after a context-menu command. Resolve a returned
+   * Promise only after controlled tab state is committed. `active-tab` focuses the currently
+   * selected surviving tab, or the programmatically focusable tablist when no selected tab
+   * survives. `none`, throws, and rejections fail closed without moving focus. Built-ins and extra
+   * items with a stable non-empty `id` participate; unidentified extras retain current behavior.
+   * Omission preserves the existing command-activation focus behavior.
    */
   readonly resolveContextMenuCommandFocus?:
     | ((
@@ -71,7 +75,7 @@ export function WorkbenchEditorTabs({
       <EditorTabs
         {...props}
         onClose={onClose}
-        onSelect={tabContextMenu.onSelectTab}
+        onSelect={tabContextMenu.onSelectTab ?? onSelect}
         onTabContextMenu={(tabId, event) => {
           tabContextMenu.onTabContextMenu(tabId, event);
           onTabContextMenu?.(tabId, event);

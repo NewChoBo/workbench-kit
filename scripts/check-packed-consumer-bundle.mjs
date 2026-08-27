@@ -3091,6 +3091,7 @@ import {
   type WorkbenchEditorTabCommandFocusDisposition as FocusedFocusDisposition,
   type WorkbenchEditorTabCommandFocusEvent as FocusedFocusEvent,
   type WorkbenchEditorTabsProps as FocusedEditorTabsProps,
+  type UseWorkbenchEditorTabContextMenuResult as FocusedEditorTabContextMenuResult,
 } from '@workbench-kit/react/editor-tabs';
 
 const legacyExtraItem = {
@@ -3104,6 +3105,10 @@ const legacyProps = {
   onSelect: () => undefined,
   tabs: [{ id: 'library', label: 'Library' }],
 } satisfies RootEditorTabsProps;
+const legacyEditorTabContextMenuResult = {
+  contextMenu: null,
+  onTabContextMenu: () => undefined,
+} satisfies FocusedEditorTabContextMenuResult;
 
 const rootProps: RootEditorTabsProps = legacyProps;
 const workbenchProps: WorkbenchEditorTabsProps = legacyProps;
@@ -3140,6 +3145,7 @@ void [
   focusedFocusDisposition,
   focusedFocusEvent,
   focusedProps,
+  legacyEditorTabContextMenuResult,
   optedInProps,
   rootProps,
   shellFocusDisposition,

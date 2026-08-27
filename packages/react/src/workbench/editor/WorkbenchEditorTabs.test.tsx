@@ -148,7 +148,9 @@ async function mountControlledHarness(options: ControlledHarnessOptions = {}): P
         getExtraTabContextMenuItems={options.getExtraTabContextMenuItems}
         onClose={closeTab}
         onSelect={(activeId) => setModel((current) => ({ ...current, activeId }))}
-        resolveContextMenuCommandFocus={options.resolveContextMenuCommandFocus}
+        {...(options.resolveContextMenuCommandFocus
+          ? { resolveContextMenuCommandFocus: options.resolveContextMenuCommandFocus }
+          : {})}
         tabs={model.tabs}
       />
     );
@@ -362,10 +364,16 @@ describe('WorkbenchEditorTabs', () => {
     }
   });
 
-  it('waits for representative deferred target-close and target-survive host commits', async () => {
+  it('waits for every deferred built-in host commit before settling focus', async () => {
     for (const scenario of [
-      { activeId: 'last', label: 'Close' },
-      { activeId: 'middle', label: 'Close others' },
+      { activeId: 'last', label: 'Close', remainingIds: ['first', 'last'] },
+      { activeId: 'middle', label: 'Close others', remainingIds: ['middle'] },
+      {
+        activeId: 'middle',
+        label: 'Close to the right',
+        remainingIds: ['first', 'middle'],
+      },
+      { activeId: null, label: 'Close all', remainingIds: [] },
     ] as const) {
       const focusReady = createDeferred<WorkbenchEditorTabCommandFocusDisposition>();
       const { commitHost, container, root } = await mountControlledHarness({
@@ -376,14 +384,21 @@ describe('WorkbenchEditorTabs', () => {
       await activateMenuItem(menu, scenario.label);
 
       expect(getTab(container, 'middle').isConnected).toBe(true);
-      expect(document.activeElement).not.toBe(getTab(container, scenario.activeId));
+      expect([document.body, document.documentElement]).toContain(document.activeElement);
       await commitHost();
-      const committedTarget = getTab(container, scenario.activeId);
-      expect(document.activeElement).not.toBe(committedTarget);
+      expect(
+        Array.from(container.querySelectorAll<HTMLElement>('[role="tab"]')).map((tab) =>
+          tab.textContent?.toLowerCase(),
+        ),
+      ).toEqual(scenario.remainingIds);
+      const committedTarget = scenario.activeId ? getTab(container, scenario.activeId) : null;
+      const tablist = container.querySelector<HTMLElement>('[role="tablist"]')!;
+      expect([document.body, document.documentElement]).toContain(document.activeElement);
 
       focusReady.resolve('active-tab');
       await flushAsync();
-      expect(document.activeElement).toBe(committedTarget);
+      expect(document.activeElement).toBe(committedTarget ?? tablist);
+      if (!committedTarget) expect(tablist.tabIndex).toBe(-1);
 
       await act(async () => root.unmount());
       container.remove();
@@ -450,23 +465,62 @@ describe('WorkbenchEditorTabs', () => {
     await act(async () => root.unmount());
   });
 
-  it('fails closed on resolver rejection and when unrelated connected focus wins', async () => {
+  it('preserves command-activation focus behavior when the resolver is omitted', async () => {
+    const { container, root } = await mountControlledHarness({
+      getExtraTabContextMenuItems: () => [
+        { id: 'stable-extra', label: 'Stable extra', onSelect: () => undefined },
+      ],
+      ignoreClose: true,
+    });
+
+    for (const label of ['Close', 'Stable extra']) {
+      const menu = await openTabMenu(container, 'middle');
+      const selectedTab = getTab(container, 'middle');
+      const tablist = container.querySelector<HTMLElement>('[role="tablist"]')!;
+      const selectedFocus = vi.spyOn(selectedTab, 'focus');
+      const tablistFocus = vi.spyOn(tablist, 'focus');
+
+      await activateMenuItem(menu, label);
+
+      expect([document.body, document.documentElement]).toContain(document.activeElement);
+      expect(selectedFocus).not.toHaveBeenCalled();
+      expect(tablistFocus).not.toHaveBeenCalled();
+      selectedFocus.mockRestore();
+      tablistFocus.mockRestore();
+    }
+
+    await act(async () => root.unmount());
+  });
+
+  it('fails closed on resolver throw, rejection, and unrelated connected focus', async () => {
     const outside = document.createElement('button');
     document.body.append(outside);
-    const rejected = await mountControlledHarness({
-      ignoreClose: true,
-      resolveContextMenuCommandFocus: () => Promise.reject(new Error('host canceled')),
-    });
-    const rejectedInvoker = getTab(rejected.container, 'middle');
-    const rejectedFocus = vi.spyOn(rejectedInvoker, 'focus');
-    await activateMenuItem(await openTabMenu(rejected.container, 'middle'), 'Close');
-    expect(rejectedFocus).not.toHaveBeenCalled();
-    outside.focus();
-    await flushAsync();
-    expect(document.activeElement).toBe(outside);
-    rejectedFocus.mockRestore();
-    await act(async () => rejected.root.unmount());
-    rejected.container.remove();
+
+    for (const resolveFocus of [
+      () => {
+        throw new Error('host threw');
+      },
+      () => Promise.reject(new Error('host rejected')),
+    ]) {
+      const failed = await mountControlledHarness({
+        ignoreClose: true,
+        resolveContextMenuCommandFocus: resolveFocus,
+      });
+      const selectedTab = getTab(failed.container, 'middle');
+      const tablist = failed.container.querySelector<HTMLElement>('[role="tablist"]')!;
+      const selectedFocus = vi.spyOn(selectedTab, 'focus');
+      const tablistFocus = vi.spyOn(tablist, 'focus');
+
+      await activateMenuItem(await openTabMenu(failed.container, 'middle'), 'Close');
+
+      expect([document.body, document.documentElement]).toContain(document.activeElement);
+      expect(selectedFocus).not.toHaveBeenCalled();
+      expect(tablistFocus).not.toHaveBeenCalled();
+      selectedFocus.mockRestore();
+      tablistFocus.mockRestore();
+      await act(async () => failed.root.unmount());
+      failed.container.remove();
+    }
 
     const pending = createDeferred<WorkbenchEditorTabCommandFocusDisposition>();
     const focusedElsewhere = await mountControlledHarness({
@@ -487,26 +541,31 @@ describe('WorkbenchEditorTabs', () => {
       createDeferred<WorkbenchEditorTabCommandFocusDisposition>(),
     ];
     let asyncCall = 0;
+    const resolveFocus = vi.fn(() => pending[asyncCall++]!.promise);
     const { container, root } = await mountControlledHarness({
       getExtraTabContextMenuItems: () => [
         { id: 'async-focus', label: 'Async focus', onSelect: () => undefined },
-        { id: 'newer-command', label: 'Newer command', onSelect: () => undefined },
+        { label: 'Newer legacy command', onSelect: () => undefined },
       ],
       ignoreClose: true,
-      resolveContextMenuCommandFocus: (event) =>
-        event.itemId === 'async-focus' ? pending[asyncCall++]!.promise : 'none',
+      resolveContextMenuCommandFocus: resolveFocus,
     });
 
     await activateMenuItem(await openTabMenu(container, 'middle'), 'Async focus');
     const firstTab = getTab(container, 'first');
+    const tablist = container.querySelector<HTMLElement>('[role="tablist"]')!;
     const firstFocus = vi.spyOn(firstTab, 'focus');
-    await activateMenuItem(await openTabMenu(container, 'first'), 'Newer command');
+    const tablistFocus = vi.spyOn(tablist, 'focus');
+    await activateMenuItem(await openTabMenu(container, 'first'), 'Newer legacy command');
+    expect(resolveFocus).toHaveBeenCalledTimes(1);
     expect([document.body, document.documentElement]).toContain(document.activeElement);
     pending[0]!.resolve('active-tab');
     await flushAsync();
     expect(firstFocus).not.toHaveBeenCalled();
+    expect(tablistFocus).not.toHaveBeenCalled();
     expect([document.body, document.documentElement]).toContain(document.activeElement);
     firstFocus.mockRestore();
+    tablistFocus.mockRestore();
 
     await activateMenuItem(await openTabMenu(container, 'middle'), 'Async focus');
     const lastTab = getTab(container, 'last');
@@ -522,6 +581,38 @@ describe('WorkbenchEditorTabs', () => {
     expect(document.activeElement).toBe(lastTab);
     lastFocus.mockRestore();
 
+    await act(async () => root.unmount());
+  });
+
+  it('keeps a detached captured tablist invalid after it is reattached', async () => {
+    const focusReady = createDeferred<WorkbenchEditorTabCommandFocusDisposition>();
+    const { container, root } = await mountControlledHarness({
+      ignoreClose: true,
+      resolveContextMenuCommandFocus: () => focusReady.promise,
+    });
+    const selectedTab = getTab(container, 'middle');
+    const tablist = container.querySelector<HTMLElement>('[role="tablist"]')!;
+    const parent = tablist.parentElement!;
+
+    await activateMenuItem(await openTabMenu(container, 'middle'), 'Close');
+    expect([document.body, document.documentElement]).toContain(document.activeElement);
+    const selectedFocus = vi.spyOn(selectedTab, 'focus');
+    const tablistFocus = vi.spyOn(tablist, 'focus');
+
+    tablist.remove();
+    parent.append(tablist);
+    await flushAsync();
+    expect(tablist.isConnected).toBe(true);
+    expect([document.body, document.documentElement]).toContain(document.activeElement);
+
+    focusReady.resolve('active-tab');
+    await flushAsync();
+
+    expect(selectedFocus).not.toHaveBeenCalled();
+    expect(tablistFocus).not.toHaveBeenCalled();
+    expect([document.body, document.documentElement]).toContain(document.activeElement);
+    selectedFocus.mockRestore();
+    tablistFocus.mockRestore();
     await act(async () => root.unmount());
   });
 
