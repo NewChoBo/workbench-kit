@@ -1048,7 +1048,10 @@ export function WorkbenchProvider({
     <WorkbenchPersistenceDiagnosticContext.Provider value={onPersistenceDiagnostic}>
       <WorkbenchContext.Provider value={value}>
         <ExtensionEnablementContext.Provider value={services.extensionEnablement}>
-          <EditorWorkspaceReconciler />
+          <EditorWorkspaceReconciler
+            editorService={services.editorService}
+            workspaceHostService={services.workspaceHostPort?.service}
+          />
           {children}
         </ExtensionEnablementContext.Provider>
       </WorkbenchContext.Provider>
