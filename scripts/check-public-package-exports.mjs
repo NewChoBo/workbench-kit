@@ -77,6 +77,7 @@ for (const workspacePackage of workspacePackages) {
 validateCssOnlySideEffects();
 validateReactStyleExports();
 validateReactSchemaFormExport();
+validateShellReactKeybindingManagementSettingsExport();
 validateReactPrivateStorySurfaces();
 
 if (violations.length > 0) {
@@ -85,6 +86,84 @@ if (violations.length > 0) {
     console.error(`${violation.location} [${violation.rule}] ${violation.message}`);
   }
   process.exit(1);
+}
+
+function validateShellReactKeybindingManagementSettingsExport() {
+  const workspacePackage = packageByName.get('@workbench-kit/shell-react');
+  const expectedTarget = './src/keybinding-management-settings.ts';
+  const actualTarget = workspacePackage?.packageJson.exports?.['./keybinding-management-settings'];
+  const providerPath = path.join(repoRoot, 'packages/shell-react/src/shell/provider.tsx');
+  const focusedLeafPath = path.join(
+    repoRoot,
+    'packages/shell-react/src/keybinding-management-settings.ts',
+  );
+  const focusedViewPath = path.join(
+    repoRoot,
+    'packages/shell-react/src/management/keybinding-settings-view.tsx',
+  );
+
+  if (actualTarget !== expectedTarget) {
+    violations.push({
+      location: 'packages/shell-react/package.json#exports./keybinding-management-settings',
+      message: `@workbench-kit/shell-react/keybinding-management-settings must map exactly to "${expectedTarget}".`,
+      rule: 'shell-react-keybinding-management-settings-export',
+    });
+  }
+
+  const providerSource = readSourceOrReport(providerPath, 'Provider binding source');
+  if (!providerSource.includes('export function useWorkbenchKeybindingManagementBinding(')) {
+    violations.push({
+      location: 'packages/shell-react/src/shell/provider.tsx',
+      message: 'The focused Provider entry must export useWorkbenchKeybindingManagementBinding.',
+      rule: 'shell-react-keybinding-management-provider-binding',
+    });
+  }
+
+  const focusedLeafSource = readSourceOrReport(focusedLeafPath, 'focused Settings View leaf');
+  const normalizedFocusedLeafSource = focusedLeafSource.replaceAll('\r\n', '\n');
+  if (
+    !normalizedFocusedLeafSource.includes('WorkbenchKeybindingManagementSettingsView,') ||
+    !normalizedFocusedLeafSource.includes('type WorkbenchKeybindingManagementSettingsViewProps,') ||
+    !normalizedFocusedLeafSource.includes("from './management/keybinding-settings-view.js';") ||
+    [...normalizedFocusedLeafSource.matchAll(/from\s+['"]([^'"]+)['"]/g)].some(
+      ([, specifier]) => specifier !== './management/keybinding-settings-view.js',
+    )
+  ) {
+    violations.push({
+      location: 'packages/shell-react/src/keybinding-management-settings.ts',
+      message:
+        'The focused Settings entry must re-export only the provider-free View and its props type.',
+      rule: 'shell-react-keybinding-management-focused-leaf',
+    });
+  }
+
+  const focusedViewSource = readSourceOrReport(focusedViewPath, 'provider-free Settings View');
+  const forbiddenViewPatterns = [
+    ['useWorkbench', 'useWorkbench'],
+    ['WorkbenchContext', 'WorkbenchContext'],
+    ['createContext', 'createContext'],
+    ['shell/provider', 'shell/provider'],
+    ['/provider', 'provider public subpath'],
+  ];
+  for (const [pattern, label] of forbiddenViewPatterns) {
+    if (focusedViewSource.includes(pattern)) {
+      violations.push({
+        location: 'packages/shell-react/src/management/keybinding-settings-view.tsx',
+        message: `The focused Settings View must not reference ${label}.`,
+        rule: 'shell-react-keybinding-management-provider-free-view',
+      });
+    }
+  }
+}
+
+function readSourceOrReport(sourcePath, label) {
+  if (fs.existsSync(sourcePath)) return fs.readFileSync(sourcePath, 'utf8');
+  violations.push({
+    location: path.relative(repoRoot, sourcePath).replaceAll('\\', '/'),
+    message: `${label} is missing.`,
+    rule: 'shell-react-keybinding-management-source-presence',
+  });
+  return '';
 }
 
 console.log(`Public package export check passed (${NPM_PUBLISH_ORDER.length} publish packages).`);

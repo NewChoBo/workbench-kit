@@ -23,6 +23,11 @@ const focusedCommandHostControllerOutputDir = path.join(
 const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
 const schemaFormIdentityOutputDir = path.join(consumerDir, 'dist-schema-form-identity');
 const focusedSchemaFormOutputDir = path.join(consumerDir, 'dist-focused-schema-form');
+const focusedShellContextOutputDir = path.join(consumerDir, 'dist-focused-shell-context');
+const focusedKeybindingManagementViewOutputDir = path.join(
+  consumerDir,
+  'dist-focused-keybinding-management-view',
+);
 
 // Keep a little deliberate headroom for normal fixes, while forcing larger
 // public-surface growth to include an explicit bundle-budget review.
@@ -331,6 +336,12 @@ try {
 
   buildFocusedConsumer('schema-form-identity');
   await executeFocusedConsumer('SchemaForm identity', schemaFormIdentityOutputDir);
+
+  buildFocusedConsumer('focused-shell-context');
+  await executeFocusedConsumer('focused shell context', focusedShellContextOutputDir);
+
+  buildFocusedConsumer('focused-keybinding-management-view');
+  verifyFocusedKeybindingManagementViewOutput();
 
   buildFocusedConsumer('focused-overlay');
   verifyFocusedStyleOutput({
@@ -699,11 +710,23 @@ import {
   type FieldRemapSelection,
 } from '@workbench-kit/shell-react/field-remap';
 import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
-import { WorkbenchProvider } from '@workbench-kit/shell-react/provider';
+import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
+import {
+  WorkbenchProvider,
+  useWorkbenchKeybindingManagementBinding,
+} from '@workbench-kit/shell-react/provider';
+import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
 import { useExtensionRegistryCommandDescriptors } from '@workbench-kit/shell-react/registry-command-descriptors';
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
+const packedFocusedShellEntries = Object.freeze({
+  WorkbenchCommandHost,
+  WorkbenchHostShell,
+  WorkbenchKeybindingManagementSettingsView,
+  WorkbenchProvider,
+  useWorkbenchKeybindingManagementBinding,
+});
 type ExtensionRegistryRemoved = 'extensionRegistry' extends keyof WorkbenchContextValue
   ? never
   : true;
@@ -3689,6 +3712,162 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-shell-context.ts'),
+    `import * as React from 'react';
+import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import { WorkbenchKeybindingManagementSettings as RootWorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react';
+import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
+import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
+import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
+import {
+  WorkbenchProvider,
+  useWorkbench,
+  useWorkbenchKeybindingManagementBinding,
+} from '@workbench-kit/shell-react/provider';
+
+const { createElement, useLayoutEffect } = React;
+
+const rootCompatibleManagementSettings: () => React.ReactNode =
+  RootWorkbenchKeybindingManagementSettings;
+void rootCompatibleManagementSettings;
+
+const commandId = 'packed.focused.command';
+let dispatchCount = 0;
+let setOverride: ((commandId: string, key: string) => void) | undefined;
+let resetOverride: ((commandId: string) => void) | undefined;
+
+function PackedCommandRegistration() {
+  const { commands } = useWorkbench();
+  useLayoutEffect(() => {
+    const command = commands.registerCommand({
+      handler: () => {
+        dispatchCount += 1;
+      },
+      id: commandId,
+      run: () => {
+        dispatchCount += 1;
+      },
+      shortcut: 'ctrl+e',
+      title: 'Packed focused command',
+    });
+    return () => {
+      command.dispose();
+    };
+  }, [commands]);
+  return null;
+}
+
+function PackedManagementSettings() {
+  const binding = useWorkbenchKeybindingManagementBinding();
+  useLayoutEffect(() => {
+    setOverride = binding.setKeybinding;
+    resetOverride = binding.resetKeybinding;
+    return () => {
+      setOverride = undefined;
+      resetOverride = undefined;
+    };
+  }, [binding.resetKeybinding, binding.setKeybinding]);
+  return createElement(WorkbenchKeybindingManagementSettingsView, binding);
+}
+
+function dispatchShortcut(key: string, modifiers: { altKey?: boolean; ctrlKey?: boolean }) {
+  window.dispatchEvent(
+    new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key, ...modifiers }),
+  );
+}
+
+function assertDispatchCount(expected: number, message: string) {
+  if (dispatchCount !== expected) throw new TypeError(message);
+}
+
+const container = document.createElement('div');
+document.body.append(container);
+const root = createRoot(container);
+function createPackedApp(settingsKey: string) {
+  return createElement(
+    WorkbenchProvider,
+    {
+      children: [
+        createElement(PackedCommandRegistration, { key: 'registration' }),
+        createElement(WorkbenchHostShell, {
+          editorArea: createElement('main', null, 'Packed editor'),
+          key: 'shell',
+          overlays: createElement(PackedManagementSettings, { key: settingsKey }),
+        }),
+        createElement(WorkbenchCommandHost, {
+          enableCommandPalette: false,
+          enableQuickOpen: false,
+          enableShortcutBridge: true,
+          key: 'commands',
+          onOpenSettings: () => undefined,
+        }),
+      ],
+      persistEditorState: false,
+      persistKeybindingOverrides: false,
+      persistLayout: false,
+      persistLocalPreferences: false,
+    },
+  );
+}
+
+flushSync(() => root.render(createPackedApp('settings:first')));
+await new Promise((resolve) => setTimeout(resolve, 0));
+await new Promise((resolve) => setTimeout(resolve, 0));
+if (!container.textContent?.includes('Keyboard Shortcuts')) {
+  throw new TypeError('Packed focused management leaf did not render under the live Provider.');
+}
+if (!container.textContent.includes('Packed editor')) {
+  throw new TypeError('Packed focused host shell did not share the live Provider.');
+}
+if (!container.textContent.includes('Packed focused command')) {
+  throw new TypeError('Packed management leaf did not list the live Provider command projection.');
+}
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(1, 'Packed default key did not dispatch exactly once.');
+flushSync(() => setOverride?.(commandId, 'alt+e'));
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(1, 'Packed displaced key remained active.');
+flushSync(() => root.render(createPackedApp('settings:remounted')));
+if (!container.textContent.includes('1 user override')) {
+  throw new TypeError('Packed Settings-only remount did not retain the live Provider override.');
+}
+dispatchShortcut('e', { altKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(2, 'Packed override key did not dispatch exactly once.');
+flushSync(() => resetOverride?.(commandId));
+dispatchShortcut('e', { altKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(2, 'Packed reset left the override key active.');
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(3, 'Packed reset did not restore exact-once dispatch.');
+flushSync(() => root.unmount());
+dispatchShortcut('e', { ctrlKey: true });
+await Promise.resolve();
+await Promise.resolve();
+assertDispatchCount(3, 'Packed cleanup left a duplicate shortcut dispatcher active.');
+container.remove();
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-keybinding-management-view.ts'),
+    `import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
+
+(globalThis as typeof globalThis & { __workbenchKitFocusedKeybindingManagementView?: unknown })
+  .__workbenchKitFocusedKeybindingManagementView = Object.freeze({
+    WorkbenchKeybindingManagementSettingsView,
+  });
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'tsconfig.json'),
     `${JSON.stringify(
       {
@@ -3749,6 +3928,17 @@ import { ContextMenu } from '@workbench-kit/react/overlay';
     schemaFormIdentityOutputDir,
     true,
   );
+  writeFocusedViteConfig(
+    'focused-shell-context',
+    path.join(consumerDir, 'src', 'focused-shell-context.ts'),
+    focusedShellContextOutputDir,
+    true,
+  );
+  writeFocusedViteConfig(
+    'focused-keybinding-management-view',
+    path.join(consumerDir, 'src', 'focused-keybinding-management-view.ts'),
+    focusedKeybindingManagementViewOutputDir,
+  );
 }
 
 function writeFocusedViteConfig(name, input, outputDirectory, nodeExecutable = false) {
@@ -3767,6 +3957,7 @@ function writeFocusedViteConfig(name, input, outputDirectory, nodeExecutable = f
     },
   }],
   build: {
+    ${nodeExecutable ? "target: 'esnext'," : ''}
     emptyOutDir: true,
     manifest: true,
     outDir: ${JSON.stringify(outputDirectory)},
@@ -3800,12 +3991,14 @@ async function executeFocusedConsumer(label, outputDirectory) {
     url: 'http://127.0.0.1/',
   });
   const browserGlobals = {
+    React: await import('react'),
     CustomEvent: dom.window.CustomEvent,
     customElements: dom.window.customElements,
     document: dom.window.document,
     Event: dom.window.Event,
     HTMLElement: dom.window.HTMLElement,
     HTMLInputElement: dom.window.HTMLInputElement,
+    KeyboardEvent: dom.window.KeyboardEvent,
     MutationObserver: dom.window.MutationObserver,
     navigator: dom.window.navigator,
     Node: dom.window.Node,
@@ -3894,6 +4087,52 @@ function verifyFocusedCommandHostControllerOutput() {
 
   console.log(
     `[check-packed-consumer] focused command-host controller graph OK (${sources.length} source-map entries).`,
+  );
+}
+
+function verifyFocusedKeybindingManagementViewOutput() {
+  const moduleIds = readJson(
+    path.join(focusedKeybindingManagementViewOutputDir, 'module-graph.json'),
+  );
+  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+    throw new Error('Focused keybinding management View emitted no module-graph evidence.');
+  }
+  const normalizedModuleIds = moduleIds.map((moduleId) =>
+    `/${moduleId.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const requiredModuleSegments = [
+    '/@workbench-kit/shell-react/src/keybinding-management-settings.ts',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings-view.tsx',
+    '/@workbench-kit/react/src/workbench/management/keybindingmanagementpanel.tsx',
+  ];
+  const forbiddenModuleSegments = [
+    '/@workbench-kit/shell-react/src/shell/provider',
+    '/@workbench-kit/shell-react/src/management/use-keybinding-management',
+    '/@workbench-kit/shell-react/src/workbench/command-host',
+    '/@workbench-kit/shell-react/src/workbench/keybinding-bridge',
+    '/@workbench-kit/workbench-core/',
+  ];
+
+  for (const requiredSegment of requiredModuleSegments) {
+    if (!normalizedModuleIds.some((moduleId) => moduleId.includes(requiredSegment))) {
+      throw new Error(
+        `Focused keybinding management View is missing retained module ${requiredSegment}.`,
+      );
+    }
+  }
+  const forbiddenModules = normalizedModuleIds.filter((moduleId) =>
+    forbiddenModuleSegments.some((segment) => moduleId.includes(segment)),
+  );
+  if (forbiddenModules.length > 0) {
+    throw new Error(
+      `Focused keybinding management View pulled the Provider/runtime graph:\n${[
+        ...new Set(forbiddenModules),
+      ].join('\n')}`,
+    );
+  }
+
+  console.log(
+    `[check-packed-consumer] focused keybinding management View graph OK (${moduleIds.length} modules).`,
   );
 }
 

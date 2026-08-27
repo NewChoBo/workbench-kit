@@ -20,39 +20,40 @@ Related: [Consumer Integration Backlog](./consumer-integration-backlog.md) ·
 
 Use official subpath exports from `@workbench-kit/react`. Do not import from `packages/react/src/...` in consuming apps.
 
-| Subpath                                                   | Purpose                                                                |
-| --------------------------------------------------------- | ---------------------------------------------------------------------- |
-| `@workbench-kit/react`                                    | Root barrel — includes typed drag MIME helpers (`createTypedDragMime`) |
-| `@workbench-kit/react/drag-mime`                          | Leaf — `createTypedDragMime` / `createStringDragMime`                  |
-| `@workbench-kit/react/primitives`                         | Controls, editor chrome, library layout, scroll, property grids        |
-| `@workbench-kit/platform/versioned-browser-state`         | Leaf — `createVersionedBrowserStateAdapter`                            |
-| `@workbench-kit/platform/resize-rect`                     | Leaf — `resizeRect`                                                    |
-| `@workbench-kit/platform/tray-close-policy`               | Leaf — tray hide/quit helpers                                          |
-| `@workbench-kit/shell-react/layout-storage`               | Leaf — framework-free layout persistence helpers                       |
-| `@workbench-kit/shell-react/provider`                     | Leaf — host context and extension inventory                            |
-| `@workbench-kit/shell-react/host-shell`                   | Leaf — product-owned content slots with Kit layout/chrome              |
-| `@workbench-kit/shell-react/shell`                        | Leaf — assembled shell without an implicit editor                      |
-| `@workbench-kit/shell-react/command-host`                 | Leaf — command host orchestration                                      |
-| `@workbench-kit/shell-react/command-host-controller`      | Leaf — provider-free Command Palette and Quick Open controller         |
-| `@workbench-kit/shell-react/command-palette`              | Leaf — shortcut and palette helpers                                    |
-| `@workbench-kit/shell-react/command-descriptors`          | Leaf — resolved command descriptor hook                                |
-| `@workbench-kit/shell-react/registry-command-descriptors` | Leaf — provider-free descriptor hook for a host-owned registry         |
-| `@workbench-kit/workbench-core/layout`                    | Leaf — framework-free layout state                                     |
-| `@workbench-kit/workbench-core/storage`                   | Leaf — storage reader/writer contracts                                 |
-| `@workbench-kit/platform/atomic-write`                    | Leaf — Node `atomicWriteText`                                          |
-| `@workbench-kit/react/layout`                             | Sidebar/editor frames, section stacks, controlled preview canvas       |
-| `@workbench-kit/react/editor-tabs`                        | Tab strip drag-and-drop helpers                                        |
-| `@workbench-kit/react/overlay`                            | Context menus; anchored overlay panel positioning helper               |
-| `@workbench-kit/react/modal`                              | Low-level modal frame (prefer management wrapper when applicable)      |
-| `@workbench-kit/react/workbench/shell`                    | Activity bar, shell layout, view editor, title bar                     |
-| `@workbench-kit/react/workbench/standalone`               | Assembled standalone shell and host bootstrap/state contracts          |
-| `@workbench-kit/react/workbench/command-ui`               | Command palette, Quick Open, shortcut bridge                           |
-| `@workbench-kit/react/workbench/theme`                    | Theme resolution and controlled theme hook                             |
-| `@workbench-kit/react/workbench/chat`                     | Chat panel, composer, message list/item, conversation bar              |
-| `@workbench-kit/react/workbench/management`               | Dialog frames, integrations shell, notices                             |
-| `@workbench-kit/react/workbench/workspace`                | Workspace explorer, editor panel, selection helpers                    |
-| `@workbench-kit/workspace`                                | Pure path/selection/virtual-workspace helpers (no React)               |
-| `@workbench-kit/contracts`                                | Cross-host DTOs and capability contracts                               |
+| Subpath                                                     | Purpose                                                                |
+| ----------------------------------------------------------- | ---------------------------------------------------------------------- |
+| `@workbench-kit/react`                                      | Root barrel — includes typed drag MIME helpers (`createTypedDragMime`) |
+| `@workbench-kit/react/drag-mime`                            | Leaf — `createTypedDragMime` / `createStringDragMime`                  |
+| `@workbench-kit/react/primitives`                           | Controls, editor chrome, library layout, scroll, property grids        |
+| `@workbench-kit/platform/versioned-browser-state`           | Leaf — `createVersionedBrowserStateAdapter`                            |
+| `@workbench-kit/platform/resize-rect`                       | Leaf — `resizeRect`                                                    |
+| `@workbench-kit/platform/tray-close-policy`                 | Leaf — tray hide/quit helpers                                          |
+| `@workbench-kit/shell-react/layout-storage`                 | Leaf — framework-free layout persistence helpers                       |
+| `@workbench-kit/shell-react/provider`                       | Leaf — host context and extension inventory                            |
+| `@workbench-kit/shell-react/host-shell`                     | Leaf — product-owned content slots with Kit layout/chrome              |
+| `@workbench-kit/shell-react/keybinding-management-settings` | Leaf — provider-free keyboard shortcut management Settings View        |
+| `@workbench-kit/shell-react/shell`                          | Leaf — assembled shell without an implicit editor                      |
+| `@workbench-kit/shell-react/command-host`                   | Leaf — command host orchestration                                      |
+| `@workbench-kit/shell-react/command-host-controller`        | Leaf — provider-free Command Palette and Quick Open controller         |
+| `@workbench-kit/shell-react/command-palette`                | Leaf — shortcut and palette helpers                                    |
+| `@workbench-kit/shell-react/command-descriptors`            | Leaf — resolved command descriptor hook                                |
+| `@workbench-kit/shell-react/registry-command-descriptors`   | Leaf — provider-free descriptor hook for a host-owned registry         |
+| `@workbench-kit/workbench-core/layout`                      | Leaf — framework-free layout state                                     |
+| `@workbench-kit/workbench-core/storage`                     | Leaf — storage reader/writer contracts                                 |
+| `@workbench-kit/platform/atomic-write`                      | Leaf — Node `atomicWriteText`                                          |
+| `@workbench-kit/react/layout`                               | Sidebar/editor frames, section stacks, controlled preview canvas       |
+| `@workbench-kit/react/editor-tabs`                          | Tab strip drag-and-drop helpers                                        |
+| `@workbench-kit/react/overlay`                              | Context menus; anchored overlay panel positioning helper               |
+| `@workbench-kit/react/modal`                                | Low-level modal frame (prefer management wrapper when applicable)      |
+| `@workbench-kit/react/workbench/shell`                      | Activity bar, shell layout, view editor, title bar                     |
+| `@workbench-kit/react/workbench/standalone`                 | Assembled standalone shell and host bootstrap/state contracts          |
+| `@workbench-kit/react/workbench/command-ui`                 | Command palette, Quick Open, shortcut bridge                           |
+| `@workbench-kit/react/workbench/theme`                      | Theme resolution and controlled theme hook                             |
+| `@workbench-kit/react/workbench/chat`                       | Chat panel, composer, message list/item, conversation bar              |
+| `@workbench-kit/react/workbench/management`                 | Dialog frames, integrations shell, notices                             |
+| `@workbench-kit/react/workbench/workspace`                  | Workspace explorer, editor panel, selection helpers                    |
+| `@workbench-kit/workspace`                                  | Pure path/selection/virtual-workspace helpers (no React)               |
+| `@workbench-kit/contracts`                                  | Cross-host DTOs and capability contracts                               |
 
 Import `@workbench-kit/react/styles/core.css` for the broad Workbench feature set, or
 `@workbench-kit/react/styles.css` when Auth or Chat is rendered. A non-shell route can
