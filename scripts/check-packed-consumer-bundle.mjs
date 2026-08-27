@@ -33,7 +33,7 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
   // its bespoke detail controls with the existing shared property/control primitives consumes
   // 251,806 bytes while retaining the same 1,882-module / one-static-chunk graph; keep deliberate
   // repair headroom without hiding another dependency-surface jump.
-  initialGzipBytes: 255_000,
+  initialGzipBytes: 253_000,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.

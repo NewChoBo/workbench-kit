@@ -472,7 +472,7 @@ export function FieldRemapDetailPanel({
 
   if (selection.kind === 'transformStep') {
     return (
-      <WorkbenchPropertyStack gap="sm" data-testid="field-remap-detail-transform-step">
+      <div data-testid="field-remap-detail-transform-step">
         <ConvertNoteEditor
           edge={edge}
           stepIndex={selection.stepIndex}
@@ -484,7 +484,7 @@ export function FieldRemapDetailPanel({
           onSelectionChange={onSelectionChange}
           readOnly={readOnly}
         />
-      </WorkbenchPropertyStack>
+      </div>
     );
   }
 
