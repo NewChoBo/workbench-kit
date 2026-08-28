@@ -7,8 +7,9 @@ It is not a changelog of the current repository. Current source is recorded only
 ## Evidence baselines
 
 - **Latest source-bearing integration baseline:**
-  `develop@288f3093aad6a76d4252c1bf3d0d3c7975ed87fd` / PR #420. This exact tree is
-  the current local and remote `develop` baseline after the Windows Storybook source-mode correction.
+  `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` / PR #424. This exact tree is
+  the current local and remote `develop` baseline after the focused keybinding command runtime
+  correction.
 - **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
@@ -2839,13 +2840,16 @@ Release, npm publication and downstream cohort consumption remain separate appro
 
 ## WB-NS-080C2 successor-v2 — Focused keybinding command runtime boundary
 
-- **Status:** `READY_FOR_IMPLEMENTATION`
+- **Status:** `DONE`
 - **Canonical public work:** [Issue #414](https://github.com/NewChoBo/workbench-kit/issues/414)
 - **Historical dependency:** `WB-NS-080C2` is `DONE`; its flat Provider-hook/provider-free-View
   contract and PR #416 evidence remain unchanged history
-- **Exact reviewed source base:** `develop@288f3093aad6a76d4252c1bf3d0d3c7975ed87fd`
-- **Admissible implementation base:** the first `develop` commit that contains this packet unchanged;
-  source work starts only after this documentation projection merges
+- **Exact projection base:** `develop@288f3093aad6a76d4252c1bf3d0d3c7975ed87fd`
+- **Documentation projection:** candidate `8b730a1a6b0dee4bd9c33c86478a88658d845163` /
+  PR #423 / `develop@8e6e9ed04d7eeaba5d9e8e7f5afb24721d3c0969`
+- **Exact implementation base:** `develop@8e6e9ed04d7eeaba5d9e8e7f5afb24721d3c0969`
+- **Source integration:** final successor `dcddf242a11f0beb6859d36572c09735c9199ea8` /
+  PR #424 / `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7`
 - **Published cohort:** `0.0.2-prototype.0.2.44`
 - **Release provenance:** `main@b2865c7c0dfc4ec9942b9df25a5167c89ca782a2`; annotated tag
   `v0.0.2-prototype.0.2.44` has object
@@ -2868,9 +2872,9 @@ runtime dispatch continue through the one existing Provider/model authority.
 This is a corrective runtime dependency packet. It does not reopen the accepted public binding/View
 shape, add a new feature, create another management model or rewrite the historical `.44` release.
 
-### Current gap and exact target
+### Corrected gap and exact target
 
-On the reviewed source base and published `.44`, the only known source-contract mismatch is:
+On the reviewed projection base and published `.44`, the source-contract mismatch was:
 
 ```ts
 // CURRENT
@@ -2883,6 +2887,9 @@ import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench/com
 `packages/react/package.json` already publishes `./workbench/commands`, and that leaf exports the
 same `createWorkbenchShellCommands` implementation. The corrective source must use this focused
 public leaf directly. It must not move, wrap, copy or re-export the helper from another owner.
+
+The integrated `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` source now uses the target
+focused leaf. Published `.44` remains immutable history with the former broad import.
 
 The target Provider-only packed graph reaches the focused commands leaf but not the broad
 `packages/react/src/workbench/index.ts` aggregate. The graph also remains free of the late keybinding
@@ -3012,6 +3019,25 @@ behavior redesign, unmeasured listener optimization, native scope or release cla
 corrective source integration, exact evidence recorded here, Issue #414 closure and topic cleanup.
 `.44` remains immutable published history with its known exception; only a later corrected cohort can
 close publication-qualified conformance.
+
+### Completion evidence
+
+- The original candidate `f55f427415da68488cd91817a2d0e6b471688d4d` changed the runtime import and
+  added exact source/public-export plus Provider-only packed graph guards.
+- Producer-distinct review found two P1 test gaps: unresolved dynamic graph escape and an unguarded
+  `ShortcutCommandBridge` back-edge that could create another management owner. Both findings were
+  batched into the sole successor `dcddf242a11f0beb6859d36572c09735c9199ea8`; targeted re-review
+  passed with no remaining blocker.
+- Focused development checks passed: public exports, shell-react typecheck, 54 focused Vitest tests,
+  the selected fresh-tarball management Chromium case, packed consumer, ESLint, Prettier and diff
+  checks. The Provider-only packed case retained 16 sources and emitted no CSS.
+- On the unchanged final successor, `pnpm validate:fast` passed 473 files / 2,798 tests and
+  `pnpm check:packed-shell-react-context` passed all four fresh-tarball Vite/Chromium cases.
+- Commit safety passed before both commits and before push. PR #424 merged the exact successor to
+  `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7`; the remote topic, local branch and isolated
+  source worktree were removed, and Issue #414 is closed.
+- No public API, Context, Provider prop, persistence, Electron/native, release, tag or npm publication
+  change occurred. A corrected published cohort remains a separate approval gate.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
