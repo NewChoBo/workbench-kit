@@ -1,6 +1,6 @@
 import { useLayoutEffect, useMemo, useState } from 'react';
 import { createKeybindingManagementModel } from '@workbench-kit/platform';
-import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
+import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench/commands';
 
 import type { WorkbenchContextValue } from '../shell/provider.js';
 import { resolveShellCommandActivities } from '../workbench/command-palette.js';

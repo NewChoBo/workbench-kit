@@ -28,6 +28,10 @@ const focusedKeybindingManagementViewOutputDir = path.join(
   consumerDir,
   'dist-focused-keybinding-management-view',
 );
+const focusedKeybindingManagementProviderOutputDir = path.join(
+  consumerDir,
+  'dist-focused-keybinding-management-provider',
+);
 
 // Keep a little deliberate headroom for normal fixes, while forcing larger
 // public-surface growth to include an explicit bundle-budget review.
@@ -342,6 +346,9 @@ try {
 
   buildFocusedConsumer('focused-keybinding-management-view');
   verifyFocusedKeybindingManagementViewOutput();
+
+  buildFocusedConsumer('focused-keybinding-management-provider');
+  verifyFocusedKeybindingManagementProviderOutput();
 
   buildFocusedConsumer('focused-overlay');
   verifyFocusedStyleOutput({
@@ -3868,6 +3875,16 @@ container.remove();
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-keybinding-management-provider.ts'),
+    `import { useWorkbenchKeybindingManagementBinding } from '@workbench-kit/shell-react/provider';
+
+(globalThis as typeof globalThis & { __workbenchKitFocusedKeybindingManagementProvider?: unknown })
+  .__workbenchKitFocusedKeybindingManagementProvider = Object.freeze({
+    useWorkbenchKeybindingManagementBinding,
+  });
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'tsconfig.json'),
     `${JSON.stringify(
       {
@@ -3938,6 +3955,11 @@ container.remove();
     'focused-keybinding-management-view',
     path.join(consumerDir, 'src', 'focused-keybinding-management-view.ts'),
     focusedKeybindingManagementViewOutputDir,
+  );
+  writeFocusedViteConfig(
+    'focused-keybinding-management-provider',
+    path.join(consumerDir, 'src', 'focused-keybinding-management-provider.ts'),
+    focusedKeybindingManagementProviderOutputDir,
   );
 }
 
@@ -4133,6 +4155,69 @@ function verifyFocusedKeybindingManagementViewOutput() {
 
   console.log(
     `[check-packed-consumer] focused keybinding management View graph OK (${moduleIds.length} modules).`,
+  );
+}
+
+function verifyFocusedKeybindingManagementProviderOutput() {
+  const sources = collectInitialJavaScriptSources(
+    focusedKeybindingManagementProviderOutputDir,
+    'focused keybinding management Provider',
+  );
+  const normalizedSources = sources.map((source) =>
+    `/${source.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const requiredModuleSegments = [
+    '/@workbench-kit/shell-react/src/shell/provider.tsx',
+    '/@workbench-kit/shell-react/src/management/use-keybinding-management.ts',
+    '/@workbench-kit/react/src/workbench/commands/commands.ts',
+    '/@workbench-kit/platform/src/keybindings/keybinding-management-model.ts',
+  ];
+  const forbiddenModuleSegments = [
+    '/@workbench-kit/react/src/workbench/index.ts',
+    '/@workbench-kit/react/src/workbench/management/',
+    '/@workbench-kit/react/src/workbench/settings/',
+    '/@workbench-kit/react/src/workbench/chat/',
+    '/@workbench-kit/react/src/workbench/workspace/',
+    '/@workbench-kit/react/src/workbench/provider',
+    '/@workbench-kit/shell-react/src/keybinding-management-settings.ts',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings-view.tsx',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings.tsx',
+  ];
+
+  for (const requiredSegment of requiredModuleSegments) {
+    if (!normalizedSources.some((source) => source.includes(requiredSegment))) {
+      throw new Error(
+        `Focused keybinding management Provider is missing retained module ${requiredSegment}.`,
+      );
+    }
+  }
+  const forbiddenSources = normalizedSources.filter((source) =>
+    forbiddenModuleSegments.some((segment) => source.includes(segment)),
+  );
+  if (forbiddenSources.length > 0) {
+    throw new Error(
+      `Focused keybinding management Provider pulled a broad or late UI graph:\n${[
+        ...new Set(forbiddenSources),
+      ].join('\n')}`,
+    );
+  }
+
+  const manifest = readJson(
+    path.join(focusedKeybindingManagementProviderOutputDir, '.vite', 'manifest.json'),
+  );
+  const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
+  if (!entryKey) throw new Error('Focused keybinding management Provider emitted no Vite entry.');
+  const cssFiles = new Set(
+    collectStaticEntries(manifest, entryKey).flatMap((entry) => entry.css ?? []),
+  );
+  if (cssFiles.size > 0) {
+    throw new Error(
+      `Focused keybinding management Provider emitted unrelated CSS: ${[...cssFiles].join(', ')}.`,
+    );
+  }
+
+  console.log(
+    `[check-packed-consumer] focused keybinding management Provider graph OK (${sources.length} retained sources).`,
   );
 }
 
