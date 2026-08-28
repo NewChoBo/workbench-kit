@@ -4159,6 +4159,15 @@ function verifyFocusedKeybindingManagementViewOutput() {
 }
 
 function verifyFocusedKeybindingManagementProviderOutput() {
+  const moduleIds = readJson(
+    path.join(focusedKeybindingManagementProviderOutputDir, 'module-graph.json'),
+  );
+  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+    throw new Error('Focused keybinding management Provider emitted no module-graph evidence.');
+  }
+  const normalizedModuleIds = moduleIds.map((moduleId) =>
+    `/${moduleId.replaceAll('\\', '/')}`.toLowerCase(),
+  );
   const sources = collectInitialJavaScriptSources(
     focusedKeybindingManagementProviderOutputDir,
     'focused keybinding management Provider',
@@ -4172,8 +4181,18 @@ function verifyFocusedKeybindingManagementProviderOutput() {
     '/@workbench-kit/react/src/workbench/commands/commands.ts',
     '/@workbench-kit/platform/src/keybindings/keybinding-management-model.ts',
   ];
+  const forbiddenResolvedModuleSegments = [
+    '/@workbench-kit/react/src/workbench/index.ts',
+    '/@workbench-kit/react/src/workbench/commands/shortcutcommandbridge.tsx',
+    '/@workbench-kit/react/src/workbench/management/keybindingmanagementpanel.tsx',
+    '/@workbench-kit/react/src/workbench/settings/',
+    '/@workbench-kit/react/src/workbench/chat/',
+    '/@workbench-kit/shell-react/src/keybinding-management-settings.ts',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings-view.tsx',
+  ];
   const forbiddenModuleSegments = [
     '/@workbench-kit/react/src/workbench/index.ts',
+    '/@workbench-kit/react/src/workbench/commands/shortcutcommandbridge.tsx',
     '/@workbench-kit/react/src/workbench/management/',
     '/@workbench-kit/react/src/workbench/settings/',
     '/@workbench-kit/react/src/workbench/chat/',
@@ -4185,11 +4204,26 @@ function verifyFocusedKeybindingManagementProviderOutput() {
   ];
 
   for (const requiredSegment of requiredModuleSegments) {
+    if (!normalizedModuleIds.some((moduleId) => moduleId.includes(requiredSegment))) {
+      throw new Error(
+        `Focused keybinding management Provider did not resolve required module ${requiredSegment}.`,
+      );
+    }
     if (!normalizedSources.some((source) => source.includes(requiredSegment))) {
       throw new Error(
         `Focused keybinding management Provider is missing retained module ${requiredSegment}.`,
       );
     }
+  }
+  const forbiddenResolvedModules = normalizedModuleIds.filter((moduleId) =>
+    forbiddenResolvedModuleSegments.some((segment) => moduleId.includes(segment)),
+  );
+  if (forbiddenResolvedModules.length > 0) {
+    throw new Error(
+      `Focused keybinding management Provider resolved a forbidden runtime boundary:\n${[
+        ...new Set(forbiddenResolvedModules),
+      ].join('\n')}`,
+    );
   }
   const forbiddenSources = normalizedSources.filter((source) =>
     forbiddenModuleSegments.some((segment) => source.includes(segment)),
@@ -4207,9 +4241,16 @@ function verifyFocusedKeybindingManagementProviderOutput() {
   );
   const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
   if (!entryKey) throw new Error('Focused keybinding management Provider emitted no Vite entry.');
-  const cssFiles = new Set(
-    collectStaticEntries(manifest, entryKey).flatMap((entry) => entry.css ?? []),
-  );
+  const staticEntries = collectStaticEntries(manifest, entryKey);
+  const dynamicImports = new Set(staticEntries.flatMap((entry) => entry.dynamicImports ?? []));
+  if (dynamicImports.size > 0) {
+    throw new Error(
+      `Focused keybinding management Provider emitted dynamic runtime edges: ${[
+        ...dynamicImports,
+      ].join(', ')}.`,
+    );
+  }
+  const cssFiles = new Set(staticEntries.flatMap((entry) => entry.css ?? []));
   if (cssFiles.size > 0) {
     throw new Error(
       `Focused keybinding management Provider emitted unrelated CSS: ${[...cssFiles].join(', ')}.`,
