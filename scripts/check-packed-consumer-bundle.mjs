@@ -523,6 +523,12 @@ function verifyJdwPackageManifest() {
     require: './dist/ui-authoring/semantic-admission-v3.cjs',
     default: './dist/ui-authoring/semantic-admission-v3.js',
   };
+  const expectedAuthoringV3Export = {
+    types: './dist/ui-authoring/v3.d.ts',
+    import: './dist/ui-authoring/v3.js',
+    require: './dist/ui-authoring/v3.cjs',
+    default: './dist/ui-authoring/v3.js',
+  };
   if (JSON.stringify(manifest.exports?.['.']) !== JSON.stringify(expectedRootExport)) {
     throw new TypeError(
       'Packed JDW root must retain exact types/import/require/default conditions.',
@@ -531,6 +537,7 @@ function verifyJdwPackageManifest() {
   const expectedExportPaths = [
     '.',
     './ui-authoring/semantic-admission-v3',
+    './ui-authoring/v3',
     './schemas/jdw-node.jdw.schema.json',
     './schemas/widget-asset-manifest.v1.jdw.schema.json',
     './schemas/widget-document.v1.jdw.schema.json',
@@ -553,9 +560,22 @@ function verifyJdwPackageManifest() {
   ) {
     throw new TypeError('Packed JDW semantic admission legacy type mapping is invalid.');
   }
+  if (
+    JSON.stringify(manifest.exports?.['./ui-authoring/v3']) !==
+    JSON.stringify(expectedAuthoringV3Export)
+  ) {
+    throw new TypeError('Packed JDW authoring V3 subpath conditions are invalid.');
+  }
+  if (
+    JSON.stringify(manifest.typesVersions?.['*']?.['ui-authoring/v3']) !==
+    JSON.stringify(['dist/ui-authoring/v3.d.ts'])
+  ) {
+    throw new TypeError('Packed JDW authoring V3 legacy type mapping is invalid.');
+  }
   for (const target of new Set([
     ...Object.values(expectedRootExport),
     ...Object.values(expectedSemanticAdmissionExport),
+    ...Object.values(expectedAuthoringV3Export),
   ])) {
     if (!fs.existsSync(path.join(jdwRoot, target))) {
       throw new TypeError(`Packed JDW root target is missing: ${target}`);
@@ -3678,6 +3698,51 @@ export const packedLiteralPolicy: UiDocumentLiteralPolicy = ({ value }) =>
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'authoring-v3-types.ts'),
+    `import {
+  applyAdmittedUiAuthoringSessionCommandV3,
+  collectWidgetNodes,
+  createUiAuthoringSessionV3,
+  createUiDocumentV3,
+  formatUiDocumentV3,
+  formatWidgetDocumentJson,
+  getWidgetChildren,
+  readUiDocumentNodeAuthoringV3,
+  redoUiAuthoringSessionV3,
+  selectUiDocumentNodesV3,
+  undoUiAuthoringSessionV3,
+  type GenericWidget,
+  type UiAuthoringSessionStateV3,
+  type UiDocumentAtomicCommandV3,
+  type UiDocumentCommandV3,
+  type UiDocumentNode,
+  type UiDocumentV3,
+} from '@workbench-kit/jdw/ui-authoring/v3';
+
+declare const widget: GenericWidget;
+declare const session: UiAuthoringSessionStateV3;
+declare const atomicCommand: UiDocumentAtomicCommandV3;
+declare const command: UiDocumentCommandV3;
+declare const node: UiDocumentNode;
+declare const document: UiDocumentV3;
+
+export const packedAuthoringV3Types = { widget, session, atomicCommand, command, node, document };
+export const packedAuthoringV3Functions = Object.freeze({
+  applyAdmittedUiAuthoringSessionCommandV3,
+  collectWidgetNodes,
+  createUiAuthoringSessionV3,
+  createUiDocumentV3,
+  formatUiDocumentV3,
+  formatWidgetDocumentJson,
+  getWidgetChildren,
+  readUiDocumentNodeAuthoringV3,
+  redoUiAuthoringSessionV3,
+  selectUiDocumentNodesV3,
+  undoUiAuthoringSessionV3,
+});
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'node-ui-authoring-runtime.cjs'),
     `const jdw = require('@workbench-kit/jdw');
 
@@ -3750,6 +3815,24 @@ const admission = require('@workbench-kit/jdw/ui-authoring/semantic-admission-v3
 for (const name of ['admitUiDocumentCommandV3', 'applyAdmittedUiAuthoringSessionCommandV3']) {
   if (typeof admission[name] !== 'function') {
     throw new TypeError('Packed JDW CommonJS admission subpath is missing: ' + name);
+  }
+}
+const authoringV3 = require('@workbench-kit/jdw/ui-authoring/v3');
+for (const name of [
+  'applyAdmittedUiAuthoringSessionCommandV3',
+  'collectWidgetNodes',
+  'createUiAuthoringSessionV3',
+  'createUiDocumentV3',
+  'formatUiDocumentV3',
+  'formatWidgetDocumentJson',
+  'getWidgetChildren',
+  'readUiDocumentNodeAuthoringV3',
+  'redoUiAuthoringSessionV3',
+  'selectUiDocumentNodesV3',
+  'undoUiAuthoringSessionV3',
+]) {
+  if (typeof authoringV3[name] !== 'function') {
+    throw new TypeError('Packed JDW CommonJS authoring V3 subpath is missing: ' + name);
   }
 }
 `,
@@ -3827,6 +3910,24 @@ const admission = await import('@workbench-kit/jdw/ui-authoring/semantic-admissi
 for (const name of ['admitUiDocumentCommandV3', 'applyAdmittedUiAuthoringSessionCommandV3']) {
   if (typeof admission[name] !== 'function') {
     throw new TypeError('Packed JDW ESM admission subpath is missing: ' + name);
+  }
+}
+const authoringV3 = await import('@workbench-kit/jdw/ui-authoring/v3');
+for (const name of [
+  'applyAdmittedUiAuthoringSessionCommandV3',
+  'collectWidgetNodes',
+  'createUiAuthoringSessionV3',
+  'createUiDocumentV3',
+  'formatUiDocumentV3',
+  'formatWidgetDocumentJson',
+  'getWidgetChildren',
+  'readUiDocumentNodeAuthoringV3',
+  'redoUiAuthoringSessionV3',
+  'selectUiDocumentNodesV3',
+  'undoUiAuthoringSessionV3',
+]) {
+  if (typeof authoringV3[name] !== 'function') {
+    throw new TypeError('Packed JDW ESM authoring V3 subpath is missing: ' + name);
   }
 }
 `,

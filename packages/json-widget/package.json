@@ -7,6 +7,9 @@
     "*": {
       "ui-authoring/semantic-admission-v3": [
         "dist/ui-authoring/semantic-admission-v3.d.ts"
+      ],
+      "ui-authoring/v3": [
+        "dist/ui-authoring/v3.d.ts"
       ]
     }
   },
@@ -27,6 +30,12 @@
       "import": "./dist/ui-authoring/semantic-admission-v3.js",
       "require": "./dist/ui-authoring/semantic-admission-v3.cjs",
       "default": "./dist/ui-authoring/semantic-admission-v3.js"
+    },
+    "./ui-authoring/v3": {
+      "types": "./dist/ui-authoring/v3.d.ts",
+      "import": "./dist/ui-authoring/v3.js",
+      "require": "./dist/ui-authoring/v3.cjs",
+      "default": "./dist/ui-authoring/v3.js"
     },
     "./schemas/jdw-node.jdw.schema.json": "./schemas/jdw-node.jdw.schema.json",
     "./schemas/widget-asset-manifest.v1.jdw.schema.json": "./schemas/widget-asset-manifest.v1.jdw.schema.json",
