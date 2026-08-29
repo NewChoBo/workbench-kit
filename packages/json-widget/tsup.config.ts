@@ -14,7 +14,7 @@ export default defineConfig([
       index: 'src/index.ts',
       'ui-authoring/semantic-admission-v3': 'src/ui-authoring/semantic-admission-v3.ts',
     },
-    clean: true,
+    clean: false,
   },
   {
     ...sharedOptions,
