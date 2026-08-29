@@ -272,6 +272,20 @@ export { applyUiDocumentCommand } from './ui-authoring/commands.js';
 export { applyUiDocumentCommandV2 } from './ui-authoring/commands-v2.js';
 export { applyUiDocumentCommandV3 } from './ui-authoring/commands-v3.js';
 export {
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
+  UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES,
+} from './ui-authoring/semantic-admission-v3.js';
+export type {
+  UiAuthoringSessionV3AdmissionResult,
+  UiDocumentCommandV3AdmissionContext,
+  UiDocumentCommandV3AdmissionDiagnostic,
+  UiDocumentCommandV3AdmissionDiagnosticCode,
+  UiDocumentCommandV3AdmissionResult,
+  UiDocumentLiteralPolicy,
+  UiDocumentLiteralPolicyInput,
+} from './ui-authoring/semantic-admission-v3.js';
+export {
   applyUiDesignSystemPackChange,
   applyUiDesignSystemPackChangeV2,
   projectUiDesignSystemDocument,

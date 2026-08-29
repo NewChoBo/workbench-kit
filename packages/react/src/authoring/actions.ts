@@ -1,4 +1,4 @@
-import type { UiValueSource } from '@workbench-kit/contracts';
+import type { UiCanvasPlacementValue, UiValueSource } from '@workbench-kit/contracts';
 import type { UiResponsiveEditingTarget } from '@workbench-kit/jdw';
 
 import type { UiAuthoringSurfaceActionV3 } from './types.js';
@@ -29,6 +29,28 @@ export interface WorkbenchAuthoringCommandIdInput {
   readonly editingTarget: UiResponsiveEditingTarget;
   readonly nodeId: string;
   readonly operation: string;
+}
+
+export type WorkbenchCanvasPlacementResizeEdge =
+  'top' | 'right' | 'bottom' | 'left' | 'top-left' | 'top-right' | 'bottom-right' | 'bottom-left';
+
+export type WorkbenchCanvasPlacementTransform =
+  | { readonly kind: 'move'; readonly deltaX: number; readonly deltaY: number }
+  | {
+      readonly kind: 'resize';
+      readonly edge: WorkbenchCanvasPlacementResizeEdge;
+      readonly deltaX: number;
+      readonly deltaY: number;
+    };
+
+export interface WorkbenchAuthoringCanvasPlacementActionInput {
+  readonly commandId: string;
+  readonly editingTarget: UiResponsiveEditingTarget;
+  readonly layoutValues: Readonly<Record<string, UiValueSource>>;
+  readonly nodeId: string;
+  readonly placementPropertyId: string;
+  readonly strategyId: string;
+  readonly transform: WorkbenchCanvasPlacementTransform;
 }
 
 /**
@@ -134,4 +156,107 @@ export function createWorkbenchAuthoringLayoutActionV3({
             values: layout.values,
           },
   };
+}
+
+function pixelLength(value: unknown): number | null {
+  if (typeof value !== 'object' || value === null) return null;
+  const candidate = value as Readonly<Record<string, unknown>>;
+  return candidate.kind === 'length' &&
+    candidate.unit === 'px' &&
+    typeof candidate.value === 'number' &&
+    Number.isFinite(candidate.value)
+    ? candidate.value
+    : null;
+}
+
+export function createWorkbenchAuthoringCanvasPlacementActionV3({
+  commandId,
+  editingTarget,
+  layoutValues,
+  nodeId,
+  placementPropertyId,
+  strategyId,
+  transform,
+}: WorkbenchAuthoringCanvasPlacementActionInput): UiAuthoringSurfaceActionV3 | null {
+  if (
+    (transform.kind !== 'move' && transform.kind !== 'resize') ||
+    !Number.isFinite(transform.deltaX) ||
+    !Number.isFinite(transform.deltaY)
+  ) {
+    return null;
+  }
+  if (
+    transform.kind === 'resize' &&
+    !(
+      [
+        'top',
+        'right',
+        'bottom',
+        'left',
+        'top-left',
+        'top-right',
+        'bottom-right',
+        'bottom-left',
+      ] as const
+    ).includes(transform.edge)
+  ) {
+    return null;
+  }
+  const source = layoutValues[placementPropertyId];
+  if (source?.kind !== 'literal' || typeof source.value !== 'object' || source.value === null) {
+    return null;
+  }
+  const placement = source.value as UiCanvasPlacementValue;
+  if (placement.kind !== 'canvas-placement') return null;
+  const initialX = pixelLength(placement.x);
+  const initialY = pixelLength(placement.y);
+  const initialWidth = pixelLength(placement.width);
+  const initialHeight = pixelLength(placement.height);
+  if (initialX === null || initialY === null || initialWidth === null || initialHeight === null) {
+    return null;
+  }
+
+  let x = initialX;
+  let y = initialY;
+  let width = initialWidth;
+  let height = initialHeight;
+  if (transform.kind === 'move') {
+    x += transform.deltaX;
+    y += transform.deltaY;
+  } else {
+    if (transform.edge.includes('left')) {
+      x += transform.deltaX;
+      width -= transform.deltaX;
+    }
+    if (transform.edge.includes('right')) width += transform.deltaX;
+    if (transform.edge.includes('top')) {
+      y += transform.deltaY;
+      height -= transform.deltaY;
+    }
+    if (transform.edge.includes('bottom')) height += transform.deltaY;
+  }
+  if (![x, y, width, height].every(Number.isFinite) || width <= 0 || height <= 0) return null;
+  if (x === initialX && y === initialY && width === initialWidth && height === initialHeight) {
+    return null;
+  }
+
+  const nextPlacement: UiCanvasPlacementValue = {
+    ...placement,
+    x: { kind: 'length', value: x, unit: 'px' },
+    y: { kind: 'length', value: y, unit: 'px' },
+    width: { kind: 'length', value: width, unit: 'px' },
+    height: { kind: 'length', value: height, unit: 'px' },
+  };
+  return createWorkbenchAuthoringLayoutActionV3({
+    commandId,
+    editingTarget,
+    nodeId,
+    layout: {
+      strategyId,
+      values: {
+        ...layoutValues,
+        [placementPropertyId]: { kind: 'literal', value: nextPlacement },
+      },
+    },
+  });
 }
