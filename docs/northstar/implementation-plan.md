@@ -6,7 +6,10 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:** `develop@ff31a38d3a4e626233a06db34e698c61b7fd1267`.
+- **Latest source-bearing integration baseline:**
+  `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` / PR #424. This exact tree is
+  the current local and remote `develop` baseline after the focused keybinding command runtime
+  correction.
 - **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
@@ -75,6 +78,7 @@ WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
 WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
 WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
+WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [SOURCE_REVIEW_PASS; READY_FOR_RELEASE]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -2834,6 +2838,207 @@ focused checks green before freeze, final `validate:fast`, full
 `check:packed-shell-react-context`, commit-safety and diff checks green on the final SHA, merge to
 `develop`, remote topic deletion, Issue #414/#405/#411 closure, and exact evidence recorded here.
 Release, npm publication and downstream cohort consumption remain separate approval gates.
+
+## WB-NS-080C2 successor-v2 — Focused keybinding command runtime boundary
+
+- **Status:** `DONE`
+- **Canonical public work:** [Issue #414](https://github.com/NewChoBo/workbench-kit/issues/414)
+- **Historical dependency:** `WB-NS-080C2` is `DONE`; its flat Provider-hook/provider-free-View
+  contract and PR #416 evidence remain unchanged history
+- **Exact projection base:** `develop@288f3093aad6a76d4252c1bf3d0d3c7975ed87fd`
+- **Documentation projection:** candidate `8b730a1a6b0dee4bd9c33c86478a88658d845163` /
+  PR #423 / `develop@8e6e9ed04d7eeaba5d9e8e7f5afb24721d3c0969`
+- **Exact implementation base:** `develop@8e6e9ed04d7eeaba5d9e8e7f5afb24721d3c0969`
+- **Source integration:** final successor `dcddf242a11f0beb6859d36572c09735c9199ea8` /
+  PR #424 / `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7`
+- **Published cohort:** `0.0.2-prototype.0.2.44`
+- **Release provenance:** `main@b2865c7c0dfc4ec9942b9df25a5167c89ca782a2`; annotated tag
+  `v0.0.2-prototype.0.2.44` has object
+  `8947cd9c0e37c52c08115aa6cd21a910b046e254` and dereferences to that main; publish run
+  `33127261642` succeeded with the exact 19-package registry cohort
+- **Published cohort status:** `PUBLISHED_WITH_KNOWN_RELEASE_GATE_EXCEPTION`; this is release
+  provenance, not a packet status and not retroactive source acceptance
+- **Ownership:** `GENERIC_KIT / RUNTIME_IMPORT_BOUNDARY`; `packages/shell-react` and the existing
+  public `packages/react` commands leaf
+- **Public API impact:** none
+- **Runtime layer:** `PURE_WEB / packed Vite + Chromium`; no Electron or native boundary
+
+### Goal and user outcome
+
+An integrating host that imports the focused shell Provider can use the existing live keybinding
+management binding without that Provider graph acquiring the broad React Workbench aggregate. The
+literal-lazy Settings View remains provider-free, while command listing, set/reset, persistence and
+runtime dispatch continue through the one existing Provider/model authority.
+
+This is a corrective runtime dependency packet. It does not reopen the accepted public binding/View
+shape, add a new feature, create another management model or rewrite the historical `.44` release.
+
+### Corrected gap and exact target
+
+On the reviewed projection base and published `.44`, the source-contract mismatch was:
+
+```ts
+// CURRENT
+import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench';
+
+// TARGET
+import { createWorkbenchShellCommands } from '@workbench-kit/react/workbench/commands';
+```
+
+`packages/react/package.json` already publishes `./workbench/commands`, and that leaf exports the
+same `createWorkbenchShellCommands` implementation. The corrective source must use this focused
+public leaf directly. It must not move, wrap, copy or re-export the helper from another owner.
+
+The integrated `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` source now uses the target
+focused leaf. Published `.44` remains immutable history with the former broad import.
+
+The target Provider-only packed graph reaches the focused commands leaf but not the broad
+`packages/react/src/workbench/index.ts` aggregate. The graph also remains free of the late keybinding
+Settings View/panel, unrelated settings/chat/workspace UI or CSS, a second `WorkbenchContext`, and a
+duplicate keybinding management model or listener owner.
+
+### Frozen compatibility and authority
+
+Preserve the existing flat contract exactly:
+
+```ts
+interface WorkbenchKeybindingManagementSettingsViewProps {
+  readonly editingDisabledReason?: string | undefined;
+  readonly entries: readonly KeybindingManagementEntry[];
+  readonly overrideCount: number;
+  readonly platform: WorkbenchShortcutPlatform;
+  readonly resetKeybinding: (commandId: string) => void;
+  readonly setKeybinding: (commandId: string, key: string | undefined) => void;
+}
+
+function useWorkbenchKeybindingManagementBinding(): WorkbenchKeybindingManagementSettingsViewProps;
+
+function WorkbenchKeybindingManagementSettingsView(
+  props: WorkbenchKeybindingManagementSettingsViewProps,
+): JSX.Element;
+```
+
+The Provider hook remains on `@workbench-kit/shell-react/provider`. The focused
+`@workbench-kit/shell-react/keybinding-management-settings` leaf exports only the provider-free View
+and its props type. The broad-root zero-prop `WorkbenchKeybindingManagementSettings()` remains a
+compatible hook-plus-View convenience component.
+
+`WorkbenchProvider` / `WorkbenchContext` stay the sole command/keybinding registry, override,
+persistence and dispatch authority. `useKeybindingManagementModel` remains the sole management
+projection/subscription/set/reset owner. No new Context, store, cache, snapshot mirror, persistence
+record, registry or dispatcher is authorized.
+
+```text
+focused Provider entry
+  -> one WorkbenchProvider / WorkbenchContext
+  -> useWorkbenchKeybindingManagementBinding
+  -> useKeybindingManagementModel
+  -> @workbench-kit/react/workbench/commands
+
+literal-lazy Settings module
+  -> provider-free WorkbenchKeybindingManagementSettingsView(props)
+  -> existing KeybindingManagementPanel
+```
+
+### Scope and non-scope
+
+In scope:
+
+- replace the one broad runtime import with the existing focused commands public leaf;
+- add a fail-closed source/packed dependency-graph regression for that exact Provider path;
+- retain existing public-export/type, Provider-context, packed JSDOM and Chromium behavior evidence;
+- record exact corrective evidence after source integration.
+
+Not in scope:
+
+- any public API, package, export mapping, dependency, Provider prop or Context change;
+- another binding subpath, helper wrapper, management model, listener owner or persistence path;
+- keybinding UI/copy/capture/conflict/dispatch redesign;
+- optimization aliases, dedupe, optimizer include/exclude, preload, source/workspace links or opaque
+  lazy imports;
+- listener-count optimization without measured duplication or leak evidence;
+- arbitrary raw-byte budgets, product policy, Electron/native work, release, tag or publish.
+
+### Ordered implementation
+
+1. Start a separate source branch from the first exact `develop` commit containing this packet
+   unchanged; do not continue source work on the documentation branch.
+2. Change only the `createWorkbenchShellCommands` import in
+   `packages/shell-react/src/management/use-keybinding-management.ts` to the focused commands leaf.
+3. Extend the narrow source/packed graph assertion so the Provider binding path must include the
+   focused commands leaf and must not include the broad Workbench index, late management/settings UI,
+   unrelated CSS, a second Context or a duplicate management implementation/listener owner.
+4. Preserve existing public-export/type and Provider/context fixtures; add no parallel mechanics
+   test when an existing fixture already proves the behavior.
+5. During development run only the affected shell-react type/unit/export/packed checks and the named
+   focused packed Chromium case until green.
+6. Freeze one atomic exact-current candidate and route it through producer-distinct source review.
+7. Batch every review finding into at most one successor. On the reviewed final SHA run
+   `validate:fast`, the full `check:packed-shell-react-context`, commit safety and exact diff checks
+   once, then integrate to `develop` and remove the topic branch/worktree.
+
+### Focused and final validation
+
+Focused development evidence must cover:
+
+- shell-react typecheck and the keybinding management model/provider tests;
+- public export/package mapping checks for the unchanged flat contract and focused leaves;
+- a source/packed Provider dependency graph that admits the commands leaf and denies the broad
+  Workbench aggregate and late Settings graph;
+- the named packed Chromium case using fresh tarballs and the repository-locked external toolchain.
+
+The final exact SHA must pass:
+
+- `pnpm validate:fast`;
+- `pnpm check:packed-shell-react-context` with all cases;
+- `pnpm check:commit-safety` before commit and again before push;
+- `git diff --check` for the exact candidate range.
+
+Electron is not required because no main/preload/native boundary changes. Source integration does not
+authorize a release or npm publication; a later corrected cohort remains a separate approval gate.
+
+### Acceptance and source-review criteria
+
+Acceptance requires:
+
+- the runtime import is exactly the existing focused commands leaf and no copied/wrapped helper
+  exists;
+- the Provider-only packed graph reaches no broad Workbench index, late Settings UI/CSS, second
+  Context or duplicate management implementation/listener owner;
+- before literal-lazy activation, boot/navigation are one and View request/evaluation/mount are
+  `0/0/0`; after activation each View marker is exactly one without reload or Context duplication;
+- real Chromium keyboard events prove command listing, set, displaced old chord disabled, new chord
+  exact-once, reset, default restored exact-once and capture cleanup;
+- the flat hook-return/View-props contract, provider-free focused leaf, broad-root compatibility and
+  single Provider/model/persistence authority remain unchanged;
+- one exact candidate, producer-distinct review, at most one successor and every final gate are green
+  before `develop` integration.
+
+Source review must reject any public/API change, broad barrel or private deep-import substitution,
+second Context/model/listener/store, late View back-edge, optimizer workaround, copied helper,
+behavior redesign, unmeasured listener optimization, native scope or release claim. `DONE` requires
+corrective source integration, exact evidence recorded here, Issue #414 closure and topic cleanup.
+`.44` remains immutable published history with its known exception; only a later corrected cohort can
+close publication-qualified conformance.
+
+### Completion evidence
+
+- The original candidate `f55f427415da68488cd91817a2d0e6b471688d4d` changed the runtime import and
+  added exact source/public-export plus Provider-only packed graph guards.
+- Producer-distinct review found two P1 test gaps: unresolved dynamic graph escape and an unguarded
+  `ShortcutCommandBridge` back-edge that could create another management owner. Both findings were
+  batched into the sole successor `dcddf242a11f0beb6859d36572c09735c9199ea8`; targeted re-review
+  passed with no remaining blocker.
+- Focused development checks passed: public exports, shell-react typecheck, 54 focused Vitest tests,
+  the selected fresh-tarball management Chromium case, packed consumer, ESLint, Prettier and diff
+  checks. The Provider-only packed case retained 16 sources and emitted no CSS.
+- On the unchanged final successor, `pnpm validate:fast` passed 473 files / 2,798 tests and
+  `pnpm check:packed-shell-react-context` passed all four fresh-tarball Vite/Chromium cases.
+- Commit safety passed before both commits and before push. PR #424 merged the exact successor to
+  `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7`; the remote topic, local branch and isolated
+  source worktree were removed, and Issue #414 is closed.
+- No public API, Context, Provider prop, persistence, Electron/native, release, tag or npm publication
+  change occurred. A corrected published cohort remains a separate approval gate.
 
 ## WB-NS-030 — Shared field schema / form / inspector architecture
 
@@ -6063,6 +6268,166 @@ enumerates a catalog instead of exact lookups; retains callbacks or mutable call
 Apply/IO in Preview/finalize; omits bounded hostile and packed-public proof; changes current exports
 incompatibly; leaks React/DOM/product/provider/model/native concerns; or claims release, publish or
 Electron completion.
+
+### `WB-NS-070H` bounded packet — descriptor-aware V3 command admission and direct-manipulation bridge
+
+- **Status:** `SOURCE_REVIEW_PASS / READY_FOR_RELEASE`; isolated local candidate, release still required
+- **2026-08-29 evidence:** producer-distinct review `PASS` with no P0/P1/P2 after immutable
+  admission-context snapshot and policy-after-generic-preflight hardening; focused JDW/React tests
+  `18/18`, package typechecks, full unit `2812/2812`, required Chromium interactions
+  `90/90`, packed 19-package consumer, commit-safety and diff checks passed. The final hardened diff
+  still requires the exact-tip release gate before tag publication.
+- **Exact implementation base:** `develop@88b2eafb6c391f066dcf55e57e67dcd2056cc1d3`
+- **Target owner:** `@workbench-kit/jdw` for semantic admission and
+  `@workbench-kit/react/authoring` for renderer-neutral committed transform projection
+- **Dependencies:** `WB-NS-070A/B/C/D` and `WB-NS-072E` are `DONE`; existing
+  `UiDocumentV3`, `UiDocumentCommandV3`, `UiAuthoringSessionStateV3`, component catalog and layout
+  descriptors remain canonical
+- **Trigger:** a generic consumer needs Canvas, Inspector, keyboard and catalog insertion to pass the
+  same descriptor-aware semantic boundary before one existing V3 session mutation. Current inherited
+  base property/layout commands validate structural source shape but do not consistently validate the
+  exact property descriptor or host literal policy; the current React Canvas does not project a
+  committed move/resize intent into the canonical canvas-placement command.
+
+#### Goal / user outcome
+
+Let an AI-free host commit direct manipulation without inventing a second document, selection,
+history or raw-patch path. The same attempted V3 command or outer batch is semantically admitted once,
+then applied once through `applyUiAuthoringSessionCommandV3`. Rejection preserves the exact document,
+ordered selection, past and future snapshots. A committed pointer gesture and its keyboard-equivalent
+produce byte-equivalent full canvas-placement values and one history record.
+
+#### Public contract
+
+Add one pure admission family under the existing JDW authoring owner:
+
+```ts
+interface UiDocumentCommandV3AdmissionContext extends UiDocumentCommandV3Context {
+  readonly validateLiteral?: UiDocumentLiteralPolicy;
+}
+
+type UiDocumentLiteralPolicy = (input: {
+  readonly component: UiComponentDescriptor;
+  readonly nodeId: string;
+  readonly property: UiPropertyDescriptor;
+  readonly value: unknown;
+}) => string | null | undefined;
+
+type UiDocumentCommandV3AdmissionResult =
+  | { readonly status: 'accepted'; readonly command: UiDocumentCommandV3 }
+  | {
+      readonly status: 'rejected';
+      readonly diagnostics: readonly [UiDocumentCommandV3AdmissionDiagnostic];
+    };
+
+admitUiDocumentCommandV3(
+  document: UiDocumentV3,
+  command: UiDocumentCommandV3,
+  context: UiDocumentCommandV3AdmissionContext,
+): UiDocumentCommandV3AdmissionResult;
+
+applyAdmittedUiAuthoringSessionCommandV3(
+  state: UiAuthoringSessionStateV3,
+  command: UiDocumentCommandV3,
+  context: UiDocumentCommandV3AdmissionContext,
+): UiAuthoringSessionV3AdmissionResult;
+```
+
+The closed diagnostic code union distinguishes malformed command, unavailable component/property,
+invalid property source/literal, unavailable/unsupported layout strategy or property, invalid layout
+value, invalid structural subtree and product-policy rejection. Messages and paths are deterministic
+and sanitized. The optional policy receives only an already structurally safe literal and exact
+canonical descriptors; throwing policy code is caught and becomes rejection.
+
+Add one pure committed canvas-placement transform bridge under React authoring:
+
+```ts
+createWorkbenchAuthoringCanvasPlacementActionV3({
+  commandId,
+  editingTarget,
+  layoutValues,
+  nodeId,
+  strategyId,
+  placementPropertyId,
+  transform,
+}): UiAuthoringSurfaceActionV3 | null;
+```
+
+`transform` is `move` or `resize` with finite pixel deltas and an explicit resize edge. V1 accepts
+only pixel-length x/y/width/height and returns `null` for unsupported units, non-finite input or a
+non-positive next size. It preserves anchor, zIndex and constraints and emits one complete
+`layout.canvas-placement` literal while retaining the other values from `layoutValues` through the
+existing V3 layout action factory. Pointer and keyboard callers use this same pure bridge;
+preview/drag state remains caller-owned and ephemeral.
+
+#### Semantic and state flow
+
+1. Snapshot/freeze the runtime-untrusted command without invoking accessors or retaining caller data.
+2. For a batch, visit atomic children in order against the transient candidate document exposed by
+   the existing replay observer. Validate each atom before replay; any failure rejects the original
+   outer batch and exposes no partial candidate.
+3. Resolve every target and inserted/replaced subtree node by stable ID and exact component
+   descriptor. Validate every authored property, layout strategy/property/value and component layout
+   support. Structural payloads cannot bypass the same checks.
+4. Invoke the optional literal policy only after generic descriptor/source validation. It may narrow
+   product references or literals but may not widen generic acceptance.
+5. On acceptance, return the frozen original command. The session helper invokes the existing V3
+   session Apply exactly once. On rejection it returns the original state object unchanged.
+
+Selection, history, document revision, persistence, drag preview and DOM focus remain outside the
+admission result. No second command language, patch engine, registry, transaction or service is added.
+
+#### Scope / non-scope
+
+Scope: JDW pure semantic admission, exact descriptor lookup, sequential batch/subtree validation,
+unchanged-state session convenience, React pure pixel placement transform projection, public exports,
+focused backendless tests and packed consumer proof.
+
+Non-scope: product component descriptors or managed-asset policy; Canvas rendering/selection UI;
+pointer capture; persistence; provider/AI; Electron/native; consumer-product names, examples or
+fixtures;
+package release/publish.
+
+#### Ordered implementation tasks
+
+1. Add the closed admission types/diagnostics and safe command snapshot under the existing JDW
+   `ui-authoring` module.
+2. Implement exact node/component/property/layout resolution and host literal-policy narrowing.
+3. Reuse `applyUiDocumentCommandV3WithReplayObserver` for sequential all-or-nothing batch preflight;
+   recursively validate inserted/replaced subtrees before replay.
+4. Add the unchanged-on-rejection session helper that delegates accepted commands to the existing
+   V3 session Apply once.
+5. Add the pure React pixel canvas-placement transform bridge by composing the existing authoring
+   command ID/layout action factories.
+6. Export through current roots and add exact-optional/public packed-consumer fixtures without a new
+   package or private deep import.
+7. Add focused hostile, property/layout, subtree, batch, policy-throw, transaction, Undo/Redo and
+   pointer/keyboard parity tests; then freeze one candidate for source review.
+
+#### Validation
+
+During development run focused JDW admission/session tests and React authoring action tests plus the
+two package typechecks. At the frozen candidate run `pnpm validate:static`, `pnpm validate:fast`,
+`pnpm check:public-exports`, focused packed-consumer checks, the repository browser gate once,
+`pnpm check:commit-safety` and `git diff --check`. Electron is not required because no native boundary
+changes.
+
+#### Acceptance / source-review gate
+
+- valid base/responsive property and layout commands exact-resolve descriptors and preserve current
+  V3 semantics;
+- invalid literal, disallowed source, unknown property, unsupported strategy/property/scope and
+  invalid canvas/grid values reject before session mutation;
+- inserted/replaced semantically invalid descendants reject the entire structural command;
+- later batch children see accepted earlier transient state, while any failure rejects the outer batch
+  with original document/selection/past/future object identity unchanged;
+- one accepted outer batch produces one revision and one history record; Undo/Redo restores exact
+  document and ordered selection;
+- pointer and keyboard transform inputs with equal deltas emit byte-equivalent one-command placement
+  actions; cancel/unsupported input emits no action;
+- no product policy, second document/history/patch path, provider, DOM state or Electron dependency is
+  introduced;
+- producer-distinct review returns no P0/P1/P2 target mismatch before integration or release work.
 
 ### Acceptance direction
 

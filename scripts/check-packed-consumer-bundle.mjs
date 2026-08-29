@@ -28,6 +28,10 @@ const focusedKeybindingManagementViewOutputDir = path.join(
   consumerDir,
   'dist-focused-keybinding-management-view',
 );
+const focusedKeybindingManagementProviderOutputDir = path.join(
+  consumerDir,
+  'dist-focused-keybinding-management-provider',
+);
 
 // Keep a little deliberate headroom for normal fixes, while forcing larger
 // public-surface growth to include an explicit bundle-budget review.
@@ -159,6 +163,33 @@ try {
         '--target',
         target,
         path.join(consumerDir, 'src', 'external-node-catalog-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
+  console.log(
+    '[check-packed-consumer] Typechecking V3 semantic admission exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'semantic-admission-types.ts'),
       ],
       { cwd: repoRoot, stdio: 'inherit' },
     );
@@ -342,6 +373,9 @@ try {
 
   buildFocusedConsumer('focused-keybinding-management-view');
   verifyFocusedKeybindingManagementViewOutput();
+
+  buildFocusedConsumer('focused-keybinding-management-provider');
+  verifyFocusedKeybindingManagementProviderOutput();
 
   buildFocusedConsumer('focused-overlay');
   verifyFocusedStyleOutput({
@@ -677,11 +711,13 @@ import { StatusBar } from '@workbench-kit/react/workbench/shell';
 import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standalone';
 import { resolveWorkbenchTheme } from '@workbench-kit/react/workbench/theme';
 import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themePresets';
-import type {
-  ExtensionManagementEntry,
-  ExtensionManagementPanelProps,
-  ExtensionManagementTransition,
+import {
+  createWorkbenchAuthoringCanvasPlacementActionV3 as createRootPlacementAction,
+  type ExtensionManagementEntry,
+  type ExtensionManagementPanelProps,
+  type ExtensionManagementTransition,
 } from '@workbench-kit/react';
+import { createWorkbenchAuthoringCanvasPlacementActionV3 as createFocusedPlacementAction } from '@workbench-kit/react/authoring';
 import type { NodeTypeDescriptor } from '@workbench-kit/contracts';
 import type { ValueTransformDefinition } from '@workbench-kit/field-remap';
 import type { ExtensionManagementPendingAction } from '@workbench-kit/react/workbench/management';
@@ -718,6 +754,39 @@ import {
 import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
 import { useExtensionRegistryCommandDescriptors } from '@workbench-kit/shell-react/registry-command-descriptors';
+
+if (createRootPlacementAction !== createFocusedPlacementAction) {
+  throw new TypeError('Packed placement action root and focused exports do not share identity.');
+}
+const packedPlacementAction = createFocusedPlacementAction({
+  commandId: 'packed-placement',
+  editingTarget: { kind: 'base' },
+  layoutValues: {
+    placement: {
+      kind: 'literal',
+      value: {
+        kind: 'canvas-placement',
+        x: { kind: 'length', value: 10, unit: 'px' },
+        y: { kind: 'length', value: 20, unit: 'px' },
+        width: { kind: 'length', value: 100, unit: 'px' },
+        height: { kind: 'length', value: 80, unit: 'px' },
+        anchor: 'top-start',
+        zIndex: 1,
+      },
+    },
+  },
+  nodeId: 'packed-node',
+  placementPropertyId: 'placement',
+  strategyId: 'builtin.canvas',
+  transform: { kind: 'move', deltaX: 5, deltaY: -5 },
+});
+if (
+  packedPlacementAction?.kind !== 'document-command-v3' ||
+  packedPlacementAction.command.type !== 'set-layout' ||
+  packedPlacementAction.command.values.placement?.kind !== 'literal'
+) {
+  throw new TypeError('Packed placement action projection failed.');
+}
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 const packedFocusedShellEntries = Object.freeze({
@@ -3221,6 +3290,8 @@ if (registry.snapshot().revision !== 0) process.exit(1);
     path.join(consumerDir, 'src', 'ui-authoring-compat.ts'),
     `import type { DesignSystemPackChangeMutation } from '@workbench-kit/contracts';
 import {
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
   applyUiAuthoringSessionCommand,
   applyUiAuthoringSessionCommandV2,
   applyUiAuthoringSessionCommandV3,
@@ -3247,6 +3318,7 @@ import {
   undoUiAuthoringSession,
   undoUiAuthoringSessionV2,
   undoUiAuthoringSessionV3,
+  UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES,
   upgradeUiDocumentToV3,
   type ApplyUiDocumentCommandResult,
   type ApplyUiDocumentCommandV2Result,
@@ -3259,6 +3331,7 @@ import {
   type UiAuthoringSessionState,
   type UiAuthoringSessionStateV2,
   type UiAuthoringSessionStateV3,
+  type UiAuthoringSessionV3AdmissionResult,
   type UiAuthoringSessionV2CommandResult,
   type UiAuthoringSessionV3CommandResult,
   type UiAuthoringBindingProvenance,
@@ -3281,6 +3354,10 @@ import {
   type UiDocumentCommand,
   type UiDocumentCommandV2,
   type UiDocumentCommandV3,
+  type UiDocumentCommandV3AdmissionContext,
+  type UiDocumentCommandV3AdmissionDiagnostic,
+  type UiDocumentCommandV3AdmissionDiagnosticCode,
+  type UiDocumentCommandV3AdmissionResult,
   type UiDocumentCommandV2Context,
   type UiDocumentCommandV3Context,
   type UiDocumentCommandV2Issue,
@@ -3290,6 +3367,8 @@ import {
   type UiDocumentTransactionRecordV3,
   type UiDocumentTransactionV2,
   type UiDocumentTransactionV3,
+  type UiDocumentLiteralPolicy,
+  type UiDocumentLiteralPolicyInput,
   type UiDocumentNodeAuthoringV3,
   type UiDocumentV3,
 } from '@workbench-kit/jdw';
@@ -3508,6 +3587,13 @@ export type PackedUiAuthoringV3Contracts = {
   sessionResult: UiAuthoringSessionV3CommandResult;
   designSystemResult: ApplyUiDesignSystemPackChangeV3Result;
   documentProjection: UiAuthoringDocumentProjectionV3;
+  admissionContext: UiDocumentCommandV3AdmissionContext;
+  admissionDiagnostic: UiDocumentCommandV3AdmissionDiagnostic;
+  admissionDiagnosticCode: UiDocumentCommandV3AdmissionDiagnosticCode;
+  admissionResult: UiDocumentCommandV3AdmissionResult;
+  literalPolicy: UiDocumentLiteralPolicy;
+  literalPolicyInput: UiDocumentLiteralPolicyInput;
+  sessionAdmissionResult: UiAuthoringSessionV3AdmissionResult;
 };
 
 export const packedUiAuthoringV2Runtime = Object.freeze({
@@ -3524,6 +3610,8 @@ export const packedUiAuthoringV2Runtime = Object.freeze({
 });
 
 export const packedUiAuthoringV3Runtime = Object.freeze({
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
   applyUiAuthoringSessionCommandV3,
   applyUiDesignSystemPackChangeV3,
   applyUiDocumentCommandV3,
@@ -3534,8 +3622,37 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
   redoUiAuthoringSessionV3,
   selectUiDocumentNodesV3,
   undoUiAuthoringSessionV3,
+  UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES,
   upgradeUiDocumentToV3,
 });
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'semantic-admission-types.ts'),
+    `import {
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
+  type UiDocumentCommandV3AdmissionContext,
+  type UiDocumentCommandV3Context,
+  type UiDocumentLiteralPolicy,
+} from '@workbench-kit/jdw';
+
+declare const context: UiDocumentCommandV3Context;
+
+export const packedAdmissionContext = context satisfies UiDocumentCommandV3AdmissionContext;
+export const packedAdmissionFunctions = Object.freeze({
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
+});
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined.
+export const packedInvalidAdmissionContext: UiDocumentCommandV3AdmissionContext = {
+  ...context,
+  validateLiteral: undefined,
+};
+
+export const packedLiteralPolicy: UiDocumentLiteralPolicy = ({ value }) =>
+  value === null ? 'Null literals are unavailable.' : null;
 `,
   );
   fs.writeFileSync(
@@ -3544,6 +3661,8 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
 
 const requiredFunctions = [
   'admitUiGenerativeUiRequest',
+  'admitUiDocumentCommandV3',
+  'applyAdmittedUiAuthoringSessionCommandV3',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -3580,6 +3699,12 @@ for (const name of requiredFunctions) {
     throw new TypeError('Packed JDW CommonJS root is missing function export: ' + name);
   }
 }
+if (
+  !Array.isArray(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES) ||
+  !Object.isFrozen(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES)
+) {
+  throw new TypeError('Packed JDW CommonJS admission diagnostic vocabulary is invalid.');
+}
 for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
   if (name in jdw) {
     throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
@@ -3588,6 +3713,7 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
+  '@workbench-kit/jdw/ui-authoring/semantic-admission-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -3607,6 +3733,8 @@ for (const subpath of [
 
 const requiredFunctions = [
   'admitUiGenerativeUiRequest',
+  'admitUiDocumentCommandV3',
+  'applyAdmittedUiAuthoringSessionCommandV3',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -3643,6 +3771,12 @@ for (const name of requiredFunctions) {
     throw new TypeError('Packed JDW ESM root is missing function export: ' + name);
   }
 }
+if (
+  !Array.isArray(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES) ||
+  !Object.isFrozen(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES)
+) {
+  throw new TypeError('Packed JDW ESM admission diagnostic vocabulary is invalid.');
+}
 for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
   if (name in jdw) {
     throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
@@ -3651,6 +3785,7 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
+  '@workbench-kit/jdw/ui-authoring/semantic-admission-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -3868,6 +4003,16 @@ container.remove();
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-keybinding-management-provider.ts'),
+    `import { useWorkbenchKeybindingManagementBinding } from '@workbench-kit/shell-react/provider';
+
+(globalThis as typeof globalThis & { __workbenchKitFocusedKeybindingManagementProvider?: unknown })
+  .__workbenchKitFocusedKeybindingManagementProvider = Object.freeze({
+    useWorkbenchKeybindingManagementBinding,
+  });
+`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'tsconfig.json'),
     `${JSON.stringify(
       {
@@ -3885,6 +4030,7 @@ container.remove();
           'src/authoring-development-types.ts',
           'src/external-node-catalog-types.ts',
           'src/schema-form-types.ts',
+          'src/semantic-admission-types.ts',
           'src/source-input-compatibility-types.ts',
           'src/ui-generative-plan-types.ts',
         ],
@@ -3938,6 +4084,11 @@ container.remove();
     'focused-keybinding-management-view',
     path.join(consumerDir, 'src', 'focused-keybinding-management-view.ts'),
     focusedKeybindingManagementViewOutputDir,
+  );
+  writeFocusedViteConfig(
+    'focused-keybinding-management-provider',
+    path.join(consumerDir, 'src', 'focused-keybinding-management-provider.ts'),
+    focusedKeybindingManagementProviderOutputDir,
   );
 }
 
@@ -4133,6 +4284,110 @@ function verifyFocusedKeybindingManagementViewOutput() {
 
   console.log(
     `[check-packed-consumer] focused keybinding management View graph OK (${moduleIds.length} modules).`,
+  );
+}
+
+function verifyFocusedKeybindingManagementProviderOutput() {
+  const moduleIds = readJson(
+    path.join(focusedKeybindingManagementProviderOutputDir, 'module-graph.json'),
+  );
+  if (!Array.isArray(moduleIds) || moduleIds.length === 0) {
+    throw new Error('Focused keybinding management Provider emitted no module-graph evidence.');
+  }
+  const normalizedModuleIds = moduleIds.map((moduleId) =>
+    `/${moduleId.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const sources = collectInitialJavaScriptSources(
+    focusedKeybindingManagementProviderOutputDir,
+    'focused keybinding management Provider',
+  );
+  const normalizedSources = sources.map((source) =>
+    `/${source.replaceAll('\\', '/')}`.toLowerCase(),
+  );
+  const requiredModuleSegments = [
+    '/@workbench-kit/shell-react/src/shell/provider.tsx',
+    '/@workbench-kit/shell-react/src/management/use-keybinding-management.ts',
+    '/@workbench-kit/react/src/workbench/commands/commands.ts',
+    '/@workbench-kit/platform/src/keybindings/keybinding-management-model.ts',
+  ];
+  const forbiddenResolvedModuleSegments = [
+    '/@workbench-kit/react/src/workbench/index.ts',
+    '/@workbench-kit/react/src/workbench/commands/shortcutcommandbridge.tsx',
+    '/@workbench-kit/react/src/workbench/management/keybindingmanagementpanel.tsx',
+    '/@workbench-kit/react/src/workbench/settings/',
+    '/@workbench-kit/react/src/workbench/chat/',
+    '/@workbench-kit/shell-react/src/keybinding-management-settings.ts',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings-view.tsx',
+  ];
+  const forbiddenModuleSegments = [
+    '/@workbench-kit/react/src/workbench/index.ts',
+    '/@workbench-kit/react/src/workbench/commands/shortcutcommandbridge.tsx',
+    '/@workbench-kit/react/src/workbench/management/',
+    '/@workbench-kit/react/src/workbench/settings/',
+    '/@workbench-kit/react/src/workbench/chat/',
+    '/@workbench-kit/react/src/workbench/workspace/',
+    '/@workbench-kit/react/src/workbench/provider',
+    '/@workbench-kit/shell-react/src/keybinding-management-settings.ts',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings-view.tsx',
+    '/@workbench-kit/shell-react/src/management/keybinding-settings.tsx',
+  ];
+
+  for (const requiredSegment of requiredModuleSegments) {
+    if (!normalizedModuleIds.some((moduleId) => moduleId.includes(requiredSegment))) {
+      throw new Error(
+        `Focused keybinding management Provider did not resolve required module ${requiredSegment}.`,
+      );
+    }
+    if (!normalizedSources.some((source) => source.includes(requiredSegment))) {
+      throw new Error(
+        `Focused keybinding management Provider is missing retained module ${requiredSegment}.`,
+      );
+    }
+  }
+  const forbiddenResolvedModules = normalizedModuleIds.filter((moduleId) =>
+    forbiddenResolvedModuleSegments.some((segment) => moduleId.includes(segment)),
+  );
+  if (forbiddenResolvedModules.length > 0) {
+    throw new Error(
+      `Focused keybinding management Provider resolved a forbidden runtime boundary:\n${[
+        ...new Set(forbiddenResolvedModules),
+      ].join('\n')}`,
+    );
+  }
+  const forbiddenSources = normalizedSources.filter((source) =>
+    forbiddenModuleSegments.some((segment) => source.includes(segment)),
+  );
+  if (forbiddenSources.length > 0) {
+    throw new Error(
+      `Focused keybinding management Provider pulled a broad or late UI graph:\n${[
+        ...new Set(forbiddenSources),
+      ].join('\n')}`,
+    );
+  }
+
+  const manifest = readJson(
+    path.join(focusedKeybindingManagementProviderOutputDir, '.vite', 'manifest.json'),
+  );
+  const entryKey = Object.keys(manifest).find((key) => manifest[key].isEntry);
+  if (!entryKey) throw new Error('Focused keybinding management Provider emitted no Vite entry.');
+  const staticEntries = collectStaticEntries(manifest, entryKey);
+  const dynamicImports = new Set(staticEntries.flatMap((entry) => entry.dynamicImports ?? []));
+  if (dynamicImports.size > 0) {
+    throw new Error(
+      `Focused keybinding management Provider emitted dynamic runtime edges: ${[
+        ...dynamicImports,
+      ].join(', ')}.`,
+    );
+  }
+  const cssFiles = new Set(staticEntries.flatMap((entry) => entry.css ?? []));
+  if (cssFiles.size > 0) {
+    throw new Error(
+      `Focused keybinding management Provider emitted unrelated CSS: ${[...cssFiles].join(', ')}.`,
+    );
+  }
+
+  console.log(
+    `[check-packed-consumer] focused keybinding management Provider graph OK (${sources.length} retained sources).`,
   );
 }
 

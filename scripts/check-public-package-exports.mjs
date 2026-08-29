@@ -90,8 +90,11 @@ if (violations.length > 0) {
 
 function validateShellReactKeybindingManagementSettingsExport() {
   const workspacePackage = packageByName.get('@workbench-kit/shell-react');
+  const reactPackage = packageByName.get('@workbench-kit/react');
   const expectedTarget = './src/keybinding-management-settings.ts';
   const actualTarget = workspacePackage?.packageJson.exports?.['./keybinding-management-settings'];
+  const expectedCommandsTarget = './src/workbench/commands/commands.ts';
+  const actualCommandsTarget = reactPackage?.packageJson.exports?.['./workbench/commands'];
   const providerPath = path.join(repoRoot, 'packages/shell-react/src/shell/provider.tsx');
   const focusedLeafPath = path.join(
     repoRoot,
@@ -101,12 +104,24 @@ function validateShellReactKeybindingManagementSettingsExport() {
     repoRoot,
     'packages/shell-react/src/management/keybinding-settings-view.tsx',
   );
+  const managementModelPath = path.join(
+    repoRoot,
+    'packages/shell-react/src/management/use-keybinding-management.ts',
+  );
 
   if (actualTarget !== expectedTarget) {
     violations.push({
       location: 'packages/shell-react/package.json#exports./keybinding-management-settings',
       message: `@workbench-kit/shell-react/keybinding-management-settings must map exactly to "${expectedTarget}".`,
       rule: 'shell-react-keybinding-management-settings-export',
+    });
+  }
+
+  if (actualCommandsTarget !== expectedCommandsTarget) {
+    violations.push({
+      location: 'packages/react/package.json#exports./workbench/commands',
+      message: `@workbench-kit/react/workbench/commands must map exactly to "${expectedCommandsTarget}".`,
+      rule: 'react-workbench-commands-export',
     });
   }
 
@@ -153,6 +168,51 @@ function validateShellReactKeybindingManagementSettingsExport() {
         rule: 'shell-react-keybinding-management-provider-free-view',
       });
     }
+  }
+
+  const managementModelSource = readSourceOrReport(
+    managementModelPath,
+    'keybinding management model',
+  );
+  const managementModelFile = ts.createSourceFile(
+    managementModelPath,
+    managementModelSource,
+    ts.ScriptTarget.Latest,
+    true,
+    ts.ScriptKind.TS,
+  );
+  const shellCommandImports = managementModelFile.statements.flatMap((statement) => {
+    if (!ts.isImportDeclaration(statement)) return [];
+    const namedBindings = statement.importClause?.namedBindings;
+    if (!namedBindings || !ts.isNamedImports(namedBindings)) return [];
+    return namedBindings.elements
+      .filter(
+        (element) =>
+          (element.propertyName?.text ?? element.name.text) === 'createWorkbenchShellCommands',
+      )
+      .map((element) => ({
+        element,
+        importClause: statement.importClause,
+        specifier: ts.isStringLiteralLike(statement.moduleSpecifier)
+          ? statement.moduleSpecifier.text
+          : undefined,
+      }));
+  });
+  const shellCommandImport = shellCommandImports[0];
+  if (
+    managementModelFile.parseDiagnostics.length > 0 ||
+    shellCommandImports.length !== 1 ||
+    shellCommandImport?.specifier !== '@workbench-kit/react/workbench/commands' ||
+    shellCommandImport.importClause?.isTypeOnly === true ||
+    shellCommandImport.element.isTypeOnly ||
+    shellCommandImport.element.name.text !== 'createWorkbenchShellCommands'
+  ) {
+    violations.push({
+      location: 'packages/shell-react/src/management/use-keybinding-management.ts',
+      message:
+        'The keybinding management model must import createWorkbenchShellCommands exactly once from the focused public commands leaf.',
+      rule: 'shell-react-keybinding-management-command-runtime-boundary',
+    });
   }
 }
 
