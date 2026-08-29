@@ -517,6 +517,12 @@ function verifyJdwPackageManifest() {
     require: './dist/index.cjs',
     default: './dist/index.js',
   };
+  const expectedSemanticAdmissionExport = {
+    types: './dist/ui-authoring/semantic-admission-v3.d.ts',
+    import: './dist/ui-authoring/semantic-admission-v3.js',
+    require: './dist/ui-authoring/semantic-admission-v3.cjs',
+    default: './dist/ui-authoring/semantic-admission-v3.js',
+  };
   if (JSON.stringify(manifest.exports?.['.']) !== JSON.stringify(expectedRootExport)) {
     throw new TypeError(
       'Packed JDW root must retain exact types/import/require/default conditions.',
@@ -524,6 +530,7 @@ function verifyJdwPackageManifest() {
   }
   const expectedExportPaths = [
     '.',
+    './ui-authoring/semantic-admission-v3',
     './schemas/jdw-node.jdw.schema.json',
     './schemas/widget-asset-manifest.v1.jdw.schema.json',
     './schemas/widget-document.v1.jdw.schema.json',
@@ -532,9 +539,24 @@ function verifyJdwPackageManifest() {
     JSON.stringify(Object.keys(manifest.exports ?? {}).sort()) !==
     JSON.stringify(expectedExportPaths.sort())
   ) {
-    throw new TypeError('Packed JDW must not expose a generative UI or private deep subpath.');
+    throw new TypeError('Packed JDW exposes an unexpected public or private subpath.');
   }
-  for (const target of new Set(Object.values(expectedRootExport))) {
+  if (
+    JSON.stringify(manifest.exports?.['./ui-authoring/semantic-admission-v3']) !==
+    JSON.stringify(expectedSemanticAdmissionExport)
+  ) {
+    throw new TypeError('Packed JDW semantic admission subpath conditions are invalid.');
+  }
+  if (
+    JSON.stringify(manifest.typesVersions?.['*']?.['ui-authoring/semantic-admission-v3']) !==
+    JSON.stringify(['dist/ui-authoring/semantic-admission-v3.d.ts'])
+  ) {
+    throw new TypeError('Packed JDW semantic admission legacy type mapping is invalid.');
+  }
+  for (const target of new Set([
+    ...Object.values(expectedRootExport),
+    ...Object.values(expectedSemanticAdmissionExport),
+  ])) {
     if (!fs.existsSync(path.join(jdwRoot, target))) {
       throw new TypeError(`Packed JDW root target is missing: ${target}`);
     }
@@ -3629,13 +3651,13 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
   );
   fs.writeFileSync(
     path.join(consumerDir, 'src', 'semantic-admission-types.ts'),
-    `import {
+    `import type { UiDocumentCommandV3Context } from '@workbench-kit/jdw';
+import {
   admitUiDocumentCommandV3,
   applyAdmittedUiAuthoringSessionCommandV3,
   type UiDocumentCommandV3AdmissionContext,
-  type UiDocumentCommandV3Context,
   type UiDocumentLiteralPolicy,
-} from '@workbench-kit/jdw';
+} from '@workbench-kit/jdw/ui-authoring/semantic-admission-v3';
 
 declare const context: UiDocumentCommandV3Context;
 
@@ -3713,7 +3735,6 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
-  '@workbench-kit/jdw/ui-authoring/semantic-admission-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -3723,6 +3744,12 @@ for (const subpath of [
   }
   if (!privateSubpathRejected) {
     throw new TypeError('Packed JDW CommonJS private subpath is exposed: ' + subpath);
+  }
+}
+const admission = require('@workbench-kit/jdw/ui-authoring/semantic-admission-v3');
+for (const name of ['admitUiDocumentCommandV3', 'applyAdmittedUiAuthoringSessionCommandV3']) {
+  if (typeof admission[name] !== 'function') {
+    throw new TypeError('Packed JDW CommonJS admission subpath is missing: ' + name);
   }
 }
 `,
@@ -3785,7 +3812,6 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
-  '@workbench-kit/jdw/ui-authoring/semantic-admission-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -3795,6 +3821,12 @@ for (const subpath of [
   }
   if (!privateSubpathRejected) {
     throw new TypeError('Packed JDW ESM private subpath is exposed: ' + subpath);
+  }
+}
+const admission = await import('@workbench-kit/jdw/ui-authoring/semantic-admission-v3');
+for (const name of ['admitUiDocumentCommandV3', 'applyAdmittedUiAuthoringSessionCommandV3']) {
+  if (typeof admission[name] !== 'function') {
+    throw new TypeError('Packed JDW ESM admission subpath is missing: ' + name);
   }
 }
 `,

@@ -3,6 +3,13 @@
   "version": "0.0.2-prototype.0.2.6",
   "private": false,
   "type": "module",
+  "typesVersions": {
+    "*": {
+      "ui-authoring/semantic-admission-v3": [
+        "dist/ui-authoring/semantic-admission-v3.d.ts"
+      ]
+    }
+  },
   "scripts": {
     "build": "tsup",
     "test": "pnpm exec vitest run --config ../../vitest.config.ts src",
@@ -14,6 +21,12 @@
       "import": "./dist/index.js",
       "require": "./dist/index.cjs",
       "default": "./dist/index.js"
+    },
+    "./ui-authoring/semantic-admission-v3": {
+      "types": "./dist/ui-authoring/semantic-admission-v3.d.ts",
+      "import": "./dist/ui-authoring/semantic-admission-v3.js",
+      "require": "./dist/ui-authoring/semantic-admission-v3.cjs",
+      "default": "./dist/ui-authoring/semantic-admission-v3.js"
     },
     "./schemas/jdw-node.jdw.schema.json": "./schemas/jdw-node.jdw.schema.json",
     "./schemas/widget-asset-manifest.v1.jdw.schema.json": "./schemas/widget-asset-manifest.v1.jdw.schema.json",
