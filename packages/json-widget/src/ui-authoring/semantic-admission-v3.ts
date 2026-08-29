@@ -412,6 +412,44 @@ function validateAuthoredNode(
       );
 }
 
+/**
+ * Validates a complete authored document against one fail-closed context snapshot.
+ *
+ * Products can add topology and managed-value policy after this generic pass without
+ * duplicating Kit-owned descriptor, value-source, layout, or literal admission rules.
+ */
+export function validateUiDocumentV3AgainstContext(
+  document: UiDocumentV3,
+  context: UiDocumentCommandV3AdmissionContext,
+): readonly UiDocumentCommandV3AdmissionDiagnostic[] {
+  let safeContext: UiDocumentCommandV3AdmissionContext;
+  try {
+    safeContext = snapshotAdmissionContext(context);
+  } catch {
+    return Object.freeze([
+      diagnostic(
+        'invalid-structural-subtree',
+        'The document validation context could not be safely snapshotted.',
+        'document',
+        {},
+      ),
+    ]);
+  }
+
+  const diagnostics: UiDocumentCommandV3AdmissionDiagnostic[] = [];
+  for (const [index, entry] of collectWidgetNodes(document.root).entries()) {
+    const nodeId = typeof entry.widget.id === 'string' ? entry.widget.id : undefined;
+    const issue = validateAuthoredNode(
+      entry.widget,
+      safeContext,
+      nodeId === undefined ? {} : { nodeId },
+      `document.nodes[${index}]`,
+    );
+    if (issue !== null) diagnostics.push(issue);
+  }
+  return Object.freeze(diagnostics);
+}
+
 function targetNode(document: UiDocumentV3, nodeId: string): GenericWidget | undefined {
   return collectWidgetNodes(document.root).find((entry) => entry.widget.id === nodeId)?.widget;
 }

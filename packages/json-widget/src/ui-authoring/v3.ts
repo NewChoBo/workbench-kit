@@ -25,6 +25,7 @@ export {
   admitUiDocumentCommandV3,
   applyAdmittedUiAuthoringSessionCommandV3,
   UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES,
+  validateUiDocumentV3AgainstContext,
 } from './semantic-admission-v3.js';
 export type {
   UiAuthoringSessionV3AdmissionResult,
