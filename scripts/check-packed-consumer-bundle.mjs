@@ -581,6 +581,23 @@ function verifyJdwPackageManifest() {
       throw new TypeError(`Packed JDW root target is missing: ${target}`);
     }
   }
+  for (const target of [expectedAuthoringV3Export.import, expectedAuthoringV3Export.require]) {
+    const source = fs.readFileSync(path.join(jdwRoot, target), 'utf8');
+    if (
+      /(?:from\s+|require\()\s*["']@workbench-kit\/contracts["']/u.test(source) ||
+      /["']@workbench-kit\/contracts["']/u.test(source)
+    ) {
+      throw new TypeError(
+        `Packed JDW authoring V3 must keep contracts validators self-contained: ${target}`,
+      );
+    }
+  }
+  for (const target of [expectedRootExport.import, expectedRootExport.require]) {
+    const source = fs.readFileSync(path.join(jdwRoot, target), 'utf8');
+    if (!/["']@workbench-kit\/contracts["']/u.test(source)) {
+      throw new TypeError(`Packed JDW root must retain its external contracts boundary: ${target}`);
+    }
+  }
   const runtimeDependencyNames = new Set(
     ['dependencies', 'optionalDependencies', 'peerDependencies'].flatMap((field) =>
       Object.keys(manifest[field] ?? {}),
@@ -3675,6 +3692,7 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
 import {
   admitUiDocumentCommandV3,
   applyAdmittedUiAuthoringSessionCommandV3,
+  validateUiDocumentV3AgainstContext,
   type UiDocumentCommandV3AdmissionContext,
   type UiDocumentLiteralPolicy,
 } from '@workbench-kit/jdw/ui-authoring/semantic-admission-v3';
@@ -3685,6 +3703,7 @@ export const packedAdmissionContext = context satisfies UiDocumentCommandV3Admis
 export const packedAdmissionFunctions = Object.freeze({
   admitUiDocumentCommandV3,
   applyAdmittedUiAuthoringSessionCommandV3,
+  validateUiDocumentV3AgainstContext,
 });
 
 // @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined.
@@ -3711,6 +3730,7 @@ export const packedLiteralPolicy: UiDocumentLiteralPolicy = ({ value }) =>
   redoUiAuthoringSessionV3,
   selectUiDocumentNodesV3,
   undoUiAuthoringSessionV3,
+  validateUiDocumentV3AgainstContext,
   type GenericWidget,
   type UiAuthoringSessionStateV3,
   type UiDocumentAtomicCommandV3,
@@ -3739,6 +3759,7 @@ export const packedAuthoringV3Functions = Object.freeze({
   redoUiAuthoringSessionV3,
   selectUiDocumentNodesV3,
   undoUiAuthoringSessionV3,
+  validateUiDocumentV3AgainstContext,
 });
 `,
   );
@@ -3780,6 +3801,7 @@ const requiredFunctions = [
   'undoUiAuthoringSessionV2',
   'undoUiAuthoringSessionV3',
   'upgradeUiDocumentToV3',
+  'validateUiDocumentV3AgainstContext',
 ];
 for (const name of requiredFunctions) {
   if (typeof jdw[name] !== 'function') {
@@ -3812,7 +3834,11 @@ for (const subpath of [
   }
 }
 const admission = require('@workbench-kit/jdw/ui-authoring/semantic-admission-v3');
-for (const name of ['admitUiDocumentCommandV3', 'applyAdmittedUiAuthoringSessionCommandV3']) {
+for (const name of [
+  'admitUiDocumentCommandV3',
+  'applyAdmittedUiAuthoringSessionCommandV3',
+  'validateUiDocumentV3AgainstContext',
+]) {
   if (typeof admission[name] !== 'function') {
     throw new TypeError('Packed JDW CommonJS admission subpath is missing: ' + name);
   }
@@ -3830,6 +3856,7 @@ for (const name of [
   'redoUiAuthoringSessionV3',
   'selectUiDocumentNodesV3',
   'undoUiAuthoringSessionV3',
+  'validateUiDocumentV3AgainstContext',
 ]) {
   if (typeof authoringV3[name] !== 'function') {
     throw new TypeError('Packed JDW CommonJS authoring V3 subpath is missing: ' + name);
@@ -3875,6 +3902,7 @@ const requiredFunctions = [
   'undoUiAuthoringSessionV2',
   'undoUiAuthoringSessionV3',
   'upgradeUiDocumentToV3',
+  'validateUiDocumentV3AgainstContext',
 ];
 for (const name of requiredFunctions) {
   if (typeof jdw[name] !== 'function') {
@@ -3907,7 +3935,11 @@ for (const subpath of [
   }
 }
 const admission = await import('@workbench-kit/jdw/ui-authoring/semantic-admission-v3');
-for (const name of ['admitUiDocumentCommandV3', 'applyAdmittedUiAuthoringSessionCommandV3']) {
+for (const name of [
+  'admitUiDocumentCommandV3',
+  'applyAdmittedUiAuthoringSessionCommandV3',
+  'validateUiDocumentV3AgainstContext',
+]) {
   if (typeof admission[name] !== 'function') {
     throw new TypeError('Packed JDW ESM admission subpath is missing: ' + name);
   }
@@ -3925,6 +3957,7 @@ for (const name of [
   'redoUiAuthoringSessionV3',
   'selectUiDocumentNodesV3',
   'undoUiAuthoringSessionV3',
+  'validateUiDocumentV3AgainstContext',
 ]) {
   if (typeof authoringV3[name] !== 'function') {
     throw new TypeError('Packed JDW ESM authoring V3 subpath is missing: ' + name);
