@@ -78,6 +78,7 @@ WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
 WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
 WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
+WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [SOURCE_REVIEW_PASS; READY_FOR_RELEASE]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -6267,6 +6268,166 @@ enumerates a catalog instead of exact lookups; retains callbacks or mutable call
 Apply/IO in Preview/finalize; omits bounded hostile and packed-public proof; changes current exports
 incompatibly; leaks React/DOM/product/provider/model/native concerns; or claims release, publish or
 Electron completion.
+
+### `WB-NS-070H` bounded packet — descriptor-aware V3 command admission and direct-manipulation bridge
+
+- **Status:** `SOURCE_REVIEW_PASS / READY_FOR_RELEASE`; isolated local candidate, release still required
+- **2026-08-29 evidence:** producer-distinct review `PASS` with no P0/P1/P2 after immutable
+  admission-context snapshot and policy-after-generic-preflight hardening; focused JDW/React tests
+  `18/18`, package typechecks, full unit `2812/2812`, required Chromium interactions
+  `90/90`, packed 19-package consumer, commit-safety and diff checks passed. The final hardened diff
+  still requires the exact-tip release gate before tag publication.
+- **Exact implementation base:** `develop@88b2eafb6c391f066dcf55e57e67dcd2056cc1d3`
+- **Target owner:** `@workbench-kit/jdw` for semantic admission and
+  `@workbench-kit/react/authoring` for renderer-neutral committed transform projection
+- **Dependencies:** `WB-NS-070A/B/C/D` and `WB-NS-072E` are `DONE`; existing
+  `UiDocumentV3`, `UiDocumentCommandV3`, `UiAuthoringSessionStateV3`, component catalog and layout
+  descriptors remain canonical
+- **Trigger:** a generic consumer needs Canvas, Inspector, keyboard and catalog insertion to pass the
+  same descriptor-aware semantic boundary before one existing V3 session mutation. Current inherited
+  base property/layout commands validate structural source shape but do not consistently validate the
+  exact property descriptor or host literal policy; the current React Canvas does not project a
+  committed move/resize intent into the canonical canvas-placement command.
+
+#### Goal / user outcome
+
+Let an AI-free host commit direct manipulation without inventing a second document, selection,
+history or raw-patch path. The same attempted V3 command or outer batch is semantically admitted once,
+then applied once through `applyUiAuthoringSessionCommandV3`. Rejection preserves the exact document,
+ordered selection, past and future snapshots. A committed pointer gesture and its keyboard-equivalent
+produce byte-equivalent full canvas-placement values and one history record.
+
+#### Public contract
+
+Add one pure admission family under the existing JDW authoring owner:
+
+```ts
+interface UiDocumentCommandV3AdmissionContext extends UiDocumentCommandV3Context {
+  readonly validateLiteral?: UiDocumentLiteralPolicy;
+}
+
+type UiDocumentLiteralPolicy = (input: {
+  readonly component: UiComponentDescriptor;
+  readonly nodeId: string;
+  readonly property: UiPropertyDescriptor;
+  readonly value: unknown;
+}) => string | null | undefined;
+
+type UiDocumentCommandV3AdmissionResult =
+  | { readonly status: 'accepted'; readonly command: UiDocumentCommandV3 }
+  | {
+      readonly status: 'rejected';
+      readonly diagnostics: readonly [UiDocumentCommandV3AdmissionDiagnostic];
+    };
+
+admitUiDocumentCommandV3(
+  document: UiDocumentV3,
+  command: UiDocumentCommandV3,
+  context: UiDocumentCommandV3AdmissionContext,
+): UiDocumentCommandV3AdmissionResult;
+
+applyAdmittedUiAuthoringSessionCommandV3(
+  state: UiAuthoringSessionStateV3,
+  command: UiDocumentCommandV3,
+  context: UiDocumentCommandV3AdmissionContext,
+): UiAuthoringSessionV3AdmissionResult;
+```
+
+The closed diagnostic code union distinguishes malformed command, unavailable component/property,
+invalid property source/literal, unavailable/unsupported layout strategy or property, invalid layout
+value, invalid structural subtree and product-policy rejection. Messages and paths are deterministic
+and sanitized. The optional policy receives only an already structurally safe literal and exact
+canonical descriptors; throwing policy code is caught and becomes rejection.
+
+Add one pure committed canvas-placement transform bridge under React authoring:
+
+```ts
+createWorkbenchAuthoringCanvasPlacementActionV3({
+  commandId,
+  editingTarget,
+  layoutValues,
+  nodeId,
+  strategyId,
+  placementPropertyId,
+  transform,
+}): UiAuthoringSurfaceActionV3 | null;
+```
+
+`transform` is `move` or `resize` with finite pixel deltas and an explicit resize edge. V1 accepts
+only pixel-length x/y/width/height and returns `null` for unsupported units, non-finite input or a
+non-positive next size. It preserves anchor, zIndex and constraints and emits one complete
+`layout.canvas-placement` literal while retaining the other values from `layoutValues` through the
+existing V3 layout action factory. Pointer and keyboard callers use this same pure bridge;
+preview/drag state remains caller-owned and ephemeral.
+
+#### Semantic and state flow
+
+1. Snapshot/freeze the runtime-untrusted command without invoking accessors or retaining caller data.
+2. For a batch, visit atomic children in order against the transient candidate document exposed by
+   the existing replay observer. Validate each atom before replay; any failure rejects the original
+   outer batch and exposes no partial candidate.
+3. Resolve every target and inserted/replaced subtree node by stable ID and exact component
+   descriptor. Validate every authored property, layout strategy/property/value and component layout
+   support. Structural payloads cannot bypass the same checks.
+4. Invoke the optional literal policy only after generic descriptor/source validation. It may narrow
+   product references or literals but may not widen generic acceptance.
+5. On acceptance, return the frozen original command. The session helper invokes the existing V3
+   session Apply exactly once. On rejection it returns the original state object unchanged.
+
+Selection, history, document revision, persistence, drag preview and DOM focus remain outside the
+admission result. No second command language, patch engine, registry, transaction or service is added.
+
+#### Scope / non-scope
+
+Scope: JDW pure semantic admission, exact descriptor lookup, sequential batch/subtree validation,
+unchanged-state session convenience, React pure pixel placement transform projection, public exports,
+focused backendless tests and packed consumer proof.
+
+Non-scope: product component descriptors or managed-asset policy; Canvas rendering/selection UI;
+pointer capture; persistence; provider/AI; Electron/native; consumer-product names, examples or
+fixtures;
+package release/publish.
+
+#### Ordered implementation tasks
+
+1. Add the closed admission types/diagnostics and safe command snapshot under the existing JDW
+   `ui-authoring` module.
+2. Implement exact node/component/property/layout resolution and host literal-policy narrowing.
+3. Reuse `applyUiDocumentCommandV3WithReplayObserver` for sequential all-or-nothing batch preflight;
+   recursively validate inserted/replaced subtrees before replay.
+4. Add the unchanged-on-rejection session helper that delegates accepted commands to the existing
+   V3 session Apply once.
+5. Add the pure React pixel canvas-placement transform bridge by composing the existing authoring
+   command ID/layout action factories.
+6. Export through current roots and add exact-optional/public packed-consumer fixtures without a new
+   package or private deep import.
+7. Add focused hostile, property/layout, subtree, batch, policy-throw, transaction, Undo/Redo and
+   pointer/keyboard parity tests; then freeze one candidate for source review.
+
+#### Validation
+
+During development run focused JDW admission/session tests and React authoring action tests plus the
+two package typechecks. At the frozen candidate run `pnpm validate:static`, `pnpm validate:fast`,
+`pnpm check:public-exports`, focused packed-consumer checks, the repository browser gate once,
+`pnpm check:commit-safety` and `git diff --check`. Electron is not required because no native boundary
+changes.
+
+#### Acceptance / source-review gate
+
+- valid base/responsive property and layout commands exact-resolve descriptors and preserve current
+  V3 semantics;
+- invalid literal, disallowed source, unknown property, unsupported strategy/property/scope and
+  invalid canvas/grid values reject before session mutation;
+- inserted/replaced semantically invalid descendants reject the entire structural command;
+- later batch children see accepted earlier transient state, while any failure rejects the outer batch
+  with original document/selection/past/future object identity unchanged;
+- one accepted outer batch produces one revision and one history record; Undo/Redo restores exact
+  document and ordered selection;
+- pointer and keyboard transform inputs with equal deltas emit byte-equivalent one-command placement
+  actions; cancel/unsupported input emits no action;
+- no product policy, second document/history/patch path, provider, DOM state or Electron dependency is
+  introduced;
+- producer-distinct review returns no P0/P1/P2 target mismatch before integration or release work.
 
 ### Acceptance direction
 

@@ -168,6 +168,33 @@ try {
     );
   }
   console.log(
+    '[check-packed-consumer] Typechecking V3 semantic admission exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'semantic-admission-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
+  console.log(
     '[check-packed-consumer] Typechecking focused SchemaForm exports with exact optional properties...',
   );
   for (const [moduleKind, moduleResolution, target] of [
@@ -684,11 +711,13 @@ import { StatusBar } from '@workbench-kit/react/workbench/shell';
 import { WorkbenchStandaloneShell } from '@workbench-kit/react/workbench/standalone';
 import { resolveWorkbenchTheme } from '@workbench-kit/react/workbench/theme';
 import { DARK_THEME_PRESET_OPTIONS } from '@workbench-kit/react/workbench/themePresets';
-import type {
-  ExtensionManagementEntry,
-  ExtensionManagementPanelProps,
-  ExtensionManagementTransition,
+import {
+  createWorkbenchAuthoringCanvasPlacementActionV3 as createRootPlacementAction,
+  type ExtensionManagementEntry,
+  type ExtensionManagementPanelProps,
+  type ExtensionManagementTransition,
 } from '@workbench-kit/react';
+import { createWorkbenchAuthoringCanvasPlacementActionV3 as createFocusedPlacementAction } from '@workbench-kit/react/authoring';
 import type { NodeTypeDescriptor } from '@workbench-kit/contracts';
 import type { ValueTransformDefinition } from '@workbench-kit/field-remap';
 import type { ExtensionManagementPendingAction } from '@workbench-kit/react/workbench/management';
@@ -725,6 +754,39 @@ import {
 import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
 import { DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY } from '@workbench-kit/shell-react/layout-storage';
 import { useExtensionRegistryCommandDescriptors } from '@workbench-kit/shell-react/registry-command-descriptors';
+
+if (createRootPlacementAction !== createFocusedPlacementAction) {
+  throw new TypeError('Packed placement action root and focused exports do not share identity.');
+}
+const packedPlacementAction = createFocusedPlacementAction({
+  commandId: 'packed-placement',
+  editingTarget: { kind: 'base' },
+  layoutValues: {
+    placement: {
+      kind: 'literal',
+      value: {
+        kind: 'canvas-placement',
+        x: { kind: 'length', value: 10, unit: 'px' },
+        y: { kind: 'length', value: 20, unit: 'px' },
+        width: { kind: 'length', value: 100, unit: 'px' },
+        height: { kind: 'length', value: 80, unit: 'px' },
+        anchor: 'top-start',
+        zIndex: 1,
+      },
+    },
+  },
+  nodeId: 'packed-node',
+  placementPropertyId: 'placement',
+  strategyId: 'builtin.canvas',
+  transform: { kind: 'move', deltaX: 5, deltaY: -5 },
+});
+if (
+  packedPlacementAction?.kind !== 'document-command-v3' ||
+  packedPlacementAction.command.type !== 'set-layout' ||
+  packedPlacementAction.command.values.placement?.kind !== 'literal'
+) {
+  throw new TypeError('Packed placement action projection failed.');
+}
 
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 const packedFocusedShellEntries = Object.freeze({
@@ -3228,6 +3290,8 @@ if (registry.snapshot().revision !== 0) process.exit(1);
     path.join(consumerDir, 'src', 'ui-authoring-compat.ts'),
     `import type { DesignSystemPackChangeMutation } from '@workbench-kit/contracts';
 import {
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
   applyUiAuthoringSessionCommand,
   applyUiAuthoringSessionCommandV2,
   applyUiAuthoringSessionCommandV3,
@@ -3254,6 +3318,7 @@ import {
   undoUiAuthoringSession,
   undoUiAuthoringSessionV2,
   undoUiAuthoringSessionV3,
+  UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES,
   upgradeUiDocumentToV3,
   type ApplyUiDocumentCommandResult,
   type ApplyUiDocumentCommandV2Result,
@@ -3266,6 +3331,7 @@ import {
   type UiAuthoringSessionState,
   type UiAuthoringSessionStateV2,
   type UiAuthoringSessionStateV3,
+  type UiAuthoringSessionV3AdmissionResult,
   type UiAuthoringSessionV2CommandResult,
   type UiAuthoringSessionV3CommandResult,
   type UiAuthoringBindingProvenance,
@@ -3288,6 +3354,10 @@ import {
   type UiDocumentCommand,
   type UiDocumentCommandV2,
   type UiDocumentCommandV3,
+  type UiDocumentCommandV3AdmissionContext,
+  type UiDocumentCommandV3AdmissionDiagnostic,
+  type UiDocumentCommandV3AdmissionDiagnosticCode,
+  type UiDocumentCommandV3AdmissionResult,
   type UiDocumentCommandV2Context,
   type UiDocumentCommandV3Context,
   type UiDocumentCommandV2Issue,
@@ -3297,6 +3367,8 @@ import {
   type UiDocumentTransactionRecordV3,
   type UiDocumentTransactionV2,
   type UiDocumentTransactionV3,
+  type UiDocumentLiteralPolicy,
+  type UiDocumentLiteralPolicyInput,
   type UiDocumentNodeAuthoringV3,
   type UiDocumentV3,
 } from '@workbench-kit/jdw';
@@ -3515,6 +3587,13 @@ export type PackedUiAuthoringV3Contracts = {
   sessionResult: UiAuthoringSessionV3CommandResult;
   designSystemResult: ApplyUiDesignSystemPackChangeV3Result;
   documentProjection: UiAuthoringDocumentProjectionV3;
+  admissionContext: UiDocumentCommandV3AdmissionContext;
+  admissionDiagnostic: UiDocumentCommandV3AdmissionDiagnostic;
+  admissionDiagnosticCode: UiDocumentCommandV3AdmissionDiagnosticCode;
+  admissionResult: UiDocumentCommandV3AdmissionResult;
+  literalPolicy: UiDocumentLiteralPolicy;
+  literalPolicyInput: UiDocumentLiteralPolicyInput;
+  sessionAdmissionResult: UiAuthoringSessionV3AdmissionResult;
 };
 
 export const packedUiAuthoringV2Runtime = Object.freeze({
@@ -3531,6 +3610,8 @@ export const packedUiAuthoringV2Runtime = Object.freeze({
 });
 
 export const packedUiAuthoringV3Runtime = Object.freeze({
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
   applyUiAuthoringSessionCommandV3,
   applyUiDesignSystemPackChangeV3,
   applyUiDocumentCommandV3,
@@ -3541,8 +3622,37 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
   redoUiAuthoringSessionV3,
   selectUiDocumentNodesV3,
   undoUiAuthoringSessionV3,
+  UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES,
   upgradeUiDocumentToV3,
 });
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'semantic-admission-types.ts'),
+    `import {
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
+  type UiDocumentCommandV3AdmissionContext,
+  type UiDocumentCommandV3Context,
+  type UiDocumentLiteralPolicy,
+} from '@workbench-kit/jdw';
+
+declare const context: UiDocumentCommandV3Context;
+
+export const packedAdmissionContext = context satisfies UiDocumentCommandV3AdmissionContext;
+export const packedAdmissionFunctions = Object.freeze({
+  admitUiDocumentCommandV3,
+  applyAdmittedUiAuthoringSessionCommandV3,
+});
+
+// @ts-expect-error exactOptionalPropertyTypes rejects explicit undefined.
+export const packedInvalidAdmissionContext: UiDocumentCommandV3AdmissionContext = {
+  ...context,
+  validateLiteral: undefined,
+};
+
+export const packedLiteralPolicy: UiDocumentLiteralPolicy = ({ value }) =>
+  value === null ? 'Null literals are unavailable.' : null;
 `,
   );
   fs.writeFileSync(
@@ -3551,6 +3661,8 @@ export const packedUiAuthoringV3Runtime = Object.freeze({
 
 const requiredFunctions = [
   'admitUiGenerativeUiRequest',
+  'admitUiDocumentCommandV3',
+  'applyAdmittedUiAuthoringSessionCommandV3',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -3587,6 +3699,12 @@ for (const name of requiredFunctions) {
     throw new TypeError('Packed JDW CommonJS root is missing function export: ' + name);
   }
 }
+if (
+  !Array.isArray(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES) ||
+  !Object.isFrozen(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES)
+) {
+  throw new TypeError('Packed JDW CommonJS admission diagnostic vocabulary is invalid.');
+}
 for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
   if (name in jdw) {
     throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
@@ -3595,6 +3713,7 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
+  '@workbench-kit/jdw/ui-authoring/semantic-admission-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -3614,6 +3733,8 @@ for (const subpath of [
 
 const requiredFunctions = [
   'admitUiGenerativeUiRequest',
+  'admitUiDocumentCommandV3',
+  'applyAdmittedUiAuthoringSessionCommandV3',
   'applyUiAuthoringSessionCommand',
   'applyUiAuthoringSessionCommandV2',
   'applyUiAuthoringSessionCommandV3',
@@ -3650,6 +3771,12 @@ for (const name of requiredFunctions) {
     throw new TypeError('Packed JDW ESM root is missing function export: ' + name);
   }
 }
+if (
+  !Array.isArray(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES) ||
+  !Object.isFrozen(jdw.UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES)
+) {
+  throw new TypeError('Packed JDW ESM admission diagnostic vocabulary is invalid.');
+}
 for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) {
   if (name in jdw) {
     throw new TypeError('Packed JDW root exposes private authoring helper: ' + name);
@@ -3658,6 +3785,7 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
+  '@workbench-kit/jdw/ui-authoring/semantic-admission-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -3902,6 +4030,7 @@ container.remove();
           'src/authoring-development-types.ts',
           'src/external-node-catalog-types.ts',
           'src/schema-form-types.ts',
+          'src/semantic-admission-types.ts',
           'src/source-input-compatibility-types.ts',
           'src/ui-generative-plan-types.ts',
         ],

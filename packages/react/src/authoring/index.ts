@@ -4,12 +4,16 @@ export {
 } from './projection.js';
 export {
   createWorkbenchAuthoringCommandId,
+  createWorkbenchAuthoringCanvasPlacementActionV3,
   createWorkbenchAuthoringLayoutActionV3,
   createWorkbenchAuthoringPropertyActionV3,
 } from './actions.js';
 export type {
   WorkbenchAuthoringCommandIdInput,
+  WorkbenchAuthoringCanvasPlacementActionInput,
   WorkbenchAuthoringLayoutActionInput,
+  WorkbenchCanvasPlacementResizeEdge,
+  WorkbenchCanvasPlacementTransform,
   WorkbenchAuthoringPropertyActionInput,
 } from './actions.js';
 export { WorkbenchAuthoringCanvas } from './WorkbenchAuthoringCanvas.js';
