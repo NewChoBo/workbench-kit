@@ -14,6 +14,7 @@ import { createUiDocumentV3 } from './document-v3.js';
 import {
   admitUiDocumentCommandV3,
   applyAdmittedUiAuthoringSessionCommandV3,
+  validateUiDocumentV3AgainstContext,
   type UiDocumentCommandV3AdmissionContext,
 } from './semantic-admission-v3.js';
 import {
@@ -136,6 +137,125 @@ const placement = {
     zIndex: 1,
   },
 } as const;
+
+function mutableFixture(): UiDocumentV3 {
+  return JSON.parse(JSON.stringify(fixture())) as UiDocumentV3;
+}
+
+type MutableAuthoredWidget = GenericWidget & {
+  $authoring: {
+    properties: Record<string, unknown>;
+    layout?: unknown;
+  };
+};
+
+function mutableImage(document: UiDocumentV3): MutableAuthoredWidget {
+  const root = document.root as GenericWidget;
+  return (root.children as GenericWidget[])[0]! as MutableAuthoredWidget;
+}
+
+describe('V3 document context validation', () => {
+  it('validates every authored node without mutating the canonical document', () => {
+    const document = mutableFixture();
+    const root = document.root as GenericWidget;
+    const firstImage = mutableImage(document);
+    const secondImage = JSON.parse(JSON.stringify(firstImage)) as GenericWidget;
+    secondImage.id = 'image-two';
+    (root.children as GenericWidget[]).push(secondImage);
+    const before = formatWidgetDocumentJson(document.root);
+    const calls = new Map<string, number>();
+    const stableCatalog = catalog();
+    const validationContext: UiDocumentCommandV3AdmissionContext = {
+      ...context(),
+      componentCatalog: {
+        component(ref) {
+          const key = `${ref.id}@${ref.version}`;
+          calls.set(key, (calls.get(key) ?? 0) + 1);
+          return stableCatalog.component(ref);
+        },
+        components: () => COMPONENTS,
+      },
+    };
+
+    expect(validateUiDocumentV3AgainstContext(document, validationContext)).toEqual([]);
+    expect(calls).toEqual(
+      new Map([
+        ['test:board@1', 1],
+        ['test:image@1', 1],
+      ]),
+    );
+    expect(formatWidgetDocumentJson(document.root)).toBe(before);
+  });
+
+  it('fails closed for descriptor, value, layout, and product-policy violations', () => {
+    const opacity = mutableFixture();
+    const opacityAuthoring = mutableImage(opacity).$authoring!;
+    opacityAuthoring.properties.opacity = { kind: 'literal', value: 5 };
+    expect(validateUiDocumentV3AgainstContext(opacity, context())).toMatchObject([
+      { code: 'invalid-property-value', propertyId: 'opacity' },
+    ]);
+
+    const missing = mutableFixture();
+    delete mutableImage(missing).$authoring!.properties.assetRef;
+    expect(validateUiDocumentV3AgainstContext(missing, context())).toMatchObject([
+      { code: 'invalid-structural-subtree', propertyId: 'assetRef' },
+    ]);
+
+    const undeclared = mutableFixture();
+    mutableImage(undeclared).$authoring!.properties.unknown = {
+      kind: 'literal',
+      value: true,
+    };
+    expect(validateUiDocumentV3AgainstContext(undeclared, context())).toMatchObject([
+      { code: 'property-unavailable', propertyId: 'unknown' },
+    ]);
+
+    const geometry = mutableFixture();
+    mutableImage(geometry).$authoring!.layout = {
+      strategyId: 'builtin.canvas',
+      values: {
+        placement: {
+          ...placement,
+          value: {
+            ...placement.value,
+            width: { kind: 'length', value: -1, unit: 'px' },
+          },
+        },
+      },
+    };
+    expect(validateUiDocumentV3AgainstContext(geometry, context())).toMatchObject([
+      { code: 'invalid-layout-value', propertyId: 'placement' },
+    ]);
+
+    const productPolicy = mutableFixture();
+    mutableImage(productPolicy).$authoring!.properties.assetRef = {
+      kind: 'literal',
+      value: 'C:\\private.png',
+    };
+    expect(
+      validateUiDocumentV3AgainstContext(
+        productPolicy,
+        context(({ property, value }) =>
+          property.id === 'assetRef' && typeof value === 'string' && !value.startsWith('asset:')
+            ? 'Managed asset references must start with asset:.'
+            : null,
+        ),
+      ),
+    ).toMatchObject([{ code: 'product-policy-rejected', propertyId: 'assetRef' }]);
+  });
+
+  it('rejects a context that cannot be snapshotted', () => {
+    const hostile = context();
+    Object.defineProperty(hostile, 'layoutProperties', {
+      get() {
+        throw new TypeError('blocked');
+      },
+    });
+    expect(validateUiDocumentV3AgainstContext(fixture(), hostile)).toMatchObject([
+      { code: 'invalid-structural-subtree', path: 'document' },
+    ]);
+  });
+});
 
 describe('V3 semantic command admission', () => {
   it('rejects invalid product literals with the exact session object unchanged', () => {
