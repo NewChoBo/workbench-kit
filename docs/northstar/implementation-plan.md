@@ -1,5 +1,15 @@
 # Workbench Kit Northstar Implementation Plan
 
+> **HISTORICAL_CHECKOUT / NO_SOURCE_AUTHORITY — 2026-09-05 reconciliation.**
+> This branch preserves an uncommitted release review at
+> `88b2eafb6c391f066dcf55e57e67dcd2056cc1d3` and cohort `.44`.
+> The currently fetched integration baseline is
+> `542123e03b6b2d372c942c9f6adb6aff54838a7e`; tag
+> `v0.0.2-prototype.0.2.48` resolves to `bf7c279571a43a49cedbcd3daf9b6444dee7c184`.
+> The dated readiness and pending-release statements below are historical receipts,
+> not admission for new source work. Reconcile the latest develop plan and source
+> before selecting a packet. Preserving this review does not imply its integration.
+
 This document decomposes [`target-architecture.md`](./target-architecture.md) and its detailed Northstar decisions into ordered, tool-neutral implementation packets.
 
 It is not a changelog of the current repository. Current source is recorded only as evidence for a CURRENT → TARGET gap or as an implementation result to review.
@@ -10,7 +20,8 @@ It is not a changelog of the current repository. Current source is recorded only
   `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` / PR #424. This exact tree is
   the current local and remote `develop` baseline after the focused keybinding command runtime
   correction.
-- **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
+- **Current documentation projection:** `develop@88b2eafb6c391f066dcf55e57e67dcd2056cc1d3` / PR #425. Its diff from the
+  source-bearing baseline changes only `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
@@ -5579,8 +5590,17 @@ public-export proof; or claims release, publish or Electron completion.
   native boundary changed; hosted CI's generic Electron quit guard nevertheless passed. At the exact
   PR head, one hosted Validate run passed; a concurrent push run failed one scope-external shell-react
   focus assertion while all 070G focused tests passed. These candidate runs are supplemental source
-  evidence, not release-tip or promotion evidence. This source is unpublished and release is not
-  claimed.
+  evidence, not release-tip evidence.
+- **Published cohort:** annotated tag `v0.0.2-prototype.0.2.44` resolves to
+  `main@b2865c7c0dfc4ec9942b9df25a5167c89ca782a2` and contains the `070G` integration. Publish run
+  `33127261642` delivered the exact 19-package cohort and moved every `prototype` dist-tag to
+  `0.0.2-prototype.0.2.44`. The npm contracts artifact exposes the focused
+  `./source-input-compatibility` subpath, and the JDW root exposes the exact inspect/create/preview/finalize
+  source-input planning API. The release-before-consume gate for this surface is closed.
+- **Independent release exception:** the separately recorded `WB-NS-080C2 successor-v2` exception is
+  confined to the published shell-react keybinding runtime-import graph. It does not remove or retract
+  this contracts/JDW surface from `.44`; a later correction cohort remains required only for that
+  independent publication-qualified conformance claim.
 - **Target:** the typed value/property and exact endpoint-binding chain in `WB-NS-070A`,
   `WB-NS-070C`, `WB-NS-070D` and `WB-NS-072E`
 - **Ownership:** `GENERIC_KIT`
@@ -6211,8 +6231,9 @@ An integrating host may project an existing converter catalog into immutable
 cannot become a second transform registry or claim that conversion execution occurred.
 
 Source `DONE`, release-tip validation, tag/publish and npm `@prototype` availability are separate
-states. This packet may record source completion after exact review, but no integrating host may claim
-the new contract until one approved published cohort contains it.
+states. For `070G`, the publish gate is satisfied by the verified `.44` cohort above, so an integrating
+host may consume this exact public contract through registry pins. Future source changes or corrections
+still require their own approved cohort and may not be inferred from `develop` alone.
 
 ##### Ordered implementation tasks
 
