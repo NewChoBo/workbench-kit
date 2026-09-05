@@ -6,10 +6,16 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:**
+- **Historical source-bearing integration baseline:**
   `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` / PR #424. This exact tree is
-  the current local and remote `develop` baseline after the focused keybinding command runtime
-  correction.
+  the recorded baseline after the focused keybinding command runtime correction,
+  not the latest integration ref.
+- **2026-09-05 component-rendering audit:** remote `develop` resolves to
+  `542123e03b6b2d372c942c9f6adb6aff54838a7e` / PR #429. The focused audit covers
+  component descriptors, registry/renderer bridges, V3 projection and generative
+  proposal lifecycle. See [component-rendering-contract.md](./component-rendering-contract.md)
+  for source paths and separately verified JDW `.48` artifact inclusion. This is
+  not a blanket requalification of every older packet or release.
 - **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
@@ -76,8 +82,9 @@ WB-NS-070C atomic component/composite descriptor contract [DONE]
 WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
         ↓
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
-WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
+WB-NS-070F provider-neutral generative UI parity [DONE; root API included in inspected JDW .48 artifact; visual/provider integration separate]
 WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
+WB-NS-070I component rendering contract + visual conformance prerequisite [DESIGNING; does not reopen 070F core completion]
 WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [SOURCE_REVIEW_PASS; READY_FOR_RELEASE]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
@@ -5104,8 +5111,16 @@ reported through those packets.
   `develop@04e402f54fbe05e7fab2cbf381107ded448958f7`. Three exact-source core,
   behavior and public-compatibility reviews found no P0/P1/P2. The candidate passed 30 focused
   tests, static, fast (464 files / 2,623 tests), the required Chromium lane (82 interactions,
-  8 skipped), packed public-consumer checks and two hosted Validate runs. This source is not
-  included in the published `.43` cohort and release is not claimed.
+  8 skipped), packed public-consumer checks and two hosted Validate runs.
+- **2026-09-05 artifact reconciliation:** the original source completion did not
+  include publication in `.43`. The current inspected npm
+  `@workbench-kit/jdw@0.0.2-prototype.0.2.48` tarball matches registry SHA-512
+  integrity and contains all four lifecycle names in root declarations and ESM
+  output. Release tag `.48` resolves to `bf7c279571a43a49cedbcd3daf9b6444dee7c184`
+  and contains the source candidate above. This establishes inclusion of this
+  surface in that artifact; it does not recertify the whole release, imply a model
+  integration or prove component-rendering conformance. The focused
+  `./ui-authoring/v3` declaration entry does not export the generative lifecycle.
 - **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
   sections 7, 13-16
 - **Ownership:** `GENERIC_KIT`
@@ -6428,6 +6443,66 @@ changes.
 - no product policy, second document/history/patch path, provider, DOM state or Electron dependency is
   introduced;
 - producer-distinct review returns no P0/P1/P2 target mismatch before integration or release work.
+
+### `WB-NS-070I` design candidate — shared component rendering contract
+
+- **Status:** `DESIGNING`; documentation-only candidate, not source admission.
+- **Target:** [component-rendering-contract.md](./component-rendering-contract.md).
+- **Evidence base:** `develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`.
+- **Existing owners to reuse:** contracts component/widget definitions; JDW
+  document, projection, layout and command/session; workbench-core Design System
+  resolution; React/JDW rendering adapter; trusted host event/resource capabilities.
+- **Related owners:** #422 owns Web Components package/delivery readiness; #430
+  owns the existing child-scoped layout repair. This candidate does not take over
+  either source scope or introduce a competing issue.
+
+#### Goal and current gap
+
+Make exact component descriptors, effective values and layout mean the same thing
+in manual authoring, proposal Preview and post-Apply runtime rendering. Existing
+070C metadata, 072E provenance surfaces and 070F detached candidate data each prove
+their bounded behavior; together they do not prove a working component renderer.
+
+The source inventory found 14 static JDW built-ins without optional authoring
+descriptors, exact-ref versus type-string identity seams, descriptor versus legacy
+event/slot differences, renderer-local defaults, and unqualified stateful lifecycle
+and Preview/runtime parity. Preserve existing static consumers while defining an
+additive, opted-in bridge over the existing semantic owners.
+
+#### Design work order
+
+1. Freeze the descriptor-to-implementation mapping for a small authored-rendering
+   fixture and reuse the overlapping #422 portable-control fixture.
+2. Reconcile property/default/source interpretation, named slots, measurement,
+   container/child scope, event intent, runtime value inputs and diagnostics.
+3. Specify derived render eligibility without creating a second catalog or
+   weakening exact descriptor-snapshot checks in 070F.
+4. Define Preview effect isolation, stable-node lifecycle/focus, legacy migration
+   and public import/module boundaries. Keep #422 registration/SSR/framework
+   decisions in its existing delivery design.
+5. Freeze backendless, real-browser, compatibility and workload/bundle/disposal
+   acceptance; obtain producer-distinct design review before READY.
+
+#### Readiness blockers and source boundary
+
+The implementation packet still needs exact public bridge types/functions,
+module exports, canary descriptor/property sets, slot/layout mapping, event and
+unresolved-value result shapes, lifecycle guarantees, numeric workload budgets
+and reviewed compatibility fixtures. These are material design decisions, not
+discretion for an implementation-only agent.
+
+No runtime source, package split, new schema/persistence, second renderer registry,
+model SDK or full React rewrite is authorized by this candidate. Existing V1/V2/V3
+command unions, legacy widget/event contracts and 070F lifecycle remain unchanged.
+
+#### Acceptance direction
+
+Use the focused target's conformance matrix: real component Preview/runtime parity,
+manual/generated one-history parity, supported responsive/Theme/resource inputs,
+explicit unsupported diagnostics, keyboard/a11y and update/reorder/reparent/dispose
+behavior. A headless plan PASS is not a visual PASS. Issue #430 must close its
+existing scope disagreement before that layout path is included in a conformance
+claim. Source integration, package availability and host adoption stay separate.
 
 ### Acceptance direction
 

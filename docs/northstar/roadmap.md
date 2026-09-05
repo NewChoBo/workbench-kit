@@ -4,7 +4,8 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## Current checkpoint
 
-- **Reviewed repository baseline:** `develop@abde7236cb48ebaf3758363ddd3df88bec0e7aa9`. The latest source-bearing integration is the completed data-only `WB-NS-071C` projection at that exact merge; its focused candidate is `850735555e59c925aed9d30045abf3d325184a14`.
+- **Historical reviewed checkpoint:** `develop@abde7236cb48ebaf3758363ddd3df88bec0e7aa9` records the completed data-only `WB-NS-071C` projection; its focused candidate is `850735555e59c925aed9d30045abf3d325184a14`.
+- **2026-09-05 rendering audit:** observed remote `develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`. The [component rendering contract](./component-rendering-contract.md) records the scoped current-source gaps and JDW `.48` artifact evidence. This does not requalify unrelated packets or claim visual/runtime completion.
 - The extension-runtime decomposition chain (`WB-NS-001A`, `WB-NS-001B1`, `WB-NS-001B2`) is `DONE`. The compatible `ExtensionRegistry` facade delegates focused runtime roles, and shell consumers use focused services without public aggregate-registry reach-through.
 - The manual authoring foundations (`WB-NS-070A` through `070D`) and graph type/property-input foundation (`WB-NS-071A`) are `DONE`: typed values, layout strategies, component descriptors, one `UiDocument` command/history path, and graph-node metadata now have explicit owners.
 - The design-system foundation and compatibility chain (`WB-NS-072A` through `072F`) is `DONE`: pack/theme resolution, typed token/resource roles, migration planning, Canvas/Inspector provenance, and legacy theme compatibility delegate to one integrated path.
@@ -29,6 +30,7 @@ This document is the compact outcome-oriented roadmap projection for Workbench K
 
 ## NEXT
 
+- **Shared component rendering semantics** — close the `WB-NS-070I` design candidate before claiming manual Preview/runtime or generated-UI visual conformance. Reuse the existing descriptor, document, Design System and layout owners; preserve #430's repair scope and #422's separately gated Web Components delivery candidate. Completed 070F headless proposal code remains DONE within its original scope.
 - **Graph/document and schema convergence** — close the remaining `WB-NS-010` and `WB-NS-030` decisions by reusing the integrated UI-authoring, node-descriptor, JDW, SchemaForm, and Field Remap contracts rather than introducing parallel document or scalar-schema families.
 - **External node effect boundary** — with the data-only `WB-NS-071C` projection integrated and its backendless 071B-to-fresh-catalog retry proof passing, separately design runtime invocation, workflow interchange, install/activation and real preview acceptance. Catalog presence must not authorize any of those effects.
 - **Extension ecosystem integration** — mature catalog/install, compatibility, trust, permission, and lifecycle decisions through `WB-NS-040` while keeping declarative design-system inputs separate from executable extension authority.
