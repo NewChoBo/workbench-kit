@@ -12,6 +12,7 @@ import { collectWidgetNodes, type GenericWidget } from '../widget/tree.js';
 import { applyUiDocumentCommandV3WithReplayObserver } from './commands-v3.js';
 import { readUiDocumentNodeAuthoringV3 } from './document-v3.js';
 import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutability.js';
+import { createLayoutPropertySupport } from './layout-property-support.js';
 import { applyUiAuthoringSessionCommandV3 } from './session-v3.js';
 import type {
   ApplyUiDocumentCommandV3Result,
@@ -322,18 +323,13 @@ function validateLayout(
     );
   }
 
-  const supportedContainer = new Set(strategy.supportedContainerProperties);
-  const supportedChild = new Set(strategy.supportedChildProperties);
+  const supportsProperty = createLayoutPropertySupport(strategy);
   for (const [propertyId, source] of Object.entries(values)) {
     const candidates = context.layoutProperties.filter(
       (property) => property.id === propertyId && property.strategyKinds.includes(strategy.kind),
     );
     const property = candidates.length === 1 ? candidates[0] : undefined;
-    const supported =
-      property !== undefined &&
-      (property.scope === 'container'
-        ? supportedContainer.has(propertyId)
-        : supportedChild.has(propertyId));
+    const supported = property !== undefined && supportsProperty(property);
     if (property === undefined || !supported) {
       return diagnostic(
         'layout-property-unavailable',

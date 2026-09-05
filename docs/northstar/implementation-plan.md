@@ -20,6 +20,65 @@ It is not a changelog of the current repository. Current source is recorded only
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
+## WB-NS-070F-R1 — child-scoped V3 layout parity repair
+
+- **Status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`; admitted as a bounded
+  `READY_FOR_IMPLEMENTATION` repair of existing declared-scope semantics before source edits.
+- **Owner:** [Issue #430](https://github.com/NewChoBo/workbench-kit/issues/430), JDW authoring.
+- **Source baseline:** `542123e03b6b2d372c942c9f6adb6aff54838a7e`; documentation candidate
+  `bb85709760b72825691d6f22601119ed1fd5b822` changes no source. The issue's exact API and
+  behavior contract require no new architecture, persistence or product decision.
+- **Goal:** a legal child-scoped Canvas placement accepted by semantic admission must also
+  succeed through responsive Apply and generative request/Preview/Finalize.
+- **Architecture/API:** keep `UiLayoutPropertyDescriptor.scope`, strategy descriptors and
+  existing V3 command/session/projection contracts. A private support predicate selects the
+  container or child list from the validated property's scope; no union or new public API.
+- **State flow:** public authoring action → existing semantic admission → V3 Apply/session;
+  generative operand collection uses the same scope rule → detached Preview → authorized
+  Finalize → ordinary session Apply. Canonical state/history and revision ownership stay unchanged.
+- **Scope:** `commands-v3.ts`, `generative-plan.ts`, the existing semantic-admission predicate
+  and a private shared helper, plus focused JDW/React regressions.
+- **Non-scope:** component renderer bridge, model SDK, new package/schema, native host,
+  unrelated projection/session changes, publication or downstream adoption.
+- **Ordered tasks:** reproduce child-scoped failure through public action and generative
+  paths; centralize the validated-scope predicate; replace container-only checks; cover
+  raw Apply, admitted session, projection, Undo/Redo and prior-layout clear; run focused
+  tests and `pnpm validate:fast`; obtain producer-distinct exact-candidate review before merge.
+- **Failure/compatibility:** invalid strategy descriptors, cross-scope membership, unknown or
+  unsupported properties, invalid values and exact-component mismatches remain rejected.
+  Container-scoped cases retain existing behavior. Rejection preserves the original document
+  and history; successful batch Apply records one revision/history step.
+- **Acceptance:** Issue #430's full matrix passes, including public variant Canvas action
+  reachability and responsive-override provenance. Preview remains detached, Finalize requires
+  authorization, and ordinary Undo/Redo restores the same documents.
+- **Validation:** focused command, semantic-admission, generative-plan and React action tests;
+  `pnpm validate:fast`; `pnpm check:commit-safety` before commit. This headless correctness repair
+  does not claim visual renderer conformance or change a UI interaction contract.
+- **Budget:** retain existing bounded context traversal and membership lookup; no new tree
+  traversal, global catalog enumeration, subscription or retained cache.
+- **Review checklist:** validated scope before membership, all three paths share the rule,
+  negative cases remain closed, no public export or duplicate state/history, exact test evidence.
+
+### Local implementation receipt — 2026-09-05
+
+- `createLayoutPropertySupport` provides one private scope-aware membership predicate for raw
+  responsive Apply, semantic admission and generative operand collection. Existing descriptor
+  validation remains before support selection; no public export, schema or dependency changes.
+- Public-action integration regressions reproduced four positive-path failures before the repair.
+  The final matrix uses a child node and covers responsive Canvas action → raw/admitted session,
+  projection provenance, generative base/responsive set and prior-layout clear, detached Preview,
+  authorized Finalize, one history entry and Undo/Redo. Six malformed/unsupported cases remain
+  rejected through command/session and generative paths.
+- Focused verification: **5 files / 55 tests passed**, including **10 new integration cases**.
+  Fresh JDW package artifacts were built before testing public package imports.
+- `pnpm validate:fast`: **PASS**, **475 files / 2,825 tests**; includes typechecks, lint/format,
+  public exports, freshly packed external consumer builds, CJS leaves, dependency/launch boundaries,
+  public-reference/secret checks, workspace isolation and schema/story-tag checks.
+  The first restricted run stopped at a temporary-directory parent-read denial in the external
+  consumer build; the same complete gate passed under ordinary user permissions.
+- This receipt does not claim independent source review, integration, publication, browser visual
+  conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
+
 ## Status model
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open
