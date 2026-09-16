@@ -9,6 +9,7 @@
     "postinstall": "node scripts/postinstall-workspace-build.mjs",
     "build:workbench-extensions": "node scripts/bundle-workbench-extensions.mjs",
     "build:workspace": "node scripts/build-workspace-packages.mjs",
+    "watch:workspace": "node scripts/watch-workspace-packages.mjs",
     "dev": "node scripts/dev-workbench.mjs",
     "dev:storybook": "node scripts/dev-workbench.mjs storybook",
     "dev:all": "node scripts/dev-workbench.mjs all",
