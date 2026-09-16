@@ -16,7 +16,7 @@ export default defineConfig({
   },
   format: ['cjs'],
   dts: false,
-  clean: true,
+  clean: process.env.WORKBENCH_KIT_WATCH !== '1',
   sourcemap: true,
   splitting: false,
   platform: 'node',
