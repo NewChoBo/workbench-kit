@@ -86,7 +86,6 @@ interface RequestOperandMaps {
     ReadonlyMap<string, UiPropertyDescriptor | null>
   >;
   readonly strategies: ReadonlyMap<string, UiLayoutStrategyDescriptor>;
-  readonly strategyContainerProperties: ReadonlyMap<string, ReadonlySet<string>>;
   readonly strategyProperties: ReadonlyMap<string, readonly string[]>;
   readonly properties: ReadonlyMap<string, UiLayoutPropertyDescriptor>;
 }
@@ -703,12 +702,6 @@ function requestMaps(context: UiGenerativeAuthoringContextV1): RequestOperandMap
       [...components].map(([key, descriptor]) => [key, uniqueIdMap(descriptor.properties ?? [])]),
     ),
     strategies,
-    strategyContainerProperties: new Map(
-      [...strategies].map(([key, strategy]) => [
-        key,
-        new Set(strategy.supportedContainerProperties),
-      ]),
-    ),
     strategyProperties: new Map(
       [...strategies].map(([key, strategy]) => [
         key,
@@ -744,12 +737,15 @@ function addLayoutReference(
       refs.layoutPropertyIds.add(propertyId);
     }
   }
-  const supported = maps.strategyContainerProperties.get(strategyId)!;
   for (const propertyId of Object.keys(values)) {
     const property = maps.properties.get(propertyId);
     if (
       property === undefined ||
-      !supported.has(propertyId) ||
+      !(
+        property.scope === 'container'
+          ? strategy.supportedContainerProperties
+          : strategy.supportedChildProperties
+      ).includes(propertyId) ||
       !property.strategyKinds.includes(strategy.kind)
     ) {
       return 'unsupported';

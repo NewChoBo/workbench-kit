@@ -621,7 +621,6 @@ function applyResponsiveCommand(
     const strategyValid =
       strategy !== undefined &&
       validateUiLayoutStrategyDescriptor(strategy, context.layoutProperties).length === 0;
-    const supported = new Set(strategy?.supportedContainerProperties ?? []);
     const valuesValid =
       strategyValid &&
       Object.entries(command.values).every(([propertyId, value]) => {
@@ -630,8 +629,11 @@ function applyResponsiveCommand(
             property.id === propertyId && property.strategyKinds.includes(strategy!.kind),
         );
         return (
-          supported.has(propertyId) &&
           properties.length === 1 &&
+          (properties[0]!.scope === 'container'
+            ? strategy!.supportedContainerProperties
+            : strategy!.supportedChildProperties
+          ).includes(propertyId) &&
           validateUiLayoutPropertyValue(properties[0]!, value).length === 0
         );
       });
