@@ -284,6 +284,13 @@ unchanged. The [wave 2 receipt](./distributed-integration-wave-2.md) records exa
 part/merge commits, source-browser evidence and next bounded design queues.
 Four-framework/real IME acceptance, develop, release and adoption remain separate.
 
+## Wave 3 — strict UTF-8 and four input hosts
+
+ST-004B and ST-005C are `READY_FOR_IMPLEMENTATION` under the closed
+[wave 3 packet](./implementation-wave-3.md). It fixes byte/BOM/error semantics,
+browser artifact delivery, host lifecycle ownership, exclusive paths and
+verification gates before independent parts branch. Common v1 remains unchanged.
+
 ## Shared status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open
