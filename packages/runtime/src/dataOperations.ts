@@ -70,6 +70,7 @@ export function createDataOperationRunner(
     async run(ref, input, options) {
       let remaining = options?.maxInvocations;
       let budgetFailure: InvocationFailure | undefined;
+      let cancellationFailure: InvocationFailure | undefined;
       const signal = options?.signal;
       const initialLocation = options?.location ?? [];
       if (
@@ -93,7 +94,10 @@ export function createDataOperationRunner(
         const address = Object.freeze([...path]);
         const operation = Object.freeze({ ...request });
         const check = () => {
-          if (signal?.aborted) throw failure('cancelled', operation, address, signal.reason);
+          if (signal?.aborted) {
+            cancellationFailure ??= failure('cancelled', operation, address, signal.reason);
+            throw cancellationFailure;
+          }
           if (budgetFailure) throw budgetFailure;
         };
         check();
@@ -104,6 +108,7 @@ export function createDataOperationRunner(
         try {
           accepted = definition.acceptsInput(value);
         } catch (cause) {
+          check();
           throw failure('validation-failed', operation, address, cause);
         }
         check();
@@ -129,8 +134,8 @@ export function createDataOperationRunner(
             }),
           );
         } catch (cause) {
-          if (cause instanceof InvocationFailure) throw cause;
           check();
+          if (cause instanceof InvocationFailure) throw cause;
           throw failure('execution-failed', operation, address, cause);
         } finally {
           active = false;
@@ -139,6 +144,7 @@ export function createDataOperationRunner(
         try {
           accepted = definition.acceptsOutput(output);
         } catch (cause) {
+          check();
           throw failure('validation-failed', operation, address, cause);
         }
         check();

@@ -6,6 +6,10 @@ all feature charters to completed code or create a universal document/scheduler.
 
 ## Rules for common implementations
 
+The [common baseline v1](./common-contract-baseline.md) closes the shared rules
+for distributed parts, including terminal-failure precedence and control profile
+compatibility. It does not create a universal scheduler or replace domain types.
+
 1. Reuse existing types and behavior before introducing a shared type. A UI value
    descriptor is editor metadata; it is not automatically a runtime data validator.
 2. Common code has one owner and a public consumption boundary. A domain adapter
@@ -96,6 +100,11 @@ clone inputs or roll back external side effects.
 Cancellation is checked before invocation and after awaited execution and value
 validation. It is cooperative: a callback that never settles still cannot be
 preempted. The original abort reason is available as the local failure cause.
+Observed cancellation has priority over exhausted budget, then ordinary failures.
+The first observed cancellation is retained for the run, including its child
+location/cause even if a caller catches it. Exhausted budget also remains terminal
+when an older ordinary child error is rethrown. Predicate exceptions pass the same
+terminal check. Ordinary nested errors remain recoverable by operation code.
 
 ### Diagnostics and compatibility
 

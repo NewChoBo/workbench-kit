@@ -37,6 +37,10 @@ and type dependencies remain; it is not a framework-independent artifact yet.
 | Commit               | Blur/Enter are signals to consumers, not automatic Apply; Escape/Undo belong to the editor               | SP07/domain adapters                                        |
 
 Existing React onValueChange remains an edit callback, including composing input.
+The future string-only core contract does not narrow the existing React native
+value prop type. Checkbox checked and submitted form value have separate types;
+native checkbox readOnly does not promise to prevent toggling. See the
+[common baseline](./common-contract-baseline.md) for distributed-work invariants.
 Do not change it into a commit-only callback when introducing a portable control.
 Controlled consumers must feed accepted edits back as value; uncontrolled consumers
 retain their live value until reset. The two modes need distinct fixtures.

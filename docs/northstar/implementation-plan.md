@@ -224,6 +224,44 @@ pre-commit validation are preserved in
 - See [shared-feature-contracts.md](./shared-feature-contracts.md) for the full
   ownership map, applied API and deferred schema/Recipe/Graph/UI integration.
 
+## Common baseline v1 — distributed capability work
+
+The normative [common contract baseline](./common-contract-baseline.md) owns the
+shared execution/control/ownership rules and the WB-ST-003C terminal-failure repair.
+WB-ST-003C is `READY_FOR_IMPLEMENTATION`; first-wave part branches start only after
+the common repair, validation and review are complete and committed.
+
+### WB-ST-004T — strict text-adapter conformance
+
+Admission: `READY_FOR_IMPLEMENTATION` after the common v1 freeze. Owner: SP02
+text adapters. Exclusive changes: new
+`packages/field-remap/src/registry/builtinDataOperations.contract.test.ts` and
+`docs/northstar/parts/text-adapter-receipt.md`. No production API change.
+Test the exact trim/upper/lower version-1 inventory, frozen definitions/ref/list,
+strict primitive strings (including rejected boxed/hostile coercion values),
+Unicode/empty/whitespace parity with legacy algorithms and independent repeated
+factory consumption. Exercise public focused adapter imports through the real
+runner; no mocked execution or duplicate algorithms. No JSON/codecs, new package,
+legacy coercion migration, framework work or common runtime edit. Focused tests,
+field-remap typecheck, formatting and commit-safety are required in the part;
+the integrator registers exact cases and runs the combined fast gate after merge.
+
+### WB-ST-006A — current Checkbox adapter conformance
+
+Admission: `READY_FOR_IMPLEMENTATION` after the common v1 freeze. Owner: SP06
+current React Checkbox. Exclusive changes: new
+`packages/react/src/primitives/checkbox/Checkbox.contract.test.tsx` and
+`docs/northstar/parts/checkbox-receipt.md`. No production API change.
+Seven required cases: controlled checked updates without callbacks; click callback
+order/boolean/same event; label activation once; stable node/ref/focus on updates;
+checked/unchecked/disabled form data and uncontrolled reset; required validity;
+ref cleanup and no duplicate callbacks after remount. Preserve native readOnly
+semantics and checked versus submitted-value distinction. No portable package,
+new callbacks, autosave or document/history ownership. JSDOM is adapter evidence,
+not keyboard/browser/real IME or four-host completion. Focused tests, React
+typecheck, formatting and commit-safety are required; the integrator owns required
+unit registration and combined fast validation after merge.
+
 ## Shared status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open

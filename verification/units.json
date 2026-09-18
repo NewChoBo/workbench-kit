@@ -129,7 +129,12 @@
             "strict data operations shares a nested budget and preserves child error addresses",
             "strict data operations does not hide an exceeded budget when operation code catches it",
             "strict data operations keeps child cancellation location and freezes diagnostics",
-            "strict data operations closes escaped invocation contexts and isolates separate runs"
+            "strict data operations closes escaped invocation contexts and isolates separate runs",
+            "strict data operations preserves exhausted budget when an older ordinary child failure is rethrown",
+            "strict data operations preserves caught child cancellation across fallback and concurrent runs",
+            "strict data operations prioritizes cancellation when input or output validation aborts and throws",
+            "strict data operations prioritizes observed cancellation over a previously exhausted budget",
+            "strict data operations allows explicit recovery from ordinary child errors"
           ]
         }
       ]

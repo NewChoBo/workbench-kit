@@ -4,6 +4,12 @@ Baseline: local source `aedc12e6`, 2026-09-19. This is an execution plan;
 implementation admission remains packet-specific. No release or downstream code
 adoption follows from a completed planning task.
 
+Distributed Kit parts now use [common baseline v1](./common-contract-baseline.md):
+freeze the shared repair/contracts first, branch all admitted parts from that
+commit, and integrate their disjoint changes sequentially with combined tests.
+The first wave is strict text-adapter and current Checkbox conformance. Common
+exports/runtime/registry remain integration-owner responsibilities.
+
 ## Independent work
 
 Kit capabilities and consumer preparation can proceed concurrently. A consumer

@@ -273,4 +273,140 @@ describe('strict data operations', () => {
     expect(await runner.run(ref, 'two', options)).toEqual({ ok: true, value: 'two' });
     expect(execute).toHaveBeenCalledTimes(2);
   });
+
+  it('preserves exhausted budget when an older ordinary child failure is rethrown', async () => {
+    const parent = { id: 'test:parent', version: 1 };
+    const runner = createDataOperationRunner([
+      definition({ acceptsInput: (value) => typeof value === 'string' }),
+      definition({
+        ref: parent,
+        execute: async (_, context) => {
+          let earlier: unknown;
+          try {
+            await context.invoke(ref, 42, 'invalid');
+          } catch (error) {
+            earlier = error;
+          }
+          try {
+            await context.invoke(ref, 'text', 'budget');
+          } catch {
+            // Rethrowing an earlier error must not recover the exhausted run.
+          }
+          throw earlier;
+        },
+      }),
+    ]);
+    expect(await runner.run(parent, null, { maxInvocations: 1, location: ['recipe'] })).toEqual({
+      ok: false,
+      diagnostic: { code: 'budget-exceeded', operation: ref, location: ['recipe', 'budget'] },
+      cause: undefined,
+    });
+  });
+
+  it('preserves caught child cancellation across fallback and concurrent runs', async () => {
+    const controller = new AbortController();
+    const reason = { source: 'child' };
+    const parent = { id: 'test:parent', version: 1 };
+    const runner = createDataOperationRunner([
+      definition({
+        execute: (value) => {
+          if (value === 'stop') controller.abort(reason);
+          return value;
+        },
+      }),
+      definition({
+        ref: parent,
+        execute: async (value, context) => {
+          try {
+            return await context.invoke(ref, value, 'child');
+          } catch {
+            return 'fallback';
+          }
+        },
+      }),
+    ]);
+    const cancelled = runner.run(parent, 'stop', {
+      maxInvocations: 2,
+      signal: controller.signal,
+      location: ['recipe'],
+    });
+    const successful = runner.run(parent, 'continue', { maxInvocations: 2 });
+    const result = await cancelled;
+    expect(result).toEqual({
+      ok: false,
+      diagnostic: { code: 'cancelled', operation: ref, location: ['recipe', 'child'] },
+      cause: reason,
+    });
+    if (!result.ok) expect(result.cause).toBe(reason);
+    expect(await successful).toEqual({ ok: true, value: 'continue' });
+  });
+
+  it('prioritizes cancellation when input or output validation aborts and throws', async () => {
+    for (const field of ['acceptsInput', 'acceptsOutput'] as const) {
+      const controller = new AbortController();
+      const reason = new Error('cancelled by validator');
+      const parent = { id: 'test:parent', version: 1 };
+      const runner = createDataOperationRunner([
+        definition({
+          [field]: () => {
+            controller.abort(reason);
+            throw new Error('validation');
+          },
+        }),
+        definition({ ref: parent, execute: (value, context) => context.invoke(ref, value, field) }),
+      ]);
+      const result = await runner.run(parent, null, {
+        maxInvocations: 2,
+        signal: controller.signal,
+        location: ['recipe'],
+      });
+      expect(result).toEqual({
+        ok: false,
+        diagnostic: { code: 'cancelled', operation: ref, location: ['recipe', field] },
+        cause: reason,
+      });
+      if (!result.ok) expect(result.cause).toBe(reason);
+    }
+  });
+
+  it('prioritizes observed cancellation over a previously exhausted budget', async () => {
+    const controller = new AbortController();
+    const parent = { id: 'test:parent', version: 1 };
+    const runner = createDataOperationRunner([
+      definition(),
+      definition({
+        ref: parent,
+        execute: async (value, context) => {
+          try {
+            await context.invoke(ref, value, 'budget');
+          } catch (error) {
+            controller.abort('stop');
+            throw error;
+          }
+        },
+      }),
+    ]);
+    expect(
+      await runner.run(parent, null, { maxInvocations: 1, signal: controller.signal }),
+    ).toEqual({
+      ok: false,
+      diagnostic: { code: 'cancelled', operation: parent, location: [] },
+      cause: 'stop',
+    });
+  });
+
+  it('allows explicit recovery from ordinary child errors', async () => {
+    const runner = createDataOperationRunner([
+      definition({
+        execute: async (_, context) => {
+          try {
+            return await context.invoke({ id: 'unknown', version: 1 }, null, 'optional');
+          } catch {
+            return 'fallback';
+          }
+        },
+      }),
+    ]);
+    expect(await runner.run(ref, null, options)).toEqual({ ok: true, value: 'fallback' });
+  });
 });
