@@ -362,6 +362,8 @@ try {
 
   const coreMetrics = verifyOutput();
 
+  await verifyPackedDataOperations();
+
   buildFocusedConsumer('focused-command-host-controller');
   verifyFocusedCommandHostControllerOutput();
 
@@ -4291,6 +4293,62 @@ function writeFocusedViteConfig(name, input, outputDirectory, nodeExecutable = f
 };
 `,
   );
+}
+
+async function verifyPackedDataOperations() {
+  const name = 'data-operations';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `import type { DataOperationDefinition, DataOperationRunner } from '@workbench-kit/contracts';
+import { createDataOperationRunner } from '@workbench-kit/runtime/data-operations';
+import { createBuiltinTextDataOperations } from '@workbench-kit/field-remap/data-operations';
+const definitions: readonly DataOperationDefinition[] = createBuiltinTextDataOperations();
+const runner: DataOperationRunner = createDataOperationRunner(definitions);
+const ref = { id: 'string:trim', version: 1 };
+const valid = await runner.run(ref, '  Ada  ', { maxInvocations: 1 });
+if (!valid.ok || valid.value !== 'Ada') throw new Error('Packed strict operation failed');
+const invalid = await runner.run(ref, 42, { maxInvocations: 1 });
+if (invalid.ok || invalid.diagnostic.code !== 'invalid-input') throw new Error('Packed input admission failed');
+const wrongVersion = await runner.run({ ...ref, version: 2 }, 'Ada', { maxInvocations: 1 });
+if (wrongVersion.ok || wrongVersion.diagnostic.code !== 'unknown-operation') throw new Error('Packed exact ref failed');
+if (typeof document !== 'undefined') throw new Error('Expected headless execution');
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (!Array.isArray(modules) || modules.length === 0) {
+    throw new Error('Data operations emitted no dependency graph evidence');
+  }
+  if (modules.some((id) => /\/(react|react-dom|monaco-editor)\//.test(id.replaceAll('\\', '/')))) {
+    throw new Error('Data operations pulled a UI dependency');
+  }
+  const manifest = readJson(path.join(output, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((item) => item.isEntry);
+  if (!entry?.file || entry.css?.length) throw new Error('Invalid headless data operation bundle');
+  await import(pathToFileURL(path.join(output, entry.file)).href);
+  console.log('[check-packed-consumer] data operations headless runtime and public types OK.');
 }
 
 function buildFocusedConsumer(name) {

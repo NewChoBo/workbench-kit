@@ -44,7 +44,8 @@
       "sources": [
         "packages/field-remap/src/registry/builtinTransforms.ts",
         "packages/field-remap/src/domain/mapping/dateFormat.ts",
-        "packages/field-remap/src/domain/mapping/pathUtils.ts"
+        "packages/field-remap/src/domain/mapping/pathUtils.ts",
+        "packages/field-remap/src/domain/operations/textOperations.ts"
       ],
       "tests": [
         {
@@ -101,6 +102,48 @@
             "TextInput adapter contract preserves the input node focus and ref across value updates",
             "TextInput adapter contract retains native uncontrolled form reset and disabled semantics",
             "TextInput adapter contract clears refs and stops delegated callbacks after removal"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP02.strict-operation-invocation",
+      "owner": "Data Operations / contracts and runtime",
+      "sources": [
+        "packages/contracts/src/data-processing/operation.ts",
+        "packages/runtime/src/dataOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/runtime/src/dataOperations.test.ts",
+          "cases": [
+            "strict data operations preserves explicit null undefined bytes and array cardinality",
+            "strict data operations resolves only exact refs and rejects invalid registration",
+            "strict data operations snapshots registration independently of caller mutation",
+            "strict data operations rejects invalid input before executing and rejects invalid output",
+            "strict data operations retains causes and identifies validation versus execution failures",
+            "strict data operations rejects invalid budgets and locations without running code",
+            "strict data operations checks cancellation before execution and after awaited completion",
+            "strict data operations isolates cancellation and budgets across concurrent runs",
+            "strict data operations shares a nested budget and preserves child error addresses",
+            "strict data operations does not hide an exceeded budget when operation code catches it",
+            "strict data operations keeps child cancellation location and freezes diagnostics",
+            "strict data operations closes escaped invocation contexts and isolates separate runs"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP10.operation-adapter-composition",
+      "owner": "Composition / builtin text operation adapters",
+      "sources": ["packages/field-remap/src/registry/builtinDataOperations.ts"],
+      "tests": [
+        {
+          "file": "scripts/data-operations-integration.test.mjs",
+          "cases": [
+            "shared data operation integration reuses all three builtin algorithms through strict calls",
+            "shared data operation integration separates strict rejection from unchanged legacy coercion",
+            "shared data operation integration composes real adapters with one shared budget and location"
           ]
         }
       ]

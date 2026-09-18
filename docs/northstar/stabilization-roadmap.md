@@ -38,6 +38,9 @@ review candidates; ST-003 strict invocation and portable delivery remain next.
 
 ## Responsibility map
 
+Detailed common semantics, owner boundaries and the first applied strict invocation
+specification: [shared-feature-contracts.md](./shared-feature-contracts.md).
+
 | Project                          | Owns                                                 | Does not own                                | First independent acceptance                                      |
 | -------------------------------- | ---------------------------------------------------- | ------------------------------------------- | ----------------------------------------------------------------- |
 | SP01 Foundation & Contracts      | Values, references, diagnostics, revisions, cleanup  | Global scheduler/kernel                     | Value distinctions, exact references and exception-safe cleanup   |

@@ -215,7 +215,7 @@ pre-commit validation are preserved in
   **7 units / 52 required cases**, 53 executed tests including the existing Emitter.
 - Packed public consumers pass exact optional property checking and real headless
   execution for success/input rejection/version rejection. The operation dependency
-  graph is checked for UI imports; no DOM or React provider is installed at execution.
+  graph is checked for UI imports; execution requires no DOM globals or React provider.
 - Both adapters now share the pure text algorithm leaf. Existing public-root source
   imports contain unrelated exact-optional issues; the focused entry points isolate
   the new contract without weakening checks or broadly changing legacy types.
