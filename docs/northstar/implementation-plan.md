@@ -9831,6 +9831,11 @@ without changing native boundaries, and is integrated on `origin/develop` throug
 
 ---
 
+# WB-ST-003B — Operation invocation performance
+
+Admission: `READY_FOR_IMPLEMENTATION`. Scope, unchanged behavior, benchmark method
+and verification are closed in [operation-performance.md](./operation-performance.md).
+
 # Implementation source-review protocol
 
 When an implementation branch/PR appears:

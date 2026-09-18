@@ -120,6 +120,7 @@
             "strict data operations preserves explicit null undefined bytes and array cardinality",
             "strict data operations resolves only exact refs and rejects invalid registration",
             "strict data operations snapshots registration independently of caller mutation",
+            "strict data operations keeps punctuation unicode and prototype-like ids distinct across versions",
             "strict data operations rejects invalid input before executing and rejects invalid output",
             "strict data operations retains causes and identifies validation versus execution failures",
             "strict data operations rejects invalid budgets and locations without running code",

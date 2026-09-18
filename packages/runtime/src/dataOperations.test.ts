@@ -64,6 +64,27 @@ describe('strict data operations', () => {
     expect(await runner.run(ref, 'original', options)).toEqual({ ok: true, value: 'original' });
   });
 
+  it('keeps punctuation unicode and prototype-like ids distinct across versions', async () => {
+    const ids = ['__proto__', 'constructor', 'text:1', 'text', 'text,1', 'text"1', '문자열'];
+    const definitions = ids.flatMap((id) =>
+      [1, 2, Number.MAX_SAFE_INTEGER].map((version) =>
+        definition({ ref: { id, version }, execute: () => `${id}/${version}` }),
+      ),
+    );
+    const runner = createDataOperationRunner(definitions);
+    for (const { ref: request } of definitions) {
+      expect(await runner.run({ ...request }, null, options)).toEqual({
+        ok: true,
+        value: `${request.id}/${request.version}`,
+      });
+    }
+    expect(await runner.run({ id: 'text', version: 3 }, null, options)).toMatchObject({
+      ok: false,
+      diagnostic: { code: 'unknown-operation' },
+    });
+    expect(() => createDataOperationRunner([...definitions, definitions[0]!])).toThrow('Duplicate');
+  });
+
   it('rejects invalid input before executing and rejects invalid output', async () => {
     const execute = vi.fn(() => 7);
     const runner = createDataOperationRunner([

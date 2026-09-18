@@ -14,10 +14,6 @@ function validRef(ref: DataOperationRef): boolean {
   return !!ref && canonical(ref.id) && Number.isSafeInteger(ref.version) && ref.version > 0;
 }
 
-function key(ref: DataOperationRef): string {
-  return JSON.stringify([ref.id, ref.version]);
-}
-
 class InvocationFailure extends Error {
   constructor(
     readonly diagnostic: DataOperationDiagnostic,
@@ -47,7 +43,7 @@ function failure(
 export function createDataOperationRunner(
   definitions: readonly DataOperationDefinition[],
 ): DataOperationRunner {
-  const registry = new Map<string, DataOperationDefinition>();
+  const registry = new Map<string, Map<number, DataOperationDefinition>>();
   for (const definition of definitions) {
     if (
       !validRef(definition.ref) ||
@@ -57,9 +53,17 @@ export function createDataOperationRunner(
     ) {
       throw new Error('Invalid data operation definition');
     }
-    const id = key(definition.ref);
-    if (registry.has(id)) throw new Error('Duplicate data operation reference');
-    registry.set(id, Object.freeze({ ...definition, ref: Object.freeze({ ...definition.ref }) }));
+    const { id, version } = definition.ref;
+    let versions = registry.get(id);
+    if (!versions) {
+      versions = new Map();
+      registry.set(id, versions);
+    }
+    if (versions.has(version)) throw new Error('Duplicate data operation reference');
+    versions.set(
+      version,
+      Object.freeze({ ...definition, ref: Object.freeze({ ...definition.ref }) }),
+    );
   }
 
   return {
@@ -94,7 +98,7 @@ export function createDataOperationRunner(
         };
         check();
         if (!validRef(operation)) throw failure('invalid-request', operation, address);
-        const definition = registry.get(key(operation));
+        const definition = registry.get(operation.id)?.get(operation.version);
         if (!definition) throw failure('unknown-operation', operation, address);
         let accepted: boolean;
         try {
