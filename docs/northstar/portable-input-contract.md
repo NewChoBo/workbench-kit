@@ -45,7 +45,16 @@ Do not change it into a commit-only callback when introducing a portable control
 Controlled consumers must feed accepted edits back as value; uncontrolled consumers
 retain their live value until reset. The two modes need distinct fixtures.
 
-## Delivery decision before implementation
+## Delivery decision — native core unit admitted
+
+[ST-005B](./implementation-wave-2.md) chooses a native text-input DOM binder for
+the first core unit, focused under platform/native-text-input. The host owns
+markup/CSS/native attributes and must explicitly dispose the binder on unmount;
+there is no automatic disconnect observer. Native input events are the transport.
+This closes core delivery while keeping framework adapters and shared styling
+as separate units; four-host acceptance below remains required for portable completion.
+
+## Original delivery comparison
 
 Use a native-input-based DOM implementation as the comparison baseline, with
 framework adapters translating values/events without importing React into core.
@@ -55,7 +64,8 @@ Do not select a wrapper solely because it renders in four frameworks.
 
 The packet must lock the published subpath/package, native versus custom event
 transport, event bubbling/composed behavior, form/reset strategy and CSS ownership.
-These delivery decisions remain open; no public API names are reserved by this draft.
+The core choices are now fixed by ST-005B; framework consumer and styling choices
+are not implied by the binder implementation.
 Existing React public props and onChange-before-onValueChange ordering remain stable.
 
 ## Acceptance evidence by layer

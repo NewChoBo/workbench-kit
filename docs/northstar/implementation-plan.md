@@ -273,6 +273,13 @@ See [wave 1 integration](./distributed-integration-wave-1.md) for exact part and
 merge commits, verification scope and remaining domain design decisions. Develop,
 release and consumer adoption remain separate gates.
 
+## Wave 2 — bounded JSON operation and native text-input core
+
+ST-004A and ST-005B are `READY_FOR_IMPLEMENTATION` with closed API, ownership,
+compatibility and acceptance in [implementation-wave-2.md](./implementation-wave-2.md).
+Both parts branch from the commit admitting that packet; export/registry/packed
+consumer edits belong only to the integrator. Shared v1 remains unchanged.
+
 ## Shared status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open
