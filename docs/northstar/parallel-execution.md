@@ -7,10 +7,13 @@ adoption follows from a completed planning task.
 Distributed Kit parts now use [common baseline v1](./common-contract-baseline.md):
 freeze the shared repair/contracts first, branch all admitted parts from that
 commit, and integrate their disjoint changes sequentially with combined tests.
-The first wave is strict text-adapter and current Checkbox conformance. Common
+The first wave covers strict text-adapter and current Checkbox conformance. Common
 exports/runtime/registry remain integration-owner responsibilities.
 The first-wave [integration receipt](./distributed-integration-wave-1.md) records
 the exact common/part/merge commits and combined verification state.
+The [second wave](./distributed-integration-wave-2.md) now integrates bounded JSON
+and native Input from a shared admission commit, with reviewed public exports,
+required cases, packed consumers and source HTML browser evidence.
 
 ## Independent work
 
@@ -19,12 +22,12 @@ does not need to wait for all Kit milestones to inventory its current use, desig
 user flows, define product policy or specify acceptance scenarios. A capability
 does not need the consumer redesign to finish its generic contracts and fixtures.
 
-| Lane                 | Owns                                                                           | Next small deliverable                                                                                                              | Can start with                                              | Does not claim                                  |
-| -------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
-| Kit processing       | Shared invocation and individual algorithms                                    | ST-004A contract for one JSON parse operation, then its own admitted implementation/test change                                     | Locally validated ST-003A/B                                 | Complete codec/filter library or Recipe runtime |
-| Kit controls         | Native control semantics and framework adapters                                | ST-005B delivery decision: compare native DOM binding and custom element against label/form/reset/IME/lifecycle and package exports | ST-005A current React fixtures and portable Input draft     | Four-host conformance from React fixtures       |
-| Consumer preparation | Product UX, input commit policy, selection/draft lifetime and composition plan | One current-source input/Inspector inventory plus before/after/error scenarios                                                      | Current consumer source and existing published API          | Adoption of unpublished Kit exports             |
-| Integration          | Exact artifacts, compatibility and end-to-end evidence                         | One capability-specific adoption packet after release                                                                               | Independently completed capability and consumer preparation | Blanket migration of all features               |
+| Lane                 | Owns                                                                           | Next small deliverable                                                                 | Can start with                                              | Does not claim                                  |
+| -------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| Kit processing       | Shared invocation and individual algorithms                                    | One UTF-8 decoding packet with byte input, malformed-sequence/BOM semantics and limits | Locally integrated ST-003 and bounded ST-004A JSON          | Complete codec/filter library or Recipe runtime |
+| Kit controls         | Native control semantics and framework adapters                                | Browser artifact delivery and same-artifact framework mount/update/unmount acceptance  | Locally integrated ST-005B native binder                    | Four-host or real IME conformance from JSDOM    |
+| Consumer preparation | Product UX, input commit policy, selection/draft lifetime and composition plan | One current-source input/Inspector inventory plus before/after/error scenarios         | Current consumer source and existing published API          | Adoption of unpublished Kit exports             |
+| Integration          | Exact artifacts, compatibility and end-to-end evidence                         | One capability-specific adoption packet after release                                  | Independently completed capability and consumer preparation | Blanket migration of all features               |
 
 Processing and controls are separate queues. With one Kit implementation owner,
 advance one admitted source packet at a time; a consumer planning owner can work
@@ -33,22 +36,19 @@ to shared exports, the unit registry or the release manifest.
 
 ## Next packet boundaries
 
-ST-004A is `DESIGNING`. Before source changes, close one operation's exact ref,
-accepted input/output, invalid JSON behavior, number representation, size/resource
-limits, package/algorithm ownership, and how diagnostics use the existing invoker.
-Search existing JSON parsers first; document parsing and UI schema admission are
-not automatically interchangeable with a general data operation. Deliver the
-contract and independent fixtures for scalar/null/0–1–N arrays, malformed input,
-pre/late cancellation and nested budget/address behavior. Do not silently choose
-lossy numeric conversion or infer a CPU/memory bound from maxInvocations.
+ST-004A is `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`. Its native number semantics,
+UTF-16 limit, diagnostics and cancellation/budget ownership are fixed in the
+[wave 2 packet](./implementation-wave-2.md). Next, close one UTF-8 decoder's byte
+admission, malformed-sequence/BOM policy, output and resource limits. Keep document
+parsing, filtering and Recipe sequencing separate. A size/invocation limit does
+not establish a CPU/memory bound.
 
-ST-005B is `DESIGNING`. Use `react/src/primitives/text-input/TextInput.tsx` and
-its six contract cases as compatibility evidence. Choose the DOM implementation,
-published entry, CSS ownership, native/custom event transport, form/reset and
-mount/disconnect behavior before admission. The existing onChange then
-onValueChange order and edit-versus-commit distinction remain stable. The decision
-must include one artifact's HTML/React/Vue/Svelte consumer fixtures and distinguish
-synthetic composition from actual operating-system IME evidence.
+ST-005B is `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`: native DOM binding with
+explicit host disposal and no styling/runtime dependency. The next packet must
+close browser artifact delivery and framework lifecycle adapters before claiming
+one artifact works in HTML/React/Vue/Svelte. Existing React onChange then
+onValueChange and edit-versus-commit semantics remain stable. Synthetic composition
+and source HTML interactions do not establish operating-system IME acceptance.
 
 The next event-order fixtures should include Enter followed by blur, blur during
 composition, and focus/unmount during selection changes. Core acceptance concerns

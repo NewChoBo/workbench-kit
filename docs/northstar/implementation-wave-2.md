@@ -4,6 +4,11 @@ Admission: `READY_FOR_IMPLEMENTATION` for the two units below. Shared semantics
 remain common v1. Starting source: `32918b8b`; the commit admitting this document
 is the common branch point. Domain choices below are closed for this scope.
 
+Implementation result: both units are now `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`.
+The [combined receipt](./distributed-integration-wave-2.md) records 488 files /
+2,932 passing tests, packed public consumers and bounded HTML browser evidence.
+Admission below is preserved as the contract; it is not a release claim.
+
 ## ST-004A — bounded native JSON parsing
 
 Owner: SP02. Public focused entry:

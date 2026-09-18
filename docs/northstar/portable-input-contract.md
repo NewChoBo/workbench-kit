@@ -22,19 +22,19 @@ and type dependencies remain; it is not a framework-independent artifact yet.
 
 ## Behavior decisions for the portable control
 
-| Concern              | Required behavior                                                                                        | Owner / validation                                          |
-| -------------------- | -------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| Value                | Runtime value is a string; empty is `''`. Number parsing and null/missing conversion live in adapters    | Core accepts a value; domain adapter validates meaning      |
-| Programmatic updates | Update displayed value without synthesizing user input/change events                                     | Core; repeat property writes in all four hosts              |
-| User edits           | Report latest text and composition state; do not save documents                                          | Core event; consumer decides when to commit                 |
-| Composition          | Forward start/update/end, preserve text and selection; composing Enter must not submit an editor command | Core plus editor adapter; real IME verification required    |
-| Focus                | Stable control identity across value/theme updates; forward focus/blur and focus method                  | Core; browser keyboard and selection tests                  |
-| Disabled/read-only   | Preserve native distinction, form participation and keyboard behavior                                    | Core; actual browser tests, not synthetic input alone       |
-| Form                 | Name, current value, default/reset value and required validation have explicit native semantics          | Core; FormData/reset/submit fixtures                        |
-| Accessibility        | Label association, described-by, invalid state and error text are composable                             | Core supplies hooks; field row owns label/error composition |
-| Lifecycle            | Remove owned listeners on disconnect; remount does not duplicate callbacks                               | Core; browser mount/unmount loop                            |
-| Styling              | Separate appearance tokens and layout width from value/state                                             | SP06 styling; SP08 owns appearance selection                |
-| Commit               | Blur/Enter are signals to consumers, not automatic Apply; Escape/Undo belong to the editor               | SP07/domain adapters                                        |
+| Concern              | Required behavior                                                                                        | Owner / validation                                           |
+| -------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Value                | Runtime value is a string; empty is `''`. Number parsing and null/missing conversion live in adapters    | Core accepts a value; domain adapter validates meaning       |
+| Programmatic updates | Update displayed value without synthesizing user input/change events                                     | Core; repeat property writes in all four hosts               |
+| User edits           | Report latest text and composition state; do not save documents                                          | Core event; consumer decides when to commit                  |
+| Composition          | Forward start/update/end, preserve text and selection; composing Enter must not submit an editor command | Core plus editor adapter; real IME verification required     |
+| Focus                | Stable control identity across value/theme updates; forward focus/blur and focus method                  | Core; browser keyboard and selection tests                   |
+| Disabled/read-only   | Preserve native distinction, form participation and keyboard behavior                                    | Core; actual browser tests, not synthetic input alone        |
+| Form                 | Name, current value, default/reset value and required validation have explicit native semantics          | Core; FormData/reset/submit fixtures                         |
+| Accessibility        | Label association, described-by, invalid state and error text are composable                             | Core supplies hooks; field row owns label/error composition  |
+| Lifecycle            | Host calls dispose on unmount; owned listeners are removed and rebinding does not duplicate callbacks    | Host lifecycle plus core cleanup; browser mount/unmount loop |
+| Styling              | Separate appearance tokens and layout width from value/state                                             | SP06 styling; SP08 owns appearance selection                 |
+| Commit               | Blur/Enter are signals to consumers, not automatic Apply; Escape/Undo belong to the editor               | SP07/domain adapters                                         |
 
 Existing React onValueChange remains an edit callback, including composing input.
 The future string-only core contract does not narrow the existing React native
@@ -45,7 +45,7 @@ Do not change it into a commit-only callback when introducing a portable control
 Controlled consumers must feed accepted edits back as value; uncontrolled consumers
 retain their live value until reset. The two modes need distinct fixtures.
 
-## Delivery decision — native core unit admitted
+## Delivery decision — native core unit locally implemented
 
 [ST-005B](./implementation-wave-2.md) chooses a native text-input DOM binder for
 the first core unit, focused under platform/native-text-input. The host owns
@@ -53,17 +53,20 @@ markup/CSS/native attributes and must explicitly dispose the binder on unmount;
 there is no automatic disconnect observer. Native input events are the transport.
 This closes core delivery while keeping framework adapters and shared styling
 as separate units; four-host acceptance below remains required for portable completion.
+The [wave 2 receipt](./distributed-integration-wave-2.md) records public packed
+types/runtime, 10 required core cases and source HTML browser interaction.
 
 ## Original delivery comparison
 
 Use a native-input-based DOM implementation as the comparison baseline, with
 framework adapters translating values/events without importing React into core.
-The next packet must choose between a DOM binder and a custom element after
-checking labels, forms, CSS/token delivery and lifecycle with the same fixture.
+ST-005B selected a DOM binder after checking labels, forms and lifecycle; a custom
+element is not required for this core. Framework and CSS/token delivery need their
+own packet and the same acceptance fixture.
 Do not select a wrapper solely because it renders in four frameworks.
 
-The packet must lock the published subpath/package, native versus custom event
-transport, event bubbling/composed behavior, form/reset strategy and CSS ownership.
+The admitted packet fixes the focused package subpath, native event transport,
+form/reset strategy and host CSS ownership.
 The core choices are now fixed by ST-005B; framework consumer and styling choices
 are not implied by the binder implementation.
 Existing React public props and onChange-before-onValueChange ordering remain stable.

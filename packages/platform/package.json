@@ -55,6 +55,7 @@
       "default": "./src/node/atomic-write.ts"
     },
     "./resize-rect": "./src/window/resize-rect.ts",
+    "./native-text-input": "./src/browser/native-text-input.ts",
     "./tray-close-policy": {
       "types": "./src/window/tray-close-policy.ts",
       "require": "./dist/tray-close-policy.cjs",

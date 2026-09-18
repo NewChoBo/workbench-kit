@@ -17,19 +17,21 @@ separate implementation receipt. A passing local candidate is not a release.
 4. **S3 — stable adoption candidate:** package-only consumers, browser interaction,
    compatibility review and release-tip gates pass on the same candidate.
 
-Current local integration: `396e9af8` plus the central first-wave test registration,
+Current local integration: `bf08f603` plus the central second-wave exports and registration,
 on `codex/stabilization-units-20260919`. S0 cleanup/required verification, ST-002
 legacy compatibility and cancellation, ST-005A current React Input fixtures,
 ST-003A strict invocation/text adapters and ST-003B lookup optimization are
 implemented. Shared baseline v1 repairs terminal failure preservation (ST-003C).
-The first independently reviewed parts add strict text and Checkbox conformance.
-Combined `validate:fast` passed **486 files / 2,908 tests**; the registry enforces
-**9 units / 71 required cases**. This is local integration and a partial capability
+The independently reviewed parts add strict text/Checkbox conformance, a bounded
+JSON operation and a native text-input binder. Combined `validate:fast` passed
+**488 files / 2,932 tests**; the registry enforces **11 units / 95 required cases**.
+This is local integration and a partial capability
 inventory, not full Kit stability, develop integration or published availability.
 
-Strict invocation is no longer pending. Bytes/text/JSON/filter definitions,
-portable Input delivery, four-host UI acceptance and real Recipe/Mapping bridges
-remain future work. Current React fixtures do not satisfy portable UI acceptance.
+Strict invocation, bounded native JSON and the native Input core are implemented.
+Bytes/UTF-8/filter definitions, no-build browser artifact delivery, four-host UI
+acceptance and real Recipe/Mapping bridges remain future work. Current React and
+native HTML fixtures do not satisfy complete portable UI acceptance.
 Existing static, complete unit, packed-consumer, dependency-boundary and required
 Storybook gates remain.
 
@@ -45,6 +47,8 @@ and explicit control-profile compatibility passed independent review and full
 fast (484 files / 2,895 tests). The first SP02/SP06 part branches started from
 that commit; their [integration receipt](./distributed-integration-wave-1.md)
 records the combined PASS and exact part/merge commits.
+The [second-wave receipt](./distributed-integration-wave-2.md) records the two new
+capabilities, packed consumers, source HTML interaction and explicit remaining gates.
 
 ## Responsibility map
 
@@ -77,8 +81,8 @@ Each row is a separate reviewable change. Scope does not expand automatically.
 | ST-001B required evidence       | Locally validated; fresh required-case registry runs in fast/CI                                          | ST-001A fixture           | Missing/renamed/skip/todo/zero/failure reject; real run succeeds                      |
 | ST-002 legacy operations        | All 13 builtins characterized; completion cancellation repaired locally                                  | S0                        | Fixtures preserve existing coercion and scalar/array semantics                        |
 | ST-003 values and invocation    | Strict invoker, text adapters and lookup optimization locally validated; portable serialization deferred | ST-002 + packet admission | Independent public type consumer; invalid input/output and unknown operation rejected |
-| ST-004 individual operations    | Decode bytes; UTF-8; parse JSON; validate; filter in separate units                                      | ST-003                    | Independent expected values, invalid encodings, 0/1/N arrays and cancellation/budget  |
-| ST-005 portable Input           | Current React fixtures locally validated; portable delivery decision still open                          | S0 + design decision      | HTML no-build and three framework consumers use same artifact; IME/focus/form/unmount |
+| ST-004 individual operations    | Bounded native JSON locally integrated; bytes/UTF-8/validate/filter remain separate units                | ST-003                    | Independent expected values, invalid encodings, 0/1/N arrays and cancellation/budget  |
+| ST-005 portable Input           | Native binder locally integrated with packed/JSDOM and source HTML evidence; four-host delivery pending  | S0 + design decision      | HTML no-build and three framework consumers use same artifact; IME/focus/form/unmount |
 | ST-006 Checkbox                 | Same control contract, property/event distinction                                                        | ST-005                    | Checked/disabled/keyboard/form/reset and cleanup across four hosts                    |
 | ST-007 PropertyRow              | Label, control slot, diagnostic and accessibility composition                                            | ST-005/006                | Label/control association and focus survive composition; no required shell/provider   |
 | ST-008 callable bridge contract | Nested invocation budget/cancel/address proven; domain bridge and trace ownership still need design      | ST-003; can design early  | Nested fixture cannot reset budget; failures preserve step/mapping location           |
@@ -108,8 +112,8 @@ inferred from this registry. Removal of a unit is a scope change requiring revie
 
 ## UI contract decisions before S1
 
-- Inventory current React Input/Checkbox behavior and consumers before choosing
-  vanilla custom elements, Lit or another implementation. No new runtime chosen yet.
+- Current React Input/Checkbox behavior is characterized. ST-005B selects native
+  DOM binding without a new runtime; close artifact/framework delivery next.
 - Separate programmatic property updates from user-originated events; specify
   event detail, bubbling/composed behavior, controlled state and validation timing.
 - Specify focus, keyboard, IME, disabled/read-only, form participation, labels,

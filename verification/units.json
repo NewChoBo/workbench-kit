@@ -193,6 +193,57 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP02.bounded-native-json",
+      "owner": "Data Operations / bounded native JSON parsing",
+      "sources": [
+        "packages/field-remap/src/domain/operations/jsonOperations.ts",
+        "packages/field-remap/src/registry/jsonDataOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/jsonDataOperations.test.ts",
+          "cases": [
+            "bounded native JSON operation rejects missing options and invalid limits before parsing",
+            "bounded native JSON operation snapshots the limit and freezes the exact versioned definition",
+            "bounded native JSON operation parses scalar null object and zero one many array results",
+            "bounded native JSON operation admits only parser top-level kinds without recursively validating values",
+            "bounded native JSON operation enforces original UTF16 length including emoji and whitespace",
+            "bounded native JSON operation rejects nonstrings boxed and hostile inputs without coercion or parsing",
+            "bounded native JSON operation guards direct execution type and length before its single parse",
+            "bounded native JSON operation preserves native syntax errors as execution causes without normalization",
+            "bounded native JSON operation preserves native rounded numbers negative zero and overflow",
+            "bounded native JSON operation keeps duplicate last keys and proto as an own data property",
+            "bounded native JSON operation parses once and returns the native result without cloning or freezing",
+            "bounded native JSON operation does not parse on preabort and preserves late cancellation after parsing",
+            "bounded native JSON operation inherits nested budgets and child diagnostic locations from the runner",
+            "bounded native JSON operation isolates concurrent results cancellation and separately configured runners"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.native-text-input",
+      "owner": "Universal UI / native DOM text input binding",
+      "sources": ["packages/platform/src/browser/native-text-input.ts"],
+      "tests": [
+        {
+          "file": "packages/platform/src/browser/native-text-input.test.ts",
+          "cases": [
+            "native text input binding rejects invalid inputs callbacks and active duplicate ownership",
+            "native text input binding reports native input events once without cancellation or synthesized changes",
+            "native text input binding sets values without events or host attribute and default value changes",
+            "native text input binding avoids same-value writes while preserving selection node and focus",
+            "native text input binding tracks composition before reentrant edits and never replays refused updates",
+            "native text input binding preserves native form reset validity disabled and readOnly properties",
+            "native text input binding ignores edits and writes while the host uses an unsupported input type",
+            "native text input binding disposes only owned listeners and permits rebind without stale disposal effects",
+            "native text input binding isolates control composition and supports disposal during edit callbacks",
+            "native text input binding imports without DOM globals and reports invalid binding with TypeError"
+          ]
+        }
+      ]
     }
   ]
 }

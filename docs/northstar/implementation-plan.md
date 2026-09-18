@@ -121,7 +121,8 @@ pre-commit validation are preserved in
 ## WB-ST-005A — current Input contract evidence
 
 - **Current status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED` for adapter
-  evidence. Portable core delivery remains `DESIGNING`.
+  evidence. Native core delivery is implemented under the separate ST-005B packet;
+  four-framework portable acceptance remains pending.
 - **Admission:** `READY_FOR_IMPLEMENTATION` for current React adapter tests and
   design only; portable implementation remains a separate packet.
 - **Owner/scope:** SP06, existing `TextInput`, native input props and callback
@@ -275,10 +276,13 @@ release and consumer adoption remain separate gates.
 
 ## Wave 2 — bounded JSON operation and native text-input core
 
-ST-004A and ST-005B are `READY_FOR_IMPLEMENTATION` with closed API, ownership,
-compatibility and acceptance in [implementation-wave-2.md](./implementation-wave-2.md).
-Both parts branch from the commit admitting that packet; export/registry/packed
-consumer edits belong only to the integrator. Shared v1 remains unchanged.
+ST-004A and ST-005B are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`, admitted by
+the closed [implementation packet](./implementation-wave-2.md). Both independent
+parts, focused public exports, required cases and packed consumers passed full
+fast: **488 files / 2,932 tests**, **11 units / 95 required cases**. Shared v1 is
+unchanged. The [wave 2 receipt](./distributed-integration-wave-2.md) records exact
+part/merge commits, source-browser evidence and next bounded design queues.
+Four-framework/real IME acceptance, develop, release and adoption remain separate.
 
 ## Shared status definitions
 

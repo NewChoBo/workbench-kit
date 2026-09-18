@@ -363,6 +363,7 @@ try {
   const coreMetrics = verifyOutput();
 
   await verifyPackedDataOperations();
+  await verifyPackedNativeTextInput();
 
   buildFocusedConsumer('focused-command-host-controller');
   verifyFocusedCommandHostControllerOutput();
@@ -4304,6 +4305,7 @@ async function verifyPackedDataOperations() {
     `import type { DataOperationDefinition, DataOperationRunner } from '@workbench-kit/contracts';
 import { createDataOperationRunner } from '@workbench-kit/runtime/data-operations';
 import { createBuiltinTextDataOperations } from '@workbench-kit/field-remap/data-operations';
+import { createJsonParseDataOperation } from '@workbench-kit/field-remap/json-data-operations';
 const definitions: readonly DataOperationDefinition[] = createBuiltinTextDataOperations();
 const runner: DataOperationRunner = createDataOperationRunner(definitions);
 const ref = { id: 'string:trim', version: 1 };
@@ -4313,6 +4315,14 @@ const invalid = await runner.run(ref, 42, { maxInvocations: 1 });
 if (invalid.ok || invalid.diagnostic.code !== 'invalid-input') throw new Error('Packed input admission failed');
 const wrongVersion = await runner.run({ ...ref, version: 2 }, 'Ada', { maxInvocations: 1 });
 if (wrongVersion.ok || wrongVersion.diagnostic.code !== 'unknown-operation') throw new Error('Packed exact ref failed');
+const parser = createDataOperationRunner([createJsonParseDataOperation({ maxInputCharacters: 32 })]);
+const jsonRef = { id: 'json:parse', version: 1 };
+const parsed = await parser.run(jsonRef, '[null,1,"text"]', { maxInvocations: 1 });
+if (!parsed.ok || JSON.stringify(parsed.value) !== '[null,1,"text"]') throw new Error('Packed JSON parse failed');
+const tooLarge = await parser.run(jsonRef, ' '.repeat(33), { maxInvocations: 1 });
+if (tooLarge.ok || tooLarge.diagnostic.code !== 'invalid-input') throw new Error('Packed JSON size admission failed');
+const malformed = await parser.run(jsonRef, '{', { maxInvocations: 1 });
+if (malformed.ok || malformed.diagnostic.code !== 'execution-failed' || !(malformed.cause instanceof SyntaxError)) throw new Error('Packed JSON syntax cause failed');
 if (typeof document !== 'undefined') throw new Error('Expected headless execution');
 `,
   );
@@ -4349,6 +4359,84 @@ if (typeof document !== 'undefined') throw new Error('Expected headless executio
   if (!entry?.file || entry.css?.length) throw new Error('Invalid headless data operation bundle');
   await import(pathToFileURL(path.join(output, entry.file)).href);
   console.log('[check-packed-consumer] data operations headless runtime and public types OK.');
+}
+
+async function verifyPackedNativeTextInput() {
+  const name = 'native-text-input';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `
+import { bindNativeTextInput, type NativeTextInputBinding, type NativeTextInputEdit } from '@workbench-kit/platform/native-text-input';
+if (typeof bindNativeTextInput !== 'function') throw new Error('Missing native input export');
+if (typeof document !== 'undefined') {
+  const form = document.createElement('form');
+  const control = document.createElement('input');
+  control.type = 'text'; control.name = 'sample'; control.defaultValue = 'default';
+  form.append(control); document.body.append(form);
+  let edits = 0;
+  const binding: NativeTextInputBinding = bindNativeTextInput(control, (edit: NativeTextInputEdit) => {
+    if (edit.value !== control.value || edit.event.target !== control) throw new Error('Wrong edit value/event');
+    edits += 1;
+  });
+  if (!binding.setValue('remote') || edits !== 0) throw new Error('Programmatic value synthesized an edit');
+  control.focus(); control.setSelectionRange(1, 3);
+  binding.setValue('remote');
+  if (document.activeElement !== control || control.selectionStart !== 1 || control.selectionEnd !== 3) throw new Error('Focus/selection changed');
+  const EventType = document.defaultView!.Event;
+  control.value = 'typed'; control.dispatchEvent(new EventType('input', { bubbles: true }));
+  if (Number(edits) !== 1) throw new Error('Missing input edit');
+  form.reset();
+  if (String(control.value) !== 'default' || Number(edits) !== 1) throw new Error('Reset contract changed');
+  binding.dispose();
+  control.dispatchEvent(new EventType('input', { bubbles: true }));
+  if (Number(edits) !== 1 || binding.setValue('late')) throw new Error('Disposed binding remained active');
+  const rebound = bindNativeTextInput(control, () => { edits += 1; });
+  control.dispatchEvent(new EventType('input', { bubbles: true }));
+  if (Number(edits) !== 2) throw new Error('Rebinding duplicated callbacks');
+  rebound.dispose(); form.remove();
+}
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (
+    !Array.isArray(modules) ||
+    !modules.some((id) =>
+      id.replaceAll('\\', '/').endsWith('/platform/src/browser/native-text-input.ts'),
+    )
+  ) {
+    throw new Error('Native input emitted no implementation evidence');
+  }
+  if (modules.some((id) => /\/(react|react-dom|monaco-editor)\//.test(id.replaceAll('\\', '/')))) {
+    throw new Error('Native input pulled a framework dependency');
+  }
+  const manifest = readJson(path.join(output, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((item) => item.isEntry);
+  if (!entry?.file || entry.css?.length) throw new Error('Native input pulled styling');
+  await import(`${pathToFileURL(path.join(output, entry.file)).href}?headless`);
+  await executeFocusedConsumer('native input', output);
 }
 
 function buildFocusedConsumer(name) {

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Native input contract fixture</title>
+    <style>
+      body {
+        font:
+          16px system-ui,
+          sans-serif;
+        max-width: 800px;
+        margin: 40px auto;
+        padding: 0 24px;
+        color: #17243a;
+        background: #f4f6fa;
+      }
+      input,
+      button {
+        font: inherit;
+        padding: 8px 12px;
+        margin: 4px;
+      }
+      input {
+        display: block;
+        min-width: 300px;
+      }
+      pre {
+        white-space: pre-wrap;
+        background: white;
+        border: 1px solid #a6b0c0;
+        padding: 16px;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Native text input</h1>
+    <p>
+      HTML-only contract fixture. Editing and form state remain native; saving is not performed.
+    </p>
+    <form id="sample-form">
+      <label for="sample">Sample value</label>
+      <input id="sample" name="sample" type="text" value="default" required />
+      <button type="reset">Reset form</button>
+      <button type="submit">Read form</button>
+    </form>
+    <p>
+      <button id="remote" type="button">Set remote value</button>
+      <button id="selection" type="button">Check selection</button>
+      <button id="duplicate" type="button">Check duplicate binding</button>
+      <button id="dispose" type="button">Dispose binding</button>
+      <button id="rebind" type="button" disabled>Rebind input</button>
+    </p>
+    <pre id="status" role="status" aria-live="polite"></pre>
+    <script type="module" src="./fixture.ts"></script>
+  </body>
+</html>
