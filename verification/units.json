@@ -1,0 +1,109 @@
+{
+  "version": 1,
+  "units": [
+    {
+      "id": "SP01.cleanup",
+      "owner": "Foundation / packages/base",
+      "sources": ["packages/base/src/disposable.ts"],
+      "tests": [
+        {
+          "file": "packages/base/src/disposable.test.ts",
+          "cases": [
+            "DisposableStore disposes registered items in reverse order",
+            "DisposableStore disposes items added after the store is disposed",
+            "DisposableStore attempts all cleanup and preserves the first failure",
+            "DisposableStore preserves a thrown undefined after remaining cleanup",
+            "DisposableStore does not repeat a batch during reentrant clear",
+            "DisposableStore retains additions during clear for the next batch",
+            "DisposableStore handles dispose during clear without repeating detached items",
+            "DisposableStore keeps additions after a successful clear",
+            "DisposableStore deduplicates registrations and immediately cleans additions during dispose"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PG00.required-unit-evidence",
+      "owner": "Repository verification / scripts",
+      "sources": ["scripts/verification-units.mjs", "scripts/check-verification-units.mjs"],
+      "tests": [
+        {
+          "file": "scripts/verification-units.test.mjs",
+          "cases": [
+            "verification units accepts a real registry and complete passing report",
+            "verification units rejects invalid ownership and paths",
+            "verification units rejects absent or renamed required evidence",
+            "verification units rejects false green reports"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP02.legacy-transform-behavior",
+      "owner": "Data Operations migration / field-remap",
+      "sources": [
+        "packages/field-remap/src/registry/builtinTransforms.ts",
+        "packages/field-remap/src/domain/mapping/dateFormat.ts",
+        "packages/field-remap/src/domain/mapping/pathUtils.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/builtinTransforms.characterization.test.ts",
+          "cases": [
+            "legacy builtin transforms covers the exact builtin inventory",
+            "legacy builtin transforms preserves identity and distinguishes undefined from null",
+            "legacy builtin transforms reduces empty singleton and multiple arrays without mutation",
+            "legacy builtin transforms preserves join coercion and separator defaults",
+            "legacy builtin transforms preserves string coercion case whitespace and affixes",
+            "legacy builtin transforms resolves safe scalar placeholders and leaves unsupported syntax literal",
+            "legacy builtin transforms preserves template fallback and serialization failures",
+            "legacy builtin transforms reformats date tokens without adding calendar validation",
+            "legacy builtin transforms combines configured fields and preserves missing values",
+            "legacy builtin transforms splits datetime text without timezone or calendar normalization"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP03.transform-chain-completion",
+      "owner": "Mapping / field-remap",
+      "sources": [
+        "packages/field-remap/src/registry/createValueTransformRegistry.ts",
+        "packages/field-remap/src/domain/abort.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/transformChain.contract.test.ts",
+          "cases": [
+            "transform chain contract awaits steps and merges options without mutating the caller",
+            "transform chain contract keeps empty-chain identity and legacy three-step truncation",
+            "transform chain contract preserves registry replacement and unknown-id errors",
+            "transform chain contract stops after rejection and preserves the original error",
+            "transform chain contract rejects pre-aborted work before calling a transform",
+            "transform chain contract rejects an aborted empty chain",
+            "transform chain contract rejects late cancellation before exposing the final result",
+            "transform chain contract stops the next step when cancellation occurs inside a transform"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.react-input-adapter",
+      "owner": "Universal UI / current React adapter",
+      "sources": ["packages/react/src/primitives/text-input/TextInput.tsx"],
+      "tests": [
+        {
+          "file": "packages/react/src/primitives/text-input/TextInput.contract.test.tsx",
+          "cases": [
+            "TextInput adapter contract rerenders controlled values without emitting change callbacks",
+            "TextInput adapter contract delivers user edits in native callback then value callback order",
+            "TextInput adapter contract forwards composition events and identifies composing edits",
+            "TextInput adapter contract preserves the input node focus and ref across value updates",
+            "TextInput adapter contract retains native uncontrolled form reset and disabled semantics",
+            "TextInput adapter contract clears refs and stops delegated callbacks after removal"
+          ]
+        }
+      ]
+    }
+  ]
+}

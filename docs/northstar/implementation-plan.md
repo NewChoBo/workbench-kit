@@ -79,7 +79,88 @@ It is not a changelog of the current repository. Current source is recorded only
 - This receipt does not claim independent source review, integration, publication, browser visual
   conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
 
-## Status model
+## WB-ST-001 — cleanup and required-unit stabilization
+
+Status: `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`. The admitted contract and
+pre-commit validation are preserved in
+[cleanup-stabilization-receipt.md](./cleanup-stabilization-receipt.md).
+
+## WB-ST-002 — legacy transform characterization and completion cancellation
+
+- **Current status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`; continuation
+  receipt below records the exact local scope, not integration or release.
+- **Admission:** `READY_FOR_IMPLEMENTATION`, 2026-09-19; existing field-remap API
+  behavior and a bounded cancellation repair, not a new processing API.
+- **Owner/API:** SP02 migration evidence / SP03 field-remap runtime; existing
+  `createBuiltinValueTransformRegistry`, `applyTransformChain` and TransformContext.
+- **Goal:** establish independently written expected outputs for all 13 builtins,
+  coercion, options and ordered async execution before shared operation extraction.
+- **State/data:** values pass through the existing registry; identity preserves
+  references. Builtins must not mutate frozen ordinary input objects/arrays/options.
+  Custom transforms remain responsible for their own side effects.
+- **Cancellation repair:** after the final awaited result, check the same signal
+  before returning success. Empty chains also reject an already-aborted signal.
+  Existing Error reasons retain identity; other reasons use the existing AbortError.
+  A transform rejection keeps its original error. This is cooperative cancellation,
+  not preemption of a never-settling transform, rollback or a scheduler.
+- **Scope:** characterization and cancellation tests, one completion check and API
+  documentation, required-unit registration; no codecs/new types, export/package
+  changes, stricter legacy coercion, date validation or new chain budget policy.
+- **Compatibility:** retain non-string coercion, array:first reduction, template
+  fallback, permissive date behavior, registry replacement and chain truncation.
+  Record surprising behavior as legacy compatibility, not a strict API guarantee.
+- **Tasks/tests:** reproduce late/empty cancellation failures; fixture every builtin
+  with hand-written values; verify async order/options/error/cancel; repair completion
+  fence; run required registry, field-remap typecheck/full tests and validate:fast.
+- **Layer/budget:** headless Node; no UI evidence. One final O(1) signal check,
+  no listener, retained cache or dependency. Existing bundle limits remain required.
+- **Done/review:** fixtures detect semantic drift; original cancellation reason and
+  stop behavior survive; no new execution engine or package. Local validation does
+  not substitute for independent review, integration or publication.
+
+## WB-ST-005A — current Input contract evidence
+
+- **Current status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED` for adapter
+  evidence. Portable core delivery remains `DESIGNING`.
+- **Admission:** `READY_FOR_IMPLEMENTATION` for current React adapter tests and
+  design only; portable implementation remains a separate packet.
+- **Owner/scope:** SP06, existing `TextInput`, native input props and callback
+  forwarding. Add component regressions and a portable Input contract document.
+- **API/state:** keep React `value/defaultValue`, ref, native input attributes,
+  `onChange` then `onValueChange(value, event)`. No new event names or host dependency.
+- **Lifecycle:** test controlled rerender without callbacks, user input callback
+  order, composition event forwarding, focus/ref, uncontrolled form/reset and unmount.
+  Current callbacks are edits, not persistence/commit authorization.
+- **Compatibility/non-goals:** do not change React callbacks or introduce a new
+  custom-element package. JSDOM synthetic composition is not real IME evidence.
+- **Verification:** required-unit tests, React typecheck, lint/format and full fast.
+  Native IME, four framework consumers and packed portable UI remain separate gates.
+- **Acceptance/review:** current adapter behavior has explicit expected assertions;
+  the target identifies owner/event/value/focus/form boundaries and pending browser
+  evidence. No visual redesign, runtime dependency or product source change.
+
+### ST-002 / ST-005A continuation receipt — 2026-09-19
+
+- Validation snapshot before commit on `codex/stabilization-units-20260919`, still based on
+  `11147a5bea222385a5697206b08672bae9adf270`; prior S0 edits are preserved.
+- Reproduced two failures before repair: pre-aborted empty chain returned success,
+  and cancellation during the last awaited transform exposed its result.
+  A final existing-helper signal check repairs both; no new API or listener.
+- Added 24 cases: 10 builtin behavior fixtures covering all 13 IDs, 8 chain
+  contract cases and 6 current React Input adapter cases. All are registered.
+- `pnpm validate:fast`: PASS, **482 files / 2,874 tests**, including static checks,
+  freshly packed external consumers and the mandatory required-unit runner.
+- Registry: **5 units / 37 required cases / 38 executed tests**. Scope remains
+  partial. Input fixtures run in JSDOM; no real IME/four-host/browser conformance
+  claim is made. Native Electron/Storybook play were not run in this continuation.
+- Packed initial gzip: **253,011 / 253,064 bytes**; this continuation changes no
+  bundle threshold, dependency, exported symbol or product source.
+- Known compatibility gaps are documented in
+  [processing-compatibility-baseline.md](./processing-compatibility-baseline.md).
+  Portable delivery choices and browser acceptance are documented in
+  [portable-input-contract.md](./portable-input-contract.md).
+
+## Status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open
 - `READY_FOR_IMPLEMENTATION` — architecture decisions are sufficiently closed for an implementation-only agent
