@@ -17,24 +17,27 @@ separate implementation receipt. A passing local candidate is not a release.
 4. **S3 — stable adoption candidate:** package-only consumers, browser interaction,
    compatibility review and release-tip gates pass on the same candidate.
 
-The first pass implemented S0. The continuation admits ST-002 and ST-005A for
-transform compatibility, completion cancellation and current Input adapter evidence.
-Strict invocation and portable implementation still need their own packets. No promise of
-full Kit stability follows from this partial registry. Existing static, complete
-unit, packed-consumer, dependency-boundary and required Storybook gates remain.
+Current local source candidate: `aedc12e6`, on
+`codex/stabilization-units-20260919`. S0 cleanup/required verification, ST-002
+legacy compatibility and cancellation, ST-005A current React Input fixtures,
+ST-003A strict invocation/text adapters and ST-003B lookup optimization are
+implemented and locally validated. `validate:fast` passed **484 files / 2,890
+tests**; the registry enforces **7 units / 53 required cases**. This is a partial
+capability inventory, not full Kit stability, independent review, integration or
+published availability. No source changes accompany this roadmap refresh.
 
-S0 local result: `validate:fast` passed (479 files / 2,850 tests), including the
-new required-unit gate. The candidate still needs independent source review,
-integration and release validation. See the WB-ST-001 receipt in
-[implementation-plan.md](./implementation-plan.md).
+Strict invocation is no longer pending. Bytes/text/JSON/filter definitions,
+portable Input delivery, four-host UI acceptance and real Recipe/Mapping bridges
+remain future work. Current React fixtures do not satisfy portable UI acceptance.
+Existing static, complete unit, packed-consumer, dependency-boundary and required
+Storybook gates remain.
 
-Continuation evidence and next contracts:
-[processing compatibility baseline](./processing-compatibility-baseline.md) and
-[portable Input contract](./portable-input-contract.md). The registry now admits
-five focused units; current React adapter evidence does not satisfy four-host UI acceptance.
-The continuation passed `validate:fast` (482 files / 2,874 tests), with 37 required
-cases confirmed in a fresh 38-test registered run. ST-002 and ST-005A are local
-review candidates; ST-003 strict invocation and portable delivery remain next.
+Evidence: [implementation receipts](./implementation-plan.md),
+[processing compatibility](./processing-compatibility-baseline.md),
+[shared contracts](./shared-feature-contracts.md),
+[Input contract](./portable-input-contract.md) and
+[performance measurements](./operation-performance.md).
+See [parallel execution](./parallel-execution.md) for independent work and handoff gates.
 
 ## Responsibility map
 
@@ -61,20 +64,20 @@ specification: [shared-feature-contracts.md](./shared-feature-contracts.md).
 
 Each row is a separate reviewable change. Scope does not expand automatically.
 
-| Unit                            | Current evidence / action                                                          | Dependency                | Completion test                                                                       |
-| ------------------------------- | ---------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
-| ST-001A cleanup                 | Existing base implementation; repair throw/reentrancy ownership                    | Closed WB-ST-001 packet   | All detached items attempted, first throw preserved, reuse and nested lifecycle pass  |
-| ST-001B required evidence       | Existing Vitest/CI; add partial registry and report gate                           | ST-001A fixture           | Missing/renamed/skip/todo/zero/failure reject; real run succeeds                      |
-| ST-002 legacy operations        | Characterize field-remap builtinTransforms before extraction                       | S0                        | Fixtures preserve existing coercion and scalar/array semantics                        |
-| ST-003 values and invocation    | Inventory contracts first; close bytes/missing/null/unknown and exact-ref contract | ST-002 + packet admission | Independent public type consumer; invalid input/output and unknown operation rejected |
-| ST-004 individual operations    | Decode bytes; UTF-8; parse JSON; validate; filter in separate units                | ST-003                    | Independent expected values, invalid encodings, 0/1/N arrays and cancellation/budget  |
-| ST-005 portable Input           | Inventory current React behavior; choose DOM implementation and package boundary   | S0 + design decision      | HTML no-build and three framework consumers use same artifact; IME/focus/form/unmount |
-| ST-006 Checkbox                 | Same control contract, property/event distinction                                  | ST-005                    | Checked/disabled/keyboard/form/reset and cleanup across four hosts                    |
-| ST-007 PropertyRow              | Label, control slot, diagnostic and accessibility composition                      | ST-005/006                | Label/control association and focus survive composition; no required shell/provider   |
-| ST-008 callable bridge contract | Specify error addresses, remaining budget/cancel/trace ownership                   | ST-003; can design early  | Nested fixture cannot reset budget; failures preserve step/mapping location           |
-| ST-009 Recipe runner            | Small versioned sequential document and session                                    | ST-004/008                | Public headless execution, failure stop and per-step output                           |
-| ST-010 Mapping bridge           | Reuse field-remap engine; define write-conflict semantics                          | ST-008/009                | Real Recipe→Mapping fixture; mocks do not count as integration                        |
-| ST-011 first processing UI      | Input, steps and result viewers                                                    | ST-007/009                | Editing/viewer changes do not mutate canonical input or rerun processing unexpectedly |
+| Unit                            | Current evidence / action                                                                                | Dependency                | Completion test                                                                       |
+| ------------------------------- | -------------------------------------------------------------------------------------------------------- | ------------------------- | ------------------------------------------------------------------------------------- |
+| ST-001A cleanup                 | Locally validated; source review remains                                                                 | Closed WB-ST-001 packet   | All detached items attempted, first throw preserved, reuse and nested lifecycle pass  |
+| ST-001B required evidence       | Locally validated; fresh required-case registry runs in fast/CI                                          | ST-001A fixture           | Missing/renamed/skip/todo/zero/failure reject; real run succeeds                      |
+| ST-002 legacy operations        | All 13 builtins characterized; completion cancellation repaired locally                                  | S0                        | Fixtures preserve existing coercion and scalar/array semantics                        |
+| ST-003 values and invocation    | Strict invoker, text adapters and lookup optimization locally validated; portable serialization deferred | ST-002 + packet admission | Independent public type consumer; invalid input/output and unknown operation rejected |
+| ST-004 individual operations    | Decode bytes; UTF-8; parse JSON; validate; filter in separate units                                      | ST-003                    | Independent expected values, invalid encodings, 0/1/N arrays and cancellation/budget  |
+| ST-005 portable Input           | Current React fixtures locally validated; portable delivery decision still open                          | S0 + design decision      | HTML no-build and three framework consumers use same artifact; IME/focus/form/unmount |
+| ST-006 Checkbox                 | Same control contract, property/event distinction                                                        | ST-005                    | Checked/disabled/keyboard/form/reset and cleanup across four hosts                    |
+| ST-007 PropertyRow              | Label, control slot, diagnostic and accessibility composition                                            | ST-005/006                | Label/control association and focus survive composition; no required shell/provider   |
+| ST-008 callable bridge contract | Nested invocation budget/cancel/address proven; domain bridge and trace ownership still need design      | ST-003; can design early  | Nested fixture cannot reset budget; failures preserve step/mapping location           |
+| ST-009 Recipe runner            | Small versioned sequential document and session                                                          | ST-004/008                | Public headless execution, failure stop and per-step output                           |
+| ST-010 Mapping bridge           | Reuse field-remap engine; define write-conflict semantics                                                | ST-008/009                | Real Recipe→Mapping fixture; mocks do not count as integration                        |
+| ST-011 first processing UI      | Input, steps and result viewers                                                                          | ST-007/009                | Editing/viewer changes do not mutate canonical input or rerun processing unexpectedly |
 
 Do not gate all work on a complete inventory of all projects. Start each unit by
 finding existing source, exports, dependencies and tests. Do not mark uninspected
