@@ -54,9 +54,19 @@ export class DisposableStore implements Disposable {
   }
 
   private disposeItems(): void {
-    for (const item of [...this.items].reverse()) {
-      item.dispose();
-    }
+    const batch = [...this.items].reverse();
+    // Release ownership before callbacks so reentrant cleanup cannot repeat it.
     this.items.clear();
+    const errors: unknown[] = [];
+    for (const item of batch) {
+      try {
+        item.dispose();
+      } catch (error) {
+        errors.push(error);
+      }
+    }
+    if (errors.length) {
+      throw errors[0];
+    }
   }
 }

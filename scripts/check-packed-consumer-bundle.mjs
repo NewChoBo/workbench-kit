@@ -42,7 +42,10 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
   // its bespoke detail controls with the existing shared property/control primitives consumes
   // 251,806 bytes while retaining the same 1,882-module / one-static-chunk graph; keep deliberate
   // repair headroom without hiding another dependency-surface jump.
-  initialGzipBytes: 253_000,
+  // WB-ST-001 baseline is 252,980 bytes; exception-safe cleanup adds 31 gzip bytes
+  // with unchanged CSS, static assets and one initial chunk. Admit 64 bytes for
+  // this bounded correctness repair; retain the dependency/CSS boundary checks.
+  initialGzipBytes: 253_064,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.
