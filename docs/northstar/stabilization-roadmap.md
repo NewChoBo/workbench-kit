@@ -17,14 +17,15 @@ separate implementation receipt. A passing local candidate is not a release.
 4. **S3 — stable adoption candidate:** package-only consumers, browser interaction,
    compatibility review and release-tip gates pass on the same candidate.
 
-Current local source candidate: `aedc12e6`, on
-`codex/stabilization-units-20260919`. S0 cleanup/required verification, ST-002
+Current local integration: `396e9af8` plus the central first-wave test registration,
+on `codex/stabilization-units-20260919`. S0 cleanup/required verification, ST-002
 legacy compatibility and cancellation, ST-005A current React Input fixtures,
 ST-003A strict invocation/text adapters and ST-003B lookup optimization are
-implemented and locally validated. `validate:fast` passed **484 files / 2,890
-tests**; the registry enforces **7 units / 53 required cases**. This is a partial
-capability inventory, not full Kit stability, independent review, integration or
-published availability. No source changes accompany this roadmap refresh.
+implemented. Shared baseline v1 repairs terminal failure preservation (ST-003C).
+The first independently reviewed parts add strict text and Checkbox conformance.
+Combined `validate:fast` passed **486 files / 2,908 tests**; the registry enforces
+**9 units / 71 required cases**. This is local integration and a partial capability
+inventory, not full Kit stability, develop integration or published availability.
 
 Strict invocation is no longer pending. Bytes/text/JSON/filter definitions,
 portable Input delivery, four-host UI acceptance and real Recipe/Mapping bridges
@@ -38,6 +39,12 @@ Evidence: [implementation receipts](./implementation-plan.md),
 [Input contract](./portable-input-contract.md) and
 [performance measurements](./operation-performance.md).
 See [parallel execution](./parallel-execution.md) for independent work and handoff gates.
+
+The shared distributed-work baseline is now `7ceb9ceb`: terminal failure repair
+and explicit control-profile compatibility passed independent review and full
+fast (484 files / 2,895 tests). The first SP02/SP06 part branches started from
+that commit; their [integration receipt](./distributed-integration-wave-1.md)
+records the combined PASS and exact part/merge commits.
 
 ## Responsibility map
 

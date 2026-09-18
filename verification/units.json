@@ -153,6 +153,46 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP02.strict-text-adapter",
+      "owner": "Data Operations / strict builtin text adapters",
+      "sources": [
+        "packages/field-remap/src/registry/builtinDataOperations.ts",
+        "packages/field-remap/src/domain/operations/textOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/builtinDataOperations.contract.test.ts",
+          "cases": [
+            "strict builtin text adapter contract publishes exactly three frozen versioned text definitions",
+            "strict builtin text adapter contract admits primitive strings and rejects other input and output values",
+            "strict builtin text adapter contract rejects boxed and hostile coercion inputs without invoking coercion",
+            "strict builtin text adapter contract preserves handwritten Unicode empty and whitespace results alongside legacy transforms",
+            "strict builtin text adapter contract keeps strict rejection separate from legacy coercion",
+            "strict builtin text adapter contract isolates repeated factories and concurrent runner results"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.react-checkbox-adapter",
+      "owner": "Universal UI / current React Checkbox adapter",
+      "sources": ["packages/react/src/primitives/checkbox/Checkbox.tsx"],
+      "tests": [
+        {
+          "file": "packages/react/src/primitives/checkbox/Checkbox.contract.test.tsx",
+          "cases": [
+            "Checkbox adapter contract rerenders controlled checked values without emitting change callbacks",
+            "Checkbox adapter contract delivers clicks in native callback then boolean callback order with the same event",
+            "Checkbox adapter contract activates the associated input once when its label is clicked",
+            "Checkbox adapter contract preserves the input node focus and ref across checked and appearance updates",
+            "Checkbox adapter contract retains native form values disabled readOnly and uncontrolled reset semantics",
+            "Checkbox adapter contract retains native required validity as the checked state changes",
+            "Checkbox adapter contract clears refs and prevents detached or duplicate callbacks across remounts"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -9,6 +9,8 @@ freeze the shared repair/contracts first, branch all admitted parts from that
 commit, and integrate their disjoint changes sequentially with combined tests.
 The first wave is strict text-adapter and current Checkbox conformance. Common
 exports/runtime/registry remain integration-owner responsibilities.
+The first-wave [integration receipt](./distributed-integration-wave-1.md) records
+the exact common/part/merge commits and combined verification state.
 
 ## Independent work
 

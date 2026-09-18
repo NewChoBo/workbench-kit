@@ -262,6 +262,17 @@ not keyboard/browser/real IME or four-host completion. Focused tests, React
 typecheck, formatting and commit-safety are required; the integrator owns required
 unit registration and combined fast validation after merge.
 
+### First distributed wave receipt
+
+Shared baseline `7ceb9ceb7089086660004c6dc4fa4c7a10c940f9` passed full fast and
+independent execution/UI contract review before both branches were created.
+ST-004T and ST-006A are now `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS` with
+combined full fast **486 files / 2,908 tests**, **9 units / 71 required cases**.
+Both parts respected their exclusive paths; public APIs/dependencies stayed fixed.
+See [wave 1 integration](./distributed-integration-wave-1.md) for exact part and
+merge commits, verification scope and remaining domain design decisions. Develop,
+release and consumer adoption remain separate gates.
+
 ## Shared status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open
