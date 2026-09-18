@@ -244,6 +244,37 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP02.strict-bounded-utf8",
+      "owner": "Data Operations / strict bounded UTF8 decoding",
+      "sources": [
+        "packages/field-remap/src/domain/operations/utf8Operations.ts",
+        "packages/field-remap/src/registry/utf8DataOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/utf8DataOperations.test.ts",
+          "cases": [
+            "strict bounded UTF8 operation rejects missing options invalid limits and missing or invalid BOM policy",
+            "strict bounded UTF8 operation snapshots both options and freezes the exact versioned definition",
+            "strict bounded UTF8 operation decodes handwritten ASCII Hangul emoji NUL and empty byte sequences",
+            "strict bounded UTF8 operation bounds actual view bytes and ignores bytes outside a subarray",
+            "strict bounded UTF8 operation admits cross realm subclass and native Buffer views without a Node production dependency",
+            "strict bounded UTF8 operation uses intrinsic view metadata without reading shadowed properties",
+            "strict bounded UTF8 operation rejects other brands proxies spoofed tags and coercion without decoding",
+            "strict bounded UTF8 operation rejects shared resizable and detached storage including empty detached views",
+            "strict bounded UTF8 operation guards direct execution type storage and byte limits before decoding",
+            "strict bounded UTF8 operation preserves original fatal errors for truncated overlong surrogate and out of range bytes",
+            "strict bounded UTF8 operation applies explicit BOM policies without stripping internal or repeated markers",
+            "strict bounded UTF8 operation uses one fresh fatal nonstreaming decoder per admitted call and only admits string output",
+            "strict bounded UTF8 operation leaves input bytes unchanged and completed strings independent of later mutations",
+            "strict bounded UTF8 operation does not decode before aborted calls and preserves cancellation after synchronous decoding",
+            "strict bounded UTF8 operation composes real UTF8 and JSON operations with shared budgets and child error locations",
+            "strict bounded UTF8 operation isolates concurrent cancellation and independently configured byte and BOM policies"
+          ]
+        }
+      ]
     }
   ]
 }

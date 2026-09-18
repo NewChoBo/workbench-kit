@@ -61,7 +61,7 @@ export function watchWorkspacePackages(repository = root) {
     for (const { directory, source } of inputs) {
       if (existsSync(source)) walk(source);
       for (const entry of readdirSync(directory)) {
-        if (/^(package\.json|tsup\.config\.[cm]?ts|tsconfig.*\.json)$/.test(entry))
+        if (/^(package\.json|tsup(?:\.browser)?\.config\.[cm]?ts|tsconfig.*\.json)$/.test(entry))
           add(join(directory, entry));
       }
     }
@@ -123,7 +123,12 @@ export function watchWorkspacePackages(repository = root) {
     // Root config only; never watch dist/node_modules or trigger a build loop.
     watchers.push(
       watch(directory, (_event, file) => {
-        if (file && /^(package\.json|tsup\.config\.[cm]?ts|tsconfig.*\.json)$/.test(String(file)))
+        if (
+          file &&
+          /^(package\.json|tsup(?:\.browser)?\.config\.[cm]?ts|tsconfig.*\.json)$/.test(
+            String(file),
+          )
+        )
           changed();
       }),
     );

@@ -286,10 +286,14 @@ Four-framework/real IME acceptance, develop, release and adoption remain separat
 
 ## Wave 3 — strict UTF-8 and four input hosts
 
-ST-004B and ST-005C are `READY_FOR_IMPLEMENTATION` under the closed
-[wave 3 packet](./implementation-wave-3.md). It fixes byte/BOM/error semantics,
-browser artifact delivery, host lifecycle ownership, exclusive paths and
-verification gates before independent parts branch. Common v1 remains unchanged.
+ST-004B and ST-005C are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`, admitted by the
+closed [wave 3 packet](./implementation-wave-3.md). Strict UTF-8, focused public
+exports and one packed browser artifact across four hosts passed combined fast:
+**489 files / 2,948 tests**, **12 units / 111 required cases**. The same 40 host
+scenarios passed in JSDOM and a real browser, with manual input/form interactions.
+The [wave 3 receipt](./distributed-integration-wave-3.md) records exact commits,
+artifact identity, review and limits. Common v1 is unchanged. Real OS IME,
+portable styling, other controls, develop, release and adoption remain separate.
 
 ## Shared status definitions
 

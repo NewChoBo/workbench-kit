@@ -107,3 +107,13 @@ exact parts; focused reruns and safety before sequential merges. Integrator adds
 focused export/packed checks and exact required UTF-8 cases, then runs full fast
 with existing bundle budgets. Public docs remain consumer-neutral. Develop,
 release-tip validation, npm publication and downstream adoption remain separate.
+
+## Implementation result — 2026-09-19
+
+Both parts are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+The [integration receipt](./distributed-integration-wave-3.md) records exact
+admission/part/merge commits, independently reviewed integration changes, 16
+required UTF-8 cases and 40 four-host scenarios. Full fast passed **489 files /
+2,948 tests** and **12 units / 111 required cases**. The packed browser artifact
+also passed the host matrix and manual interactions in a real browser. This
+result closes the two admitted units, not the remaining portable UI or release gates.

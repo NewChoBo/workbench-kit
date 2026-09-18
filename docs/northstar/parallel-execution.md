@@ -14,6 +14,9 @@ the exact common/part/merge commits and combined verification state.
 The [second wave](./distributed-integration-wave-2.md) now integrates bounded JSON
 and native Input from a shared admission commit, with reviewed public exports,
 required cases, packed consumers and source HTML browser evidence.
+The [third wave](./distributed-integration-wave-3.md) integrates strict UTF-8 and
+same-artifact text input in four actual framework/browser hosts. The shared
+execution/control contracts remain v1; the next units still need closed packets.
 
 ## Independent work
 
@@ -22,12 +25,12 @@ does not need to wait for all Kit milestones to inventory its current use, desig
 user flows, define product policy or specify acceptance scenarios. A capability
 does not need the consumer redesign to finish its generic contracts and fixtures.
 
-| Lane                 | Owns                                                                           | Next small deliverable                                                                 | Can start with                                              | Does not claim                                  |
-| -------------------- | ------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
-| Kit processing       | Shared invocation and individual algorithms                                    | One UTF-8 decoding packet with byte input, malformed-sequence/BOM semantics and limits | Locally integrated ST-003 and bounded ST-004A JSON          | Complete codec/filter library or Recipe runtime |
-| Kit controls         | Native control semantics and framework adapters                                | Browser artifact delivery and same-artifact framework mount/update/unmount acceptance  | Locally integrated ST-005B native binder                    | Four-host or real IME conformance from JSDOM    |
-| Consumer preparation | Product UX, input commit policy, selection/draft lifetime and composition plan | One current-source input/Inspector inventory plus before/after/error scenarios         | Current consumer source and existing published API          | Adoption of unpublished Kit exports             |
-| Integration          | Exact artifacts, compatibility and end-to-end evidence                         | One capability-specific adoption packet after release                                  | Independently completed capability and consumer preparation | Blanket migration of all features               |
+| Lane                 | Owns                                                                           | Next small deliverable                                                                   | Can start with                                              | Does not claim                                  |
+| -------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| Kit processing       | Shared invocation and individual algorithms                                    | Close one validation/filter operation's input, output, predicate and limit contract      | Locally integrated ST-003 and bounded JSON/UTF-8            | Complete codec/filter library or Recipe runtime |
+| Kit controls         | Native control semantics and framework adapters                                | Close native Checkbox, then PropertyRow; track real OS IME and shared styling separately | Locally integrated ST-005B/C binder and four-host fixtures  | Complete portable UI or real OS IME conformance |
+| Consumer preparation | Product UX, input commit policy, selection/draft lifetime and composition plan | One current-source input/Inspector inventory plus before/after/error scenarios           | Current consumer source and existing published API          | Adoption of unpublished Kit exports             |
+| Integration          | Exact artifacts, compatibility and end-to-end evidence                         | One capability-specific adoption packet after release                                    | Independently completed capability and consumer preparation | Blanket migration of all features               |
 
 Processing and controls are separate queues. With one Kit implementation owner,
 advance one admitted source packet at a time; a consumer planning owner can work
@@ -36,19 +39,22 @@ to shared exports, the unit registry or the release manifest.
 
 ## Next packet boundaries
 
-ST-004A is `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`. Its native number semantics,
-UTF-16 limit, diagnostics and cancellation/budget ownership are fixed in the
-[wave 2 packet](./implementation-wave-2.md). Next, close one UTF-8 decoder's byte
-admission, malformed-sequence/BOM policy, output and resource limits. Keep document
-parsing, filtering and Recipe sequencing separate. A size/invocation limit does
-not establish a CPU/memory bound.
+ST-004A/B are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`. Their native JSON/UTF-8
+semantics, input limits, diagnostics and cancellation/budget ownership are fixed
+in the [wave 2](./implementation-wave-2.md) and [wave 3](./implementation-wave-3.md)
+packets. Next, close validation/filter input shape, predicate ownership, rejection
+versus exclusion, output order and limits before implementation. Keep schema
+validation, filtering and Recipe sequencing separate. A size/invocation limit
+does not establish a CPU/memory bound.
 
-ST-005B is `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`: native DOM binding with
-explicit host disposal and no styling/runtime dependency. The next packet must
-close browser artifact delivery and framework lifecycle adapters before claiming
-one artifact works in HTML/React/Vue/Svelte. Existing React onChange then
-onValueChange and edit-versus-commit semantics remain stable. Synthetic composition
-and source HTML interactions do not establish operating-system IME acceptance.
+ST-005B/C are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`: native DOM binding with
+explicit host disposal and no styling/runtime dependency; one packed browser
+artifact passes the common text-input matrix in HTML/React/Vue/Svelte. Next, close
+Checkbox checked/value/reset/indeterminate semantics and then PropertyRow's
+label/control/diagnostic ownership. Existing React onChange then onValueChange and
+edit-versus-commit semantics remain stable. Synthetic composition and browser
+ASCII typing do not establish operating-system IME acceptance. Shared appearance
+delivery and real IME still need their own acceptance evidence.
 
 The next event-order fixtures should include Enter followed by blur, blur during
 composition, and focus/unmount during selection changes. Core acceptance concerns

@@ -50,10 +50,12 @@ test(
   async () => {
     const repository = mkdtempSync(join(tmpdir(), 'kit-watch-'));
     const source = join(repository, 'packages/example/src/index.ts');
+    const browserConfig = join(repository, 'packages/example/tsup.browser.config.ts');
     const marker = join(repository, '.cache/workspace-build.json');
     mkdirSync(join(repository, 'packages/example/src'), { recursive: true });
     mkdirSync(join(repository, 'scripts'));
     writeFileSync(source, 'initial');
+    writeFileSync(browserConfig, 'browser target initial');
     writeFileSync(
       join(repository, 'scripts/build-workspace-packages.mjs'),
       `
@@ -89,5 +91,12 @@ test(
     writeFileSync(source, 'recovered');
     await until(() => readFileSync(marker, 'utf8') !== initial);
     assert.equal(readFileSync(join(repository, 'output.txt'), 'utf8'), 'recovered');
+    const beforeConfigChange = readFileSync(marker, 'utf8');
+    writeFileSync(browserConfig, 'browser target updated');
+    await until(() => readFileSync(marker, 'utf8') !== beforeConfigChange);
+    const afterConfigChange = readFileSync(marker, 'utf8');
+    writeFileSync(browserConfig, 'browser target updated');
+    await delay(500);
+    assert.equal(readFileSync(marker, 'utf8'), afterConfigChange);
   },
 );

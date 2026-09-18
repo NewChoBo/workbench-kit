@@ -5,6 +5,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { validatePackedPackageCohort } from './lib/packed-package-cohort.mjs';
+import { verifyNativeInputHosts } from './lib/native-input-hosts.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
@@ -364,6 +365,14 @@ try {
 
   await verifyPackedDataOperations();
   await verifyPackedNativeTextInput();
+  const nativeInputHosts = await verifyNativeInputHosts({
+    repoRoot,
+    platformRoot: packagePath(nodeModulesDir, '@workbench-kit/platform'),
+    outputDir: path.join(consumerDir, 'native-input-hosts'),
+  });
+  console.log(
+    `[check-packed-consumer] native input hosts OK (${nativeInputHosts.hosts.map(({ host, cases }) => `${host}: ${cases.length}`).join(', ')}; SHA-256 ${nativeInputHosts.artifactSha256}).`,
+  );
 
   buildFocusedConsumer('focused-command-host-controller');
   verifyFocusedCommandHostControllerOutput();
@@ -4306,6 +4315,7 @@ async function verifyPackedDataOperations() {
 import { createDataOperationRunner } from '@workbench-kit/runtime/data-operations';
 import { createBuiltinTextDataOperations } from '@workbench-kit/field-remap/data-operations';
 import { createJsonParseDataOperation } from '@workbench-kit/field-remap/json-data-operations';
+import { createUtf8DecodeDataOperation } from '@workbench-kit/field-remap/utf8-data-operations';
 const definitions: readonly DataOperationDefinition[] = createBuiltinTextDataOperations();
 const runner: DataOperationRunner = createDataOperationRunner(definitions);
 const ref = { id: 'string:trim', version: 1 };
@@ -4323,6 +4333,25 @@ const tooLarge = await parser.run(jsonRef, ' '.repeat(33), { maxInvocations: 1 }
 if (tooLarge.ok || tooLarge.diagnostic.code !== 'invalid-input') throw new Error('Packed JSON size admission failed');
 const malformed = await parser.run(jsonRef, '{', { maxInvocations: 1 });
 if (malformed.ok || malformed.diagnostic.code !== 'execution-failed' || !(malformed.cause instanceof SyntaxError)) throw new Error('Packed JSON syntax cause failed');
+const decode = createUtf8DecodeDataOperation({ maxInputBytes: 32, bom: 'strip' });
+const composed = createDataOperationRunner([
+  decode,
+  createJsonParseDataOperation({ maxInputCharacters: 32 }),
+  {
+    ref: { id: 'fixture:decode-json', version: 1 },
+    acceptsInput: () => true,
+    acceptsOutput: Array.isArray,
+    execute: async (input, context) => context.invoke(jsonRef,
+      await context.invoke(decode.ref, input, 'decode'), 'parse'),
+  },
+]);
+const decoded = await composed.run({ id: 'fixture:decode-json', version: 1 },
+  new Uint8Array([0xef, 0xbb, 0xbf, 0x5b, 0x31, 0x5d]), { maxInvocations: 3 });
+if (!decoded.ok || JSON.stringify(decoded.value) !== '[1]') throw new Error('Packed decode to JSON failed');
+const malformedBytes = await composed.run(decode.ref, new Uint8Array([0xc0, 0xaf]), { maxInvocations: 1 });
+if (malformedBytes.ok || malformedBytes.diagnostic.code !== 'execution-failed' || !(malformedBytes.cause instanceof TypeError)) throw new Error('Packed UTF-8 fatal cause failed');
+const oversizedBytes = await composed.run(decode.ref, new Uint8Array(33), { maxInvocations: 1 });
+if (oversizedBytes.ok || oversizedBytes.diagnostic.code !== 'invalid-input') throw new Error('Packed UTF-8 size admission failed');
 if (typeof document !== 'undefined') throw new Error('Expected headless execution');
 `,
   );
@@ -4424,7 +4453,7 @@ if (typeof document !== 'undefined') {
   if (
     !Array.isArray(modules) ||
     !modules.some((id) =>
-      id.replaceAll('\\', '/').endsWith('/platform/src/browser/native-text-input.ts'),
+      id.replaceAll('\\', '/').endsWith('/platform/dist/browser/native-text-input.js'),
     )
   ) {
     throw new Error('Native input emitted no implementation evidence');

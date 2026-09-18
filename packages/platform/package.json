@@ -30,7 +30,7 @@
     }
   },
   "scripts": {
-    "build": "tsup",
+    "build": "tsup && tsup --config tsup.browser.config.ts",
     "test": "vitest run src",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.node.json --noEmit"
   },
@@ -55,7 +55,11 @@
       "default": "./src/node/atomic-write.ts"
     },
     "./resize-rect": "./src/window/resize-rect.ts",
-    "./native-text-input": "./src/browser/native-text-input.ts",
+    "./native-text-input": {
+      "types": "./src/browser/native-text-input.ts",
+      "import": "./dist/browser/native-text-input.js",
+      "default": "./dist/browser/native-text-input.js"
+    },
     "./tray-close-policy": {
       "types": "./src/window/tray-close-policy.ts",
       "require": "./dist/tray-close-policy.cjs",
