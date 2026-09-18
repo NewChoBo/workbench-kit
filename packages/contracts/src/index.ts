@@ -1,4 +1,15 @@
 export type {
+  DataOperationRef,
+  DataOperationFailureCode,
+  DataOperationDiagnostic,
+  DataOperationResult,
+  DataOperationContext,
+  DataOperationDefinition,
+  DataOperationRunOptions,
+  DataOperationRunner,
+} from './data-processing/operation';
+
+export type {
   ChatMessage,
   ChatMessageSource,
   ChatStreamEvent,

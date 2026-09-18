@@ -1,3 +1,4 @@
+export { createDataOperationRunner } from './dataOperations';
 export { createMockWorkbenchRuntime } from './mockRuntime';
 export {
   deriveRuntimeChatMessages,

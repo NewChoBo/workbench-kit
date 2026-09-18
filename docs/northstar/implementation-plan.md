@@ -160,7 +160,71 @@ pre-commit validation are preserved in
   Portable delivery choices and browser acceptance are documented in
   [portable-input-contract.md](./portable-input-contract.md).
 
-## Status definitions
+## WB-ST-003A — shared strict operation invocation
+
+- **Current status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`; the local
+  implementation covers this packet only, not all processing/UI projects.
+- **Admission:** `READY_FOR_IMPLEMENTATION`, 2026-09-19. Scope is the invocation
+  boundary and three existing text operations; value serialization is deferred.
+- **Owners/API:** contracts exports `DataOperationRef`, definition/context/result
+  types; runtime exports `createDataOperationRunner`; field-remap exports
+  `createBuiltinTextDataOperations`. Existing dependency directions remain intact.
+  Runtime and field-remap also expose focused `./data-operations` entry points;
+  shared text algorithms live in a pure domain leaf used by both legacy and strict
+  adapters. This avoids importing unrelated mapping/UI code for strict calls.
+- **Reference:** canonical nonempty ID plus positive safe-integer definition version;
+  exact resolution only, duplicate exact refs rejected, multiple versions allowed.
+  Registration snapshots refs/callbacks. Definition versions are not npm versions.
+- **Values:** retain unknown JS values and explicit input/output predicates; no
+  competing UiValueSchema, universal value document or implicit coercion. Predicates
+  are synchronous trusted callbacks. Missing/undefined and null remain distinct.
+- **Execution:** validate ref/context/input before charging one invocation, await
+  execution, check cancellation/budget then validate output before exposing success.
+  Nested `context.invoke` shares the run's signal, invocation budget and location
+  prefix; it cannot create a fresh budget. A denied over-budget attempt latches
+  failure even if operation code catches its rejection. Separate top-level runs
+  have separate budgets. Max invocations is a required positive safe integer.
+- **Diagnostics:** stable failure code, exact ref and immutable location segments.
+  Nested failures retain their original address. Thrown callback causes remain
+  available on the failure result; never serialize arbitrary causes automatically.
+- **Limits:** cooperative cancellation; no preemption/timeout/CPU or memory sandbox,
+  scheduling/trace store/transaction/rollback. Domain schedulers and persistence
+  remain in Mapping/Recipe/Graph/authoring. Trusted callbacks can mutate their inputs.
+- **Adapter:** strict string input/output for trim/upper/lower delegates to existing
+  builtin implementations; legacy registry and coercion are unchanged. No new
+  dependency, package, custom element, renderer or product-source implementation.
+- **Tasks:** add contracts; runner; builtin adapter; independent success/rejection,
+  version collision, late cancel, nested-budget/address and frozen-registration
+  fixtures; register required tests; verify actual public package consumption.
+- **Acceptance:** same runner works with builtin adapters and a nested composition
+  fixture; invalid input/output never escapes as success; zero/one/many arrays
+  and null/undefined retain their semantics under explicit predicates.
+- **Verification/review:** backendless tests, packed public imports, dependency/export
+  gates, validate:fast and commit-safety. O(1) lookup, bounded invocation count;
+  callback runtime and payload size are caller-owned. No browser evidence claimed.
+
+### ST-003A local receipt — 2026-09-19
+
+- Validation snapshot based on `ae6c52b9a36ff26005071af219e290d435348921` plus
+  this packet. Contracts, runtime and strict text adapters retain the existing
+  package dependency direction; the two providers expose `./data-operations`.
+- Twelve runner regressions and three integration cases cover exact refs,
+  registration snapshots, value admission, nested/concurrent budget and cancel,
+  child diagnostics, closed contexts and unchanged legacy coercion.
+- `pnpm validate:fast`: PASS, **484 files / 2,889 tests**; required registry
+  **7 units / 52 required cases**, 53 executed tests including the existing Emitter.
+- Packed public consumers pass exact optional property checking and real headless
+  execution for success/input rejection/version rejection. The operation dependency
+  graph is checked for UI imports; no DOM or React provider is installed at execution.
+- Both adapters now share the pure text algorithm leaf. Existing public-root source
+  imports contain unrelated exact-optional issues; the focused entry points isolate
+  the new contract without weakening checks or broadly changing legacy types.
+- Initial packed gzip remains **253,011 / 253,064 bytes**. No budget increase,
+  runtime dependency, new package, UI rewrite, publication or product-source change.
+- See [shared-feature-contracts.md](./shared-feature-contracts.md) for the full
+  ownership map, applied API and deferred schema/Recipe/Graph/UI integration.
+
+## Shared status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open
 - `READY_FOR_IMPLEMENTATION` — architecture decisions are sufficiently closed for an implementation-only agent
