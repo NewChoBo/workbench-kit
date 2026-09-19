@@ -295,9 +295,12 @@ export const MultiSelection: Story = {
     await rightClick(app);
     await menuFor(canvas, SAMPLE_APP_PATH);
     await escapeMenu(canvas, app);
-    await userEvent.keyboard('{Control>}');
-    await userEvent.click(button);
-    await userEvent.keyboard('{/Control}');
+    const user = userEvent.setup();
+    await user.keyboard('{Control>}');
+    await user.click(button);
+    await user.keyboard('{/Control}');
+    expect(selected(canvas, SAMPLE_APP_PATH)).toBe('true');
+    expect(selected(canvas, SAMPLE_BUTTON_PATH)).toBe('true');
 
     for (const entry of ['pointer', 'more', 'keyboard']) {
       const invoker = entry === 'more' ? more(canvas, SAMPLE_APP_PATH) : app;
