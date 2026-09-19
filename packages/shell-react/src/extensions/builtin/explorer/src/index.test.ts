@@ -171,6 +171,7 @@ describe('builtin explorer dirty-resource protection', () => {
     const dirtyTab = editorService.openEditor({
       dirty: true,
       editorId: 'stateful-text-host',
+      groupId: 'secondary',
       pinned: true,
       resourceUri: 'workspace://file/src/folder/draft.ts',
     });
@@ -192,6 +193,10 @@ describe('builtin explorer dirty-resource protection', () => {
     const dirtyFileHost = editorService.createEditorHost(dirtyFileTab.id) as TextEditorHost;
     dirtyFileHost.onDidChangeDirty = (dirty) => editorService.setDirty(dirtyFileTab.id, dirty);
     editorService.setActiveEditor(otherTab.id);
+    expect(editorService.getState().groups.map((group) => group.id)).toEqual([
+      'workbench.editor.group.main',
+      'secondary',
+    ]);
     const handlers = createContext({ editorService, service: workspaceHost.service });
     const before = workspaceHost.service.getSnapshot();
 
@@ -226,19 +231,30 @@ describe('builtin explorer dirty-resource protection', () => {
         mutations: [{ path: 'src/folder/draft.ts', type: 'delete-file' }],
       }),
     );
+    editorService.setActiveEditor(dirtyTab.id);
+    const missingSnapshot = workspaceHost.service.getSnapshot();
+    const missingJournalLength = workspaceHost.service.getTransactionJournal().length;
     expect(saveActiveEditor({ editorSavePort: workspaceHost, editorService })).toEqual({
+      resourceUri: dirtyTab.resourceUri,
       saved: false,
     });
     expect(workspaceHost.service.getFile('src/folder/draft.ts')).toBeUndefined();
+    expect(workspaceHost.service.getSnapshot()).toEqual(missingSnapshot);
+    expect(workspaceHost.service.getTransactionJournal()).toHaveLength(missingJournalLength);
     editorService.reconcileWorkspaceFileTabs(
       (resourceUri) => workspaceHost.resolveResource?.(resourceUri) !== undefined,
     );
     expect(editorService.getEditorHost(dirtyTab.id)).toBe(host);
     expect(host.render().initialContent).toBe('unsaved draft');
+    const reconciledSnapshot = workspaceHost.service.getSnapshot();
+    const reconciledJournalLength = workspaceHost.service.getTransactionJournal().length;
     expect(saveActiveEditor({ editorSavePort: workspaceHost, editorService })).toEqual({
+      resourceUri: dirtyTab.resourceUri,
       saved: false,
     });
     expect(workspaceHost.service.getFile('src/folder/draft.ts')).toBeUndefined();
+    expect(workspaceHost.service.getSnapshot()).toEqual(reconciledSnapshot);
+    expect(workspaceHost.service.getTransactionJournal()).toHaveLength(reconciledJournalLength);
     expect(editorService.getState().groups.flatMap((group) => group.tabs)).toContainEqual(
       expect.objectContaining({ dirty: true, id: dirtyTab.id }),
     );

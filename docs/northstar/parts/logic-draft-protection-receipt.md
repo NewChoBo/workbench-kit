@@ -18,7 +18,7 @@ failures without changing selection; rename failures remain on the inline draft.
 
 - Dirty file rename, folder rename/delete/move, and mixed clean/dirty delete/move
   preserve the workspace snapshot and journal.
-- An actual `TextEditorHost` and `EditorService` fixture proves inactive dirty
+- An actual `TextEditorHost` and `EditorService` fixture uses a dirty secondary-group tab while an unrelated main-group tab remains active for mutation denial, then explicitly activates the dirty tab to prove missing-resource Save returns its URI and `saved: false` before and after reconcile. It proves inactive dirty
   folder and file protection, save-first success, direct disappearance before and
   after reconcile, same-host draft retention, dirty-state retention, and
   reappearance without replacing the draft.
@@ -28,10 +28,10 @@ failures without changing selection; rename failures remain on the inline draft.
 
 ## Validation
 
-- `pnpm exec vitest run ...` — 6 files, 55 tests passed (core service/save,
+- `pnpm exec vitest run packages/workbench-core/src/editor/service.test.ts packages/workbench-core/src/editor/save.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts packages/shell-react/src/extensions/builtin/explorer/src/index.test.ts packages/shell-react/src/explorer/view.context.test.tsx packages/react/src/workbench/workspace/workspaceExplorerController.test.ts` — 6 files, 55 tests passed (core service/save,
   workspace host, builtin Explorer integration, Explorer view context, and
   controller helpers).
-- `pnpm typecheck:workbench` — passed.
+- `pnpm exec vitest run packages/shell-react/src/extensions/builtin/explorer/src/index.test.ts packages/shell-react/src/explorer/view.context.test.tsx` — 2 files, 12 tests passed after the evidence follow-up.\n- `pnpm typecheck:workbench` — passed.
 - `pnpm typecheck:shell-react-exact-optional` — passed.
 - `pnpm typecheck:react-exact-optional` — passed.
 - `pnpm check:public-exports` — passed.

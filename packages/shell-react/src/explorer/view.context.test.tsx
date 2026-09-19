@@ -159,11 +159,13 @@ describe('BuiltinExplorerView context ownership', () => {
   });
 
   it('surfaces a rejected right-click Delete action without changing selection', async () => {
+    await pointer(row('b.md'));
     await pointer(row('b.md'), 'contextmenu');
     const deleteItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
       (item) => item.textContent?.includes('Delete'),
     );
     expect(deleteItem).toBeDefined();
+    expect(row('b.md').closest('[role="treeitem"]')?.getAttribute('aria-selected')).toBe('true');
     executeCommand.mockRejectedValueOnce(new Error('Save the affected editor first.'));
 
     await pointer(deleteItem!);
@@ -171,6 +173,7 @@ describe('BuiltinExplorerView context ownership', () => {
       'Save the affected editor first.',
     );
     expect(container.querySelector('[data-workspace-path="b.md"]')).not.toBeNull();
+    expect(row('b.md').closest('[role="treeitem"]')?.getAttribute('aria-selected')).toBe('true');
     expect(host.service.getFile('b.md')).toBeDefined();
   });
 });
