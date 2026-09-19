@@ -692,6 +692,53 @@
       ]
     },
     {
+      "id": "SP09.editor-resource-identity",
+      "owner": "Workbench Shell / canonical editor composition",
+      "sources": [
+        "packages/workbench-core/src/editor/service.ts",
+        "packages/workbench-core/src/editor/state.ts",
+        "packages/shell-react/src/editor/resource.ts",
+        "packages/shell-react/src/shell/provider.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/workbench-core/src/editor/service.test.ts",
+          "cases": [
+            "EditorService normalizes aliases before open lookup and stores one canonical tab",
+            "EditorService rejects ambiguous dirty aliases during initial state creation",
+            "EditorService coalesces clean initial aliases while keeping the active tab",
+            "EditorService coalesces interleaved aliases while retaining active tab tab-1",
+            "EditorService coalesces interleaved aliases while retaining active tab tab-2",
+            "EditorService coalesces interleaved aliases while retaining active tab tab-4",
+            "EditorService rejects a dirty member anywhere in an interleaved alias bucket",
+            "EditorService preserves initial order for non-alias resources with identity normalization"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/editor/resource.test.ts",
+          "cases": [
+            "editor-resource canonicalizes workspace URI aliases while preserving literal percent data",
+            "editor-resource leaves opaque and malformed identifiers unchanged"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/editor/resource-identity.test.ts",
+          "cases": [
+            "workspace editor resource identity integration shares one TextEditorHost and saves the latest alias edit to one workspace file"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/shell/provider.identity.test.tsx",
+          "cases": [
+            "WorkbenchProvider editor resource identity restores aliases before effects, then persists one canonical tab after a mounted alias open",
+            "WorkbenchProvider editor resource identity restores clean persisted aliases as one canonical active tab",
+            "WorkbenchProvider editor resource identity keeps ordinary alias opens on one tab through provider wiring",
+            "WorkbenchProvider editor resource identity rejects dirty initial aliases before persistence can write"
+          ]
+        }
+      ]
+    },
+    {
       "id": "SP01.workspace-unicode-paths",
       "owner": "Foundation / workspace path validity before mutation",
       "sources": ["packages/workspace/src/path/path.ts"],

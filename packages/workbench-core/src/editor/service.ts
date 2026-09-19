@@ -63,6 +63,7 @@ export interface EditorServiceOptions {
   readonly editorResolvers?: EditorResolverRegistry | undefined;
   readonly initialState?: EditorState | undefined;
   readonly resolveEditorResource?: ((resourceUri: string) => unknown) | undefined;
+  /** Pure, idempotent identity normalization; defaults to preserving the input. */
   readonly normalizeResourceUri?: ((resourceUri: string) => string) | undefined;
 }
 
