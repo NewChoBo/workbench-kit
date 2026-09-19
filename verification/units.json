@@ -781,6 +781,10 @@
           ]
         },
         {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorerPanel.test.tsx",
+          "cases": ["WorkspaceExplorerPanel renders the header addon outside the toolbar"]
+        },
+        {
           "file": "packages/react/src/workbench/workspace/WorkspaceExplorer.action-errors.test.tsx",
           "cases": [
             "WorkspaceExplorer async action errors reports open failures from a throw port without an unhandled rejection",
