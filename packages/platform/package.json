@@ -55,6 +55,11 @@
       "default": "./src/node/atomic-write.ts"
     },
     "./resize-rect": "./src/window/resize-rect.ts",
+    "./native-checkbox": {
+      "types": "./src/browser/native-checkbox.ts",
+      "import": "./dist/browser/native-checkbox.js",
+      "default": "./dist/browser/native-checkbox.js"
+    },
     "./native-text-input": {
       "types": "./src/browser/native-text-input.ts",
       "import": "./dist/browser/native-text-input.js",

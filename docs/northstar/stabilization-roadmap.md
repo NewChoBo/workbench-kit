@@ -17,7 +17,7 @@ separate implementation receipt. A passing local candidate is not a release.
 4. **S3 — stable adoption candidate:** package-only consumers, browser interaction,
    compatibility review and release-tip gates pass on the same candidate.
 
-Current local integration: `4119e8a4` plus the central fourth-wave verification,
+Current local integration: `19ca64f2` plus the central fifth-wave verification,
 on `codex/stabilization-units-20260919`. S0 cleanup/required verification, ST-002
 legacy compatibility and cancellation, ST-005A current React Input fixtures,
 ST-003A strict invocation/text adapters and ST-003B lookup optimization are
@@ -26,15 +26,16 @@ The independently reviewed parts add strict text/Checkbox conformance, bounded
 JSON and UTF-8 operations, and a native text-input binder with one packed browser
 artifact used by HTML, React, Vue and Svelte. Structural work now also repairs the
 HTTPS redirect boundary, moves semantic history from shell to Mapping, and
-reconciles current dependency rules with their target. Combined `validate:fast`
-passed **491 files / 2,968 tests**; the registry enforces **14 units / 139 required cases**.
+reconciles current dependency rules with their target. Native Checkbox now adds
+an optional DOM binder and four-host evidence. Combined `validate:fast` passed
+**492 files / 2,983 tests**; the registry enforces **15 units / 154 required cases**.
 This is local integration and a partial capability
 inventory, not full Kit stability, develop integration or published availability.
 
-Strict invocation, bounded native JSON/UTF-8 and the native Input core are implemented.
-No-build HTML delivery and four-host text-input lifecycle scenarios pass with the
+Strict invocation, bounded native JSON/UTF-8 and native Input/Checkbox cores are implemented.
+No-build HTML delivery and four-host control lifecycle scenarios pass with the
 same packed artifact in JSDOM and a real browser. Validation/filter definitions,
-real OS IME, portable styling, Checkbox/PropertyRow and real Recipe/Mapping bridges
+real OS IME, portable styling, PropertyRow and real Recipe/Mapping bridges
 remain separate work; these input fixtures do not complete portable UI acceptance.
 Existing static, complete unit, packed-consumer, dependency-boundary and required
 Storybook gates remain.
@@ -57,13 +58,16 @@ The [third-wave receipt](./distributed-integration-wave-3.md) records strict UTF
 same-artifact four-host evidence and the updated independent design queues.
 The [fourth-wave receipt](./structural-stabilization-wave-4-receipt.md) records the
 transport fix, headless history extraction and unresolved structural work.
+The [fifth-wave receipt](./native-controls-wave-5-receipt.md) records optional native
+Checkbox delivery, a shared host harness and the wrapper/direct-use comparison.
 
 ## Current structural priority
 
 SP06 delivery uses standard HTML/DOM directly. Framework wrappers are optional
 conveniences; same-artifact HTML/React/Vue/Svelte consumer verification remains
-required. The next bounded control is [native Checkbox](./native-controls-wave-5.md),
-followed by PropertyRow and shared styling with their own contracts.
+required. [Native Checkbox](./native-controls-wave-5-receipt.md) is locally integrated;
+PropertyRow and shared styling need their own contracts. The [delivery comparison](./standard-ui-delivery.md)
+keeps thin wrappers optional and treats compound-control delivery separately.
 
 After the bounded ST-012/013/014 repairs, prioritize preview-controller ownership,
 minimal UI/Mapping package boundaries, explicit Provider composition and mandatory
@@ -107,7 +111,7 @@ Each row is a separate reviewable change. Scope does not expand automatically.
 | ST-003 values and invocation    | Strict invoker, text adapters and lookup optimization locally validated; portable serialization deferred | ST-002 + packet admission | Independent public type consumer; invalid input/output and unknown operation rejected |
 | ST-004 individual operations    | Bounded native JSON and UTF-8 locally integrated; validate/filter remain separate units                  | ST-003                    | Independent expected values, invalid encodings, 0/1/N arrays and cancellation/budget  |
 | ST-005 portable Input           | Same packed binder passes 40 four-host JSDOM/browser scenarios; real OS IME and shared styling pending   | S0 + design decision      | HTML no-build and three framework consumers use same artifact; IME/focus/form/unmount |
-| ST-006 Checkbox                 | Same control contract, property/event distinction                                                        | ST-005                    | Checked/disabled/keyboard/form/reset and cleanup across four hosts                    |
+| ST-006 Checkbox                 | Native binder locally integrated; same artifact passes 48 four-host scenarios and browser activation     | ST-005                    | Checked/disabled/keyboard/form/reset and cleanup across four hosts                    |
 | ST-007 PropertyRow              | Label, control slot, diagnostic and accessibility composition                                            | ST-005/006                | Label/control association and focus survive composition; no required shell/provider   |
 | ST-008 callable bridge contract | Nested invocation budget/cancel/address proven; domain bridge and trace ownership still need design      | ST-003; can design early  | Nested fixture cannot reset budget; failures preserve step/mapping location           |
 | ST-009 Recipe runner            | Small versioned sequential document and session                                                          | ST-004/008                | Public headless execution, failure stop and per-step output                           |

@@ -2,7 +2,10 @@ import { defineConfig } from 'tsup';
 
 /** One framework-independent module for native HTML and bundled consumers. */
 export default defineConfig({
-  entry: { 'native-text-input': 'src/browser/native-text-input.ts' },
+  entry: {
+    'native-text-input': 'src/browser/native-text-input.ts',
+    'native-checkbox': 'src/browser/native-checkbox.ts',
+  },
   outDir: 'dist/browser',
   format: ['esm'],
   dts: false,

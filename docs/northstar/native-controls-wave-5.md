@@ -1,12 +1,18 @@
 # Native controls — optional wrappers and Checkbox
 
-Admission: `READY_FOR_IMPLEMENTATION`. Source baseline: `9a59da7b`, 2026-09-19.
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Admitted as `READY_FOR_IMPLEMENTATION` from `9a59da7b`, 2026-09-19.
+Exact commits and verification: [integration receipt](./native-controls-wave-5-receipt.md).
 Producer-distinct design review required two clarifications, now incorporated:
 unsupported-type event handling and independent property requests in host fixtures.
 SP06 owns this bounded control; the integration owner owns exports, packaging,
 required-case registration and the shared host harness.
 
 ## Delivery rule
+
+The [delivery comparison](./standard-ui-delivery.md) records tradeoffs and
+capability-specific decision gates. Direct use and thin wrappers may coexist;
+neither wrapper absence nor a common artifact proves better runtime performance.
 
 Standard HTML/DOM is the primary control interface. Use existing input/button/
 label/form behavior and shared CSS where sufficient. Custom Elements are an
@@ -22,7 +28,7 @@ consumer examples, not four publishable wrapper libraries. DOM creation is owned
 by the host; programmatic control updates have one writer. Native property/event,
 form, accessibility and cleanup contracts still need explicit verification.
 
-## ST-006A — native Checkbox binding
+## ST-006B — native Checkbox binding
 
 The built-in `<input type="checkbox">` already works without Kit JavaScript.
 Provide an optional binder for consumers needing the Kit edit/lifetime contract,

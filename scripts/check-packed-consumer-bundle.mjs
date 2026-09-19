@@ -6,6 +6,7 @@ import { gzipSync } from 'node:zlib';
 
 import { validatePackedPackageCohort } from './lib/packed-package-cohort.mjs';
 import { verifyNativeInputHosts } from './lib/native-input-hosts.mjs';
+import { verifyNativeCheckboxHosts } from './lib/native-checkbox-hosts.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
@@ -366,6 +367,7 @@ try {
   await verifyPackedDataOperations();
   await verifyPackedRemapHistory();
   await verifyPackedNativeTextInput();
+  await verifyPackedNativeCheckbox();
   const nativeInputHosts = await verifyNativeInputHosts({
     repoRoot,
     platformRoot: packagePath(nodeModulesDir, '@workbench-kit/platform'),
@@ -373,6 +375,14 @@ try {
   });
   console.log(
     `[check-packed-consumer] native input hosts OK (${nativeInputHosts.hosts.map(({ host, cases }) => `${host}: ${cases.length}`).join(', ')}; SHA-256 ${nativeInputHosts.artifactSha256}).`,
+  );
+  const nativeCheckboxHosts = await verifyNativeCheckboxHosts({
+    repoRoot,
+    platformRoot: packagePath(nodeModulesDir, '@workbench-kit/platform'),
+    outputDir: path.join(consumerDir, 'native-checkbox-hosts'),
+  });
+  console.log(
+    `[check-packed-consumer] native checkbox hosts OK (${nativeCheckboxHosts.hosts.map(({ host, cases }) => `${host}: ${cases.length}`).join(', ')}; SHA-256 ${nativeCheckboxHosts.artifactSha256}).`,
   );
 
   buildFocusedConsumer('focused-command-host-controller');
@@ -4476,6 +4486,90 @@ if (typeof document !== 'undefined') throw new Error('History consumer requires 
   if (!entry?.file || entry.css?.length) throw new Error('Invalid headless history bundle');
   await import(pathToFileURL(path.join(output, entry.file)).href);
   console.log('[check-packed-consumer] Remap history headless runtime and public types OK.');
+}
+
+async function verifyPackedNativeCheckbox() {
+  const name = 'native-checkbox';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `
+import { bindNativeCheckbox, type NativeCheckboxBinding, type NativeCheckboxEdit } from '@workbench-kit/platform/native-checkbox';
+if (typeof bindNativeCheckbox !== 'function') throw new Error('Missing native checkbox export');
+if (typeof document === 'undefined') {
+  let rejected = false;
+  try { bindNativeCheckbox(null as unknown as HTMLInputElement, () => {}); }
+  catch (error) { rejected = error instanceof TypeError; }
+  if (!rejected) throw new Error('Headless admission did not reject without accessing missing DOM globals');
+} else {
+  const form = document.createElement('form');
+  const control = document.createElement('input');
+  control.type = 'checkbox'; control.name = 'sample'; control.defaultChecked = true;
+  form.append(control); document.body.append(form);
+  const edits: NativeCheckboxEdit[] = [];
+  const binding: NativeCheckboxBinding = bindNativeCheckbox(control, (edit) => edits.push(edit));
+  if (!binding.setChecked(false) || !binding.setIndeterminate(true) || edits.length !== 0) throw new Error('Silent properties failed');
+  if (!control.defaultChecked || control.value !== 'on' || control.checked || !control.indeterminate) throw new Error('Checkbox properties conflated');
+  control.focus(); const EventType = document.defaultView!.Event;
+  const event = new EventType('change', { bubbles: true }); control.dispatchEvent(event);
+  if (Number(edits.length) !== 1 || edits[0]?.event !== event || edits[0]?.checked !== false || edits[0]?.indeterminate !== true) throw new Error('Original change snapshot lost');
+  form.reset();
+  if (!control.checked || !control.indeterminate || new document.defaultView!.FormData(form).get('sample') !== 'on' || Number(edits.length) !== 1) throw new Error('Reset/form behavior changed');
+  if (document.activeElement !== control) throw new Error('Focus moved');
+  binding.dispose(); binding.dispose();
+  control.dispatchEvent(event);
+  if (Number(edits.length) !== 1 || binding.setChecked(false) || binding.setIndeterminate(false)) throw new Error('Disposed binding still active');
+  const rebound = bindNativeCheckbox(control, (edit) => edits.push(edit));
+  binding.dispose(); control.dispatchEvent(event);
+  if (Number(edits.length) !== 2) throw new Error('Rebind callback lost or duplicated');
+  rebound.dispose(); form.remove();
+}
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (
+    !Array.isArray(modules) ||
+    !modules.some((id) =>
+      id.replaceAll('\\', '/').endsWith('/platform/dist/browser/native-checkbox.js'),
+    )
+  )
+    throw new Error('Native checkbox emitted no implementation evidence');
+  if (
+    modules.some((id) =>
+      /\/(react|react-dom|vue|svelte|monaco-editor|workbench-core|shell-react|json-widget)\//.test(
+        id.replaceAll('\\', '/'),
+      ),
+    )
+  )
+    throw new Error('Native checkbox pulled a framework or domain dependency');
+  const entry = Object.values(readJson(path.join(output, '.vite', 'manifest.json'))).find(
+    (item) => item.isEntry,
+  );
+  if (!entry?.file || entry.css?.length) throw new Error('Native checkbox pulled styling');
+  await import(`${pathToFileURL(path.join(output, entry.file)).href}?headless`);
+  await executeFocusedConsumer('native checkbox', output);
 }
 
 async function verifyPackedNativeTextInput() {

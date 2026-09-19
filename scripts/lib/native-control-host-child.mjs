@@ -4,7 +4,7 @@ import { pathToFileURL } from 'node:url';
 import { registerHooks } from 'node:module';
 import { JSDOM, VirtualConsole } from 'jsdom';
 
-const [entry, vendor] = process.argv.slice(2);
+const [entry, vendor, artifactPath, fixtureApiName] = process.argv.slice(2);
 const errors = [];
 const virtualConsole = new VirtualConsole();
 virtualConsole.on('jsdomError', (error) => errors.push(error));
@@ -42,7 +42,7 @@ globalThis.cancelAnimationFrame = dom.window.cancelAnimationFrame.bind(dom.windo
 registerHooks({
   resolve(specifier, context, nextResolve) {
     return nextResolve(
-      specifier === '/vendor/native-text-input.js' ? pathToFileURL(vendor).href : specifier,
+      specifier === artifactPath ? pathToFileURL(vendor).href : specifier,
       context,
     );
   },
@@ -50,8 +50,8 @@ registerHooks({
 
 try {
   await import(pathToFileURL(entry).href);
-  if (!dom.window.nativeInputFixture?.ready) throw new Error('Fixture did not start its matrix');
-  const summary = await dom.window.nativeInputFixture.ready;
+  if (!dom.window[fixtureApiName]?.ready) throw new Error('Fixture did not start its matrix');
+  const summary = await dom.window[fixtureApiName].ready;
   if (errors.length) throw new AggregateError(errors, 'Unhandled DOM errors');
   dom.window.close();
   process.stdout.write(`${JSON.stringify(summary)}\n`, () => process.exit(0));

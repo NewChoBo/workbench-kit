@@ -1,6 +1,8 @@
-# ST-006A — optional native Checkbox binding
+# ST-006B — optional native Checkbox binding
 
 Status: `LOCAL_VALIDATED / SOURCE_REVIEW_REQUIRED / INTEGRATION_PENDING`.
+This is the original part handoff; subsequent source review, local integration,
+packed and browser evidence are in the [wave 5 receipt](../native-controls-wave-5-receipt.md).
 Admission branch point: `7ba2c38ad08ac71089626a7817d00a049ff385fa`.
 Part branch: `codex/part-native-checkbox-20260919`.
 The admitted scope is [native controls wave 5](../native-controls-wave-5.md).

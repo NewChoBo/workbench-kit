@@ -51,8 +51,8 @@ retain their live value until reset. The two modes need distinct fixtures.
 the first core unit, focused under platform/native-text-input. The host owns
 markup/CSS/native attributes and must explicitly dispose the binder on unmount;
 there is no automatic disconnect observer. Native input events are the transport.
-This closes core ownership while keeping framework adapters and shared styling
-as separate units.
+This closes core ownership. Shared styling remains a separate unit; any framework
+convenience wrapper is optional and needs a demonstrated consumer benefit.
 The [wave 2 receipt](./distributed-integration-wave-2.md) records public packed
 types/runtime, 10 required core cases and source HTML browser interaction.
 
@@ -71,8 +71,9 @@ framework wrappers optional. Direct HTML/DOM use and the same-artifact four-host
 fixtures are the required interface and evidence. References to adapters below
 describe consumer binding/lifecycle glue, not a requirement to publish wrappers.
 
-Use a native-input-based DOM implementation as the comparison baseline, with
-framework adapters translating values/events without importing React into core.
+Use a native-input-based DOM implementation as the comparison baseline. Direct
+consumers and any optional wrappers translate values/events without importing
+React into core.
 ST-005B selected a DOM binder after checking labels, forms and lifecycle; a custom
 element is not required for this core. Framework and CSS/token delivery need their
 own packet and the same acceptance fixture; ST-005C closes the former's bounded
@@ -106,5 +107,6 @@ Acceptance status after ST-005C:
 5. **Passed:** export/dependency checks prove the focused core has no
    React/framework/provider dependency and can import without DOM globals.
 
-Checkbox and PropertyRow are later independent packets. The Input fixture does
-not establish either component's acceptance or a complete UI migration.
+The independent [Checkbox packet](./native-controls-wave-5-receipt.md) now records
+its own native semantics and four-host evidence. PropertyRow remains separate.
+Neither control's fixture establishes a complete UI migration or shared styling.

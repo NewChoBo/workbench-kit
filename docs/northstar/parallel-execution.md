@@ -19,8 +19,8 @@ same-artifact text input in four actual framework/browser hosts. The shared
 execution/control contracts remain v1; the next units still need closed packets.
 
 The [fourth wave](./structural-stabilization-wave-4-receipt.md) integrates the
-HTTPS redirect repair and headless history extraction. The next control packet,
-[native Checkbox](./native-controls-wave-5.md), makes standard HTML/DOM direct
+HTTPS redirect repair and headless history extraction. The locally integrated
+[native Checkbox packet](./native-controls-wave-5-receipt.md) makes standard HTML/DOM direct
 consumption primary; framework wrappers are optional. Host fixtures remain
 mandatory evidence and do not create separate framework implementations.
 
@@ -31,12 +31,12 @@ does not need to wait for all Kit milestones to inventory its current use, desig
 user flows, define product policy or specify acceptance scenarios. A capability
 does not need the consumer redesign to finish its generic contracts and fixtures.
 
-| Lane                 | Owns                                                                           | Next small deliverable                                                                   | Can start with                                              | Does not claim                                  |
-| -------------------- | ------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
-| Kit processing       | Shared invocation and individual algorithms                                    | Close one validation/filter operation's input, output, predicate and limit contract      | Locally integrated ST-003 and bounded JSON/UTF-8            | Complete codec/filter library or Recipe runtime |
-| Kit controls         | Native control semantics and direct-use host fixtures                          | Close native Checkbox, then PropertyRow; track real OS IME and shared styling separately | Locally integrated ST-005B/C binder and four-host fixtures  | Complete portable UI or real OS IME conformance |
-| Consumer preparation | Product UX, input commit policy, selection/draft lifetime and composition plan | One current-source input/Inspector inventory plus before/after/error scenarios           | Current consumer source and existing published API          | Adoption of unpublished Kit exports             |
-| Integration          | Exact artifacts, compatibility and end-to-end evidence                         | One capability-specific adoption packet after release                                    | Independently completed capability and consumer preparation | Blanket migration of all features               |
+| Lane                 | Owns                                                                           | Next small deliverable                                                              | Can start with                                              | Does not claim                                  |
+| -------------------- | ------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------- | ----------------------------------------------------------- | ----------------------------------------------- |
+| Kit processing       | Shared invocation and individual algorithms                                    | Close one validation/filter operation's input, output, predicate and limit contract | Locally integrated ST-003 and bounded JSON/UTF-8            | Complete codec/filter library or Recipe runtime |
+| Kit controls         | Native control semantics and direct-use host fixtures                          | Close PropertyRow; track real OS IME and shared styling separately                  | Locally integrated ST-005B/C and ST-006B four-host fixtures | Complete portable UI or real OS IME conformance |
+| Consumer preparation | Product UX, input commit policy, selection/draft lifetime and composition plan | One current-source input/Inspector inventory plus before/after/error scenarios      | Current consumer source and existing published API          | Adoption of unpublished Kit exports             |
+| Integration          | Exact artifacts, compatibility and end-to-end evidence                         | One capability-specific adoption packet after release                               | Independently completed capability and consumer preparation | Blanket migration of all features               |
 
 Processing and controls are separate queues. With one Kit implementation owner,
 advance one admitted source packet at a time; a consumer planning owner can work
@@ -55,9 +55,9 @@ does not establish a CPU/memory bound.
 
 ST-005B/C are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`: native DOM binding with
 explicit host disposal and no styling/runtime dependency; one packed browser
-artifact passes the common text-input matrix in HTML/React/Vue/Svelte. Next, close
-Checkbox checked/value/reset/indeterminate semantics and then PropertyRow's
-label/control/diagnostic ownership. Existing React onChange then onValueChange and
+artifact passes the common text-input matrix in HTML/React/Vue/Svelte. ST-006B
+adds native Checkbox semantics and 48 four-host scenarios with independent review.
+Next, close PropertyRow's label/control/diagnostic ownership. Existing React onChange then onValueChange and
 edit-versus-commit semantics remain stable. Synthetic composition and browser
 ASCII typing do not establish operating-system IME acceptance. Shared appearance
 delivery and real IME still need their own acceptance evidence.
