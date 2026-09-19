@@ -3,6 +3,7 @@ import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetAssetCatalogContract, WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
   applyWidgetDocumentPatch,
+  collectWidgetNodes,
   collectJsonWidgetListenBindings,
   createJdwDocumentJsonSchema,
   createWidgetDocument,
@@ -27,6 +28,7 @@ import {
 } from '@workbench-kit/jdw';
 
 import { ResizablePanels } from '../primitives/workbench-editor';
+import { ContextMenu, type ContextMenuItem } from '../overlay/ContextMenu.js';
 import { WorkbenchLabeledPane } from '../layout/panel';
 import type { WorkspaceEditorTheme } from '../workbench/workspace/WorkspaceEditor.js';
 import type { JsonEditorProblem } from '../jdw/JsonCodeEditorPane.js';
@@ -37,9 +39,11 @@ import { WidgetSourceEditor } from './WidgetSourceEditor.js';
 import { WidgetTreeSidePanel } from './WidgetTreeSidePanel.js';
 import {
   WidgetTreeView,
+  resolveWidgetTreeMoveOperation,
   type WidgetTreeAssetDropOperation,
   type WidgetTreeMoveOperation,
 } from './WidgetTreeView.js';
+import type { WidgetContextActionRequest } from './widget-context-actions.js';
 import { canAddChildren, insertedWidgetPathForParent } from './widget-tree-layout.js';
 import {
   DEFAULT_WIDGET_TREE_VIEW_MODE,
@@ -233,6 +237,26 @@ export function WidgetTreeLab({
   const [selection, setSelection] = useState<WidgetSelectionState>({ pathKeys: new Set() });
   const [inspectorFocusRequest, setInspectorFocusRequest] = useState(0);
   const inspectorPanelRef = useRef<HTMLDivElement | null>(null);
+  const [context, setContext] = useState<
+    | (WidgetContextActionRequest & {
+        readonly value: string;
+        readonly documentPath: string | undefined;
+        readonly viewMode: WidgetTreeViewMode;
+        readonly readOnly: boolean;
+      })
+    | null
+  >(null);
+  // Clear during rendering so an old array path never survives a document or permission change.
+  const contextIsCurrent =
+    context !== null &&
+    context.value === value &&
+    context.documentPath === path &&
+    context.viewMode === viewMode &&
+    context.readOnly === readOnly &&
+    document.parseError === null &&
+    document.root !== null &&
+    getWidgetAtPath(document.root, context.path) !== null;
+  if (context !== null && !contextIsCurrent) setContext(null);
 
   useEffect(() => {
     if (document.parseError !== null || document.root === null) {
@@ -407,6 +431,48 @@ export function WidgetTreeLab({
     }
   };
 
+  const handleRequestContextActions = (request: WidgetContextActionRequest) => {
+    if (
+      !document.root ||
+      document.parseError !== null ||
+      !getWidgetAtPath(document.root, request.path)
+    )
+      return;
+    handleSelectPath(request.path);
+    setContext({ ...request, value, documentPath: path, viewMode, readOnly });
+  };
+
+  const contextItems: ContextMenuItem[] = [];
+  if (contextIsCurrent && context && document.root) {
+    const nodes = collectWidgetNodes(document.root);
+    const targetSelection = selectWidgetPath({ pathKeys: new Set() }, context.path);
+    contextItems.push({
+      label: readOnly ? 'Inspect properties' : 'Edit properties',
+      onSelect: () => handleActivatePath(context.path),
+    });
+    for (const direction of ['up', 'down'] as const) {
+      const operation = resolveWidgetTreeMoveOperation(nodes, targetSelection, direction);
+      contextItems.push({
+        label: direction === 'up' ? 'Move up' : 'Move down',
+        disabled: readOnly || !operation,
+        onSelect: () => {
+          if (!readOnly && operation) handleMovePath(operation);
+        },
+      });
+    }
+    contextItems.push(
+      { type: 'separator' },
+      {
+        label: 'Remove node',
+        danger: true,
+        disabled: readOnly || context.path.length === 0,
+        onSelect: () => {
+          if (!readOnly) handleRemovePath(context.path);
+        },
+      },
+    );
+  }
+
   const sourcePane = (
     <WidgetSourceEditor
       jsonSchema={jsonSchema}
@@ -463,6 +529,7 @@ export function WidgetTreeLab({
             onMovePath={readOnly ? undefined : handleMovePath}
             onPlaceAssetPath={readOnly ? undefined : handlePlaceAssetPath}
             onSelectPath={handleSelectPath}
+            onRequestContextActions={handleRequestContextActions}
           />
         }
         properties={
@@ -499,6 +566,7 @@ export function WidgetTreeLab({
         onPatch={handleCanvasPatch}
         onPlaceAssetPath={readOnly ? undefined : handlePlaceAssetPath}
         onSelectPath={handlePreviewSelectPath}
+        onRequestContextActions={handleRequestContextActions}
       />
     </WorkbenchLabeledPane>
   );
@@ -574,6 +642,16 @@ export function WidgetTreeLab({
         first={assetsSidebar}
         second={centerAndRight}
       />
+      {contextIsCurrent && context ? (
+        <ContextMenu
+          ariaLabel="Widget actions"
+          items={contextItems}
+          returnFocusTarget={context.invoker}
+          x={context.x}
+          y={context.y}
+          onClose={() => setContext(null)}
+        />
+      ) : null}
     </div>
   );
 }
