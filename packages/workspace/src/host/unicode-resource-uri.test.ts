@@ -19,6 +19,8 @@ describe('workspace host raw Unicode URI validity', () => {
     const beforeSnapshot = port.service.getSnapshot();
     const replacementUri = formatWorkspaceResourceUri({ kind: 'file', path: 'src/bad�.txt' });
     const malformedUris = [
+      `workspace://file/src/bad${highSurrogate}.txt`,
+      `workspace://file/src/bad${lowSurrogate}.txt`,
       `workspace://file/src/${highSurrogate}start.txt`,
       `workspace://file/src/middle${highSurrogate}.txt`,
       `workspace://file/src/end${highSurrogate}`,

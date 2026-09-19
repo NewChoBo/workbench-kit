@@ -741,7 +741,11 @@
     {
       "id": "SP01.workspace-unicode-paths",
       "owner": "Foundation / workspace path validity before mutation",
-      "sources": ["packages/workspace/src/path/path.ts"],
+      "sources": [
+        "packages/workspace/src/path/path.ts",
+        "packages/workspace/src/path/unicode.ts",
+        "packages/workspace/src/resource/uri.ts"
+      ],
       "tests": [
         {
           "file": "packages/workspace/src/path/path.test.ts",
@@ -752,7 +756,8 @@
         {
           "file": "packages/workspace/src/resource/uri.test.ts",
           "cases": [
-            "workspace resource URI identity rejects unpaired surrogates before URI encoding or path acceptance"
+            "workspace resource URI identity rejects unpaired surrogates before URI encoding or path acceptance",
+            "workspace resource URI identity rejects raw unpaired surrogates before URL replacement can alias U+FFFD"
           ]
         },
         {
@@ -761,6 +766,12 @@
             "workbench workspace host port leaves state, snapshot version, and journal unchanged for an invalid rename",
             "workbench workspace host port leaves state, snapshot version, and journal unchanged for invalid create mutations",
             "workbench workspace host port filters invalid initial paths while preserving valid entries"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/host/unicode-resource-uri.test.ts",
+          "cases": [
+            "workspace host raw Unicode URI validity does not alias malformed raw URIs to a legitimate replacement-character file"
           ]
         }
       ]
