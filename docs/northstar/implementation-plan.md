@@ -85,6 +85,20 @@ Admission: `READY_FOR_IMPLEMENTATION`. The [bounded repair](./modal-viewport-rep
 closes the real Settings resize defect found by WB-ST-015. Existing Modal frames
 must fit a smaller overlay viewport without replacing form state or losing Close.
 
+## WB-ST-017 — long management-card values
+
+Admission: `READY_FOR_IMPLEMENTATION`, 2026-09-19, source `14f66f41`.
+The sample's long unbroken account ID makes the shared management-card body
+overflow at 430px. Owner: React management-card CSS and the sample screen play.
+Allow text within the body to wrap at a safe character boundary when ordinary
+word breaks cannot fit; keep the actual value, semantics, DOM and short-label
+layout. No truncation, injected separators, data shortening, new API or layout
+redesign. Limit source work to `management-panel.css`. Verify all 24 original
+long IDs in the real Settings screen, ensure details fit each card after host
+shrink, and retain the existing sample plays, lint/format and full fast checks.
+Packed budgets remain unchanged. This small CSS packet is separate from the
+Modal implementation part and does not change its file ownership.
+
 ## WB-ST-015 — sample backend and screen verification
 
 Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
