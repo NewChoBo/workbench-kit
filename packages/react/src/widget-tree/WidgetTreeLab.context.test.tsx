@@ -227,18 +227,22 @@ describe('WidgetTreeLab context actions', () => {
     };
     vi.spyOn(more, 'getBoundingClientRect').mockReturnValue(rect);
     const hostShortcut = vi.fn();
-    container.addEventListener('keydown', hostShortcut, { once: true });
-    const saveKey = await fire(
-      more,
-      new KeyboardEvent('keydown', {
-        bubbles: true,
-        cancelable: true,
-        key: 's',
-        ctrlKey: true,
-      }),
-    );
-    expect(hostShortcut).toHaveBeenCalledTimes(1);
-    expect(saveKey.defaultPrevented).toBe(false);
+    document.addEventListener('keydown', hostShortcut);
+    try {
+      const saveKey = await fire(
+        more,
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 's',
+          ctrlKey: true,
+        }),
+      );
+      expect(hostShortcut).toHaveBeenCalledTimes(1);
+      expect(saveKey.defaultPrevented).toBe(false);
+    } finally {
+      document.removeEventListener('keydown', hostShortcut);
+    }
     await key(more, 'Enter');
     expect(
       element('[data-testid="widget-tree-inspector-panel"]').contains(document.activeElement),
