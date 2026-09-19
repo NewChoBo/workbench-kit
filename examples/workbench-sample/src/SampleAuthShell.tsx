@@ -1,4 +1,5 @@
 import type { ReactNode } from 'react';
+import type { SampleHostBackendClient } from '@workbench-kit/contracts';
 import {
   resolveActiveThemePreset,
   useResolvedWorkbenchTheme,
@@ -11,11 +12,12 @@ import { SampleAccountProvider, useSampleAuth } from './useSampleAuth.js';
 
 export interface SampleAuthShellProps {
   appearance: WorkbenchAppearanceSettings;
+  backendClient?: SampleHostBackendClient | undefined;
   children: ReactNode;
 }
 
-export function SampleAuthShell({ appearance, children }: SampleAuthShellProps) {
-  const auth = useSampleAuth();
+export function SampleAuthShell({ appearance, backendClient, children }: SampleAuthShellProps) {
+  const auth = useSampleAuth(backendClient);
   const resolvedTheme = useResolvedWorkbenchTheme(appearance.themePreference);
   const activePreset = resolveActiveThemePreset(resolvedTheme, appearance);
 
