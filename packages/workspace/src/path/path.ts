@@ -10,6 +10,25 @@ export class WorkspacePathError extends Error {
   }
 }
 
+function hasUnpairedSurrogate(value: string) {
+  for (let index = 0; index < value.length; index += 1) {
+    const codeUnit = value.charCodeAt(index);
+    if (codeUnit >= 0xdc00 && codeUnit <= 0xdfff) {
+      return true;
+    }
+
+    if (codeUnit >= 0xd800 && codeUnit <= 0xdbff) {
+      const nextCodeUnit = value.charCodeAt(index + 1);
+      if (!(nextCodeUnit >= 0xdc00 && nextCodeUnit <= 0xdfff)) {
+        return true;
+      }
+      index += 1;
+    }
+  }
+
+  return false;
+}
+
 /**
  * Normalize a workspace-relative virtual path.
  * Rejects traversal (`..` / `.`), Windows drive letters, and UNC forms.
@@ -19,6 +38,13 @@ export class WorkspacePathError extends Error {
 export function normalizeWorkspacePath(path: string): string {
   if (!path) {
     return '';
+  }
+
+  if (hasUnpairedSurrogate(path)) {
+    throw new WorkspacePathError(
+      'Workspace path must contain well-formed Unicode (unpaired surrogates are not allowed).',
+      path,
+    );
   }
 
   const slashNormalized = path.replace(/\\/g, '/');
@@ -100,6 +126,7 @@ export function isSimpleWorkspaceName(name: string) {
   const trimmedName = name.trim();
   return (
     Boolean(trimmedName) &&
+    !hasUnpairedSurrogate(trimmedName) &&
     trimmedName !== '.' &&
     trimmedName !== '..' &&
     !/[\\/]/.test(trimmedName)

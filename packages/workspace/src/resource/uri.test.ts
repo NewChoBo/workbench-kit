@@ -7,6 +7,7 @@ import {
   workspaceResourceUriForFile,
   workspaceResourceUriForFolder,
 } from './uri.js';
+import { WorkspacePathError } from '../path/path.js';
 
 describe('workspace resource URI identity', () => {
   it('preserves ordinary ASCII file and folder URIs and the root folder', () => {
@@ -88,6 +89,18 @@ describe('workspace resource URI identity', () => {
     for (const segment of ['bad%', 'bad%2', 'bad%GG', '%C3%28', '%ED%A0%80']) {
       expect(parseWorkspaceResourceUri(`workspace://file/src/${segment}.txt`)).toBeNull();
     }
+  });
+
+  it('rejects unpaired surrogates before URI encoding or path acceptance', () => {
+    const highSurrogate = String.fromCharCode(0xd800);
+    const lowSurrogate = String.fromCharCode(0xdc00);
+    expect(() =>
+      formatWorkspaceResourceUri({ kind: 'file', path: `src/bad${highSurrogate}.ts` }),
+    ).toThrow(WorkspacePathError);
+    expect(() =>
+      formatWorkspaceResourceUri({ kind: 'file', path: `src/bad${lowSurrogate}.ts` }),
+    ).toThrow(WorkspacePathError);
+    expect(parseWorkspaceResourceUri('workspace://file/src/bad%ED%A0%80.ts')).toBeNull();
   });
 
   it('rejects encoded forward and backward separators without rewriting path structure', () => {

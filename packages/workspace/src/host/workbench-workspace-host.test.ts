@@ -145,4 +145,57 @@ describe('workbench workspace host port', () => {
     expect(port.service.getTransactionJournal()).toHaveLength(0);
     port.dispose?.();
   });
+
+  it('leaves state, snapshot version, and journal unchanged for an invalid rename', () => {
+    const highSurrogate = String.fromCharCode(0xd800);
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: {
+        files: [{ path: 'src/App.tsx', content: 'original' }],
+        folders: ['src'],
+        openPaths: ['src/App.tsx'],
+        selectedPath: 'src/App.tsx',
+      },
+    });
+    const beforeState = port.service.getState();
+    const beforeSnapshot = port.service.getSnapshot();
+
+    port.service.applyTransaction(
+      createWorkspaceResourceTransaction({
+        label: 'Invalid rename',
+        mutations: [{ type: 'rename-file', path: 'src/App.tsx', name: `bad${highSurrogate}.ts` }],
+      }),
+    );
+
+    expect(port.service.getState()).toEqual(beforeState);
+    expect(port.service.getSnapshot()).toEqual(beforeSnapshot);
+    expect(port.service.getTransactionJournal()).toHaveLength(0);
+    port.dispose?.();
+  });
+
+  it('does not partially accept invalid initial paths', () => {
+    const highSurrogate = String.fromCharCode(0xd800);
+    const lowSurrogate = String.fromCharCode(0xdc00);
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: {
+        files: [
+          { path: `src/bad${highSurrogate}.ts`, content: 'invalid' },
+          { path: 'src/good-😀.ts', content: 'valid' },
+        ],
+        folders: ['src', `bad${lowSurrogate}`],
+        openPaths: [`src/bad${highSurrogate}.ts`, 'src/good-😀.ts'],
+        selectedPath: `src/bad${highSurrogate}.ts`,
+      },
+    });
+
+    expect(port.service.getState()).toMatchObject({
+      files: [{ path: 'src/good-😀.ts', content: 'valid' }],
+      openPaths: ['src/good-😀.ts'],
+      selectedPath: 'src/good-😀.ts',
+    });
+    expect(port.service.getState().files.some((file) => file.path.includes(highSurrogate))).toBe(
+      false,
+    );
+    expect(port.service.getTransactionJournal()).toHaveLength(0);
+    port.dispose?.();
+  });
 });

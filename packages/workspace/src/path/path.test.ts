@@ -37,6 +37,30 @@ describe('workspace path helpers', () => {
     expect(tryNormalizeWorkspacePath('/src/ok.ts')).toBe('src/ok.ts');
   });
 
+  it('rejects unpaired UTF-16 surrogates while preserving valid Unicode', () => {
+    const highSurrogate = String.fromCharCode(0xd800);
+    const lowSurrogate = String.fromCharCode(0xdc00);
+    const invalidPaths = [
+      `${highSurrogate}start.ts`,
+      `middle${highSurrogate}.ts`,
+      `end.ts${highSurrogate}`,
+      `${lowSurrogate}start.ts`,
+      `middle${lowSurrogate}.ts`,
+      `end.ts${lowSurrogate}`,
+    ];
+
+    for (const path of invalidPaths) {
+      expect(() => normalizeWorkspacePath(path)).toThrow(WorkspacePathError);
+      expect(tryNormalizeWorkspacePath(path)).toBeUndefined();
+    }
+
+    expect(normalizeWorkspacePath('src/emoji-😀.ts')).toBe('src/emoji-😀.ts');
+    expect(normalizeWorkspacePath('src/한글-日本語 %.ts')).toBe('src/한글-日本語 %.ts');
+    expect(isSimpleWorkspaceName('emoji-😀.ts')).toBe(true);
+    expect(isSimpleWorkspaceName(`bad${highSurrogate}.ts`)).toBe(false);
+    expect(isSimpleWorkspaceName(`bad${lowSurrogate}.ts`)).toBe(false);
+  });
+
   it('derives path parts without leaking root separators', () => {
     expect(joinWorkspacePath('src/components', 'Button.tsx')).toBe('src/components/Button.tsx');
     expect(fileNameOfPath('src/components/Button.tsx')).toBe('Button.tsx');
