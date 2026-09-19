@@ -172,7 +172,69 @@ describe('workbench workspace host port', () => {
     port.dispose?.();
   });
 
-  it('does not partially accept invalid initial paths', () => {
+  it('leaves state, snapshot version, and journal unchanged for invalid create mutations', () => {
+    const highSurrogate = String.fromCharCode(0xd800);
+    const lowSurrogate = String.fromCharCode(0xdc00);
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: { files: [{ path: 'README.md', content: 'original' }] },
+    });
+    const beforeState = port.service.getState();
+    const beforeSnapshot = port.service.getSnapshot();
+
+    port.service.applyTransaction(
+      createWorkspaceResourceTransaction({
+        label: 'Invalid creates',
+        mutations: [
+          {
+            type: 'create-file',
+            path: `src/bad${highSurrogate}.ts`,
+            file: { path: `src/bad${highSurrogate}.ts`, content: 'invalid' },
+          },
+          { type: 'create-folder', path: `src/bad${lowSurrogate}` },
+        ],
+      }),
+    );
+
+    expect(port.service.getState()).toEqual(beforeState);
+    expect(port.service.getSnapshot()).toEqual(beforeSnapshot);
+    expect(port.service.getTransactionJournal()).toHaveLength(0);
+    port.dispose?.();
+  });
+
+  it('keeps existing sequential transaction semantics for mixed valid and invalid renames', () => {
+    const highSurrogate = String.fromCharCode(0xd800);
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: {
+        files: [
+          { path: 'src/App.tsx', content: 'app' },
+          { path: 'src/Other.tsx', content: 'other' },
+        ],
+        folders: ['src'],
+      },
+    });
+
+    port.service.applyTransaction(
+      createWorkspaceResourceTransaction({
+        label: 'Mixed rename',
+        mutations: [
+          { type: 'rename-file', path: 'src/App.tsx', name: 'Renamed.tsx' },
+          { type: 'rename-file', path: 'src/Other.tsx', name: `bad${highSurrogate}.tsx` },
+        ],
+      }),
+    );
+
+    expect(
+      port.service
+        .getState()
+        .files.map(({ path }) => path)
+        .sort(),
+    ).toEqual(['src/Other.tsx', 'src/Renamed.tsx']);
+    expect(port.service.getSnapshot().version).toBe(2);
+    expect(port.service.getTransactionJournal()).toHaveLength(1);
+    port.dispose?.();
+  });
+
+  it('filters invalid initial paths while preserving valid entries', () => {
     const highSurrogate = String.fromCharCode(0xd800);
     const lowSurrogate = String.fromCharCode(0xdc00);
     const port = createWorkbenchWorkspaceHostPort({
