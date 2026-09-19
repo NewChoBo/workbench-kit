@@ -261,10 +261,20 @@ create behavior and compatibility with custom ports that omit the query.
 - Shell editor reconcile tests, command Explorer port/error wiring as necessary.
 - `useWorkspaceExplorerController.ts` after WB-ST-021 integration, and shell
   Explorer view/port tests for asynchronous failure reporting. Use the existing
-  panel `toolbarStatus` slot for a concise English action error with `role="alert"`;
+  panel header addon for a wrapping English action error with `role="alert"`;
   no new notification framework or stylesheet is needed. Rename errors stay on
   the draft; delete/move errors must also be visible and must not change selection.
 - `docs/northstar/parts/logic-draft-protection-receipt.md`
+
+Screen-review follow-up is `READY_FOR_IMPLEMENTATION`: at a 240px sidebar the
+full denial message in the fixed toolbar hides the Explorer title and clips the
+message. Allow `WorkspaceExplorerPanel.tsx` and its adjacent test to expose the
+existing `SideBarViewFrame.headerAddon` slot; render shell errors there using the
+existing sidebar header-control spacing. Preserve toolbarStatus compatibility,
+keep icons in the toolbar, and wrap long paths within the sidebar (a local style
+on the message is allowed). No new notification framework or general CSS change.
+Validate the addon outside the toolbar, existing view-context tests, exact-optional
+types, lint/format and safety. The integrator owns the real-screen repeat.
 
 ### Acceptance and validation
 
