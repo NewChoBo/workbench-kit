@@ -56,8 +56,8 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
   // Independently reviewed bounded allowance; see explorer-resource-uri-repair.md.
   // WB-ST-021..025: editor attempts, persistence admission, canonical identity,
   // Unicode validity and draft protection add 847 gzip bytes (253,439 -> 254,286).
-  // Source e83d809f retains the CSS asset and package/dependency manifests; one
-  // resource helper enters the graph (2,290 -> 2,291 modules). Admit 881 bytes
+  // Source e83d809f retains the CSS asset and package/dependency manifests;
+  // resource and Unicode helpers enter the graph (2,290 -> 2,292 modules). Admit 881 bytes
   // above the prior measured baseline, retaining 34 bytes of deliberate headroom.
   // See docs/northstar/logic-stabilization-verification.md; all closure checks remain.
   initialGzipBytes: 254_320,
