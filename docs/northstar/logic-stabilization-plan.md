@@ -149,8 +149,11 @@ isSimpleWorkspaceName returns false. Do not add a new framework or dependency.
 
 ### Allowed files and implementation instructions
 
-- `packages/workspace/src/path/path.ts` and adjacent tests.
-- `packages/workspace/src/resource/uri.test.ts` and host/transaction tests.
+- `packages/workspace/src/path/path.ts`, an internal Unicode validity helper and
+  adjacent tests; keep the helper out of the public package barrel.
+- `packages/workspace/src/resource/uri.ts`, its tests and host/transaction tests.
+  Validate raw UTF-16 before URL construction can replace lone surrogates with
+  U+FFFD. A malformed URI must not alias a legitimate replacement-character file.
 - Builtin Explorer command tests only if needed for actual create/rename proof;
   production command code is not owned by this packet.
 - `docs/northstar/parts/logic-unicode-receipt.md`
