@@ -79,6 +79,13 @@ It is not a changelog of the current repository. Current source is recorded only
 - This receipt does not claim independent source review, integration, publication, browser visual
   conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
 
+## WB-ST-018 / WB-ST-019 — context actions and editing entry
+
+Admission: `READY_FOR_IMPLEMENTATION`. The [closed UX contract](./context-editing-ux.md)
+separates native text/menu focus repair from Widget Tree target selection and
+context-to-properties entry. Parts reuse existing callbacks and document ownership;
+the integrator verifies real pointer/keyboard/edit behavior and stale targets.
+
 ## WB-ST-016 — Modal viewport resize repair
 
 Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
