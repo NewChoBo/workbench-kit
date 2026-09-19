@@ -298,7 +298,7 @@ export function WidgetTreeLab({
     );
 
     (focusTarget ?? panel)?.focus();
-  }, [inspectorFocusRequest, selectedPath]);
+  }, [inspectorFocusRequest]);
 
   const focusPropertyDetailTab = () => {
     setInspectorFocusRequest((current) => current + 1);

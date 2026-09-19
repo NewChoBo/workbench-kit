@@ -158,6 +158,58 @@ describe('WidgetTreeLab context actions', () => {
     expect(container.querySelector('[role="menu"]')).toBeNull();
   });
 
+  it('keeps a later node menu focused after an earlier Inspector activation', async () => {
+    await mount();
+    await context(rowButton('$.children[0]'));
+    await click(action('Edit properties'));
+    const inspector = element('[data-testid="widget-tree-inspector-panel"]');
+    expect(inspector.contains(document.activeElement)).toBe(true);
+
+    await context(rowButton('$.children[1]'));
+    expect(document.activeElement).toBe(action('Edit properties'));
+    await key(document.activeElement as HTMLElement, 'ArrowDown');
+    expect(document.activeElement).toBe(action('Move up'));
+    await key(document.activeElement as HTMLElement, 'Escape');
+    expect(document.activeElement).toBe(rowButton('$.children[1]'));
+
+    await context(rowButton('$.children[1]'));
+    expect(document.activeElement).toBe(action('Edit properties'));
+    await key(document.activeElement as HTMLElement, 'Enter');
+    expect(inspector.contains(document.activeElement)).toBe(true);
+    expect(changes).not.toHaveBeenCalled();
+  });
+
+  it.each([
+    ['Delete', 'Delete', false],
+    ['Backspace', 'Backspace', false],
+    ['Alt+ArrowUp', 'ArrowUp', true],
+    ['Alt+ArrowDown', 'ArrowDown', true],
+  ] satisfies [string, string, boolean][])(
+    'does not apply %s to another selected node from a focused More button',
+    async (_label, keyValue, altKey) => {
+      await mount();
+      await context(rowButton('$.children[1]'));
+      await key(menu(), 'Escape');
+      const more = element<HTMLButtonElement>('[data-testid="widget-tree-actions-$.children[0]"]');
+      await act(async () => more.focus());
+      expect(document.activeElement).toBe(more);
+      await fire(
+        more,
+        new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: keyValue, altKey }),
+      );
+      expect(changes).not.toHaveBeenCalled();
+      expect(currentSource).toBe(source);
+      expect(document.activeElement).toBe(more);
+      await click(more);
+      expect(row('$.children[0]').getAttribute('aria-selected')).toBe('true');
+      expect(document.activeElement).toBe(action('Edit properties'));
+      await key(menu(), 'Escape');
+      await key(rowButton('$.children[0]'), 'Delete');
+      expect(changes).toHaveBeenCalledTimes(1);
+      expect(childrenText()).toEqual(['Beta', undefined]);
+    },
+  );
+
   it('shares More and keyboard actions with the invoking row rectangle and no nested buttons', async () => {
     await mount();
     const more = element<HTMLButtonElement>('[data-testid="widget-tree-actions-$.children[1]"]');
@@ -174,6 +226,19 @@ describe('WidgetTreeLab context actions', () => {
       toJSON() {},
     };
     vi.spyOn(more, 'getBoundingClientRect').mockReturnValue(rect);
+    const hostShortcut = vi.fn();
+    container.addEventListener('keydown', hostShortcut, { once: true });
+    const saveKey = await fire(
+      more,
+      new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: 's',
+        ctrlKey: true,
+      }),
+    );
+    expect(hostShortcut).toHaveBeenCalledTimes(1);
+    expect(saveKey.defaultPrevented).toBe(false);
     await key(more, 'Enter');
     expect(
       element('[data-testid="widget-tree-inspector-panel"]').contains(document.activeElement),

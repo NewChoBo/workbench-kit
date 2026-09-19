@@ -827,7 +827,22 @@ export function WidgetTreeView({
                       icon="codicon-ellipsis"
                       label={`More actions for ${displayLabel}`}
                       onKeyDown={(event) => {
-                        if (event.key === 'Enter' || event.key === ' ') event.stopPropagation();
+                        // This button is a menu entry, not the selected tree row's keyboard target.
+                        if (
+                          [
+                            'Enter',
+                            ' ',
+                            'Delete',
+                            'Backspace',
+                            'ArrowUp',
+                            'ArrowDown',
+                            'ArrowLeft',
+                            'ArrowRight',
+                            'Home',
+                            'End',
+                          ].includes(event.key)
+                        )
+                          event.stopPropagation();
                       }}
                       onClick={(event) => {
                         event.stopPropagation();

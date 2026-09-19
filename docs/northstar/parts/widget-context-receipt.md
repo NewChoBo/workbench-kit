@@ -32,8 +32,17 @@ reference expansion and secondary-pointer canvas chrome. The latter's focus
 assertion first failed because the frame cannot receive focus, then passed with
 the rendered-node return target.
 
+Independent review identified two sequential-flow defects in the first part
+commit `f3732de401d72ab7ba859e515a506208c7831eb9`. Five new regressions failed:
+an earlier Inspector activation stole focus from a later node's menu, and four
+tree shortcuts on another row's More button mutated the previous selection.
+The Inspector now focuses only on an explicit focus request. More stops the
+tree-consumed keys while preserving default button behavior, context shortcuts
+and host shortcuts such as Ctrl+S. All five regressions then passed; the tests
+also retain a positive control for Delete on an actual selected tree row.
+
 Suite: `packages/react/src/widget-tree/WidgetTreeLab.context.test.tsx`,
-describe `WidgetTreeLab context actions`, **15 cases**:
+describe `WidgetTreeLab context actions`, **20 cases**:
 
 1. `targets the right-clicked outline node without editing and restores focus on Escape`
 2. `opens the targeted Inspector and edits that node through the existing controlled callback`
@@ -50,12 +59,17 @@ describe `WidgetTreeLab context actions`, **15 cases**:
 13. `preserves native editable context menus and ignores unowned canvas paths`
 14. `does not retarget an expanded reference child to an authored ancestor`
 15. `does not start a resize or drag from a secondary pointer on canvas chrome`
+16. `keeps a later node menu focused after an earlier Inspector activation`
+17. `does not apply Delete to another selected node from a focused More button`
+18. `does not apply Backspace to another selected node from a focused More button`
+19. `does not apply Alt+ArrowUp to another selected node from a focused More button`
+20. `does not apply Alt+ArrowDown to another selected node from a focused More button`
 
 ## Local checks
 
 - `pnpm install --frozen-lockfile` — PASS; independent worktree installation.
 - `pnpm exec vitest run packages/react/src/widget-tree/WidgetTreeLab.context.test.tsx packages/react/src/widget-tree/WidgetTreeView.test.tsx packages/react/src/widget-tree/WidgetTreeCanvasPreview.test.tsx packages/react/src/widget-tree/WidgetTreeLab.test.tsx packages/react/src/widget-tree/WidgetTreeWorkbench.test.tsx`
-  — PASS, 5 files / 56 tests.
+  — PASS, 5 files / 61 tests.
 - `pnpm --filter @workbench-kit/react typecheck` — PASS.
 - `pnpm --filter @workbench-kit/react typecheck:exact-optional` — PASS.
 - `pnpm exec eslint` on the five changed TypeScript/TSX files — PASS.
