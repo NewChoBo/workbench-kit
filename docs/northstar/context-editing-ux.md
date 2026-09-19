@@ -33,7 +33,7 @@ it does not persist on context-menu open or claim an Apply completed.
 
 ## WB-ST-018 — native text context and menu dismissal
 
-Own `workbench/shell/workbenchContextMenu.ts`, the optional native guard in
+Own `workbench/commands/workbenchContextMenu.ts`, the optional native guard in
 `workbench/commands/keyboard.ts`, ContextMenu's focus/dismiss behavior and adjacent
 tests. Share one native-target decision; cover input/select/textarea, true/empty/
 plaintext-only/inherited editable content, false boundaries, ordinary chrome,
@@ -69,6 +69,24 @@ Opening a menu must not initiate a drag or resize.
 This packet improves editing entry and existing actions; it does not add duplicate
 semantics, multi-selection, a new persistence session, transactional Inspector
 drafts, or migrate the compatibility Widget Tree to the V3 authoring document.
+
+## WB-ST-019B — code and property selection ownership
+
+Admission: `READY_FOR_IMPLEMENTATION`, source `7dcb2c66`, discovered by the
+integration browser play. In the actual WidgetTreeWorkbench with Monaco visible,
+editing Beta's Content to empty triggers automatic source cursor movement; the
+Inspector switches to Gamma and subsequent typing changes Gamma. The sample's
+Form without a visible source editor does not reproduce this path.
+
+Own WidgetSourceEditor cursor-to-selection forwarding and adjacent focused tests.
+Only user-owned code cursor navigation may change the authored selection.
+Controlled source synchronization and reveal operations must not retarget an
+ongoing Inspector edit. Keep the public callback shape, Monaco integration and
+existing canonical patch/selection owner; do not add a second selection store.
+Verify the failing real Monaco story with multiple characters, preserved target
+and focus, Save/Discard, and a positive user code-navigation case. Add focused
+regressions for listener lifecycle and latest source/callback where applicable.
+Independent review, fast validation and packed budgets remain required.
 
 ## Verification and remaining work
 
