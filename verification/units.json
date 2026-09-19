@@ -543,6 +543,49 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP06.explorer-context",
+      "owner": "Universal UI / Explorer target and focus ownership",
+      "sources": ["packages/react/src/workbench/workspace/WorkspaceExplorer.tsx"],
+      "tests": [
+        {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorer.context.test.tsx",
+          "cases": [
+            "WorkspaceExplorer context ownership preserves the selected set and anchor while focusing the pointer target once",
+            "WorkspaceExplorer context ownership selects the unselected file target without opening or expanding it",
+            "WorkspaceExplorer context ownership selects the folder target without opening or expanding it",
+            "WorkspaceExplorer context ownership preserves the real pointer callback fallback without adding inert keyboard or More entries",
+            "WorkspaceExplorer context ownership uses the real invoker rectangle and common targets for More",
+            "WorkspaceExplorer context ownership uses the real invoker rectangle and common targets for Shift+F10",
+            "WorkspaceExplorer context ownership uses the real invoker rectangle and common targets for ContextMenu",
+            "WorkspaceExplorer context ownership keeps custom action siblings independent from More and row keyboard actions",
+            "WorkspaceExplorer context ownership returns from Escape to B then moves DOM focus and Delete or F2 targets to C",
+            "WorkspaceExplorer context ownership moves real focus for Home End arrows and horizontal folder navigation",
+            "WorkspaceExplorer context ownership preserves native rename menus and prevents context entry from committing an active draft",
+            "WorkspaceExplorer context ownership retains inline rename Enter retry and Escape cancellation after native context use"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.explorer-context",
+      "owner": "Workbench Shell / Explorer command and workspace context",
+      "sources": ["packages/shell-react/src/explorer/view.tsx"],
+      "tests": [
+        {
+          "file": "packages/shell-react/src/explorer/view.context.test.tsx",
+          "cases": [
+            "BuiltinExplorerView context ownership restores the invoked row rather than the previously focused row on Escape",
+            "BuiltinExplorerView context ownership opens the more menu without opening a file and restores its invoker",
+            "BuiltinExplorerView context ownership opens the keyboard menu without opening a file and restores its invoker",
+            "BuiltinExplorerView context ownership keeps multi-file targets for a selected row menu and moves subsequent keyboard actions",
+            "BuiltinExplorerView context ownership invalidates a menu when its workspace snapshot changes",
+            "BuiltinExplorerView context ownership invalidates a menu when the workspace service is replaced",
+            "BuiltinExplorerView context ownership invalidates an existing menu when inline creation begins"
+          ]
+        }
+      ]
     }
   ]
 }
