@@ -1,12 +1,18 @@
 /** @vitest-environment jsdom */
 
 import { describe, expect, it } from 'vitest';
+import { act, useEffect } from 'react';
+import { createRoot } from 'react-dom/client';
 import { renderToStaticMarkup } from 'react-dom/server';
 import { useEditorService } from '../editor/use-editor.js';
 import { EditorStateInitializationError } from '@workbench-kit/workbench-core';
 
 import { DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY } from '../editor/state-storage.js';
 import { WorkbenchProvider } from './provider.js';
+
+(
+  globalThis as typeof globalThis & { IS_REACT_ACT_ENVIRONMENT?: boolean }
+).IS_REACT_ACT_ENVIRONMENT = true;
 
 function createMemoryStorage() {
   const values = new Map<string, string>();
@@ -46,6 +52,97 @@ function StateProbe({
 }
 
 describe('WorkbenchProvider editor resource identity', () => {
+  it('restores aliases before effects, then persists one canonical tab after a mounted alias open', async () => {
+    const storage = createMemoryStorage();
+    storage.set(
+      DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+      JSON.stringify({
+        workspaceResourceUriEncoding: 'percent-encoded-v1',
+        activeGroupId: 'main',
+        groups: [
+          {
+            activeTabId: 'tab-2',
+            id: 'main',
+            tabs: [
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-1',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/src/A.txt',
+              },
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-2',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/src/%41.txt',
+              },
+            ],
+          },
+        ],
+        layout: { groupId: 'main', type: 'group' },
+      }),
+    );
+    let service: ReturnType<typeof useEditorService> | undefined;
+    function CaptureService() {
+      const current = useEditorService();
+      useEffect(() => {
+        service = current;
+      }, [current]);
+      return null;
+    }
+    const root = createRoot(document.createElement('div'));
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider availableExtensions={[]} editorStateStorage={storage} persistEditorState>
+          <CaptureService />
+        </WorkbenchProvider>,
+      );
+    });
+
+    expect(service?.getState().groups[0]?.tabs).toEqual([
+      expect.objectContaining({
+        id: 'tab-2',
+        resourceUri: 'workspace://file/src/A.txt',
+      }),
+    ]);
+    let first: ReturnType<NonNullable<typeof service>['openEditor']> | undefined;
+    let alias: ReturnType<NonNullable<typeof service>['openEditor']> | undefined;
+    await act(async () => {
+      first = service?.openEditor({
+        editorId: 'workbench.editor.text',
+        resourceUri: 'workspace://file/src/A.txt',
+      });
+      alias = service?.openEditor({
+        editorId: 'workbench.editor.text',
+        resourceUri: 'workspace://file/src/%41.txt',
+      });
+      const other = service?.openEditor({
+        editorId: 'workbench.editor.text',
+        resourceUri: 'custom://other',
+      });
+      if (other) {
+        service?.closeEditor(other.id);
+      }
+    });
+
+    expect(alias?.id).toBe(first?.id);
+    expect(service?.getState().groups[0]?.tabs).toHaveLength(1);
+    const persisted = JSON.parse(storage.getItem(DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY)!);
+    expect(persisted.groups[0].tabs).toEqual([
+      expect.objectContaining({
+        id: 'tab-2',
+        resourceUri: 'workspace://file/src/A.txt',
+      }),
+    ]);
+    expect(storage.writes).toBeGreaterThan(0);
+    await act(async () => root.unmount());
+  });
+
   it('restores clean persisted aliases as one canonical active tab', () => {
     const storage = createMemoryStorage();
     storage.set(

@@ -47,14 +47,14 @@ Unicode, literal percent neighbors, opaque/malformed identifiers, active alias
 selection at first/middle/last positions, interleaved three-member buckets,
 dirty members anywhere in a bucket, non-alias tab order, separate split groups,
 repeated saves through one host, actual host/save behavior, provider wiring,
-clean persisted alias restoration, and dirty initialization rejection before a
-persistence write.
+clean persisted alias restoration, mounted provider persistence effects, and
+dirty initialization rejection before a persistence write.
 
 ## Validation
 
 | Command                                                                                                                                                                                                                                                                                                                                                                                                 | Result                   |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `pnpm exec vitest run packages/workbench-core/src/editor/service.test.ts packages/workbench-core/src/editor/save.test.ts packages/shell-react/src/editor/resource.test.ts packages/shell-react/src/editor/resource-identity.test.ts packages/shell-react/src/shell/provider.identity.test.tsx packages/workspace/src/resource/uri.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts` | PASS; 7 files / 49 tests |
+| `pnpm exec vitest run packages/workbench-core/src/editor/service.test.ts packages/workbench-core/src/editor/save.test.ts packages/shell-react/src/editor/resource.test.ts packages/shell-react/src/editor/resource-identity.test.ts packages/shell-react/src/shell/provider.identity.test.tsx packages/workspace/src/resource/uri.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts` | PASS; 7 files / 50 tests |
 | `pnpm --filter @workbench-kit/workbench-core typecheck`                                                                                                                                                                                                                                                                                                                                                 | PASS                     |
 | `pnpm --filter @workbench-kit/shell-react typecheck`                                                                                                                                                                                                                                                                                                                                                    | PASS                     |
 | `pnpm --filter @workbench-kit/shell-react typecheck:exact-optional`                                                                                                                                                                                                                                                                                                                                     | PASS                     |
