@@ -79,6 +79,9 @@ Inspector switches to Gamma and subsequent typing changes Gamma. The sample's
 Form without a visible source editor does not reproduce this path.
 
 Own WidgetSourceEditor cursor-to-selection forwarding and adjacent focused tests.
+The associated JsonCodeEditorPane problem-click handler may move its existing
+focus call before setPosition so explicit problem navigation remains user-owned;
+its general cursor callback API and reveal behavior stay unchanged.
 Only user-owned code cursor navigation may change the authored selection.
 Controlled source synchronization and reveal operations must not retarget an
 ongoing Inspector edit. Keep the public callback shape, Monaco integration and
@@ -109,3 +112,21 @@ and failure/retry evidence for Form; reversible multi-step Inspector sessions;
 domain-specific Mapping/Recipe/Graph menus. These require their own ownership and
 admission. Hosts consume released generic mechanics and provide their own product
 actions, permission and persistence policy.
+
+## Measured packed-size review
+
+The first combined fast run failed the initial gzip gate: **253,169 bytes**
+against **253,064**, compared with **253,019** at `b24abeed`. A producer-distinct
+read-only review of source and before/after build logs admitted a **253,192-byte**
+ceiling for this repair (+128 allowance, +150 measured source growth, 23 remaining).
+No package, dependency, public barrel or export-map changes are introduced. Both
+builds transform 2,290 modules and retain the worker/font asset names and graph
+runtime chunk. The added runtime is shared native-editable boundary handling and
+Tab/blur bookkeeping; the outline action rule uses the existing widget CSS graph.
+A broader CSS extraction would change ownership beyond this bounded repair.
+
+The failing fixture is cleaned up by the existing checker, so the log is not
+proof of a retained final manifest/closure. A fresh passing packed run must still
+reach all unchanged forbidden-dependency, CSS and static-closure assertions.
+This measured admission is specific to this source; it is not a blanket increase
+or permission to skip bundle inspection after the source cursor repair.

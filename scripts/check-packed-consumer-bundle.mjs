@@ -47,7 +47,11 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
   // WB-ST-001 baseline is 252,980 bytes; exception-safe cleanup adds 31 gzip bytes
   // with unchanged CSS, static assets and one initial chunk. Admit 64 bytes for
   // this bounded correctness repair; retain the dependency/CSS boundary checks.
-  initialGzipBytes: 253_064,
+  // WB-ST-018/019: native editing boundaries and Tab dismissal raise 253,019 to
+  // 253,169 bytes with the same 2,290 transformed modules and existing CSS graph.
+  // Independently reviewed bounded allowance; retain all closure/CSS checks.
+  // See docs/northstar/context-editing-ux.md (packed-size review).
+  initialGzipBytes: 253_192,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.
