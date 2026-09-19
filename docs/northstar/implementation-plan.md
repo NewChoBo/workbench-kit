@@ -79,8 +79,6 @@ It is not a changelog of the current repository. Current source is recorded only
 - This receipt does not claim independent source review, integration, publication, browser visual
   conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
 
-## WB-ST-018 / WB-ST-019 — context actions and editing entry
-
 ## WB-ST-020 — Explorer context parity
 
 Admission: `READY_FOR_IMPLEMENTATION`. The [Explorer contract](./explorer-context-ux.md)

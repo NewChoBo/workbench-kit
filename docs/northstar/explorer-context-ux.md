@@ -26,6 +26,11 @@ navigation and custom action rendering compatible. Native inline-rename context
 events must bypass the list background callback using the existing native-menu
 policy. Context opening must not accidentally submit or cancel an active draft.
 
+Source audit also found keyboard navigation updates state without moving DOM
+focus. Include real row refs/focus movement for Arrow/Home/End and horizontal
+navigation: after Escape -> B -> ArrowDown, Delete/F2 must address the newly
+focused row. This is the same target-ownership repair, not a new selection model.
+
 The built-in shell Explorer adopts the normalized request and existing menu item
 builder/command bridge. Store the connected invoker for Escape restoration;
 activation leaves focus with inline Rename/Create or the opened editor. Discard
