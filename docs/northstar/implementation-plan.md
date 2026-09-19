@@ -81,6 +81,15 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-ST-018 / WB-ST-019 — context actions and editing entry
 
+## WB-ST-020 — Explorer context parity
+
+Admission: `READY_FOR_IMPLEMENTATION`. The [Explorer contract](./explorer-context-ux.md)
+closes target selection, normalized pointer/More/keyboard entry, inline-edit native
+menus, focus return and stale workspace invalidation. Reuse the existing controller
+and command bridge; do not create another edit/history/persistence owner.
+
+## WB-ST-018 / WB-ST-019 — context actions and editing entry
+
 Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
 The [closed UX contract](./context-editing-ux.md) separates native text/menu focus
 from Widget Tree target selection and context-to-properties entry. WB-ST-019B
