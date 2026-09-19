@@ -295,6 +295,15 @@ The [wave 3 receipt](./distributed-integration-wave-3.md) records exact commits,
 artifact identity, review and limits. Common v1 is unchanged. Real OS IME,
 portable styling, other controls, develop, release and adoption remain separate.
 
+## Wave 4 — structural defects and ownership
+
+ST-012 (HTTPS redirect policy), ST-013 (current/target dependency documentation)
+and ST-014 (headless Remap history ownership)
+are `READY_FOR_IMPLEMENTATION` under the closed
+[structural stabilization packet](./structural-stabilization-wave-4.md).
+The existing common operation/control contracts remain unchanged. Preview state,
+UI/package splitting and Provider decomposition remain subsequent bounded work.
+
 ## Shared status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open

@@ -90,10 +90,12 @@
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
     "react-markdown": "^10.1.0",
+    "selfsigned": "5.5.0",
     "storybook": "^10.5.2",
     "svelte": "5.57.0",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.64.0",
+    "undici": "7.28.0",
     "vite": "^6.4.3",
     "vitest": "^4.1.10",
     "vue": "3.5.43"
