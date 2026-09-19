@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 
+import { createWorkspaceResourceTransaction } from '../resource/transaction.js';
+import { formatWorkspaceResourceUri } from '../resource/uri.js';
 import {
   WorkspaceResourceService,
   createWorkbenchWorkspaceHostPort,
@@ -41,5 +43,106 @@ describe('workbench workspace host port', () => {
       content: 'readme',
       path: 'README.md',
     });
+  });
+
+  it('resolves and saves the renamed multilingual file without changing another file', () => {
+    const renamedPath = 'src/App-with-a-long-context-menu-regression-name-다국어-日本語.tsx';
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: {
+        files: [
+          { content: 'export const app = "original";', path: 'src/App.tsx' },
+          { content: 'export const sibling = "unchanged";', path: 'src/Other.tsx' },
+        ],
+        folders: ['src'],
+      },
+    });
+    port.service.applyTransaction(
+      createWorkspaceResourceTransaction({
+        label: 'Rename fixture',
+        mutations: [
+          {
+            type: 'rename-file',
+            path: 'src/App.tsx',
+            name: 'App-with-a-long-context-menu-regression-name-다국어-日本語.tsx',
+          },
+        ],
+      }),
+    );
+    const uri = formatWorkspaceResourceUri({ kind: 'file', path: renamedPath });
+
+    expect(port.resolveResource?.(uri)).toMatchObject({
+      path: renamedPath,
+      content: 'export const app = "original";',
+    });
+    expect(port.service.getFile('src/App.tsx')).toBeUndefined();
+    expect(port.applySave(uri, 'export const app = "updated";')?.transactionId).toEqual(
+      expect.any(String),
+    );
+    expect(port.service.getState().files.map(({ path, content }) => ({ path, content }))).toEqual([
+      { content: 'export const sibling = "unchanged";', path: 'src/Other.tsx' },
+      { content: 'export const app = "updated";', path: renamedPath },
+    ]);
+    expect(port.service.getFile('src/Other.tsx')).toEqual({
+      content: 'export const sibling = "unchanged";',
+      path: 'src/Other.tsx',
+    });
+    expect(port.service.getTransactionJournal()).toHaveLength(2);
+    expect(port.service.getTransactionJournal()[1]?.mutations).toEqual([
+      { type: 'save-file', path: renamedPath, file: { content: 'export const app = "updated";' } },
+    ]);
+    port.dispose?.();
+  });
+
+  it('keeps reserved and literal percent filenames separate during lookup and save', () => {
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: {
+        files: [
+          { path: 'src/a?#%2F.txt', content: 'reserved' },
+          { path: 'src/a', content: 'neighbor' },
+          { path: 'src/%41.txt', content: 'literal percent' },
+          { path: 'src/A.txt', content: 'decoded neighbor' },
+        ],
+      },
+    });
+    const reservedUri = formatWorkspaceResourceUri({ kind: 'file', path: 'src/a?#%2F.txt' });
+    const percentUri = formatWorkspaceResourceUri({ kind: 'file', path: 'src/%41.txt' });
+    expect(port.resolveResource?.(reservedUri)).toEqual({
+      path: 'src/a?#%2F.txt',
+      content: 'reserved',
+    });
+    expect(port.resolveResource?.(percentUri)).toEqual({
+      path: 'src/%41.txt',
+      content: 'literal percent',
+    });
+    port.applySave(reservedUri, 'changed reserved');
+    port.applySave(percentUri, 'changed percent');
+    expect(port.service.getState().files.map(({ path, content }) => ({ path, content }))).toEqual([
+      { path: 'src/a?#%2F.txt', content: 'changed reserved' },
+      { path: 'src/a', content: 'neighbor' },
+      { path: 'src/%41.txt', content: 'changed percent' },
+      { path: 'src/A.txt', content: 'decoded neighbor' },
+    ]);
+    expect(port.service.getFile('src/a')).toEqual({ path: 'src/a', content: 'neighbor' });
+    expect(port.service.getFile('src/A.txt')).toEqual({
+      path: 'src/A.txt',
+      content: 'decoded neighbor',
+    });
+    port.dispose?.();
+  });
+
+  it('does not resolve create or save resources with invalid encoded paths', () => {
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: {
+        files: [{ path: 'src/a/b.txt', content: 'untouched' }],
+      },
+    });
+    const before = port.service.getState();
+    for (const uri of ['workspace://file/src/a%2Fb.txt', 'workspace://file/src/bad%.txt']) {
+      expect(port.resolveResource?.(uri)).toBeUndefined();
+      expect(port.applySave(uri, 'must not be written')).toBeUndefined();
+    }
+    expect(port.service.getState()).toEqual(before);
+    expect(port.service.getTransactionJournal()).toHaveLength(0);
+    port.dispose?.();
   });
 });

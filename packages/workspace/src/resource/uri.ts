@@ -16,7 +16,7 @@ export function formatWorkspaceResourceUri(input: {
   kind: WorkspaceResourceKind;
 }): string {
   const path = normalizeWorkspacePath(input.path);
-  return `workspace://${input.kind}/${path}`;
+  return `workspace://${input.kind}/${path.split('/').map(encodeURIComponent).join('/')}`;
 }
 
 export function parseWorkspaceResourceUri(uri: string): WorkspaceResourceUri | null {
@@ -31,8 +31,11 @@ export function parseWorkspaceResourceUri(uri: string): WorkspaceResourceUri | n
       return null;
     }
 
-    // URL pathname always has a leading "/"; workspace paths are relative.
-    const path = normalizeWorkspacePath(url.pathname.replace(/^\/+/, ''));
+    // Decode once without allowing escaped filename data to become a separator.
+    if (/%2f|%5c/i.test(url.pathname)) {
+      return null;
+    }
+    const path = normalizeWorkspacePath(decodeURIComponent(url.pathname).replace(/^\/+/, ''));
     if (kind === 'file' && !path) {
       return null;
     }
