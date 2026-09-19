@@ -642,6 +642,81 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP06.explorer-rename-retry",
+      "owner": "Universal UI / inline edit attempt ownership",
+      "sources": [
+        "packages/react/src/workbench/workspace/WorkspaceExplorer.tsx",
+        "packages/react/src/workbench/workspace/useWorkspaceExplorerController.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx",
+          "cases": [
+            "WorkspaceExplorer inline rename retry retries after two identical validation failures and calls renameEntry",
+            "WorkspaceExplorer inline rename retry retries after three identical validation failures",
+            "WorkspaceExplorer inline rename retry keeps the draft after a collision and retries with a new name",
+            "WorkspaceExplorer inline rename retry deduplicates Enter, blur, and repeated Enter while rename is pending",
+            "WorkspaceExplorer inline rename retry opens a retry after a rejected rename promise",
+            "WorkspaceExplorer inline rename retry does not let an old promise clear or report over a replacement draft",
+            "WorkspaceExplorer inline rename retry ignores an old rejection after a replacement draft starts submitting",
+            "WorkspaceExplorer inline rename retry preserves later typing when the original pending rename rejects",
+            "WorkspaceExplorer inline rename retry cancels an idle draft with Escape without committing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.editor-storage-eligibility",
+      "owner": "Workbench Shell / rejected editor storage preservation",
+      "sources": [
+        "packages/shell-react/src/editor/state-storage.ts",
+        "packages/shell-react/src/shell/provider.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/shell-react/src/editor/state-storage.test.ts",
+          "cases": [
+            "editor-state-storage reports missing and valid state as writable, while locking rejected state"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/shell/provider.test.tsx",
+          "cases": [
+            "WorkbenchProvider preserves rejected editor storage through ordinary editor events",
+            "WorkbenchProvider recomputes editor write eligibility when the adapter or key changes",
+            "WorkbenchProvider allows an explicit initial editor state to remain host-authoritative"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP01.workspace-unicode-paths",
+      "owner": "Foundation / workspace path validity before mutation",
+      "sources": ["packages/workspace/src/path/path.ts"],
+      "tests": [
+        {
+          "file": "packages/workspace/src/path/path.test.ts",
+          "cases": [
+            "workspace path helpers rejects unpaired UTF-16 surrogates while preserving valid Unicode"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/resource/uri.test.ts",
+          "cases": [
+            "workspace resource URI identity rejects unpaired surrogates before URI encoding or path acceptance"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/host/workbench-workspace-host.test.ts",
+          "cases": [
+            "workbench workspace host port leaves state, snapshot version, and journal unchanged for an invalid rename",
+            "workbench workspace host port leaves state, snapshot version, and journal unchanged for invalid create mutations",
+            "workbench workspace host port filters invalid initial paths while preserving valid entries"
+          ]
+        }
+      ]
     }
   ]
 }
