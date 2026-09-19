@@ -245,6 +245,11 @@ create behavior and compatibility with custom ports that omit the query.
 - Workspace host save-eligibility query and tests.
 - Builtin Explorer commands + focused dirty-mutation tests.
 - Shell editor reconcile tests, command Explorer port/error wiring as necessary.
+- `useWorkspaceExplorerController.ts` after WB-ST-021 integration, and shell
+  Explorer view/port tests for asynchronous failure reporting. Use the existing
+  panel `toolbarStatus` slot for a concise English action error with `role="alert"`;
+  no new notification framework or stylesheet is needed. Rename errors stay on
+  the draft; delete/move errors must also be visible and must not change selection.
 - `docs/northstar/parts/logic-draft-protection-receipt.md`
 
 ### Acceptance and validation
