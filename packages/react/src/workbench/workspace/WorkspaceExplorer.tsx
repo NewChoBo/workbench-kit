@@ -90,6 +90,8 @@ export type WorkspaceExplorerInlineEditKind =
   'create-file' | 'create-folder' | 'rename-file' | 'rename-folder';
 
 export interface WorkspaceExplorerInlineEditState {
+  /** Incremented by the controller for each completed rejected commit attempt. */
+  commitAttempt?: number;
   error?: ReactNode;
   id?: string;
   kind: WorkspaceExplorerInlineEditKind;
@@ -218,11 +220,11 @@ export function WorkspaceExplorer({
   }, [inlineEditKey]);
 
   useEffect(() => {
-    // Validation failures keep the same draft id; allow Enter/blur retry after an error.
+    // Validation failures keep the same draft id; each completed rejection opens a retry gate.
     if (inlineEdit?.error) {
       inlineEditCommitStartedRef.current = false;
     }
-  }, [inlineEdit?.error]);
+  }, [inlineEdit?.commitAttempt, inlineEdit?.error]);
 
   const selectFile = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
     const mode = resolveSelectionMode(event);
