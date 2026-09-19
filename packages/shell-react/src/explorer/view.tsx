@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
+import { SideBarHeaderControl } from '@workbench-kit/react/layout';
 import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import {
   WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID,
@@ -242,7 +243,15 @@ export function BuiltinExplorerView() {
           void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
         }}
         sectionTitle={sectionTitle}
-        toolbarStatus={actionError ? <span role="alert">{actionError}</span> : undefined}
+        headerAddon={
+          actionError ? (
+            <SideBarHeaderControl>
+              <span role="alert" style={{ overflowWrap: 'anywhere' }}>
+                {actionError}
+              </span>
+            </SideBarHeaderControl>
+          ) : undefined
+        }
         selectedPaths={explorer.selection.paths}
         selectionAnchorPath={explorer.selection.anchorPath}
         onActivateFile={explorer.handleActivateFile}

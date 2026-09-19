@@ -47,4 +47,31 @@ describe('WorkspaceExplorerPanel', () => {
     expect(markup.indexOf('New file')).toBeLessThan(markup.indexOf('toolbar-trailing'));
     expect(markup.indexOf('toolbar-trailing')).toBeLessThan(markup.indexOf('toolbar-status'));
   });
+
+  it('renders the header addon outside the toolbar', () => {
+    const markup = renderToStaticMarkup(
+      <WorkspaceExplorerPanel
+        expandedPaths={new Set()}
+        nodes={[]}
+        onActivateFile={() => undefined}
+        onToggleFolder={() => undefined}
+        onNewFile={() => undefined}
+        toolbarStatus={<span data-testid="toolbar-status">3 items</span>}
+        headerAddon={
+          <span data-testid="header-addon" role="alert" style={{ overflowWrap: 'anywhere' }}>
+            Cannot open this workspace path
+          </span>
+        }
+      />,
+    );
+
+    const toolbarEnd = markup.indexOf('</div>', markup.indexOf('ui-explorer-action-bar'));
+    const headerAddonContainer = markup.indexOf('ui-sidebar-view__header-addon');
+    const headerAddon = markup.indexOf('data-testid="header-addon"');
+    expect(markup).toContain('data-testid="toolbar-status"');
+    expect(headerAddonContainer).toBeGreaterThan(toolbarEnd);
+    expect(headerAddon).toBeGreaterThan(headerAddonContainer);
+    expect(markup).toContain('role="alert"');
+    expect(markup).toContain('overflow-wrap:anywhere');
+  });
 });
