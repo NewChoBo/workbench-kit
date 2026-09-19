@@ -79,6 +79,16 @@ It is not a changelog of the current repository. Current source is recorded only
 - This receipt does not claim independent source review, integration, publication, browser visual
   conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
 
+## WB-ST-021 through WB-ST-025 — editor logic stabilization
+
+Admission: `READY_FOR_IMPLEMENTATION`, audited source `a01df0d9`.
+The [detailed worker plan](./logic-stabilization-plan.md) closes shared contracts,
+file ownership, reproduction, acceptance and validation for repeated rename
+failure, incompatible persisted state, Unicode path validity, canonical editor
+identity and dirty-buffer protection. Wave 1 is independent; identity follows
+storage/path review, then dirty-resource protection follows identity integration.
+No release or consumer source change is part of these packets.
+
 ## WB-ST-020 — Explorer context parity
 
 Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
