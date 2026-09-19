@@ -81,13 +81,17 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-ST-016 — Modal viewport resize repair
 
-Admission: `READY_FOR_IMPLEMENTATION`. The [bounded repair](./modal-viewport-repair.md)
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`. The [bounded repair](./modal-viewport-repair.md)
 closes the real Settings resize defect found by WB-ST-015. Existing Modal frames
 must fit a smaller overlay viewport without replacing form state or losing Close.
+Its integration receipt records 11 focused regressions, six actual sample plays,
+full fast 495 files / 3,020 tests and the unchanged packed-size budget.
 
 ## WB-ST-017 — long management-card values
 
-Admission: `READY_FOR_IMPLEMENTATION`, 2026-09-19, source `14f66f41`.
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`, 2026-09-19, source `14f66f41`.
 The sample's long unbroken account ID makes the shared management-card body
 overflow at 430px. Owner: React management-card CSS and the sample screen play.
 Allow text within the body to wrap at a safe character boundary when ordinary
@@ -98,6 +102,8 @@ long IDs in the real Settings screen, ensure details fit each card after host
 shrink, and retain the existing sample plays, lint/format and full fast checks.
 Packed budgets remain unchanged. This small CSS packet is separate from the
 Modal implementation part and does not change its file ownership.
+The [shared screen receipt](./modal-viewport-repair.md#local-integration-evidence)
+records details-only wrapping and complete ID preservation in 24 cards.
 
 ## WB-ST-015 — sample backend and screen verification
 
@@ -108,7 +114,7 @@ auth hook's failure/lifetime repair, and actual screen acceptance. It preserves
 public contracts, default sample behavior and existing host storage.
 The [integration receipt](./sample-backend-receipt.md) records ten scenarios,
 26 focused tests, five Storybook plays, full fast validation and the separate
-Modal viewport-resize finding. Narrow-layout acceptance remains open there.
+Modal viewport-resize finding. WB-ST-016 and WB-ST-017 own its narrow-screen follow-up.
 
 ## WB-ST-006B — standards-first native Checkbox
 

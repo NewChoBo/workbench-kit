@@ -208,6 +208,10 @@ describe('Modal viewport ownership', () => {
       const fitted = bounds(dialog);
       resize(0, 0);
       expect(bounds(dialog)).toEqual(fitted);
+      resize(0, 600);
+      expect(bounds(dialog)).toEqual(fitted);
+      resize(900, 0);
+      expect(bounds(dialog)).toEqual(fitted);
       resize(900, 600);
       expect(bounds(dialog)).toEqual(fitted);
       resize(320, 120);

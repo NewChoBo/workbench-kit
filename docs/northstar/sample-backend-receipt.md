@@ -39,9 +39,15 @@ The recommended reset-while-pending regression is included in ControlledLoading.
   profile after failed sign-out, reset while sign-in is pending, empty accounts,
   and 24 long-label accounts operated through the actual screens. Fresh-page
   warning/error logs were empty. Desktop screenshots were inspected at 1280x720.
-- **Open finding:** resizing an already-open Settings modal to 430x900 retained
+- **Finding and follow-up:** resizing an already-open Settings modal to 430x900 retained
   its 1120px width and moved Close outside the viewport. Narrow-layout acceptance
-  is not passed by this packet. A separate generic Modal repair owns this finding.
+  was not passed by this original packet. The separate
+  [Modal and long-value repair](./modal-viewport-repair.md#local-integration-evidence)
+  records the later fixes and sixth play; its receipt owns the combined result.
+
+The sample production build also passes. Its emitted JavaScript does not contain
+the dev-only backend lab or fake transport markers. Vite reports the existing
+sample's large-chunk advisory; no sample performance qualification is claimed.
 
 Real server conformance, complete DTO schemas, cross-browser, actual OS IME,
 Electron host integration, performance and package release require their own

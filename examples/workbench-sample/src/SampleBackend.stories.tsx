@@ -1,4 +1,4 @@
-import { StrictMode } from 'react';
+import { StrictMode, useState } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 import { SampleBackendLab } from './testing/SampleBackendLab.js';
@@ -146,5 +146,92 @@ export const SessionFailures: Story = {
       await userEvent.click(canvas.getByRole('button', { name: 'Sign in' }));
       await waitForWorkbenchReady(canvas);
     }
+  },
+};
+
+function ResizableSampleHost() {
+  const [width, setWidth] = useState(1280);
+  return (
+    <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'start' }}>
+      <div>
+        <button type="button" onClick={() => setWidth(430)}>
+          Narrow host
+        </button>
+        <button type="button" onClick={() => setWidth(1280)}>
+          Wide host
+        </button>
+      </div>
+      <div
+        data-testid="resizable-sample-host"
+        style={{ width, maxWidth: '100%', flex: 1, minHeight: 0 }}
+      >
+        <StrictMode>
+          <SampleBackendLab initialScenario="many-accounts" />
+        </StrictMode>
+      </div>
+    </div>
+  );
+}
+
+export const ViewportResize: Story = {
+  render: () => <ResizableSampleHost />,
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await waitForWorkbenchReady(canvas);
+    await userEvent.click(canvas.getByRole('button', { name: 'Settings' }));
+    const dialog = await canvas.findByRole('dialog', { name: /Settings/ });
+    const settings = within(dialog);
+    await userEvent.click(settings.getByRole('button', { name: 'Linked Accounts' }));
+    await waitFor(() =>
+      expect(settings.getAllByText(/Research workspace — multilingual collaboration/)).toHaveLength(
+        24,
+      ),
+    );
+    await waitFor(() => expect(dialog.getBoundingClientRect().width).toBeGreaterThan(430));
+    const originalIds = settings
+      .getAllByText(/^integration-\d{2}-longidentifier/)
+      .map((id) => id.textContent);
+    const search = settings.getByPlaceholderText('Search settings');
+    await userEvent.type(search, 'linked');
+    await userEvent.click(canvas.getByRole('button', { name: 'Narrow host' }));
+    const assertContained = () => {
+      const host = dialog.closest('.ide-workbench-overlays')!.getBoundingClientRect();
+      const outerHost = canvas.getByTestId('resizable-sample-host').getBoundingClientRect();
+      const frame = dialog.getBoundingClientRect();
+      const close = settings.getByRole('button', { name: 'Close' }).getBoundingClientRect();
+      expect(host.right).toBeLessThanOrEqual(outerHost.right);
+      expect(frame.left).toBeGreaterThanOrEqual(host.left);
+      expect(frame.top).toBeGreaterThanOrEqual(host.top);
+      expect(frame.right).toBeLessThanOrEqual(host.right + 0.5);
+      expect(frame.bottom).toBeLessThanOrEqual(host.bottom + 0.5);
+      expect(close.right).toBeLessThanOrEqual(host.right);
+      expect(close.bottom).toBeLessThanOrEqual(host.bottom);
+    };
+    await waitFor(assertContained);
+    expect(canvas.getByTestId('resizable-sample-host').getBoundingClientRect().width).toBe(430);
+    expect(canvas.getByRole('dialog', { name: /Settings/ })).toBe(dialog);
+    expect(settings.getByPlaceholderText('Search settings')).toBe(search);
+    await expect(search).toHaveValue('linked');
+    const longIds = settings.getAllByText(/^integration-\d{2}-longidentifier/);
+    expect(longIds).toHaveLength(24);
+    expect(longIds.map((id) => id.textContent)).toEqual(originalIds);
+    for (const id of longIds) {
+      const card = id.closest('article')!;
+      expect(card.scrollWidth).toBeLessThanOrEqual(card.clientWidth);
+      expect(id.getBoundingClientRect().right).toBeLessThanOrEqual(
+        card.getBoundingClientRect().right,
+      );
+    }
+    const narrowWidth = dialog.getBoundingClientRect().width;
+    await userEvent.click(canvas.getByRole('button', { name: 'Wide host' }));
+    await waitFor(() =>
+      expect(
+        canvas.getByTestId('resizable-sample-host').getBoundingClientRect().width,
+      ).toBeGreaterThan(430),
+    );
+    await waitFor(assertContained);
+    expect(dialog.getBoundingClientRect().width).toBe(narrowWidth);
+    await userEvent.click(settings.getByRole('button', { name: 'Close' }));
+    await waitFor(() => expect(canvas.queryByRole('dialog', { name: /Settings/ })).toBeNull());
   },
 };
