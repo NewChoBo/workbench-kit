@@ -53,3 +53,19 @@ adopting a release. No release is performed in this packet.
 Reproduce restored `%41.txt` and `%20.txt` alongside their decoded neighbors.
 Verify host resolution and Save target the original literal-percent files, while
 new encoded Unicode and reserved-name tabs survive repeated writes/reads.
+
+## Measured packed-size admission
+
+At source candidate `7484bafc`, the old 253,192-byte initial gzip budget stops the
+combined gate at **253,439 bytes**. The Explorer-only candidate measured 253,169;
+the additional URI codec and required legacy migration account for **270 bytes**.
+A producer-distinct source/log review approves a bounded **253,472-byte** ceiling
+(280-byte allowance increase, 33 bytes of measured headroom).
+
+Both builds transform 2,290 modules and retain the same CSS asset/hash (342,764
+bytes / 49,730 gzip), font and worker assets, and graph runtime chunk. There are
+no package, dependency, lockfile or CSS changes. The old budget fails before later
+closure assertions, so its log is not proof of the complete static closure. A
+fresh passing packed run must reach every unchanged Monaco exclusion, CSS,
+static-closure and focused-consumer assertion. This is a source-specific
+correctness allowance, not a general budget increase for future work.

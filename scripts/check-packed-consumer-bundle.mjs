@@ -51,7 +51,10 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
   // 253,169 bytes with the same 2,290 transformed modules and existing CSS graph.
   // Independently reviewed bounded allowance; retain all closure/CSS checks.
   // See docs/northstar/context-editing-ux.md (packed-size review).
-  initialGzipBytes: 253_192,
+  // WB-ST-020B: resource URI identity and legacy editor-state migration add 270
+  // gzip bytes (253,169 -> 253,439), with unchanged modules, CSS and static assets.
+  // Independently reviewed bounded allowance; see explorer-resource-uri-repair.md.
+  initialGzipBytes: 253_472,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.
