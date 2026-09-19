@@ -239,12 +239,16 @@ function parseEditorLayoutStorageValue(
   }
 
   if (value.type === 'group') {
-    return typeof value.groupId === 'string'
-      ? {
-          groupId: value.groupId,
-          type: 'group',
-        }
-      : undefined;
+    if (typeof value.groupId !== 'string') {
+      if (strict) {
+        throw new TypeError('Invalid editor group layout.');
+      }
+      return undefined;
+    }
+    return {
+      groupId: value.groupId,
+      type: 'group',
+    };
   }
 
   if (value.type !== 'split' || !Array.isArray(value.children)) {

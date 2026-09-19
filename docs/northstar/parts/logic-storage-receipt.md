@@ -19,3 +19,22 @@ continues to be host-authoritative and intentionally permits persistence.
 Focused coverage includes missing, valid, future, malformed and invalid-URI
 values plus an actual provider event sequence. The integrator owns combined
 validation, required-case registration, and release decisions.
+
+## Evidence
+
+| Check                                                                                                                         | Result                                                                                                                                                      |
+| ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| RED reproduction                                                                                                              | The supplied audit reproduced the pre-fix overwrite: `future-v2` returned no diagnostic/write guard and the first editor event replaced the original bytes. |
+| `pnpm exec vitest run packages/shell-react/src/editor/state-storage.test.ts packages/shell-react/src/shell/provider.test.tsx` | GREEN; previous baseline 57 tests, follow-up adds strict layout, throwing-read, adapter/key switch, close, diagnostic, and initial-state cases.             |
+| `pnpm --filter @workbench-kit/shell-react typecheck`                                                                          | GREEN                                                                                                                                                       |
+| `pnpm typecheck:shell-react-exact-optional`                                                                                   | GREEN                                                                                                                                                       |
+| `pnpm check:workspace-isolation`                                                                                              | GREEN                                                                                                                                                       |
+| Targeted `pnpm exec eslint ...`                                                                                               | GREEN                                                                                                                                                       |
+| `pnpm run format:check`                                                                                                       | GREEN                                                                                                                                                       |
+| `pnpm check:commit-safety`                                                                                                    | GREEN; public-reference and secret scans passed                                                                                                             |
+
+The focused provider tests observe `decode_failed`, verify actual close of an
+opened tab, recompute eligibility after adapter/key changes, and cover the
+documented explicit `initialEditorState` bypass. This receipt records local
+implementation evidence only; integrated validation and release status remain
+with the integrator.

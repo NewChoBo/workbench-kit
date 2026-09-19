@@ -311,6 +311,45 @@ describe('editor-state-storage', () => {
     expect(readPersistedEditorStateResult('invalid-uri', storage)).toMatchObject({
       writeEligible: false,
     });
+
+    const malformedSplit = {
+      ...valid,
+      workspaceResourceUriEncoding: 'percent-encoded-v1',
+      layout: {
+        children: [
+          { groupId: 'main', type: 'group' },
+          { groupId: 42, type: 'group' },
+        ],
+        direction: 'horizontal',
+        type: 'split',
+      },
+    };
+    storage.setItem('malformed-split', JSON.stringify(malformedSplit));
+    expect(readPersistedEditorStateResult('malformed-split', storage)).toMatchObject({
+      writeEligible: false,
+    });
+
+    const throwingStorage: Storage = {
+      get length() {
+        return 0;
+      },
+      clear() {},
+      getItem() {
+        throw new Error('unavailable');
+      },
+      key() {
+        return null;
+      },
+      removeItem() {},
+      setItem() {},
+    };
+    const diagnostics: unknown[] = [];
+    const failedRead = readPersistedEditorStateResult('read-failed', throwingStorage, {
+      onDiagnostic: (diagnostic) => diagnostics.push(diagnostic),
+    });
+    expect(failedRead.writeEligible).toBe(false);
+    expect(failedRead.diagnostic?.code).toBe('read_failed');
+    expect(diagnostics).toEqual([expect.objectContaining({ code: 'read_failed' })]);
   });
 });
 
