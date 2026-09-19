@@ -299,10 +299,13 @@ portable styling, other controls, develop, release and adoption remain separate.
 
 ST-012 (HTTPS redirect policy), ST-013 (current/target dependency documentation)
 and ST-014 (headless Remap history ownership)
-are `READY_FOR_IMPLEMENTATION` under the closed
+are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`, admitted under the closed
 [structural stabilization packet](./structural-stabilization-wave-4.md).
 The existing common operation/control contracts remain unchanged. Preview state,
 UI/package splitting and Provider decomposition remain subsequent bounded work.
+The [wave 4 receipt](./structural-stabilization-wave-4-receipt.md) records the real
+redirect reproduction/repair, unchanged history extraction, independent reviews
+and combined fast PASS: **491 files / 2,968 tests**, **14 units / 139 required cases**.
 
 ## Shared status definitions
 

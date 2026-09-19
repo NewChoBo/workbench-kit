@@ -275,6 +275,71 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP01.https-redirect-policy",
+      "owner": "Platform / HTTPS request boundary",
+      "sources": ["packages/platform/src/network/create-allowlisted-https-fetch.ts"],
+      "tests": [
+        {
+          "file": "packages/platform/src/network/create-allowlisted-https-fetch.test.ts",
+          "cases": [
+            "createAllowlistedHttpsFetch allows https requests to allowlisted hosts",
+            "createAllowlistedHttpsFetch rejects http URLs",
+            "createAllowlistedHttpsFetch rejects non-allowlisted hostnames",
+            "createAllowlistedHttpsFetch lets hosts map policy violations without changing request validation",
+            "createAllowlistedHttpsFetch accepts URL and Request inputs after hostname checks",
+            "createAllowlistedHttpsFetch normalizes hostnames case-insensitively",
+            "createAllowlistedHttpsFetch overrides init redirect modes without mutating request options",
+            "createAllowlistedHttpsFetch overrides Request redirect without cloning or changing the Request",
+            "createAllowlistedHttpsFetch preserves transport failure and cancellation causes"
+          ]
+        },
+        {
+          "file": "scripts/allowlisted-https-fetch.network.test.mjs",
+          "cases": [
+            "allowlisted HTTPS network boundary delivers direct Request body headers and method over verified TLS",
+            "allowlisted HTTPS network boundary proves native fetch can reach each redirect target with the same TLS trust",
+            "allowlisted HTTPS network boundary blocks every redirect status to cross-host HTTPS before the target is contacted",
+            "allowlisted HTTPS network boundary blocks every redirect status to HTTP downgrade before the target is contacted",
+            "allowlisted HTTPS network boundary blocks every redirect status to same-host HTTPS before the target is contacted",
+            "allowlisted HTTPS network boundary does not allow Request or init redirect options to opt out",
+            "allowlisted HTTPS network boundary rejects disallowed direct destinations before making a request"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP03.headless-history",
+      "owner": "Mapping / semantic edit history",
+      "sources": [
+        "packages/field-remap/src/history.ts",
+        "packages/shell-react/src/field-remap/history.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/history.test.ts",
+          "cases": [
+            "headless Field Remap history creates independent empty histories without DOM globals",
+            "headless Field Remap history copies and shallow-freezes snapshot containers while retaining item identity",
+            "headless Field Remap history compares ordered item identities instead of structural values",
+            "headless Field Remap history returns the same state and preserves redo for an equal record",
+            "headless Field Remap history records the current composite snapshot and clears redo without mutating inputs",
+            "headless Field Remap history returns null for unavailable undo and redo",
+            "headless Field Remap history undoes and redoes whole snapshots in order without changing prior states",
+            "headless Field Remap history retains exactly the latest one hundred record steps through undo and redo",
+            "headless Field Remap history caps past during redo when a caller supplies an existing full history"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/field-remap/history.test.ts",
+          "cases": [
+            "Field Remap semantic history re-exports every headless history function with identical identity",
+            "Field Remap semantic history records a connect and restores it through undo and redo",
+            "Field Remap semantic history restores edges and operators as one immutable snapshot"
+          ]
+        }
+      ]
     }
   ]
 }

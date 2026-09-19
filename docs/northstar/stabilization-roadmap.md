@@ -17,15 +17,17 @@ separate implementation receipt. A passing local candidate is not a release.
 4. **S3 — stable adoption candidate:** package-only consumers, browser interaction,
    compatibility review and release-tip gates pass on the same candidate.
 
-Current local integration: `98c2505f` plus the central third-wave exports and registration,
+Current local integration: `4119e8a4` plus the central fourth-wave verification,
 on `codex/stabilization-units-20260919`. S0 cleanup/required verification, ST-002
 legacy compatibility and cancellation, ST-005A current React Input fixtures,
 ST-003A strict invocation/text adapters and ST-003B lookup optimization are
 implemented. Shared baseline v1 repairs terminal failure preservation (ST-003C).
 The independently reviewed parts add strict text/Checkbox conformance, bounded
 JSON and UTF-8 operations, and a native text-input binder with one packed browser
-artifact used by HTML, React, Vue and Svelte. Combined `validate:fast` passed
-**489 files / 2,948 tests**; the registry enforces **12 units / 111 required cases**.
+artifact used by HTML, React, Vue and Svelte. Structural work now also repairs the
+HTTPS redirect boundary, moves semantic history from shell to Mapping, and
+reconciles current dependency rules with their target. Combined `validate:fast`
+passed **491 files / 2,968 tests**; the registry enforces **14 units / 139 required cases**.
 This is local integration and a partial capability
 inventory, not full Kit stability, develop integration or published availability.
 
@@ -53,6 +55,19 @@ The [second-wave receipt](./distributed-integration-wave-2.md) records the two n
 capabilities, packed consumers, source HTML interaction and explicit remaining gates.
 The [third-wave receipt](./distributed-integration-wave-3.md) records strict UTF-8,
 same-artifact four-host evidence and the updated independent design queues.
+The [fourth-wave receipt](./structural-stabilization-wave-4-receipt.md) records the
+transport fix, headless history extraction and unresolved structural work.
+
+## Current structural priority
+
+After the bounded ST-012/013/014 repairs, prioritize preview-controller ownership,
+minimal UI/Mapping package boundaries, explicit Provider composition and mandatory
+independent installation. Close each packet before source edits. Preview extraction
+first needs its exact-optional and callback lifecycle contracts resolved.
+History now has one domain implementation with a compatibility shell re-export;
+this does not remove the shell's Mapping UI dependency. Current broad dependency
+allowances are documented debt, not proof of the target architecture. Required
+test counts likewise do not establish whole-library architectural completion.
 
 ## Responsibility map
 

@@ -60,13 +60,15 @@ documentation updates followed this complete run; their formatting and commit
 safety were checked again before commit.
 
 The packed-consumer gate built and packed all 19 packages at the unchanged
-repository cohort, installed outside the workspace, and checked public imports
+repository cohort, extracted tarballs outside the workspace, and checked public imports
 with strict/exact-optional TypeScript. JSON executed headlessly through the real
 runner, including size rejection and native syntax cause. Native input imported
 without DOM globals and then executed in JSDOM, verifying edit/value, selection,
 reset and dispose/rebind. Module graphs exclude React/ReactDOM/Monaco and CSS for
 these focused capabilities. Existing initial gzip remained **253,011 / 253,064
 bytes**; no budget was raised. This is fresh local pack evidence, not npm release.
+Clarification after the wave 4 audit: third-party dependencies are linked from the
+repository installation; this gate does not perform a clean package-manager install.
 
 The source HTML fixture at `scripts/fixtures/native-text-input` ran in a real
 in-app browser using:

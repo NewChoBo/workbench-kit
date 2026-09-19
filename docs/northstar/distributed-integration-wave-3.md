@@ -69,13 +69,15 @@ gains a framework dependency, version bump or common runtime API change.
 Node CJS boundaries, schemas and Storybook tag checks passed. Only documentation
 updates followed this run; formatting and commit-safety were checked before commit.
 
-All 19 packages were freshly built, packed and installed outside the workspace at
+All 19 packages were freshly built, packed and extracted outside the workspace at
 the unchanged local cohort `0.0.2-prototype.0.2.6`. Public strict/exact-optional
 type consumers pass. A real nested UTF-8-to-JSON operation runs headlessly through
 the common runner with a three-invocation budget; malformed input preserves its
 native cause, and oversize input is rejected. Native input imports without DOM
 globals and runs in JSDOM. Existing initial gzip remains **253,011 / 253,064 bytes**;
 no bundle budget was raised. Local packs do not prove published availability.
+Clarification after the wave 4 audit: third-party dependencies are linked from the
+repository installation; this gate does not perform a clean package-manager install.
 
 The packed gate also runs the real React, Vue and compiled Svelte runtimes with
 JSDOM. All four hosts pass the same ten scenarios:

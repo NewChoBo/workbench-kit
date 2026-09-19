@@ -57,6 +57,9 @@ third-party dependencies from the repository. Correct any wording implying a
 clean package-manager install. A future gate must install selected tarballs and
 resolve their dependencies without shared node_modules, then inspect transitive
 dependencies and execute real consumers. That gate is not completed by this doc fix.
+The separate `check:packed-shell-react-context` script already performs an offline
+frozen consumer install, but is not part of mandatory validate/CI. Its existence
+is not evidence for a cold-cache install or a mandatory minimal-feature consumer gate.
 
 ## ST-014 — headless Remap history ownership
 
@@ -90,3 +93,12 @@ the default evaluator would change its API. Close that prerequisite separately.
 The shell shim remains until an explicitly reviewed compatibility removal; moving
 the implementation removes duplicated mechanics now. Independent Remap UI/package
 installation and Provider decomposition are subsequent packets, not claims of this move.
+
+## Implementation result
+
+ST-012/013/014 are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS` for their bounded
+scopes. [The receipt](./structural-stabilization-wave-4-receipt.md) records exact
+part/merge/fix commits, reproduction and independent review. Combined fast passed
+**491 files / 2,968 tests**, with **14 required units / 139 cases**. Public headless
+history and packed CJS redirect behavior pass. Broad UI/package independence,
+Provider decomposition, mandatory clean installation and release remain separate.

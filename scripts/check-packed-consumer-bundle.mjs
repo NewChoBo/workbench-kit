@@ -364,6 +364,7 @@ try {
   const coreMetrics = verifyOutput();
 
   await verifyPackedDataOperations();
+  await verifyPackedRemapHistory();
   await verifyPackedNativeTextInput();
   const nativeInputHosts = await verifyNativeInputHosts({
     repoRoot,
@@ -811,7 +812,15 @@ import type {
   WorkbenchSettingsCapabilityPublisher,
   FieldRemapPreviewState as FieldRemapRootPreviewState,
   FieldRemapSelection as FieldRemapRootSelection,
+  FieldRemapHistorySnapshot as FieldRemapShellHistorySnapshot,
 } from '@workbench-kit/shell-react';
+import type { FieldRemapHistorySnapshot as FieldRemapDomainHistorySnapshot } from '@workbench-kit/field-remap/history';
+type AssertHistoryCompatibility<T extends true> = T;
+export type PackedHistoryCompatibility = AssertHistoryCompatibility<
+  FieldRemapShellHistorySnapshot extends FieldRemapDomainHistorySnapshot
+    ? FieldRemapDomainHistorySnapshot extends FieldRemapShellHistorySnapshot ? true : false
+    : false
+>;
 import {
   FieldRemapFlowMapper,
   type FieldRemapDraftTransform,
@@ -4388,6 +4397,85 @@ if (typeof document !== 'undefined') throw new Error('Expected headless executio
   if (!entry?.file || entry.css?.length) throw new Error('Invalid headless data operation bundle');
   await import(pathToFileURL(path.join(output, entry.file)).href);
   console.log('[check-packed-consumer] data operations headless runtime and public types OK.');
+}
+
+async function verifyPackedRemapHistory() {
+  const name = 'remap-history';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `
+import {
+  createFieldRemapHistorySnapshot, createFieldRemapHistoryState,
+  areFieldRemapHistorySnapshotsEqual, recordFieldRemapHistory,
+  undoFieldRemapHistory, redoFieldRemapHistory,
+  type FieldRemapHistorySnapshot, type FieldRemapHistoryState,
+} from '@workbench-kit/field-remap/history';
+const edge: FieldRemapHistorySnapshot['edges'][number] = {
+  id: 'edge', sourceFieldId: 'source', targetSlotId: 'target',
+};
+const operator: FieldRemapHistorySnapshot['operators'][number] = {
+  kind: 'combine', id: 'operator', inputFieldIds: ['source'], outputSlotId: 'target',
+};
+const empty = createFieldRemapHistorySnapshot([], []);
+const edited = createFieldRemapHistorySnapshot([edge], [operator]);
+const initial: FieldRemapHistoryState = createFieldRemapHistoryState();
+if (undoFieldRemapHistory(initial, empty) !== null) throw new Error('Empty history changed');
+const recorded = recordFieldRemapHistory(initial, empty, edited);
+const undone = undoFieldRemapHistory(recorded, edited);
+if (!undone || !areFieldRemapHistorySnapshotsEqual(undone.snapshot, empty)) throw new Error('Headless undo failed');
+const redone = redoFieldRemapHistory(undone.state, undone.snapshot);
+if (!redone || redone.snapshot.edges[0] !== edge || redone.snapshot.operators[0] !== operator) throw new Error('Headless redo lost items');
+if (!Object.isFrozen(redone.snapshot.edges) || initial.past.length !== 0) throw new Error('History mutated its inputs');
+const same = recordFieldRemapHistory(undone.state, empty, createFieldRemapHistorySnapshot([], []));
+if (same !== undone.state || same.future.length !== 1) throw new Error('No-op discarded redo');
+if (typeof document !== 'undefined') throw new Error('History consumer requires headless execution');
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (
+    !Array.isArray(modules) ||
+    !modules.some((id) => id.replaceAll('\\', '/').endsWith('/field-remap/src/history.ts'))
+  ) {
+    throw new Error('Headless history emitted no implementation evidence');
+  }
+  if (
+    modules.some(
+      (id) =>
+        /\/(react|react-dom|shell-react|workbench-core|jdw|monaco|monaco-editor|@xyflow)\//.test(
+          id.replaceAll('\\', '/'),
+        ) || /\.css(?:\?|$)/.test(id),
+    )
+  ) {
+    throw new Error('Headless history pulled a UI or shell dependency');
+  }
+  const manifest = readJson(path.join(output, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((item) => item.isEntry);
+  if (!entry?.file || entry.css?.length) throw new Error('Invalid headless history bundle');
+  await import(pathToFileURL(path.join(output, entry.file)).href);
+  console.log('[check-packed-consumer] Remap history headless runtime and public types OK.');
 }
 
 async function verifyPackedNativeTextInput() {
