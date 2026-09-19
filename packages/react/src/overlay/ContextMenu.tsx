@@ -73,6 +73,7 @@ function stepEnabledIndex(
  * - Home/End jump to first/last enabled item
  * - Enter/Space activate the highlighted item
  * - Escape closes via {@link useFixedOverlayDismiss}
+ * - Tab leaves the menu normally, then outside blur dismisses without returning focus
  * - Roving tabindex: only the highlighted enabled item is tabIndex=0
  */
 export function ContextMenu({
@@ -85,6 +86,7 @@ export function ContextMenu({
   onClose,
 }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const tabLeaving = useRef(false);
   const [fallbackReturnFocusTarget] = useState<HTMLElement | null>(() => {
     if (typeof document === 'undefined') {
       return null;
@@ -98,6 +100,7 @@ export function ContextMenu({
   const [highlightedIndex, setHighlightedIndex] = useState(() => enabledIndexes[0] ?? -1);
 
   const restoreFocusOnEscape = useCallback(() => {
+    tabLeaving.current = false;
     const target = returnFocusTarget ?? fallbackReturnFocusTarget;
     if (target?.isConnected) {
       target.focus();
@@ -138,6 +141,7 @@ export function ContextMenu({
   }, [highlightedIndex]);
 
   const activateIndex = (index: number) => {
+    tabLeaving.current = false;
     const item = items[index];
     if (!item || !isEnabledMenuItem(item)) {
       return;
@@ -147,6 +151,7 @@ export function ContextMenu({
   };
 
   const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    tabLeaving.current = event.key === 'Tab';
     if (event.key === 'ArrowDown') {
       event.preventDefault();
       setHighlightedIndex((current) => stepEnabledIndex(enabledIndexes, current, 1));
@@ -195,6 +200,12 @@ export function ContextMenu({
         top: position.y,
       }}
       onContextMenu={(event) => event.preventDefault()}
+      onBlur={(event) => {
+        if (tabLeaving.current && !event.currentTarget.contains(event.relatedTarget)) {
+          tabLeaving.current = false;
+          onClose();
+        }
+      }}
       onKeyDown={handleMenuKeyDown}
     >
       {items.map((item, index) =>

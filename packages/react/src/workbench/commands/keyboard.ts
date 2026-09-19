@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { shouldAllowNativeBrowserContextMenu } from './workbenchContextMenu';
 
 /** Set on document.body when an editor that handles Ctrl+S has focus. */
 export const WORKBENCH_ACTIVE_EDITOR_SAVE_SHORTCUT_ATTRIBUTE = 'data-active-editor-save-shortcut';
@@ -17,11 +18,11 @@ export function hasWorkbenchModalDialogOpen(): boolean {
   return Boolean(document.querySelector('[role="dialog"][aria-modal="true"]'));
 }
 
-/** Disables the browser's native right-click context menu globally. */
+/** Applies the shell's native editing-menu policy globally. */
 export function useWorkbenchNativeContextMenuGuard(): void {
   useEffect(() => {
     const handleContextMenu = (event: MouseEvent) => {
-      event.preventDefault();
+      if (!shouldAllowNativeBrowserContextMenu(event.target)) event.preventDefault();
     };
 
     window.addEventListener('contextmenu', handleContextMenu);
