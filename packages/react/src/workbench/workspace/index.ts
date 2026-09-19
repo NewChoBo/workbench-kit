@@ -27,6 +27,7 @@ export {
 export type {
   WorkspaceExplorerItemActionMeta,
   WorkspaceExplorerItemContextMenuMeta,
+  WorkspaceExplorerItemContextMenuRequest,
   WorkspaceExplorerItemKeyboardActionMeta,
   WorkspaceExplorerInlineEditCommitMeta,
   WorkspaceExplorerDragMetadataContext,
