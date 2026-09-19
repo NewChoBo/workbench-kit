@@ -86,6 +86,11 @@ closes target selection, normalized pointer/More/keyboard entry, inline-edit nat
 menus, focus return and stale workspace invalidation. Reuse the existing controller
 and command bridge; do not create another edit/history/persistence owner.
 
+The real multilingual rename play also admitted [WB-ST-020B resource identity
+repair](./explorer-resource-uri-repair.md): preserve the file content when a URI
+round-trips through URL escaping. Its implementation and review remain a separate
+part of the combined Explorer gate.
+
 ## WB-ST-018 / WB-ST-019 — context actions and editing entry
 
 Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
