@@ -329,20 +329,54 @@ describe('editor-state-storage', () => {
       writeEligible: false,
     });
 
-    const invalidIdentity = {
-      ...valid,
-      workspaceResourceUriEncoding: 'percent-encoded-v1',
-      groups: [
-        { id: 'main', tabs: [{ ...valid.groups[0]!.tabs[0], id: '' }] },
-        { id: 'main', tabs: [{ ...valid.groups[0]!.tabs[0], id: 'other' }] },
-      ],
-    };
-    const invalidIdentityBytes = JSON.stringify(invalidIdentity);
-    storage.setItem('invalid-identity', invalidIdentityBytes);
-    const invalidIdentityResult = readPersistedEditorStateResult('invalid-identity', storage);
-    expect(invalidIdentityResult).toMatchObject({ writeEligible: false });
-    expect(invalidIdentityResult.diagnostic?.code).toBe('decode_failed');
-    expect(storage.getItem('invalid-identity')).toBe(invalidIdentityBytes);
+    const baseTab = valid.groups[0]!.tabs[0]!;
+    const invalidIdentityFixtures = [
+      {
+        label: 'empty group id',
+        groups: [{ ...valid.groups[0], id: '' }],
+      },
+      {
+        label: 'empty tab id',
+        groups: [{ ...valid.groups[0], tabs: [{ ...baseTab, id: '' }] }],
+      },
+      {
+        label: 'empty editor id',
+        groups: [{ ...valid.groups[0], tabs: [{ ...baseTab, editorId: '' }] }],
+      },
+      {
+        label: 'empty resource URI',
+        groups: [{ ...valid.groups[0], tabs: [{ ...baseTab, resourceUri: '' }] }],
+      },
+      {
+        label: 'duplicate group id',
+        groups: [valid.groups[0], { ...valid.groups[0], tabs: [{ ...baseTab, id: 'other-tab' }] }],
+      },
+      {
+        label: 'duplicate tab id',
+        groups: [valid.groups[0], { ...valid.groups[0], id: 'other-group' }],
+      },
+    ] as const;
+    for (const [index, fixture] of invalidIdentityFixtures.entries()) {
+      const invalidIdentity = {
+        ...valid,
+        workspaceResourceUriEncoding: 'percent-encoded-v1',
+        groups: fixture.groups,
+      };
+      const invalidIdentityBytes = JSON.stringify(invalidIdentity);
+      const storageKey = `invalid-identity-${index}`;
+      storage.setItem(storageKey, invalidIdentityBytes);
+      const invalidIdentityResult = readPersistedEditorStateResult(storageKey, storage);
+      expect(invalidIdentityResult, fixture.label).toMatchObject({ writeEligible: false });
+      expect(invalidIdentityResult.diagnostic?.code, fixture.label).toBe('decode_failed');
+      expect(storage.getItem(storageKey), fixture.label).toBe(invalidIdentityBytes);
+
+      const legacyValue = { ...invalidIdentity };
+      delete (legacyValue as { workspaceResourceUriEncoding?: unknown })
+        .workspaceResourceUriEncoding;
+      const legacyKey = `legacy-${index}`;
+      storage.setItem(legacyKey, JSON.stringify(legacyValue));
+      expect(readPersistedEditorState(legacyKey, storage), fixture.label).toBeDefined();
+    }
 
     const legacyValid = stateForUris(['workspace://file/src/legacy.ts']);
     storage.setItem('legacy-valid', JSON.stringify(legacyValid));
