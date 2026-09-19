@@ -12,7 +12,7 @@ export function clampModalBounds(
   constraints: ModalSizeConstraints,
   viewport: ModalContainerBounds = readWindowViewportBounds(),
 ): ModalBounds {
-  if (typeof window === 'undefined') {
+  if (typeof window === 'undefined' || viewport.width <= 0 || viewport.height <= 0) {
     return bounds;
   }
 
@@ -33,8 +33,6 @@ export function clampModalBounds(
 
   width = Math.min(width, viewport.width - x);
   height = Math.min(height, viewport.height - y);
-  height = Math.max(constraints.minHeight, height);
-
   return { x, y, width, height };
 }
 
