@@ -586,6 +586,62 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP01.workspace-resource-uri",
+      "owner": "Foundation / workspace URI identity",
+      "sources": [
+        "packages/workspace/src/resource/uri.ts",
+        "packages/workspace/src/host/workbench-workspace-host.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/workspace/src/resource/uri.test.ts",
+          "cases": [
+            "workspace resource URI identity preserves ordinary ASCII file and folder URIs and the root folder",
+            "workspace resource URI identity encodes multilingual segments and resolves canonical and raw Unicode paths",
+            "workspace resource URI identity preserves spaces in canonical and raw paths without treating plus as space",
+            "workspace resource URI identity keeps literal percent sequences distinct from decoded names and structural separators",
+            "workspace resource URI identity round-trips query fragment and reserved filename characters as path data",
+            "workspace resource URI identity rejects malformed escapes and invalid UTF-8 instead of returning an aliased path",
+            "workspace resource URI identity rejects encoded forward and backward separators without rewriting path structure",
+            "workspace resource URI identity retains normalization and rejection of unsupported schemes kinds and empty files"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/host/workbench-workspace-host.test.ts",
+          "cases": [
+            "workbench workspace host port applies save transactions and records journal entries",
+            "workbench workspace host port creates files that do not yet exist in the workspace",
+            "workbench workspace host port resolves workspace file resources for editor hosts",
+            "workbench workspace host port resolves and saves the renamed multilingual file without changing another file",
+            "workbench workspace host port keeps reserved and literal percent filenames separate during lookup and save",
+            "workbench workspace host port does not resolve create or save resources with invalid encoded paths"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.editor-uri-storage",
+      "owner": "Workbench Shell / persisted resource identity migration",
+      "sources": ["packages/shell-react/src/editor/state-storage.ts"],
+      "tests": [
+        {
+          "file": "packages/shell-react/src/editor/state-storage.test.ts",
+          "cases": [
+            "editor-state-storage migrates the legacy %41.txt tab without reading or saving its decoded neighbor",
+            "editor-state-storage migrates the legacy %20.txt tab without reading or saving its decoded neighbor",
+            "editor-state-storage marks new URI encoding and restores it repeatedly without double migration",
+            "editor-state-storage normalizes leading space before classifying a legacy workspace URI",
+            "editor-state-storage normalizes embedded tab before classifying a legacy workspace URI",
+            "editor-state-storage rejects marked malformed workspace URIs while retaining opaque host resources",
+            "editor-state-storage keeps non-workspace legacy URIs unchanged and rejects unknown encoding versions",
+            "editor-state-storage drops invalid legacy workspace identities without altering the stored bytes",
+            "editor-state-storage round-trips editor state through storage",
+            "editor-state-storage ignores invalid persisted editor state payloads"
+          ]
+        }
+      ]
     }
   ]
 }

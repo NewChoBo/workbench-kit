@@ -10,6 +10,11 @@ import {
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
+import {
+  formatWorkspaceResourceUri,
+  normalizeWorkspacePath,
+  parseWorkspaceResourceUri,
+} from '@workbench-kit/workspace';
 
 import { isRecord } from '../is-record.js';
 import {
@@ -21,13 +26,15 @@ import {
 } from '../storage/local-json-storage.js';
 
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
+const WORKSPACE_URI_ENCODING = 'percent-encoded-v1';
 
 export function isWorkbenchEditorStatePersistenceAvailable(): boolean {
   return resolveLocalWorkbenchStorage() !== undefined;
 }
 
 export function editorStateToStorageValue(state: EditorState): EditorState {
-  return {
+  const value = {
+    workspaceResourceUriEncoding: WORKSPACE_URI_ENCODING,
     activeGroupId: state.activeGroupId,
     groups: state.groups.map((group) => ({
       activeTabId: group.activeTabId,
@@ -45,6 +52,7 @@ export function editorStateToStorageValue(state: EditorState): EditorState {
     })),
     layout: cloneEditorLayoutForStorage(state.layout),
   };
+  return value;
 }
 
 export function readPersistedEditorState(
@@ -94,9 +102,12 @@ function parseEditorStateStorageValue(value: unknown): EditorState | undefined {
   if (!isRecord(value)) {
     return undefined;
   }
+  const encoding = value.workspaceResourceUriEncoding;
+  if (encoding !== undefined && encoding !== WORKSPACE_URI_ENCODING) return undefined;
+  const legacyWorkspaceUris = encoding === undefined;
 
   const groups = Array.isArray(value.groups)
-    ? value.groups.flatMap(parseEditorGroupStorageValue)
+    ? value.groups.flatMap((group) => parseEditorGroupStorageValue(group, legacyWorkspaceUris))
     : [];
   const layout = parseEditorLayoutStorageValue(value.layout);
   if (groups.length === 0 || !layout) {
@@ -110,7 +121,10 @@ function parseEditorStateStorageValue(value: unknown): EditorState | undefined {
   };
 }
 
-function parseEditorGroupStorageValue(value: unknown): EditorGroupState[] {
+function parseEditorGroupStorageValue(
+  value: unknown,
+  legacyWorkspaceUris: boolean,
+): EditorGroupState[] {
   if (!isRecord(value) || typeof value.id !== 'string' || !Array.isArray(value.tabs)) {
     return [];
   }
@@ -119,12 +133,15 @@ function parseEditorGroupStorageValue(value: unknown): EditorGroupState[] {
     {
       activeTabId: typeof value.activeTabId === 'string' ? value.activeTabId : undefined,
       id: value.id,
-      tabs: value.tabs.flatMap(parseEditorTabStorageValue),
+      tabs: value.tabs.flatMap((tab) => parseEditorTabStorageValue(tab, legacyWorkspaceUris)),
     },
   ];
 }
 
-function parseEditorTabStorageValue(value: unknown): EditorTabState[] {
+function parseEditorTabStorageValue(
+  value: unknown,
+  legacyWorkspaceUris: boolean,
+): EditorTabState[] {
   if (
     !isRecord(value) ||
     typeof value.id !== 'string' ||
@@ -133,6 +150,8 @@ function parseEditorTabStorageValue(value: unknown): EditorTabState[] {
   ) {
     return [];
   }
+  const resourceUri = readStoredResourceUri(value.resourceUri, legacyWorkspaceUris);
+  if (resourceUri === undefined) return [];
 
   return [
     {
@@ -142,10 +161,31 @@ function parseEditorTabStorageValue(value: unknown): EditorTabState[] {
       id: value.id,
       pinned: typeof value.pinned === 'boolean' ? value.pinned : true,
       preview: typeof value.preview === 'boolean' ? value.preview : false,
-      resourceUri: value.resourceUri,
+      resourceUri,
       title: typeof value.title === 'string' ? value.title : undefined,
     },
   ];
+}
+
+function readStoredResourceUri(resourceUri: string, legacy: boolean): string | undefined {
+  let url: URL;
+  try {
+    url = new URL(resourceUri);
+  } catch {
+    return /^\s*workspace:/i.test(resourceUri) ? undefined : resourceUri;
+  }
+  if (url.protocol !== 'workspace:') return resourceUri;
+  if (!legacy) return parseWorkspaceResourceUri(resourceUri) ? resourceUri : undefined;
+  try {
+    const kind = url.hostname;
+    if (kind !== 'file' && kind !== 'folder') return undefined;
+    // Preserve the previous parser's effective identity, including literal percent sequences.
+    const path = normalizeWorkspacePath(url.pathname.replace(/^\/+/, ''));
+    if (kind === 'file' && !path) return undefined;
+    return formatWorkspaceResourceUri({ kind, path });
+  } catch {
+    return undefined;
+  }
 }
 
 function parseEditorLayoutStorageValue(value: unknown): EditorLayoutNode | undefined {
