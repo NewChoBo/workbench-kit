@@ -329,6 +329,25 @@ describe('editor-state-storage', () => {
       writeEligible: false,
     });
 
+    const invalidIdentity = {
+      ...valid,
+      workspaceResourceUriEncoding: 'percent-encoded-v1',
+      groups: [
+        { id: 'main', tabs: [{ ...valid.groups[0]!.tabs[0], id: '' }] },
+        { id: 'main', tabs: [{ ...valid.groups[0]!.tabs[0], id: 'other' }] },
+      ],
+    };
+    const invalidIdentityBytes = JSON.stringify(invalidIdentity);
+    storage.setItem('invalid-identity', invalidIdentityBytes);
+    const invalidIdentityResult = readPersistedEditorStateResult('invalid-identity', storage);
+    expect(invalidIdentityResult).toMatchObject({ writeEligible: false });
+    expect(invalidIdentityResult.diagnostic?.code).toBe('decode_failed');
+    expect(storage.getItem('invalid-identity')).toBe(invalidIdentityBytes);
+
+    const legacyValid = stateForUris(['workspace://file/src/legacy.ts']);
+    storage.setItem('legacy-valid', JSON.stringify(legacyValid));
+    expect(readPersistedEditorStateResult('legacy-valid', storage).writeEligible).toBe(true);
+
     const throwingStorage: Storage = {
       get length() {
         return 0;

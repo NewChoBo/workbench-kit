@@ -130,6 +130,22 @@ function parseEditorStateStorageValue(value: unknown, strict = false): EditorSta
         parseEditorGroupStorageValue(group, legacyWorkspaceUris, strict),
       )
     : [];
+  if (strict) {
+    const groupIds = new Set<string>();
+    const tabIds = new Set<string>();
+    for (const group of groups) {
+      if (groupIds.has(group.id)) {
+        throw new TypeError('Duplicate editor group identifier.');
+      }
+      groupIds.add(group.id);
+      for (const tab of group.tabs) {
+        if (tabIds.has(tab.id)) {
+          throw new TypeError('Duplicate editor tab identifier.');
+        }
+        tabIds.add(tab.id);
+      }
+    }
+  }
   const layout = parseEditorLayoutStorageValue(value.layout, strict);
   if (groups.length === 0 || !layout) {
     if (strict) {
@@ -150,7 +166,12 @@ function parseEditorGroupStorageValue(
   legacyWorkspaceUris: boolean,
   strict = false,
 ): EditorGroupState[] {
-  if (!isRecord(value) || typeof value.id !== 'string' || !Array.isArray(value.tabs)) {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    (strict && value.id.length === 0) ||
+    !Array.isArray(value.tabs)
+  ) {
     if (strict) {
       throw new TypeError('Invalid editor group storage value.');
     }
@@ -176,8 +197,11 @@ function parseEditorTabStorageValue(
   if (
     !isRecord(value) ||
     typeof value.id !== 'string' ||
+    (strict && value.id.length === 0) ||
     typeof value.editorId !== 'string' ||
-    typeof value.resourceUri !== 'string'
+    (strict && value.editorId.length === 0) ||
+    typeof value.resourceUri !== 'string' ||
+    (strict && value.resourceUri.length === 0)
   ) {
     if (strict) {
       throw new TypeError('Invalid editor tab storage value.');

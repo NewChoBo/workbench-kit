@@ -25,7 +25,7 @@ validation, required-case registration, and release decisions.
 | Check                                                                                                                         | Result                                                                                                                                                      |
 | ----------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | RED reproduction                                                                                                              | The supplied audit reproduced the pre-fix overwrite: `future-v2` returned no diagnostic/write guard and the first editor event replaced the original bytes. |
-| `pnpm exec vitest run packages/shell-react/src/editor/state-storage.test.ts packages/shell-react/src/shell/provider.test.tsx` | GREEN; previous baseline 57 tests, follow-up adds strict layout, throwing-read, adapter/key switch, close, diagnostic, and initial-state cases.             |
+| `pnpm exec vitest run packages/shell-react/src/editor/state-storage.test.ts packages/shell-react/src/shell/provider.test.tsx` | GREEN; 59 tests, including strict identity rejection, throwing-read, adapter/key switch, close, diagnostic, and initial-state cases.                        |
 | `pnpm --filter @workbench-kit/shell-react typecheck`                                                                          | GREEN                                                                                                                                                       |
 | `pnpm typecheck:shell-react-exact-optional`                                                                                   | GREEN                                                                                                                                                       |
 | `pnpm check:workspace-isolation`                                                                                              | GREEN                                                                                                                                                       |
@@ -38,3 +38,7 @@ opened tab, recompute eligibility after adapter/key changes, and cover the
 documented explicit `initialEditorState` bypass. This receipt records local
 implementation evidence only; integrated validation and release status remain
 with the integrator.
+
+Strict editor reads also reject empty required identifiers, empty resource URIs,
+duplicate group IDs, and duplicate tab IDs without changing the permissive
+legacy reader behavior.
