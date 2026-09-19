@@ -227,7 +227,7 @@ describe('WorkspaceExplorer inline rename retry', () => {
 
     await changeInput('Retry.tsx');
     await keyEnter();
-    rejectRename(new Error('temporary failure'));
+    rejectRename(new Error(''));
     await act(async () => await Promise.resolve());
     await keyEnter();
 
@@ -270,6 +270,83 @@ describe('WorkspaceExplorer inline rename retry', () => {
       'input[aria-label="Workspace item name"]',
     );
     expect(input?.value).toBe('Replacement.tsx');
+    await keyEnter();
+    expect(renameEntry).toHaveBeenCalledTimes(2);
+  });
+
+  it('ignores an old rejection after a replacement draft starts submitting', async () => {
+    let rejectOld!: (error: Error) => void;
+    let resolveNew!: () => void;
+    const renameEntry = vi.fn((input: { name: string }) => {
+      if (input.name === 'Old.tsx') {
+        return new Promise<void>((_resolve, reject) => {
+          rejectOld = reject;
+        });
+      }
+      return new Promise<void>((resolve) => {
+        resolveNew = resolve;
+      });
+    });
+    await mount({
+      snapshot: { files: [node.file!], folders: ['src'] },
+      createFile: () => undefined,
+      createFolder: () => undefined,
+      deleteEntries: () => undefined,
+      openFile: () => undefined,
+      renameEntry,
+    });
+
+    await changeInput('Old.tsx');
+    await keyEnter();
+    await act(async () => {
+      activeController!.setInlineEdit({
+        id: 'replacement-pending',
+        kind: 'rename-file',
+        path: 'src/App.tsx',
+        value: 'New.tsx',
+      });
+    });
+    await keyEnter();
+    rejectOld(new Error('old failure'));
+    await act(async () => await Promise.resolve());
+
+    const input = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Workspace item name"]',
+    );
+    expect(input?.value).toBe('New.tsx');
+    expect(container.querySelector('.ui-sidebar-inline-edit__error')).toBeNull();
+    await keyEnter();
+    expect(renameEntry).toHaveBeenCalledTimes(2);
+    resolveNew();
+  });
+
+  it('preserves later typing when the original pending rename rejects', async () => {
+    let rejectRename!: (error: Error) => void;
+    const renameEntry = vi.fn(
+      () =>
+        new Promise<void>((_resolve, reject) => {
+          rejectRename = reject;
+        }),
+    );
+    await mount({
+      snapshot: { files: [node.file!], folders: ['src'] },
+      createFile: () => undefined,
+      createFolder: () => undefined,
+      deleteEntries: () => undefined,
+      openFile: () => undefined,
+      renameEntry,
+    });
+
+    await changeInput('First.tsx');
+    await keyEnter();
+    await changeInput('Later.tsx');
+    rejectRename(new Error('temporary failure'));
+    await act(async () => await Promise.resolve());
+
+    const input = container.querySelector<HTMLInputElement>(
+      'input[aria-label="Workspace item name"]',
+    );
+    expect(input?.value).toBe('Later.tsx');
     await keyEnter();
     expect(renameEntry).toHaveBeenCalledTimes(2);
   });

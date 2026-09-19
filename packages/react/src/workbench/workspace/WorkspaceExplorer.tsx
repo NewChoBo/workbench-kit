@@ -221,7 +221,7 @@ export function WorkspaceExplorer({
 
   useEffect(() => {
     // Validation failures keep the same draft id; each completed rejection opens a retry gate.
-    if (inlineEdit?.error) {
+    if (inlineEdit?.commitAttempt !== undefined || inlineEdit?.error) {
       inlineEditCommitStartedRef.current = false;
     }
   }, [inlineEdit?.commitAttempt, inlineEdit?.error]);

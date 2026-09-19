@@ -197,7 +197,7 @@ export function useWorkspaceExplorerController({
   }, [activePath, revealFolder, syncSelectionFromActivePath]);
 
   const reportInlineEditError = useCallback(
-    (edit: WorkspaceExplorerInlineEditState, error: string, generation: number) => {
+    (error: string, generation: number) => {
       if (generation !== inlineEditGenerationRef.current) {
         return;
       }
@@ -205,10 +205,16 @@ export function useWorkspaceExplorerController({
       // Keep the same draft id; record every completed rejection so controlled explorers can retry
       // identical errors without coupling the commit gate to presentation text.
       inlineEditCommitInFlightRef.current = false;
-      setInlineEditState({
-        ...edit,
-        commitAttempt: (edit.commitAttempt ?? 0) + 1,
-        error,
+      setInlineEditState((currentEdit) => {
+        if (!currentEdit) {
+          return currentEdit;
+        }
+
+        return {
+          ...currentEdit,
+          commitAttempt: (currentEdit.commitAttempt ?? 0) + 1,
+          error,
+        };
       });
       port.reportError?.(error);
     },
@@ -268,7 +274,7 @@ export function useWorkspaceExplorerController({
         const name = value.trim();
         const nameError = validateWorkspaceExplorerInlineEditName(name, invalidNameMessage);
         if (nameError) {
-          reportInlineEditError(edit, nameError, generation);
+          reportInlineEditError(nameError, generation);
           return;
         }
 
@@ -276,12 +282,12 @@ export function useWorkspaceExplorerController({
           const parentPath = edit.parentPath ?? '';
           const createDenied = mutationDeniedMessage(parentPath, 'create');
           if (createDenied) {
-            reportInlineEditError(edit, createDenied, generation);
+            reportInlineEditError(createDenied, generation);
             return;
           }
 
           if (!isWorkspaceExplorerCreatePathAvailable(snapshot, parentPath, name)) {
-            reportInlineEditError(edit, alreadyExistsMessage(name), generation);
+            reportInlineEditError(alreadyExistsMessage(name), generation);
             return;
           }
 
@@ -300,7 +306,7 @@ export function useWorkspaceExplorerController({
             applyWorkspaceExplorerMutationResult(result, setSelection);
           } catch (error) {
             const message = error instanceof Error ? error.message : createFailedMessage;
-            reportInlineEditError(edit, message, generation);
+            reportInlineEditError(message, generation);
           }
           return;
         }
@@ -308,12 +314,12 @@ export function useWorkspaceExplorerController({
         const sourcePath = edit.path ?? '';
         const renameDenied = mutationDeniedMessage(sourcePath, 'rename');
         if (renameDenied) {
-          reportInlineEditError(edit, renameDenied, generation);
+          reportInlineEditError(renameDenied, generation);
           return;
         }
 
         if (!isWorkspaceExplorerRenamePathAvailable(snapshot, sourcePath, name)) {
-          reportInlineEditError(edit, alreadyExistsMessage(name), generation);
+          reportInlineEditError(alreadyExistsMessage(name), generation);
           return;
         }
 
@@ -352,7 +358,7 @@ export function useWorkspaceExplorerController({
           applyWorkspaceExplorerMutationResult(result, setSelection);
         } catch (error) {
           const message = error instanceof Error ? error.message : renameFailedMessage;
-          reportInlineEditError(edit, message, generation);
+          reportInlineEditError(message, generation);
         }
       })();
     },

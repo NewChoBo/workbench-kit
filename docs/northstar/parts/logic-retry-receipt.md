@@ -31,10 +31,12 @@ Suite: `WorkspaceExplorer inline rename retry`.
 4. `deduplicates Enter, blur, and repeated Enter while rename is pending`
 5. `opens a retry after a rejected rename promise`
 6. `does not let an old promise clear or report over a replacement draft`
-7. `cancels an idle draft with Escape without committing`
+7. `ignores an old rejection after a replacement draft starts submitting`
+8. `preserves later typing when the original pending rename rejects`
+9. `cancels an idle draft with Escape without committing`
 
 The integrated fixture failed on the unchanged source after two identical
-invalid submissions: the later valid Enter left `renameEntry` at zero. All seven
+invalid submissions: the later valid Enter left `renameEntry` at zero. All nine
 cases pass after the explicit attempt revision repair. Existing Explorer,
 context, and controller suites remain green.
 
@@ -43,8 +45,14 @@ context, and controller suites remain green.
 | Command                                                                                                                                                                                                                                                                                                                                         | Result                             |
 | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------- |
 | `pnpm install --frozen-lockfile`                                                                                                                                                                                                                                                                                                                | PASS; independent worktree install |
-| `pnpm exec vitest run --config vitest.config.ts packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx`                                                                                                                                                                                                                        | PASS; 1 file / 6 tests             |
-| `pnpm exec vitest run --config vitest.config.ts packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx packages/react/src/workbench/workspace/WorkspaceExplorer.test.tsx packages/react/src/workbench/workspace/WorkspaceExplorer.context.test.tsx packages/react/src/workbench/workspace/workspaceExplorerController.test.ts` | PASS; 4 files / 23 tests           |
+| `pnpm exec vitest run --config vitest.config.ts packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx`                                                                                                                                                                                                                        | PASS; 1 file / 9 tests             |
+| `pnpm exec vitest run --config vitest.config.ts packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx packages/react/src/workbench/workspace/WorkspaceExplorer.test.tsx packages/react/src/workbench/workspace/WorkspaceExplorer.context.test.tsx packages/react/src/workbench/workspace/workspaceExplorerController.test.ts` | PASS; 4 files / 31 tests           |
+| `pnpm --filter @workbench-kit/react typecheck`                                                                                                                                                                                                                                                                                                  | PASS                               |
+| `pnpm typecheck:react-exact-optional`                                                                                                                                                                                                                                                                                                           | PASS                               |
+| `pnpm exec eslint packages/react/src/workbench/workspace/WorkspaceExplorer.tsx packages/react/src/workbench/workspace/useWorkspaceExplorerController.ts packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx`                                                                                                                | PASS                               |
+| `pnpm exec prettier packages/react/src/workbench/workspace/WorkspaceExplorer.tsx packages/react/src/workbench/workspace/useWorkspaceExplorerController.ts packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx docs/northstar/parts/logic-retry-receipt.md --check`                                                          | PASS                               |
+| `pnpm check:workspace-isolation`                                                                                                                                                                                                                                                                                                                | PASS                               |
+| `pnpm check:commit-safety`                                                                                                                                                                                                                                                                                                                      | PASS                               |
 
 The containing commit is the local review candidate. The integrator owns
 combined browser plays, verification registration, full fast validation and
