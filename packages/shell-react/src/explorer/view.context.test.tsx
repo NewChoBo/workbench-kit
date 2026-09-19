@@ -157,4 +157,20 @@ describe('BuiltinExplorerView context ownership', () => {
     expect(menu()).toBeNull();
     expect(executeCommand).not.toHaveBeenCalled();
   });
+
+  it('surfaces a rejected right-click Delete action without changing selection', async () => {
+    await pointer(row('b.md'), 'contextmenu');
+    const deleteItem = Array.from(document.querySelectorAll<HTMLElement>('[role="menuitem"]')).find(
+      (item) => item.textContent?.includes('Delete'),
+    );
+    expect(deleteItem).toBeDefined();
+    executeCommand.mockRejectedValueOnce(new Error('Save the affected editor first.'));
+
+    await pointer(deleteItem!);
+    expect(container.querySelector('[role="alert"]')?.textContent).toBe(
+      'Save the affected editor first.',
+    );
+    expect(container.querySelector('[data-workspace-path="b.md"]')).not.toBeNull();
+    expect(host.service.getFile('b.md')).toBeDefined();
+  });
 });

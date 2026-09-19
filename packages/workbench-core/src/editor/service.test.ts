@@ -414,6 +414,34 @@ describe('EditorService', () => {
     ]);
   });
 
+  it('collects dirty resources across groups without including clean tabs', () => {
+    const service = createEditorService({
+      editorHostFactories: createEditorHostFactoryRegistry(),
+    });
+    const first = service.openEditor({
+      editorId: 'workbench.editor.text',
+      pinned: true,
+      resourceUri: 'workspace://file/src/first.ts',
+    });
+    const split = service.splitEditor({ tabId: first.id });
+    const second = service.openEditor({
+      editorId: 'workbench.editor.text',
+      groupId: DEFAULT_EDITOR_GROUP_ID,
+      pinned: true,
+      resourceUri: 'workspace://file/src/second.ts',
+    });
+
+    service.setDirty(first.id, true);
+    service.setDirty(split!.id, true);
+    expect(service.getDirtyResourceUris()).toEqual(['workspace://file/src/first.ts']);
+
+    service.setDirty(second.id, true);
+    expect(service.getDirtyResourceUris()).toEqual([
+      'workspace://file/src/first.ts',
+      'workspace://file/src/second.ts',
+    ]);
+  });
+
   it('splits the active editor into a new group', () => {
     const editorHostFactories = createEditorHostFactoryRegistry();
     editorHostFactories.register({
@@ -1086,7 +1114,6 @@ describe('EditorService', () => {
     });
 
     const opened = service.openEditor({
-      dirty: true,
       resourceUri: 'workspace://file/src/app.ts',
       title: 'app.ts',
     });
@@ -1109,5 +1136,46 @@ describe('EditorService', () => {
       id: opened.id,
     });
     expect(service.getState().groups[0]?.tabs[0]).not.toHaveProperty('resourceMissing');
+  });
+
+  it('preserves a dirty host, text and dirty state through disappearance and reappearance', () => {
+    let disposed = false;
+    let content = 'unsaved draft';
+    const hostFactories = createEditorHostFactoryRegistry();
+    hostFactories.register({
+      id: 'stateful-text-host',
+      create: () => ({
+        dispose() {
+          disposed = true;
+        },
+        getContent: () => content,
+        render: () => content,
+        setContent: (nextContent: string) => {
+          content = nextContent;
+        },
+        setDirty: () => undefined,
+      }),
+    });
+    const service = createEditorService({ editorHostFactories: hostFactories });
+    const tab = service.openEditor({
+      editorId: 'stateful-text-host',
+      dirty: true,
+      pinned: true,
+      resourceUri: 'workspace://file/src/draft.ts',
+    });
+    const host = service.createEditorHost(tab.id);
+    service.reconcileWorkspaceFileTabs(() => false);
+
+    expect(service.getEditorHost(tab.id)).toBe(host);
+    expect(service.getEditorHost(tab.id)?.render()).toBe('unsaved draft');
+    expect(service.getActiveTab()).toMatchObject({ dirty: true, resourceMissing: true });
+    expect(disposed).toBe(false);
+
+    service.reconcileWorkspaceFileTabs(() => true);
+    expect(service.getEditorHost(tab.id)).toBe(host);
+    expect(service.getActiveTab()).toMatchObject({ dirty: true });
+    expect(service.getActiveTab()).not.toHaveProperty('resourceMissing');
+    expect(service.getEditorHost(tab.id)?.render()).toBe('unsaved draft');
+    expect(disposed).toBe(false);
   });
 });

@@ -32,6 +32,19 @@ describe('workbench workspace host port', () => {
     expect(port.service.getFile('src/New.tsx')?.content).toBe('new file body');
   });
 
+  it('reports save eligibility from the current workspace state', () => {
+    const port = createWorkbenchWorkspaceHostPort({
+      initialState: { files: [{ content: 'existing', path: 'src/App.tsx' }] },
+    });
+
+    expect(port.canSaveResource?.('workspace://file/src/App.tsx')).toBe(true);
+    expect(port.canSaveResource?.('workspace://file/src/Missing.tsx')).toBe(false);
+    expect(port.applySave('workspace://file/src/Missing.tsx', 'created')?.transactionId).toEqual(
+      expect.any(String),
+    );
+    expect(port.canSaveResource?.('workspace://file/src/Missing.tsx')).toBe(true);
+  });
+
   it('resolves workspace file resources for editor hosts', () => {
     const service = new WorkspaceResourceService({
       initialState: {

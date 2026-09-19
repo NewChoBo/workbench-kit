@@ -14,6 +14,7 @@ import {
   isWorkspaceEntryPathAvailable,
   joinWorkspacePath,
   normalizeWorkspacePath,
+  parseWorkspaceResourceUri,
   parentPathOf,
   type VirtualWorkspaceState,
   type VirtualWorkspaceInitialState,
@@ -267,6 +268,8 @@ function renameWorkspaceTarget(
     readString(input, 'kind') === 'folder' ? 'folder' : resolveWorkspacePathKind(state, path);
   if (!kind) return undefined;
 
+  assertNoDirtyWorkspaceResources(context, [path], state);
+
   return applyMutations(
     service,
     kind === 'folder' ? 'Rename folder' : 'Rename file',
@@ -305,6 +308,12 @@ function deleteWorkspaceTargets(
 
   if (mutations.length === 0) return undefined;
 
+  assertNoDirtyWorkspaceResources(
+    context,
+    mutations.flatMap((mutation) => ('path' in mutation ? [mutation.path] : [])),
+    state,
+  );
+
   return applyMutations(service, 'Delete workspace entries', mutations, { paths: [] });
 }
 
@@ -338,6 +347,12 @@ function moveWorkspaceTargets(
   );
 
   if (mutations.length === 0) return undefined;
+
+  assertNoDirtyWorkspaceResources(
+    context,
+    plan.moves.map((move) => move.sourcePath),
+    state,
+  );
 
   return applyMutations(service, 'Move workspace entries', mutations, {
     paths: plan.moves.map((move) => move.destinationPath),
@@ -393,6 +408,36 @@ function resolveNewEntryPath({
 
 function getWorkspaceService(context: ExtensionContext): WorkspaceResourceService | undefined {
   return context.getCapability<WorkspaceResourceService>(WORKBENCH_WORKSPACE_CAPABILITY_ID);
+}
+
+function assertNoDirtyWorkspaceResources(
+  context: ExtensionContext,
+  sourcePaths: readonly string[],
+  state: VirtualWorkspaceState,
+): void {
+  const editorService = context.getCapability<WorkbenchEditorServiceCapability>(
+    WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID,
+  );
+  const dirtyPaths = new Set(
+    (editorService?.getDirtyResourceUris?.() ?? []).flatMap((resourceUri) => {
+      const resource = parseWorkspaceResourceUri(resourceUri);
+      return resource?.kind === 'file' ? [resource.path] : [];
+    }),
+  );
+  if (dirtyPaths.size === 0) return;
+
+  const blockedPaths = [...new Set(sourcePaths)].filter((sourcePath) =>
+    [...dirtyPaths].some(
+      (dirtyPath) =>
+        dirtyPath === sourcePath ||
+        (state.folders.includes(sourcePath) && dirtyPath.startsWith(`${sourcePath}/`)),
+    ),
+  );
+  if (blockedPaths.length > 0) {
+    throw new Error(
+      `Save the affected editor before changing this workspace resource: ${blockedPaths.join(', ')}.`,
+    );
+  }
 }
 
 function resolveWorkspacePathKind(

@@ -28,6 +28,13 @@ export function saveActiveEditor(input: SaveActiveEditorInput): SaveActiveEditor
     return { saved: false };
   }
 
+  if (
+    activeTab.resourceMissing ||
+    input.editorSavePort.canSaveResource?.(activeTab.resourceUri) === false
+  ) {
+    return { saved: false, resourceUri: activeTab.resourceUri };
+  }
+
   const host = input.editorService.getEditorHost(activeTab.id);
   const content = getTextEditorHostContent(host);
   if (content === undefined) {

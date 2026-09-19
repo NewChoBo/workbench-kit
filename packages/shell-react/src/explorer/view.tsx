@@ -59,7 +59,11 @@ export function BuiltinExplorerView() {
     : undefined;
   const workspaceState = useWorkspaceResourceState(workspaceService);
   const [contextMenu, setContextMenu] = useState<ExplorerContextMenuState | null>(null);
+  const [actionError, setActionError] = useState<string | undefined>();
   const [seededExpandedPaths, setSeededExpandedPaths] = useState(false);
+  const explorerRef = useRef<ReturnType<typeof useWorkspaceExplorerController> | undefined>(
+    undefined,
+  );
 
   const activePath = useActiveWorkspacePath(activeTab?.resourceUri);
 
@@ -67,6 +71,11 @@ export function BuiltinExplorerView() {
     () =>
       createCommandWorkspaceExplorerPort({
         executeCommand,
+        reportError: (message) => {
+          if (!explorerRef.current?.inlineEdit) {
+            setActionError(message);
+          }
+        },
         workspaceState,
       }),
     [executeCommand, workspaceState],
@@ -77,7 +86,6 @@ export function BuiltinExplorerView() {
     initialExpandedPaths: workspaceState?.expandedPaths,
     port,
   });
-  const explorerRef = useRef(explorer);
   explorerRef.current = explorer;
 
   const currentContextMenu =
@@ -105,6 +113,7 @@ export function BuiltinExplorerView() {
     () =>
       subscribeExplorerRevealRequest((path) => {
         const currentExplorer = explorerRef.current;
+        if (!currentExplorer) return;
         applyExplorerPathReveal(path, {
           revealFolder: currentExplorer.revealFolder,
           setSelection: (selection) => {
@@ -140,10 +149,25 @@ export function BuiltinExplorerView() {
 
   const executeWorkspaceCommand = useCallback(
     async (commandId: string, payload?: unknown) => {
-      await executeCommand(commandId, payload);
+      try {
+        const result = await executeCommand(commandId, payload);
+        setActionError(undefined);
+        return result;
+      } catch (error) {
+        setActionError(
+          error instanceof Error ? error.message : 'Could not complete workspace action.',
+        );
+        return undefined;
+      }
     },
     [executeCommand],
   );
+
+  useEffect(() => {
+    if (workspaceState) {
+      setActionError(undefined);
+    }
+  }, [workspaceState]);
 
   const handleItemContextMenu = useCallback(
     ({ node, meta, invoker, x, y }: WorkspaceExplorerItemContextMenuRequest) => {
@@ -218,6 +242,7 @@ export function BuiltinExplorerView() {
           void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
         }}
         sectionTitle={sectionTitle}
+        toolbarStatus={actionError ? <span role="alert">{actionError}</span> : undefined}
         selectedPaths={explorer.selection.paths}
         selectionAnchorPath={explorer.selection.anchorPath}
         onActivateFile={explorer.handleActivateFile}

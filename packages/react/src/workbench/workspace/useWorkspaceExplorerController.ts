@@ -221,6 +221,15 @@ export function useWorkspaceExplorerController({
     [port],
   );
 
+  const reportAsyncActionError = useCallback(
+    (error: unknown) => {
+      port.reportError?.(
+        error instanceof Error ? error.message : 'Could not complete workspace action.',
+      );
+    },
+    [port],
+  );
+
   const mutationDeniedMessage = useCallback(
     (path: string, action: WorkspaceExplorerMutationAction): string | undefined =>
       resolveWorkspaceExplorerMutationDeniedMessage(port.canMutatePath?.(path, action)),
@@ -385,9 +394,15 @@ export function useWorkspaceExplorerController({
 
   const handleActivateFile = useCallback(
     (path: string) => {
-      void port.openFile(path);
+      void (async () => {
+        try {
+          await port.openFile(path);
+        } catch (error) {
+          reportAsyncActionError(error);
+        }
+      })();
     },
-    [port],
+    [port, reportAsyncActionError],
   );
 
   const handleToggleFolder = useCallback(
@@ -431,12 +446,18 @@ export function useWorkspaceExplorerController({
         }
       }
 
-      void port.deleteEntries({
-        kind: meta.node.type,
-        paths,
-      });
+      void (async () => {
+        try {
+          await port.deleteEntries({
+            kind: meta.node.type,
+            paths,
+          });
+        } catch (error) {
+          reportAsyncActionError(error);
+        }
+      })();
     },
-    [mutationDeniedMessage, onRequestDelete, port],
+    [mutationDeniedMessage, onRequestDelete, port, reportAsyncActionError],
   );
 
   const handleRequestMove = useCallback(
@@ -454,14 +475,18 @@ export function useWorkspaceExplorerController({
       }
 
       void (async () => {
-        const result = await port.moveEntries?.({
-          sourcePaths: meta.sourcePaths,
-          targetFolderPath: meta.targetFolderPath,
-        });
-        applyWorkspaceExplorerMutationResult(result, setSelection);
+        try {
+          const result = await port.moveEntries?.({
+            sourcePaths: meta.sourcePaths,
+            targetFolderPath: meta.targetFolderPath,
+          });
+          applyWorkspaceExplorerMutationResult(result, setSelection);
+        } catch (error) {
+          reportAsyncActionError(error);
+        }
       })();
     },
-    [mutationDeniedMessage, port],
+    [mutationDeniedMessage, port, reportAsyncActionError],
   );
 
   const handleRequestRename = useCallback(

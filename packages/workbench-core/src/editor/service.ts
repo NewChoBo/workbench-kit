@@ -94,6 +94,16 @@ export class EditorService implements Disposable {
     return cloneEditorState(this.state);
   }
 
+  getDirtyResourceUris(): readonly string[] {
+    return [
+      ...new Set(
+        this.state.groups.flatMap((group) =>
+          group.tabs.filter((tab) => tab.dirty).map((tab) => tab.resourceUri),
+        ),
+      ),
+    ];
+  }
+
   openEditor(options: OpenEditorOptions): EditorTabState {
     const resourceUri = this.normalizeResourceUri(options.resourceUri);
     const existingTab = this.findTabByResourceUri(resourceUri);
@@ -467,8 +477,17 @@ export class EditorService implements Disposable {
         }
 
         changed = true;
-        this.disposeEditorHost(tab.id);
-        return missing ? markResourceMissing(tab) : clearResourceMissing(tab);
+        if (missing) {
+          if (!tab.dirty) {
+            this.disposeEditorHost(tab.id);
+          }
+          return markResourceMissing(tab);
+        }
+
+        if (!tab.dirty) {
+          this.disposeEditorHost(tab.id);
+        }
+        return clearResourceMissing(tab);
       }),
     }));
 
@@ -669,7 +688,6 @@ function isWorkspaceFileResourceUri(resourceUri: string): boolean {
 function markResourceMissing(tab: EditorTabState): EditorTabState {
   return {
     ...tab,
-    dirty: false,
     resourceMissing: true,
   };
 }
