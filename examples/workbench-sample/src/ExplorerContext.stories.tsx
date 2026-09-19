@@ -92,10 +92,12 @@ async function rightClick(button: HTMLElement) {
 async function escapeMenu(canvas: Canvas, invoker: HTMLElement) {
   await userEvent.keyboard('{Escape}');
   await waitFor(() => expect(canvas.queryByRole('menu')).toBeNull());
-  await expect(
-    invoker,
-    `Escape focus: ${invoker.getAttribute('aria-label') ?? invoker.textContent}`,
-  ).toHaveFocus();
+  await waitFor(() =>
+    expect(
+      invoker,
+      `Escape focus: ${invoker.getAttribute('aria-label') ?? invoker.textContent}`,
+    ).toHaveFocus(),
+  );
 }
 
 async function clickMore(button: HTMLElement) {
@@ -249,6 +251,15 @@ export const RenameRetry: Story = {
     await expect(input).toHaveValue('invalid/name.tsx');
     await expect(row(canvas, SAMPLE_BUTTON_PATH)).toBeVisible();
 
+    // The same message on a later completed attempt must not leave submission locked.
+    for (let retry = 0; retry < 2; retry += 1) {
+      await userEvent.keyboard('{Enter}');
+      await expect(input).toHaveValue('invalid/name.tsx');
+      await expect(
+        within(explorer(canvas)).getByText('Use a simple file or folder name.'),
+      ).toBeVisible();
+    }
+
     const nextName = 'App-with-a-long-context-menu-regression-name-다국어-日本語.tsx';
     const nextPath = `src/${nextName}`;
     await userEvent.clear(input);
@@ -282,6 +293,87 @@ export const RenameRetry: Story = {
     const longNameMenu = await menuFor(canvas, nextPath);
     await expectMenuContained(longNameMenu);
     await escapeMenu(canvas, renamedMore);
+  },
+};
+
+export const DirtyRenameProtection: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await ready(canvas);
+    await userEvent.click(row(canvas, SAMPLE_APP_PATH));
+    const { monaco } = await import('@workbench-kit/monaco');
+    const modelFor = (path: string) =>
+      monaco.editor.getModel(monaco.Uri.parse(formatWorkspaceResourceUri({ kind: 'file', path })));
+    await waitFor(() => expect(modelFor(SAMPLE_APP_PATH)).not.toBeNull(), { timeout: 30_000 });
+    await canvas.findByRole('textbox', { name: 'Editor content' });
+    // Model creation precedes the React wrapper's change subscription. Let its
+    // mounted editor commit before editing; synthetic textarea typing bypasses Monaco.
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const draft = `${modelFor(SAMPLE_APP_PATH)!.getValue()}\n// Keep this unsaved draft.\n`;
+    modelFor(SAMPLE_APP_PATH)!.setValue(draft);
+    await canvas.findByLabelText('Unsaved changes');
+
+    const renameTo = async (name: string) => {
+      await rightClick(row(canvas, SAMPLE_APP_PATH));
+      await userEvent.click(
+        within(await menuFor(canvas, SAMPLE_APP_PATH)).getByRole('menuitem', { name: /^Rename/ }),
+      );
+      const input = await canvas.findByRole('textbox', { name: 'Workspace item name' });
+      await userEvent.clear(input);
+      await userEvent.type(input, name);
+      await userEvent.keyboard('{Enter}');
+      return input;
+    };
+
+    const nextName = 'Draft-preserved.tsx';
+    const nextPath = `src/${nextName}`;
+    const input = await renameTo(nextName);
+    await within(explorer(canvas)).findByText(/save.*before/i);
+    expect(queryRow(canvas, nextPath)).toBeUndefined();
+    expect(modelFor(SAMPLE_APP_PATH)?.getValue()).toBe(draft);
+    await expect(input).toHaveValue(nextName);
+    await expect(canvas.getByLabelText('Unsaved changes')).toBeVisible();
+    await userEvent.keyboard('{Escape}');
+
+    await userEvent.click(row(canvas, SAMPLE_APP_PATH));
+    await userEvent.keyboard('{Control>}s{/Control}');
+    await waitFor(() => expect(canvas.queryByLabelText('Unsaved changes')).toBeNull());
+    await renameTo(nextName);
+    await waitFor(() => expect(queryRow(canvas, nextPath)).toBeDefined());
+    await userEvent.click(row(canvas, nextPath));
+    await waitFor(() => expect(modelFor(nextPath)?.getValue()).toBe(draft), { timeout: 30_000 });
+  },
+};
+
+export const DirtyDeleteProtection: Story = {
+  play: async ({ canvasElement }) => {
+    const canvas = within(canvasElement);
+    await ready(canvas);
+    await userEvent.click(row(canvas, SAMPLE_APP_PATH));
+    const { monaco } = await import('@workbench-kit/monaco');
+    const uri = monaco.Uri.parse(
+      formatWorkspaceResourceUri({ kind: 'file', path: SAMPLE_APP_PATH }),
+    );
+    await waitFor(() => expect(monaco.editor.getModel(uri)).not.toBeNull(), { timeout: 30_000 });
+    const model = monaco.editor.getModel(uri)!;
+    await canvas.findByRole('textbox', { name: 'Editor content' });
+    await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const draft = `${model.getValue()}\n// Keep this draft after a denied delete.\n`;
+    model.setValue(draft);
+    await canvas.findByLabelText('Unsaved changes');
+
+    await rightClick(row(canvas, SAMPLE_APP_PATH));
+    await userEvent.click(
+      within(await menuFor(canvas, SAMPLE_APP_PATH)).getByRole('menuitem', { name: /^Delete/ }),
+    );
+    await expect(await within(explorer(canvas)).findByRole('alert')).toHaveTextContent(
+      /save.*before/i,
+    );
+    await expect(row(canvas, SAMPLE_APP_PATH)).toBeVisible();
+    expect(selected(canvas, SAMPLE_APP_PATH)).toBe('true');
+    expect(monaco.editor.getModel(uri)).toBe(model);
+    expect(model.getValue()).toBe(draft);
+    await expect(canvas.getByLabelText('Unsaved changes')).toBeVisible();
   },
 };
 

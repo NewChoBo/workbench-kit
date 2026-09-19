@@ -739,6 +739,63 @@
       ]
     },
     {
+      "id": "SP09.dirty-resource-protection",
+      "owner": "Workbench Shell / draft-preserving resource mutations",
+      "sources": [
+        "packages/workbench-core/src/editor/service.ts",
+        "packages/workbench-core/src/editor/save.ts",
+        "packages/workspace/src/host/workbench-workspace-host.ts",
+        "packages/shell-react/src/extensions/builtin/explorer/src/index.ts",
+        "packages/react/src/workbench/workspace/useWorkspaceExplorerController.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/workbench-core/src/editor/service.test.ts",
+          "cases": [
+            "EditorService collects dirty resources across groups without including clean tabs",
+            "EditorService preserves a dirty host, text and dirty state through disappearance and reappearance"
+          ]
+        },
+        {
+          "file": "packages/workbench-core/src/editor/save.test.ts",
+          "cases": ["saveActiveEditor does not save a missing or host-rejected dirty resource"]
+        },
+        {
+          "file": "packages/workspace/src/host/workbench-workspace-host.test.ts",
+          "cases": [
+            "workbench workspace host port reports save eligibility from the current workspace state"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/extensions/builtin/explorer/src/index.test.ts",
+          "cases": [
+            "builtin explorer dirty-resource protection denies dirty rename before mutation and preserves journal and version",
+            "builtin explorer dirty-resource protection blocks dirty descendants and mixed move batches while respecting folder boundaries",
+            "builtin explorer dirty-resource protection wires dirty inactive hosts through denial, save-first mutation and reconcile protection"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/explorer/view.context.test.tsx",
+          "cases": [
+            "BuiltinExplorerView context ownership surfaces a rejected right-click Delete action without changing selection"
+          ]
+        },
+        {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorer.action-errors.test.tsx",
+          "cases": [
+            "WorkspaceExplorer async action errors reports open failures from a throw port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports open failures from a reject port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports delete failures from a throw port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports delete failures from a reject port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports move failures from a throw port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports move failures from a reject port without an unhandled rejection",
+            "WorkspaceExplorer async action errors does not apply a fake success result after a failed move",
+            "WorkspaceExplorer async action errors reports one rejected rename and permits the same draft to retry"
+          ]
+        }
+      ]
+    },
+    {
       "id": "SP01.workspace-unicode-paths",
       "owner": "Foundation / workspace path validity before mutation",
       "sources": [
