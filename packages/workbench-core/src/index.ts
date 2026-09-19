@@ -48,6 +48,7 @@ export {
 export {
   createEditorService,
   DEFAULT_EDITOR_GROUP_ID,
+  EditorStateInitializationError,
   EditorService,
   type EditorChangeEvent,
   type EditorGroupState,

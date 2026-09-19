@@ -79,6 +79,7 @@ import {
   writePersistedEditorStateResult,
   type WorkbenchEditorStatePersistenceReadResult,
 } from '../editor/state-storage.js';
+import { normalizeWorkspaceResourceUri } from '../editor/resource.js';
 import {
   DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   isWorkbenchKeybindingPersistenceAvailable,
@@ -709,6 +710,7 @@ export function WorkbenchProvider({
       editorHostFactories: extensionRegistry.editorHostFactories,
       editorResolvers: extensionRegistry.editorResolvers,
       initialState: resolvedInitialEditorState,
+      normalizeResourceUri: normalizeWorkspaceResourceUri,
       resolveEditorResource: workspaceHostPort?.resolveResource?.bind(workspaceHostPort),
     });
     const installedRecords = installedExtensionRecords;

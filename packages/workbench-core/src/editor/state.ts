@@ -45,6 +45,13 @@ export interface EditorState {
   readonly layout: EditorLayoutNode;
 }
 
+export class EditorStateInitializationError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = 'EditorStateInitializationError';
+  }
+}
+
 export interface OpenEditorOptions {
   readonly dirty?: boolean | undefined;
   readonly editorId?: string | undefined;
@@ -101,12 +108,15 @@ export function createDefaultEditorState(): EditorState {
   };
 }
 
-export function createInitialEditorState(initialState: EditorState | undefined): EditorState {
+export function createInitialEditorState(
+  initialState: EditorState | undefined,
+  normalizeResourceUri: (resourceUri: string) => string = (resourceUri) => resourceUri,
+): EditorState {
   if (!initialState) {
     return createDefaultEditorState();
   }
 
-  const groups = normalizeEditorGroups(initialState.groups);
+  const groups = normalizeEditorGroups(initialState.groups, normalizeResourceUri);
   return {
     activeGroupId: groups.some((group) => group.id === initialState.activeGroupId)
       ? initialState.activeGroupId
@@ -320,7 +330,10 @@ export function isSameEditorState(left: EditorState, right: EditorState): boolea
   });
 }
 
-function normalizeEditorGroups(groups: readonly EditorGroupState[]): EditorGroupState[] {
+function normalizeEditorGroups(
+  groups: readonly EditorGroupState[],
+  normalizeResourceUri: (resourceUri: string) => string,
+): EditorGroupState[] {
   const seenGroupIds = new Set<string>();
   const seenTabIds = new Set<string>();
   const normalizedGroups = groups.flatMap<EditorGroupState>((group) => {
@@ -329,32 +342,75 @@ function normalizeEditorGroups(groups: readonly EditorGroupState[]): EditorGroup
     }
 
     seenGroupIds.add(group.id);
-    const tabs = group.tabs.flatMap<EditorTabState>((tab) => {
+    const tabs = group.tabs.flatMap<{ rawResourceUri: string; tab: EditorTabState }>((tab) => {
       if (!tab.id || seenTabIds.has(tab.id) || !tab.editorId || !tab.resourceUri) {
         return [];
       }
 
       seenTabIds.add(tab.id);
+
       return [
         {
-          dirty: tab.dirty,
-          editorId: tab.editorId,
-          icon: tab.icon,
-          id: tab.id,
-          pinned: tab.pinned,
-          preview: tab.preview,
-          resourceUri: tab.resourceUri,
-          title: tab.title,
+          rawResourceUri: tab.resourceUri,
+          tab: {
+            dirty: tab.dirty,
+            editorId: tab.editorId,
+            icon: tab.icon,
+            id: tab.id,
+            pinned: tab.pinned,
+            preview: tab.preview,
+            resourceUri: normalizeResourceUri(tab.resourceUri),
+            title: tab.title,
+          },
         },
       ];
     });
+    const buckets = new Map<string, { rawResourceUri: string; tab: EditorTabState }[]>();
+    for (const entry of tabs) {
+      const bucket = buckets.get(entry.tab.resourceUri) ?? [];
+      bucket.push(entry);
+      buckets.set(entry.tab.resourceUri, bucket);
+    }
+    const aliasResources = new Set(
+      [...buckets].flatMap(([resourceUri, bucket]) =>
+        bucket.some((entry) => entry.rawResourceUri !== bucket[0]?.rawResourceUri)
+          ? [resourceUri]
+          : [],
+      ),
+    );
+    const coalescedTabs: EditorTabState[] = [];
+    const processedResources = new Set<string>();
+    for (const { tab } of tabs) {
+      const bucket = buckets.get(tab.resourceUri) ?? [];
+      if (!aliasResources.has(tab.resourceUri)) {
+        coalescedTabs.push(tab);
+        continue;
+      }
+      if (processedResources.has(tab.resourceUri)) {
+        continue;
+      }
+      processedResources.add(tab.resourceUri);
+
+      if (bucket.some((entry) => entry.tab.dirty)) {
+        throw new EditorStateInitializationError(
+          `Cannot initialize editor state: ambiguous dirty editor resource aliases for "${tab.resourceUri}".`,
+        );
+      }
+
+      const retained =
+        bucket.find((entry) => entry.tab.id === group.activeTabId)?.tab ?? bucket[0]?.tab;
+      if (retained) {
+        coalescedTabs.push(retained);
+      }
+    }
+
     return [
       {
-        activeTabId: tabs.some((tab) => tab.id === group.activeTabId)
+        activeTabId: coalescedTabs.some((tab) => tab.id === group.activeTabId)
           ? group.activeTabId
-          : tabs[0]?.id,
+          : coalescedTabs[0]?.id,
         id: group.id,
-        tabs,
+        tabs: coalescedTabs,
       },
     ];
   });
