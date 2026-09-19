@@ -1,5 +1,6 @@
-import { useMemo } from 'react';
+import { useMemo, useRef } from 'react';
 import type { WidgetJsonSchema } from '@workbench-kit/contracts';
+import type { editor } from '@workbench-kit/monaco';
 import {
   findPathForLineAndColumn,
   findSourceRangeForPath,
@@ -70,6 +71,7 @@ export function WidgetSourceEditor({
   root = null,
   onSelectPath,
 }: WidgetSourceEditorProps) {
+  const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
   const file = useMemo<WorkspaceFile>(
     () => ({
       content: value,
@@ -100,7 +102,7 @@ export function WidgetSourceEditor({
     lineNumber: number;
     column: number;
   }) => {
-    if (!onSelectPath) return;
+    if (!onSelectPath || !editorRef.current?.hasTextFocus()) return;
 
     const pathAtCursor = resolveWidgetPathForEditorPosition(value, root, lineNumber, column);
     if (!pathAtCursor) return;
@@ -122,6 +124,9 @@ export function WidgetSourceEditor({
         value={value}
         onChange={onChange}
         onCursorPositionChange={handleCursorPositionChange}
+        onEditorMount={(editor) => {
+          editorRef.current = editor;
+        }}
         onSave={onSave}
       />
     </div>

@@ -315,12 +315,12 @@ export function JsonCodeEditorPane({
   const jumpToProblem = (problem: JsonEditorProblem) => {
     const editor = editorRef.current;
     if (!editor) return;
+    editor.focus();
     editor.setPosition({ lineNumber: problem.startLineNumber, column: problem.startColumn });
     editor.revealPositionInCenter({
       lineNumber: problem.startLineNumber,
       column: problem.startColumn,
     });
-    editor.focus();
   };
 
   return (
