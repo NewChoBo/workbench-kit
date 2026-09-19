@@ -81,10 +81,16 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-ST-018 / WB-ST-019 — context actions and editing entry
 
-Admission: `READY_FOR_IMPLEMENTATION`. The [closed UX contract](./context-editing-ux.md)
-separates native text/menu focus repair from Widget Tree target selection and
-context-to-properties entry. Parts reuse existing callbacks and document ownership;
-the integrator verifies real pointer/keyboard/edit behavior and stale targets.
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+The [closed UX contract](./context-editing-ux.md) separates native text/menu focus
+from Widget Tree target selection and context-to-properties entry. WB-ST-019B
+also repairs source cursor updates that could retarget Inspector typing.
+The [integration evidence](./context-editing-verification.md) records reviewed
+parts, sequential-use regressions, four real browser plays, sample Form editing
+and Ctrl+S, fast validation (498 files / 3,058 tests), 21 registered units / 229
+required cases and the separately reviewed 150-byte initial gzip increase.
+Explorer parity, visible save failure/retry and reversible Inspector sessions
+remain follow-up packets; publication and consumer adoption are not claimed.
 
 ## WB-ST-016 — Modal viewport resize repair
 

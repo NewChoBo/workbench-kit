@@ -452,6 +452,97 @@
           ]
         }
       ]
+    },
+    {
+      "id": "SP06.context-menu",
+      "owner": "Universal UI / native context and keyboard focus",
+      "sources": [
+        "packages/react/src/workbench/commands/workbenchContextMenu.ts",
+        "packages/react/src/workbench/commands/keyboard.ts",
+        "packages/react/src/overlay/ContextMenu.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/workbench/commands/workbenchContextMenu.test.tsx",
+          "cases": [
+            "workbench native context menu policy preserves native input textarea and select menus",
+            "workbench native context menu policy recognizes true empty and plaintext-only editing including descendant text targets",
+            "workbench native context menu policy inherits editing through missing and invalid contenteditable values",
+            "workbench native context menu policy respects false boundaries and nested editable overrides",
+            "workbench native context menu policy preserves the existing Monaco and CodeMirror editor areas",
+            "workbench native context menu policy honors explicit native opt-ins within noneditable content",
+            "workbench native context menu policy rejects ordinary chrome and non-node event targets",
+            "workbench native context menu policy applies the shared native policy through the shell event handler",
+            "workbench native context menu policy shares the native policy in the global guard and removes its listener on unmount"
+          ]
+        },
+        {
+          "file": "packages/react/src/overlay/ContextMenu.keyboard.test.tsx",
+          "cases": [
+            "ContextMenu keyboard model dismisses after Tab moves focus outside without swallowing navigation",
+            "ContextMenu keyboard model dismisses after Shift+Tab moves focus outside without swallowing navigation",
+            "ContextMenu keyboard model keeps internal focus navigation open and preserves focus chosen by an action"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP07.widget-context",
+      "owner": "UI authoring / targeted context actions",
+      "sources": [
+        "packages/react/src/widget-tree/WidgetTreeLab.tsx",
+        "packages/react/src/widget-tree/WidgetTreeView.tsx",
+        "packages/react/src/widget-tree/WidgetTreeCanvasPreview.tsx",
+        "packages/react/src/widget-tree/widget-context-actions.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/widget-tree/WidgetTreeLab.context.test.tsx",
+          "cases": [
+            "WidgetTreeLab context actions targets the right-clicked outline node without editing and restores focus on Escape",
+            "WidgetTreeLab context actions opens the targeted Inspector and edits that node through the existing controlled callback",
+            "WidgetTreeLab context actions shares More and keyboard actions with the invoking row rectangle and no nested buttons",
+            "WidgetTreeLab context actions moves only the targeted sibling once and keeps the moved node selected",
+            "WidgetTreeLab context actions protects the root and removes the targeted child once with parent selection",
+            "WidgetTreeLab context actions allows read-only inspection while disabling every mutation",
+            "WidgetTreeLab context actions invalidates an open menu on replacement before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on document path before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on parse failure before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on mode before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on permission before a stale action can edit",
+            "WidgetTreeLab context actions targets the nearest authored canvas node for pointer and keyboard requests without a drag",
+            "WidgetTreeLab context actions preserves native editable context menus and ignores unowned canvas paths",
+            "WidgetTreeLab context actions does not retarget an expanded reference child to an authored ancestor",
+            "WidgetTreeLab context actions does not start a resize or drag from a secondary pointer on canvas chrome",
+            "WidgetTreeLab context actions keeps a later node menu focused after an earlier Inspector activation",
+            "WidgetTreeLab context actions does not apply Delete to another selected node from a focused More button",
+            "WidgetTreeLab context actions does not apply Backspace to another selected node from a focused More button",
+            "WidgetTreeLab context actions does not apply Alt+ArrowUp to another selected node from a focused More button",
+            "WidgetTreeLab context actions does not apply Alt+ArrowDown to another selected node from a focused More button"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP07.source-cursor",
+      "owner": "UI authoring / source and Inspector selection ownership",
+      "sources": [
+        "packages/react/src/widget-tree/WidgetSourceEditor.tsx",
+        "packages/react/src/jdw/JsonCodeEditorPane.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/widget-tree/WidgetSourceEditor.cursor.test.tsx",
+          "cases": [
+            "WidgetSourceEditor cursor ownership ignores an unfocused model cursor event while the Inspector owns editing",
+            "WidgetSourceEditor cursor ownership selects the authored node for focused code navigation and ignores invalid positions",
+            "WidgetSourceEditor cursor ownership reveals external selection and synchronizes changed source without retargeting the Inspector",
+            "WidgetSourceEditor cursor ownership uses the latest source root and callback for focused cursor navigation",
+            "WidgetSourceEditor cursor ownership focuses code before an explicit problem jump so its authored node becomes selected",
+            "WidgetSourceEditor cursor ownership replaces the mounted editor and disposes cursor forwarding on unmount"
+          ]
+        }
+      ]
     }
   ]
 }
