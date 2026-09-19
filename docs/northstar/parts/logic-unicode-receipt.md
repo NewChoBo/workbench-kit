@@ -1,7 +1,7 @@
 # WB-ST-023 — Workspace Unicode validity
 
 Status: `LOCAL_VALIDATED / SOURCE_REVIEW_REQUIRED / INTEGRATION_PENDING`.
-Part branch: `codex/luna-unicode-20260919`.
+Part branch: `codex/luna-uri-unicode-20260919`.
 
 ## Implementation and ownership
 
@@ -45,7 +45,7 @@ before mutation or URI encoding.
 
 | Command                                                                                                                                                                                                                                                          | Result                   |
 | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
-| `pnpm exec vitest run packages/workspace/src/path/path.test.ts packages/workspace/src/resource/uri.test.ts packages/workspace/src/resource/transaction.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts`                                     | PASS; 4 files / 30 tests |
+| `pnpm exec vitest run packages/workspace/src/path/path.test.ts packages/workspace/src/resource/uri.test.ts packages/workspace/src/resource/transaction.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts packages/workspace/src/host/unicode-resource-uri.test.ts` | PASS; 5 files / 32 tests |
 | `pnpm --filter @workbench-kit/workspace typecheck`                                                                                                                                                                                                               | PASS                     |
 | `pnpm exec eslint packages/workspace/src/path/path.ts packages/workspace/src/path/path.test.ts packages/workspace/src/resource/uri.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts`                                                         | PASS                     |
 | `pnpm exec prettier packages/workspace/src/path/path.ts packages/workspace/src/path/path.test.ts packages/workspace/src/resource/uri.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts docs/northstar/parts/logic-unicode-receipt.md --check` | PASS                     |
@@ -54,3 +54,18 @@ before mutation or URI encoding.
 
 This receipt records part-local evidence only. Independent source review, the
 integrator's combined gates, release, and consumer adoption remain separate.
+
+## URI parser follow-up
+
+The raw URI parser had a remaining alias boundary: `new URL()` replaces an
+unpaired surrogate before path decoding. The actual RED reproduction produced
+the same pathname for `workspace://file/src/bad` followed by a lone high
+surrogate and for the legitimate `workspace://file/src/bad%EF%BF%BD.txt`
+resource (`aliases: true`).
+
+The internal `hasUnpairedSurrogate` helper now lives beside the path codec and is
+used by both `normalizeWorkspacePath` and `parseWorkspaceResourceUri`. Raw high
+and low surrogates are rejected before URL conversion, while a legitimate U+FFFD
+filename, valid emoji pairs, and existing encoded/literal-percent behavior remain
+valid. The focused URI-host regression proves malformed raw lookup/save attempts
+leave the legitimate replacement-character file, snapshot, and journal unchanged.

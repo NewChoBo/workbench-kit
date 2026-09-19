@@ -103,6 +103,27 @@ describe('workspace resource URI identity', () => {
     expect(parseWorkspaceResourceUri('workspace://file/src/bad%ED%A0%80.ts')).toBeNull();
   });
 
+  it('rejects raw unpaired surrogates before URL replacement can alias U+FFFD', () => {
+    const highSurrogate = String.fromCharCode(0xd800);
+    const lowSurrogate = String.fromCharCode(0xdc00);
+    for (const uri of [
+      `workspace://file/src/${highSurrogate}start.txt`,
+      `workspace://file/src/middle${highSurrogate}.txt`,
+      `workspace://file/src/end${highSurrogate}`,
+      `workspace://file/src/${lowSurrogate}start.txt`,
+      `workspace://file/src/middle${lowSurrogate}.txt`,
+      `workspace://file/src/end${lowSurrogate}`,
+    ]) {
+      expect(parseWorkspaceResourceUri(uri)).toBeNull();
+    }
+
+    expect(parseWorkspaceResourceUri('workspace://file/src/bad�.txt')).toEqual({
+      kind: 'file',
+      path: 'src/bad�.txt',
+      scheme: 'workspace',
+    });
+  });
+
   it('rejects encoded forward and backward separators without rewriting path structure', () => {
     for (const segment of ['a%2Fb', 'a%2fb', 'a%5Cb', 'a%5cb']) {
       expect(parseWorkspaceResourceUri(`workspace://file/src/${segment}.txt`)).toBeNull();

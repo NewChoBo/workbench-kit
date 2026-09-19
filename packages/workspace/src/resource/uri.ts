@@ -1,4 +1,5 @@
 import { normalizeWorkspacePath } from '../path/path.js';
+import { hasUnpairedSurrogate } from '../path/unicode.js';
 import type { WorkspaceFile } from '../data/types.js';
 
 export const WORKSPACE_RESOURCE_SCHEME = 'workspace' as const;
@@ -20,6 +21,10 @@ export function formatWorkspaceResourceUri(input: {
 }
 
 export function parseWorkspaceResourceUri(uri: string): WorkspaceResourceUri | null {
+  if (hasUnpairedSurrogate(uri)) {
+    return null;
+  }
+
   try {
     const url = new URL(uri);
     if (url.protocol !== `${WORKSPACE_RESOURCE_SCHEME}:`) {
