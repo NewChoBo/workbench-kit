@@ -107,8 +107,9 @@ local integration. Run focused tests, typecheck, lint/format, full fast and
 commit-safety. Keep existing packed budgets; any necessary budget change requires
 separate measured review and is not pre-admitted here. No release is implied.
 
-Follow-on packets: Explorer selection/context parity; host-visible Save/Discard
-and failure/retry evidence for Form; reversible multi-step Inspector sessions;
+Explorer selection/context parity is locally validated in the [WB-ST-020
+receipt](./explorer-context-verification.md). Follow-on packets: host-visible
+Save/Discard and failure/retry evidence for Form; reversible multi-step Inspector sessions;
 domain-specific Mapping/Recipe/Graph menus. These require their own ownership and
 admission. Hosts consume released generic mechanics and provide their own product
 actions, permission and persistence policy.

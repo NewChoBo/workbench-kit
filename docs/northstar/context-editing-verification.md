@@ -90,6 +90,6 @@ These are local candidate results; the registry remains a partial inventory.
 Save/Discard in the fixture proves the existing controlled host callback and
 baseline behavior. It is not disk, network, Electron or release evidence.
 Native context-event passthrough is verified; OS menu rendering is not claimed.
-Explorer selection parity, durable save failure/retry and reversible multi-step
-Inspector sessions remain separately admitted follow-ups. No publish or consumer
-adoption follows from local integration.
+Explorer selection parity is now covered by the [WB-ST-020 receipt](./explorer-context-verification.md).
+Durable save failure/retry and reversible multi-step Inspector sessions remain
+follow-ups. No publish or consumer adoption follows from local integration.

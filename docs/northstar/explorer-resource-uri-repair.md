@@ -2,6 +2,9 @@
 
 WB-ST-020B: `READY_FOR_IMPLEMENTATION`, discovered while validating WB-ST-020.
 
+Outcome: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+See the [combined verification receipt](./explorer-context-verification.md).
+
 The real sample rename journey preserves a multilingual filename in Explorer,
 but opening it displays the text editor placeholder instead of the file content.
 The workspace resource parser currently keeps URL-escaped pathname bytes as the

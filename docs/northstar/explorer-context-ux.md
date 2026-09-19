@@ -3,6 +3,9 @@
 WB-ST-020: `READY_FOR_IMPLEMENTATION`, baseline `6b01c825`, 2026-09-19.
 Follow-on to [context editing UX](./context-editing-ux.md).
 
+Outcome: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+See the [combined verification receipt](./explorer-context-verification.md).
+
 ## Closed behavior contract
 
 An Explorer context request targets its invoking file/folder without opening a

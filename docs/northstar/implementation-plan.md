@@ -81,15 +81,20 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-ST-020 — Explorer context parity
 
-Admission: `READY_FOR_IMPLEMENTATION`. The [Explorer contract](./explorer-context-ux.md)
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`. The [Explorer contract](./explorer-context-ux.md)
 closes target selection, normalized pointer/More/keyboard entry, inline-edit native
 menus, focus return and stale workspace invalidation. Reuse the existing controller
 and command bridge; do not create another edit/history/persistence owner.
 
 The real multilingual rename play also admitted [WB-ST-020B resource identity
 repair](./explorer-resource-uri-repair.md): preserve the file content when a URI
-round-trips through URL escaping. Its implementation and review remain a separate
-part of the combined Explorer gate.
+round-trips through URL escaping. Its independently reviewed implementation also
+migrates saved editor URIs without changing the old effective file target.
+The [combined receipt](./explorer-context-verification.md) records 46 focused
+cases, three real sample browser plays, fast validation (501 files / 3,096 tests),
+25 registered units / 272 named required cases and the reviewed URI compatibility
+size allowance. This is local integration; promotion and publication remain separate.
 
 ## WB-ST-018 / WB-ST-019 — context actions and editing entry
 
@@ -101,8 +106,9 @@ The [integration evidence](./context-editing-verification.md) records reviewed
 parts, sequential-use regressions, four real browser plays, sample Form editing
 and Ctrl+S, fast validation (498 files / 3,058 tests), 21 registered units / 229
 required cases and the separately reviewed 150-byte initial gzip increase.
-Explorer parity, visible save failure/retry and reversible Inspector sessions
-remain follow-up packets; publication and consumer adoption are not claimed.
+Explorer parity is covered by WB-ST-020 above. Visible save failure/retry and
+reversible Inspector sessions remain follow-up packets; publication and consumer
+adoption are not claimed.
 
 ## WB-ST-016 — Modal viewport resize repair
 
