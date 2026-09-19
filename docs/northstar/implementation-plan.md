@@ -79,6 +79,12 @@ It is not a changelog of the current repository. Current source is recorded only
 - This receipt does not claim independent source review, integration, publication, browser visual
   conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
 
+## WB-ST-016 — Modal viewport resize repair
+
+Admission: `READY_FOR_IMPLEMENTATION`. The [bounded repair](./modal-viewport-repair.md)
+closes the real Settings resize defect found by WB-ST-015. Existing Modal frames
+must fit a smaller overlay viewport without replacing form state or losing Close.
+
 ## WB-ST-015 — sample backend and screen verification
 
 Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
