@@ -79,6 +79,13 @@ It is not a changelog of the current repository. Current source is recorded only
 - This receipt does not claim independent source review, integration, publication, browser visual
   conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
 
+## WB-ST-015 — sample backend and screen verification
+
+Admission: `READY_FOR_IMPLEMENTATION`. The [closed sample packet](./sample-backend-verification.md)
+defines HTTP-boundary fakes, isolated deterministic scenarios, the existing sample
+auth hook's failure/lifetime repair, and actual screen acceptance. It preserves
+public contracts, default sample behavior and existing host storage.
+
 ## WB-ST-006B — standards-first native Checkbox
 
 Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
