@@ -83,6 +83,8 @@ reset the guard on every render. Do not replace the whole controller.
 - Collision error can be retried without losing the draft.
 - A deferred rename promise plus Enter/blur/repeated Enter calls the port once.
 - Promise rejection permits retry; pending state cannot duplicate mutation.
+- Cancelling/replacing a pending draft invalidates that attempt's completion:
+  old success/error cannot clear or overwrite a newer draft or unlock its request.
 - Escape cancels an idle draft without committing; native input context remains.
 - Run focused tests with `pnpm exec vitest run` for the new fixture and the existing
   WorkspaceExplorer and workspaceExplorerController tests.
