@@ -191,6 +191,8 @@ stored new tab identity; findTabByResourceUri must use the same rule.
   editor/ if needed; preserve existing exports and use an additive options field.
 - Shell-owned workspace URI identity helper and focused tests, provider wiring.
 - Initial editor-state normalization where necessary, plus state-storage tests.
+- A public initialization error export for ambiguous dirty aliases, and actual
+  provider restoration/rejection tests with unchanged persisted-byte assertions.
 - `docs/northstar/parts/logic-identity-receipt.md`
 
 Do not simply decode an entire URI string or lowercase case-sensitive paths.
@@ -205,6 +207,11 @@ tab when present, otherwise first occurrence, and repair activeTabId. Preserve
 explicit equal-URI split groups. If conflicting dirty initial tabs would be
 discarded, reject that state without persistence overwrite instead of choosing
 one silently. No document text is stored by this format.
+
+Evaluate the complete canonical-resource bucket, including interleaved repeated
+raw forms. Coalesce aliases without reordering unrelated or unchanged duplicate
+tabs; inspect every dirty member before dropping anything. Determine alias
+buckets once so restored-tab normalization stays linear in the number of tabs.
 
 ### Acceptance and validation
 
