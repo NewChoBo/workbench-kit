@@ -62,6 +62,14 @@ Other Node/window helpers:
 | `@workbench-kit/platform/versioned-browser-state`   | Versioned browser state adapter     |
 | `@workbench-kit/platform/window-bounds-persistence` | Debounced Window bounds persistence |
 
+`createAllowlistedHttpsFetch` validates the initial HTTPS hostname and forces
+`redirect: 'error'` on every request, overriding Request and init redirect modes.
+Same-host redirects also fail; use the final allowed URL for redirecting endpoints.
+Method, headers, body and cancellation continue to use the injected transport.
+An injected fetch must honor the standard redirect policy. Hostname admission is
+not DNS/IP/port isolation. Redirect failures remain native transport errors rather
+than new `createPolicyError` variants.
+
 ## Electron main (CommonJS) consumption
 
 Pure leaf helpers ship dual `exports` so a CommonJS Electron `main` process can

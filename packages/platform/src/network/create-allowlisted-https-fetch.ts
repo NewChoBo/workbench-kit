@@ -5,7 +5,7 @@ export interface CreateAllowlistedHttpsFetchOptions {
   readonly allowedHosts: readonly string[];
   /** Optional host error mapping for user-facing policy feedback. */
   readonly createPolicyError?: (violation: AllowlistedHttpsFetchPolicyViolation, url: URL) => Error;
-  /** Injected fetch; defaults to `globalThis.fetch`. */
+  /** Trusted Fetch-compatible transport; must honor redirect: 'error'. Defaults to globalThis.fetch. */
   readonly fetch?: typeof globalThis.fetch;
 }
 
@@ -48,6 +48,7 @@ function assertAllowedHttpsUrl(
 /**
  * Wraps `fetch` with an HTTPS-only + hostname allowlist policy.
  * Hosts inject `allowedHosts`; kit does not ship concrete API host catalogs.
+ * All redirects fail, including same-host redirects and caller-requested follow/manual modes.
  */
 export function createAllowlistedHttpsFetch(
   options: CreateAllowlistedHttpsFetchOptions,
@@ -67,7 +68,7 @@ export function createAllowlistedHttpsFetch(
       // Match fetch's Promise-based surface so callers can use `.catch` / rejects.
       return Promise.reject(error);
     }
-    return baseFetch(input, init);
+    return baseFetch(input, { ...init, redirect: 'error' });
   };
 
   return allowlistedFetch;
