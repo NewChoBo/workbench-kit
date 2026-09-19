@@ -165,7 +165,9 @@ report its exact owner rather than patching shell consumers independently.
 - Emoji surrogate pairs, Korean/Japanese, spaces, literal percent and reserved
   characters retain their existing supported round trips.
 - Rejected rename/create leaves original paths/content/snapshot version/journal.
-- Initial/imported invalid paths reject without partially accepting a state.
+- Initial/imported invalid entries are filtered by the existing initialization
+  policy; valid entries remain available. No malformed path may enter the state.
+  Do not change this compatibility policy into all-or-nothing initialization.
 - Run workspace path, URI, transaction and host tests, workspace typecheck,
   targeted eslint/Prettier, workspace-isolation and commit-safety.
 
