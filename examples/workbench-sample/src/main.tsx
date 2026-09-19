@@ -13,4 +13,15 @@ if (!rootElement) {
   throw new Error('Sample host root element #root was not found.');
 }
 
-createRoot(rootElement).render(<StrictMode>{createSampleHost()}</StrictMode>);
+const root = createRoot(rootElement);
+if (import.meta.env.DEV && new URLSearchParams(window.location.search).has('backend-lab')) {
+  void import('./testing/SampleBackendLab.js').then(({ SampleBackendLab }) => {
+    root.render(
+      <StrictMode>
+        <SampleBackendLab />
+      </StrictMode>,
+    );
+  });
+} else {
+  root.render(<StrictMode>{createSampleHost()}</StrictMode>);
+}

@@ -367,6 +367,64 @@
           ]
         }
       ]
+    },
+    {
+      "id": "PG00.sample-backend",
+      "owner": "Sample host / HTTP-boundary verification",
+      "sources": [
+        "examples/workbench-sample/src/testing/sample-backend-fixture.ts",
+        "examples/workbench-sample/src/dummy-backend/http-client.ts"
+      ],
+      "tests": [
+        {
+          "file": "examples/workbench-sample/src/testing/sample-backend-fixture.test.ts",
+          "cases": [
+            "sample backend fixture uses real HTTP routes methods JSON and error parsing for sign-in session and sign-out",
+            "sample backend fixture isolates instances and returned payloads and resets through fresh factories",
+            "sample backend fixture holds repeated StrictMode-style session calls until explicitly released without timers",
+            "sample backend fixture holds sign-in without mutating the session before release",
+            "sample backend fixture rejects held and future requests on idempotent disposal without mutation or network fallback",
+            "sample backend fixture disposes a held sign-in before it can establish a session",
+            "sample backend fixture keeps failed sign-in unauthenticated and succeeds on retry through the same HTTP client",
+            "sample backend fixture preserves the server session on failed sign-out and clears it only after retry",
+            "sample backend fixture rejects expired and invalid session responses through existing client parsing and permits recovery",
+            "sample backend fixture provides deterministic zero one and many valid account payloads with distinct IDs",
+            "sample backend fixture rejects unknown routes origins methods and malformed credentials instead of fabricating success"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PG00.sample-auth",
+      "owner": "Sample host / request and session ownership",
+      "sources": [
+        "examples/workbench-sample/src/useSampleAuth.ts",
+        "examples/workbench-sample/src/SampleAuthShell.tsx",
+        "examples/workbench-sample/src/App.tsx",
+        "examples/workbench-sample/src/createSampleHost.tsx"
+      ],
+      "tests": [
+        {
+          "file": "examples/workbench-sample/src/useSampleAuth.test.tsx",
+          "cases": [
+            "sample auth request ownership retains the default factory and workspace query when no client is supplied",
+            "sample auth request ownership uses the injected client without constructing a default or retaining signed-out data",
+            "sample auth request ownership handles bootstrap failure and clears its error for a successful sign-in retry",
+            "sample auth request ownership deduplicates synchronous sign-in and sign-out calls across both mutation kinds",
+            "sample auth request ownership ignores stale bootstrap success while a sign-in is pending",
+            "sample auth request ownership ignores stale bootstrap failure after successful sign-in",
+            "sample auth request ownership failed sign-in supersedes bootstrap and exits loading with a retryable error",
+            "sample auth request ownership preserves an authenticated session when a later sign-in fails",
+            "sample auth request ownership retains profile and accounts on failed sign-out then clears them only after retry succeeds",
+            "sample auth request ownership StrictMode ignores cleaned-up bootstrap results without disposing the caller client",
+            "sample auth request ownership client replacement resets visible state and ignores old mutation failure and callbacks",
+            "sample auth request ownership old bootstrap and successful mutation cannot overwrite a replacement client session",
+            "sample auth request ownership ignores bootstrap rejection after unmount without disposing the client",
+            "sample auth request ownership ignores sign-in rejection after unmount without disposing the client",
+            "sample auth request ownership ignores sign-out rejection after unmount without disposing the client"
+          ]
+        }
+      ]
     }
   ]
 }

@@ -81,10 +81,14 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-ST-015 — sample backend and screen verification
 
-Admission: `READY_FOR_IMPLEMENTATION`. The [closed sample packet](./sample-backend-verification.md)
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`. The [closed sample packet](./sample-backend-verification.md)
 defines HTTP-boundary fakes, isolated deterministic scenarios, the existing sample
 auth hook's failure/lifetime repair, and actual screen acceptance. It preserves
 public contracts, default sample behavior and existing host storage.
+The [integration receipt](./sample-backend-receipt.md) records ten scenarios,
+26 focused tests, five Storybook plays, full fast validation and the separate
+Modal viewport-resize finding. Narrow-layout acceptance remains open there.
 
 ## WB-ST-006B — standards-first native Checkbox
 

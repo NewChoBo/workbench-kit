@@ -67,3 +67,24 @@ createSampleHost.tsx and its part receipt. The integrator owns scenario backend,
 fixtures/stories, dev entry, registry and this receipt. Future capability packets
 reuse the scenario principles and their own real ports instead of importing an
 auth-specific fake into unrelated domains.
+
+## Following capability packets
+
+Every new capability records its real port/renderer, typed seed factory, named
+scenarios, reset/dispose owner and executable assertions in one place. Use stable
+IDs and explicit values for zero/one/many records, missing/empty values, long text,
+Unicode and rejected inputs. Share seeds between sample/Storybook/tests but keep
+expected outcomes independently written. Reuse actual local engines rather than
+mocking their outputs. Fake only the external boundary being substituted.
+
+| Capability                     | Next fixture contract to close                                                              | Existing behavior to retain                        |
+| ------------------------------ | ------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Input / Checkbox / PropertyRow | Shared styling, diagnostic/label composition, actual OS IME for Input                       | Native events, focus, forms and explicit lifetime  |
+| Mapping / processing           | Deterministic source/target examples, missing/null/array values, conflicts and cancellation | Real operation/Mapping engine and detached preview |
+| Workspace / persistence        | Read/write failure, stale revision, reopen and recovery through the real service port       | Canonical document/history ownership               |
+| Recipe / Graph composition     | Per-step failure/location, cancellation and inherited budgets after runner admission        | Real execution contracts; no fake success pipeline |
+
+An HTTP fixture verifies client integration, not compatibility with an untested
+server. When a real adapter is introduced, run the same applicable behavioral
+contract against it and separately verify transport, persistence, permissions and
+deployment. A screenshot of seeded data does not replace interaction assertions.
