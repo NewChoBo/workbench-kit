@@ -32,3 +32,24 @@ existing packed budget stays unchanged unless a measured review admits a change.
 
 This repair establishes resource identity and content preservation in the virtual
 workspace. It does not claim disk persistence, Electron behavior or publication.
+
+## Legacy editor-state compatibility
+
+Review found persisted tabs use unversioned raw resource URIs. An old `%41.txt`
+tab must not become `A.txt`, and `%20.txt` must not become a space-named file when
+the codec changes. Admit the integrator-owned `shell-react/src/editor/state-storage.ts`
+and its adjacent tests before changing this compatibility boundary.
+
+New serialized editor state records the workspace URI encoding. When that marker
+is absent, preserve the old parser's effective workspace path (normalized URL
+pathname without decoding) and encode it with the new formatter. Keep group/tab
+IDs and selection, do not rewrite non-workspace URIs, and do not migrate a marked
+state twice. Unknown encoding markers and malformed workspace identities fail
+closed. Reading does not write storage; the next ordinary state save records the
+new marker. This only migrates the repository-owned editor-state format; external
+hosts that persist URI strings must follow the same codec transition before
+adopting a release. No release is performed in this packet.
+
+Reproduce restored `%41.txt` and `%20.txt` alongside their decoded neighbors.
+Verify host resolution and Save target the original literal-percent files, while
+new encoded Unicode and reserved-name tabs survive repeated writes/reads.
