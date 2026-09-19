@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
 import { formatWorkspaceResourceUri } from '@workbench-kit/workspace';
+import { DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY } from '@workbench-kit/shell-react';
 import {
   initialWorkspace,
   SAMPLE_APP_PATH,
@@ -23,9 +24,12 @@ const meta = {
   },
   tags: ['storybook-play-required', 'storybook-play-sample', 'storybook-play-explorer-context'],
   args: { initialScenario: 'one-account' },
-  beforeEach: () => resetSampleHostStorage('none'),
-  render: (args) => (
-    <StrictMode>
+  beforeEach: () => {
+    resetSampleHostStorage('none');
+    window.localStorage.removeItem(DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY);
+  },
+  render: (args, { id }) => (
+    <StrictMode key={id}>
       <SampleBackendLab {...args} />
     </StrictMode>
   ),
@@ -73,6 +77,7 @@ async function menuFor(canvas: Canvas, path: string): Promise<HTMLElement> {
 
 async function rightClick(button: HTMLElement) {
   button.scrollIntoView({ block: 'nearest' });
+  await new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
   const rect = button.getBoundingClientRect();
   await userEvent.pointer({
     target: button,
@@ -87,7 +92,16 @@ async function rightClick(button: HTMLElement) {
 async function escapeMenu(canvas: Canvas, invoker: HTMLElement) {
   await userEvent.keyboard('{Escape}');
   await waitFor(() => expect(canvas.queryByRole('menu')).toBeNull());
-  await expect(invoker).toHaveFocus();
+  await expect(
+    invoker,
+    `Escape focus: ${invoker.getAttribute('aria-label') ?? invoker.textContent}`,
+  ).toHaveFocus();
+}
+
+async function clickMore(button: HTMLElement) {
+  // Actions are revealed by focus-within; synthetic pointer events do not set CSS :hover.
+  button.focus();
+  await userEvent.click(button);
 }
 
 function menuLabels(menu: HTMLElement) {
@@ -109,7 +123,7 @@ async function expectMenuContained(menu: HTMLElement) {
 
 async function ready(canvas: Canvas) {
   await waitForWorkbenchReady(canvas);
-  await canvas.findByRole('tab', { name: /example\.jdw\.json/ }, { timeout: 30_000 });
+  await canvas.findByText('No editors open');
 }
 
 export const TargetParity: Story = {
@@ -134,7 +148,7 @@ export const TargetParity: Story = {
 
     const appMore = more(canvas, SAMPLE_APP_PATH);
     expect(appMore.closest('button[data-workspace-path]')).toBeNull();
-    await userEvent.click(appMore);
+    await clickMore(appMore);
     const moreMenu = await menuFor(canvas, SAMPLE_APP_PATH);
     expect(menuLabels(moreMenu)).toEqual(labels);
     await expectMenuContained(moreMenu);
@@ -156,7 +170,7 @@ export const TargetParity: Story = {
     for (const entry of ['pointer', 'more', 'keyboard']) {
       const invoker = entry === 'more' ? more(canvas, 'src') : folder;
       if (entry === 'pointer') await rightClick(folder);
-      else if (entry === 'more') await userEvent.click(invoker);
+      else if (entry === 'more') await clickMore(invoker);
       else {
         folder.focus();
         await userEvent.keyboard('{Shift>}{F10}{/Shift}');
@@ -167,6 +181,21 @@ export const TargetParity: Story = {
       expect(openTabNames(canvas)).toEqual(initialTabs);
       await escapeMenu(canvas, invoker);
     }
+
+    // Keyboard traversal must expose its target in the overflowing sidebar, not just change focus.
+    folder.focus();
+    await userEvent.keyboard('{Home}');
+    await expect(explorer(canvas).querySelector('button[data-workspace-path]')).toHaveFocus();
+    await userEvent.keyboard('{End}');
+    const lastRow = row(canvas, SAMPLE_README_PATH);
+    await expect(lastRow).toHaveFocus();
+    await waitFor(() => {
+      const bounds = explorer(canvas).getBoundingClientRect();
+      const target = lastRow.getBoundingClientRect();
+      expect(target.top).toBeGreaterThanOrEqual(bounds.top);
+      expect(target.bottom).toBeLessThanOrEqual(bounds.bottom);
+    });
+    expect(openTabNames(canvas)).toEqual(initialTabs);
   },
 };
 
@@ -201,7 +230,7 @@ export const RenameRetry: Story = {
     await expect(row(canvas, SAMPLE_APP_PATH)).toBeVisible();
     expect(openTabNames(canvas)).toEqual(initialTabs);
 
-    await userEvent.click(more(canvas, SAMPLE_APP_PATH));
+    await clickMore(more(canvas, SAMPLE_APP_PATH));
     await userEvent.click(
       within(await menuFor(canvas, SAMPLE_APP_PATH)).getByRole('menuitem', { name: /^Rename/ }),
     );
@@ -249,7 +278,7 @@ export const RenameRetry: Story = {
 
     const renamedMore = more(canvas, nextPath);
     await expect(renamedMore).toHaveAccessibleName(`More actions for ${nextPath}`);
-    await userEvent.click(renamedMore);
+    await clickMore(renamedMore);
     const longNameMenu = await menuFor(canvas, nextPath);
     await expectMenuContained(longNameMenu);
     await escapeMenu(canvas, renamedMore);
@@ -273,7 +302,7 @@ export const MultiSelection: Story = {
     for (const entry of ['pointer', 'more', 'keyboard']) {
       const invoker = entry === 'more' ? more(canvas, SAMPLE_APP_PATH) : app;
       if (entry === 'pointer') await rightClick(app);
-      else if (entry === 'more') await userEvent.click(invoker);
+      else if (entry === 'more') await clickMore(invoker);
       else {
         app.focus();
         await userEvent.keyboard('{Shift>}{F10}{/Shift}');

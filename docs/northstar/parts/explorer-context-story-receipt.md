@@ -36,3 +36,20 @@ Browser plays were deliberately not executed by this part. The admission base
 does not yet contain the normalized Explorer callback or shell adoption; the
 integrator owns RED/GREEN browser execution, screenshots, registry and full gates.
 These are authored regressions, not a browser PASS or release receipt.
+
+## Integration fixture corrections
+
+The initial browser run corrected the fresh-host assumption: storage reset starts
+with no editors open. Each story now remounts by story ID and clears the public
+editor-state storage key as well as sample settings, preventing a prior story's
+open tabs from being restored. Workspace initialization still uses the actual
+StartupGate and workspace command.
+
+Synthetic pointer events do not set CSS `:hover`, so More interaction first uses
+the supported focus-within reveal. Pointer context setup waits one animation frame
+after scrollIntoView so the pending scroll event cannot dismiss a newly opened
+menu. TargetParity also checks Home/End focus and visible overflow navigation.
+
+With context routing connected, the real content assertion exposed the separately
+admitted [resource URI repair](../explorer-resource-uri-repair.md). Preserve that
+assertion; the final combined browser result belongs to the integration receipt.
