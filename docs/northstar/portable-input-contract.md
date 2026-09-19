@@ -66,6 +66,11 @@ fixtures, not published framework adapters or a styled portable component suite.
 
 ## Original delivery comparison
 
+The [native-control delivery decision](./native-controls-wave-5.md) makes
+framework wrappers optional. Direct HTML/DOM use and the same-artifact four-host
+fixtures are the required interface and evidence. References to adapters below
+describe consumer binding/lifecycle glue, not a requirement to publish wrappers.
+
 Use a native-input-based DOM implementation as the comparison baseline, with
 framework adapters translating values/events without importing React into core.
 ST-005B selected a DOM binder after checking labels, forms and lifecycle; a custom

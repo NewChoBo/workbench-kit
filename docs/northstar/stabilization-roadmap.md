@@ -60,6 +60,11 @@ transport fix, headless history extraction and unresolved structural work.
 
 ## Current structural priority
 
+SP06 delivery uses standard HTML/DOM directly. Framework wrappers are optional
+conveniences; same-artifact HTML/React/Vue/Svelte consumer verification remains
+required. The next bounded control is [native Checkbox](./native-controls-wave-5.md),
+followed by PropertyRow and shared styling with their own contracts.
+
 After the bounded ST-012/013/014 repairs, prioritize preview-controller ownership,
 minimal UI/Mapping package boundaries, explicit Provider composition and mandatory
 independent installation. Close each packet before source edits. Preview extraction

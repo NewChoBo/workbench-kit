@@ -79,6 +79,15 @@ It is not a changelog of the current repository. Current source is recorded only
 - This receipt does not claim independent source review, integration, publication, browser visual
   conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
 
+## WB-ST-006A — standards-first native Checkbox
+
+Admission: `READY_FOR_IMPLEMENTATION`. The closed behavior, file ownership,
+compatibility and exact verification scope are in
+[native-controls-wave-5.md](./native-controls-wave-5.md). Standard HTML/DOM direct
+use is primary; framework wrappers are optional conveniences. Implement one
+native Checkbox binder and verify the same packed artifact in four direct-use
+hosts. Existing React public controls remain unchanged.
+
 ## WB-ST-001 — cleanup and required-unit stabilization
 
 Status: `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`. The admitted contract and
