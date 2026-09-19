@@ -24,6 +24,7 @@ export {
   DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   isWorkbenchEditorStatePersistenceAvailable,
   readPersistedEditorState,
+  type WorkbenchEditorStatePersistenceReadResult,
   writePersistedEditorState,
 } from './editor/state-storage.js';
 export {

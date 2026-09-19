@@ -28,6 +28,13 @@ import {
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
 const WORKSPACE_URI_ENCODING = 'percent-encoded-v1';
 
+export interface WorkbenchEditorStatePersistenceReadResult extends WorkbenchPersistenceReadResult<
+  EditorState | undefined
+> {
+  /** Whether an editor event may replace the value for this adapter and key. */
+  readonly writeEligible: boolean;
+}
+
 export function isWorkbenchEditorStatePersistenceAvailable(): boolean {
   return resolveLocalWorkbenchStorage() !== undefined;
 }
@@ -66,14 +73,18 @@ export function readPersistedEditorStateResult(
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
   options: WorkbenchPersistenceDiagnosticOptions = {},
-): WorkbenchPersistenceReadResult<EditorState | undefined> {
-  return readLocalJsonStorageResult(
+): WorkbenchEditorStatePersistenceReadResult {
+  const result = readLocalJsonStorageResult(
     storageKey,
-    parseEditorStateStorageValue,
+    (value) => parseEditorStateStorageValue(value, true),
     () => undefined,
     storage,
     options,
   );
+  return {
+    ...result,
+    writeEligible: result.diagnostic === undefined,
+  };
 }
 
 export function writePersistedEditorState(
@@ -98,19 +109,32 @@ export function writePersistedEditorStateResult(
   });
 }
 
-function parseEditorStateStorageValue(value: unknown): EditorState | undefined {
+function parseEditorStateStorageValue(value: unknown, strict = false): EditorState | undefined {
   if (!isRecord(value)) {
+    if (strict) {
+      throw new TypeError('Expected an editor state storage object.');
+    }
     return undefined;
   }
   const encoding = value.workspaceResourceUriEncoding;
-  if (encoding !== undefined && encoding !== WORKSPACE_URI_ENCODING) return undefined;
+  if (encoding !== undefined && encoding !== WORKSPACE_URI_ENCODING) {
+    if (strict) {
+      throw new TypeError('Unsupported editor state storage encoding.');
+    }
+    return undefined;
+  }
   const legacyWorkspaceUris = encoding === undefined;
 
   const groups = Array.isArray(value.groups)
-    ? value.groups.flatMap((group) => parseEditorGroupStorageValue(group, legacyWorkspaceUris))
+    ? value.groups.flatMap((group) =>
+        parseEditorGroupStorageValue(group, legacyWorkspaceUris, strict),
+      )
     : [];
-  const layout = parseEditorLayoutStorageValue(value.layout);
+  const layout = parseEditorLayoutStorageValue(value.layout, strict);
   if (groups.length === 0 || !layout) {
+    if (strict) {
+      throw new TypeError('Invalid editor state storage value.');
+    }
     return undefined;
   }
 
@@ -124,8 +148,12 @@ function parseEditorStateStorageValue(value: unknown): EditorState | undefined {
 function parseEditorGroupStorageValue(
   value: unknown,
   legacyWorkspaceUris: boolean,
+  strict = false,
 ): EditorGroupState[] {
   if (!isRecord(value) || typeof value.id !== 'string' || !Array.isArray(value.tabs)) {
+    if (strict) {
+      throw new TypeError('Invalid editor group storage value.');
+    }
     return [];
   }
 
@@ -133,7 +161,9 @@ function parseEditorGroupStorageValue(
     {
       activeTabId: typeof value.activeTabId === 'string' ? value.activeTabId : undefined,
       id: value.id,
-      tabs: value.tabs.flatMap((tab) => parseEditorTabStorageValue(tab, legacyWorkspaceUris)),
+      tabs: value.tabs.flatMap((tab) =>
+        parseEditorTabStorageValue(tab, legacyWorkspaceUris, strict),
+      ),
     },
   ];
 }
@@ -141,6 +171,7 @@ function parseEditorGroupStorageValue(
 function parseEditorTabStorageValue(
   value: unknown,
   legacyWorkspaceUris: boolean,
+  strict = false,
 ): EditorTabState[] {
   if (
     !isRecord(value) ||
@@ -148,10 +179,18 @@ function parseEditorTabStorageValue(
     typeof value.editorId !== 'string' ||
     typeof value.resourceUri !== 'string'
   ) {
+    if (strict) {
+      throw new TypeError('Invalid editor tab storage value.');
+    }
     return [];
   }
   const resourceUri = readStoredResourceUri(value.resourceUri, legacyWorkspaceUris);
-  if (resourceUri === undefined) return [];
+  if (resourceUri === undefined) {
+    if (strict) {
+      throw new TypeError('Invalid editor resource URI.');
+    }
+    return [];
+  }
 
   return [
     {
@@ -188,8 +227,14 @@ function readStoredResourceUri(resourceUri: string, legacy: boolean): string | u
   }
 }
 
-function parseEditorLayoutStorageValue(value: unknown): EditorLayoutNode | undefined {
+function parseEditorLayoutStorageValue(
+  value: unknown,
+  strict = false,
+): EditorLayoutNode | undefined {
   if (!isRecord(value) || typeof value.type !== 'string') {
+    if (strict) {
+      throw new TypeError('Invalid editor layout storage value.');
+    }
     return undefined;
   }
 
@@ -203,14 +248,20 @@ function parseEditorLayoutStorageValue(value: unknown): EditorLayoutNode | undef
   }
 
   if (value.type !== 'split' || !Array.isArray(value.children)) {
+    if (strict) {
+      throw new TypeError('Invalid editor split storage value.');
+    }
     return undefined;
   }
 
   const direction = parseEditorLayoutDirection(value.direction);
   const children = value.children
-    .map(parseEditorLayoutStorageValue)
+    .map((child) => parseEditorLayoutStorageValue(child, strict))
     .filter((child): child is EditorLayoutNode => child !== undefined);
   if (!direction || children.length === 0) {
+    if (strict) {
+      throw new TypeError('Invalid editor split layout.');
+    }
     return undefined;
   }
 

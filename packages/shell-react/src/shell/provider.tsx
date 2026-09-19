@@ -77,6 +77,7 @@ import {
   isWorkbenchEditorStatePersistenceAvailable,
   readPersistedEditorStateResult,
   writePersistedEditorStateResult,
+  type WorkbenchEditorStatePersistenceReadResult,
 } from '../editor/state-storage.js';
 import {
   DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
@@ -376,16 +377,21 @@ export function WorkbenchProvider({
     [initialLayout, layoutStorage, layoutStorageKey, shouldPersistLayout],
   );
   const resolvedInitialLayout = resolvedInitialLayoutResult.value;
-  const resolvedInitialEditorStateResult = useMemo(
+  const resolvedInitialEditorStateResult = useMemo<WorkbenchEditorStatePersistenceReadResult>(
     () =>
       initialEditorState !== undefined
-        ? { value: initialEditorState }
+        ? { value: initialEditorState, writeEligible: true }
         : shouldPersistEditorState
           ? readPersistedEditorStateResult(editorStateStorageKey, editorStateStorage)
-          : { value: undefined },
+          : { value: undefined, writeEligible: true },
     [editorStateStorage, editorStateStorageKey, initialEditorState, shouldPersistEditorState],
   );
   const resolvedInitialEditorState = resolvedInitialEditorStateResult.value;
+  // A host-supplied initial state is authoritative and intentionally bypasses
+  // persisted storage eligibility. Otherwise rejected data stays read-only for
+  // this adapter/key until the provider is resolved again for a new identity.
+  const editorStateWriteEligible =
+    initialEditorState !== undefined || resolvedInitialEditorStateResult.writeEligible;
   const resolvedInitialKeybindingOverridesResult = useMemo<PersistedKeybindingOverridesReadResult>(
     () =>
       initialKeybindingOverrides !== undefined
@@ -901,7 +907,7 @@ export function WorkbenchProvider({
   ]);
 
   useEffect(() => {
-    if (!shouldPersistEditorState) {
+    if (!shouldPersistEditorState || !editorStateWriteEligible) {
       return undefined;
     }
 
@@ -919,6 +925,7 @@ export function WorkbenchProvider({
     diagnosticHandlerRef,
     editorStateStorage,
     editorStateStorageKey,
+    editorStateWriteEligible,
     services.editorService,
     shouldPersistEditorState,
   ]);

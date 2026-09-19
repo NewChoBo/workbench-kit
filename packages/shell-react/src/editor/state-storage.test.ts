@@ -8,6 +8,7 @@ import {
 import {
   DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   readPersistedEditorState,
+  readPersistedEditorStateResult,
   writePersistedEditorState,
 } from './state-storage.js';
 
@@ -268,6 +269,48 @@ describe('editor-state-storage', () => {
     expect(readPersistedEditorState(DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY, storage)).toBe(
       undefined,
     );
+  });
+
+  it('reports missing and valid state as writable, while locking rejected state', () => {
+    const storage = createMemoryStorage();
+    expect(readPersistedEditorStateResult('missing', storage)).toMatchObject({
+      value: undefined,
+      writeEligible: true,
+    });
+
+    const valid = stateForUris(['workspace://file/src/App.tsx']);
+    storage.setItem(
+      'valid',
+      JSON.stringify({ ...valid, workspaceResourceUriEncoding: 'percent-encoded-v1' }),
+    );
+    expect(readPersistedEditorStateResult('valid', storage)).toMatchObject({
+      writeEligible: true,
+      value: valid,
+    });
+
+    const original = JSON.stringify({ ...valid, workspaceResourceUriEncoding: 'future-v2' });
+    storage.setItem('future', original);
+    const rejected = readPersistedEditorStateResult('future', storage);
+    expect(rejected).toMatchObject({ writeEligible: false, value: undefined });
+    expect(rejected.diagnostic?.code).toBe('decode_failed');
+    expect(storage.getItem('future')).toBe(original);
+
+    storage.setItem(
+      'invalid-uri',
+      JSON.stringify({
+        ...valid,
+        workspaceResourceUriEncoding: 'percent-encoded-v1',
+        groups: [
+          {
+            ...valid.groups[0],
+            tabs: [{ ...valid.groups[0]!.tabs[0], resourceUri: 'workspace://file/src/%GG' }],
+          },
+        ],
+      }),
+    );
+    expect(readPersistedEditorStateResult('invalid-uri', storage)).toMatchObject({
+      writeEligible: false,
+    });
   });
 });
 

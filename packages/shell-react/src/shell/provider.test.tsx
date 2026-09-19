@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type {
   EditorState,
+  EditorService,
   LayoutService,
   ViewHostFactory,
   WorkbenchExtensionDescription,
@@ -2898,6 +2899,68 @@ describe('WorkbenchProvider', () => {
       secondRoot.unmount();
     });
     secondContainer.remove();
+  });
+
+  it('preserves rejected editor storage through ordinary editor events', async () => {
+    const storageKey = `${DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY}/future-provider`;
+    const editorStateStorage = createMemoryStorage();
+    const original = JSON.stringify({
+      workspaceResourceUriEncoding: 'future-v2',
+      activeGroupId: 'main',
+      groups: [
+        {
+          activeTabId: 'saved',
+          id: 'main',
+          tabs: [
+            {
+              dirty: false,
+              editorId: 'workbench.editor.text',
+              id: 'saved',
+              pinned: true,
+              preview: false,
+              resourceUri: 'workspace://file/important.txt',
+            },
+          ],
+        },
+      ],
+      layout: { groupId: 'main', type: 'group' },
+    });
+    editorStateStorage.setItem(storageKey, original);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    let editor!: EditorService;
+    function Probe() {
+      editor = useEditorService();
+      return null;
+    }
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          availableExtensions={[]}
+          editorStateStorage={editorStateStorage}
+          editorStateStorageKey={storageKey}
+          persistLayout={false}
+          persistKeybindingOverrides={false}
+          persistLocalPreferences={false}
+        >
+          <Probe />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+    await act(async () => {
+      editor!.openEditor({
+        editorId: 'workbench.editor.text',
+        resourceUri: 'workspace://file/new.txt',
+      });
+      editor!.splitEditor();
+      editor!.closeEditor('missing-tab');
+    });
+    expect(editorStateStorage.getItem(storageKey)).toBe(original);
+    await act(async () => root.unmount());
+    container.remove();
   });
 
   it('opens built-in explorer item context menus with file and folder actions', async () => {
