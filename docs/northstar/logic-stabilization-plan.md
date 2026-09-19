@@ -1,8 +1,10 @@
 # Editor and Explorer logic stabilization
 
 Date: 2026-09-19. Audited source: `a01df0d9`.
-Admission: WB-ST-021 through WB-ST-025 are `READY_FOR_IMPLEMENTATION`, subject
-to the sequencing below. This is a bounded repair plan, not release approval.
+Status: WB-ST-021 through WB-ST-025 are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS /
+COMBINED_VALIDATION_PASS`; see the [combined receipt](./logic-stabilization-verification.md).
+Originally admitted as `READY_FOR_IMPLEMENTATION`, following the sequencing
+below. This is a bounded repair plan, not release approval.
 
 ## Shared contracts and ownership
 
@@ -35,6 +37,7 @@ to the sequencing below. This is a bounded repair plan, not release approval.
 | WB-ST-024 | Canonical editor resource identity      | Reviewed 022 and 023       | Wave 2            |
 | WB-ST-025 | Dirty-resource mutation/save protection | Reviewed 024; 021 retained | Wave 3            |
 
+All packet workers use `gpt-5.6-luna`; the integrator owns cross-packet review.
 Workers use separate branches/worktrees and independent pnpm installs. Do not
 symlink node_modules to another worktree. Each worker owns only its packet's
 allowlist and receipt. The integrator owns this plan, implementation-plan.md,

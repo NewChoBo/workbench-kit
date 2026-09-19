@@ -81,13 +81,18 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-ST-021 through WB-ST-025 — editor logic stabilization
 
-Admission: `READY_FOR_IMPLEMENTATION`, audited source `a01df0d9`.
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`, audited source `a01df0d9`.
 The [detailed worker plan](./logic-stabilization-plan.md) closes shared contracts,
 file ownership, reproduction, acceptance and validation for repeated rename
 failure, incompatible persisted state, Unicode path validity, canonical editor
 identity and dirty-buffer protection. Wave 1 is independent; identity follows
 storage/path review, then dirty-resource protection follows identity integration.
-No release or consumer source change is part of these packets.
+The [combined receipt](./logic-stabilization-verification.md) records the exact
+worker/integration commits, 507 files / 3,150 passing tests, 30 registered units /
+324 required cases, five real sample browser plays and measured bundle growth.
+No release or consumer source change is part of these packets. Split-view shared
+documents, dirty-close policy, Save As and durable draft recovery remain separate.
 
 ## WB-ST-020 — Explorer context parity
 
