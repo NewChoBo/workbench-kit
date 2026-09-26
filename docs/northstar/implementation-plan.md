@@ -79,6 +79,7 @@ WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mec
 WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
 WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
 WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [SOURCE_REVIEW_PASS; READY_FOR_RELEASE]
+WB-NS-070J aspect-preserving Canvas resize projection [DESIGN_CURRENTIZED; PACKET_REVIEW_PASSED; SOURCE_CLOSED; dependency: published WB-NS-070H]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -6428,6 +6429,287 @@ changes.
 - no product policy, second document/history/patch path, provider, DOM state or Electron dependency is
   introduced;
 - producer-distinct review returns no P0/P1/P2 target mismatch before integration or release work.
+
+### `WB-NS-070J` bounded packet — aspect-preserving Canvas resize projection
+
+- **Status:** `DESIGN_CURRENTIZED / PACKET_REVIEW_PASSED / SOURCE_CLOSED`;
+  documentation-only local candidate, no source work started
+- **Exact source/API base:** `origin/develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`
+- **Released dependency:** `WB-NS-070H` is published in the exact `0.2.48` cohort at
+  `main@bf7c279571a43a49cedbcd3daf9b6444dee7c184`, tag
+  `v0.0.2-prototype.0.2.48`; live `@workbench-kit/react@prototype` and
+  `@workbench-kit/jdw@prototype` both resolve to `0.0.2-prototype.0.2.48`
+- **Target owner:** `@workbench-kit/react/authoring` pure Canvas-placement transform projection;
+  canonical `UiCanvasPlacementValue`, V3 layout commands, admission, session and history remain
+  unchanged
+- **Existing canonical contract:** `UiCanvasPlacementValue.constraints.aspectRatio` already exists and
+  validates a finite positive value. Released resize projection preserves the field as opaque placement
+  metadata but neither reads nor enforces it.
+- **Trigger:** the released placement bridge resizes width and height independently from pointer deltas.
+  Integrating hosts that preserve the current visible ratio as an editing default would otherwise
+  duplicate edge/corner anchoring and numeric-Inspector ratio arithmetic outside the Kit, allowing
+  Canvas preview, committed Canvas output and Inspector values to diverge. This packet must not disguise
+  that editing behavior as the existing durable Canvas constraint.
+
+#### Goal / user outcome
+
+Let an AI-free integrating host opt one selected Canvas item into aspect-preserving resize while using
+the same public pure projection for pointer preview and committed Canvas output, plus the same ratio
+arithmetic for numeric Inspector size fields. The host chooses an explicit neutral free/current-ratio
+behavior; Workbench Kit owns deterministic resize math, validation and the complete resulting placement
+value.
+
+One completed resize still emits the existing one `set-layout` action and one V3 history record.
+Preview remains caller-owned and ephemeral. The released action factory and its transform type remain
+unchanged, so existing consumers do not change merely by adopting the new package cohort. New explicit
+free/current-ratio projection is available only for placements without a canonical aspect constraint.
+A current-ratio behavior is an ephemeral interaction choice: a free resize naturally establishes the
+visible ratio used by the next current-ratio gesture and writes no lock flag or ratio metadata.
+
+#### Public contract
+
+Extend the existing additive React authoring exports:
+
+```ts
+interface WorkbenchCanvasSize {
+  readonly height: number;
+  readonly width: number;
+}
+
+type WorkbenchCanvasSizeAxis = 'width' | 'height';
+
+interface WorkbenchAspectRatioSizeInput {
+  readonly aspectRatio?: number;
+  readonly axis: WorkbenchCanvasSizeAxis;
+  readonly current: WorkbenchCanvasSize;
+  readonly value: number;
+}
+
+function projectWorkbenchAspectRatioSize(
+  input: WorkbenchAspectRatioSizeInput,
+): WorkbenchCanvasSize | null;
+
+type WorkbenchCanvasPlacementResizeBehavior =
+  { readonly kind: 'free' } | { readonly kind: 'preserve-current-aspect-ratio' };
+
+interface WorkbenchCanvasCenterVisualTransform {
+  readonly origin: 'center';
+  readonly rotationDegrees: number;
+}
+
+interface WorkbenchCanvasPlacementResizeRequest {
+  readonly behavior: WorkbenchCanvasPlacementResizeBehavior;
+  readonly deltaX: number;
+  readonly deltaY: number;
+  readonly edge: WorkbenchCanvasPlacementResizeEdge;
+  readonly visualTransform?: WorkbenchCanvasCenterVisualTransform;
+}
+
+interface WorkbenchCanvasPlacementResizeProjectionInput extends WorkbenchCanvasPlacementResizeRequest {
+  readonly placement: UiCanvasPlacementValue;
+}
+
+function projectWorkbenchCanvasPlacementResize(
+  input: WorkbenchCanvasPlacementResizeProjectionInput,
+): UiCanvasPlacementValue | null;
+
+interface WorkbenchAuthoringProjectedCanvasPlacementActionInput extends Omit<
+  WorkbenchAuthoringCanvasPlacementActionInput,
+  'transform'
+> {
+  readonly resize: WorkbenchCanvasPlacementResizeRequest;
+}
+
+function createWorkbenchAuthoringProjectedCanvasPlacementActionV3(
+  input: WorkbenchAuthoringProjectedCanvasPlacementActionInput,
+): UiAuthoringSurfaceActionV3 | null;
+```
+
+`projectWorkbenchAspectRatioSize` uses `aspectRatio` when supplied and otherwise derives the current
+positive `width / height`. It treats `value` as the exact next primary-axis size and derives the other
+dimension without rounding. Numeric Inspector projection is an explicit size edit, so a supplied ratio
+may deterministically repair a mismatched current box. The helper returns `null` for non-finite or
+non-positive current sizes, value or ratio. It invokes no callback, command, document, DOM, persistence
+or IO path.
+
+`projectWorkbenchCanvasPlacementResize` is a new public pure projector. Canvas preview calls it directly;
+the new projected-action factory delegates to the same function before wrapping the returned complete
+placement in the existing one `set-layout` action. The factory reads the current placement from the
+specified literal `layoutValues` entry and supplies it to the projector, so it cannot accept a
+caller-authored projected result. Equal source input yields equal preview/commit projection; verifying
+that the host commits the same source revision it previewed remains integrating-host acceptance. The released transform type and
+`createWorkbenchAuthoringCanvasPlacementActionV3` remain unchanged. Unknown runtime behavior, behavior
+omission at either new API, or a runtime payload that combines omitted behavior with a visual transform
+returns `null` without throwing.
+
+Explicit `{ kind: 'free' }` is deep-result-compatible with released independent-axis geometry on an
+unrotated unconstrained placement. `preserve-current-aspect-ratio` freezes the initial positive
+`width / height` for that projection. Both explicit modes return `null` when
+`placement.constraints.aspectRatio` exists; neither reads, writes, repairs or removes the durable field.
+Both modes require X, Y, width and height to be finite `px` lengths and return `null` for every other
+otherwise-valid unit or intrinsic size kind; viewport deltas and the frozen world-anchor equation are
+pixel-domain operations and never reinterpret percentages as pixels.
+This packet intentionally does not add a canonical-ratio resize mode or close the legacy/direct-command
+constraint invariant. Enforcing, repairing or unlocking the durable constraint across every command
+producer requires a separate reviewed admission packet before an integrating host may expose it.
+
+`visualTransform` is optional only on the new explicit projector and freezes a finite clockwise-positive
+rotation with the exact center origin used by the rendered item. The projector inverse-rotates the
+viewport delta into placement-local axes, computes the next local size, and then compensates X/Y in
+parent/world coordinates so the visual opposite corner or opposite-edge midpoint stays fixed. It never
+discovers a rotation property or measures the DOM.
+
+#### Frozen geometry semantics
+
+1. The released action input retains the exact released algorithm and no-op/error behavior. Its type and
+   factory remain unchanged and do not accept `visualTransform`. The new
+   public projector requires a valid explicit behavior; both explicit modes refuse a placement carrying
+   durable `constraints.aspectRatio`.
+2. Explicit free mode uses the released independent-axis edge arithmetic after any viewport-to-local
+   delta mapping. Explicit current-ratio mode freezes the initial positive `width / height` and uses the
+   proportional rules below.
+3. For a proportional corner handle, project the pointer displacement onto the initial signed diagonal:
+   `scale = 1 + dot(delta, signedSize) / dot(signedSize, signedSize)`. The opposite corner remains fixed.
+4. For a proportional horizontal edge, its signed X delta determines scale; the opposite horizontal edge remains
+   fixed and the vertical center remains fixed. For a vertical edge, its signed Y delta determines scale;
+   the opposite vertical edge remains fixed and the horizontal center remains fixed.
+5. Apply scale to both dimensions using the frozen ratio. For an unrotated item, left/top handles adjust
+   X/Y and right/bottom handles keep them unchanged, preserving the conventional opposite anchor.
+6. For a center-origin rotated item, let `p=(x,y)`, `c=(width/2,height/2)`, and let `q` be the local
+   opposite corner or opposite-edge midpoint selected by the active handle. Freeze the world-space
+   anchor `A = p + c + R(theta) * (q - c)`. After the new size is known, derive `c'` and the same semantic
+   opposite anchor `q'`, then return `p' = A - c' - R(theta) * (q' - c')`. At `theta=0` this must equal
+   the unrotated rule. Preserve `anchor`, `zIndex`, constraints and every non-placement entry in
+   `layoutValues`.
+7. Reject non-finite input or rotation, a visual origin other than `center`, non-positive initial/result
+   dimensions, zero-length diagonal, any durable aspect constraint, unsupported runtime edge or unknown
+   runtime behavior, and any non-`px` X/Y/width/height with `null`; do not clamp, round, flip an edge,
+   normalize a box, reinterpret percentage/intrinsic values or fabricate a command.
+8. Equal frozen input produces deep-equal placement/action output. Caller mutation after the function
+   returns cannot alter the returned action. Move behavior never consults resize behavior or visual
+   rotation.
+
+These rules define pure geometry only. Hosts may use `projectWorkbenchAspectRatioSize` for a controlled
+Inspector and then submit the resulting complete placement through the existing layout action. A host
+remains responsible for its toggle/shortcut copy, current-ratio versus durable-constraint policy,
+selected-node state, preview, focus and accessibility. Held modifier state is interpreted by the host;
+the Kit accepts only the neutral behavior and never imports DOM event types.
+
+#### State, ownership and compatibility
+
+| Concern                                               | Owner / decision                            |
+| ----------------------------------------------------- | ------------------------------------------- |
+| Viewport-to-local delta, ratio math and stable anchor | React authoring pure helpers                |
+| Canvas-placement value and literal units              | existing contracts; unchanged               |
+| Current-ratio editing default and temporary free mode | integrating host transient UI policy        |
+| Durable `constraints.aspectRatio` intent              | separate admission packet; unsupported here |
+| Intrinsic media ratio, fit/crop/focal-point policy    | integrating host; never inferred by the Kit |
+| Preview/pointer capture/focus                         | integrating Canvas                          |
+| Command admission, transaction and Undo/Redo          | existing JDW V3 path; unchanged             |
+
+The behavior is action input, not canonical authored state. No `aspectLocked` property, second ratio
+field, media metadata field, component kind, global editor preference, service, registry or persistence
+migration is added. The new explicit projector refuses the existing canonical Canvas constraint, but the
+unchanged legacy action and direct V3 commands do not enforce it. Therefore this packet makes no global
+non-bypass claim. A host may use this slice only for unconstrained placements and must keep durable
+constraint authoring unavailable until its separate admission invariant, repair and unlock policy are
+reviewed.
+
+#### Scope / non-scope
+
+Scope: additive React authoring types, public pure aspect-size and complete placement-resize projection,
+unchanged legacy action compatibility, explicit guarded-free/current-ratio modes, optional typed center-
+origin visual transform, viewport-to-local rotation plus world-anchor compensation, eight-edge/corner
+geometry, public root/subpath exports, hostile numeric/runtime tests, exact-optional types and packed-
+consumer proof.
+
+Non-scope: built-in Image/media semantics, intrinsic-size loading, fit/crop/focal point, rotate handles,
+snap/grid/guides, minimum/maximum descriptor-constraint enforcement, canonical-ratio repair/unlock
+commands or enforced resize, multi-selection, built-in lock toggle or shortcut, Canvas DOM/preview implementation, JDW
+command/schema/history changes, persistence, provider/AI, Electron/native, release/publish or
+consumer-specific examples.
+
+#### Ordered implementation tasks
+
+1. Reverify exact base `542123e0`, published `0.2.48` public actions and current seven focused action
+   tests. Return to design if the transform input or released free-resize output has drifted.
+2. Preserve the released action input, factory and free placement branch unchanged. Add and publicly
+   export one pure complete-placement projector plus a projected-action factory that wraps it, so preview
+   and commit never need separate math or command reverse-reading.
+3. Implement and export `projectWorkbenchAspectRatioSize` with current-ratio derivation, explicit-ratio
+   override and fail-closed finite/positive checks.
+4. Add guarded-free and current-ratio projection for all four edges and four corners using the frozen
+   scale rules. For an explicit center visual transform, inverse-map viewport deltas and apply the frozen
+   world-anchor equation before composing through the existing layout action factory.
+5. Add exact-optional/public export fixtures and a packed consumer that uses the size helper and both
+   resize modes without a private import.
+6. Add focused compatibility, geometry, hostile input, immutability and deterministic stress tests;
+   freeze one candidate for producer-distinct source review.
+
+#### Focused validation
+
+- preserve exact current move, eight-edge free resize, no-op, invalid-unit and non-positive-result output
+  through the unchanged released factory; prove explicit free is equal on an unrotated unconstrained
+  placement;
+- cover all eight aspect-preserving edges/corners with positive/negative/fractional deltas, non-square
+  starting sizes, current ratios and left/top coordinate adjustment;
+- cover zero, positive, negative and multi-turn-equivalent center-origin visual rotations with local-axis
+  pointer invariants and world-coordinate opposite corner/edge-midpoint invariants; zero must equal the
+  explicit unrotated result;
+- assert the fixed opposite corner or primary edge plus cross-axis center before/after through the frozen
+  forward transform to a tight deterministic tolerance while `width / height` equals the target ratio;
+- prove numeric width-driven and height-driven Inspector projections agree with equivalent Canvas result
+  and emit no rounding drift across 1,000 alternating operations;
+- reject NaN/infinity/zero/negative sizes, ratios and results, invalid runtime edges, malformed/unknown
+  runtime behaviors, non-number rotations, non-center origins, behavior omission combined with a visual
+  transform, percentage positions/sizes, intrinsic sizes and malformed placement values without throwing
+  or emitting an action; cover non-`px` rejection for both unrotated and rotated requests;
+- prove current-ratio and explicit-free modes reject every durable canonical aspect ratio and never
+  create one. Record separately that the unchanged legacy branch preserves even unknown constraint
+  metadata opaquely and does not enforce conformance; do not count it as this slice's constraint proof;
+- prove caller-owned layout/transform mutation cannot change returned placement/action and unrelated
+  layout values remain deep-equal;
+- prove the existing action still produces one complete `set-layout` command; V3 admission/session tests
+  need only a compatibility assertion because command/history semantics do not change. Host Chromium
+  acceptance must prove preview and commit used the same source revision because this pure API does not
+  issue an opaque pairing token.
+
+During implementation run focused React authoring tests, package typecheck and public-export fixtures.
+At the frozen candidate run `pnpm validate:static`, `pnpm validate:fast`,
+`pnpm check:public-exports`, focused packed-consumer validation, `pnpm check:commit-safety` and
+`git diff --check`. Chromium is not required for this renderer-neutral projection packet; an integrating
+host must prove its actual pointer/keyboard/Inspector UI in a real browser. Electron is not required
+because no native boundary changes.
+
+#### Performance and source-review gate
+
+For 100,000 deterministic placement projections after warm-up, aspect-preserving mode must remain within
+`2.5x` the current free-resize median in the same Node process, with no work proportional to document or
+sibling count. Record Node version, workload and five medians; use this as a relative regression gate,
+not a cross-machine latency promise.
+
+Done requires an unchanged released action type/factory; deterministic guarded-free/current-ratio results for
+every edge and corner; correct local-axis projection and center-origin world-anchor compensation for
+explicitly rotated items; one public complete-placement projector shared by preview and commit; shared
+Canvas/Inspector ratio arithmetic; stable visual anchors; preserved placement/layout metadata; explicit
+rejection of durable constraints; fail-closed hostile input; public and packed consumption; bounded
+projection cost; no schema/history/DOM/product/native expansion; and
+producer-distinct review with no P0/P1/P2 target mismatch.
+
+The producer-distinct final packet review of this exact documentation candidate returned
+`PASS / P0 none / P1 none / P2 none`. This promotes only the bounded design packet: source remains
+closed, no implementation or integration has started, and any future source lane must revalidate its
+exact base and receive separate source authority.
+
+Reject a candidate that changes released legacy resize; renames transient behavior as the existing canonical
+constraint; accepts a durable aspect constraint in either explicit mode; claims the unchanged legacy or
+direct-command path now enforces that constraint; applies raw viewport deltas to an explicitly rotated placement;
+inverse-rotates the delta without compensating X/Y to preserve the visual opposite anchor;
+derives ratio from media or component identity; persists a generic
+lock flag; lets Canvas and Inspector use different arithmetic; rounds repeatedly; clamps or flips invalid
+geometry silently; drops anchor/zIndex/constraints or sibling layout values; mutates caller data; adds a
+second command/history path; hides a built-in shortcut/toggle in the helper; uses private imports; or
+claims consumer integration, Chromium UI acceptance, release or publish.
 
 ### Acceptance direction
 
