@@ -79,6 +79,7 @@ WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mec
 WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
 WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
 WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [SOURCE_REVIEW_PASS; READY_FOR_RELEASE]
+WB-NS-070L zoom-aware cover focal projection + accessible media pan handle [DESIGN_CURRENTIZED; PACKET_REVIEW_PASSED; SOURCE_CLOSED; waits WB-NS-070J source integration]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -6428,6 +6429,423 @@ changes.
 - no product policy, second document/history/patch path, provider, DOM state or Electron dependency is
   introduced;
 - producer-distinct review returns no P0/P1/P2 target mismatch before integration or release work.
+
+### `WB-NS-070L` bounded packet — zoom-aware cover focal projection and accessible media pan handle
+
+- **Status:** `DESIGN_CURRENTIZED / PACKET_REVIEW_PASSED / WAITING_WB-NS-070J_SOURCE_INTEGRATION /
+SOURCE_CLOSED`; documentation-only local candidate, no source work started
+- **Exact base:** `develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`
+- **Dependency:** published `WB-NS-070H` descriptor-aware V3 command/property action, current React
+  layout/primitives exports and the reviewed `WB-NS-070J` center-origin visual-transform contract. Source
+  starts only after 070J is integrated and its public transform type is exact-reverified.
+- **Ownership:** `@workbench-kit/react` owns reusable cover geometry and pointer/keyboard interaction;
+  an integrating host owns media/property identity, the zoom value/control/range, whether crop editing is
+  available, fit-mode policy, copy, persistence and command composition
+- **Runtime boundary:** renderer/browser only; no Electron/native dependency
+
+#### Goal / user outcome
+
+An integrating host can expose an explicit crop-edit mode in which a user drags the visible media to
+reposition a `cover` crop at a host-supplied zoom, including inside a center-origin rotated frame, previews
+the result without mutating canonical state, and emits exactly one terminal normalized-focal interaction
+change on pointer completion. The same operation remains reachable by keyboard and screen reader without
+requiring a product-specific geometry helper or parallel history path.
+
+The packet is not a generic image editor. It supplies deterministic `cover` render/overflow projection at
+one explicit zoom, viewport-to-local pan projection for the reviewed center-origin transform, and an
+accessible controlled pan handle. It does not author or edit zoom. The host still decides whether a
+component is media, which properties store focal point/zoom, the allowed zoom range, how the image is
+rendered, and how returned values become existing property commands or one outer batch.
+
+#### Current evidence and gap
+
+Current React surfaces provide useful but non-equivalent pieces:
+
+- `WorkbenchMediaSlot` renders a media element with host-selectable `object-fit`, but its
+  `object-position` is fixed at center;
+- `WorkbenchMediaPreviewViewport` / `usePreviewViewport` own session-local scene navigation with
+  unbounded pixel pan and zoom. They intentionally do not expose controlled authored focal state or a
+  commit boundary;
+- `WorkbenchCanvasFrameHandle` emits pointer deltas but is a generic `div` drag surface with no keyboard
+  focal semantics, while `WorkbenchCanvasResizeHandle` is a native button specialized for resize;
+- existing authoring property actions can already commit host-declared properties, so this packet must
+  not add a second document, property schema, command or history mechanism.
+
+Reusing preview pan as persistence would conflate editor viewport state with authored media state.
+Keeping every host's cover overflow math local would duplicate generic interaction mechanics. The target
+therefore introduces one pure normalized projection and one controlled React handle while leaving all
+canonical values host-owned.
+
+#### Public pure projection
+
+Add public renderer-neutral numeric types and pure helpers under the existing React authoring/layout
+surface. `focalPoint` is the normalized source coordinate that the frame center attempts to show; it is
+not an overflow percentage or direct CSS `object-position` value.
+
+```ts
+export interface WorkbenchMediaSize {
+  readonly height: number;
+  readonly width: number;
+}
+
+export interface WorkbenchMediaFocalPoint {
+  /** Normalized source position from left to right, inclusive. */
+  readonly x: number;
+  /** Normalized source position from top to bottom, inclusive. */
+  readonly y: number;
+}
+
+export interface WorkbenchCoverMediaProjectionInput {
+  readonly focalPoint: WorkbenchMediaFocalPoint;
+  readonly frameSize: WorkbenchMediaSize;
+  readonly mediaSize: WorkbenchMediaSize;
+  /** Finite multiplier applied after base cover scale. Must be at least 1. */
+  readonly zoom: number;
+}
+
+export interface WorkbenchCoverMediaProjection {
+  readonly focalPoint: WorkbenchMediaFocalPoint;
+  readonly movableX: boolean;
+  readonly movableY: boolean;
+  /** Local frame-space offset from the frame's top-left corner. */
+  readonly offsetX: number;
+  readonly offsetY: number;
+  readonly overflowX: number;
+  readonly overflowY: number;
+  readonly renderedSize: WorkbenchMediaSize;
+  readonly scale: number;
+}
+
+export interface WorkbenchCoverFocalProjectionInput {
+  readonly focalPoint: WorkbenchMediaFocalPoint;
+  readonly frameSize: WorkbenchMediaSize;
+  readonly mediaSize: WorkbenchMediaSize;
+  /** Total viewport CSS-pixel media-pan delta from the gesture origin. */
+  readonly panDeltaX: number;
+  readonly panDeltaY: number;
+  readonly visualTransform?: WorkbenchCanvasCenterVisualTransform;
+  /** Viewport CSS pixels per local frame pixel. Defaults to 1. */
+  readonly viewportScale?: number;
+  readonly zoom: number;
+}
+
+export interface WorkbenchCoverFocalProjectionResult {
+  readonly changed: boolean;
+  readonly focalPoint: WorkbenchMediaFocalPoint;
+  readonly projection: WorkbenchCoverMediaProjection;
+}
+
+export function resolveWorkbenchCoverMediaProjection(
+  input: WorkbenchCoverMediaProjectionInput,
+): WorkbenchCoverMediaProjection | null;
+
+export function projectWorkbenchCoverFocalPoint(
+  input: WorkbenchCoverFocalProjectionInput,
+): WorkbenchCoverFocalProjectionResult | null;
+```
+
+The render helper applies source-focal `cover` geometry:
+
+```text
+baseScale = max(frame.width / media.width, frame.height / media.height)
+scale = baseScale * zoom
+rendered = media * scale
+overflow = max(0, rendered - frame)
+offsetX = clamp(frame.width / 2 - focal.x * rendered.width, -overflow.x, 0)
+offsetY = clamp(frame.height / 2 - focal.y * rendered.height, -overflow.y, 0)
+```
+
+For pan, inverse-rotate the total viewport delta by a finite center-origin `visualTransform`, divide by
+the finite positive `viewportScale`, add that local delta to the starting offset, clamp the offset to
+`[-overflow, 0]`, then solve `focal = (frame / 2 - offset) / rendered`. Positive pointer delta therefore
+moves the visible media right/down and the source focal point in the opposite direction. A non-moving
+axis retains its exact starting focal value. If a valid delta projects to the exact starting offset on an
+axis, including zero delta or an edge plateau, retain the exact starting focal component and report no
+change for that axis rather than canonicalizing it to the nearest centerable boundary.
+
+An axis is movable only when its overflow is greater than
+`32 * Number.EPSILON * max(1, frameAxis, renderedAxis)` in local CSS pixels. The helpers return `null` for
+non-finite/non-positive input or derived sizes/scales, zoom below `1`, non-finite delta/rotation,
+non-center origin, non-positive viewport scale or starting focal outside inclusive `[0, 1]`. Every derived
+inverse-rotated/scaled local delta, candidate offset, focal numerator and focal result must also remain
+finite before clamp; extreme finite deltas or a subnormal positive viewport scale that overflow return
+`null` rather than becoming a boundary pan. The helpers clamp only a valid projected offset/result and
+never silently repair invalid canonical input. Inputs are read-only and never retained. Equal frozen
+input produces deep-equal output.
+
+The returned offset/rendered size is the renderer oracle. A host may express it with an absolutely
+positioned media element, a correctly derived CSS position or an equivalent renderer, but must not pass
+the source focal percentage directly to `object-position`/`background-position` and call that equivalent.
+Workbench defines no media property IDs and serializes no document value.
+
+#### Controlled React handle
+
+Add a public `WorkbenchMediaCropPanHandle` through the current layout and root exports:
+
+```ts
+export type WorkbenchMediaCropPanCancelReason =
+  | 'controlled-change'
+  | 'disabled'
+  | 'escape'
+  | 'invalid-projection'
+  | 'lost-capture'
+  | 'pointer-cancel'
+  | 'unmount'
+  | 'zero-movement';
+
+export interface WorkbenchMediaCropPanChange {
+  readonly focalPoint: WorkbenchMediaFocalPoint;
+  readonly source: 'axis-range' | 'pan-surface';
+}
+
+export interface WorkbenchMediaCropPanHandleProps extends Omit<
+  ComponentPropsWithRef<'fieldset'>,
+  | 'children'
+  | 'onChange'
+  | 'onInput'
+  | 'onLostPointerCapture'
+  | 'onPointerCancel'
+  | 'onPointerDown'
+  | 'onPointerMove'
+  | 'onPointerUp'
+  | 'value'
+> {
+  readonly focalPoint: WorkbenchMediaFocalPoint;
+  readonly frameSize: WorkbenchMediaSize;
+  readonly formatValueText?: (axis: 'x' | 'y', effectivePosition: number) => string;
+  readonly horizontalLabel?: string;
+  readonly mediaSize: WorkbenchMediaSize;
+  readonly keyboardStep?: number;
+  readonly largeKeyboardStep?: number;
+  readonly label?: string;
+  readonly onFocalPointCancel?: (reason: WorkbenchMediaCropPanCancelReason) => void;
+  readonly onFocalPointChange: (change: WorkbenchMediaCropPanChange) => void;
+  readonly onFocalPointPreview?: (focalPoint: WorkbenchMediaFocalPoint) => void;
+  readonly rangeDescriptionId?: string;
+  readonly unavailableValueText?: (
+    axis: 'x' | 'y',
+    reason: 'invalid-projection' | 'no-overflow',
+  ) => string;
+  readonly viewportScale?: number;
+  readonly verticalLabel?: string;
+  readonly visualTransform?: WorkbenchCanvasCenterVisualTransform;
+  readonly zoom: number;
+}
+```
+
+The controlled component is a native `fieldset` mounted by a host only while crop editing is explicit.
+It contains one non-focusable pointer pan surface and two native `input type="range"` axis controls. The
+pointer surface may cover the frame and expose neutral grab chrome but is `aria-hidden`; the sliders are
+the keyboard/screen-reader path and may be visually compact while their focus ring remains visible on the
+crop frame. The default legend is `Reposition media crop`; default axis labels are `Horizontal crop
+position` and `Vertical crop position`. The inherited fieldset `aria-describedby` remains the complete
+IDREF list for the fieldset only. `rangeDescriptionId` is the complete IDREF list applied to both child
+ranges only; the component does not merge or infer IDs between the two props. A host that wants the same
+help at both levels passes the same IDs explicitly. Each slider exposes current effective pan percentage
+through native value semantics and `aria-valuetext`; `formatValueText` lets the host localize it, while the
+fallback is the deterministic rounded integer string `${Math.round(position * 100)}%`. Standard
+`disabled`, focus, data and style props remain available on the fieldset; a no-overflow axis disables only
+its range while both collapsed axes disable the group.
+
+Effective component validity is exactly the pure projection validity across focal/frame/media/zoom/
+visual-transform/viewport-scale and every derived finite value. Invalid initial props disable the
+fieldset, pan surface and ranges and emit callback `0`. Do not pass an invalid canonical focal into a
+native range for browser clamping. An invalid projection or a valid tolerance-collapsed/no-overflow axis
+renders the disabled range at finite presentation value `0.5`; this value is presentation-only and never
+re-enters projection or a callback. Its `aria-valuetext` comes from `unavailableValueText(axis, reason)` or
+falls back to `Crop position unavailable` for `invalid-projection` and `No horizontal crop adjustment
+available` / `No vertical crop adjustment available` for `no-overflow`. Both text callbacks are runtime
+fail-safe: a throw, non-string or trimmed-empty result uses the matching deterministic fallback and never
+breaks render. Active ranges use `formatValueText`; unavailable ranges never call it. A valid active
+gesture becoming invalid cancels once as
+`invalid-projection`, restores its starting preview and emits no terminal change.
+
+Pointer behavior:
+
+1. only a primary pointer on the pan surface starts a drag. The surface uses `touch-action: none` only
+   while the explicit handle is mounted, so touch pan reaches the same Pointer Events lifecycle. Capture the exact pointer ID, starting focal
+   point, frame, media size, zoom, transform and viewport scale;
+2. pointer move calls the pure helper with total delta from the origin and emits preview only when the
+   projected point changes;
+3. pointer preview is ephemeral and host-owned—no command, persistence or document callback occurs. The
+   host renders it as separate interaction-preview state and does not feed it back through controlled
+   `focalPoint`; the component also keeps a range drag's transient thumb/effective value internally;
+4. pointer up reprojects from its final client coordinates and emits one terminal change exactly once
+   when changed; zero movement/collapsed axes cancel;
+5. Escape, `pointercancel`, lost capture and unmount cancel exactly once and allow the host to restore the
+   starting preview; a stale pointer cannot change a later gesture. Controlled focal/frame/media/zoom/
+   transform/scale changes, invalid geometry or effective disablement during capture also cancel with
+   their public reason instead of silently rebasing. The pan surface suppresses native image drag and text
+   selection; `touch-action: none` does not apply to either native axis range.
+
+Native range pointer behavior has the same terminal boundary. Pointer down snapshots the exact starting
+focal, effective range position and all geometry inputs. Native `input` events update preview only.
+Pointer up derives the final source focal and emits one terminal change; a trailing native `change` is
+deduplicated. Escape, pointer cancel, lost capture, controlled scalar change, disablement and unmount
+restore the starting preview and cancel once. Blur without value change is a no-op. No range drag emits a
+canonical callback per input frame.
+
+Keyboard/AT behavior controls effective overflow position rather than pretending a two-axis drag surface
+is one slider. Each axis maps native range `[0, 1]` to local offset `[0, -overflow]`, then solves the same
+source focal equation. Arrow keys follow native slider direction; Shift uses the large step. This mapping
+has no invisible edge plateau even when a canonical source focal lies outside the currently centerable
+range. Each range interaction freezes its starting effective position and exact source focal. If the range
+returns to that effective position, it restores the exact starting focal and emits no terminal change;
+it must not replace an edge-plateau focal with the nearest centerable boundary. `keyboardStep` defaults to
+`0.01`, `largeKeyboardStep` to `0.1`; both are finite positive normalized pan fractions no larger than `1`.
+Each accepted keyboard step emits one terminal interaction change, while projected no-op input emits none.
+An explicitly invalid step fails closed for that axis instead of being repaired. The host supplies
+localized help/copy and may choose different valid steps.
+
+Focus on an axis range starts one keyboard/AT provenance tenure at its exact source focal and effective
+position. An exact controlled echo of the component's last axis-range terminal change updates the visible
+value but does not replace that tenure origin; a different controlled scalar change cancels it. Returning
+through later Arrow or assistive-technology range input to the tenure's starting effective position emits
+the exact original edge-plateau focal, not the nearest centerable focal. Blur, Escape, disablement,
+unmount or host crop-session completion ends the tenure. The change `source: 'axis-range'` includes
+keyboard, assistive-technology and pointer input on a native range; `'pan-surface'` is reserved for the
+separate pointer/touch drag surface.
+
+#### Host composition and canonical state
+
+The handle is controlled: changing a scalar component of `focalPoint`, `frameSize`, `mediaSize`, `zoom`,
+`visualTransform` or `viewportScale` between gestures becomes the next gesture baseline; new object
+identity with equal scalar values is not a change. During an active pointer gesture, any unequal scalar
+change cancels the stale gesture rather than rebasing it invisibly. A valid exact-aspect/no-overflow
+projection disables that axis range even when the caller omitted `disabled`; any invalid projection or
+both collapsed axes disable the fieldset. Host description text remains available from an adjacent
+focusable crop-mode control.
+
+`onFocalPointChange` is an interaction boundary, not a canonical document or persistence acknowledgement.
+An integrating host may use it to update a longer crop-session draft and commit later, or map it through
+existing authoring property actions immediately. A single structured property produces one command; two
+host scalar properties use one existing outer batch. Only an admitted state-changing command advances
+document revision/history once; rejected/no-op results advance neither. Unsupported fit modes, missing
+intrinsic size, read-only/locked media and unavailable assets keep the handle absent or disabled.
+Workbench does not infer a focal point from asset metadata, mutate a host document, own a captured source
+revision/CAS or report durable save; the host rejects a stale draft against its own canonical session.
+
+`usePreviewViewport` remains editor-session navigation. It is neither initialized from nor written back
+to the authored focal point, and its Reset action cannot reset media crop. Hosts may visually compose a
+preview viewport outside the crop frame, but the two state owners remain separate.
+
+#### Ordered implementation tasks
+
+1. Add the frozen numeric types, `resolveWorkbenchCoverMediaProjection` and
+   `projectWorkbenchCoverFocalPoint` beside existing layout/authoring projection helpers with no document
+   or DOM dependency. Reuse the integrated 070J center-transform type rather than cloning it.
+2. Add focused geometry tests for wide/tall/exact aspect ratios, zoomed cover, source-focal offset,
+   rotation + viewport scale, both clamp boundaries, reversed drag, fractional/extreme sizes, derived
+   non-finite scale/delta/offset/focal, subnormal viewport scale and the exact scale-relative
+   near-zero-overflow rule.
+3. Implement `WorkbenchMediaCropPanHandle` as a controlled native fieldset with a non-focusable pointer
+   pan surface, two semantic axis ranges, exact pointer capture and preview/change/cancel lifecycle.
+4. Export only through the current React layout/root surfaces; add a packed consumer type fixture without
+   a new package or private deep import.
+5. Add a neutral Storybook fixture that composes deterministic inline wide/tall media, zoom and a rotated
+   frame, applies the returned render projection locally and records interaction changes without a
+   document.
+6. Run focused unit/React tests, package typecheck, public-export/commit-safety gates, packed consumer and
+   the required real Chromium Storybook play before freezing one candidate for review.
+
+#### Verification
+
+Focused unit/React minimum:
+
+- invalid geometry, zoom/transform/scale and invalid starting focal values return `null` without throwing
+  or mutation; finite positive input that derives non-finite scale/rendered/overflow/local delta/offset/
+  focal also fails closed, including rotated near-maximum deltas and subnormal viewport scale;
+- landscape media in a portrait frame changes only X when Y has no overflow, and the inverse case changes
+  only Y; exact aspect at zoom 1 changes neither axis while zoom greater than 1 makes both axes movable;
+- positive pointer movement maps to the inverse focal direction, clamps at `[0, 1]`, and reversing to the
+  origin reproduces the exact starting point; zero/effectively-clamped delta from a source focal inside an
+  edge plateau preserves that exact focal and reports unchanged; non-zero center rotation and viewport
+  scale preserve the pointer-follows-media invariant in local frame coordinates;
+- preview never calls terminal change; pointer up reprojects its final coordinate and changes once; zero
+  movement, Escape, pointer cancel, lost capture, controlled focal/frame/media/zoom/transform/scale change,
+  disabled/invalid transition and unmount cannot leak a change, and each path emits one cancel at most;
+- invalid initial focal/frame/media/zoom/transform/scale disables every interaction with callback `0`,
+  gives both ranges presentation value `0.5`, exposes the supplied or built-in unavailable value text and
+  never lets native range clamping become preview/state; a valid no-overflow axis uses the same inert
+  value with its distinct axis fallback;
+- native range pointer input emits preview only, pointer completion emits one deduplicated terminal change,
+  and cancel restores its exact starting focal; effective range origin → move → origin preserves an
+  edge-plateau source focal rather than canonicalizing it; keyboard/AT move → controlled self-echo →
+  reverse during one focus tenure also restores the exact origin focal;
+- disabled/non-primary/stale pointer input is inert; native axis-range normal/Shift steps, boundaries/
+  edge-plateau escape, focus, described instructions and changing percentage/value text are deterministic;
+  pointer still follows inverse-rotated viewport direction; equal-value prop object replacement does not
+  cancel while one unequal scalar does;
+- inherited `aria-describedby` reaches only the fieldset and `rangeDescriptionId` reaches only both native
+  ranges with no implicit merge; active default value text has deterministic rounding and a supplied
+  formatter receives exact axis/effective position without being retained; throw/non-string/blank text
+  callbacks deterministically fall back and cannot break render;
+- render offset at center/corners matches source-focal equations and is not treated as direct CSS
+  `object-position`; each axis uses its exact tolerance formula and finite/derived-overflow classification
+  remains stable across wide numeric cross-products;
+- no test needs filesystem, network, image decoding, Electron or a product descriptor.
+
+Real Chromium Storybook play is required because native pointer capture, computed media position, focus
+and keyboard behavior are material. Use deterministic inline landscape and portrait SVG fixtures and
+prove pointer preview → one terminal change, cancel restoration, only-overflow-axis movement, both native
+axis ranges and Shift steps, zoomed exact-aspect movement, rotated + viewport-scaled pointer direction,
+source-focal render offset, 200% text/high-contrast reachability and zero console/page errors. Include a
+`pointerType=touch` pan preview → terminal change and touch cancel/lost-capture no-change case; the pan
+surface suppresses browser gesture/image/text drag while native ranges retain browser touch behavior.
+Electron is omitted because there is no native host boundary.
+
+At the frozen candidate run changed-package typecheck/lint, focused tests, `pnpm check:public-exports`,
+packed consumer, `pnpm check:commit-safety`, `pnpm validate:static` and `git diff --check`. Run the
+repository browser lane or an exact required-tag Storybook subset that executes the new play in real
+Chromium; unit/typecheck/build alone cannot declare UI acceptance.
+
+#### Performance and compatibility
+
+Projection is `O(1)` with no allocation proportional to document/media size. The handle does not install a
+`ResizeObserver`, decode media, walk the DOM or dispatch canonical updates on pointer move. A host may
+measure intrinsic/frame size using its existing media renderer and supplies those finite values, its
+current zoom and any supported center rotation/viewport scale.
+
+Existing `WorkbenchMediaSlot`, `WorkbenchMediaPreviewViewport`, `usePreviewViewport`, Canvas handles and
+their exports remain source- and behavior-compatible. Do not change the default centered position of
+current media consumers, make preview pan controlled, or add focal props to broad display primitives in
+this packet. A host adopts the new handle explicitly.
+
+#### Non-goals / reject criteria
+
+- no image URL/asset loader, byte crop/export, image decode, upload, AI subject detection or face focus;
+- no zoom control/gesture/property/range policy, rotate editing, resize/aspect, multi-selection, non-center
+  transform origin, skew, alignment guide or full image editor; a host-supplied zoom multiplier and
+  center-origin rotation/viewport scale only make cover render/pan projection correct;
+- no built-in media/focal property IDs, component descriptor, document schema, persistence, command,
+  transaction or history;
+- no product-specific copy, defaults, fit-mode policy, sample, fixture, path or identifier;
+- no reuse of `usePreviewViewport` pan as authored state and no direct CSS implementation embedded in the
+  pure projection;
+- no canonical dispatch during pointer preview and no rebase after an observed controlled-value change;
+  canonical source-revision conflict detection remains host-owned;
+- no Electron/native API, release, publish or consuming-host migration in this source packet.
+
+A producer-distinct readiness review must reject ambiguous source-focal meaning, direct CSS percentage
+substitution, ambiguous coordinate space/tolerance, silent repair of invalid input, per-move canonical
+commits, missing public cancel/focus behavior, a second media/property document, a forced default-position
+change in existing primitives, unbounded API growth or product-specific content.
+
+Producer-distinct final review of this exact documentation candidate returned
+`PASS / P0 none / P1 none / P2 none`. This promotes only the bounded packet design. Source remains closed;
+no implementation, integration, Chromium acceptance, package release or consumer adoption has started.
+Any future source lane must first integrate/revalidate `WB-NS-070J` on its exact base and receive separate
+source authority.
+
+#### Done criteria
+
+The packet is done when one public render helper and one pan helper project valid zoom-aware `cover`
+geometry into deterministic source focal/offset values across center rotation and viewport scale; one
+controlled native fieldset exposes pointer preview/single terminal change/public cancel plus two semantic
+axis ranges;
+editor viewport pan remains separate; existing media/canvas consumers remain compatible; packed/public
+exports and real Chromium interaction pass; and an integrating host can stage or route one returned point
+through its existing property command/history without duplicating generic crop geometry.
 
 ### Acceptance direction
 
