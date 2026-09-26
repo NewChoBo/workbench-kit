@@ -7,3 +7,4 @@ storybook-static/
 **/typecheck-exact-optional/.tmp-types/
 *.tsbuildinfo
 pnpm-lock.yaml
+.playwright-cli/
