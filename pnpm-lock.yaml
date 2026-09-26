@@ -261,7 +261,11 @@ importers:
         specifier: ^8.5.0
         version: 8.5.1(@swc/core@1.15.46)(postcss@8.5.28)(typescript@5.9.3)
 
-  packages/logging: {}
+  packages/logging:
+    devDependencies:
+      tsup:
+        specifier: ^8.5.0
+        version: 8.5.1(@swc/core@1.15.46)(postcss@8.5.28)(typescript@5.9.3)
 
   packages/monaco:
     dependencies:
