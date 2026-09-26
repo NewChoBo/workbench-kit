@@ -5,6 +5,7 @@ import {
   type WorkbenchBootstrapTaskDefinition,
 } from '@workbench-kit/react/workbench/bootstrap';
 import type { VirtualWorkspaceInitialState } from '@workbench-kit/workspace';
+import { useEditorService } from '../editor/use-editor.js';
 import { useWorkbench } from '../shell/provider.js';
 
 export interface WorkbenchStartupGateProps {
@@ -18,6 +19,7 @@ export interface WorkbenchStartupGateProps {
     ((bootstrap: ReturnType<typeof useWorkbenchBootstrap>) => ReactNode) | undefined;
   subtitle?: string | undefined;
   tasks?: readonly WorkbenchBootstrapTaskDefinition[] | undefined;
+  /** Initial workspace data for a clean session; hosts should omit startup openPaths when restoring a saved session, including one with no open tabs. */
   workspaceInit?: VirtualWorkspaceInitialState | undefined;
 }
 
@@ -56,6 +58,7 @@ export function WorkbenchStartupGate({
   workspaceInit,
 }: WorkbenchStartupGateProps) {
   const { executeCommand, missingExtensionIds, waitForExtensionStartup } = useWorkbench();
+  const editorService = useEditorService();
   const bootstrap = useWorkbenchBootstrap();
   const startedRef = useRef(false);
   const workspaceDetail = countWorkspaceEntries(workspaceInit);
@@ -84,6 +87,12 @@ export function WorkbenchStartupGate({
         label: 'Preparing workspace',
         run: async () => {
           await executeCommand('workspace.init', workspaceInit);
+          const hasRestoredEditors = editorService
+            .getState()
+            .groups.some((group) => group.tabs.length > 0);
+          if (!hasRestoredEditors && (workspaceInit.openPaths?.length ?? 0) > 0) {
+            await executeCommand('workspace.open', { paths: workspaceInit.openPaths });
+          }
         },
       });
     }
@@ -91,6 +100,7 @@ export function WorkbenchStartupGate({
     return resolvedTasks;
   }, [
     executeCommand,
+    editorService,
     missingExtensionIds.length,
     tasks,
     waitForExtensionStartup,

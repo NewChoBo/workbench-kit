@@ -769,6 +769,7 @@ export const TesterWorkbench: Story = {
     await expect(canvas.getByLabelText('Workspace Explorer')).toBeVisible();
     await expect(canvas.getByLabelText('Status bar')).toHaveTextContent('Workbench Kit');
     await expect(canvas.getByRole('button', { name: 'Open example' })).toBeVisible();
+    await expectEditorTabVisible(canvas, 'example.jdw.json');
 
     expectTesterActivityLabels(canvas);
   },

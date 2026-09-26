@@ -1,8 +1,12 @@
 import { StrictMode } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, fireEvent, userEvent, waitFor, within } from 'storybook/test';
+import type { EditorState } from '@workbench-kit/workbench-core';
 import { formatWorkspaceResourceUri } from '@workbench-kit/workspace';
-import { DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY } from '@workbench-kit/shell-react';
+import {
+  DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+  writePersistedEditorState,
+} from '@workbench-kit/shell-react';
 import {
   initialWorkspace,
   SAMPLE_APP_PATH,
@@ -27,6 +31,18 @@ const meta = {
   beforeEach: () => {
     resetSampleHostStorage('none');
     window.localStorage.removeItem(DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY);
+    const emptyEditorState: EditorState = {
+      activeGroupId: 'workbench.editor.group.main',
+      groups: [
+        {
+          activeTabId: undefined,
+          id: 'workbench.editor.group.main',
+          tabs: [],
+        },
+      ],
+      layout: { groupId: 'workbench.editor.group.main', type: 'group' },
+    };
+    writePersistedEditorState(emptyEditorState);
   },
   render: (args, { id }) => (
     <StrictMode key={id}>

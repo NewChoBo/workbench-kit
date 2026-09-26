@@ -39,6 +39,7 @@ import {
   DEFAULT_WORKBENCH_KEYBINDING_STORAGE_KEY,
   WorkbenchProvider as BareWorkbenchProvider,
   WorkbenchShell,
+  WorkbenchStartupGate,
   useEditorService,
   useWorkbench,
   type WorkbenchContextValue,
@@ -2683,6 +2684,151 @@ describe('WorkbenchProvider', () => {
       root.unmount();
     });
     container.remove();
+  });
+
+  it('opens startup workspace paths only when no editor session was restored', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const workspaceInit = {
+      files: [
+        { content: 'startup', path: 'src/start.ts' },
+        { content: 'restored', path: 'src/restored.ts' },
+      ],
+      folders: ['src'],
+      openPaths: ['src/start.ts'],
+    } satisfies VirtualWorkspaceInitialState;
+    const restoredEditorState: EditorState = {
+      activeGroupId: 'workbench.editor.group.main',
+      groups: [
+        {
+          activeTabId: 'restored-tab',
+          id: 'workbench.editor.group.main',
+          tabs: [
+            {
+              dirty: false,
+              editorId: 'workbench-kit.builtin.editor.text',
+              id: 'restored-tab',
+              pinned: true,
+              preview: false,
+              resourceUri: 'workspace://file/src/restored.ts',
+              title: 'restored.ts',
+            },
+          ],
+        },
+      ],
+      layout: { groupId: 'workbench.editor.group.main', type: 'group' },
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          initialEditorState={restoredEditorState}
+          persistEditorState={false}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <WorkbenchStartupGate workspaceInit={workspaceInit}>
+            <TestWorkbenchShell />
+          </WorkbenchStartupGate>
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    const tabLabels = Array.from(container.querySelectorAll('[role="tab"]')).map((tab) =>
+      tab.textContent?.trim(),
+    );
+    expect(tabLabels).toContain('restored.ts');
+    expect(tabLabels).not.toContain('start.ts');
+    expect(container.textContent).toContain('src');
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('opens the configured startup file and safely skips a missing path', async () => {
+    const workspaceHostPort = createWorkbenchWorkspaceHostPort();
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          persistEditorState={false}
+          workspaceHostPort={workspaceHostPort}
+        >
+          <WorkbenchStartupGate
+            workspaceInit={{
+              files: [{ content: 'startup file', path: 'jdw/showcase/example.jdw.json' }],
+              openPaths: ['jdw/showcase/example.jdw.json'],
+            }}
+          >
+            <TestWorkbenchShell />
+          </WorkbenchStartupGate>
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    const startupTab = container.querySelector('[role="tab"]');
+    expect(startupTab?.textContent).toContain('example.jdw.json');
+    expect(startupTab?.getAttribute('title')).toBe(
+      'workspace://file/jdw/showcase/example.jdw.json',
+    );
+    expect(workspaceHostPort.service.getState().files.map((file) => file.path)).toContain(
+      'jdw/showcase/example.jdw.json',
+    );
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+
+    const missingContainer = document.createElement('div');
+    document.body.append(missingContainer);
+    const missingRoot = createRoot(missingContainer);
+    await act(async () => {
+      missingRoot.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.editor', 'workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          persistEditorState={false}
+          workspaceHostPort={createWorkbenchWorkspaceHostPort()}
+        >
+          <WorkbenchStartupGate
+            workspaceInit={{
+              files: [{ content: 'current file', path: 'README.md' }],
+              openPaths: ['missing/startup.ts'],
+            }}
+          >
+            <TestWorkbenchShell />
+          </WorkbenchStartupGate>
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    expect(missingContainer.querySelector('[role="tab"]')).toBeNull();
+    expect(missingContainer.textContent).toContain('No editors open');
+
+    await act(async () => {
+      missingRoot.unmount();
+    });
+    missingContainer.remove();
   });
 
   it('reveals nested workspace paths through the explorer reveal command', async () => {

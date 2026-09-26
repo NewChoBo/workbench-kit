@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { SampleHostBackendClient } from '@workbench-kit/contracts';
-import { Badge, IconButton } from '@workbench-kit/react/primitives';
+import { Badge, Button, IconButton } from '@workbench-kit/react/primitives';
 import {
   resolveActiveThemePreset,
   useResolvedWorkbenchTheme,
@@ -15,10 +15,12 @@ import {
   BUILTIN_WORKBENCH_EXTENSIONS,
   createWorkspaceResourceStatusItems,
   DEFAULT_WORKBENCH_APPEARANCE_STORAGE_KEY,
+  DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   DEFAULT_WORKBENCH_LAYOUT_STORAGE_KEY,
   EditorArea,
   isWorkspaceResourceService,
   mergeWorkbenchStatusSections,
+  readPersistedEditorState,
   SAMPLE_FIELD_REMAP_VIEW_HOST_FACTORY,
   SAMPLE_JDW_LAB_VIEW_HOST_FACTORY,
   usePersistedWorkbenchAppearance,
@@ -146,6 +148,14 @@ function SampleAuthenticatedWorkbench({
     () => createSampleInstalledExtensionsStorageKey(accountId),
     [accountId],
   );
+  const startupWorkspace = useMemo(() => {
+    const persistedEditorState = readPersistedEditorState(
+      DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
+    );
+    return persistedEditorState !== undefined
+      ? { ...initialWorkspace, openPaths: [] }
+      : initialWorkspace;
+  }, []);
 
   return (
     <WorkbenchProvider
@@ -167,7 +177,7 @@ function SampleAuthenticatedWorkbench({
       viewHostFactories={SAMPLE_VIEW_HOST_FACTORIES}
       workspaceHostPort={workspaceHostPort}
     >
-      <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={initialWorkspace}>
+      <WorkbenchStartupGate heading="Workbench Sample" workspaceInit={startupWorkspace}>
         {devtools ? (
           <WorkbenchDevtoolsShell>
             <SampleWorkbenchHost
@@ -208,6 +218,14 @@ function SampleWorkbenchHost({
   const workspaceState = useWorkspaceResourceState(
     isWorkspaceResourceService(workspaceHostPort?.service) ? workspaceHostPort.service : undefined,
   );
+  const emptyStateRecoveryPath =
+    workspaceState?.files.find((file) => file.path === SAMPLE_EXAMPLE_JDW_PATH)?.path ??
+    workspaceState?.files.find((file) => file.path === SAMPLE_README_PATH)?.path;
+  const emptyStateRecoveryLabel = emptyStateRecoveryPath
+    ? emptyStateRecoveryPath === SAMPLE_EXAMPLE_JDW_PATH
+      ? 'Open the sample file to get started.'
+      : 'Open README to get started.'
+    : 'Create a file from Explorer to get started.';
   const liveFileCount = workspaceState?.files.length ?? 0;
   const liveFolderCount = workspaceState?.folders.length ?? 0;
   const [layout, setLayout] = useState(() => layoutService.getState());
@@ -358,7 +376,26 @@ function SampleWorkbenchHost({
       darkPreset={appearance.darkPreset}
       editorArea={
         <SampleEditorFrame>
-          <EditorArea theme={editorTheme} />
+          <EditorArea
+            emptyState={
+              <section className="workbench-editor-area__empty">
+                <p>No editors open</p>
+                <p>{emptyStateRecoveryLabel}</p>
+                {emptyStateRecoveryPath ? (
+                  <Button
+                    onClick={() => {
+                      void executeCommand('workspace.open', { path: emptyStateRecoveryPath });
+                    }}
+                  >
+                    {emptyStateRecoveryPath === SAMPLE_EXAMPLE_JDW_PATH
+                      ? 'Open example'
+                      : 'Open README'}
+                  </Button>
+                ) : null}
+              </section>
+            }
+            theme={editorTheme}
+          />
         </SampleEditorFrame>
       }
       helpContent={<SampleHelpContent />}
