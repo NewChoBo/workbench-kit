@@ -19,6 +19,10 @@ are not kept as active documents. Their conclusions are folded into
 | [**JDW Editor UX Plan**](./jdw-editor-ux-plan.md)                   | **JDW editor policy:** landed authoring UX, remaining zoom/pan decision, JDW persistence boundary.        |
 | [**Workbench Change Guidelines**](./workbench-change-guidelines.md) | **Implementation guardrails:** VS Code/Theia baselines, existing-logic-first workflow, review checklist.  |
 
+Current proposal: [Workbench UI/UX improvement](./ux-improvement-proposal.md)
+records observed Sample behavior and ordered acceptance criteria. It does not
+replace the status and roadmap in [Current State](./current-state.md).
+
 ## Consumer integration
 
 | Document                                                              | Purpose                                                                                        |
