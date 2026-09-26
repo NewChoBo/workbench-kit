@@ -31,6 +31,9 @@ import {
   useResolvedWorkbenchTheme,
   type WorkbenchCommandDescriptor,
   type WorkbenchCommandRunContext,
+  WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID,
+  WORKBENCH_TOGGLE_PANEL_COMMAND_ID,
+  WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
 } from '@workbench-kit/react/workbench';
 
 import { BUILTIN_COMMANDS_VIEW_CONTAINER_ID } from '../commands/view-data.js';
@@ -94,6 +97,7 @@ import {
   renderDefaultPrimarySidebar,
 } from './view-host.js';
 import { WorkbenchShellTitleBarLayoutControls } from './titlebar-layout-controls.js';
+import { createWorkbenchShellLayoutActions } from './layout-actions.js';
 import { WorkbenchProfileModal, type WorkbenchProfileInput } from '../workbench/profile-modal.js';
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
 import {
@@ -299,6 +303,10 @@ export function WorkbenchShell({
     [showSettingsModal],
   );
   const layout = layoutService.getState();
+  const layoutActions = useMemo(
+    () => createWorkbenchShellLayoutActions(layoutService),
+    [layoutService],
+  );
   const resolvedStatusSections = useMemo(
     () =>
       statusSections ??
@@ -498,6 +506,14 @@ export function WorkbenchShell({
     setHelpOpen(false);
     setProfileOpen(true);
   }, []);
+  const executeLayoutCommand = useCallback(
+    (commandId: string) => {
+      void executeCommand(commandId).catch(() => {
+        console.error(`Workbench layout command failed: ${commandId}`);
+      });
+    },
+    [executeCommand],
+  );
   const resolvedTitleBar =
     titleBar === undefined ? (
       <WorkbenchShellTitleBar
@@ -513,13 +529,28 @@ export function WorkbenchShell({
         titleMeta={titleMeta}
         onHelpOpen={showHelpModal}
         onToggleAuxiliarySidebar={() => {
-          layoutService.setAuxiliaryBarVisible(!layout.auxiliaryBar.visible);
+          if (commandHost === false) {
+            layoutActions.toggleAuxiliarySidebar();
+            return;
+          }
+
+          executeLayoutCommand(WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID);
         }}
         onTogglePanel={() => {
-          layoutService.setPanelVisible(!layout.panel.visible);
+          if (commandHost === false) {
+            layoutActions.togglePanel();
+            return;
+          }
+
+          executeLayoutCommand(WORKBENCH_TOGGLE_PANEL_COMMAND_ID);
         }}
         onTogglePrimarySidebar={() => {
-          layoutService.setSideBarVisible(!layout.sideBar.visible);
+          if (commandHost === false) {
+            layoutActions.togglePrimarySidebar();
+            return;
+          }
+
+          executeLayoutCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID);
         }}
       />
     ) : (
@@ -708,7 +739,7 @@ export function WorkbenchShell({
             return;
           }
 
-          layoutService.focusSideBarViewContainer(item.id);
+          layoutActions.focusActivity(item.id);
         },
         onItemsReorder: (itemIds) => {
           const preservedItemIds =

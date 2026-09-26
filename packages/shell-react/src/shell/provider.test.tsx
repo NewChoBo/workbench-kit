@@ -174,6 +174,8 @@ function CaptureEditorStateProbe({ onState }: { onState: (state: EditorState) =>
 }
 
 const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrimarySidebar';
+const WORKBENCH_TOGGLE_PANEL_COMMAND_ID = 'workbench.togglePanel';
+const WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID = 'workbench.toggleAuxiliarySidebar';
 
 const testGlobal = globalThis as typeof globalThis & {
   IS_REACT_ACT_ENVIRONMENT?: boolean;
@@ -437,6 +439,22 @@ function LayoutServiceProbe({ onReady }: { onReady: (service: LayoutService) => 
   useEffect(() => {
     onReady(layoutService);
   }, [layoutService, onReady]);
+
+  return null;
+}
+
+function ShellLayoutServicesProbe({
+  onCapture,
+}: {
+  onCapture: (
+    services: Pick<WorkbenchContextValue, 'commands' | 'executeCommand' | 'layoutService'>,
+  ) => void;
+}) {
+  const { commands, executeCommand, layoutService } = useWorkbench();
+
+  useEffect(() => {
+    onCapture({ commands, executeCommand, layoutService });
+  }, [commands, executeCommand, layoutService, onCapture]);
 
   return null;
 }
@@ -2371,9 +2389,276 @@ describe('WorkbenchProvider', () => {
     ).toBe(false);
 
     await act(async () => {
+      primaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      primaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      panelToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      panelToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      secondaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      secondaryToggle?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    });
+    await flushReactEffects();
+
+    expect(primaryToggle?.getAttribute('aria-pressed')).toBe('false');
+    expect(panelToggle?.getAttribute('aria-pressed')).toBe('true');
+    expect(secondaryToggle?.getAttribute('aria-pressed')).toBe('true');
+
+    await act(async () => {
       root.unmount();
     });
     container.remove();
+  });
+
+  it('routes default titlebar layout controls through registered shell commands', async () => {
+    let services: Pick<WorkbenchContextValue, 'commands' | 'layoutService'> | undefined;
+    const interceptedPaletteCommands: string[] = [];
+    let claimPanelPaletteRun = false;
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          extensionsConfig={{
+            enabled: ['workbench-kit.builtin.explorer'],
+            recommendations: [],
+          }}
+          initialKeybindingOverrides={[
+            { command: WORKBENCH_TOGGLE_PANEL_COMMAND_ID, key: 'ctrl+alt+p' },
+            { command: WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID, key: 'ctrl+alt+a' },
+          ]}
+          initialLayout={parseWorkbenchLayoutConfig({
+            sideBar: { activeViewContainer: 'explorer', visible: true },
+          })}
+          persistEditorState={false}
+          persistKeybindingOverrides={false}
+          persistLayout={false}
+          persistLocalPreferences={false}
+        >
+          <WorkbenchShell
+            commandHost={{
+              onRunCommand: (command) => {
+                interceptedPaletteCommands.push(command.id);
+                return command.id === WORKBENCH_TOGGLE_PANEL_COMMAND_ID && claimPanelPaletteRun;
+              },
+            }}
+            editorArea={<main>Editor Area</main>}
+          />
+          <ShellLayoutServicesProbe
+            onCapture={(capturedServices) => {
+              services = capturedServices;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    const captureHandler = (commandId: string) => {
+      const command = services?.commands.getCommand(commandId);
+      if (!command?.handler) throw new Error(`Expected registered handler: ${commandId}`);
+      const handler = vi.fn(command.handler);
+      command.handler = handler;
+      return handler;
+    };
+    const primaryHandler = captureHandler(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID);
+    const panelHandler = captureHandler(WORKBENCH_TOGGLE_PANEL_COMMAND_ID);
+    const auxiliaryHandler = captureHandler(WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID);
+
+    const click = async (button: HTMLButtonElement | null) => {
+      await act(async () => {
+        button?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+      await flushReactEffects();
+    };
+    const runPaletteCommand = async (query: string) => {
+      await act(async () => {
+        window.dispatchEvent(
+          new KeyboardEvent('keydown', {
+            bubbles: true,
+            cancelable: true,
+            ctrlKey: true,
+            key: 'P',
+            shiftKey: true,
+          }),
+        );
+      });
+      await flushReactEffects();
+
+      const search = container.querySelector<HTMLInputElement>(
+        'input[placeholder="Search commands"]',
+      );
+      expect(search).not.toBeNull();
+      await act(async () => {
+        setInputValue(search, `>${query}`);
+      });
+      expect(container.querySelector('[role="dialog"]')?.textContent).toContain(query);
+      await act(async () => {
+        search?.dispatchEvent(
+          new KeyboardEvent('keydown', { bubbles: true, cancelable: true, key: 'Enter' }),
+        );
+      });
+      await flushReactEffects();
+    };
+
+    const explorerActivity = container.querySelector<HTMLButtonElement>(
+      'button[aria-label="Explorer"]',
+    );
+    await click(explorerActivity);
+    expect(services?.layoutService.getState().sideBar.visible).toBe(false);
+    expect(primaryHandler).not.toHaveBeenCalled();
+    await click(explorerActivity);
+    expect(services?.layoutService.getState().sideBar.visible).toBe(true);
+
+    await click(
+      container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Show Panel"], button[aria-label="Hide Panel"]',
+      ),
+    );
+    expect(panelHandler).toHaveBeenCalledOnce();
+    expect(services?.layoutService.getState().panel.visible).toBe(true);
+    expect(interceptedPaletteCommands).toEqual([]);
+
+    await runPaletteCommand('Hide Panel');
+    expect(services?.layoutService.getState().panel.visible).toBe(false);
+    expect(interceptedPaletteCommands).toContain(WORKBENCH_TOGGLE_PANEL_COMMAND_ID);
+
+    claimPanelPaletteRun = true;
+    await runPaletteCommand('Show Panel');
+    expect(services?.layoutService.getState().panel.visible).toBe(false);
+    await click(container.querySelector<HTMLButtonElement>('button[aria-label="Show Panel"]'));
+    expect(services?.layoutService.getState().panel.visible).toBe(true);
+    expect(panelHandler).toHaveBeenCalledTimes(3);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          altKey: true,
+          key: 'p',
+        }),
+      );
+    });
+    await flushReactEffects();
+    expect(services?.layoutService.getState().panel.visible).toBe(false);
+
+    await click(
+      container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Show Secondary Side Bar"], button[aria-label="Hide Secondary Side Bar"]',
+      ),
+    );
+    expect(auxiliaryHandler).toHaveBeenCalledOnce();
+    expect(services?.layoutService.getState().auxiliaryBar.visible).toBe(true);
+    expect(interceptedPaletteCommands).not.toContain(WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID);
+
+    await runPaletteCommand('Hide Secondary Side Bar');
+    expect(services?.layoutService.getState().auxiliaryBar.visible).toBe(false);
+    expect(interceptedPaletteCommands).toContain(WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID);
+
+    await act(async () => {
+      window.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          ctrlKey: true,
+          altKey: true,
+          key: 'a',
+        }),
+      );
+    });
+    await flushReactEffects();
+    expect(services?.layoutService.getState().auxiliaryBar.visible).toBe(true);
+
+    await click(
+      container.querySelector<HTMLButtonElement>(
+        'button[aria-label="Hide Primary Side Bar"], button[aria-label="Show Primary Side Bar"]',
+      ),
+    );
+    expect(primaryHandler).toHaveBeenCalledOnce();
+    expect(services?.layoutService.getState().sideBar.visible).toBe(false);
+    await runPaletteCommand('Show primary sidebar');
+    expect(services?.layoutService.getState().sideBar.visible).toBe(true);
+    expect(interceptedPaletteCommands).toContain(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID);
+
+    const onConsoleError = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+    try {
+      const panelCommand = services?.commands.getCommand(WORKBENCH_TOGGLE_PANEL_COMMAND_ID);
+      if (!panelCommand) throw new Error('Expected the panel command to remain registered.');
+      panelCommand.handler = () => Promise.reject(new Error('host detail should not be logged'));
+      await click(
+        container.querySelector<HTMLButtonElement>(
+          'button[aria-label="Show Panel"], button[aria-label="Hide Panel"]',
+        ),
+      );
+      expect(onConsoleError).toHaveBeenCalledWith(
+        `Workbench layout command failed: ${WORKBENCH_TOGGLE_PANEL_COMMAND_ID}`,
+      );
+    } finally {
+      onConsoleError.mockRestore();
+    }
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
+  it('keeps direct titlebar layout actions when the command host is disabled', async () => {
+    let services:
+      Pick<WorkbenchContextValue, 'commands' | 'executeCommand' | 'layoutService'> | undefined;
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          persistEditorState={false}
+          persistKeybindingOverrides={false}
+          persistLayout={false}
+          persistLocalPreferences={false}
+        >
+          <WorkbenchShell commandHost={false} editorArea={<main>Editor Area</main>} />
+          <ShellLayoutServicesProbe
+            onCapture={(capturedServices) => {
+              services = capturedServices;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    expect(
+      services?.commands.getCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID),
+    ).toBeUndefined();
+    expect(services?.commands.getCommand(WORKBENCH_TOGGLE_PANEL_COMMAND_ID)).toBeUndefined();
+    expect(
+      services?.commands.getCommand(WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID),
+    ).toBeUndefined();
+
+    const click = async (selector: string) => {
+      await act(async () => {
+        container
+          .querySelector<HTMLButtonElement>(selector)
+          ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+      });
+      await flushReactEffects();
+    };
+    await click('button[aria-label="Hide Primary Side Bar"]');
+    await click('button[aria-label="Show Panel"]');
+    await click('button[aria-label="Show Secondary Side Bar"]');
+
+    expect(services?.layoutService.getState()).toMatchObject({
+      auxiliaryBar: { visible: true },
+      panel: { visible: true },
+      sideBar: { visible: false },
+    });
+
+    await act(async () => {
+      root.unmount();
+    });
   });
 
   it('hosts contributed bottom panel views and persists panel size', async () => {
@@ -2559,6 +2844,8 @@ describe('WorkbenchProvider', () => {
   });
 
   it('hides unused panel and auxiliary title-bar layout toggles when disabled', async () => {
+    let services:
+      Pick<WorkbenchContextValue, 'commands' | 'executeCommand' | 'layoutService'> | undefined;
     const container = document.createElement('div');
     document.body.append(container);
     const root = createRoot(container);
@@ -2571,11 +2858,16 @@ describe('WorkbenchProvider', () => {
             recommendations: [],
           }}
         >
-          <TestWorkbenchShell
+          <WorkbenchShell
             editorArea={<main>Editor Area</main>}
             showAuxiliarySidebarLayoutToggle={false}
             showPanelLayoutToggle={false}
             title="Primary Only"
+          />
+          <ShellLayoutServicesProbe
+            onCapture={(capturedServices) => {
+              services = capturedServices;
+            }}
           />
         </WorkbenchProvider>,
       );
@@ -2595,6 +2887,17 @@ describe('WorkbenchProvider', () => {
     expect(primaryToggle).not.toBeNull();
     expect(panelToggle).toBeNull();
     expect(secondaryToggle).toBeNull();
+    expect(services?.commands.getCommand(WORKBENCH_TOGGLE_PANEL_COMMAND_ID)).toBeDefined();
+    expect(
+      services?.commands.getCommand(WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID),
+    ).toBeDefined();
+
+    await act(async () => {
+      await services?.executeCommand(WORKBENCH_TOGGLE_PANEL_COMMAND_ID);
+      await services?.executeCommand(WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID);
+    });
+    expect(services?.layoutService.getState().panel.visible).toBe(true);
+    expect(services?.layoutService.getState().auxiliaryBar.visible).toBe(true);
 
     await act(async () => {
       root.unmount();
@@ -3495,6 +3798,14 @@ function setTextAreaValue(textarea: HTMLTextAreaElement, value: string): void {
 
   valueSetter?.call(textarea, value);
   textarea.dispatchEvent(new Event('input', { bubbles: true }));
+}
+
+function setInputValue(input: HTMLInputElement | null, value: string): void {
+  if (!input) return;
+  const valueSetter = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+
+  valueSetter?.call(input, value);
+  input.dispatchEvent(new Event('input', { bubbles: true }));
 }
 
 function createLifecycleProbeExtension(events: string[]): WorkbenchExtensionDescription {

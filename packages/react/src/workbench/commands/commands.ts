@@ -15,6 +15,8 @@ import type { ContextMenuItem } from '../../overlay/ContextMenu';
 export const WORKBENCH_OPEN_SETTINGS_COMMAND_ID = 'workbench.openSettings';
 export const WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID = 'workbench.toggleFocusMode';
 export const WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID = 'workbench.togglePrimarySidebar';
+export const WORKBENCH_TOGGLE_PANEL_COMMAND_ID = 'workbench.togglePanel';
+export const WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID = 'workbench.toggleAuxiliarySidebar';
 export const WORKBENCH_EDITOR_SAVE_COMMAND_ID = 'editor.save';
 export const WORKBENCH_EDITOR_DISCARD_CHANGES_COMMAND_ID = 'editor.discardChanges';
 export const WORKBENCH_EDITOR_COPY_PATH_COMMAND_ID = 'editor.copyPath';
@@ -56,11 +58,15 @@ export interface WorkbenchShellCommandActivity<TActivityId extends string = stri
 }
 
 export interface WorkbenchShellCommandContext<TActivityId extends string = string> {
+  isAuxiliarySidebarVisible?: boolean | undefined;
   isFocusModeActive?: boolean | undefined;
+  isPanelVisible?: boolean | undefined;
   isPrimarySidebarVisible: boolean;
   openSettings: () => void;
   showActivity: (activityId: TActivityId) => void;
+  toggleAuxiliarySidebar?: (() => void) | undefined;
   toggleFocusMode?: (() => void) | undefined;
+  togglePanel?: (() => void) | undefined;
   togglePrimarySidebar: () => void;
 }
 
@@ -103,6 +109,8 @@ export interface WorkbenchShellCommandPresetOptions<TActivityId extends string =
   includeFocusModeToggle?: boolean | undefined;
   includeSettings?: boolean | undefined;
   includeSidebarToggle?: boolean | undefined;
+  includePanelToggle?: boolean | undefined;
+  includeAuxiliarySidebarToggle?: boolean | undefined;
   menuSeparatorId?: string | undefined;
   settingsIcon?: string | undefined;
   settingsLabel?: string | undefined;
@@ -171,6 +179,8 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
   includeFocusModeToggle = true,
   includeSettings = true,
   includeSidebarToggle = true,
+  includePanelToggle = false,
+  includeAuxiliarySidebarToggle = false,
   settingsIcon = 'codicon-settings-gear',
   settingsLabel = 'Settings',
   sidebarIcon = 'codicon-layout-sidebar-left',
@@ -213,6 +223,29 @@ export function createWorkbenchShellCommands<TActivityId extends string>({
     });
   }
 
+  if (includePanelToggle) {
+    shellCommands.push({
+      id: WORKBENCH_TOGGLE_PANEL_COMMAND_ID,
+      icon: 'codicon-layout-panel',
+      isEnabled: ({ togglePanel }) => togglePanel !== undefined,
+      label: ({ isPanelVisible }) => (isPanelVisible ? 'Hide Panel' : 'Show Panel'),
+      run: ({ togglePanel }) => togglePanel?.(),
+      title: 'Toggle Panel',
+    });
+  }
+
+  if (includeAuxiliarySidebarToggle) {
+    shellCommands.push({
+      id: WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID,
+      icon: 'codicon-layout-sidebar-right',
+      isEnabled: ({ toggleAuxiliarySidebar }) => toggleAuxiliarySidebar !== undefined,
+      label: ({ isAuxiliarySidebarVisible }) =>
+        isAuxiliarySidebarVisible ? 'Hide Secondary Side Bar' : 'Show Secondary Side Bar',
+      run: ({ toggleAuxiliarySidebar }) => toggleAuxiliarySidebar?.(),
+      title: 'Toggle Secondary Side Bar',
+    });
+  }
+
   if (includeSettings) {
     shellCommands.push({
       id: WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
@@ -233,6 +266,8 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
   includeFocusModeToggle = true,
   includeSettings = true,
   includeSidebarToggle = true,
+  includePanelToggle = false,
+  includeAuxiliarySidebarToggle = false,
   menuSeparatorId = 'workbench-shell-separator',
 }: WorkbenchShellCommandPresetOptions<TActivityId>): CommandMenuEntry<
   WorkbenchShellCommandContext<TActivityId>
@@ -260,6 +295,24 @@ export function createWorkbenchShellMenuEntries<TActivityId extends string>({
     shellEntries.push(
       commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
         WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
+        { surfaces: [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR] },
+      ),
+    );
+  }
+
+  if (includePanelToggle) {
+    shellEntries.push(
+      commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
+        WORKBENCH_TOGGLE_PANEL_COMMAND_ID,
+        { surfaces: [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR] },
+      ),
+    );
+  }
+
+  if (includeAuxiliarySidebarToggle) {
+    shellEntries.push(
+      commandMenuEntry<WorkbenchShellCommandContext<TActivityId>>(
+        WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID,
         { surfaces: [WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR] },
       ),
     );
