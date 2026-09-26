@@ -23,6 +23,7 @@ const focusedCommandHostControllerOutputDir = path.join(
   'dist-focused-command-host-controller',
 );
 const focusedOverlayOutputDir = path.join(consumerDir, 'dist-focused-overlay');
+const focusedLayoutOutputDir = path.join(consumerDir, 'dist-focused-layout');
 const schemaFormIdentityOutputDir = path.join(consumerDir, 'dist-schema-form-identity');
 const focusedSchemaFormOutputDir = path.join(consumerDir, 'dist-focused-schema-form');
 const focusedShellContextOutputDir = path.join(consumerDir, 'dist-focused-shell-context');
@@ -443,6 +444,9 @@ try {
       '.ui-scroll-area',
     ],
   });
+
+  buildFocusedConsumer('focused-layout');
+  await executeFocusedConsumer('focused layout', focusedLayoutOutputDir);
 } finally {
   assertSafeFixturePath();
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
@@ -1071,6 +1075,54 @@ async function verifyPackedGraphAuthoring(): Promise<{
     shortcut: 'Ctrl+P',
   }),
 });
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'focused-layout.ts'),
+    `import { createElement } from 'react';
+import { flushSync } from 'react-dom';
+import { createRoot } from 'react-dom/client';
+import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle } from '@workbench-kit/react';
+import {
+  WorkbenchCanvasFrameHandle,
+  WorkbenchInteractionSurface,
+  type WorkbenchInteractionEffect,
+} from '@workbench-kit/react/layout';
+
+if (RootWorkbenchCanvasFrameHandle !== WorkbenchCanvasFrameHandle) {
+  throw new TypeError('Packed CanvasFrameHandle root and layout exports do not share identity.');
+}
+
+const effect: WorkbenchInteractionEffect = 'lift';
+const container = document.createElement('div');
+document.body.append(container);
+const root = createRoot(container);
+flushSync(() => {
+  root.render(
+    createElement(
+      WorkbenchInteractionSurface,
+      {
+        'aria-label': 'Packed interaction preview',
+        content: createElement('span', null, 'Canvas content'),
+        effect,
+      },
+      createElement(WorkbenchCanvasFrameHandle, { label: 'Resize canvas' }),
+    ),
+  );
+});
+
+const interaction = container.querySelector('.ui-workbench-interaction-surface');
+const frameHandle = container.querySelector('.ui-workbench-canvas-frame-handle');
+if (interaction?.getAttribute('data-effect') !== 'lift') {
+  throw new TypeError('Packed WorkbenchInteractionSurface did not render its selected effect.');
+}
+if (interaction.getAttribute('aria-label') !== 'Packed interaction preview') {
+  throw new TypeError('Packed WorkbenchInteractionSurface did not forward consumer attributes.');
+}
+if (frameHandle?.textContent !== 'Resize canvas') {
+  throw new TypeError('Packed WorkbenchCanvasFrameHandle did not render consumer content.');
+}
+root.unmount();
 `,
   );
   fs.writeFileSync(
@@ -4302,6 +4354,12 @@ container.remove();
     'focused-keybinding-management-provider',
     path.join(consumerDir, 'src', 'focused-keybinding-management-provider.ts'),
     focusedKeybindingManagementProviderOutputDir,
+  );
+  writeFocusedViteConfig(
+    'focused-layout',
+    path.join(consumerDir, 'src', 'focused-layout.ts'),
+    focusedLayoutOutputDir,
+    true,
   );
 }
 
