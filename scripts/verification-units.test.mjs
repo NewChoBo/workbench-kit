@@ -36,6 +36,25 @@ describe('verification units', () => {
     expect(validateRegistry(registry, root)).toBe(registry);
     expect(() => verifyReport(registry, report(), root)).not.toThrow();
   });
+  it('ignores pending and todo cases outside registered evidence', () => {
+    const withUnrelatedPendingAndTodo = report();
+    withUnrelatedPendingAndTodo.numTotalTests = 3;
+    withUnrelatedPendingAndTodo.numPendingTests = 1;
+    withUnrelatedPendingAndTodo.numTodoTests = 1;
+    withUnrelatedPendingAndTodo.testResults.push(
+      {
+        name: resolve(root, 'unregistered-pending.test.mjs'),
+        status: 'pending',
+        assertionResults: [{ fullName: 'unregistered pending case', status: 'pending' }],
+      },
+      {
+        name: resolve(root, 'unregistered-todo.test.mjs'),
+        status: 'todo',
+        assertionResults: [{ fullName: 'unregistered todo case', status: 'todo' }],
+      },
+    );
+    expect(() => verifyReport(registry, withUnrelatedPendingAndTodo, root)).not.toThrow();
+  });
   it('rejects invalid ownership and paths', () => {
     for (const change of [
       (r) => {
@@ -94,11 +113,9 @@ describe('verification units', () => {
       invalid.testResults[0].assertionResults[0].status = status;
       expect(() => verifyReport(registry, invalid, root)).toThrow();
     }
-    for (const field of ['numFailedTests', 'numPendingTests', 'numTodoTests']) {
-      const invalid = report();
-      invalid[field] = 1;
-      expect(() => verifyReport(registry, invalid, root)).toThrow();
-    }
+    const failedReport = report();
+    failedReport.numFailedTests = 1;
+    expect(() => verifyReport(registry, failedReport, root)).toThrow();
     expect(() => verifyReport(registry, { ...report(), success: false }, root)).toThrow();
     expect(() => verifyReport(registry, { ...report(), numTotalTests: 0 }, root)).toThrow();
   });
