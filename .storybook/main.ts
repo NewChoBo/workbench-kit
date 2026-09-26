@@ -26,6 +26,7 @@ const config: StorybookConfig = {
     '../packages/react/src/primitives/scroll-area-infinite-load/ScrollAreaInfiniteLoad.stories.@(ts|tsx)',
     '../packages/react/src/modal/OverlayDialogs.stories.@(ts|tsx)',
     '../packages/react/src/overlay/AnchoredOverlayPanel.stories.@(ts|tsx)',
+    '../packages/react/src/overlay/ContextEditing.stories.@(ts|tsx)',
 
     '../packages/react/src/workbench/chat/ChatComponents.stories.@(ts|tsx)',
     '../packages/react/src/workbench/management/ExtensionManagementSidebar.stories.@(ts|tsx)',
@@ -37,6 +38,7 @@ const config: StorybookConfig = {
     '../packages/react/src/layout/sidebar/SideBarViewTabStrip.stories.@(ts|tsx)',
     '../packages/react/src/layout/WorkbenchPropertyOverrideLabel.stories.@(ts|tsx)',
     '../packages/react/src/widget-tree/WidgetTreeLab.stories.@(ts|tsx)',
+    '../packages/react/src/widget-tree/WidgetTreeContext.stories.@(ts|tsx)',
     '../packages/jdw-editor/src/**/*.stories.@(ts|tsx)',
   ],
   addons: ['@storybook/addon-docs'],

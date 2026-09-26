@@ -1,0 +1,71 @@
+# WB-ST-023 — Workspace Unicode validity
+
+Status: `LOCAL_VALIDATED / SOURCE_REVIEW_REQUIRED / INTEGRATION_PENDING`.
+Part branch: `codex/luna-uri-unicode-20260919`.
+
+## Implementation and ownership
+
+`packages/workspace/src/path/path.ts` remains the shared owner for workspace path
+and simple-name validity. It now rejects unpaired UTF-16 high or low surrogates
+before path normalization can mutate separators or before URI formatting can call
+`encodeURIComponent`. `normalizeWorkspacePath` throws `WorkspacePathError`,
+`tryNormalizeWorkspacePath` returns `undefined`, and `isSimpleWorkspaceName`
+returns `false` for ill-formed Unicode. A valid surrogate pair, including emoji,
+continues through the existing normalization and URI round trip unchanged.
+
+No consumer command or new dependency was added. Existing reducer and host paths
+already pass create, rename, save, move, and initialization values through the
+shared helpers. Invalid reducer mutations remain unchanged; initialization
+filters invalid entries before they can enter state.
+
+## Regression cases
+
+The focused tests cover:
+
+1. Lone high and low surrogates at the start, middle, and end of a path.
+2. Valid emoji surrogate pairs plus Korean, Japanese, spaces, literal percent,
+   and reserved filename characters through the existing path and URI behavior.
+3. URI formatting throwing `WorkspacePathError` and URI parsing rejecting invalid
+   UTF-8 surrogate encodings.
+4. Invalid rename, create-file, and create-folder mutations preserving files,
+   snapshot version, and transaction journal.
+5. Mixed valid and invalid rename mutations documenting the existing sequential
+   transaction behavior: the valid mutation applies and the invalid one is a
+   reducer no-op.
+6. Invalid initial files/folders being filtered while valid Unicode entries
+   remain available.
+
+The RED reproduction ran against the parent commit with a lone high surrogate:
+`normalizeWorkspacePath` returned `bad\uD800.ts` and the following
+`encodeURIComponent` raised `URIError` (`acceptedPath: "bad\\ud800.ts",
+uriError: true`). After the change, the path gate rejects the value consistently
+before mutation or URI encoding.
+
+## Validation
+
+| Command                                                                                                                                                                                                                                                                               | Result                   |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------ |
+| `pnpm exec vitest run packages/workspace/src/path/path.test.ts packages/workspace/src/resource/uri.test.ts packages/workspace/src/resource/transaction.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts packages/workspace/src/host/unicode-resource-uri.test.ts` | PASS; 5 files / 32 tests |
+| `pnpm --filter @workbench-kit/workspace typecheck`                                                                                                                                                                                                                                    | PASS                     |
+| `pnpm exec eslint packages/workspace/src/path/path.ts packages/workspace/src/path/path.test.ts packages/workspace/src/resource/uri.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts`                                                                              | PASS                     |
+| `pnpm exec prettier packages/workspace/src/path/path.ts packages/workspace/src/path/path.test.ts packages/workspace/src/resource/uri.test.ts packages/workspace/src/host/workbench-workspace-host.test.ts docs/northstar/parts/logic-unicode-receipt.md --check`                      | PASS                     |
+| `pnpm check:workspace-isolation`                                                                                                                                                                                                                                                      | PASS                     |
+| `pnpm check:commit-safety`                                                                                                                                                                                                                                                            | PASS                     |
+
+This receipt records part-local evidence only. Independent source review, the
+integrator's combined gates, release, and consumer adoption remain separate.
+
+## URI parser follow-up
+
+The raw URI parser had a remaining alias boundary: `new URL()` replaces an
+unpaired surrogate before path decoding. The actual RED reproduction produced
+the same pathname for `workspace://file/src/bad` followed by a lone high
+surrogate and for the legitimate `workspace://file/src/bad%EF%BF%BD.txt`
+resource (`aliases: true`).
+
+The internal `hasUnpairedSurrogate` helper now lives beside the path codec and is
+used by both `normalizeWorkspacePath` and `parseWorkspaceResourceUri`. Raw high
+and low surrogates are rejected before URL conversion, while a legitimate U+FFFD
+filename, valid emoji pairs, and existing encoded/literal-percent behavior remain
+valid. The focused URI-host regression proves malformed raw lookup/save attempts
+leave the legitimate replacement-character file, snapshot, and journal unchanged.

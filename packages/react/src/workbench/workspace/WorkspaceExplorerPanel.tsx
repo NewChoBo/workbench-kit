@@ -7,6 +7,7 @@ import { WorkspaceExplorer, type WorkspaceExplorerProps } from './WorkspaceExplo
 export interface WorkspaceExplorerPanelProps extends WorkspaceExplorerProps {
   'aria-label'?: string | undefined;
   className?: string | undefined;
+  headerAddon?: ReactNode;
   onNewFile?: (() => void) | undefined;
   onNewFolder?: (() => void) | undefined;
   onRefresh?: (() => void) | undefined;
@@ -21,6 +22,7 @@ export interface WorkspaceExplorerPanelProps extends WorkspaceExplorerProps {
 export function WorkspaceExplorerPanel({
   'aria-label': ariaLabel,
   className,
+  headerAddon,
   onNewFile,
   onNewFolder,
   onRefresh,
@@ -63,6 +65,7 @@ export function WorkspaceExplorerPanel({
       actions={headerActions}
       aria-label={ariaLabel}
       className={cx('workbench-explorer-view', 'ui-workspace-explorer-panel', className)}
+      headerAddon={headerAddon}
       title={title}
     >
       <WorkbenchSidebarSection id="workspace-explorer-section" title={sectionTitle}>

@@ -37,7 +37,7 @@ import type {
   SplitEditorOptions,
 } from './state.js';
 
-export { DEFAULT_EDITOR_GROUP_ID } from './state.js';
+export { DEFAULT_EDITOR_GROUP_ID, EditorStateInitializationError } from './state.js';
 export type {
   EditorGroupLayoutNode,
   EditorGroupState,
@@ -63,12 +63,15 @@ export interface EditorServiceOptions {
   readonly editorResolvers?: EditorResolverRegistry | undefined;
   readonly initialState?: EditorState | undefined;
   readonly resolveEditorResource?: ((resourceUri: string) => unknown) | undefined;
+  /** Pure, idempotent identity normalization; defaults to preserving the input. */
+  readonly normalizeResourceUri?: ((resourceUri: string) => string) | undefined;
 }
 
 export class EditorService implements Disposable {
   private readonly editorHostFactories: EditorHostFactoryRegistry;
   private readonly editorResolvers?: EditorResolverRegistry | undefined;
   private readonly resolveEditorResource?: ((resourceUri: string) => unknown) | undefined;
+  private readonly normalizeResourceUri: (resourceUri: string) => string;
   private readonly editorHosts = new Map<string, EditorHost>();
   private readonly onDidChangeEditorsEmitter = new Emitter<EditorChangeEvent>();
   private state: EditorState;
@@ -81,7 +84,8 @@ export class EditorService implements Disposable {
     this.editorHostFactories = options.editorHostFactories;
     this.editorResolvers = options.editorResolvers;
     this.resolveEditorResource = options.resolveEditorResource;
-    this.state = createInitialEditorState(options.initialState);
+    this.normalizeResourceUri = options.normalizeResourceUri ?? identityResourceUri;
+    this.state = createInitialEditorState(options.initialState, this.normalizeResourceUri);
     this.groupSequence = getMaxEditorGroupSequence(this.state.groups);
     this.tabSequence = getMaxEditorTabSequence(this.state.groups);
   }
@@ -90,16 +94,27 @@ export class EditorService implements Disposable {
     return cloneEditorState(this.state);
   }
 
+  getDirtyResourceUris(): readonly string[] {
+    return [
+      ...new Set(
+        this.state.groups.flatMap((group) =>
+          group.tabs.filter((tab) => tab.dirty).map((tab) => tab.resourceUri),
+        ),
+      ),
+    ];
+  }
+
   openEditor(options: OpenEditorOptions): EditorTabState {
-    const existingTab = this.findTabByResourceUri(options.resourceUri);
+    const resourceUri = this.normalizeResourceUri(options.resourceUri);
+    const existingTab = this.findTabByResourceUri(resourceUri);
     if (existingTab) {
       this.setActiveEditor(existingTab.id);
       return existingTab;
     }
 
-    const editorId = options.editorId ?? this.resolveEditorId(options.resourceUri);
+    const editorId = options.editorId ?? this.resolveEditorId(resourceUri);
     if (!editorId) {
-      throw new Error(`No editor resolver could open resource "${options.resourceUri}".`);
+      throw new Error(`No editor resolver could open resource "${resourceUri}".`);
     }
 
     const groupId = options.groupId ?? DEFAULT_EDITOR_GROUP_ID;
@@ -113,7 +128,7 @@ export class EditorService implements Disposable {
       id: createEditorTabId(++this.tabSequence),
       pinned,
       preview,
-      resourceUri: options.resourceUri,
+      resourceUri,
       title: options.title,
     };
 
@@ -430,8 +445,9 @@ export class EditorService implements Disposable {
   }
 
   findTabByResourceUri(resourceUri: string): EditorTabState | undefined {
+    const normalizedResourceUri = this.normalizeResourceUri(resourceUri);
     for (const group of this.state.groups) {
-      const tab = group.tabs.find((entry) => entry.resourceUri === resourceUri);
+      const tab = group.tabs.find((entry) => entry.resourceUri === normalizedResourceUri);
       if (tab) {
         return tab;
       }
@@ -461,8 +477,17 @@ export class EditorService implements Disposable {
         }
 
         changed = true;
-        this.disposeEditorHost(tab.id);
-        return missing ? markResourceMissing(tab) : clearResourceMissing(tab);
+        if (missing) {
+          if (!tab.dirty) {
+            this.disposeEditorHost(tab.id);
+          }
+          return markResourceMissing(tab);
+        }
+
+        if (!tab.dirty) {
+          this.disposeEditorHost(tab.id);
+        }
+        return clearResourceMissing(tab);
       }),
     }));
 
@@ -512,7 +537,9 @@ export class EditorService implements Disposable {
   }
 
   resolveEditorId(resourceUri: string): string | undefined {
-    return this.editorResolvers?.resolveEditorId({ resourceUri });
+    return this.editorResolvers?.resolveEditorId({
+      resourceUri: this.normalizeResourceUri(resourceUri),
+    });
   }
 
   dispose(): void {
@@ -627,6 +654,10 @@ export function createEditorService(options: EditorServiceOptions): EditorServic
   return new EditorService(options);
 }
 
+function identityResourceUri(resourceUri: string): string {
+  return resourceUri;
+}
+
 interface StatefulEditorHost extends EditorHost {
   getContent?(): string;
   setContent?(content: string): void;
@@ -657,7 +688,6 @@ function isWorkspaceFileResourceUri(resourceUri: string): boolean {
 function markResourceMissing(tab: EditorTabState): EditorTabState {
   return {
     ...tab,
-    dirty: false,
     resourceMissing: true,
   };
 }

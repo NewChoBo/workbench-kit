@@ -472,6 +472,11 @@
   cursor: pointer;
 }
 
+.widget-tree-outline__actions {
+  flex: 0 0 auto;
+  margin-right: 4px;
+}
+
 .widget-tree-inspector {
   min-height: 0;
   overflow: auto;

@@ -66,6 +66,20 @@ README for the exact ownership matrix.
 
 ## Shell and editor chrome
 
+### `WorkbenchInteractionSurface`
+
+Import from `@workbench-kit/react/layout`. Wrap presentational `content` and pass
+native controls as `children` to keep overlay actions stationary. The optional
+`effect` (`none`, `highlight`, `lift`) supplies pointer hover, keyboard focus-within,
+and press feedback without changing layout. `enabled={false}` disables feedback;
+it does not disable the host's controls. Reduced-motion preferences suppress
+transforms, and forced-colors mode retains a visible outline.
+
+The surface adds no button role, activation handler, timer, or persistence. Hosts
+own available actions, accessible labels, content identity, and saved preferences.
+`WorkbenchCanvasFrameHandle` is also available from this focused entry for
+controlled pointer gestures; hosts own the resulting value and transaction.
+
 ### `WorkbenchShell`
 
 **Purpose:** Top-level workbench grid: activity bar, primary sidebar slot, editor region, optional status bar and overlays.

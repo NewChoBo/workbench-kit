@@ -10,6 +10,11 @@ import {
   type WorkbenchStorageReader,
   type WorkbenchStorageWriter,
 } from '@workbench-kit/workbench-core';
+import {
+  formatWorkspaceResourceUri,
+  normalizeWorkspacePath,
+  parseWorkspaceResourceUri,
+} from '@workbench-kit/workspace';
 
 import { isRecord } from '../is-record.js';
 import {
@@ -21,13 +26,22 @@ import {
 } from '../storage/local-json-storage.js';
 
 export const DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY = 'workbench-kit/.workbench/editors';
+const WORKSPACE_URI_ENCODING = 'percent-encoded-v1';
+
+export interface WorkbenchEditorStatePersistenceReadResult extends WorkbenchPersistenceReadResult<
+  EditorState | undefined
+> {
+  /** Whether an editor event may replace the value for this adapter and key. */
+  readonly writeEligible: boolean;
+}
 
 export function isWorkbenchEditorStatePersistenceAvailable(): boolean {
   return resolveLocalWorkbenchStorage() !== undefined;
 }
 
 export function editorStateToStorageValue(state: EditorState): EditorState {
-  return {
+  const value = {
+    workspaceResourceUriEncoding: WORKSPACE_URI_ENCODING,
     activeGroupId: state.activeGroupId,
     groups: state.groups.map((group) => ({
       activeTabId: group.activeTabId,
@@ -45,6 +59,7 @@ export function editorStateToStorageValue(state: EditorState): EditorState {
     })),
     layout: cloneEditorLayoutForStorage(state.layout),
   };
+  return value;
 }
 
 export function readPersistedEditorState(
@@ -58,14 +73,18 @@ export function readPersistedEditorStateResult(
   storageKey = DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY,
   storage?: WorkbenchStorageReader,
   options: WorkbenchPersistenceDiagnosticOptions = {},
-): WorkbenchPersistenceReadResult<EditorState | undefined> {
-  return readLocalJsonStorageResult(
+): WorkbenchEditorStatePersistenceReadResult {
+  const result = readLocalJsonStorageResult(
     storageKey,
-    parseEditorStateStorageValue,
+    (value) => parseEditorStateStorageValue(value, true),
     () => undefined,
     storage,
     options,
   );
+  return {
+    ...result,
+    writeEligible: result.diagnostic === undefined,
+  };
 }
 
 export function writePersistedEditorState(
@@ -90,16 +109,48 @@ export function writePersistedEditorStateResult(
   });
 }
 
-function parseEditorStateStorageValue(value: unknown): EditorState | undefined {
+function parseEditorStateStorageValue(value: unknown, strict = false): EditorState | undefined {
   if (!isRecord(value)) {
+    if (strict) {
+      throw new TypeError('Expected an editor state storage object.');
+    }
     return undefined;
   }
+  const encoding = value.workspaceResourceUriEncoding;
+  if (encoding !== undefined && encoding !== WORKSPACE_URI_ENCODING) {
+    if (strict) {
+      throw new TypeError('Unsupported editor state storage encoding.');
+    }
+    return undefined;
+  }
+  const legacyWorkspaceUris = encoding === undefined;
 
   const groups = Array.isArray(value.groups)
-    ? value.groups.flatMap(parseEditorGroupStorageValue)
+    ? value.groups.flatMap((group) =>
+        parseEditorGroupStorageValue(group, legacyWorkspaceUris, strict),
+      )
     : [];
-  const layout = parseEditorLayoutStorageValue(value.layout);
+  if (strict) {
+    const groupIds = new Set<string>();
+    const tabIds = new Set<string>();
+    for (const group of groups) {
+      if (groupIds.has(group.id)) {
+        throw new TypeError('Duplicate editor group identifier.');
+      }
+      groupIds.add(group.id);
+      for (const tab of group.tabs) {
+        if (tabIds.has(tab.id)) {
+          throw new TypeError('Duplicate editor tab identifier.');
+        }
+        tabIds.add(tab.id);
+      }
+    }
+  }
+  const layout = parseEditorLayoutStorageValue(value.layout, strict);
   if (groups.length === 0 || !layout) {
+    if (strict) {
+      throw new TypeError('Invalid editor state storage value.');
+    }
     return undefined;
   }
 
@@ -110,8 +161,20 @@ function parseEditorStateStorageValue(value: unknown): EditorState | undefined {
   };
 }
 
-function parseEditorGroupStorageValue(value: unknown): EditorGroupState[] {
-  if (!isRecord(value) || typeof value.id !== 'string' || !Array.isArray(value.tabs)) {
+function parseEditorGroupStorageValue(
+  value: unknown,
+  legacyWorkspaceUris: boolean,
+  strict = false,
+): EditorGroupState[] {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== 'string' ||
+    (strict && value.id.length === 0) ||
+    !Array.isArray(value.tabs)
+  ) {
+    if (strict) {
+      throw new TypeError('Invalid editor group storage value.');
+    }
     return [];
   }
 
@@ -119,18 +182,37 @@ function parseEditorGroupStorageValue(value: unknown): EditorGroupState[] {
     {
       activeTabId: typeof value.activeTabId === 'string' ? value.activeTabId : undefined,
       id: value.id,
-      tabs: value.tabs.flatMap(parseEditorTabStorageValue),
+      tabs: value.tabs.flatMap((tab) =>
+        parseEditorTabStorageValue(tab, legacyWorkspaceUris, strict),
+      ),
     },
   ];
 }
 
-function parseEditorTabStorageValue(value: unknown): EditorTabState[] {
+function parseEditorTabStorageValue(
+  value: unknown,
+  legacyWorkspaceUris: boolean,
+  strict = false,
+): EditorTabState[] {
   if (
     !isRecord(value) ||
     typeof value.id !== 'string' ||
+    (strict && value.id.length === 0) ||
     typeof value.editorId !== 'string' ||
-    typeof value.resourceUri !== 'string'
+    (strict && value.editorId.length === 0) ||
+    typeof value.resourceUri !== 'string' ||
+    (strict && value.resourceUri.length === 0)
   ) {
+    if (strict) {
+      throw new TypeError('Invalid editor tab storage value.');
+    }
+    return [];
+  }
+  const resourceUri = readStoredResourceUri(value.resourceUri, legacyWorkspaceUris);
+  if (resourceUri === undefined) {
+    if (strict) {
+      throw new TypeError('Invalid editor resource URI.');
+    }
     return [];
   }
 
@@ -142,35 +224,72 @@ function parseEditorTabStorageValue(value: unknown): EditorTabState[] {
       id: value.id,
       pinned: typeof value.pinned === 'boolean' ? value.pinned : true,
       preview: typeof value.preview === 'boolean' ? value.preview : false,
-      resourceUri: value.resourceUri,
+      resourceUri,
       title: typeof value.title === 'string' ? value.title : undefined,
     },
   ];
 }
 
-function parseEditorLayoutStorageValue(value: unknown): EditorLayoutNode | undefined {
+function readStoredResourceUri(resourceUri: string, legacy: boolean): string | undefined {
+  let url: URL;
+  try {
+    url = new URL(resourceUri);
+  } catch {
+    return /^\s*workspace:/i.test(resourceUri) ? undefined : resourceUri;
+  }
+  if (url.protocol !== 'workspace:') return resourceUri;
+  if (!legacy) return parseWorkspaceResourceUri(resourceUri) ? resourceUri : undefined;
+  try {
+    const kind = url.hostname;
+    if (kind !== 'file' && kind !== 'folder') return undefined;
+    // Preserve the previous parser's effective identity, including literal percent sequences.
+    const path = normalizeWorkspacePath(url.pathname.replace(/^\/+/, ''));
+    if (kind === 'file' && !path) return undefined;
+    return formatWorkspaceResourceUri({ kind, path });
+  } catch {
+    return undefined;
+  }
+}
+
+function parseEditorLayoutStorageValue(
+  value: unknown,
+  strict = false,
+): EditorLayoutNode | undefined {
   if (!isRecord(value) || typeof value.type !== 'string') {
+    if (strict) {
+      throw new TypeError('Invalid editor layout storage value.');
+    }
     return undefined;
   }
 
   if (value.type === 'group') {
-    return typeof value.groupId === 'string'
-      ? {
-          groupId: value.groupId,
-          type: 'group',
-        }
-      : undefined;
+    if (typeof value.groupId !== 'string') {
+      if (strict) {
+        throw new TypeError('Invalid editor group layout.');
+      }
+      return undefined;
+    }
+    return {
+      groupId: value.groupId,
+      type: 'group',
+    };
   }
 
   if (value.type !== 'split' || !Array.isArray(value.children)) {
+    if (strict) {
+      throw new TypeError('Invalid editor split storage value.');
+    }
     return undefined;
   }
 
   const direction = parseEditorLayoutDirection(value.direction);
   const children = value.children
-    .map(parseEditorLayoutStorageValue)
+    .map((child) => parseEditorLayoutStorageValue(child, strict))
     .filter((child): child is EditorLayoutNode => child !== undefined);
   if (!direction || children.length === 0) {
+    if (strict) {
+      throw new TypeError('Invalid editor split layout.');
+    }
     return undefined;
   }
 

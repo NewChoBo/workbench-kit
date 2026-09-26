@@ -81,6 +81,29 @@ VITE_SAMPLE_HOST_BACKEND_TRANSPORT=http
 VITE_SAMPLE_HOST_BACKEND_BASE_URL=http://127.0.0.1:8787
 ```
 
+## Backend scenario lab
+
+In development, open `http://127.0.0.1:65173/?backend-lab`. The ordinary sample
+route retains its default backend. Select one of ten deterministic scenarios,
+use **Release response** for held requests, and **Reset scenario** to create a
+fresh backend and host. The fixture uses the real HTTP client and app with an
+injected fetch implementation; it never contacts an external server or patches
+global fetch. Existing demo credentials apply.
+
+Scenarios cover signed-out, slow session/sign-in, sign-in/sign-out retry,
+expired/malformed session responses, and zero/one/24 linked accounts with long
+Unicode text. Request counts expose progress without logging credentials.
+Scenario reset disposes pending work; default host preferences are retained.
+
+Storybook: **Workbench Sample / Backend Scenarios**. Against a running Storybook:
+
+```powershell
+pnpm exec test-storybook --url http://127.0.0.1:61009 --includeTags storybook-play-backend --maxWorkers 1 --testTimeout=90000
+```
+
+See the [fixture contract and next capability packets](../../docs/northstar/sample-backend-verification.md)
+and [verification receipt](../../docs/northstar/sample-backend-receipt.md).
+
 ## Content Security Policy
 
 The sample ships a fail-closed CSP baseline (`csp-policy.ts`) applied as:

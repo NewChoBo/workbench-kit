@@ -10,7 +10,7 @@ export default defineConfig({
   },
   format: ['esm', 'cjs'],
   dts: true,
-  clean: true,
+  clean: process.env.WORKBENCH_KIT_WATCH !== '1',
   sourcemap: true,
   splitting: false,
 });

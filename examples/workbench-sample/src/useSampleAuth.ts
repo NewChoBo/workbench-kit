@@ -5,12 +5,17 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from 'react';
 import type { WorkbenchLoginSubmitContext } from '@workbench-kit/react';
 import type { WorkbenchAuthStatus } from '@workbench-kit/react/workbench/auth';
-import { isSampleHostBackendApiError } from '@workbench-kit/contracts';
+import {
+  isSampleHostBackendApiError,
+  type SampleHostBackendClient,
+  type SampleHostBackendSession,
+} from '@workbench-kit/contracts';
 
 import {
   createSampleHostBackendClient,
@@ -51,112 +56,136 @@ export function useSampleAccount(): SampleAuthController {
   return value;
 }
 
-export function useSampleAuth(): SampleAuthController {
-  const backendClient = useMemo(() => createSampleHostBackendClient(), []);
-  const [status, setStatus] = useState<WorkbenchAuthStatus>('loading');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | undefined>();
-  const [profile, setProfile] = useState<SampleProfile | undefined>();
-  const [linkedAccounts, setLinkedAccounts] = useState<readonly SampleLinkedAccount[]>([]);
+type SampleAuthState = Omit<SampleAuthController, 'signIn' | 'signOut'>;
+
+interface SampleAuthGeneration {
+  client: SampleHostBackendClient;
+  mutationPending: boolean;
+  revision: number;
+  state: SampleAuthState;
+}
+
+const loadingState = (): SampleAuthState => ({
+  busy: false,
+  error: undefined,
+  linkedAccounts: [],
+  profile: undefined,
+  status: 'loading',
+});
+
+export function useSampleAuth(client?: SampleHostBackendClient): SampleAuthController {
+  const backendClient = useMemo(() => client ?? createSampleHostBackendClient(), [client]);
+  const current = useRef<SampleAuthGeneration | undefined>(undefined);
+  const [snapshot, setSnapshot] = useState(() => ({
+    client: backendClient,
+    state: loadingState(),
+  }));
+  const isCurrent = useCallback(
+    (generation: SampleAuthGeneration, revision: number) =>
+      current.current === generation && generation.revision === revision,
+    [],
+  );
+  const publish = useCallback((generation: SampleAuthGeneration, state: SampleAuthState) => {
+    generation.state = state;
+    setSnapshot({ client: generation.client, state });
+  }, []);
 
   useEffect(() => {
-    let disposed = false;
+    const generation: SampleAuthGeneration = {
+      client: backendClient,
+      mutationPending: false,
+      revision: 0,
+      state: loadingState(),
+    };
+    current.current = generation;
+    publish(generation, generation.state);
 
-    void backendClient
-      .getSession({ workspaceLabel: SAMPLE_WORKSPACE_LABEL })
-      .then((session) => {
-        if (disposed) {
-          return;
+    void (async () => {
+      try {
+        const session = await backendClient.getSession({ workspaceLabel: SAMPLE_WORKSPACE_LABEL });
+        if (isCurrent(generation, 0)) publish(generation, stateFromSession(session));
+      } catch (requestError: unknown) {
+        if (isCurrent(generation, 0)) {
+          publish(generation, {
+            ...stateFromSession({ status: 'unauthenticated' }),
+            error: formatSampleAuthError(requestError),
+          });
         }
-
-        applySampleSession(session, {
-          setLinkedAccounts,
-          setProfile,
-          setStatus,
-        });
-      })
-      .catch((requestError: unknown) => {
-        if (disposed) {
-          return;
-        }
-
-        setLinkedAccounts([]);
-        setProfile(undefined);
-        setStatus('unauthenticated');
-        setError(formatSampleAuthError(requestError));
-      });
+      }
+    })();
 
     return () => {
-      disposed = true;
+      // Invalidate results only. Transport cancellation and disposal belong to the caller.
+      if (current.current === generation) current.current = undefined;
     };
-  }, [backendClient]);
+  }, [backendClient, isCurrent, publish]);
 
+  const mutate = useCallback(
+    (request: (activeClient: SampleHostBackendClient) => Promise<SampleHostBackendSession>) => {
+      const generation = current.current;
+      if (!generation || generation.client !== backendClient || generation.mutationPending) return;
+
+      // The ref lock takes effect before React rerenders; a mutation supersedes bootstrap.
+      generation.mutationPending = true;
+      const revision = ++generation.revision;
+      publish(generation, { ...generation.state, busy: true, error: undefined });
+      void (async () => {
+        try {
+          const session = await request(backendClient);
+          if (isCurrent(generation, revision)) {
+            generation.mutationPending = false;
+            publish(generation, stateFromSession(session));
+          }
+        } catch (requestError: unknown) {
+          if (!isCurrent(generation, revision)) return;
+          generation.mutationPending = false;
+          publish(generation, {
+            ...generation.state,
+            busy: false,
+            error: formatSampleAuthError(requestError),
+            status:
+              generation.state.status === 'loading' ? 'unauthenticated' : generation.state.status,
+          });
+        }
+      })();
+    },
+    [backendClient, isCurrent, publish],
+  );
   const signIn = useCallback(
     ({ credentials }: WorkbenchLoginSubmitContext) => {
-      setError(undefined);
-      setBusy(true);
-
-      void backendClient
-        .signIn({
+      mutate((activeClient) =>
+        activeClient.signIn({
           identifier: credentials.identifier,
           password: credentials.password,
           workspaceLabel: SAMPLE_WORKSPACE_LABEL,
-        })
-        .then((session) => {
-          applySampleSession(session, {
-            setLinkedAccounts,
-            setProfile,
-            setStatus,
-          });
-          setBusy(false);
-        })
-        .catch((requestError: unknown) => {
-          setBusy(false);
-          setError(formatSampleAuthError(requestError));
-        });
+        }),
+      );
     },
-    [backendClient],
+    [mutate],
   );
-
   const signOut = useCallback(() => {
-    setBusy(true);
-    void backendClient.signOut().finally(() => {
-      setLinkedAccounts([]);
-      setProfile(undefined);
-      setBusy(false);
-      setError(undefined);
-      setStatus('unauthenticated');
+    mutate(async (activeClient) => {
+      await activeClient.signOut();
+      return { status: 'unauthenticated' };
     });
-  }, [backendClient]);
+  }, [mutate]);
 
   return {
-    busy,
-    error,
-    linkedAccounts,
-    profile,
+    // A replacement never renders the previous client's profile before effect cleanup.
+    ...(snapshot.client === backendClient ? snapshot.state : loadingState()),
     signIn,
     signOut,
-    status,
   };
 }
 
-function applySampleSession(
-  session: {
-    readonly linkedAccounts?: readonly SampleLinkedAccount[] | undefined;
-    readonly profile?: SampleProfile | undefined;
-    readonly status: 'authenticated' | 'unauthenticated';
-  },
-  setters: {
-    readonly setLinkedAccounts: (linkedAccounts: readonly SampleLinkedAccount[]) => void;
-    readonly setProfile: (profile: SampleProfile | undefined) => void;
-    readonly setStatus: (status: WorkbenchAuthStatus) => void;
-  },
-): void {
-  setters.setLinkedAccounts(
-    session.status === 'authenticated' ? (session.linkedAccounts ?? []) : [],
-  );
-  setters.setProfile(session.status === 'authenticated' ? session.profile : undefined);
-  setters.setStatus(session.status);
+function stateFromSession(session: SampleHostBackendSession): SampleAuthState {
+  return {
+    busy: false,
+    error: undefined,
+    linkedAccounts: session.status === 'authenticated' ? (session.linkedAccounts ?? []) : [],
+    profile: session.status === 'authenticated' ? session.profile : undefined,
+    status: session.status,
+  };
 }
 
 function formatSampleAuthError(error: unknown): string {

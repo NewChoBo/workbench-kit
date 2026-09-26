@@ -5,6 +5,8 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 import { gzipSync } from 'node:zlib';
 
 import { validatePackedPackageCohort } from './lib/packed-package-cohort.mjs';
+import { verifyNativeInputHosts } from './lib/native-input-hosts.mjs';
+import { verifyNativeCheckboxHosts } from './lib/native-checkbox-hosts.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
@@ -42,7 +44,23 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
   // its bespoke detail controls with the existing shared property/control primitives consumes
   // 251,806 bytes while retaining the same 1,882-module / one-static-chunk graph; keep deliberate
   // repair headroom without hiding another dependency-surface jump.
-  initialGzipBytes: 253_000,
+  // WB-ST-001 baseline is 252,980 bytes; exception-safe cleanup adds 31 gzip bytes
+  // with unchanged CSS, static assets and one initial chunk. Admit 64 bytes for
+  // this bounded correctness repair; retain the dependency/CSS boundary checks.
+  // WB-ST-018/019: native editing boundaries and Tab dismissal raise 253,019 to
+  // 253,169 bytes with the same 2,290 transformed modules and existing CSS graph.
+  // Independently reviewed bounded allowance; retain all closure/CSS checks.
+  // See docs/northstar/context-editing-ux.md (packed-size review).
+  // WB-ST-020B: resource URI identity and legacy editor-state migration add 270
+  // gzip bytes (253,169 -> 253,439), with unchanged modules, CSS and static assets.
+  // Independently reviewed bounded allowance; see explorer-resource-uri-repair.md.
+  // WB-ST-021..025: editor attempts, persistence admission, canonical identity,
+  // Unicode validity and draft protection add 847 gzip bytes (253,439 -> 254,286).
+  // Source e83d809f retains the CSS asset and package/dependency manifests;
+  // resource and Unicode helpers enter the graph (2,290 -> 2,292 modules). Admit 881 bytes
+  // above the prior measured baseline, retaining 34 bytes of deliberate headroom.
+  // See docs/northstar/logic-stabilization-verification.md; all closure checks remain.
+  initialGzipBytes: 254_320,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.
@@ -358,6 +376,27 @@ try {
   );
 
   const coreMetrics = verifyOutput();
+
+  await verifyPackedDataOperations();
+  await verifyPackedRemapHistory();
+  await verifyPackedNativeTextInput();
+  await verifyPackedNativeCheckbox();
+  const nativeInputHosts = await verifyNativeInputHosts({
+    repoRoot,
+    platformRoot: packagePath(nodeModulesDir, '@workbench-kit/platform'),
+    outputDir: path.join(consumerDir, 'native-input-hosts'),
+  });
+  console.log(
+    `[check-packed-consumer] native input hosts OK (${nativeInputHosts.hosts.map(({ host, cases }) => `${host}: ${cases.length}`).join(', ')}; SHA-256 ${nativeInputHosts.artifactSha256}).`,
+  );
+  const nativeCheckboxHosts = await verifyNativeCheckboxHosts({
+    repoRoot,
+    platformRoot: packagePath(nodeModulesDir, '@workbench-kit/platform'),
+    outputDir: path.join(consumerDir, 'native-checkbox-hosts'),
+  });
+  console.log(
+    `[check-packed-consumer] native checkbox hosts OK (${nativeCheckboxHosts.hosts.map(({ host, cases }) => `${host}: ${cases.length}`).join(', ')}; SHA-256 ${nativeCheckboxHosts.artifactSha256}).`,
+  );
 
   buildFocusedConsumer('focused-command-host-controller');
   verifyFocusedCommandHostControllerOutput();
@@ -796,7 +835,15 @@ import type {
   WorkbenchSettingsCapabilityPublisher,
   FieldRemapPreviewState as FieldRemapRootPreviewState,
   FieldRemapSelection as FieldRemapRootSelection,
+  FieldRemapHistorySnapshot as FieldRemapShellHistorySnapshot,
 } from '@workbench-kit/shell-react';
+import type { FieldRemapHistorySnapshot as FieldRemapDomainHistorySnapshot } from '@workbench-kit/field-remap/history';
+type AssertHistoryCompatibility<T extends true> = T;
+export type PackedHistoryCompatibility = AssertHistoryCompatibility<
+  FieldRemapShellHistorySnapshot extends FieldRemapDomainHistorySnapshot
+    ? FieldRemapDomainHistorySnapshot extends FieldRemapShellHistorySnapshot ? true : false
+    : false
+>;
 import {
   FieldRemapFlowMapper,
   type FieldRemapDraftTransform,
@@ -4288,6 +4335,332 @@ function writeFocusedViteConfig(name, input, outputDirectory, nodeExecutable = f
 };
 `,
   );
+}
+
+async function verifyPackedDataOperations() {
+  const name = 'data-operations';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `import type { DataOperationDefinition, DataOperationRunner } from '@workbench-kit/contracts';
+import { createDataOperationRunner } from '@workbench-kit/runtime/data-operations';
+import { createBuiltinTextDataOperations } from '@workbench-kit/field-remap/data-operations';
+import { createJsonParseDataOperation } from '@workbench-kit/field-remap/json-data-operations';
+import { createUtf8DecodeDataOperation } from '@workbench-kit/field-remap/utf8-data-operations';
+const definitions: readonly DataOperationDefinition[] = createBuiltinTextDataOperations();
+const runner: DataOperationRunner = createDataOperationRunner(definitions);
+const ref = { id: 'string:trim', version: 1 };
+const valid = await runner.run(ref, '  Ada  ', { maxInvocations: 1 });
+if (!valid.ok || valid.value !== 'Ada') throw new Error('Packed strict operation failed');
+const invalid = await runner.run(ref, 42, { maxInvocations: 1 });
+if (invalid.ok || invalid.diagnostic.code !== 'invalid-input') throw new Error('Packed input admission failed');
+const wrongVersion = await runner.run({ ...ref, version: 2 }, 'Ada', { maxInvocations: 1 });
+if (wrongVersion.ok || wrongVersion.diagnostic.code !== 'unknown-operation') throw new Error('Packed exact ref failed');
+const parser = createDataOperationRunner([createJsonParseDataOperation({ maxInputCharacters: 32 })]);
+const jsonRef = { id: 'json:parse', version: 1 };
+const parsed = await parser.run(jsonRef, '[null,1,"text"]', { maxInvocations: 1 });
+if (!parsed.ok || JSON.stringify(parsed.value) !== '[null,1,"text"]') throw new Error('Packed JSON parse failed');
+const tooLarge = await parser.run(jsonRef, ' '.repeat(33), { maxInvocations: 1 });
+if (tooLarge.ok || tooLarge.diagnostic.code !== 'invalid-input') throw new Error('Packed JSON size admission failed');
+const malformed = await parser.run(jsonRef, '{', { maxInvocations: 1 });
+if (malformed.ok || malformed.diagnostic.code !== 'execution-failed' || !(malformed.cause instanceof SyntaxError)) throw new Error('Packed JSON syntax cause failed');
+const decode = createUtf8DecodeDataOperation({ maxInputBytes: 32, bom: 'strip' });
+const composed = createDataOperationRunner([
+  decode,
+  createJsonParseDataOperation({ maxInputCharacters: 32 }),
+  {
+    ref: { id: 'fixture:decode-json', version: 1 },
+    acceptsInput: () => true,
+    acceptsOutput: Array.isArray,
+    execute: async (input, context) => context.invoke(jsonRef,
+      await context.invoke(decode.ref, input, 'decode'), 'parse'),
+  },
+]);
+const decoded = await composed.run({ id: 'fixture:decode-json', version: 1 },
+  new Uint8Array([0xef, 0xbb, 0xbf, 0x5b, 0x31, 0x5d]), { maxInvocations: 3 });
+if (!decoded.ok || JSON.stringify(decoded.value) !== '[1]') throw new Error('Packed decode to JSON failed');
+const malformedBytes = await composed.run(decode.ref, new Uint8Array([0xc0, 0xaf]), { maxInvocations: 1 });
+if (malformedBytes.ok || malformedBytes.diagnostic.code !== 'execution-failed' || !(malformedBytes.cause instanceof TypeError)) throw new Error('Packed UTF-8 fatal cause failed');
+const oversizedBytes = await composed.run(decode.ref, new Uint8Array(33), { maxInvocations: 1 });
+if (oversizedBytes.ok || oversizedBytes.diagnostic.code !== 'invalid-input') throw new Error('Packed UTF-8 size admission failed');
+if (typeof document !== 'undefined') throw new Error('Expected headless execution');
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (!Array.isArray(modules) || modules.length === 0) {
+    throw new Error('Data operations emitted no dependency graph evidence');
+  }
+  if (modules.some((id) => /\/(react|react-dom|monaco-editor)\//.test(id.replaceAll('\\', '/')))) {
+    throw new Error('Data operations pulled a UI dependency');
+  }
+  const manifest = readJson(path.join(output, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((item) => item.isEntry);
+  if (!entry?.file || entry.css?.length) throw new Error('Invalid headless data operation bundle');
+  await import(pathToFileURL(path.join(output, entry.file)).href);
+  console.log('[check-packed-consumer] data operations headless runtime and public types OK.');
+}
+
+async function verifyPackedRemapHistory() {
+  const name = 'remap-history';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `
+import {
+  createFieldRemapHistorySnapshot, createFieldRemapHistoryState,
+  areFieldRemapHistorySnapshotsEqual, recordFieldRemapHistory,
+  undoFieldRemapHistory, redoFieldRemapHistory,
+  type FieldRemapHistorySnapshot, type FieldRemapHistoryState,
+} from '@workbench-kit/field-remap/history';
+const edge: FieldRemapHistorySnapshot['edges'][number] = {
+  id: 'edge', sourceFieldId: 'source', targetSlotId: 'target',
+};
+const operator: FieldRemapHistorySnapshot['operators'][number] = {
+  kind: 'combine', id: 'operator', inputFieldIds: ['source'], outputSlotId: 'target',
+};
+const empty = createFieldRemapHistorySnapshot([], []);
+const edited = createFieldRemapHistorySnapshot([edge], [operator]);
+const initial: FieldRemapHistoryState = createFieldRemapHistoryState();
+if (undoFieldRemapHistory(initial, empty) !== null) throw new Error('Empty history changed');
+const recorded = recordFieldRemapHistory(initial, empty, edited);
+const undone = undoFieldRemapHistory(recorded, edited);
+if (!undone || !areFieldRemapHistorySnapshotsEqual(undone.snapshot, empty)) throw new Error('Headless undo failed');
+const redone = redoFieldRemapHistory(undone.state, undone.snapshot);
+if (!redone || redone.snapshot.edges[0] !== edge || redone.snapshot.operators[0] !== operator) throw new Error('Headless redo lost items');
+if (!Object.isFrozen(redone.snapshot.edges) || initial.past.length !== 0) throw new Error('History mutated its inputs');
+const same = recordFieldRemapHistory(undone.state, empty, createFieldRemapHistorySnapshot([], []));
+if (same !== undone.state || same.future.length !== 1) throw new Error('No-op discarded redo');
+if (typeof document !== 'undefined') throw new Error('History consumer requires headless execution');
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (
+    !Array.isArray(modules) ||
+    !modules.some((id) => id.replaceAll('\\', '/').endsWith('/field-remap/src/history.ts'))
+  ) {
+    throw new Error('Headless history emitted no implementation evidence');
+  }
+  if (
+    modules.some(
+      (id) =>
+        /\/(react|react-dom|shell-react|workbench-core|jdw|monaco|monaco-editor|@xyflow)\//.test(
+          id.replaceAll('\\', '/'),
+        ) || /\.css(?:\?|$)/.test(id),
+    )
+  ) {
+    throw new Error('Headless history pulled a UI or shell dependency');
+  }
+  const manifest = readJson(path.join(output, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((item) => item.isEntry);
+  if (!entry?.file || entry.css?.length) throw new Error('Invalid headless history bundle');
+  await import(pathToFileURL(path.join(output, entry.file)).href);
+  console.log('[check-packed-consumer] Remap history headless runtime and public types OK.');
+}
+
+async function verifyPackedNativeCheckbox() {
+  const name = 'native-checkbox';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `
+import { bindNativeCheckbox, type NativeCheckboxBinding, type NativeCheckboxEdit } from '@workbench-kit/platform/native-checkbox';
+if (typeof bindNativeCheckbox !== 'function') throw new Error('Missing native checkbox export');
+if (typeof document === 'undefined') {
+  let rejected = false;
+  try { bindNativeCheckbox(null as unknown as HTMLInputElement, () => {}); }
+  catch (error) { rejected = error instanceof TypeError; }
+  if (!rejected) throw new Error('Headless admission did not reject without accessing missing DOM globals');
+} else {
+  const form = document.createElement('form');
+  const control = document.createElement('input');
+  control.type = 'checkbox'; control.name = 'sample'; control.defaultChecked = true;
+  form.append(control); document.body.append(form);
+  const edits: NativeCheckboxEdit[] = [];
+  const binding: NativeCheckboxBinding = bindNativeCheckbox(control, (edit) => edits.push(edit));
+  if (!binding.setChecked(false) || !binding.setIndeterminate(true) || edits.length !== 0) throw new Error('Silent properties failed');
+  if (!control.defaultChecked || control.value !== 'on' || control.checked || !control.indeterminate) throw new Error('Checkbox properties conflated');
+  control.focus(); const EventType = document.defaultView!.Event;
+  const event = new EventType('change', { bubbles: true }); control.dispatchEvent(event);
+  if (Number(edits.length) !== 1 || edits[0]?.event !== event || edits[0]?.checked !== false || edits[0]?.indeterminate !== true) throw new Error('Original change snapshot lost');
+  form.reset();
+  if (!control.checked || !control.indeterminate || new document.defaultView!.FormData(form).get('sample') !== 'on' || Number(edits.length) !== 1) throw new Error('Reset/form behavior changed');
+  if (document.activeElement !== control) throw new Error('Focus moved');
+  binding.dispose(); binding.dispose();
+  control.dispatchEvent(event);
+  if (Number(edits.length) !== 1 || binding.setChecked(false) || binding.setIndeterminate(false)) throw new Error('Disposed binding still active');
+  const rebound = bindNativeCheckbox(control, (edit) => edits.push(edit));
+  binding.dispose(); control.dispatchEvent(event);
+  if (Number(edits.length) !== 2) throw new Error('Rebind callback lost or duplicated');
+  rebound.dispose(); form.remove();
+}
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (
+    !Array.isArray(modules) ||
+    !modules.some((id) =>
+      id.replaceAll('\\', '/').endsWith('/platform/dist/browser/native-checkbox.js'),
+    )
+  )
+    throw new Error('Native checkbox emitted no implementation evidence');
+  if (
+    modules.some((id) =>
+      /\/(react|react-dom|vue|svelte|monaco-editor|workbench-core|shell-react|json-widget)\//.test(
+        id.replaceAll('\\', '/'),
+      ),
+    )
+  )
+    throw new Error('Native checkbox pulled a framework or domain dependency');
+  const entry = Object.values(readJson(path.join(output, '.vite', 'manifest.json'))).find(
+    (item) => item.isEntry,
+  );
+  if (!entry?.file || entry.css?.length) throw new Error('Native checkbox pulled styling');
+  await import(`${pathToFileURL(path.join(output, entry.file)).href}?headless`);
+  await executeFocusedConsumer('native checkbox', output);
+}
+
+async function verifyPackedNativeTextInput() {
+  const name = 'native-text-input';
+  const input = path.join(consumerDir, 'src', `${name}.ts`);
+  const output = path.join(consumerDir, `dist-${name}`);
+  fs.writeFileSync(
+    input,
+    `
+import { bindNativeTextInput, type NativeTextInputBinding, type NativeTextInputEdit } from '@workbench-kit/platform/native-text-input';
+if (typeof bindNativeTextInput !== 'function') throw new Error('Missing native input export');
+if (typeof document !== 'undefined') {
+  const form = document.createElement('form');
+  const control = document.createElement('input');
+  control.type = 'text'; control.name = 'sample'; control.defaultValue = 'default';
+  form.append(control); document.body.append(form);
+  let edits = 0;
+  const binding: NativeTextInputBinding = bindNativeTextInput(control, (edit: NativeTextInputEdit) => {
+    if (edit.value !== control.value || edit.event.target !== control) throw new Error('Wrong edit value/event');
+    edits += 1;
+  });
+  if (!binding.setValue('remote') || edits !== 0) throw new Error('Programmatic value synthesized an edit');
+  control.focus(); control.setSelectionRange(1, 3);
+  binding.setValue('remote');
+  if (document.activeElement !== control || control.selectionStart !== 1 || control.selectionEnd !== 3) throw new Error('Focus/selection changed');
+  const EventType = document.defaultView!.Event;
+  control.value = 'typed'; control.dispatchEvent(new EventType('input', { bubbles: true }));
+  if (Number(edits) !== 1) throw new Error('Missing input edit');
+  form.reset();
+  if (String(control.value) !== 'default' || Number(edits) !== 1) throw new Error('Reset contract changed');
+  binding.dispose();
+  control.dispatchEvent(new EventType('input', { bubbles: true }));
+  if (Number(edits) !== 1 || binding.setValue('late')) throw new Error('Disposed binding remained active');
+  const rebound = bindNativeTextInput(control, () => { edits += 1; });
+  control.dispatchEvent(new EventType('input', { bubbles: true }));
+  if (Number(edits) !== 2) throw new Error('Rebinding duplicated callbacks');
+  rebound.dispose(); form.remove();
+}
+`,
+  );
+  runCommand(
+    'pnpm',
+    [
+      'exec',
+      'tsc',
+      '--module',
+      'ESNext',
+      '--moduleResolution',
+      'Bundler',
+      '--exactOptionalPropertyTypes',
+      '--noEmit',
+      '--skipLibCheck',
+      '--strict',
+      '--target',
+      'ES2022',
+      input,
+    ],
+    { cwd: repoRoot, stdio: 'inherit' },
+  );
+  writeFocusedViteConfig(name, input, output, true);
+  buildFocusedConsumer(name);
+  const modules = readJson(path.join(output, 'module-graph.json'));
+  if (
+    !Array.isArray(modules) ||
+    !modules.some((id) =>
+      id.replaceAll('\\', '/').endsWith('/platform/dist/browser/native-text-input.js'),
+    )
+  ) {
+    throw new Error('Native input emitted no implementation evidence');
+  }
+  if (modules.some((id) => /\/(react|react-dom|monaco-editor)\//.test(id.replaceAll('\\', '/')))) {
+    throw new Error('Native input pulled a framework dependency');
+  }
+  const manifest = readJson(path.join(output, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((item) => item.isEntry);
+  if (!entry?.file || entry.css?.length) throw new Error('Native input pulled styling');
+  await import(`${pathToFileURL(path.join(output, entry.file)).href}?headless`);
+  await executeFocusedConsumer('native input', output);
 }
 
 function buildFocusedConsumer(name) {

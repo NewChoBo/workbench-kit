@@ -20,9 +20,11 @@ interface WorkspaceCommandResult {
 
 export function createCommandWorkspaceExplorerPort({
   executeCommand,
+  reportError,
   workspaceState,
 }: {
   executeCommand(commandId: string, payload?: unknown): Promise<unknown>;
+  reportError?: (message: string) => void;
   workspaceState: VirtualWorkspaceState | undefined;
 }): WorkspaceExplorerControllerPort {
   const snapshot: WorkspaceExplorerWorkspaceSnapshot = {
@@ -39,10 +41,12 @@ export function createCommandWorkspaceExplorerPort({
       return runWorkspaceCommand(executeCommand, WORKBENCH_WORKSPACE_NEW_FOLDER_COMMAND_ID, input);
     },
     deleteEntries({ kind, paths }) {
-      void executeCommand(WORKBENCH_WORKSPACE_DELETE_COMMAND_ID, {
-        kind,
-        paths,
-      });
+      return (async () => {
+        await runWorkspaceCommand(executeCommand, WORKBENCH_WORKSPACE_DELETE_COMMAND_ID, {
+          kind,
+          paths,
+        });
+      })();
     },
     moveEntries(input) {
       return runWorkspaceCommand(executeCommand, BUILTIN_EXPLORER_MOVE_COMMAND_ID, {
@@ -51,15 +55,18 @@ export function createCommandWorkspaceExplorerPort({
       });
     },
     openFile(path) {
-      void executeCommand(WORKBENCH_WORKSPACE_OPEN_COMMAND_ID, {
-        kind: 'file',
-        path,
-        paths: [path],
-      });
+      return (async () => {
+        await runWorkspaceCommand(executeCommand, WORKBENCH_WORKSPACE_OPEN_COMMAND_ID, {
+          kind: 'file',
+          path,
+          paths: [path],
+        });
+      })();
     },
     renameEntry(input) {
       return runWorkspaceCommand(executeCommand, WORKBENCH_WORKSPACE_RENAME_COMMAND_ID, input);
     },
+    reportError,
   };
 }
 

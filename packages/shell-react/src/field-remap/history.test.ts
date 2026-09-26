@@ -1,5 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { MappingEdge, MappingOperator } from '@workbench-kit/field-remap';
+import * as headlessHistory from '@workbench-kit/field-remap/history';
+import * as shellHistory from './history.js';
 
 import {
   createFieldRemapHistorySnapshot,
@@ -33,6 +35,21 @@ const operatorB: MappingOperator = {
 };
 
 describe('Field Remap semantic history', () => {
+  it('re-exports every headless history function with identical identity', () => {
+    const names = [
+      'areFieldRemapHistorySnapshotsEqual',
+      'createFieldRemapHistorySnapshot',
+      'createFieldRemapHistoryState',
+      'recordFieldRemapHistory',
+      'redoFieldRemapHistory',
+      'undoFieldRemapHistory',
+    ] as const;
+    expect(Object.keys(shellHistory).sort()).toEqual([...names]);
+    for (const name of names) {
+      expect(shellHistory[name]).toBe(headlessHistory[name]);
+    }
+  });
+
   it('records a connect and restores it through undo and redo', () => {
     const empty = createFieldRemapHistorySnapshot([], []);
     const connected = createFieldRemapHistorySnapshot([edgeA], []);

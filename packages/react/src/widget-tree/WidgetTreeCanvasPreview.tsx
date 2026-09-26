@@ -1,4 +1,12 @@
-import { useMemo, useState, type DragEvent, type FocusEvent, type PointerEvent } from 'react';
+import {
+  useMemo,
+  useState,
+  type DragEvent,
+  type FocusEvent,
+  type KeyboardEvent,
+  type MouseEvent,
+  type PointerEvent,
+} from 'react';
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 import type { WidgetPlacementAsset } from '@workbench-kit/contracts';
 import {
@@ -42,6 +50,11 @@ import { JdwPreview } from '../jdw/JdwPreview.js';
 import { readWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
 import { canAddChildren, insertedWidgetPathForParent } from './widget-tree-layout.js';
 import type { WidgetTreeAssetDropOperation } from './WidgetTreeView.js';
+import {
+  isWidgetContextKey,
+  requestWidgetContextActions,
+  type WidgetContextActionRequest,
+} from './widget-context-actions.js';
 
 const RESIZE_HANDLE_POSITIONS = [
   'n',
@@ -67,6 +80,7 @@ export interface WidgetTreeCanvasPreviewProps {
   readonly onPatch: (patch: WidgetPatch) => boolean;
   readonly onPlaceAssetPath?: ((operation: WidgetTreeCanvasAssetDropOperation) => void) | undefined;
   readonly onSelectPath: (path: WidgetPath) => void;
+  readonly onRequestContextActions?: ((request: WidgetContextActionRequest) => void) | undefined;
 }
 
 export type WidgetTreeCanvasAssetDropOperation = WidgetTreeAssetDropOperation;
@@ -362,6 +376,7 @@ export function WidgetTreeCanvasPreview({
   onPatch,
   onPlaceAssetPath,
   onSelectPath,
+  onRequestContextActions,
 }: WidgetTreeCanvasPreviewProps) {
   const [assetDropTarget, setAssetDropTarget] = useState<WidgetTreeCanvasAssetDropTarget | null>(
     null,
@@ -612,6 +627,19 @@ export function WidgetTreeCanvasPreview({
     setFocusedPath(null);
   };
 
+  const handleContextRequest = (
+    event: MouseEvent<HTMLDivElement> | KeyboardEvent<HTMLDivElement>,
+  ) => {
+    if (!(event.target instanceof Element)) return;
+    const targetPath = widgetPathFromEventTarget(event.target);
+    if (!targetPath || !root || !getWidgetAtPath(root, targetPath)) return;
+    // Chrome frames share the path but cannot receive focus. Return to the actual rendered node.
+    const invoker = event.currentTarget.querySelector<HTMLElement>(
+      `[data-layout-node][data-widget-path="${widgetPathKey(targetPath)}"]`,
+    );
+    if (invoker) requestWidgetContextActions(event, targetPath, invoker, onRequestContextActions);
+  };
+
   return (
     <WorkbenchPreviewCanvas
       className="widget-tree-canvas-preview"
@@ -647,6 +675,10 @@ export function WidgetTreeCanvasPreview({
         onFocus={handlePreviewFocus}
         onPointerLeave={handlePreviewPointerLeave}
         onPointerMove={handlePreviewPointerMove}
+        onContextMenuCapture={handleContextRequest}
+        onKeyDownCapture={(event) => {
+          if (isWidgetContextKey(event)) handleContextRequest(event);
+        }}
       >
         <JdwPreview
           className="widget-tree-canvas-preview__render"

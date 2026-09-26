@@ -221,12 +221,14 @@ export const DEFAULT_EDITOR_HOST_FACTORY_ID = 'workbench-kit.editor-host.default
 
 export interface WorkbenchEditorSavePort {
   applySave(resourceUri: string, content: string): { readonly transactionId: string } | undefined;
+  canSaveResource?(resourceUri: string): boolean;
   resolveResource?(resourceUri: string): unknown;
 }
 
 export const WORKBENCH_EDITOR_SERVICE_CAPABILITY_ID = 'workbench.editorService' as const;
 
 export interface WorkbenchEditorServiceCapability {
+  getDirtyResourceUris?(): readonly string[];
   openEditor(input: {
     pinned?: boolean | undefined;
     preview?: boolean | undefined;

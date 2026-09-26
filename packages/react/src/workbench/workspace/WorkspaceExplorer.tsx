@@ -20,7 +20,9 @@ import {
 } from '@workbench-kit/workspace';
 import { SideBarList, SideBarListItem, useSidebarSectionBaseDepth } from '../../layout/sidebar';
 import { TextInput } from '../../primitives/text-input';
+import { IconButton } from '../../primitives/icon-button';
 import { cxCodicon } from '../../utils/codicon';
+import { shouldAllowNativeBrowserContextMenu } from '../commands/workbenchContextMenu';
 import { explorerTreeDepthStyle } from './explorer-tree-style';
 import { flattenWorkspaceTree } from './tree';
 import {
@@ -51,6 +53,14 @@ export interface WorkspaceExplorerItemActionMeta {
 
 export type WorkspaceExplorerItemContextMenuMeta = WorkspaceExplorerItemActionMeta;
 
+export interface WorkspaceExplorerItemContextMenuRequest {
+  readonly node: WorkspaceTreeNode;
+  readonly meta: WorkspaceExplorerItemContextMenuMeta;
+  readonly invoker: HTMLButtonElement;
+  readonly x: number;
+  readonly y: number;
+}
+
 export interface WorkspaceExplorerDragMetadataContext {
   event: DragEvent<HTMLButtonElement>;
   node: WorkspaceTreeNode;
@@ -80,6 +90,8 @@ export type WorkspaceExplorerInlineEditKind =
   'create-file' | 'create-folder' | 'rename-file' | 'rename-folder';
 
 export interface WorkspaceExplorerInlineEditState {
+  /** Incremented by the controller for each completed rejected commit attempt. */
+  commitAttempt?: number;
   error?: ReactNode;
   id?: string;
   kind: WorkspaceExplorerInlineEditKind;
@@ -114,6 +126,9 @@ export interface WorkspaceExplorerProps {
     node: WorkspaceTreeNode,
     meta: WorkspaceExplorerItemContextMenuMeta,
   ) => void;
+  /** Shared pointer, More and keyboard entry; takes precedence over the pointer-only callback. */
+  onRequestItemContextMenu?:
+    ((request: WorkspaceExplorerItemContextMenuRequest) => void) | undefined;
   onRequestDelete?: (meta: WorkspaceExplorerItemKeyboardActionMeta) => void;
   onRequestMove?: (meta: WorkspaceExplorerMoveRequestMeta) => void;
   onRequestRename?: (meta: WorkspaceExplorerItemKeyboardActionMeta) => void;
@@ -150,6 +165,7 @@ export function WorkspaceExplorer({
   onInlineEditCommit,
   onInlineEditValueChange,
   onItemContextMenu,
+  onRequestItemContextMenu,
   onRequestDelete,
   onRequestMove,
   onRequestRename,
@@ -162,6 +178,7 @@ export function WorkspaceExplorer({
 }: WorkspaceExplorerProps) {
   const sectionBaseDepth = useSidebarSectionBaseDepth();
   const draggedPathsRef = useRef<string[]>([]);
+  const rowRefs = useRef(new Map<string, HTMLButtonElement>());
   const inlineEditInputRef = useRef<HTMLInputElement>(null);
   const inlineEditCommitStartedRef = useRef(false);
   const [dropTargetPath, setDropTargetPath] = useState<string | null>(null);
@@ -203,11 +220,11 @@ export function WorkspaceExplorer({
   }, [inlineEditKey]);
 
   useEffect(() => {
-    // Validation failures keep the same draft id; allow Enter/blur retry after an error.
-    if (inlineEdit?.error) {
+    // Validation failures keep the same draft id; each completed rejection opens a retry gate.
+    if (inlineEdit?.commitAttempt !== undefined || inlineEdit?.error) {
       inlineEditCommitStartedRef.current = false;
     }
-  }, [inlineEdit?.error]);
+  }, [inlineEdit?.commitAttempt, inlineEdit?.error]);
 
   const selectFile = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
     const mode = resolveSelectionMode(event);
@@ -285,46 +302,63 @@ export function WorkspaceExplorer({
     };
   };
 
+  const focusContextTarget = (
+    node: WorkspaceTreeNode,
+    invoker: HTMLButtonElement,
+    event?: MouseEvent<HTMLButtonElement>,
+  ) => {
+    const meta = getItemActionMeta(node);
+    invoker.focus({ preventScroll: true });
+    onSelectionChange?.(meta.selection, {
+      ...(event ? { event } : {}),
+      mode: 'single',
+      node,
+      reason: 'context-menu',
+    });
+    return meta;
+  };
+
   const handleItemContextMenu = (event: MouseEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
+    if (shouldAllowNativeBrowserContextMenu(event.target)) return;
     // Keep item menus from bubbling to the list background handler.
     event.stopPropagation();
-    const meta = getItemActionMeta(node);
-
-    if (node.type === 'file' && !meta.selected) {
-      onSelectionChange?.(
-        {
-          ...meta.selection,
-          focusedPath: node.path,
-        },
-        {
-          event,
-          mode: 'single',
-          node,
-          reason: 'context-menu',
-        },
-      );
+    if (inlineEdit) {
+      event.preventDefault();
+      return;
     }
+    const invoker = event.currentTarget;
+    const meta = focusContextTarget(node, invoker, event);
+    if (onRequestItemContextMenu) {
+      event.preventDefault();
+      onRequestItemContextMenu({ node, meta, invoker, x: event.clientX, y: event.clientY });
+    } else onItemContextMenu?.(event, node, meta);
+  };
 
-    if (node.type === 'folder') {
-      onSelectionChange?.(
-        {
-          anchorPath: undefined,
-          focusedPath: node.path,
-          paths: [],
-        },
-        {
-          event,
-          mode: 'single',
-          node,
-          reason: 'context-menu',
-        },
-      );
-    }
+  const requestAnchoredContextMenu = (node: WorkspaceTreeNode, invoker: HTMLButtonElement) => {
+    if (!onRequestItemContextMenu || inlineEdit) return;
+    const { left, bottom } = invoker.getBoundingClientRect();
+    const meta = focusContextTarget(node, invoker);
+    onRequestItemContextMenu({ node, meta, invoker, x: left, y: bottom });
+  };
 
-    onItemContextMenu?.(event, node, meta);
+  const handleContextKeyDown = (
+    event: KeyboardEvent<HTMLButtonElement>,
+    node: WorkspaceTreeNode,
+  ) => {
+    if (
+      !onRequestItemContextMenu ||
+      !(event.key === 'ContextMenu' || (event.key === 'F10' && event.shiftKey)) ||
+      shouldAllowNativeBrowserContextMenu(event.target)
+    )
+      return false;
+    event.preventDefault();
+    event.stopPropagation();
+    requestAnchoredContextMenu(node, event.currentTarget);
+    return true;
   };
 
   const focusPath = (path: string, node: WorkspaceTreeNode | undefined) => {
+    rowRefs.current.get(path)?.focus();
     if (!onSelectionChange || !selectionFollowsFocus) {
       if (onSelectionChange) {
         onSelectionChange(
@@ -362,6 +396,7 @@ export function WorkspaceExplorer({
   };
 
   const handleItemKeyDown = (event: KeyboardEvent<HTMLButtonElement>, node: WorkspaceTreeNode) => {
+    if (handleContextKeyDown(event, node)) return;
     if (
       event.key === 'ArrowDown' ||
       event.key === 'ArrowUp' ||
@@ -602,12 +637,25 @@ export function WorkspaceExplorer({
       dropTarget={dropTargetPath === ''}
       role="tree"
       onContextMenu={(event) => {
+        if (shouldAllowNativeBrowserContextMenu(event.target)) return;
+        if (inlineEdit) {
+          event.preventDefault();
+          return;
+        }
         onBackgroundContextMenu?.(event);
       }}
       onDragLeave={(event) => handleDropTargetDragLeave(event, '')}
       onDragOver={(event) => handleDropTargetDragOver(event, '')}
       onDrop={(event) => handleDrop(event, '')}
       onMouseDown={(event) => {
+        if (
+          inlineEdit &&
+          event.button === 2 &&
+          !shouldAllowNativeBrowserContextMenu(event.target)
+        ) {
+          event.preventDefault();
+          return;
+        }
         if (event.target === event.currentTarget) {
           clearSelection();
         }
@@ -634,11 +682,27 @@ export function WorkspaceExplorer({
         ) : (
           <Fragment key={node.path}>
             <SideBarListItem
+              ref={(button) => {
+                if (button) rowRefs.current.set(node.path, button);
+                else rowRefs.current.delete(node.path);
+              }}
               active={activePath === node.path}
               after={
-                renderItemActions ? (
+                renderItemActions || onRequestItemContextMenu ? (
                   <span className="ui-workspace-explorer-item-actions">
-                    {renderItemActions(node, getItemActionMeta(node))}
+                    {renderItemActions?.(node, getItemActionMeta(node))}
+                    {onRequestItemContextMenu ? (
+                      <IconButton
+                        aria-haspopup="menu"
+                        compact
+                        disabled={Boolean(inlineEdit)}
+                        icon="codicon-ellipsis"
+                        label={`More actions for ${node.path}`}
+                        onClick={(event) => requestAnchoredContextMenu(node, event.currentTarget)}
+                        onContextMenu={(event) => handleItemContextMenu(event, node)}
+                        onKeyDown={(event) => handleContextKeyDown(event, node)}
+                      />
+                    ) : null}
                   </span>
                 ) : undefined
               }

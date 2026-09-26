@@ -1,103 +1,153 @@
 # Dependency Rules
 
-Dependency direction enforces a VS Code–like layering: UI-independent core at the bottom, React shell above, extensions at the edge. Violations are architectural defects and should be caught by lint or CI graph checks in later phases.
+The current package graph and the target architecture are different. The graph
+checker permits existing workbench, authoring and domain UI inside broad packages;
+a passing check does not establish independently installable primitives or a
+minimal shell. This document records the enforced baseline first, then the
+remaining separation work.
 
-## Allowed Dependencies
+## Current enforced package edges
 
-| Package                        | May depend on                                                                                                                 |
-| ------------------------------ | ----------------------------------------------------------------------------------------------------------------------------- |
-| `base`                         | _(nothing in-repo)_                                                                                                           |
-| `platform`                     | `base`                                                                                                                        |
-| `tokens`                       | _(no React; optional dev-only tooling)_                                                                                       |
-| `react`                        | `tokens`, `platform`, domain packages used by presentational surfaces; workspace-only demos use local helpers over services   |
-| `workbench-extension-sdk`      | `base`, `platform` (types and minimal utilities only)                                                                         |
-| `workbench-config`             | `base`, `platform`, schemas (as data)                                                                                         |
-| `workbench-core`               | `base`, `platform`, `workbench-extension-sdk`, `workbench-config`                                                             |
-| `shell-react`                  | `react`, `workbench-core`, `workbench-config`, `platform`, `tokens`, `workspace`; may host sample surfaces with `field-remap` |
-| `monaco`                       | `base`, `platform` (optional); may peer `react` for editor UI                                                                 |
-| Built-ins inside `shell-react` | `workbench-extension-sdk`, `platform`, `workspace`                                                                            |
-| Repository sample extensions   | `workbench-extension-sdk` (plus explicit sample dependencies)                                                                 |
-| `contracts`                    | _(nothing in-repo required; keep acyclic)_                                                                                    |
-| `services`                     | `contracts`                                                                                                                   |
-| `adapters`                     | `contracts`, `runtime`, `workspace`, optionally `jdw`                                                                         |
-| `runtime`                      | `contracts`                                                                                                                   |
-| `workspace`                    | _(minimal / none)_                                                                                                            |
-| `jdw` (`json-widget`)          | `contracts` (if needed)                                                                                                       |
-| `jdw-editor`                   | `jdw`, `react` (peer); owns the compile-once JDW template sample explorer                                                     |
-| `field-remap`                  | `contracts` (projection protocol types); field remap runtime (`convertToShape`, edges, ValueTransform registry)               |
+[`scripts/check-workbench-dependency-graph.mjs`](../../scripts/check-workbench-dependency-graph.mjs)
+is the source of truth for the allowlist. Names below omit `@workbench-kit/`.
+An allowed edge is permission, not evidence that the manifest declares it.
 
-### Extension Boundary
+| Package                   | Allowed Kit dependencies and source imports                                                                                |
+| ------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
+| `base`                    | None                                                                                                                       |
+| `platform`                | `base`                                                                                                                     |
+| `tokens`                  | None                                                                                                                       |
+| `workbench-extension-sdk` | `base`, `platform`                                                                                                         |
+| `workbench-config`        | `base`, `platform`                                                                                                         |
+| `workbench-core`          | `base`, `contracts`, `platform`, `workbench-config`, `workbench-extension-sdk`                                             |
+| `shell-react`             | `platform`, `react`, `field-remap`, `tokens`, `workbench-config`, `workbench-core`, `workbench-extension-sdk`, `workspace` |
+| `monaco`                  | `base`, `platform`                                                                                                         |
+| `electron-shell`          | None                                                                                                                       |
+| `contracts`               | None                                                                                                                       |
+| `runtime`                 | `contracts`                                                                                                                |
+| `workspace`               | None                                                                                                                       |
+| `services`                | `contracts`                                                                                                                |
+| `adapters`                | `contracts`, `runtime`, `workspace`                                                                                        |
+| `jdw` (`json-widget`)     | `contracts`                                                                                                                |
+| `jdw-editor`              | `jdw`, `react`                                                                                                             |
+| `field-remap`             | `contracts`                                                                                                                |
+| `react`                   | `adapters`, `contracts`, `jdw`, `monaco`, `platform`, `runtime`, `services`, `tokens`, `workbench-core`, `workspace`       |
+| `logging`                 | None; currently uses the checker's empty fallback rather than an explicit `packageRules` entry                             |
 
-- Extension **core** logic (activation, contribution builders) must depend on `workbench-extension-sdk` and optionally `platform` / `base`.
-- Extension UI may depend on `react` or host-provided render hooks, but must **not** depend directly on `shell-react`.
-- Host applications wire extension UI through registries and view contributions, not by importing shell internals.
+Manifest comparison:
 
-## Forbidden Dependencies
+- `workbench-config` and `monaco` currently declare no Kit runtime/peer/optional
+  dependencies despite their allowed `base`/`platform` edges. Other rows declare
+  their listed Kit edges as `dependencies`; rows with no allowed edges declare none.
+- `react` currently declares `workbench-core` as a dependency. Authoring projection
+  types in `packages/react/src/authoring` import its design-system contracts. This
+  edge is permitted today, not a currently enforced prohibition.
+- `shell-react` declares `field-remap` as a dependency and publicly exports
+  `./field-remap`. Its editor host also imports `FieldRemapEditorSurface`; this is
+  shipped composition, not solely an unpublished demo.
+- `jdw-editor` declares **Kit** `react` as a dependency and third-party `react` as
+  a peer. `monaco` declares third-party `@monaco-editor/react` and `monaco-editor`
+  dependencies plus `react`/`react-dom` peers. The graph checker does not classify
+  those third-party edges.
+- `adapters` may not import or declare Kit `jdw` under the current allowlist.
 
-| Rule                                                       | Rationale                                             |
-| ---------------------------------------------------------- | ----------------------------------------------------- |
-| `base` must not depend on React                            | Keeps foundation usable in non-React hosts            |
-| `platform` must not depend on React                        | Platform services are UI-framework neutral            |
-| `workbench-core` must not depend on React                  | Core registries and layout engine stay portable       |
-| `react` must not depend on `workbench-core`                | Primitives stay usable outside the full workbench     |
-| `workbench-extension-sdk` must not depend on `shell-react` | Extensions must not couple to shell implementation    |
-| Extension core must not depend directly on `shell-react`   | Prevents hidden shell coupling; use SDK contributions |
-| `tokens` must not depend on React                          | Tokens are style-only                                 |
-| `workbench-core` must not depend on `shell-react`          | Shell depends on core, not the reverse                |
-| Extensions must not import private paths of other packages | Use public exports and SDK types only                 |
+Repository sample extensions share this Kit allowlist: `base`, `platform`,
+`react`, `workbench-core`, `workbench-extension-sdk`, `workspace`. The checker does
+not distinguish extension core from extension UI. For example, the hello-world
+sample currently declares both `workbench-core` and `workbench-extension-sdk`.
+Built-ins inside `shell-react` use the enclosing package's rules rather than a
+separate built-in allowlist. Neither extension packages nor the SDK may depend on
+`shell-react` through the checked Kit edges.
 
-## Dependency Graph (high level)
+## What the gate checks
 
-```
-sample extensions ──► workbench-extension-sdk ──► platform ──► base
-                              ▲
-shell-react (built-ins) ──► react ──► tokens
-       │              │
-       └──────► workbench-core ──► workbench-config
-```
+Run `pnpm check:dependency-graph`. It is part of `validate:static`, and therefore
+also `validate:fast` and `validate`.
 
-## Workspace and Versioning
+- For immediate package directories under `packages/*` and `extensions/*`, check
+  Kit names in `dependencies`, `peerDependencies` and `optionalDependencies`
+  against the allowlist. `devDependencies` are not checked as manifest edges.
+- Scan JavaScript/TypeScript files under each package's `src`, including tests and
+  stories, for literal import/export declarations and literal dynamic imports.
+  Type-only import declarations follow the same package rule.
+- Reject public packages with runtime, peer or optional dependencies on private
+  packages found under `packages/*`; the private-dependency exception map is empty.
+- Reject cycles among packages under `packages/*`, using the union of their Kit
+  runtime, peer and optional manifest edges. This is not a source-import cycle or
+  extension-manifest cycle analysis.
+- Reject the removed `@workbench-kit/core` alias explicitly. Other removed bridge
+  packages are absent from all allowlists.
 
-- Use `workspace:*` for in-repo package references during development.
-- Published packages will use semver ranges on `@workbench-kit/*` peers.
-- Circular workspace dependencies are forbidden; resolution must fail at install or CI time.
+Scope limits matter: the scanner reduces Kit subpaths to their package name. It
+does not validate each subpath against public exports, check relative cross-package
+imports, resolve computed imports or CommonJS `require`, or police third-party
+React/Node imports. A manifest allowlist check also does not prove that every
+source import has a correctly declared runtime or peer dependency. Keep public
+export, packed-consumer and framework-independence checks alongside this gate.
 
-## Enforcement
+## Target: independent primitives and optional feature UI
 
-M5 adds `scripts/check-workbench-dependency-graph.mjs`, run directly or through the root validate script:
+Foundation, platform services and workbench core should remain usable without
+React. Primitives should need neither workbench-core registries nor a shell
+provider. Extension core should use SDK contracts and minimal platform utilities;
+extension UI should enter through public contributions, not shell internals.
+These are architectural responsibilities. The package-level gate enforces their
+Kit directions where the current allowlist permits it; it does not fully enforce
+third-party framework independence or boundaries inside the broad `react` package.
 
-```powershell
-node ./scripts/check-workbench-dependency-graph.mjs
-```
+The following current edges are separation debt, not proof that the target has
+been achieved:
 
-The script checks package dependencies and TypeScript import/export edges for
-`packages/*` and repository-only sample `extensions/*`, and rejects public packages that runtime- or
-peer-depend on private workspace packages. It also rejects runtime workspace
-dependency cycles. It is wired into `pnpm validate`. Future work may replace or
-augment it with `dependency-cruiser` or ESLint restricted-path rules.
+| Current coupling                                                                                          | Intended separation                                                                                                                            | Condition for removing the broad allowance                                                                                                                                                                                                                                                                                                            |
+| --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `react` groups primitives, workbench UI, authoring, JDW and editor integration, with ten Kit dependencies | Give primitives a minimal installable boundary; place workbench/authoring/domain/editor composition behind separately owned feature boundaries | Move the corresponding public exports, imports and consumers to their owners; verify standalone primitive installation and packed imports without core/shell/domain dependencies. Remove each obsolete manifest edge and allowlist permission together after its last use is gone. A subpath alone does not remove package installation dependencies. |
+| `shell-react` ships Field Remap UI and its editor route                                                   | Keep Mapping UI independently consumable; let shell composition opt into a feature through a public contribution boundary                      | Move the Mapping UI exports and editor integration out of the mandatory shell closure, migrate consumers, and verify Mapping without the shell and the shell without Mapping. Then remove the shell's `field-remap` dependency and allowlist edge.                                                                                                    |
 
-Extension manifests have a separate validation gate:
+The existing focused native text-input browser artifact is evidence for that one
+control across hosts. It does not complete React package separation, portable
+styling or all primitive controls. Focused bundle checks and tree shaking likewise
+do not establish a minimal installation dependency set.
 
-```powershell
-pnpm check:extension-manifests
-```
+Do not expand a broad allowance simply because it already exists. New work needs
+a named owner, a bounded public contract and standalone verification. Separation
+must preserve existing contracts until their consumers have migrated; this
+document does not remove a public export or authorize an unplanned package split.
 
-The manifest gate rejects duplicate extension IDs, malformed identity/engine
-fields, unknown hard dependencies, hard dependency cycles, invalid local
-extension package metadata, and extension packs that reference unknown local
-extensions. It is wired into `pnpm validate`, and the extension bundle script
-runs the same check before writing generated bundle data.
+## Workspace, publishing and consumer verification
 
-`@workbench-kit/react` must not keep a runtime or dev dependency on removed VS
-Code bridge packages. Storybook demo sources should use local helpers over
-`@workbench-kit/services` and public platform contracts.
+Use `workspace:*` for internal development references. Current Kit relationships
+are primarily dependencies, not an all-peer model. Packing rewrites workspace
+references; the packed cohort gate requires every Kit dependency, optional
+dependency and peer reference to match the exact cohort version and rejects
+remaining `workspace:` references or unpublished Kit names. External peers retain
+their separately declared ranges.
 
-## Target State: No Legacy Compatibility Packages
+The default packed-consumer gate freshly builds and packs the publish set, then
+extracts tarballs into an external fixture. Its third-party dependencies are
+linked from the existing repository installation. This verifies real package
+contents, public consumption and selected bundle boundaries, but does not itself
+perform a fresh consumer dependency resolution/install.
 
-New code must not depend on `@workbench-kit/core`, `@workbench-kit/vscode-host`,
-`@workbench-kit/vscode-extension`, or `@workbench-kit/workbench-vscode-adapter`.
-The command/context APIs live in `@workbench-kit/platform`; Storybook demo
-service wiring uses local helpers over `@workbench-kit/services`.
+The separate `pnpm check:packed-shell-react-context` command creates a consumer
+lockfile offline, guards it against the repository lock, and performs an offline
+frozen install of the tarball cohort before its browser cases. It is not currently
+called by `validate:static` or the CI validation command. This narrower optional
+lane does not make clean consumer installation a mandatory gate for every package
+or prove a cold-cache registry install.
+
+## Other boundaries
+
+Use only public package exports and SDK types across package boundaries. New code
+must not depend on `@workbench-kit/core`, `@workbench-kit/vscode-host`,
+`@workbench-kit/vscode-extension` or `@workbench-kit/workbench-vscode-adapter`.
+The command/context APIs live in `@workbench-kit/platform`; Storybook demo service
+wiring uses local helpers over `@workbench-kit/services`. Do not reintroduce removed
+bridge packages as dev dependencies; that policy requires review because the graph
+checker's manifest scan excludes dev dependencies.
+
+`pnpm check:extension-manifests` separately checks extension IDs, identity/engine
+fields, hard dependencies and cycles, local extension metadata and extension-pack
+references. The extension bundler runs that check before generating its output.
 
 ## Related Documents
 

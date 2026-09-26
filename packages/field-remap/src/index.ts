@@ -1,3 +1,5 @@
+export { createBuiltinTextDataOperations } from './registry/builtinDataOperations.js';
+
 export type {
   ClassRef,
   CombineMappingOperator,

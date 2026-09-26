@@ -302,6 +302,7 @@
 }
 
 .workbench-management-card__details {
+  overflow-wrap: anywhere;
   display: grid;
   gap: 8px;
   margin: 0;

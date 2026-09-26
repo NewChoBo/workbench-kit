@@ -70,6 +70,7 @@ export async function applyTransformChain(
         : context;
     current = await registry.apply(ids[index]!, current, stepContext);
   }
+  throwIfAborted(context.signal);
   return current;
 }
 

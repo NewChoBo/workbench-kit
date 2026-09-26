@@ -267,6 +267,10 @@ adapters remain appropriate only for small JSON documents in browser hosts.
 `createAllowlistedHttpsFetch({ allowedHosts, fetch?, createPolicyError? })` rejects non-`https:`
 URLs and non-allowlisted hostnames. The optional callback maps those policy errors without
 changing validation; kit does not ship concrete API host catalogs or product copy.
+The wrapper forces `redirect: 'error'`, including same-host redirects and explicit
+Request/init follow or manual modes. Call the final allowed URL directly when an
+endpoint redirects. Injected fetch implementations must honor that policy;
+redirect failures retain the transport error instead of a new policy-error code.
 
 **Tray-aware close / quit policy (implemented API):** Hosts own tray icons, menus, and
 preference UI. `@workbench-kit/platform` exposes pure decision helpers (no Electron imports):

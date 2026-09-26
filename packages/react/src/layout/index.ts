@@ -151,6 +151,13 @@ export { WorkbenchMediaPreviewViewport } from './WorkbenchMediaPreviewViewport';
 export type { WorkbenchMediaPreviewViewportProps } from './WorkbenchMediaPreviewViewport';
 export { WorkbenchPreviewCanvas } from './WorkbenchCanvas';
 export type { WorkbenchPreviewCanvasProps } from './WorkbenchCanvas';
+export { WorkbenchCanvasFrameHandle } from './WorkbenchCanvas';
+export type { WorkbenchCanvasFrameHandleProps } from './WorkbenchCanvas';
+export { WorkbenchInteractionSurface } from './WorkbenchInteractionSurface';
+export type {
+  WorkbenchInteractionSurfaceProps,
+  WorkbenchInteractionEffect,
+} from './WorkbenchInteractionSurface';
 export {
   clampPreviewViewportZoom,
   computePreviewViewportFitScale,

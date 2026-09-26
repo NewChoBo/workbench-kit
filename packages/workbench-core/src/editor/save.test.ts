@@ -104,4 +104,24 @@ describe('saveActiveEditor', () => {
     expect(saveActiveEditor({ editorSavePort, editorService })).toEqual({ saved: false });
     expect(editorSavePort.transactionIds).toHaveLength(0);
   });
+
+  it('does not save a missing or host-rejected dirty resource', () => {
+    const editorSavePort = createRecordingSavePort([{ content: 'original', path: 'src/App.tsx' }]);
+    editorSavePort.canSaveResource = () => false;
+    const editorService = createEditorService({
+      editorHostFactories: createEditorHostFactoryRegistry(),
+    });
+    const tab = editorService.openEditor({
+      dirty: true,
+      editorId: 'workbench.editor.text',
+      pinned: true,
+      resourceUri: 'workspace://file/src/App.tsx',
+    });
+
+    expect(saveActiveEditor({ editorSavePort, editorService })).toEqual({
+      resourceUri: tab.resourceUri,
+      saved: false,
+    });
+    expect(editorSavePort.transactionIds).toHaveLength(0);
+  });
 });

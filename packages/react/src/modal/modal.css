@@ -10,6 +10,7 @@
 }
 
 .ui-modal {
+  box-sizing: border-box;
   position: fixed;
   margin: 0;
   width: var(--ui-modal-width, 640px);

@@ -12,6 +12,7 @@ Existing `docs/architecture`, `docs/workbench`, source code, tests, pull request
 - [`host-capability-boundary.md`](./host-capability-boundary.md) — confirmed focused host/renderer capability boundary and the evidence gate for future generic capability APIs
 - [`extension-composition-boundary.md`](./extension-composition-boundary.md) — confirmed host-composition vs runtime-extension plane separation, compatibility-facade migration, and isolation discovery decision
 - [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md) — atomic UI composition, typed property/value nodes, manual-first visual authoring, optional generative UI, AI-assisted component/node development, and external node ecosystem interoperability
+- [`component-rendering-contract.md`](./component-rendering-contract.md) — source-backed descriptor/renderer gaps, shared rendering semantics, Preview/runtime conformance, Web Components delivery relationship, and the design-only rendering prerequisite
 - [`layout-and-style-authoring.md`](./layout-and-style-authoring.md) — user-selectable layout strategies, typed CSS-compatible style values, design tokens/resources, responsive variants, Inspector/direct-manipulation parity, and optional AI parity
 - [`design-system-packs.md`](./design-system-packs.md) — installable/versioned DesignSystemPack, runtime Theme/ThemeScope resolution, semantic versus pack-specific component identity, explicit pack migration transactions, trust and compatibility migration
 

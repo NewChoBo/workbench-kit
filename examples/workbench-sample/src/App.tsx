@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
+import type { SampleHostBackendClient } from '@workbench-kit/contracts';
 import { Badge, IconButton } from '@workbench-kit/react/primitives';
 import {
   resolveActiveThemePreset,
@@ -89,10 +90,11 @@ const workspaceHostPort = createWorkbenchWorkspaceHostPort();
  * one assembly path; keep exporting `App` for CSF `component` typing.
  */
 export interface AppProps {
+  readonly backendClient?: SampleHostBackendClient | undefined;
   readonly devtools?: boolean | undefined;
 }
 
-export function App({ devtools = false }: AppProps) {
+export function App({ backendClient, devtools = false }: AppProps) {
   const [appearance, setAppearance] = usePersistedWorkbenchAppearance();
   const [permissionRoleOverride, setPermissionRoleOverride] =
     useState<SamplePermissionRoleOverride>(() => readPersistedSamplePermissionRoleOverride());
@@ -102,7 +104,7 @@ export function App({ devtools = false }: AppProps) {
   }, [permissionRoleOverride]);
 
   return (
-    <SampleAuthShell appearance={appearance}>
+    <SampleAuthShell appearance={appearance} backendClient={backendClient}>
       <SampleAuthenticatedWorkbench
         appearance={appearance}
         devtools={devtools}
@@ -381,7 +383,13 @@ function SampleWorkbenchHost({
         }
       }}
       profile={profile}
-      profileExtraContent={permissionRoleProfileExtra}
+      profileExtraContent={
+        <>
+          {auth.busy ? <p role="status">Updating sample session...</p> : null}
+          {auth.error ? <p role="alert">{auth.error}</p> : null}
+          {permissionRoleProfileExtra}
+        </>
+      }
       rootClassName="ide-root"
       statusSections={statusSections}
       theme={appearance.themePreference}

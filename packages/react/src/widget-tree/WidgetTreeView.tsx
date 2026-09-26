@@ -16,8 +16,14 @@ import {
 
 import { Panel, PanelBody } from '../layout/panel';
 import { EmptyState } from '../primitives/empty-state';
+import { IconButton } from '../primitives/icon-button';
 import { cx } from '../utils/cx';
 import { readWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
+import {
+  isWidgetContextKey,
+  requestWidgetContextActions,
+  type WidgetContextActionRequest,
+} from './widget-context-actions.js';
 import {
   canAddChildren,
   formatWidgetPlacementMeta,
@@ -33,6 +39,7 @@ export interface WidgetTreeViewProps {
   readonly onDeletePath?: ((path: WidgetPath) => void) | undefined;
   readonly onMovePath?: ((operation: WidgetTreeMoveOperation) => void) | undefined;
   readonly onPlaceAssetPath?: ((operation: WidgetTreeAssetDropOperation) => void) | undefined;
+  readonly onRequestContextActions?: ((request: WidgetContextActionRequest) => void) | undefined;
 }
 
 export function isWidgetTreeActivateKey(key: string): boolean {
@@ -438,6 +445,7 @@ export function WidgetTreeView({
   onDeletePath,
   onMovePath,
   onPlaceAssetPath,
+  onRequestContextActions,
 }: WidgetTreeViewProps) {
   const nodes = useMemo(() => (root ? collectWidgetNodes(root) : []), [root]);
   const selectedPath = selection ? firstSelectedWidgetPath(selection) : null;
@@ -746,6 +754,30 @@ export function WidgetTreeView({
                   onDragOver={(event) => handleDragOver(event, node)}
                   onDragStart={(event) => handleDragStart(event, node.path)}
                   onDrop={(event) => handleDrop(event, node)}
+                  onContextMenu={(event) => {
+                    const invoker = treeButtonRefs.current.get(pathKey);
+                    if (invoker)
+                      requestWidgetContextActions(
+                        event,
+                        node.path,
+                        invoker,
+                        onRequestContextActions,
+                      );
+                  }}
+                  onKeyDown={(event) => {
+                    if (!isWidgetContextKey(event)) return;
+                    const invoker =
+                      event.target instanceof HTMLElement
+                        ? event.target
+                        : treeButtonRefs.current.get(pathKey);
+                    if (invoker)
+                      requestWidgetContextActions(
+                        event,
+                        node.path,
+                        invoker,
+                        onRequestContextActions,
+                      );
+                  }}
                 >
                   {hasChildren ? (
                     <button
@@ -786,6 +818,46 @@ export function WidgetTreeView({
                       <span className="widget-tree-outline__meta">{textPreview}</span>
                     ) : null}
                   </button>
+                  {onRequestContextActions ? (
+                    <IconButton
+                      aria-haspopup="menu"
+                      className="widget-tree-outline__actions"
+                      compact
+                      data-testid={`widget-tree-actions-${pathKey}`}
+                      icon="codicon-ellipsis"
+                      label={`More actions for ${displayLabel}`}
+                      onKeyDown={(event) => {
+                        // This button is a menu entry, not the selected tree row's keyboard target.
+                        if (
+                          [
+                            'Enter',
+                            ' ',
+                            'Delete',
+                            'Backspace',
+                            'ArrowUp',
+                            'ArrowDown',
+                            'ArrowLeft',
+                            'ArrowRight',
+                            'Home',
+                            'End',
+                          ].includes(event.key)
+                        )
+                          event.stopPropagation();
+                      }}
+                      onClick={(event) => {
+                        event.stopPropagation();
+                        const invoker = event.currentTarget;
+                        const rect = invoker.getBoundingClientRect();
+                        invoker.focus({ preventScroll: true });
+                        onRequestContextActions({
+                          path: node.path,
+                          invoker,
+                          x: rect.left,
+                          y: rect.bottom,
+                        });
+                      }}
+                    />
+                  ) : null}
                 </li>
               );
             })}

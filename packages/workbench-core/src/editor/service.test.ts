@@ -29,6 +29,277 @@ describe('EditorResolverRegistry', () => {
 });
 
 describe('EditorService', () => {
+  it('normalizes aliases before open lookup and stores one canonical tab', () => {
+    const editorResolvers = createEditorResolverRegistry();
+    editorResolvers.register({
+      id: 'workspace-file',
+      resolve: () => 'workbench.editor.text',
+    });
+    const service = createEditorService({
+      editorHostFactories: createEditorHostFactoryRegistry(),
+      editorResolvers,
+      normalizeResourceUri: (resourceUri) =>
+        resourceUri.replace('workspace://file/src/%41.txt', 'workspace://file/src/A.txt'),
+    });
+
+    service.openEditor({ resourceUri: 'workspace://file/src/A.txt' });
+    service.openEditor({ resourceUri: 'workspace://file/src/%41.txt' });
+
+    expect(service.getState().groups[0]?.tabs).toHaveLength(1);
+  });
+
+  it('rejects ambiguous dirty aliases during initial state creation', () => {
+    expect(() =>
+      createEditorService({
+        editorHostFactories: createEditorHostFactoryRegistry(),
+        initialState: {
+          groups: [
+            {
+              activeTabId: 'tab-1',
+              id: DEFAULT_EDITOR_GROUP_ID,
+              tabs: [
+                {
+                  dirty: true,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-1',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/A.txt',
+                },
+                {
+                  dirty: true,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-2',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/%41.txt',
+                },
+              ],
+            },
+          ],
+          layout: { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' },
+        },
+        normalizeResourceUri: (resourceUri) =>
+          resourceUri.replace('workspace://file/src/%41.txt', 'workspace://file/src/A.txt'),
+      }),
+    ).toThrow(/ambiguous dirty editor resource aliases/i);
+  });
+
+  it('coalesces clean initial aliases while keeping the active tab', () => {
+    const service = createEditorService({
+      editorHostFactories: createEditorHostFactoryRegistry(),
+      initialState: {
+        activeGroupId: DEFAULT_EDITOR_GROUP_ID,
+        groups: [
+          {
+            activeTabId: 'tab-2',
+            id: DEFAULT_EDITOR_GROUP_ID,
+            tabs: [
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-1',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/src/A.txt',
+              },
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-2',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/src/%41.txt',
+              },
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-4',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/src/A.txt',
+              },
+            ],
+          },
+          {
+            activeTabId: 'tab-3',
+            id: 'workbench.editor.group.1',
+            tabs: [
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-3',
+                pinned: true,
+                preview: false,
+                resourceUri: 'workspace://file/src/A.txt',
+              },
+            ],
+          },
+        ],
+        layout: {
+          children: [
+            { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' },
+            { groupId: 'workbench.editor.group.1', type: 'group' },
+          ],
+          direction: 'horizontal',
+          type: 'split',
+        },
+      },
+      normalizeResourceUri: (resourceUri) =>
+        resourceUri.replace('workspace://file/src/%41.txt', 'workspace://file/src/A.txt'),
+    });
+
+    expect(service.getState().groups.map((group) => group.tabs.map((tab) => tab.id))).toEqual([
+      ['tab-2'],
+      ['tab-3'],
+    ]);
+    expect(service.getActiveTab()?.id).toBe('tab-2');
+  });
+
+  it.each(['tab-1', 'tab-2', 'tab-4'])(
+    'coalesces interleaved aliases while retaining active tab %s',
+    (activeTabId) => {
+      const service = createEditorService({
+        editorHostFactories: createEditorHostFactoryRegistry(),
+        initialState: {
+          activeGroupId: DEFAULT_EDITOR_GROUP_ID,
+          groups: [
+            {
+              activeTabId,
+              id: DEFAULT_EDITOR_GROUP_ID,
+              tabs: [
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-1',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/A.txt',
+                },
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-2',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/%41.txt',
+                },
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-4',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/A.txt',
+                },
+              ],
+            },
+          ],
+          layout: { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' },
+        },
+        normalizeResourceUri: (resourceUri) =>
+          resourceUri.replace('workspace://file/src/%41.txt', 'workspace://file/src/A.txt'),
+      });
+
+      expect(service.getState().groups[0]?.tabs.map((tab) => tab.id)).toEqual([activeTabId]);
+      expect(service.getActiveTab()?.id).toBe(activeTabId);
+    },
+  );
+
+  it('rejects a dirty member anywhere in an interleaved alias bucket', () => {
+    expect(() =>
+      createEditorService({
+        editorHostFactories: createEditorHostFactoryRegistry(),
+        initialState: {
+          activeGroupId: DEFAULT_EDITOR_GROUP_ID,
+          groups: [
+            {
+              activeTabId: 'tab-2',
+              id: DEFAULT_EDITOR_GROUP_ID,
+              tabs: [
+                {
+                  dirty: true,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-1',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/A.txt',
+                },
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-2',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/A.txt',
+                },
+                {
+                  dirty: false,
+                  editorId: 'workbench.editor.text',
+                  id: 'tab-4',
+                  pinned: true,
+                  preview: false,
+                  resourceUri: 'workspace://file/src/%41.txt',
+                },
+              ],
+            },
+          ],
+          layout: { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' },
+        },
+        normalizeResourceUri: (resourceUri) =>
+          resourceUri.replace('workspace://file/src/%41.txt', 'workspace://file/src/A.txt'),
+      }),
+    ).toThrow(/ambiguous dirty editor resource aliases/i);
+  });
+
+  it('preserves initial order for non-alias resources with identity normalization', () => {
+    const service = createEditorService({
+      editorHostFactories: createEditorHostFactoryRegistry(),
+      initialState: {
+        activeGroupId: DEFAULT_EDITOR_GROUP_ID,
+        groups: [
+          {
+            activeTabId: 'tab-1',
+            id: DEFAULT_EDITOR_GROUP_ID,
+            tabs: [
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-1',
+                pinned: true,
+                preview: false,
+                resourceUri: 'custom://A',
+              },
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-2',
+                pinned: true,
+                preview: false,
+                resourceUri: 'custom://B',
+              },
+              {
+                dirty: false,
+                editorId: 'workbench.editor.text',
+                id: 'tab-3',
+                pinned: true,
+                preview: false,
+                resourceUri: 'custom://A',
+              },
+            ],
+          },
+        ],
+        layout: { groupId: DEFAULT_EDITOR_GROUP_ID, type: 'group' },
+      },
+    });
+
+    expect(service.getState().groups[0]?.tabs.map((tab) => tab.id)).toEqual([
+      'tab-1',
+      'tab-2',
+      'tab-3',
+    ]);
+  });
+
   it('opens editors, focuses existing tabs, and creates hosts through factories', () => {
     const editorHostFactories = createEditorHostFactoryRegistry();
     editorHostFactories.register({
@@ -140,6 +411,34 @@ describe('EditorService', () => {
         id: DEFAULT_EDITOR_GROUP_ID,
         tabs: [],
       },
+    ]);
+  });
+
+  it('collects dirty resources across groups without including clean tabs', () => {
+    const service = createEditorService({
+      editorHostFactories: createEditorHostFactoryRegistry(),
+    });
+    const first = service.openEditor({
+      editorId: 'workbench.editor.text',
+      pinned: true,
+      resourceUri: 'workspace://file/src/first.ts',
+    });
+    const split = service.splitEditor({ tabId: first.id });
+    const second = service.openEditor({
+      editorId: 'workbench.editor.text',
+      groupId: DEFAULT_EDITOR_GROUP_ID,
+      pinned: true,
+      resourceUri: 'workspace://file/src/second.ts',
+    });
+
+    service.setDirty(first.id, true);
+    service.setDirty(split!.id, true);
+    expect(service.getDirtyResourceUris()).toEqual(['workspace://file/src/first.ts']);
+
+    service.setDirty(second.id, true);
+    expect(service.getDirtyResourceUris()).toEqual([
+      'workspace://file/src/first.ts',
+      'workspace://file/src/second.ts',
     ]);
   });
 
@@ -815,7 +1114,6 @@ describe('EditorService', () => {
     });
 
     const opened = service.openEditor({
-      dirty: true,
       resourceUri: 'workspace://file/src/app.ts',
       title: 'app.ts',
     });
@@ -838,5 +1136,46 @@ describe('EditorService', () => {
       id: opened.id,
     });
     expect(service.getState().groups[0]?.tabs[0]).not.toHaveProperty('resourceMissing');
+  });
+
+  it('preserves a dirty host, text and dirty state through disappearance and reappearance', () => {
+    let disposed = false;
+    let content = 'unsaved draft';
+    const hostFactories = createEditorHostFactoryRegistry();
+    hostFactories.register({
+      id: 'stateful-text-host',
+      create: () => ({
+        dispose() {
+          disposed = true;
+        },
+        getContent: () => content,
+        render: () => content,
+        setContent: (nextContent: string) => {
+          content = nextContent;
+        },
+        setDirty: () => undefined,
+      }),
+    });
+    const service = createEditorService({ editorHostFactories: hostFactories });
+    const tab = service.openEditor({
+      editorId: 'stateful-text-host',
+      dirty: true,
+      pinned: true,
+      resourceUri: 'workspace://file/src/draft.ts',
+    });
+    const host = service.createEditorHost(tab.id);
+    service.reconcileWorkspaceFileTabs(() => false);
+
+    expect(service.getEditorHost(tab.id)).toBe(host);
+    expect(service.getEditorHost(tab.id)?.render()).toBe('unsaved draft');
+    expect(service.getActiveTab()).toMatchObject({ dirty: true, resourceMissing: true });
+    expect(disposed).toBe(false);
+
+    service.reconcileWorkspaceFileTabs(() => true);
+    expect(service.getEditorHost(tab.id)).toBe(host);
+    expect(service.getActiveTab()).toMatchObject({ dirty: true });
+    expect(service.getActiveTab()).not.toHaveProperty('resourceMissing');
+    expect(service.getEditorHost(tab.id)?.render()).toBe('unsaved draft');
+    expect(disposed).toBe(false);
   });
 });

@@ -1,4 +1,5 @@
 import { reformatDateString, splitDateTimeString } from '../domain/mapping/dateFormat.js';
+import { trimText, uppercaseText, lowercaseText } from '../domain/operations/textOperations.js';
 import { applyStringTemplate, isPlainObject } from '../domain/mapping/pathUtils.js';
 import type { ValueTransformDefinition } from '../domain/types.js';
 import { createValueTransformRegistry } from './createValueTransformRegistry.js';
@@ -98,7 +99,7 @@ export const builtinValueTransforms: readonly ValueTransformDefinition[] = [
     category: 'string',
     inputTypes: ['string', 'number', 'unknown'],
     outputType: 'string',
-    apply: (value) => asString(value).trim(),
+    apply: (value) => trimText(asString(value)),
   },
   {
     id: BUILTIN_TRANSFORM_IDS.stringUpper,
@@ -107,7 +108,7 @@ export const builtinValueTransforms: readonly ValueTransformDefinition[] = [
     category: 'string',
     inputTypes: ['string', 'number', 'unknown'],
     outputType: 'string',
-    apply: (value) => asString(value).toUpperCase(),
+    apply: (value) => uppercaseText(asString(value)),
   },
   {
     id: BUILTIN_TRANSFORM_IDS.stringLower,
@@ -116,7 +117,7 @@ export const builtinValueTransforms: readonly ValueTransformDefinition[] = [
     category: 'string',
     inputTypes: ['string', 'number', 'unknown'],
     outputType: 'string',
-    apply: (value) => asString(value).toLowerCase(),
+    apply: (value) => lowercaseText(asString(value)),
   },
   {
     id: BUILTIN_TRANSFORM_IDS.stringPrefix,

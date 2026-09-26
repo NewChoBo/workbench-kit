@@ -1,12 +1,6 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type MouseEvent as ReactMouseEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ContextMenu, type ContextMenuItem } from '@workbench-kit/react/overlay';
+import { SideBarHeaderControl } from '@workbench-kit/react/layout';
 import { ViewEmptyState } from '@workbench-kit/react/primitives';
 import {
   WORKBENCH_WORKSPACE_COPY_PATH_COMMAND_ID,
@@ -19,8 +13,12 @@ import {
   resolveWorkspaceExplorerSectionTitle,
   useWorkspaceExplorerController,
 } from '@workbench-kit/react/workbench/workspace';
-import { type WorkspaceExplorerItemContextMenuMeta } from '@workbench-kit/react/workbench/workspace/explorer';
-import { resolveWorkspaceCreateParentPath, type WorkspaceTreeNode } from '@workbench-kit/workspace';
+import { type WorkspaceExplorerItemContextMenuRequest } from '@workbench-kit/react/workbench/workspace/explorer';
+import {
+  resolveWorkspaceCreateParentPath,
+  type VirtualWorkspaceState,
+  type WorkspaceResourceService,
+} from '@workbench-kit/workspace';
 import { createCommandWorkspaceExplorerPort } from './create-command-workspace-explorer-port.js';
 import { createExplorerItemContextMenuItems } from './context-menu.js';
 import { applyExplorerPathReveal, subscribeExplorerRevealRequest } from './reveal.js';
@@ -49,6 +47,9 @@ interface ExplorerContextMenuState {
   readonly items: ContextMenuItem[];
   readonly x: number;
   readonly y: number;
+  readonly invoker: HTMLButtonElement;
+  readonly workspaceService: WorkspaceResourceService;
+  readonly workspaceState: VirtualWorkspaceState;
 }
 
 export function BuiltinExplorerView() {
@@ -59,7 +60,11 @@ export function BuiltinExplorerView() {
     : undefined;
   const workspaceState = useWorkspaceResourceState(workspaceService);
   const [contextMenu, setContextMenu] = useState<ExplorerContextMenuState | null>(null);
+  const [actionError, setActionError] = useState<string | undefined>();
   const [seededExpandedPaths, setSeededExpandedPaths] = useState(false);
+  const explorerRef = useRef<ReturnType<typeof useWorkspaceExplorerController> | undefined>(
+    undefined,
+  );
 
   const activePath = useActiveWorkspacePath(activeTab?.resourceUri);
 
@@ -67,6 +72,11 @@ export function BuiltinExplorerView() {
     () =>
       createCommandWorkspaceExplorerPort({
         executeCommand,
+        reportError: (message) => {
+          if (!explorerRef.current?.inlineEdit) {
+            setActionError(message);
+          }
+        },
         workspaceState,
       }),
     [executeCommand, workspaceState],
@@ -77,8 +87,17 @@ export function BuiltinExplorerView() {
     initialExpandedPaths: workspaceState?.expandedPaths,
     port,
   });
-  const explorerRef = useRef(explorer);
   explorerRef.current = explorer;
+
+  const currentContextMenu =
+    contextMenu?.workspaceService === workspaceService &&
+    contextMenu?.workspaceState === workspaceState &&
+    !explorer.inlineEdit
+      ? contextMenu
+      : null;
+  useEffect(() => {
+    if (contextMenu && !currentContextMenu) setContextMenu(null);
+  }, [contextMenu, currentContextMenu]);
 
   useEffect(() => {
     if (!workspaceState || seededExpandedPaths) {
@@ -95,6 +114,7 @@ export function BuiltinExplorerView() {
     () =>
       subscribeExplorerRevealRequest((path) => {
         const currentExplorer = explorerRef.current;
+        if (!currentExplorer) return;
         applyExplorerPathReveal(path, {
           revealFolder: currentExplorer.revealFolder,
           setSelection: (selection) => {
@@ -130,18 +150,29 @@ export function BuiltinExplorerView() {
 
   const executeWorkspaceCommand = useCallback(
     async (commandId: string, payload?: unknown) => {
-      await executeCommand(commandId, payload);
+      try {
+        const result = await executeCommand(commandId, payload);
+        setActionError(undefined);
+        return result;
+      } catch (error) {
+        setActionError(
+          error instanceof Error ? error.message : 'Could not complete workspace action.',
+        );
+        return undefined;
+      }
     },
     [executeCommand],
   );
 
+  useEffect(() => {
+    if (workspaceState) {
+      setActionError(undefined);
+    }
+  }, [workspaceState]);
+
   const handleItemContextMenu = useCallback(
-    (
-      event: ReactMouseEvent<HTMLButtonElement>,
-      node: WorkspaceTreeNode,
-      meta: WorkspaceExplorerItemContextMenuMeta,
-    ) => {
-      event.preventDefault();
+    ({ node, meta, invoker, x, y }: WorkspaceExplorerItemContextMenuRequest) => {
+      if (!workspaceService || !workspaceState || explorer.inlineEdit) return;
       setContextMenu({
         ariaLabel: `${node.name} menu`,
         items: createExplorerItemContextMenuItems({
@@ -171,11 +202,22 @@ export function BuiltinExplorerView() {
           revealFolder: explorer.revealFolder,
           renameTarget: () => explorer.startRename(node, meta.actionPaths),
         }),
-        x: event.clientX,
-        y: event.clientY,
+        x,
+        y,
+        invoker,
+        workspaceService,
+        workspaceState,
       });
     },
-    [commands, executeWorkspaceCommand, explorer, menus, workspaceState?.files],
+    [
+      commands,
+      executeCommand,
+      executeWorkspaceCommand,
+      explorer,
+      menus,
+      workspaceService,
+      workspaceState,
+    ],
   );
 
   if (!workspaceService || !workspaceState) {
@@ -201,10 +243,19 @@ export function BuiltinExplorerView() {
           void executeWorkspaceCommand(BUILTIN_EXPLORER_REFRESH_COMMAND_ID);
         }}
         sectionTitle={sectionTitle}
+        headerAddon={
+          actionError ? (
+            <SideBarHeaderControl>
+              <span role="alert" style={{ overflowWrap: 'anywhere' }}>
+                {actionError}
+              </span>
+            </SideBarHeaderControl>
+          ) : undefined
+        }
         selectedPaths={explorer.selection.paths}
         selectionAnchorPath={explorer.selection.anchorPath}
         onActivateFile={explorer.handleActivateFile}
-        onItemContextMenu={handleItemContextMenu}
+        onRequestItemContextMenu={handleItemContextMenu}
         onInlineEditCancel={explorer.cancelInlineEdit}
         onInlineEditCommit={explorer.handleInlineEditCommit}
         onInlineEditValueChange={explorer.handleInlineEditValueChange}
@@ -214,12 +265,13 @@ export function BuiltinExplorerView() {
         onSelectionChange={explorer.handleSelectionChange}
         onToggleFolder={explorer.handleToggleFolder}
       />
-      {contextMenu ? (
+      {currentContextMenu ? (
         <ContextMenu
-          ariaLabel={contextMenu.ariaLabel}
-          items={contextMenu.items}
-          x={contextMenu.x}
-          y={contextMenu.y}
+          ariaLabel={currentContextMenu.ariaLabel}
+          items={currentContextMenu.items}
+          x={currentContextMenu.x}
+          y={currentContextMenu.y}
+          returnFocusTarget={currentContextMenu.invoker}
           onClose={() => setContextMenu(null)}
         />
       ) : null}

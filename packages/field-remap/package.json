@@ -8,7 +8,11 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./history": "./src/history.ts",
+    "./data-operations": "./src/registry/builtinDataOperations.ts",
+    "./json-data-operations": "./src/registry/jsonDataOperations.ts",
+    "./utf8-data-operations": "./src/registry/utf8DataOperations.ts"
   },
   "files": [
     "src",

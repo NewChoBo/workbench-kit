@@ -21,6 +21,7 @@ export const WORKBENCH_WORKSPACE_CAPABILITY_ID = 'workbench.workspace' as const;
 
 export interface WorkbenchEditorSavePort {
   applySave(resourceUri: string, content: string): { readonly transactionId: string } | undefined;
+  canSaveResource?(resourceUri: string): boolean;
   resolveResource?(resourceUri: string): unknown;
 }
 
@@ -181,6 +182,9 @@ export function createWorkbenchWorkspaceHostPort(
 
       service.applyTransaction(transaction);
       return { transactionId: transaction.id };
+    },
+    canSaveResource(resourceUri) {
+      return service.getFileByResourceUri(resourceUri) !== undefined;
     },
     resolveResource(resourceUri) {
       return service.getFileByResourceUri(resourceUri);

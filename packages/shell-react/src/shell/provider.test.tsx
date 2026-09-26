@@ -7,6 +7,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { parseWorkbenchLayoutConfig } from '@workbench-kit/workbench-config';
 import type {
   EditorState,
+  EditorService,
   LayoutService,
   ViewHostFactory,
   WorkbenchExtensionDescription,
@@ -2898,6 +2899,183 @@ describe('WorkbenchProvider', () => {
       secondRoot.unmount();
     });
     secondContainer.remove();
+  });
+
+  it('preserves rejected editor storage through ordinary editor events', async () => {
+    const storageKey = `${DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY}/future-provider`;
+    const editorStateStorage = createMemoryStorage();
+    const original = JSON.stringify({
+      workspaceResourceUriEncoding: 'future-v2',
+      activeGroupId: 'main',
+      groups: [
+        {
+          activeTabId: 'saved',
+          id: 'main',
+          tabs: [
+            {
+              dirty: false,
+              editorId: 'workbench.editor.text',
+              id: 'saved',
+              pinned: true,
+              preview: false,
+              resourceUri: 'workspace://file/important.txt',
+            },
+          ],
+        },
+      ],
+      layout: { groupId: 'main', type: 'group' },
+    });
+    editorStateStorage.setItem(storageKey, original);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    let editor!: EditorService;
+    const diagnostics: unknown[] = [];
+    function Probe() {
+      editor = useEditorService();
+      return null;
+    }
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          availableExtensions={[]}
+          editorStateStorage={editorStateStorage}
+          editorStateStorageKey={storageKey}
+          persistLayout={false}
+          persistKeybindingOverrides={false}
+          persistLocalPreferences={false}
+          onPersistenceDiagnostic={(diagnostic) => diagnostics.push(diagnostic)}
+        >
+          <Probe />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+    await act(async () => {
+      const opened = editor!.openEditor({
+        editorId: 'workbench.editor.text',
+        resourceUri: 'workspace://file/new.txt',
+      });
+      const split = editor!.splitEditor();
+      editor!.closeEditor(split?.id ?? opened.id);
+    });
+    expect(editorStateStorage.getItem(storageKey)).toBe(original);
+    expect(diagnostics).toEqual([expect.objectContaining({ code: 'decode_failed', storageKey })]);
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it('recomputes editor write eligibility when the adapter or key changes', async () => {
+    const storageKeyA = `${DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY}/future-a`;
+    const storageKeyB = `${DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY}/missing-b`;
+    const storageA = createMemoryStorage();
+    const storageB = createMemoryStorage();
+    const future = JSON.stringify({
+      workspaceResourceUriEncoding: 'future-v2',
+      groups: [{ id: 'main', tabs: [] }],
+      layout: { groupId: 'main', type: 'group' },
+    });
+    storageA.setItem(storageKeyA, future);
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    let editor!: EditorService;
+    function Probe() {
+      editor = useEditorService();
+      return null;
+    }
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          availableExtensions={[]}
+          editorStateStorage={storageA}
+          editorStateStorageKey={storageKeyA}
+          persistLayout={false}
+          persistKeybindingOverrides={false}
+          persistLocalPreferences={false}
+        >
+          <Probe />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          availableExtensions={[]}
+          editorStateStorage={storageB}
+          editorStateStorageKey={storageKeyB}
+          persistLayout={false}
+          persistKeybindingOverrides={false}
+          persistLocalPreferences={false}
+        >
+          <Probe />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+    await act(async () => {
+      editor.openEditor({
+        editorId: 'workbench.editor.text',
+        resourceUri: 'workspace://file/recovered.txt',
+      });
+    });
+    expect(storageA.getItem(storageKeyA)).toBe(future);
+    expect(storageB.getItem(storageKeyB)).toContain('percent-encoded-v1');
+    await act(async () => root.unmount());
+    container.remove();
+  });
+
+  it('allows an explicit initial editor state to remain host-authoritative', async () => {
+    const storageKey = `${DEFAULT_WORKBENCH_EDITOR_STATE_STORAGE_KEY}/initial-authority`;
+    const storage = createMemoryStorage();
+    const future = JSON.stringify({
+      workspaceResourceUriEncoding: 'future-v2',
+      groups: [{ id: 'main', tabs: [] }],
+      layout: { groupId: 'main', type: 'group' },
+    });
+    storage.setItem(storageKey, future);
+    const initialEditorState: EditorState = {
+      activeGroupId: 'main',
+      groups: [{ activeTabId: undefined, id: 'main', tabs: [] }],
+      layout: { groupId: 'main', type: 'group' },
+    };
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    let editor!: EditorService;
+    function Probe() {
+      editor = useEditorService();
+      return null;
+    }
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          availableExtensions={[]}
+          editorStateStorage={storage}
+          editorStateStorageKey={storageKey}
+          initialEditorState={initialEditorState}
+          persistLayout={false}
+          persistKeybindingOverrides={false}
+          persistLocalPreferences={false}
+        >
+          <Probe />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+    await act(async () => {
+      editor.openEditor({
+        editorId: 'workbench.editor.text',
+        resourceUri: 'workspace://file/host.txt',
+      });
+    });
+    expect(storage.getItem(storageKey)).not.toBe(future);
+    expect(storage.getItem(storageKey)).toContain('host.txt');
+    await act(async () => root.unmount());
+    container.remove();
   });
 
   it('opens built-in explorer item context menus with file and folder actions', async () => {

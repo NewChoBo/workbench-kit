@@ -1,0 +1,50 @@
+.sample-backend-lab {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  color: var(--vscode-foreground, var(--color-text));
+  background: var(--vscode-editor-background, var(--color-bg));
+}
+
+.sample-backend-lab__controls {
+  flex: 0 0 auto;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--vscode-panel-border, var(--color-border));
+  font-size: var(--font-size-sm, 0.875rem);
+}
+
+.sample-backend-lab__toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.sample-backend-lab__toolbar select {
+  max-width: 100%;
+  padding: 6px 8px;
+  color: inherit;
+  background: var(--vscode-input-background, var(--color-bg));
+  border: 1px solid var(--vscode-input-border, var(--color-border));
+}
+
+.sample-backend-lab__controls p {
+  margin: 8px 0 4px;
+}
+
+.sample-backend-lab__controls output {
+  color: var(--vscode-descriptionForeground, var(--color-text-muted));
+}
+
+.sample-backend-lab__host {
+  flex: 1 1 auto;
+  min-height: 0;
+  min-width: 0;
+  position: relative;
+  overflow: auto;
+}
+
+.sample-backend-lab__host > .ui-workbench-host-root {
+  height: 100%;
+}

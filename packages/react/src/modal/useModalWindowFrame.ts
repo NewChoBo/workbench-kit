@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useRef, useState } from 'react';
 import { readModalContainerBounds, resolveModalContainer } from './modalContainer';
 import { clampModalBoundsPosition } from './modalPosition';
 import { clampModalBounds, readCssModalDimension } from './modalSize';
@@ -75,13 +75,23 @@ export function useModalWindowFrame({
     setBounds(resolveDefaultBounds());
   }, [bounds, maximized, resolveDefaultBounds, frameVersion, viewport.height, viewport.width]);
 
-  useEffect(() => {
-    if (maximized) {
+  useLayoutEffect(() => {
+    if (maximized || viewport.width <= 0 || viewport.height <= 0) {
       return undefined;
     }
 
-    setBounds((current) => (current ? clampModalBoundsPosition(current, viewport) : current));
-  }, [maximized, viewport.height, viewport.width]);
+    stopDragging();
+    stopResizing();
+    setBounds((current) =>
+      current
+        ? clampModalBounds(
+            clampModalBoundsPosition(current, viewport),
+            { minHeight: 0, minWidth: 0 },
+            viewport,
+          )
+        : current,
+    );
+  }, [maximized, viewport.height, viewport.width, stopDragging, stopResizing]);
 
   const handleToggleMaximized = useCallback(() => {
     if (maximized) {

@@ -1,3 +1,5 @@
+import { hasUnpairedSurrogate } from './unicode.js';
+
 export class WorkspacePathError extends Error {
   readonly code = 'workspace_path_invalid' as const;
 
@@ -19,6 +21,13 @@ export class WorkspacePathError extends Error {
 export function normalizeWorkspacePath(path: string): string {
   if (!path) {
     return '';
+  }
+
+  if (hasUnpairedSurrogate(path)) {
+    throw new WorkspacePathError(
+      'Workspace path must contain well-formed Unicode (unpaired surrogates are not allowed).',
+      path,
+    );
   }
 
   const slashNormalized = path.replace(/\\/g, '/');
@@ -100,6 +109,7 @@ export function isSimpleWorkspaceName(name: string) {
   const trimmedName = name.trim();
   return (
     Boolean(trimmedName) &&
+    !hasUnpairedSurrogate(trimmedName) &&
     trimmedName !== '.' &&
     trimmedName !== '..' &&
     !/[\\/]/.test(trimmedName)

@@ -167,7 +167,9 @@ export interface TransformContext {
   readonly options?: Readonly<Record<string, unknown>>;
   /**
    * Optional cancellation signal. `applyTransformChain` / `convertToShape` check
-   * between steps and reject with `AbortError` when aborted.
+   * between steps. The chain also checks before returning its final result.
+   * Cancellation preserves an Error reason or otherwise rejects with AbortError;
+   * a pending transform must still settle before the chain can finish.
    */
   readonly signal?: AbortSignal;
 }

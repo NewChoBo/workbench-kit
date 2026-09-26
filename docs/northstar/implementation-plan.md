@@ -6,15 +6,405 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
-- **Latest source-bearing integration baseline:**
+- **Historical source-bearing integration baseline:**
   `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` / PR #424. This exact tree is
-  the current local and remote `develop` baseline after the focused keybinding command runtime
-  correction.
+  the recorded baseline after the focused keybinding command runtime correction,
+  not the latest integration ref.
+- **2026-09-05 component-rendering audit:** remote `develop` resolves to
+  `542123e03b6b2d372c942c9f6adb6aff54838a7e` / PR #429. The focused audit covers
+  component descriptors, registry/renderer bridges, V3 projection and generative
+  proposal lifecycle. See [component-rendering-contract.md](./component-rendering-contract.md)
+  for source paths and separately verified JDW `.48` artifact inclusion. This is
+  not a blanket requalification of every older packet or release.
 - **Reviewed documentation-only predecessor:** `develop@5983e44275f8c7022c47467b383f7162c03215af` / PR #388; its diff from the preceding source-bearing `develop@cfd752355c00c6b59018a220f2ce22c561a0e984` changes only `docs/northstar/design-system-packs.md` and `docs/northstar/implementation-plan.md` and carries no source/API change.
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
-## Status model
+## WB-NS-070F-R1 — child-scoped V3 layout parity repair
+
+- **Status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`; admitted as a bounded
+  `READY_FOR_IMPLEMENTATION` repair of existing declared-scope semantics before source edits.
+- **Owner:** [Issue #430](https://github.com/NewChoBo/workbench-kit/issues/430), JDW authoring.
+- **Source baseline:** `542123e03b6b2d372c942c9f6adb6aff54838a7e`; documentation candidate
+  `bb85709760b72825691d6f22601119ed1fd5b822` changes no source. The issue's exact API and
+  behavior contract require no new architecture, persistence or product decision.
+- **Goal:** a legal child-scoped Canvas placement accepted by semantic admission must also
+  succeed through responsive Apply and generative request/Preview/Finalize.
+- **Architecture/API:** keep `UiLayoutPropertyDescriptor.scope`, strategy descriptors and
+  existing V3 command/session/projection contracts. A private support predicate selects the
+  container or child list from the validated property's scope; no union or new public API.
+- **State flow:** public authoring action → existing semantic admission → V3 Apply/session;
+  generative operand collection uses the same scope rule → detached Preview → authorized
+  Finalize → ordinary session Apply. Canonical state/history and revision ownership stay unchanged.
+- **Scope:** `commands-v3.ts`, `generative-plan.ts`, the existing semantic-admission predicate
+  and a private shared helper, plus focused JDW/React regressions.
+- **Non-scope:** component renderer bridge, model SDK, new package/schema, native host,
+  unrelated projection/session changes, publication or downstream adoption.
+- **Ordered tasks:** reproduce child-scoped failure through public action and generative
+  paths; centralize the validated-scope predicate; replace container-only checks; cover
+  raw Apply, admitted session, projection, Undo/Redo and prior-layout clear; run focused
+  tests and `pnpm validate:fast`; obtain producer-distinct exact-candidate review before merge.
+- **Failure/compatibility:** invalid strategy descriptors, cross-scope membership, unknown or
+  unsupported properties, invalid values and exact-component mismatches remain rejected.
+  Container-scoped cases retain existing behavior. Rejection preserves the original document
+  and history; successful batch Apply records one revision/history step.
+- **Acceptance:** Issue #430's full matrix passes, including public variant Canvas action
+  reachability and responsive-override provenance. Preview remains detached, Finalize requires
+  authorization, and ordinary Undo/Redo restores the same documents.
+- **Validation:** focused command, semantic-admission, generative-plan and React action tests;
+  `pnpm validate:fast`; `pnpm check:commit-safety` before commit. This headless correctness repair
+  does not claim visual renderer conformance or change a UI interaction contract.
+- **Budget:** retain existing bounded context traversal and membership lookup; no new tree
+  traversal, global catalog enumeration, subscription or retained cache.
+- **Review checklist:** validated scope before membership, all three paths share the rule,
+  negative cases remain closed, no public export or duplicate state/history, exact test evidence.
+
+### Local implementation receipt — 2026-09-05
+
+- `createLayoutPropertySupport` provides one private scope-aware membership predicate for raw
+  responsive Apply, semantic admission and generative operand collection. Existing descriptor
+  validation remains before support selection; no public export, schema or dependency changes.
+- Public-action integration regressions reproduced four positive-path failures before the repair.
+  The final matrix uses a child node and covers responsive Canvas action → raw/admitted session,
+  projection provenance, generative base/responsive set and prior-layout clear, detached Preview,
+  authorized Finalize, one history entry and Undo/Redo. Six malformed/unsupported cases remain
+  rejected through command/session and generative paths.
+- Focused verification: **5 files / 55 tests passed**, including **10 new integration cases**.
+  Fresh JDW package artifacts were built before testing public package imports.
+- `pnpm validate:fast`: **PASS**, **475 files / 2,825 tests**; includes typechecks, lint/format,
+  public exports, freshly packed external consumer builds, CJS leaves, dependency/launch boundaries,
+  public-reference/secret checks, workspace isolation and schema/story-tag checks.
+  The first restricted run stopped at a temporary-directory parent-read denial in the external
+  consumer build; the same complete gate passed under ordinary user permissions.
+- This receipt does not claim independent source review, integration, publication, browser visual
+  conformance or downstream adoption. Issue #430 remains the owner; exact-candidate review is next.
+
+## WB-ST-021 through WB-ST-025 — editor logic stabilization
+
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`, audited source `a01df0d9`.
+The [detailed worker plan](./logic-stabilization-plan.md) closes shared contracts,
+file ownership, reproduction, acceptance and validation for repeated rename
+failure, incompatible persisted state, Unicode path validity, canonical editor
+identity and dirty-buffer protection. Wave 1 is independent; identity follows
+storage/path review, then dirty-resource protection follows identity integration.
+The [combined receipt](./logic-stabilization-verification.md) records the exact
+worker/integration commits, 507 files / 3,150 passing tests, 30 registered units /
+324 required cases, five real sample browser plays and measured bundle growth.
+No release or consumer source change is part of these packets. Split-view shared
+documents, dirty-close policy, Save As and durable draft recovery remain separate.
+
+## WB-ST-020 — Explorer context parity
+
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`. The [Explorer contract](./explorer-context-ux.md)
+closes target selection, normalized pointer/More/keyboard entry, inline-edit native
+menus, focus return and stale workspace invalidation. Reuse the existing controller
+and command bridge; do not create another edit/history/persistence owner.
+
+The real multilingual rename play also admitted [WB-ST-020B resource identity
+repair](./explorer-resource-uri-repair.md): preserve the file content when a URI
+round-trips through URL escaping. Its independently reviewed implementation also
+migrates saved editor URIs without changing the old effective file target.
+The [combined receipt](./explorer-context-verification.md) records 46 focused
+cases, three real sample browser plays, fast validation (501 files / 3,096 tests),
+25 registered units / 272 named required cases and the reviewed URI compatibility
+size allowance. This is local integration; promotion and publication remain separate.
+
+## WB-ST-018 / WB-ST-019 — context actions and editing entry
+
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+The [closed UX contract](./context-editing-ux.md) separates native text/menu focus
+from Widget Tree target selection and context-to-properties entry. WB-ST-019B
+also repairs source cursor updates that could retarget Inspector typing.
+The [integration evidence](./context-editing-verification.md) records reviewed
+parts, sequential-use regressions, four real browser plays, sample Form editing
+and Ctrl+S, fast validation (498 files / 3,058 tests), 21 registered units / 229
+required cases and the separately reviewed 150-byte initial gzip increase.
+Explorer parity is covered by WB-ST-020 above. Visible save failure/retry and
+reversible Inspector sessions remain follow-up packets; publication and consumer
+adoption are not claimed.
+
+## WB-ST-016 — Modal viewport resize repair
+
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`. The [bounded repair](./modal-viewport-repair.md)
+closes the real Settings resize defect found by WB-ST-015. Existing Modal frames
+must fit a smaller overlay viewport without replacing form state or losing Close.
+Its integration receipt records 11 focused regressions, six actual sample plays,
+full fast 495 files / 3,020 tests and the unchanged packed-size budget.
+
+## WB-ST-017 — long management-card values
+
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`, 2026-09-19, source `14f66f41`.
+The sample's long unbroken account ID makes the shared management-card body
+overflow at 430px. Owner: React management-card CSS and the sample screen play.
+Allow text within the body to wrap at a safe character boundary when ordinary
+word breaks cannot fit; keep the actual value, semantics, DOM and short-label
+layout. No truncation, injected separators, data shortening, new API or layout
+redesign. Limit source work to `management-panel.css`. Verify all 24 original
+long IDs in the real Settings screen, ensure details fit each card after host
+shrink, and retain the existing sample plays, lint/format and full fast checks.
+Packed budgets remain unchanged. This small CSS packet is separate from the
+Modal implementation part and does not change its file ownership.
+The [shared screen receipt](./modal-viewport-repair.md#local-integration-evidence)
+records details-only wrapping and complete ID preservation in 24 cards.
+
+## WB-ST-015 — sample backend and screen verification
+
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`. The [closed sample packet](./sample-backend-verification.md)
+defines HTTP-boundary fakes, isolated deterministic scenarios, the existing sample
+auth hook's failure/lifetime repair, and actual screen acceptance. It preserves
+public contracts, default sample behavior and existing host storage.
+The [integration receipt](./sample-backend-receipt.md) records ten scenarios,
+26 focused tests, five Storybook plays, full fast validation and the separate
+Modal viewport-resize finding. WB-ST-016 and WB-ST-017 own its narrow-screen follow-up.
+
+## WB-ST-006B — standards-first native Checkbox
+
+Status: `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS / COMBINED_VALIDATION_PASS`.
+Originally admitted as `READY_FOR_IMPLEMENTATION`. The closed behavior, file ownership,
+compatibility and exact verification scope are in
+[native-controls-wave-5.md](./native-controls-wave-5.md). Standard HTML/DOM direct
+use is primary; framework wrappers are optional conveniences. Implement one
+native Checkbox binder and verify the same packed artifact in four direct-use
+hosts. Existing React public controls remain unchanged.
+The [integration receipt](./native-controls-wave-5-receipt.md) records 15 focused
+cases, 48 four-host scenarios, browser pointer/Space/form/lifetime evidence and
+full fast **492 files / 2,983 tests**. Optional wrappers and capability-specific
+delivery decisions are compared in [standard UI delivery](./standard-ui-delivery.md).
+
+## WB-ST-001 — cleanup and required-unit stabilization
+
+Status: `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`. The admitted contract and
+pre-commit validation are preserved in
+[cleanup-stabilization-receipt.md](./cleanup-stabilization-receipt.md).
+
+## WB-ST-002 — legacy transform characterization and completion cancellation
+
+- **Current status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`; continuation
+  receipt below records the exact local scope, not integration or release.
+- **Admission:** `READY_FOR_IMPLEMENTATION`, 2026-09-19; existing field-remap API
+  behavior and a bounded cancellation repair, not a new processing API.
+- **Owner/API:** SP02 migration evidence / SP03 field-remap runtime; existing
+  `createBuiltinValueTransformRegistry`, `applyTransformChain` and TransformContext.
+- **Goal:** establish independently written expected outputs for all 13 builtins,
+  coercion, options and ordered async execution before shared operation extraction.
+- **State/data:** values pass through the existing registry; identity preserves
+  references. Builtins must not mutate frozen ordinary input objects/arrays/options.
+  Custom transforms remain responsible for their own side effects.
+- **Cancellation repair:** after the final awaited result, check the same signal
+  before returning success. Empty chains also reject an already-aborted signal.
+  Existing Error reasons retain identity; other reasons use the existing AbortError.
+  A transform rejection keeps its original error. This is cooperative cancellation,
+  not preemption of a never-settling transform, rollback or a scheduler.
+- **Scope:** characterization and cancellation tests, one completion check and API
+  documentation, required-unit registration; no codecs/new types, export/package
+  changes, stricter legacy coercion, date validation or new chain budget policy.
+- **Compatibility:** retain non-string coercion, array:first reduction, template
+  fallback, permissive date behavior, registry replacement and chain truncation.
+  Record surprising behavior as legacy compatibility, not a strict API guarantee.
+- **Tasks/tests:** reproduce late/empty cancellation failures; fixture every builtin
+  with hand-written values; verify async order/options/error/cancel; repair completion
+  fence; run required registry, field-remap typecheck/full tests and validate:fast.
+- **Layer/budget:** headless Node; no UI evidence. One final O(1) signal check,
+  no listener, retained cache or dependency. Existing bundle limits remain required.
+- **Done/review:** fixtures detect semantic drift; original cancellation reason and
+  stop behavior survive; no new execution engine or package. Local validation does
+  not substitute for independent review, integration or publication.
+
+## WB-ST-005A — current Input contract evidence
+
+- **Current status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED` for adapter
+  evidence. Native core delivery is implemented under the separate ST-005B packet;
+  four-framework portable acceptance remains pending.
+- **Admission:** `READY_FOR_IMPLEMENTATION` for current React adapter tests and
+  design only; portable implementation remains a separate packet.
+- **Owner/scope:** SP06, existing `TextInput`, native input props and callback
+  forwarding. Add component regressions and a portable Input contract document.
+- **API/state:** keep React `value/defaultValue`, ref, native input attributes,
+  `onChange` then `onValueChange(value, event)`. No new event names or host dependency.
+- **Lifecycle:** test controlled rerender without callbacks, user input callback
+  order, composition event forwarding, focus/ref, uncontrolled form/reset and unmount.
+  Current callbacks are edits, not persistence/commit authorization.
+- **Compatibility/non-goals:** do not change React callbacks or introduce a new
+  custom-element package. JSDOM synthetic composition is not real IME evidence.
+- **Verification:** required-unit tests, React typecheck, lint/format and full fast.
+  Native IME, four framework consumers and packed portable UI remain separate gates.
+- **Acceptance/review:** current adapter behavior has explicit expected assertions;
+  the target identifies owner/event/value/focus/form boundaries and pending browser
+  evidence. No visual redesign, runtime dependency or product source change.
+
+### ST-002 / ST-005A continuation receipt — 2026-09-19
+
+- Validation snapshot before commit on `codex/stabilization-units-20260919`, still based on
+  `11147a5bea222385a5697206b08672bae9adf270`; prior S0 edits are preserved.
+- Reproduced two failures before repair: pre-aborted empty chain returned success,
+  and cancellation during the last awaited transform exposed its result.
+  A final existing-helper signal check repairs both; no new API or listener.
+- Added 24 cases: 10 builtin behavior fixtures covering all 13 IDs, 8 chain
+  contract cases and 6 current React Input adapter cases. All are registered.
+- `pnpm validate:fast`: PASS, **482 files / 2,874 tests**, including static checks,
+  freshly packed external consumers and the mandatory required-unit runner.
+- Registry: **5 units / 37 required cases / 38 executed tests**. Scope remains
+  partial. Input fixtures run in JSDOM; no real IME/four-host/browser conformance
+  claim is made. Native Electron/Storybook play were not run in this continuation.
+- Packed initial gzip: **253,011 / 253,064 bytes**; this continuation changes no
+  bundle threshold, dependency, exported symbol or product source.
+- Known compatibility gaps are documented in
+  [processing-compatibility-baseline.md](./processing-compatibility-baseline.md).
+  Portable delivery choices and browser acceptance are documented in
+  [portable-input-contract.md](./portable-input-contract.md).
+
+## WB-ST-003A — shared strict operation invocation
+
+- **Current status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`; the local
+  implementation covers this packet only, not all processing/UI projects.
+- **Admission:** `READY_FOR_IMPLEMENTATION`, 2026-09-19. Scope is the invocation
+  boundary and three existing text operations; value serialization is deferred.
+- **Owners/API:** contracts exports `DataOperationRef`, definition/context/result
+  types; runtime exports `createDataOperationRunner`; field-remap exports
+  `createBuiltinTextDataOperations`. Existing dependency directions remain intact.
+  Runtime and field-remap also expose focused `./data-operations` entry points;
+  shared text algorithms live in a pure domain leaf used by both legacy and strict
+  adapters. This avoids importing unrelated mapping/UI code for strict calls.
+- **Reference:** canonical nonempty ID plus positive safe-integer definition version;
+  exact resolution only, duplicate exact refs rejected, multiple versions allowed.
+  Registration snapshots refs/callbacks. Definition versions are not npm versions.
+- **Values:** retain unknown JS values and explicit input/output predicates; no
+  competing UiValueSchema, universal value document or implicit coercion. Predicates
+  are synchronous trusted callbacks. Missing/undefined and null remain distinct.
+- **Execution:** validate ref/context/input before charging one invocation, await
+  execution, check cancellation/budget then validate output before exposing success.
+  Nested `context.invoke` shares the run's signal, invocation budget and location
+  prefix; it cannot create a fresh budget. A denied over-budget attempt latches
+  failure even if operation code catches its rejection. Separate top-level runs
+  have separate budgets. Max invocations is a required positive safe integer.
+- **Diagnostics:** stable failure code, exact ref and immutable location segments.
+  Nested failures retain their original address. Thrown callback causes remain
+  available on the failure result; never serialize arbitrary causes automatically.
+- **Limits:** cooperative cancellation; no preemption/timeout/CPU or memory sandbox,
+  scheduling/trace store/transaction/rollback. Domain schedulers and persistence
+  remain in Mapping/Recipe/Graph/authoring. Trusted callbacks can mutate their inputs.
+- **Adapter:** strict string input/output for trim/upper/lower delegates to existing
+  builtin implementations; legacy registry and coercion are unchanged. No new
+  dependency, package, custom element, renderer or product-source implementation.
+- **Tasks:** add contracts; runner; builtin adapter; independent success/rejection,
+  version collision, late cancel, nested-budget/address and frozen-registration
+  fixtures; register required tests; verify actual public package consumption.
+- **Acceptance:** same runner works with builtin adapters and a nested composition
+  fixture; invalid input/output never escapes as success; zero/one/many arrays
+  and null/undefined retain their semantics under explicit predicates.
+- **Verification/review:** backendless tests, packed public imports, dependency/export
+  gates, validate:fast and commit-safety. O(1) lookup, bounded invocation count;
+  callback runtime and payload size are caller-owned. No browser evidence claimed.
+
+### ST-003A local receipt — 2026-09-19
+
+- Validation snapshot based on `ae6c52b9a36ff26005071af219e290d435348921` plus
+  this packet. Contracts, runtime and strict text adapters retain the existing
+  package dependency direction; the two providers expose `./data-operations`.
+- Twelve runner regressions and three integration cases cover exact refs,
+  registration snapshots, value admission, nested/concurrent budget and cancel,
+  child diagnostics, closed contexts and unchanged legacy coercion.
+- `pnpm validate:fast`: PASS, **484 files / 2,889 tests**; required registry
+  **7 units / 52 required cases**, 53 executed tests including the existing Emitter.
+- Packed public consumers pass exact optional property checking and real headless
+  execution for success/input rejection/version rejection. The operation dependency
+  graph is checked for UI imports; execution requires no DOM globals or React provider.
+- Both adapters now share the pure text algorithm leaf. Existing public-root source
+  imports contain unrelated exact-optional issues; the focused entry points isolate
+  the new contract without weakening checks or broadly changing legacy types.
+- Initial packed gzip remains **253,011 / 253,064 bytes**. No budget increase,
+  runtime dependency, new package, UI rewrite, publication or product-source change.
+- See [shared-feature-contracts.md](./shared-feature-contracts.md) for the full
+  ownership map, applied API and deferred schema/Recipe/Graph/UI integration.
+
+## Common baseline v1 — distributed capability work
+
+The normative [common contract baseline](./common-contract-baseline.md) owns the
+shared execution/control/ownership rules and the WB-ST-003C terminal-failure repair.
+WB-ST-003C is `READY_FOR_IMPLEMENTATION`; first-wave part branches start only after
+the common repair, validation and review are complete and committed.
+
+### WB-ST-004T — strict text-adapter conformance
+
+Admission: `READY_FOR_IMPLEMENTATION` after the common v1 freeze. Owner: SP02
+text adapters. Exclusive changes: new
+`packages/field-remap/src/registry/builtinDataOperations.contract.test.ts` and
+`docs/northstar/parts/text-adapter-receipt.md`. No production API change.
+Test the exact trim/upper/lower version-1 inventory, frozen definitions/ref/list,
+strict primitive strings (including rejected boxed/hostile coercion values),
+Unicode/empty/whitespace parity with legacy algorithms and independent repeated
+factory consumption. Exercise public focused adapter imports through the real
+runner; no mocked execution or duplicate algorithms. No JSON/codecs, new package,
+legacy coercion migration, framework work or common runtime edit. Focused tests,
+field-remap typecheck, formatting and commit-safety are required in the part;
+the integrator registers exact cases and runs the combined fast gate after merge.
+
+### WB-ST-006A — current Checkbox adapter conformance
+
+Admission: `READY_FOR_IMPLEMENTATION` after the common v1 freeze. Owner: SP06
+current React Checkbox. Exclusive changes: new
+`packages/react/src/primitives/checkbox/Checkbox.contract.test.tsx` and
+`docs/northstar/parts/checkbox-receipt.md`. No production API change.
+Seven required cases: controlled checked updates without callbacks; click callback
+order/boolean/same event; label activation once; stable node/ref/focus on updates;
+checked/unchecked/disabled form data and uncontrolled reset; required validity;
+ref cleanup and no duplicate callbacks after remount. Preserve native readOnly
+semantics and checked versus submitted-value distinction. No portable package,
+new callbacks, autosave or document/history ownership. JSDOM is adapter evidence,
+not keyboard/browser/real IME or four-host completion. Focused tests, React
+typecheck, formatting and commit-safety are required; the integrator owns required
+unit registration and combined fast validation after merge.
+
+### First distributed wave receipt
+
+Shared baseline `7ceb9ceb7089086660004c6dc4fa4c7a10c940f9` passed full fast and
+independent execution/UI contract review before both branches were created.
+ST-004T and ST-006A are now `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS` with
+combined full fast **486 files / 2,908 tests**, **9 units / 71 required cases**.
+Both parts respected their exclusive paths; public APIs/dependencies stayed fixed.
+See [wave 1 integration](./distributed-integration-wave-1.md) for exact part and
+merge commits, verification scope and remaining domain design decisions. Develop,
+release and consumer adoption remain separate gates.
+
+## Wave 2 — bounded JSON operation and native text-input core
+
+ST-004A and ST-005B are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`, admitted by
+the closed [implementation packet](./implementation-wave-2.md). Both independent
+parts, focused public exports, required cases and packed consumers passed full
+fast: **488 files / 2,932 tests**, **11 units / 95 required cases**. Shared v1 is
+unchanged. The [wave 2 receipt](./distributed-integration-wave-2.md) records exact
+part/merge commits, source-browser evidence and next bounded design queues.
+Four-framework/real IME acceptance, develop, release and adoption remain separate.
+
+## Wave 3 — strict UTF-8 and four input hosts
+
+ST-004B and ST-005C are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`, admitted by the
+closed [wave 3 packet](./implementation-wave-3.md). Strict UTF-8, focused public
+exports and one packed browser artifact across four hosts passed combined fast:
+**489 files / 2,948 tests**, **12 units / 111 required cases**. The same 40 host
+scenarios passed in JSDOM and a real browser, with manual input/form interactions.
+The [wave 3 receipt](./distributed-integration-wave-3.md) records exact commits,
+artifact identity, review and limits. Common v1 is unchanged. Real OS IME,
+portable styling, other controls, develop, release and adoption remain separate.
+
+## Wave 4 — structural defects and ownership
+
+ST-012 (HTTPS redirect policy), ST-013 (current/target dependency documentation)
+and ST-014 (headless Remap history ownership)
+are `LOCALLY_INTEGRATED / SOURCE_REVIEW_PASS`, admitted under the closed
+[structural stabilization packet](./structural-stabilization-wave-4.md).
+The existing common operation/control contracts remain unchanged. Preview state,
+UI/package splitting and Provider decomposition remain subsequent bounded work.
+The [wave 4 receipt](./structural-stabilization-wave-4-receipt.md) records the real
+redirect reproduction/repair, unchanged history extraction, independent reviews
+and combined fast PASS: **491 files / 2,968 tests**, **14 units / 139 required cases**.
+
+## Shared status definitions
 
 - `DESIGNING` — target architecture/API/ownership decisions remain open
 - `READY_FOR_IMPLEMENTATION` — architecture decisions are sufficiently closed for an implementation-only agent
@@ -76,8 +466,9 @@ WB-NS-070C atomic component/composite descriptor contract [DONE]
 WB-NS-070D UiDocument command + direct-manipulation authoring [DONE]
         ↓
 WB-NS-070E responsive variants + tokens/resources [DECOMPOSED; design-system mechanics → WB-NS-072B..F, remaining responsive authoring → WB-NS-072E]
-WB-NS-070F provider-neutral generative UI parity [DONE; source integrated, unpublished]
+WB-NS-070F provider-neutral generative UI parity [DONE; root API included in inspected JDW .48 artifact; visual/provider integration separate]
 WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
+WB-NS-070I component rendering contract + visual conformance prerequisite [DESIGNING; does not reopen 070F core completion]
 WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [SOURCE_REVIEW_PASS; READY_FOR_RELEASE]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
@@ -5104,8 +5495,16 @@ reported through those packets.
   `develop@04e402f54fbe05e7fab2cbf381107ded448958f7`. Three exact-source core,
   behavior and public-compatibility reviews found no P0/P1/P2. The candidate passed 30 focused
   tests, static, fast (464 files / 2,623 tests), the required Chromium lane (82 interactions,
-  8 skipped), packed public-consumer checks and two hosted Validate runs. This source is not
-  included in the published `.43` cohort and release is not claimed.
+  8 skipped), packed public-consumer checks and two hosted Validate runs.
+- **2026-09-05 artifact reconciliation:** the original source completion did not
+  include publication in `.43`. The current inspected npm
+  `@workbench-kit/jdw@0.0.2-prototype.0.2.48` tarball matches registry SHA-512
+  integrity and contains all four lifecycle names in root declarations and ESM
+  output. Release tag `.48` resolves to `bf7c279571a43a49cedbcd3daf9b6444dee7c184`
+  and contains the source candidate above. This establishes inclusion of this
+  surface in that artifact; it does not recertify the whole release, imply a model
+  integration or prove component-rendering conformance. The focused
+  `./ui-authoring/v3` declaration entry does not export the generative lifecycle.
 - **Target:** [`ui-authoring-and-generative-composition.md`](./ui-authoring-and-generative-composition.md)
   sections 7, 13-16
 - **Ownership:** `GENERIC_KIT`
@@ -6428,6 +6827,66 @@ changes.
 - no product policy, second document/history/patch path, provider, DOM state or Electron dependency is
   introduced;
 - producer-distinct review returns no P0/P1/P2 target mismatch before integration or release work.
+
+### `WB-NS-070I` design candidate — shared component rendering contract
+
+- **Status:** `DESIGNING`; documentation-only candidate, not source admission.
+- **Target:** [component-rendering-contract.md](./component-rendering-contract.md).
+- **Evidence base:** `develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`.
+- **Existing owners to reuse:** contracts component/widget definitions; JDW
+  document, projection, layout and command/session; workbench-core Design System
+  resolution; React/JDW rendering adapter; trusted host event/resource capabilities.
+- **Related owners:** #422 owns Web Components package/delivery readiness; #430
+  owns the existing child-scoped layout repair. This candidate does not take over
+  either source scope or introduce a competing issue.
+
+#### Goal and current gap
+
+Make exact component descriptors, effective values and layout mean the same thing
+in manual authoring, proposal Preview and post-Apply runtime rendering. Existing
+070C metadata, 072E provenance surfaces and 070F detached candidate data each prove
+their bounded behavior; together they do not prove a working component renderer.
+
+The source inventory found 14 static JDW built-ins without optional authoring
+descriptors, exact-ref versus type-string identity seams, descriptor versus legacy
+event/slot differences, renderer-local defaults, and unqualified stateful lifecycle
+and Preview/runtime parity. Preserve existing static consumers while defining an
+additive, opted-in bridge over the existing semantic owners.
+
+#### Design work order
+
+1. Freeze the descriptor-to-implementation mapping for a small authored-rendering
+   fixture and reuse the overlapping #422 portable-control fixture.
+2. Reconcile property/default/source interpretation, named slots, measurement,
+   container/child scope, event intent, runtime value inputs and diagnostics.
+3. Specify derived render eligibility without creating a second catalog or
+   weakening exact descriptor-snapshot checks in 070F.
+4. Define Preview effect isolation, stable-node lifecycle/focus, legacy migration
+   and public import/module boundaries. Keep #422 registration/SSR/framework
+   decisions in its existing delivery design.
+5. Freeze backendless, real-browser, compatibility and workload/bundle/disposal
+   acceptance; obtain producer-distinct design review before READY.
+
+#### Readiness blockers and source boundary
+
+The implementation packet still needs exact public bridge types/functions,
+module exports, canary descriptor/property sets, slot/layout mapping, event and
+unresolved-value result shapes, lifecycle guarantees, numeric workload budgets
+and reviewed compatibility fixtures. These are material design decisions, not
+discretion for an implementation-only agent.
+
+No runtime source, package split, new schema/persistence, second renderer registry,
+model SDK or full React rewrite is authorized by this candidate. Existing V1/V2/V3
+command unions, legacy widget/event contracts and 070F lifecycle remain unchanged.
+
+#### Acceptance direction
+
+Use the focused target's conformance matrix: real component Preview/runtime parity,
+manual/generated one-history parity, supported responsive/Theme/resource inputs,
+explicit unsupported diagnostics, keyboard/a11y and update/reorder/reparent/dispose
+behavior. A headless plan PASS is not a visual PASS. Issue #430 must close its
+existing scope disagreement before that layout path is included in a conformance
+claim. Source integration, package availability and host adoption stay separate.
 
 ### Acceptance direction
 
@@ -9551,6 +10010,11 @@ through the private catalog, fails closed on registry or source drift, owns lega
 without changing native boundaries, and is integrated on `origin/develop` through PR #364.
 
 ---
+
+# WB-ST-003B — Operation invocation performance
+
+Admission: `READY_FOR_IMPLEMENTATION`. Scope, unchanged behavior, benchmark method
+and verification are closed in [operation-performance.md](./operation-performance.md).
 
 # Implementation source-review protocol
 

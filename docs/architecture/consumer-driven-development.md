@@ -66,6 +66,16 @@ host.
 
 ### 3. Release before consumption
 
+For explicitly requested local co-development, a consumer may link a separate Kit checkout and validate
+unreleased changes without waiting for publication. Keep pnpm workspaces and peer installations isolated.
+`pnpm watch:workspace` builds package outputs serially, coalesces edits during a build and writes
+`.cache/workspace-build.json` only after a successful build. A consumer may use that completion marker to
+reload its renderer and restart development processes that cache CommonJS modules. Source-exported UI
+packages remain eligible for the consumer's normal hot updates. Stop the watcher when the development
+session ends. Local compatibility evidence does not replace packed-package or release validation.
+Watch builds retain existing outputs while compiling so active consumers do not lose their entrypoints.
+Normal builds still clean those outputs; use a normal build before packed-package validation.
+
 The committed consumer baseline uses published registry packages.
 
 ```text

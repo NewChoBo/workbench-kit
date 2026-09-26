@@ -152,6 +152,11 @@ second history owner. A V2 batch validates against an immutable exact component 
 one revision and one history record, and restores the full document and selection in one Undo/Redo
 step.
 
+V3 adds responsive authoring through separately named document/command/session
+types and the existing schema-2 authoring envelope. 070F proposals use those V3
+atomic commands and one V3 session batch; they do not reinterpret the V2 recipe
+plan lifecycle below.
+
 Reusable recipe flows are data-only and detached: create a plan from exact document, Design
 System, host-width, and endpoint operands; inspect a mutation-free Preview; revalidate those
 operands; then finalize one V2 batch. Finalization never applies by itself, and provider or
@@ -161,46 +166,17 @@ host-owned state remains outside Workbench.
 
 The same semantic value model should drive inspector editors, form fields, component inputs, graph inputs, bindings, layout/style authoring, and generation constraints without forcing identical UI.
 
-Provisional target roles:
+`WB-NS-070A` implemented the canonical
+[`UiValueSchema`, `UiPropertyDescriptor` and `UiValueSource`](../../packages/contracts/src/ui-authoring/types.ts).
+`UiValueSchema` uses `type`, `defaultValue`, `constraints`, `editor` and
+`allowedSources`; source eligibility must not be reconstructed from the obsolete
+conceptual `bindable`, `tokenizable` or `editorHint` fields.
 
-```text
-UiValueType
-UiValueSchema
-UiPropertyDescriptor
-UiPropertyValue
-DesignTokenRegistry
-ResourceRegistry
-ValueEditorRegistry
-```
-
-Conceptual contract:
-
-```ts
-interface UiValueSchema<T = unknown> {
-  type: string;
-  defaultValue?: T;
-  constraints?: unknown;
-  editorHint?: string;
-  bindable?: boolean;
-  tokenizable?: boolean;
-}
-
-interface UiPropertyDescriptor<T = unknown> {
-  id: string;
-  label?: string;
-  value: UiValueSchema<T>;
-  required?: boolean;
-}
-
-type UiValueSource<T = unknown> =
-  | { kind: 'literal'; value: T }
-  | { kind: 'token'; tokenId: string }
-  | { kind: 'resource'; resourceId: string }
-  | { kind: 'binding'; bindingId: string }
-  | { kind: 'expression'; expressionId: string };
-```
-
-Exact names and public exposure remain `TARGET_PROVISIONAL` until the existing field-schema/settings/remap APIs are inventoried.
+The closed source kinds are `literal | token | resource | binding | expression`.
+A permitted reference is not evidence that a renderer can evaluate it. Reuse
+the existing Design System/token/resource resolution owners, preserve endpoint
+binding distinctions, and diagnose unavailable runtime resolution. This target
+does not introduce another token, resource or value-schema registry.
 
 ### Property-to-node duality
 
@@ -255,24 +231,12 @@ See [`layout-and-style-authoring.md`](./layout-and-style-authoring.md) for the d
 
 ## 6. Component registry target
 
-The component catalog is extensible and typed.
-
-Provisional contract:
-
-```ts
-interface UiComponentDescriptor {
-  id: string;
-  version: string;
-  category?: string;
-  properties: readonly UiPropertyDescriptor[];
-  events?: readonly UiEventDescriptor[];
-  bindings?: readonly UiBindingDescriptor[];
-  layout?: UiLayoutCapabilityDescriptor;
-  accessibility?: UiAccessibilityDescriptor;
-  designTime?: UiDesignTimeDescriptor;
-  runtimeRequirements?: readonly string[];
-}
-```
+The component catalog is extensible and typed. `WB-NS-070C` implemented the
+canonical [`UiComponentDescriptor`](../../packages/contracts/src/ui-authoring/component-types.ts)
+atomic/composite union and exact `{ id, version }` identity. Properties, events,
+bindings, child slots, supported layout strategies, accessibility and design-time
+metadata use those existing public types; composite descriptors carry a
+`compositionRef`. This target does not define another descriptor schema.
 
 Sources may include:
 
@@ -284,72 +248,65 @@ Reusable composite components
 Imported external component descriptors
 ```
 
-A renderer adapter resolves a descriptor to React/Vue/etc. rendering. The descriptor is not a React component reference in the canonical model.
+A renderer adapter resolves an exact descriptor to a supported implementation.
+The descriptor is not a React component reference or Custom Element tag in the
+canonical model. Catalog presence alone does not prove renderer support.
+
+The [component rendering contract](./component-rendering-contract.md) records the
+current descriptor/runtime gaps and shared identity, value, slot, layout, event,
+lifecycle and diagnostic rules. `WB-NS-070I` is the design-only prerequisite for
+visual conformance. The Web Components delivery candidate in
+[Issue #422](https://github.com/NewChoBo/workbench-kit/issues/422) consumes these
+semantics while retaining its own package and cross-framework readiness gates.
 
 ## 7. Generative UI as a first-class authoring mode
 
-Generative UI is a proposal/command interface over existing target primitives.
+Generative UI is a proposal/command interface over existing primitives.
+`WB-NS-070F` has implemented the following provider-neutral headless lifecycle;
+it does not itself provide a model adapter or a finished visual renderer.
 
 ```text
-User intent / agent request
-        ↓
-Authoring context
-  - current document/selection
-  - component catalog
-  - layout strategies
-  - value/property schemas
-  - capabilities
-  - policy/permissions
-        ↓
-GenerativeUiPlannerPort
-        ↓
-UiProposal
-        ↓
-normalize + validate + policy check
-        ↓
-preview / diff
-        ↓
-accept
-        ↓
-commands / transaction
-        ↓
-UiDocumentModel
+Host-approved intent + canonical document/selection/catalog/layout/Design System
+  → admitUiGenerativeUiRequest (detached safe-data request)
+  → injected GenerativeUiPlannerPort.propose
+  → host unwraps proposal or reports sanitized planner unavailability
+  → createUiGenerativeUiPlan (revalidate request, validate/replay V3 atoms)
+  → previewUiGenerativeUiPlan (detached candidate data; no document mutation)
+  → explicit Accept
+  → finalizeUiGenerativeUiPlan (revalidate, return one V3 batch; never Apply)
+  → caller uses existing V3 session Apply / Undo / Redo
 ```
 
-Provisional roles:
-
-```text
-GenerativeUiPlannerPort
-UiAuthoringContext
-UiProposal
-UiPatchOperation
-UiProposalValidator
-UiProposalNormalizer
-UiGenerationPreview
-UiPatchApplier
-```
+Exact public shapes live in
+[`ui-authoring/types.ts`](../../packages/json-widget/src/ui-authoring/types.ts)
+and the 070F packet. `UiGenerativeUiProposal.commands` contains existing
+`UiDocumentAtomicCommandV3` values. There is no second `UiPatchOperation` language,
+normalizer that silently repairs unsupported intent, or separate patch applier.
 
 `GenerativeUiPlannerPort` is provider-neutral. A host may use a cloud model, local model, coding agent, rules engine, or no implementation at all.
 
-### Allowed proposal operations
+### Implemented proposal capability and later targets
 
-Examples:
+Implemented proposal operations are bounded by the existing V3 atomic union:
 
 ```text
-insert component
-remove component
-move/reparent component
-set layout strategy
-set property
-set layout constraint
-set responsive/state variant
-set binding
-set event/action binding
-create composite from selection
-replace component with compatible component
+insert/remove/replace/move node
+set declared property or layout
+set/clear exact component input binding
+upsert/remove responsive variant
+set/clear responsive property or layout
 ```
 
-The default target explicitly rejects arbitrary generated JSX/HTML/script execution as the primary authoring protocol.
+Event/action binding authoring, composite-definition creation, arbitrary state
+variants and new component implementations require their own manual command and
+readiness contracts before a planner may propose them. The default target rejects
+arbitrary generated JSX/HTML/script execution as the primary authoring protocol.
+
+For a visual feature, the approved catalog must also pass renderer-capability and
+host-policy checks from the shared rendering contract. Preserve full canonical
+descriptor identity rather than removing unsupported fields under the same ref.
+070F's data-only Preview and manual/generated document parity do not establish
+actual Preview/runtime rendering conformance.
 
 ## 8. Capability resolution for missing UI
 
@@ -586,6 +543,11 @@ minimal real runtime canaries
 
 Important invariant: the same expected document result should be testable whether an edit was expressed as direct commands or as an accepted generated proposal.
 
+Separately prove the same resolved content, layout, events and accessibility in
+Preview and runtime under fixed rendering conditions. Use the shared
+[rendering canary matrix](./component-rendering-contract.md#canary-and-acceptance);
+metadata cards, static snapshots and headless tests alone do not close this gate.
+
 ## 16. Target implementation sequence
 
 ```text
@@ -612,8 +574,15 @@ WB-NS-071C external static node catalog projection (data-only v1)
 optional ComfyUI adapter experiment
 ```
 
-The canonical implementation plan records `WB-NS-071B` as DONE and freezes the bounded data-only
-`WB-NS-071C` v1 packet. Later workflow/runtime adapter horizons remain placeholders until their own
+The graph above records the foundational decomposition, not the current work
+queue. N2 records 070F, 071B and the bounded data-only 071C source as DONE.
+The next visual delivery sequence is shared rendering contract (`070I`, DESIGNING)
+→ AI-disabled component rendering/Preview/direct-edit conformance → optional
+model adapter and generated-UI visual conformance. Issue #422's delivery canary
+shares the semantic contract but retains its separate scope. Existing 070F core
+completion is not reopened by this additional visual gate.
+
+Later workflow/runtime adapter horizons remain placeholders until their own
 source/API inventory and ready gates close.
 
 ## 17. Non-goals

@@ -2,7 +2,8 @@ import { defineConfig } from 'tsup';
 
 /**
  * CJS leaves for Electron main (and other CommonJS hosts).
- * ESM consumers keep importing the source subpaths from package exports.
+ * These leaves retain source ESM subpaths. The native input browser artifact
+ * is built afterwards by tsup.browser.config.ts.
  */
 export default defineConfig({
   entry: {
@@ -16,7 +17,7 @@ export default defineConfig({
   },
   format: ['cjs'],
   dts: false,
-  clean: true,
+  clean: process.env.WORKBENCH_KIT_WATCH !== '1',
   sourcemap: true,
   splitting: false,
   platform: 'node',

@@ -16,6 +16,7 @@ import {
   validateUiDocumentRootV3,
 } from './document-v3.js';
 import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutability.js';
+import { createLayoutPropertySupport } from './layout-property-support.js';
 import {
   canonicalizeUiResponsiveVariantCatalog,
   validateUiResponsiveVariantCatalog,
@@ -621,7 +622,7 @@ function applyResponsiveCommand(
     const strategyValid =
       strategy !== undefined &&
       validateUiLayoutStrategyDescriptor(strategy, context.layoutProperties).length === 0;
-    const supported = new Set(strategy?.supportedContainerProperties ?? []);
+    const supportsProperty = strategyValid ? createLayoutPropertySupport(strategy) : undefined;
     const valuesValid =
       strategyValid &&
       Object.entries(command.values).every(([propertyId, value]) => {
@@ -630,8 +631,8 @@ function applyResponsiveCommand(
             property.id === propertyId && property.strategyKinds.includes(strategy!.kind),
         );
         return (
-          supported.has(propertyId) &&
           properties.length === 1 &&
+          supportsProperty!(properties[0]!) &&
           validateUiLayoutPropertyValue(properties[0]!, value).length === 0
         );
       });

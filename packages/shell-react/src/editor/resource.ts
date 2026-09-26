@@ -4,7 +4,12 @@ import {
   JDW_WIDGET_DOCUMENT_FILE_EXTENSION,
   JDW_WIDGET_DOCUMENT_MIME,
 } from '@workbench-kit/react/jdw/document';
-import { parseWorkspaceResourceUri } from '@workbench-kit/workspace';
+import { formatWorkspaceResourceUri, parseWorkspaceResourceUri } from '@workbench-kit/workspace';
+
+export function normalizeWorkspaceResourceUri(resourceUri: string): string {
+  const parsed = parseWorkspaceResourceUri(resourceUri);
+  return parsed ? formatWorkspaceResourceUri(parsed) : resourceUri;
+}
 
 export function pathForResource(resourceUri: string): string {
   const workspaceUri = parseWorkspaceResourceUri(resourceUri);

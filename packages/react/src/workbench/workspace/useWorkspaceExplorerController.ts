@@ -111,6 +111,7 @@ export function useWorkspaceExplorerController({
   const expandedPaths = expandedPathsProp ?? internalExpandedPaths;
   const [inlineEdit, setInlineEditState] = useState<WorkspaceExplorerInlineEditState | undefined>();
   const inlineEditCommitInFlightRef = useRef(false);
+  const inlineEditGenerationRef = useRef(0);
   const [selection, setSelection] = useState<WorkspaceSelectionState>(
     initialSelection ?? { paths: [] },
   );
@@ -122,11 +123,13 @@ export function useWorkspaceExplorerController({
 
   /** Host/API draft replacement — always opens the commit gate for the next attempt. */
   const setInlineEdit = useCallback((edit: WorkspaceExplorerInlineEditState | undefined) => {
+    inlineEditGenerationRef.current += 1;
     inlineEditCommitInFlightRef.current = false;
     setInlineEditState(edit);
   }, []);
 
   const clearInlineEdit = useCallback(() => {
+    inlineEditGenerationRef.current += 1;
     inlineEditCommitInFlightRef.current = false;
     setInlineEditState(undefined);
   }, []);
@@ -194,11 +197,35 @@ export function useWorkspaceExplorerController({
   }, [activePath, revealFolder, syncSelectionFromActivePath]);
 
   const reportInlineEditError = useCallback(
-    (edit: WorkspaceExplorerInlineEditState, error: string) => {
-      // Keep the same draft id; open the gate so Enter/blur can retry after the error.
+    (error: string, generation: number) => {
+      if (generation !== inlineEditGenerationRef.current) {
+        return;
+      }
+
+      // Keep the same draft id; record every completed rejection so controlled explorers can retry
+      // identical errors without coupling the commit gate to presentation text.
       inlineEditCommitInFlightRef.current = false;
-      setInlineEditState({ ...edit, error });
+      setInlineEditState((currentEdit) => {
+        if (!currentEdit) {
+          return currentEdit;
+        }
+
+        return {
+          ...currentEdit,
+          commitAttempt: (currentEdit.commitAttempt ?? 0) + 1,
+          error,
+        };
+      });
       port.reportError?.(error);
+    },
+    [port],
+  );
+
+  const reportAsyncActionError = useCallback(
+    (error: unknown) => {
+      port.reportError?.(
+        error instanceof Error ? error.message : 'Could not complete workspace action.',
+      );
     },
     [port],
   );
@@ -252,10 +279,11 @@ export function useWorkspaceExplorerController({
       inlineEditCommitInFlightRef.current = true;
 
       void (async () => {
+        const generation = inlineEditGenerationRef.current;
         const name = value.trim();
         const nameError = validateWorkspaceExplorerInlineEditName(name, invalidNameMessage);
         if (nameError) {
-          reportInlineEditError(edit, nameError);
+          reportInlineEditError(nameError, generation);
           return;
         }
 
@@ -263,12 +291,12 @@ export function useWorkspaceExplorerController({
           const parentPath = edit.parentPath ?? '';
           const createDenied = mutationDeniedMessage(parentPath, 'create');
           if (createDenied) {
-            reportInlineEditError(edit, createDenied);
+            reportInlineEditError(createDenied, generation);
             return;
           }
 
           if (!isWorkspaceExplorerCreatePathAvailable(snapshot, parentPath, name)) {
-            reportInlineEditError(edit, alreadyExistsMessage(name));
+            reportInlineEditError(alreadyExistsMessage(name), generation);
             return;
           }
 
@@ -277,6 +305,7 @@ export function useWorkspaceExplorerController({
               edit.kind === 'create-file'
                 ? await port.createFile({ name, parentPath })
                 : await port.createFolder({ name, parentPath });
+            if (generation !== inlineEditGenerationRef.current) return;
             clearInlineEdit();
             if (edit.kind === 'create-folder') {
               const folderPath = result?.path ?? joinWorkspacePath(parentPath, name);
@@ -286,7 +315,7 @@ export function useWorkspaceExplorerController({
             applyWorkspaceExplorerMutationResult(result, setSelection);
           } catch (error) {
             const message = error instanceof Error ? error.message : createFailedMessage;
-            reportInlineEditError(edit, message);
+            reportInlineEditError(message, generation);
           }
           return;
         }
@@ -294,17 +323,18 @@ export function useWorkspaceExplorerController({
         const sourcePath = edit.path ?? '';
         const renameDenied = mutationDeniedMessage(sourcePath, 'rename');
         if (renameDenied) {
-          reportInlineEditError(edit, renameDenied);
+          reportInlineEditError(renameDenied, generation);
           return;
         }
 
         if (!isWorkspaceExplorerRenamePathAvailable(snapshot, sourcePath, name)) {
-          reportInlineEditError(edit, alreadyExistsMessage(name));
+          reportInlineEditError(alreadyExistsMessage(name), generation);
           return;
         }
 
         const destinationPath = joinWorkspacePath(parentPathOf(sourcePath), name);
         if (sourcePath === destinationPath) {
+          if (generation !== inlineEditGenerationRef.current) return;
           clearInlineEdit();
           return;
         }
@@ -316,6 +346,7 @@ export function useWorkspaceExplorerController({
             name,
             path: sourcePath,
           });
+          if (generation !== inlineEditGenerationRef.current) return;
           clearInlineEdit();
           if (mapRenameSelection) {
             setSelection((currentSelection) =>
@@ -336,7 +367,7 @@ export function useWorkspaceExplorerController({
           applyWorkspaceExplorerMutationResult(result, setSelection);
         } catch (error) {
           const message = error instanceof Error ? error.message : renameFailedMessage;
-          reportInlineEditError(edit, message);
+          reportInlineEditError(message, generation);
         }
       })();
     },
@@ -363,9 +394,15 @@ export function useWorkspaceExplorerController({
 
   const handleActivateFile = useCallback(
     (path: string) => {
-      void port.openFile(path);
+      void (async () => {
+        try {
+          await port.openFile(path);
+        } catch (error) {
+          reportAsyncActionError(error);
+        }
+      })();
     },
-    [port],
+    [port, reportAsyncActionError],
   );
 
   const handleToggleFolder = useCallback(
@@ -409,12 +446,18 @@ export function useWorkspaceExplorerController({
         }
       }
 
-      void port.deleteEntries({
-        kind: meta.node.type,
-        paths,
-      });
+      void (async () => {
+        try {
+          await port.deleteEntries({
+            kind: meta.node.type,
+            paths,
+          });
+        } catch (error) {
+          reportAsyncActionError(error);
+        }
+      })();
     },
-    [mutationDeniedMessage, onRequestDelete, port],
+    [mutationDeniedMessage, onRequestDelete, port, reportAsyncActionError],
   );
 
   const handleRequestMove = useCallback(
@@ -432,14 +475,18 @@ export function useWorkspaceExplorerController({
       }
 
       void (async () => {
-        const result = await port.moveEntries?.({
-          sourcePaths: meta.sourcePaths,
-          targetFolderPath: meta.targetFolderPath,
-        });
-        applyWorkspaceExplorerMutationResult(result, setSelection);
+        try {
+          const result = await port.moveEntries?.({
+            sourcePaths: meta.sourcePaths,
+            targetFolderPath: meta.targetFolderPath,
+          });
+          applyWorkspaceExplorerMutationResult(result, setSelection);
+        } catch (error) {
+          reportAsyncActionError(error);
+        }
       })();
     },
-    [mutationDeniedMessage, port],
+    [mutationDeniedMessage, port, reportAsyncActionError],
   );
 
   const handleRequestRename = useCallback(

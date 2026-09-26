@@ -1,0 +1,841 @@
+{
+  "version": 1,
+  "units": [
+    {
+      "id": "SP01.cleanup",
+      "owner": "Foundation / packages/base",
+      "sources": ["packages/base/src/disposable.ts"],
+      "tests": [
+        {
+          "file": "packages/base/src/disposable.test.ts",
+          "cases": [
+            "DisposableStore disposes registered items in reverse order",
+            "DisposableStore disposes items added after the store is disposed",
+            "DisposableStore attempts all cleanup and preserves the first failure",
+            "DisposableStore preserves a thrown undefined after remaining cleanup",
+            "DisposableStore does not repeat a batch during reentrant clear",
+            "DisposableStore retains additions during clear for the next batch",
+            "DisposableStore handles dispose during clear without repeating detached items",
+            "DisposableStore keeps additions after a successful clear",
+            "DisposableStore deduplicates registrations and immediately cleans additions during dispose"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PG00.required-unit-evidence",
+      "owner": "Repository verification / scripts",
+      "sources": ["scripts/verification-units.mjs", "scripts/check-verification-units.mjs"],
+      "tests": [
+        {
+          "file": "scripts/verification-units.test.mjs",
+          "cases": [
+            "verification units accepts a real registry and complete passing report",
+            "verification units rejects invalid ownership and paths",
+            "verification units rejects absent or renamed required evidence",
+            "verification units rejects false green reports"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP02.legacy-transform-behavior",
+      "owner": "Data Operations migration / field-remap",
+      "sources": [
+        "packages/field-remap/src/registry/builtinTransforms.ts",
+        "packages/field-remap/src/domain/mapping/dateFormat.ts",
+        "packages/field-remap/src/domain/mapping/pathUtils.ts",
+        "packages/field-remap/src/domain/operations/textOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/builtinTransforms.characterization.test.ts",
+          "cases": [
+            "legacy builtin transforms covers the exact builtin inventory",
+            "legacy builtin transforms preserves identity and distinguishes undefined from null",
+            "legacy builtin transforms reduces empty singleton and multiple arrays without mutation",
+            "legacy builtin transforms preserves join coercion and separator defaults",
+            "legacy builtin transforms preserves string coercion case whitespace and affixes",
+            "legacy builtin transforms resolves safe scalar placeholders and leaves unsupported syntax literal",
+            "legacy builtin transforms preserves template fallback and serialization failures",
+            "legacy builtin transforms reformats date tokens without adding calendar validation",
+            "legacy builtin transforms combines configured fields and preserves missing values",
+            "legacy builtin transforms splits datetime text without timezone or calendar normalization"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP03.transform-chain-completion",
+      "owner": "Mapping / field-remap",
+      "sources": [
+        "packages/field-remap/src/registry/createValueTransformRegistry.ts",
+        "packages/field-remap/src/domain/abort.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/transformChain.contract.test.ts",
+          "cases": [
+            "transform chain contract awaits steps and merges options without mutating the caller",
+            "transform chain contract keeps empty-chain identity and legacy three-step truncation",
+            "transform chain contract preserves registry replacement and unknown-id errors",
+            "transform chain contract stops after rejection and preserves the original error",
+            "transform chain contract rejects pre-aborted work before calling a transform",
+            "transform chain contract rejects an aborted empty chain",
+            "transform chain contract rejects late cancellation before exposing the final result",
+            "transform chain contract stops the next step when cancellation occurs inside a transform"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.react-input-adapter",
+      "owner": "Universal UI / current React adapter",
+      "sources": ["packages/react/src/primitives/text-input/TextInput.tsx"],
+      "tests": [
+        {
+          "file": "packages/react/src/primitives/text-input/TextInput.contract.test.tsx",
+          "cases": [
+            "TextInput adapter contract rerenders controlled values without emitting change callbacks",
+            "TextInput adapter contract delivers user edits in native callback then value callback order",
+            "TextInput adapter contract forwards composition events and identifies composing edits",
+            "TextInput adapter contract preserves the input node focus and ref across value updates",
+            "TextInput adapter contract retains native uncontrolled form reset and disabled semantics",
+            "TextInput adapter contract clears refs and stops delegated callbacks after removal"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP02.strict-operation-invocation",
+      "owner": "Data Operations / contracts and runtime",
+      "sources": [
+        "packages/contracts/src/data-processing/operation.ts",
+        "packages/runtime/src/dataOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/runtime/src/dataOperations.test.ts",
+          "cases": [
+            "strict data operations preserves explicit null undefined bytes and array cardinality",
+            "strict data operations resolves only exact refs and rejects invalid registration",
+            "strict data operations snapshots registration independently of caller mutation",
+            "strict data operations keeps punctuation unicode and prototype-like ids distinct across versions",
+            "strict data operations rejects invalid input before executing and rejects invalid output",
+            "strict data operations retains causes and identifies validation versus execution failures",
+            "strict data operations rejects invalid budgets and locations without running code",
+            "strict data operations checks cancellation before execution and after awaited completion",
+            "strict data operations isolates cancellation and budgets across concurrent runs",
+            "strict data operations shares a nested budget and preserves child error addresses",
+            "strict data operations does not hide an exceeded budget when operation code catches it",
+            "strict data operations keeps child cancellation location and freezes diagnostics",
+            "strict data operations closes escaped invocation contexts and isolates separate runs",
+            "strict data operations preserves exhausted budget when an older ordinary child failure is rethrown",
+            "strict data operations preserves caught child cancellation across fallback and concurrent runs",
+            "strict data operations prioritizes cancellation when input or output validation aborts and throws",
+            "strict data operations prioritizes observed cancellation over a previously exhausted budget",
+            "strict data operations allows explicit recovery from ordinary child errors"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP10.operation-adapter-composition",
+      "owner": "Composition / builtin text operation adapters",
+      "sources": ["packages/field-remap/src/registry/builtinDataOperations.ts"],
+      "tests": [
+        {
+          "file": "scripts/data-operations-integration.test.mjs",
+          "cases": [
+            "shared data operation integration reuses all three builtin algorithms through strict calls",
+            "shared data operation integration separates strict rejection from unchanged legacy coercion",
+            "shared data operation integration composes real adapters with one shared budget and location"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP02.strict-text-adapter",
+      "owner": "Data Operations / strict builtin text adapters",
+      "sources": [
+        "packages/field-remap/src/registry/builtinDataOperations.ts",
+        "packages/field-remap/src/domain/operations/textOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/builtinDataOperations.contract.test.ts",
+          "cases": [
+            "strict builtin text adapter contract publishes exactly three frozen versioned text definitions",
+            "strict builtin text adapter contract admits primitive strings and rejects other input and output values",
+            "strict builtin text adapter contract rejects boxed and hostile coercion inputs without invoking coercion",
+            "strict builtin text adapter contract preserves handwritten Unicode empty and whitespace results alongside legacy transforms",
+            "strict builtin text adapter contract keeps strict rejection separate from legacy coercion",
+            "strict builtin text adapter contract isolates repeated factories and concurrent runner results"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.react-checkbox-adapter",
+      "owner": "Universal UI / current React Checkbox adapter",
+      "sources": ["packages/react/src/primitives/checkbox/Checkbox.tsx"],
+      "tests": [
+        {
+          "file": "packages/react/src/primitives/checkbox/Checkbox.contract.test.tsx",
+          "cases": [
+            "Checkbox adapter contract rerenders controlled checked values without emitting change callbacks",
+            "Checkbox adapter contract delivers clicks in native callback then boolean callback order with the same event",
+            "Checkbox adapter contract activates the associated input once when its label is clicked",
+            "Checkbox adapter contract preserves the input node focus and ref across checked and appearance updates",
+            "Checkbox adapter contract retains native form values disabled readOnly and uncontrolled reset semantics",
+            "Checkbox adapter contract retains native required validity as the checked state changes",
+            "Checkbox adapter contract clears refs and prevents detached or duplicate callbacks across remounts"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP02.bounded-native-json",
+      "owner": "Data Operations / bounded native JSON parsing",
+      "sources": [
+        "packages/field-remap/src/domain/operations/jsonOperations.ts",
+        "packages/field-remap/src/registry/jsonDataOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/jsonDataOperations.test.ts",
+          "cases": [
+            "bounded native JSON operation rejects missing options and invalid limits before parsing",
+            "bounded native JSON operation snapshots the limit and freezes the exact versioned definition",
+            "bounded native JSON operation parses scalar null object and zero one many array results",
+            "bounded native JSON operation admits only parser top-level kinds without recursively validating values",
+            "bounded native JSON operation enforces original UTF16 length including emoji and whitespace",
+            "bounded native JSON operation rejects nonstrings boxed and hostile inputs without coercion or parsing",
+            "bounded native JSON operation guards direct execution type and length before its single parse",
+            "bounded native JSON operation preserves native syntax errors as execution causes without normalization",
+            "bounded native JSON operation preserves native rounded numbers negative zero and overflow",
+            "bounded native JSON operation keeps duplicate last keys and proto as an own data property",
+            "bounded native JSON operation parses once and returns the native result without cloning or freezing",
+            "bounded native JSON operation does not parse on preabort and preserves late cancellation after parsing",
+            "bounded native JSON operation inherits nested budgets and child diagnostic locations from the runner",
+            "bounded native JSON operation isolates concurrent results cancellation and separately configured runners"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.native-text-input",
+      "owner": "Universal UI / native DOM text input binding",
+      "sources": ["packages/platform/src/browser/native-text-input.ts"],
+      "tests": [
+        {
+          "file": "packages/platform/src/browser/native-text-input.test.ts",
+          "cases": [
+            "native text input binding rejects invalid inputs callbacks and active duplicate ownership",
+            "native text input binding reports native input events once without cancellation or synthesized changes",
+            "native text input binding sets values without events or host attribute and default value changes",
+            "native text input binding avoids same-value writes while preserving selection node and focus",
+            "native text input binding tracks composition before reentrant edits and never replays refused updates",
+            "native text input binding preserves native form reset validity disabled and readOnly properties",
+            "native text input binding ignores edits and writes while the host uses an unsupported input type",
+            "native text input binding disposes only owned listeners and permits rebind without stale disposal effects",
+            "native text input binding isolates control composition and supports disposal during edit callbacks",
+            "native text input binding imports without DOM globals and reports invalid binding with TypeError"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP02.strict-bounded-utf8",
+      "owner": "Data Operations / strict bounded UTF8 decoding",
+      "sources": [
+        "packages/field-remap/src/domain/operations/utf8Operations.ts",
+        "packages/field-remap/src/registry/utf8DataOperations.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/registry/utf8DataOperations.test.ts",
+          "cases": [
+            "strict bounded UTF8 operation rejects missing options invalid limits and missing or invalid BOM policy",
+            "strict bounded UTF8 operation snapshots both options and freezes the exact versioned definition",
+            "strict bounded UTF8 operation decodes handwritten ASCII Hangul emoji NUL and empty byte sequences",
+            "strict bounded UTF8 operation bounds actual view bytes and ignores bytes outside a subarray",
+            "strict bounded UTF8 operation admits cross realm subclass and native Buffer views without a Node production dependency",
+            "strict bounded UTF8 operation uses intrinsic view metadata without reading shadowed properties",
+            "strict bounded UTF8 operation rejects other brands proxies spoofed tags and coercion without decoding",
+            "strict bounded UTF8 operation rejects shared resizable and detached storage including empty detached views",
+            "strict bounded UTF8 operation guards direct execution type storage and byte limits before decoding",
+            "strict bounded UTF8 operation preserves original fatal errors for truncated overlong surrogate and out of range bytes",
+            "strict bounded UTF8 operation applies explicit BOM policies without stripping internal or repeated markers",
+            "strict bounded UTF8 operation uses one fresh fatal nonstreaming decoder per admitted call and only admits string output",
+            "strict bounded UTF8 operation leaves input bytes unchanged and completed strings independent of later mutations",
+            "strict bounded UTF8 operation does not decode before aborted calls and preserves cancellation after synchronous decoding",
+            "strict bounded UTF8 operation composes real UTF8 and JSON operations with shared budgets and child error locations",
+            "strict bounded UTF8 operation isolates concurrent cancellation and independently configured byte and BOM policies"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP01.https-redirect-policy",
+      "owner": "Platform / HTTPS request boundary",
+      "sources": ["packages/platform/src/network/create-allowlisted-https-fetch.ts"],
+      "tests": [
+        {
+          "file": "packages/platform/src/network/create-allowlisted-https-fetch.test.ts",
+          "cases": [
+            "createAllowlistedHttpsFetch allows https requests to allowlisted hosts",
+            "createAllowlistedHttpsFetch rejects http URLs",
+            "createAllowlistedHttpsFetch rejects non-allowlisted hostnames",
+            "createAllowlistedHttpsFetch lets hosts map policy violations without changing request validation",
+            "createAllowlistedHttpsFetch accepts URL and Request inputs after hostname checks",
+            "createAllowlistedHttpsFetch normalizes hostnames case-insensitively",
+            "createAllowlistedHttpsFetch overrides init redirect modes without mutating request options",
+            "createAllowlistedHttpsFetch overrides Request redirect without cloning or changing the Request",
+            "createAllowlistedHttpsFetch preserves transport failure and cancellation causes"
+          ]
+        },
+        {
+          "file": "scripts/allowlisted-https-fetch.network.test.mjs",
+          "cases": [
+            "allowlisted HTTPS network boundary delivers direct Request body headers and method over verified TLS",
+            "allowlisted HTTPS network boundary proves native fetch can reach each redirect target with the same TLS trust",
+            "allowlisted HTTPS network boundary blocks every redirect status to cross-host HTTPS before the target is contacted",
+            "allowlisted HTTPS network boundary blocks every redirect status to HTTP downgrade before the target is contacted",
+            "allowlisted HTTPS network boundary blocks every redirect status to same-host HTTPS before the target is contacted",
+            "allowlisted HTTPS network boundary does not allow Request or init redirect options to opt out",
+            "allowlisted HTTPS network boundary rejects disallowed direct destinations before making a request"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP03.headless-history",
+      "owner": "Mapping / semantic edit history",
+      "sources": [
+        "packages/field-remap/src/history.ts",
+        "packages/shell-react/src/field-remap/history.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/field-remap/src/history.test.ts",
+          "cases": [
+            "headless Field Remap history creates independent empty histories without DOM globals",
+            "headless Field Remap history copies and shallow-freezes snapshot containers while retaining item identity",
+            "headless Field Remap history compares ordered item identities instead of structural values",
+            "headless Field Remap history returns the same state and preserves redo for an equal record",
+            "headless Field Remap history records the current composite snapshot and clears redo without mutating inputs",
+            "headless Field Remap history returns null for unavailable undo and redo",
+            "headless Field Remap history undoes and redoes whole snapshots in order without changing prior states",
+            "headless Field Remap history retains exactly the latest one hundred record steps through undo and redo",
+            "headless Field Remap history caps past during redo when a caller supplies an existing full history"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/field-remap/history.test.ts",
+          "cases": [
+            "Field Remap semantic history re-exports every headless history function with identical identity",
+            "Field Remap semantic history records a connect and restores it through undo and redo",
+            "Field Remap semantic history restores edges and operators as one immutable snapshot"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.native-checkbox",
+      "owner": "Universal UI / native checkbox behavior",
+      "sources": ["packages/platform/src/browser/native-checkbox.ts"],
+      "tests": [
+        {
+          "file": "packages/platform/src/browser/native-checkbox.test.ts",
+          "cases": [
+            "native checkbox binding rejects invalid elements callbacks and active duplicate ownership",
+            "native checkbox binding accepts a checkbox from another DOM realm",
+            "native checkbox binding registers without changing native state markup defaults or focus",
+            "native checkbox binding reports one original change after native input without blocking propagation",
+            "native checkbox binding snapshots each native field once before a reentrant synthetic change callback",
+            "native checkbox binding silently changes only the requested property and skips equal writes",
+            "native checkbox binding requires primitive booleans before disposed and unsupported state checks",
+            "native checkbox binding keeps checked indeterminate and native form values separate",
+            "native checkbox binding preserves native label activation reset and canceled activation rollback",
+            "native checkbox binding ignores changes and writes for other types then resumes on the same checkbox",
+            "native checkbox binding requires explicit disposal and leaves host state and listeners intact on rebind",
+            "native checkbox binding supports synchronous setters disposal and rebind during a callback",
+            "native checkbox binding keeps bindings and native properties independent across controls",
+            "native checkbox binding leaves callback exceptions to native EventTarget reporting",
+            "native checkbox binding imports without DOM globals and fails invalid binding with TypeError"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PG00.sample-backend",
+      "owner": "Sample host / HTTP-boundary verification",
+      "sources": [
+        "examples/workbench-sample/src/testing/sample-backend-fixture.ts",
+        "examples/workbench-sample/src/dummy-backend/http-client.ts"
+      ],
+      "tests": [
+        {
+          "file": "examples/workbench-sample/src/testing/sample-backend-fixture.test.ts",
+          "cases": [
+            "sample backend fixture uses real HTTP routes methods JSON and error parsing for sign-in session and sign-out",
+            "sample backend fixture isolates instances and returned payloads and resets through fresh factories",
+            "sample backend fixture holds repeated StrictMode-style session calls until explicitly released without timers",
+            "sample backend fixture holds sign-in without mutating the session before release",
+            "sample backend fixture rejects held and future requests on idempotent disposal without mutation or network fallback",
+            "sample backend fixture disposes a held sign-in before it can establish a session",
+            "sample backend fixture keeps failed sign-in unauthenticated and succeeds on retry through the same HTTP client",
+            "sample backend fixture preserves the server session on failed sign-out and clears it only after retry",
+            "sample backend fixture rejects expired and invalid session responses through existing client parsing and permits recovery",
+            "sample backend fixture provides deterministic zero one and many valid account payloads with distinct IDs",
+            "sample backend fixture rejects unknown routes origins methods and malformed credentials instead of fabricating success"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "PG00.sample-auth",
+      "owner": "Sample host / request and session ownership",
+      "sources": [
+        "examples/workbench-sample/src/useSampleAuth.ts",
+        "examples/workbench-sample/src/SampleAuthShell.tsx",
+        "examples/workbench-sample/src/App.tsx",
+        "examples/workbench-sample/src/createSampleHost.tsx"
+      ],
+      "tests": [
+        {
+          "file": "examples/workbench-sample/src/useSampleAuth.test.tsx",
+          "cases": [
+            "sample auth request ownership retains the default factory and workspace query when no client is supplied",
+            "sample auth request ownership uses the injected client without constructing a default or retaining signed-out data",
+            "sample auth request ownership handles bootstrap failure and clears its error for a successful sign-in retry",
+            "sample auth request ownership deduplicates synchronous sign-in and sign-out calls across both mutation kinds",
+            "sample auth request ownership ignores stale bootstrap success while a sign-in is pending",
+            "sample auth request ownership ignores stale bootstrap failure after successful sign-in",
+            "sample auth request ownership failed sign-in supersedes bootstrap and exits loading with a retryable error",
+            "sample auth request ownership preserves an authenticated session when a later sign-in fails",
+            "sample auth request ownership retains profile and accounts on failed sign-out then clears them only after retry succeeds",
+            "sample auth request ownership StrictMode ignores cleaned-up bootstrap results without disposing the caller client",
+            "sample auth request ownership client replacement resets visible state and ignores old mutation failure and callbacks",
+            "sample auth request ownership old bootstrap and successful mutation cannot overwrite a replacement client session",
+            "sample auth request ownership ignores bootstrap rejection after unmount without disposing the client",
+            "sample auth request ownership ignores sign-in rejection after unmount without disposing the client",
+            "sample auth request ownership ignores sign-out rejection after unmount without disposing the client"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.modal-viewport",
+      "owner": "Universal UI / React Modal compatibility",
+      "sources": [
+        "packages/react/src/modal/useModalWindowFrame.ts",
+        "packages/react/src/modal/modalSize.ts",
+        "packages/react/src/modal/modal.css"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/modal/Modal.viewport.test.tsx",
+          "cases": [
+            "Modal viewport ownership fits initial viewport dimensions below the preferred and minimum size",
+            "Modal viewport ownership fits initial contained dimensions below the preferred and minimum size",
+            "Modal viewport ownership shrinks the viewport frame from 1120 to 430 without replacing focused form state",
+            "Modal viewport ownership fits a shrinking contained host and retains the smaller size after expansion",
+            "Modal viewport ownership fits restored maximized bounds to the current contained host",
+            "Modal viewport ownership fits a default-maximized frame when it first restores into a small viewport",
+            "Modal viewport ownership ignores zero-size viewport observations and recovers on a positive size",
+            "Modal viewport ownership ignores zero-size contained observations and recovers on a positive size",
+            "Modal viewport ownership recovers preferred dimensions when a contained host initially measures zero",
+            "Modal viewport ownership ends a captured drag on viewport shrink and allows later position-only dragging",
+            "Modal viewport ownership ends a captured resize on host shrink and permits later manual resizing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.context-menu",
+      "owner": "Universal UI / native context and keyboard focus",
+      "sources": [
+        "packages/react/src/workbench/commands/workbenchContextMenu.ts",
+        "packages/react/src/workbench/commands/keyboard.ts",
+        "packages/react/src/overlay/ContextMenu.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/workbench/commands/workbenchContextMenu.test.tsx",
+          "cases": [
+            "workbench native context menu policy preserves native input textarea and select menus",
+            "workbench native context menu policy recognizes true empty and plaintext-only editing including descendant text targets",
+            "workbench native context menu policy inherits editing through missing and invalid contenteditable values",
+            "workbench native context menu policy respects false boundaries and nested editable overrides",
+            "workbench native context menu policy preserves the existing Monaco and CodeMirror editor areas",
+            "workbench native context menu policy honors explicit native opt-ins within noneditable content",
+            "workbench native context menu policy rejects ordinary chrome and non-node event targets",
+            "workbench native context menu policy applies the shared native policy through the shell event handler",
+            "workbench native context menu policy shares the native policy in the global guard and removes its listener on unmount"
+          ]
+        },
+        {
+          "file": "packages/react/src/overlay/ContextMenu.keyboard.test.tsx",
+          "cases": [
+            "ContextMenu keyboard model dismisses after Tab moves focus outside without swallowing navigation",
+            "ContextMenu keyboard model dismisses after Shift+Tab moves focus outside without swallowing navigation",
+            "ContextMenu keyboard model keeps internal focus navigation open and preserves focus chosen by an action"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP07.widget-context",
+      "owner": "UI authoring / targeted context actions",
+      "sources": [
+        "packages/react/src/widget-tree/WidgetTreeLab.tsx",
+        "packages/react/src/widget-tree/WidgetTreeView.tsx",
+        "packages/react/src/widget-tree/WidgetTreeCanvasPreview.tsx",
+        "packages/react/src/widget-tree/widget-context-actions.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/widget-tree/WidgetTreeLab.context.test.tsx",
+          "cases": [
+            "WidgetTreeLab context actions targets the right-clicked outline node without editing and restores focus on Escape",
+            "WidgetTreeLab context actions opens the targeted Inspector and edits that node through the existing controlled callback",
+            "WidgetTreeLab context actions shares More and keyboard actions with the invoking row rectangle and no nested buttons",
+            "WidgetTreeLab context actions moves only the targeted sibling once and keeps the moved node selected",
+            "WidgetTreeLab context actions protects the root and removes the targeted child once with parent selection",
+            "WidgetTreeLab context actions allows read-only inspection while disabling every mutation",
+            "WidgetTreeLab context actions invalidates an open menu on replacement before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on document path before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on parse failure before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on mode before a stale action can edit",
+            "WidgetTreeLab context actions invalidates an open menu on permission before a stale action can edit",
+            "WidgetTreeLab context actions targets the nearest authored canvas node for pointer and keyboard requests without a drag",
+            "WidgetTreeLab context actions preserves native editable context menus and ignores unowned canvas paths",
+            "WidgetTreeLab context actions does not retarget an expanded reference child to an authored ancestor",
+            "WidgetTreeLab context actions does not start a resize or drag from a secondary pointer on canvas chrome",
+            "WidgetTreeLab context actions keeps a later node menu focused after an earlier Inspector activation",
+            "WidgetTreeLab context actions does not apply Delete to another selected node from a focused More button",
+            "WidgetTreeLab context actions does not apply Backspace to another selected node from a focused More button",
+            "WidgetTreeLab context actions does not apply Alt+ArrowUp to another selected node from a focused More button",
+            "WidgetTreeLab context actions does not apply Alt+ArrowDown to another selected node from a focused More button"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP07.source-cursor",
+      "owner": "UI authoring / source and Inspector selection ownership",
+      "sources": [
+        "packages/react/src/widget-tree/WidgetSourceEditor.tsx",
+        "packages/react/src/jdw/JsonCodeEditorPane.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/widget-tree/WidgetSourceEditor.cursor.test.tsx",
+          "cases": [
+            "WidgetSourceEditor cursor ownership ignores an unfocused model cursor event while the Inspector owns editing",
+            "WidgetSourceEditor cursor ownership selects the authored node for focused code navigation and ignores invalid positions",
+            "WidgetSourceEditor cursor ownership reveals external selection and synchronizes changed source without retargeting the Inspector",
+            "WidgetSourceEditor cursor ownership uses the latest source root and callback for focused cursor navigation",
+            "WidgetSourceEditor cursor ownership focuses code before an explicit problem jump so its authored node becomes selected",
+            "WidgetSourceEditor cursor ownership replaces the mounted editor and disposes cursor forwarding on unmount"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.explorer-context",
+      "owner": "Universal UI / Explorer target and focus ownership",
+      "sources": ["packages/react/src/workbench/workspace/WorkspaceExplorer.tsx"],
+      "tests": [
+        {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorer.context.test.tsx",
+          "cases": [
+            "WorkspaceExplorer context ownership preserves the selected set and anchor while focusing the pointer target once",
+            "WorkspaceExplorer context ownership selects the unselected file target without opening or expanding it",
+            "WorkspaceExplorer context ownership selects the folder target without opening or expanding it",
+            "WorkspaceExplorer context ownership preserves the real pointer callback fallback without adding inert keyboard or More entries",
+            "WorkspaceExplorer context ownership uses the real invoker rectangle and common targets for More",
+            "WorkspaceExplorer context ownership uses the real invoker rectangle and common targets for Shift+F10",
+            "WorkspaceExplorer context ownership uses the real invoker rectangle and common targets for ContextMenu",
+            "WorkspaceExplorer context ownership keeps custom action siblings independent from More and row keyboard actions",
+            "WorkspaceExplorer context ownership returns from Escape to B then moves DOM focus and Delete or F2 targets to C",
+            "WorkspaceExplorer context ownership moves real focus for Home End arrows and horizontal folder navigation",
+            "WorkspaceExplorer context ownership preserves native rename menus and prevents context entry from committing an active draft",
+            "WorkspaceExplorer context ownership retains inline rename Enter retry and Escape cancellation after native context use"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.explorer-context",
+      "owner": "Workbench Shell / Explorer command and workspace context",
+      "sources": ["packages/shell-react/src/explorer/view.tsx"],
+      "tests": [
+        {
+          "file": "packages/shell-react/src/explorer/view.context.test.tsx",
+          "cases": [
+            "BuiltinExplorerView context ownership restores the invoked row rather than the previously focused row on Escape",
+            "BuiltinExplorerView context ownership opens the more menu without opening a file and restores its invoker",
+            "BuiltinExplorerView context ownership opens the keyboard menu without opening a file and restores its invoker",
+            "BuiltinExplorerView context ownership keeps multi-file targets for a selected row menu and moves subsequent keyboard actions",
+            "BuiltinExplorerView context ownership invalidates a menu when its workspace snapshot changes",
+            "BuiltinExplorerView context ownership invalidates a menu when the workspace service is replaced",
+            "BuiltinExplorerView context ownership invalidates an existing menu when inline creation begins"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP01.workspace-resource-uri",
+      "owner": "Foundation / workspace URI identity",
+      "sources": [
+        "packages/workspace/src/resource/uri.ts",
+        "packages/workspace/src/host/workbench-workspace-host.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/workspace/src/resource/uri.test.ts",
+          "cases": [
+            "workspace resource URI identity preserves ordinary ASCII file and folder URIs and the root folder",
+            "workspace resource URI identity encodes multilingual segments and resolves canonical and raw Unicode paths",
+            "workspace resource URI identity preserves spaces in canonical and raw paths without treating plus as space",
+            "workspace resource URI identity keeps literal percent sequences distinct from decoded names and structural separators",
+            "workspace resource URI identity round-trips query fragment and reserved filename characters as path data",
+            "workspace resource URI identity rejects malformed escapes and invalid UTF-8 instead of returning an aliased path",
+            "workspace resource URI identity rejects encoded forward and backward separators without rewriting path structure",
+            "workspace resource URI identity retains normalization and rejection of unsupported schemes kinds and empty files"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/host/workbench-workspace-host.test.ts",
+          "cases": [
+            "workbench workspace host port applies save transactions and records journal entries",
+            "workbench workspace host port creates files that do not yet exist in the workspace",
+            "workbench workspace host port resolves workspace file resources for editor hosts",
+            "workbench workspace host port resolves and saves the renamed multilingual file without changing another file",
+            "workbench workspace host port keeps reserved and literal percent filenames separate during lookup and save",
+            "workbench workspace host port does not resolve create or save resources with invalid encoded paths"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.editor-uri-storage",
+      "owner": "Workbench Shell / persisted resource identity migration",
+      "sources": ["packages/shell-react/src/editor/state-storage.ts"],
+      "tests": [
+        {
+          "file": "packages/shell-react/src/editor/state-storage.test.ts",
+          "cases": [
+            "editor-state-storage migrates the legacy %41.txt tab without reading or saving its decoded neighbor",
+            "editor-state-storage migrates the legacy %20.txt tab without reading or saving its decoded neighbor",
+            "editor-state-storage marks new URI encoding and restores it repeatedly without double migration",
+            "editor-state-storage normalizes leading space before classifying a legacy workspace URI",
+            "editor-state-storage normalizes embedded tab before classifying a legacy workspace URI",
+            "editor-state-storage rejects marked malformed workspace URIs while retaining opaque host resources",
+            "editor-state-storage keeps non-workspace legacy URIs unchanged and rejects unknown encoding versions",
+            "editor-state-storage drops invalid legacy workspace identities without altering the stored bytes",
+            "editor-state-storage round-trips editor state through storage",
+            "editor-state-storage ignores invalid persisted editor state payloads"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP06.explorer-rename-retry",
+      "owner": "Universal UI / inline edit attempt ownership",
+      "sources": [
+        "packages/react/src/workbench/workspace/WorkspaceExplorer.tsx",
+        "packages/react/src/workbench/workspace/useWorkspaceExplorerController.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorer.retry.test.tsx",
+          "cases": [
+            "WorkspaceExplorer inline rename retry retries after two identical validation failures and calls renameEntry",
+            "WorkspaceExplorer inline rename retry retries after three identical validation failures",
+            "WorkspaceExplorer inline rename retry keeps the draft after a collision and retries with a new name",
+            "WorkspaceExplorer inline rename retry deduplicates Enter, blur, and repeated Enter while rename is pending",
+            "WorkspaceExplorer inline rename retry opens a retry after a rejected rename promise",
+            "WorkspaceExplorer inline rename retry does not let an old promise clear or report over a replacement draft",
+            "WorkspaceExplorer inline rename retry ignores an old rejection after a replacement draft starts submitting",
+            "WorkspaceExplorer inline rename retry preserves later typing when the original pending rename rejects",
+            "WorkspaceExplorer inline rename retry cancels an idle draft with Escape without committing"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.editor-storage-eligibility",
+      "owner": "Workbench Shell / rejected editor storage preservation",
+      "sources": [
+        "packages/shell-react/src/editor/state-storage.ts",
+        "packages/shell-react/src/shell/provider.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/shell-react/src/editor/state-storage.test.ts",
+          "cases": [
+            "editor-state-storage reports missing and valid state as writable, while locking rejected state"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/shell/provider.test.tsx",
+          "cases": [
+            "WorkbenchProvider preserves rejected editor storage through ordinary editor events",
+            "WorkbenchProvider recomputes editor write eligibility when the adapter or key changes",
+            "WorkbenchProvider allows an explicit initial editor state to remain host-authoritative"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.editor-resource-identity",
+      "owner": "Workbench Shell / canonical editor composition",
+      "sources": [
+        "packages/workbench-core/src/editor/service.ts",
+        "packages/workbench-core/src/editor/state.ts",
+        "packages/shell-react/src/editor/resource.ts",
+        "packages/shell-react/src/shell/provider.tsx"
+      ],
+      "tests": [
+        {
+          "file": "packages/workbench-core/src/editor/service.test.ts",
+          "cases": [
+            "EditorService normalizes aliases before open lookup and stores one canonical tab",
+            "EditorService rejects ambiguous dirty aliases during initial state creation",
+            "EditorService coalesces clean initial aliases while keeping the active tab",
+            "EditorService coalesces interleaved aliases while retaining active tab tab-1",
+            "EditorService coalesces interleaved aliases while retaining active tab tab-2",
+            "EditorService coalesces interleaved aliases while retaining active tab tab-4",
+            "EditorService rejects a dirty member anywhere in an interleaved alias bucket",
+            "EditorService preserves initial order for non-alias resources with identity normalization"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/editor/resource.test.ts",
+          "cases": [
+            "editor-resource canonicalizes workspace URI aliases while preserving literal percent data",
+            "editor-resource leaves opaque and malformed identifiers unchanged"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/editor/resource-identity.test.ts",
+          "cases": [
+            "workspace editor resource identity integration shares one TextEditorHost and saves the latest alias edit to one workspace file"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/shell/provider.identity.test.tsx",
+          "cases": [
+            "WorkbenchProvider editor resource identity restores aliases before effects, then persists one canonical tab after a mounted alias open",
+            "WorkbenchProvider editor resource identity restores clean persisted aliases as one canonical active tab",
+            "WorkbenchProvider editor resource identity keeps ordinary alias opens on one tab through provider wiring",
+            "WorkbenchProvider editor resource identity rejects dirty initial aliases before persistence can write"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP09.dirty-resource-protection",
+      "owner": "Workbench Shell / draft-preserving resource mutations",
+      "sources": [
+        "packages/workbench-core/src/editor/service.ts",
+        "packages/workbench-core/src/editor/save.ts",
+        "packages/workspace/src/host/workbench-workspace-host.ts",
+        "packages/shell-react/src/extensions/builtin/explorer/src/index.ts",
+        "packages/react/src/workbench/workspace/useWorkspaceExplorerController.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/workbench-core/src/editor/service.test.ts",
+          "cases": [
+            "EditorService collects dirty resources across groups without including clean tabs",
+            "EditorService preserves a dirty host, text and dirty state through disappearance and reappearance"
+          ]
+        },
+        {
+          "file": "packages/workbench-core/src/editor/save.test.ts",
+          "cases": ["saveActiveEditor does not save a missing or host-rejected dirty resource"]
+        },
+        {
+          "file": "packages/workspace/src/host/workbench-workspace-host.test.ts",
+          "cases": [
+            "workbench workspace host port reports save eligibility from the current workspace state"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/extensions/builtin/explorer/src/index.test.ts",
+          "cases": [
+            "builtin explorer dirty-resource protection denies dirty rename before mutation and preserves journal and version",
+            "builtin explorer dirty-resource protection blocks dirty descendants and mixed move batches while respecting folder boundaries",
+            "builtin explorer dirty-resource protection wires dirty inactive hosts through denial, save-first mutation and reconcile protection"
+          ]
+        },
+        {
+          "file": "packages/shell-react/src/explorer/view.context.test.tsx",
+          "cases": [
+            "BuiltinExplorerView context ownership surfaces a rejected right-click Delete action without changing selection"
+          ]
+        },
+        {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorerPanel.test.tsx",
+          "cases": ["WorkspaceExplorerPanel renders the header addon outside the toolbar"]
+        },
+        {
+          "file": "packages/react/src/workbench/workspace/WorkspaceExplorer.action-errors.test.tsx",
+          "cases": [
+            "WorkspaceExplorer async action errors reports open failures from a throw port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports open failures from a reject port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports delete failures from a throw port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports delete failures from a reject port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports move failures from a throw port without an unhandled rejection",
+            "WorkspaceExplorer async action errors reports move failures from a reject port without an unhandled rejection",
+            "WorkspaceExplorer async action errors does not apply a fake success result after a failed move",
+            "WorkspaceExplorer async action errors reports one rejected rename and permits the same draft to retry"
+          ]
+        }
+      ]
+    },
+    {
+      "id": "SP01.workspace-unicode-paths",
+      "owner": "Foundation / workspace path validity before mutation",
+      "sources": [
+        "packages/workspace/src/path/path.ts",
+        "packages/workspace/src/path/unicode.ts",
+        "packages/workspace/src/resource/uri.ts"
+      ],
+      "tests": [
+        {
+          "file": "packages/workspace/src/path/path.test.ts",
+          "cases": [
+            "workspace path helpers rejects unpaired UTF-16 surrogates while preserving valid Unicode"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/resource/uri.test.ts",
+          "cases": [
+            "workspace resource URI identity rejects unpaired surrogates before URI encoding or path acceptance",
+            "workspace resource URI identity rejects raw unpaired surrogates before URL replacement can alias U+FFFD"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/host/workbench-workspace-host.test.ts",
+          "cases": [
+            "workbench workspace host port leaves state, snapshot version, and journal unchanged for an invalid rename",
+            "workbench workspace host port leaves state, snapshot version, and journal unchanged for invalid create mutations",
+            "workbench workspace host port filters invalid initial paths while preserving valid entries"
+          ]
+        },
+        {
+          "file": "packages/workspace/src/host/unicode-resource-uri.test.ts",
+          "cases": [
+            "workspace host raw Unicode URI validity does not alias malformed raw URIs to a legitimate replacement-character file"
+          ]
+        }
+      ]
+    }
+  ]
+}
