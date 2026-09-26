@@ -151,10 +151,14 @@ visible shell behavior changes.
 
 | Change type                                               | Gate                                                                          |
 | --------------------------------------------------------- | ----------------------------------------------------------------------------- |
-| Docs or contract-only planning                            | `pnpm.cmd validate:static`                                                    |
+| Docs or contract-only planning                            | Prettier on touched docs; public-reference check if public naming changed     |
 | Storage/install-state contract or model change            | targeted Vitest plus `pnpm.cmd --filter @workbench-kit/shell-react typecheck` |
-| JDW/widget-tree authoring slice                           | targeted Vitest, `@workbench-kit/react` typecheck, `pnpm.cmd validate:static` |
-| UI-visible extension management or shell runtime behavior | `pnpm.cmd validate:full`                                                      |
+| JDW/widget-tree authoring slice                           | targeted Vitest and affected package typecheck                                |
+| UI-visible extension management or shell runtime behavior | targeted Vitest, affected typecheck, assembled Sample browser/renderer smoke  |
+
+Run `pnpm validate:fast` for cross-package integration and `pnpm validate` on
+the release tip. Focused checks are iteration evidence; they do not replace
+the integration or release gate.
 
 ## Open Decisions
 

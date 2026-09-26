@@ -11,15 +11,15 @@ lockfile updates.
 
 ## Validation Lanes
 
-| Changed surface                         | Minimum validation                                                 | Extended validation                          |
-| --------------------------------------- | ------------------------------------------------------------------ | -------------------------------------------- |
-| Workspace, package exports, lockfile    | `pnpm validate`                                                    | Public-boundary search                       |
-| `packages/tokens` CSS variables         | `pnpm validate`                                                    | Storybook visual check                       |
-| `packages/react` primitives             | `pnpm --filter @workbench-kit/react typecheck`                     | `pnpm validate`, browser smoke               |
-| `examples/workbench-sample` UI behavior | `pnpm --filter workbench-sample typecheck` + browser/preview smoke | `pnpm validate:ui` (optional CI parity)      |
-| Storybook config or stories             | `pnpm build:storybook` and/or interactive Storybook UI             | `pnpm validate:ui` / `pnpm validate:full`    |
-| Lint/format config                      | `pnpm lint && pnpm format:check`                                   | `pnpm validate`                              |
-| README and conventions                  | Manual docs review                                                 | `pnpm exec prettier --check <touched-files>` |
+| Changed surface                         | Minimum validation                                                                                     | Extended validation                                            |
+| --------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
+| Workspace, package exports, lockfile    | affected build/typecheck + `pnpm check:public-exports` + packed consumer when export/packaging changes | `pnpm validate` at integration/release                         |
+| `packages/tokens` CSS variables         | Prettier on touched CSS + `pnpm check:plan-a-css`                                                      | Storybook visual check; `pnpm validate` at integration/release |
+| `packages/react` primitives             | `pnpm --filter @workbench-kit/react typecheck`                                                         | `pnpm validate`, browser smoke                                 |
+| `examples/workbench-sample` UI behavior | `pnpm --filter workbench-sample typecheck` + browser/preview smoke                                     | `pnpm validate:ui` (optional CI parity)                        |
+| Storybook config or stories             | `pnpm build:storybook` and/or interactive Storybook UI                                                 | `pnpm validate:ui` / `pnpm validate:full`                      |
+| Lint/format config                      | `pnpm lint && pnpm format:check`                                                                       | `pnpm validate`                                                |
+| README and conventions                  | Manual docs review + Prettier on touched files                                                         | `pnpm check:public-references` if naming changed               |
 
 ## Changed-Package Matrix (inner loop)
 

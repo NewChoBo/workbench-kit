@@ -6,10 +6,14 @@ Instructions for coding agents working in `NewChoBo/workbench-kit`.
 
 ```powershell
 pnpm install
-pnpm validate:static
 ```
 
 Package manager is **pnpm** only. Root scripts delegate tooling through pnpm.
+For an edit, run the affected package typecheck and focused tests first; use
+[`docs/conventions/development-harness.md`](docs/conventions/development-harness.md)
+to select the lane. Documentation edits do not require package typechecks or
+the packed consumer suite. Full validation remains the integration/release
+gate, not the default inner loop.
 
 ## Workspace isolation (consumer apps)
 
@@ -53,6 +57,11 @@ not identify private hosts while following this workflow.
 
 ## Before you change code
 
+For workbench shell work, read [`docs/workbench/current-state.md`](docs/workbench/current-state.md)
+and [`docs/workbench/workbench-change-guidelines.md`](docs/workbench/workbench-change-guidelines.md),
+then inspect the current code and tests. A plan or prior validation result never
+overrides the checked-out source.
+
 1. For Northstar source work, confirm the relevant packet in
    [`docs/northstar/implementation-plan.md`](docs/northstar/implementation-plan.md) is
    `READY_FOR_IMPLEMENTATION`; otherwise return to design/documentation only.
@@ -64,6 +73,55 @@ not identify private hosts while following this workflow.
    preview, Storybook UI, `pnpm dev`). **Do not treat Playwright /
    `pnpm validate:ui` as mandatory** for routine agent work—use it when CI
    parity or required Storybook play coverage is explicitly requested.
+
+## Refactor protocol
+
+Refactor to remove a demonstrated ownership split, duplicated state transition,
+consumer friction, or maintenance hazard. File length by itself is not a reason
+to move code. Keep each change as a reviewable behavior-preserving unit unless a
+specific failing behavior is part of the task.
+
+1. Record `git status --short --branch`, `HEAD`, the base ref/SHA, and any
+   existing dirty or staged files before editing. Preserve another task's work.
+   Use separate branches/worktrees for independent tracks; never let agents edit
+   the same files concurrently.
+2. Trace one user action through the public API, command/context key, owning
+   service, React adapter, host effect, and persistence boundary. Identify which
+   layer owns each state transition before introducing another state field or
+   helper. `platform` owns commands/context keys, `workspace` owns resource
+   transactions, `workbench-core` owns layout/editor/lifecycle state,
+   `shell-react` wires the assembled shell, and `react` renders reusable UI.
+   Integrating hosts own product data and effects.
+   The opt-in standalone shell hook in `react` has its own public state contract;
+   do not silently substitute it for the assembled shell's `LayoutService`.
+   A command palette `onRunCommand` claim is specific to that surface: its
+   context contains palette query/source position. Do not synthesize that
+   context for title-bar or keyboard actions. Global host overrides require an
+   explicit command integration contract.
+3. State the invariant and a counterexample before coding. Keep existing public
+   exports, keyboard behavior, focus, disabled states, restore semantics, and
+   host callbacks unless the task explicitly changes their contract. Prefer a
+   focused contract test and one consuming path over tests that restate the new
+   implementation.
+4. Implement the smallest vertical slice, remove the superseded path in that
+   same slice, and check the diff for new duplicate mechanics. For public API or
+   package-boundary changes, verify packed external consumption; workspace-only
+   imports cannot prove release readiness.
+5. For user-visible shell changes, run the affected Sample flow in a real
+   browser/renderer and report the route and observed behavior. Storybook and
+   generated mockups are useful design or component evidence, not proof of the
+   assembled Sample. A failed or skipped runtime check stays unverified.
+6. Report exact commands and outcomes, changed files, source added/removed,
+   remaining risks, branch/commit status, and whether the change is only a local
+   candidate or is integrated and published. Do not claim release from local
+   green tests.
+
+For delegated implementation, the planning/review agent states the source
+finding, invariant, counterexample, file ownership, and acceptance checks
+before handing off. The implementation agent owns its assigned files and
+reports the exact diff and verification results. The planning/review agent
+inspects the resulting diff, resolves contract questions, and records any
+unverified behavior. Do not split a single file between concurrent agents.
 
 ## Project layout
 
