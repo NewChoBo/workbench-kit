@@ -31,6 +31,23 @@ It is not a changelog of the current repository. Current source is recorded only
 - **Baseline maintenance:** a later documentation-only integration preserves the named source-bearing baseline only after its diff from that baseline is re-verified as documentation-only. Any source-bearing integration must refresh the named baseline evidence and re-verify current source facts.
 - **Historical source snapshot evidence:** any separately named `develop@...` reference below is candidate evidence only. It must be re-verified against the latest source-bearing integration baseline before it is described as a current source fact or used to promote a packet.
 
+## WB-SHELL-FOCUS-001 — Quick Open focus completion
+
+- **Status:** `READY_FOR_IMPLEMENTATION` for this bounded packet only.
+- **Owner:** `shell-react`; private assembled-shell focus coordination.
+- **Reviewed source base:** `9e098e6886f64318f5c012126abf5000e4eb89bd`.
+- **Design review:** independently accepted v2 on 2026-09-30; design SHA-256
+  `BD18EEB402C3440C062EB31B63CAC714A406E2E9287E2102899679D231F8CD57`.
+- **Canonical contract:** [Quick Open focus completion](./quick-open-focus-completion.md)
+  defines the behavior, source/test allowlist, compatibility boundary and
+  minimum verification. Reconcile the implementation checkout to the current
+  packet-bearing HEAD, then verify the allowed source/test inputs still match
+  the reviewed base. Any drift returns to source review.
+- **Admission boundary:** documentation-only registration does not report source
+  implementation or validation. Only this packet is admitted; broad shell R2,
+  other `DESIGNING` / `SOURCE_CLOSED` work and all other packet states remain
+  unchanged.
+
 ## WB-NS-070F-R1 — child-scoped V3 layout parity repair
 
 - **Status:** `SOURCE_REVIEW_REQUIRED / LOCAL_VALIDATED`; admitted as a bounded

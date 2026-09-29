@@ -74,14 +74,14 @@ Workflow and execution-plan edits are still local, uncommitted documentation.
 
 ## Ordered work after consolidation
 
-| Order | Work                                                                    | Completion boundary                                                                                                                                 |
-| ----- | ----------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0     | Combined source validation and independent integration review completed | Local candidate accepted; remote develop promotion and release remain separate                                                                      |
-| 1     | Align AGENTS, thin tool mirrors and handoff rules                       | Lead designs, independent reviewer verifies, Luna implements the frozen unit; source review and combined tests close it                             |
-| 2     | Close the shell R1/R2 acceptance gaps                                   | Command availability, focus and persisted restoration demonstrated through consuming paths, not only service state assertions                       |
-| 3     | Design one independent Universal UI PropertyRow unit                    | Label/control/diagnostic ownership, optional wrappers, no required shell, one artifact tested in HTML/React/Vue/Svelte                              |
-| 4     | Revalidate one authoring packet on the consolidated base                | Reuse incumbent rendering ownership; choose a bounded J, K or M unit only after current-source review; L waits for J                                |
-| 5     | Expand distribution and provider work only with evidence                | Logging is the first compiled leaf; each further package has its own packed checks. Provider decomposition needs characterization before extraction |
+| Order | Work                                                                        | Completion boundary                                                                                                                                 |
+| ----- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Combined source validation and independent integration review completed     | Local candidate accepted; remote develop promotion and release remain separate                                                                      |
+| 1     | Align AGENTS, thin tool mirrors and handoff rules                           | Lead designs, independent reviewer verifies, Luna implements the frozen unit; source review and combined tests close it                             |
+| 2     | [Implement WB-SHELL-FOCUS-001](../northstar/quick-open-focus-completion.md) | Selected-tab focus after a qualified Quick Open success; other shell acceptance gaps remain separate design work and are not admitted here          |
+| 3     | Design one independent Universal UI PropertyRow unit                        | Label/control/diagnostic ownership, optional wrappers, no required shell, one artifact tested in HTML/React/Vue/Svelte                              |
+| 4     | Revalidate one authoring packet on the consolidated base                    | Reuse incumbent rendering ownership; choose a bounded J, K or M unit only after current-source review; L waits for J                                |
+| 5     | Expand distribution and provider work only with evidence                    | Logging is the first compiled leaf; each further package has its own packed checks. Provider decomposition needs characterization before extraction |
 
 Steps 3 and 4 are design queues, not permission to start every lane. An independent
 capability need not wait for all shell features. With one implementation worker,
@@ -91,12 +91,28 @@ and Recipe/Mapping contracts from the
 [stabilization roadmap](../northstar/stabilization-roadmap.md); it is not reset or
 declared complete by this integration.
 
-## First source handoff to prepare: shell acceptance completion
+## Admitted source handoff: WB-SHELL-FOCUS-001
 
-**State: DESIGNING; no new source dispatch yet.** The existing
-[shell refactor plan](./shell-refactor-plan.md) supplies R1/R2 behavior and current
-evidence. The lead closes the following decisions, obtains independent review,
-then records the final base and allowed files in the execution handoff.
+**State: `READY_FOR_IMPLEMENTATION` for this packet only.** The canonical
+[Quick Open focus completion packet](../northstar/quick-open-focus-completion.md)
+contains the accepted v2 contract, exact seven-file source/test allowlist,
+compatibility boundaries and minimum checks. Independent design review accepted
+v2 on 2026-09-30 (SHA-256
+`BD18EEB402C3440C062EB31B63CAC714A406E2E9287E2102899679D231F8CD57`) against
+source base `9e098e6886f64318f5c012126abf5000e4eb89bd`.
+
+Before source work, reconcile to the current packet-bearing HEAD and confirm the
+allowed source/test inputs still match that reviewed base. Any source drift
+returns to review. This admission does not change the status of other work.
+Command availability, activity-intent transitions, persisted restoration and
+other shell R2 gaps remain separate design work; provider extraction, broad UI
+redesign and new storage policy are outside this packet.
+
+## Remaining shell acceptance design queue
+
+**State: `DESIGNING`; no source dispatch.** This table preserves the existing
+broader shell concerns; it does not expand the focus packet's source allowlist
+or verification set. Only WB-SHELL-FOCUS-001 above is `READY_FOR_IMPLEMENTATION`.
 
 | Concern                    | Required design and acceptance                                                                                                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -107,18 +123,6 @@ then records the final base and allowed files in the execution handoff.
 | Persistence                | Toggle, unmount and remount through a host storage adapter; persisted visibility/active contribution survives. Missing contribution and read/write failure produce the documented fallback/diagnostic |
 | Compatibility              | Preserve `commandHost={false}`, existing command IDs and the palette-specific `onRunCommand` contract; do not invent palette context for title-bar/keyboard actions                                   |
 | Existing integration       | Retain fresh/restored/intentionally empty/missing-path startup cases and both packed layout/logging fixtures                                                                                          |
-
-Candidate ownership is `shell-react` command wiring and focused consuming tests,
-plus `react` command definitions only if the reviewed availability contract needs
-them. Exact files are frozen after design; shared barrels, lockfiles and the
-verification registry remain with the lead. Do not include provider extraction,
-new authoring geometry, new storage schema, broad UI redesign or another budget
-policy change in this unit.
-
-Expected checks: affected workbench/React typechecks and exact-optional lanes,
-focused command/provider tests, actual Sample keyboard/focus/restore interaction,
-packed consumer checks for any public change, and combined validation. A helper
-test or JSDOM packed render alone cannot establish browser focus behavior.
 
 ## Later boundaries and status maintenance
 
