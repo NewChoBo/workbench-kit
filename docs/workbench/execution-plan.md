@@ -6,17 +6,20 @@ packets own detailed contracts. The shell is an optional composition. Independen
 processing and HTML/React/Vue/Svelte capability goals remain separate completion
 tracks.
 
-## Current local candidate
+## Current local integration
 
-Based on `develop@246363d1a757fc6790f1bad4b8a012caf9560296`, this dirty local
-candidate combines guidance architecture, advisory validation scope, Quick Open
+The reviewed candidate is integrated into local `develop` at
+`79996e8edc3307a43e9fc559a6ec8d1f56c7f44e`, and independent source acceptance is
+complete. It combines guidance architecture, advisory validation scope, Quick Open
 focus, exact-optional declaration validation, Electron preparation, packed-build
 reuse, and Storybook Widget Tree Phase A readiness. Structural, focused, declaration,
 actual packed-consumer, direct Windows Electron, and Sample-route checks passed.
 The bounded WidgetTreeLab static and dev routes both passed 18/18. The two hook
 files pass focused ESLint after explicit Node built-in imports; CSS remains outside
-the existing ESLint configuration. Final independent rereview of these repairs is
-pending; this is not a develop promotion or release result.
+the existing ESLint configuration. `origin/develop` remains at
+`246363d1a757fc6790f1bad4b8a012caf9560296`; standalone push authorization is
+pending. Release, publication, and host adoption are not verified by this local
+integration.
 
 ## Reconciled baseline (historical; 2026-09-29)
 
@@ -87,14 +90,14 @@ Workflow and execution-plan edits are still local, uncommitted documentation.
 
 ## Ordered work after consolidation
 
-| Order | Work                                                                       | Completion boundary                                                                                                                                             |
-| ----- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0     | Seven-candidate dirty-local Kit combination                                | Affected checks, including fresh static/dev WidgetTreeLab 18/18 and focused hook ESLint, passed; final independent rereview pending                             |
-| 1     | Align AGENTS, thin tool mirrors and handoff rules                          | Guidance architecture is locally combined and its exact source disposition is accepted; combined candidate verification and independent rereview remain pending |
-| 2     | [Complete WB-SHELL-FOCUS-001](../northstar/quick-open-focus-completion.md) | Selected-tab focus after a qualified Quick Open success is accepted; other shell gaps remain separate design work                                               |
-| 3     | Design one independent Universal UI PropertyRow unit                       | Label/control/diagnostic ownership, optional wrappers, no required shell, one artifact tested in HTML/React/Vue/Svelte                                          |
-| 4     | Revalidate one authoring packet on the consolidated base                   | Reuse incumbent rendering ownership; choose a bounded J, K or M unit only after current-source review; L waits for J                                            |
-| 5     | Expand distribution and provider work only with evidence                   | Logging is the first compiled leaf; each further package has its own packed checks. Provider decomposition needs characterization before extraction             |
+| Order | Work                                                                       | Completion boundary                                                                                                                                                                                 |
+| ----- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Seven-candidate Kit combination                                            | Integrated into local `develop` at `79996e8`; affected checks and independent source acceptance complete; `origin/develop` push authorization pending; release/publication/host adoption unverified |
+| 1     | Align AGENTS, thin tool mirrors and handoff rules                          | Integrated and independently accepted in local `develop` at `79996e8`; `origin/develop` push authorization pending; release/publication/host adoption unverified                                    |
+| 2     | [Complete WB-SHELL-FOCUS-001](../northstar/quick-open-focus-completion.md) | Selected-tab focus after a qualified Quick Open success is accepted; other shell gaps remain separate design work                                                                                   |
+| 3     | Design one independent Universal UI PropertyRow unit                       | Label/control/diagnostic ownership, optional wrappers, no required shell, one artifact tested in HTML/React/Vue/Svelte                                                                              |
+| 4     | Revalidate one authoring packet on the consolidated base                   | Reuse incumbent rendering ownership; choose a bounded J, K or M unit only after current-source review; L waits for J                                                                                |
+| 5     | Expand distribution and provider work only with evidence                   | Logging is the first compiled leaf; each further package has its own packed checks. Provider decomposition needs characterization before extraction                                                 |
 
 Steps 3 and 4 are design queues, not permission to start every lane. An independent
 capability need not wait for all shell features. Admit parallel implementation only for disjoint file and contract ownership, with
