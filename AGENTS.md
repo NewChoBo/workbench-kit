@@ -211,6 +211,11 @@ Status labels: `status:queued` · `in-progress` · `pr-open` · `needs-human` ·
 
 Follow [`docs/conventions/git-workflow.md`](docs/conventions/git-workflow.md). Do not commit, push, or tag unless the user explicitly requests it.
 
+For ordinary new work, refresh remote refs and branch from the latest
+`origin/develop` in an isolated topic worktree. Reuse a free checkout where
+possible; never switch, reset, or advance a dirty or in-use checkout. Follow the
+Git workflow for safe `develop` fast-forward updates and managed worktree bases.
+
 **Commit messages are English-only.** Use Conventional Commits (`feat`, `fix`, `docs`, …) with an English title and body. Full format and examples: [`docs/conventions/language-policy.md`](docs/conventions/language-policy.md) and the **Commit Message** section in `git-workflow.md`.
 
 Consumer applications may define their own commit language policy. This repository keeps English commits for public npm history and contributor consistency.

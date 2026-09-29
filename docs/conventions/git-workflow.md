@@ -22,6 +22,11 @@ the selected validation lane plus the public boundary before merging.
 - Keep it green: run the selected validation lane before merge.
 - Promote to `main` when ready to release or keep `main` current.
 - Use lowercase branch name exactly: `develop`.
+- For ordinary new work, refresh remote refs and base the topic branch on the
+  latest `origin/develop`.
+- Update a local `develop` only with fast-forward after confirming its dirty and
+  unique local work is accounted for. If it has diverged, reconcile it; never
+  reset or force it to match the remote.
 
 There is **no** long-lived `staging` branch. Grouped validation happens on
 `develop` (or a short-lived integration branch that merges into `develop`).
@@ -54,13 +59,18 @@ actor.
 
 ## Work Loop
 
+For Codex, use the managed `create_worktree` tool first and explicitly set
+`ref: origin/develop` (or the exact different base requested by the user). The
+manual shell example below is for human CLI use, and is a Codex fallback only
+when the managed tool is unavailable or the user explicitly requests manual CLI.
+
 ```powershell
-git switch develop
-git pull --ff-only
-git switch -c feature/codex/chatting-ui
+git fetch origin
+git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chatting-ui origin/develop
 ```
 
-1. Create a working branch from `develop`.
+1. Refresh remote refs, then create a `feature/codex/<topic>` branch from the
+   latest `origin/develop` in an isolated worktree.
 2. Keep the changed surface narrow.
 3. Commit by logical unit.
 4. Write a body for each non-trivial commit.
@@ -199,11 +209,17 @@ Recommended layout:
 Create worktrees:
 
 ```powershell
-git switch develop
-git pull --ff-only
-git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chatting-ui develop
-git worktree add ..\workbench-kit-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline develop
+git fetch origin
+git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chatting-ui origin/develop
+git worktree add ..\workbench-kit-worktrees\storybook-baseline -b chore/storybook/react-vite-baseline origin/develop
 ```
+
+Prefer reusing a free checkout. Do not switch, reset, or advance a dirty or
+in-use worktree, including a consumer checkout pinned to a fixed Kit source.
+When updating a local `develop`, first account for dirty and unique local work,
+then use fast-forward only; divergence requires reconciliation, never reset or
+force. Managed Codex worktree creation may default to `main`, so explicitly pass
+`ref: origin/develop` unless the user requested another base.
 
 Run install, dev servers, and validation inside each worktree independently.
 
