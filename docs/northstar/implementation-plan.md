@@ -473,6 +473,7 @@ WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [S
         ↓
 WB-NS-070M host mutation-policy admission hook [DESIGN_REVALIDATION_REQUIRED; SOURCE_CLOSED; dependency: released WB-NS-070H]
 WB-NS-070J aspect-preserving Canvas resize projection [DESIGN_CURRENTIZED; PACKET_REVIEW_PASSED; SOURCE_CLOSED; dependency: published WB-NS-070H]
+WB-NS-070K controlled pointer rotation projection + accessible Canvas rotation slider [PACKET_REVIEW_PASSED; SOURCE_CLOSED]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -7356,6 +7357,368 @@ lock flag; lets Canvas and Inspector use different arithmetic; rounds repeatedly
 geometry silently; drops anchor/zIndex/constraints or sibling layout values; mutates caller data; adds a
 second command/history path; hides a built-in shortcut/toggle in the helper; uses private imports; or
 claims consumer integration, Chromium UI acceptance, release or publish.
+
+### `WB-NS-070K` bounded packet — controlled pointer rotation projection and accessible Canvas slider
+
+- **Status:** `DESIGN_CURRENTIZED / PACKET_REVIEW_PASSED / SOURCE_CLOSED / NOT_COMMITTED / NOT_PUSHED /
+NOT_INTEGRATED / NOT_RELEASED`; documentation-only local candidate, no source work started
+- **Exact source/API base:** `origin/develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`
+- **Released dependency:** the public Canvas frame/resize primitives and V3 property action are published
+  in the exact `0.2.48` cohort at `main@bf7c279571a43a49cedbcd3daf9b6444dee7c184`,
+  tag `v0.0.2-prototype.0.2.48`
+- **Design coordination, not a source dependency:** align center-origin and viewport-coordinate semantics
+  with reviewed `WB-NS-070J`; 070K consumes no 070J symbol and may be implemented/reviewed independently.
+  Combined rotate-then-resize acceptance waits for both source packets and must not define a competing
+  Canvas transform convention.
+- **Target owner:** `@workbench-kit/react/authoring` owns stable pointer-to-angle projection;
+  `@workbench-kit/react/layout` owns the controlled semantic rotation slider. Existing property
+  descriptors, command admission, session/history and host product policy remain unchanged.
+- **Trigger:** the released Canvas can render rotation and expose generic frame/resize drags, while the
+  authoring bridge emits generic property commands. It has no continuous center-based pointer angle
+  projection or keyboard/assistive-technology-operable rotation control. Hosts would otherwise duplicate
+  wraparound, snapping, touch cancellation, focus and controlled-preview mechanics.
+
+#### Goal / user outcome
+
+Let an AI-free host place one visible **Rotate** control beside a selected Canvas item. Pointer or touch
+drag previews continuous clockwise-positive degrees around the item center, crosses the branch cut
+without jumping and submits one terminal intent on release. Arrow keys expose the same controlled value
+through slider semantics. Escape, stale state or pointer cancellation restores the host preview and
+submits no terminal intent.
+
+The Kit does not know which component/property is rotational, what range is valid, or whether rotation
+is enabled. The host maps one finite terminal degree through its existing public property action and
+descriptor/policy admission. Inspector and Canvas can therefore share one authored value and command/
+history path without a rotation field in Canvas placement.
+
+#### Public contract
+
+Add these public authoring exports. Pure projection retains an unwrapped, unsnapped accumulator while
+returning one value in the host's closed inclusive range:
+
+```ts
+interface WorkbenchCanvasPoint {
+  readonly x: number;
+  readonly y: number;
+}
+
+interface WorkbenchRotationRange {
+  readonly maximumDegrees: number;
+  readonly minimumDegrees: number;
+}
+
+interface WorkbenchRotationValueInput {
+  readonly deltaDegrees: number;
+  readonly initialDegrees: number;
+  readonly range: WorkbenchRotationRange;
+  readonly snapOriginDegrees?: number;
+  readonly snapStepDegrees?: number;
+}
+
+interface WorkbenchRotationValueResult {
+  readonly degrees: number;
+  readonly unwrappedDegrees: number;
+}
+
+function projectWorkbenchRotationDegrees(
+  input: WorkbenchRotationValueInput,
+): WorkbenchRotationValueResult | null;
+
+interface WorkbenchPointerRotationState {
+  readonly accumulatedDeltaDegrees: number;
+  readonly previousPointer: WorkbenchCanvasPoint;
+}
+
+interface WorkbenchPointerRotationInput extends Omit<WorkbenchRotationValueInput, 'deltaDegrees'> {
+  readonly center: WorkbenchCanvasPoint;
+  readonly currentPointer: WorkbenchCanvasPoint;
+  readonly state: WorkbenchPointerRotationState;
+}
+
+interface WorkbenchPointerRotationResult extends WorkbenchRotationValueResult {
+  readonly state: WorkbenchPointerRotationState;
+}
+
+function projectWorkbenchPointerRotation(
+  input: WorkbenchPointerRotationInput,
+): WorkbenchPointerRotationResult | null;
+```
+
+Add a public controlled `WorkbenchCanvasRotationHandle` under the current layout and root exports. A
+custom slider rather than a button exposes current value and range while retaining circular pointer
+geometry:
+
+```ts
+type WorkbenchCanvasRotationCancelReason =
+  | 'controlled-change'
+  | 'disabled'
+  | 'escape'
+  | 'invalid-projection'
+  | 'lost-capture'
+  | 'pointer-cancel'
+  | 'unmount';
+
+interface WorkbenchCanvasRotationChange {
+  readonly degrees: number;
+  readonly expectedInteractionEpoch?: number | string;
+  readonly source: 'keyboard' | 'pointer';
+}
+
+interface WorkbenchCanvasRotationPreview {
+  readonly degrees: number;
+  readonly expectedInteractionEpoch?: number | string;
+}
+
+interface WorkbenchCanvasRotationHandleProps extends Omit<
+  ComponentPropsWithRef<'div'>,
+  | 'aria-describedby'
+  | 'aria-disabled'
+  | 'aria-label'
+  | 'aria-labelledby'
+  | 'aria-valuemax'
+  | 'aria-valuemin'
+  | 'aria-valuenow'
+  | 'aria-valuetext'
+  | 'children'
+  | 'draggable'
+  | 'role'
+  | 'style'
+  | 'tabIndex'
+> {
+  center: WorkbenchCanvasPoint;
+  degrees: number;
+  descriptionId?: string;
+  formatValueText?: (degrees: number) => string;
+  interactionDisabled?: boolean;
+  interactionEpoch?: number | string;
+  label?: string;
+  largeStepDegrees?: number;
+  maximumDegrees: number;
+  minimumDegrees: number;
+  onRotationCancel?: (reason: WorkbenchCanvasRotationCancelReason) => void;
+  onRotationChange: (change: WorkbenchCanvasRotationChange) => void;
+  onRotationPreview?: (preview: WorkbenchCanvasRotationPreview | null) => void;
+  snapActive?: boolean;
+  snapOriginDegrees?: number;
+  snapStepDegrees?: number;
+  stepDegrees?: number;
+  stopPropagation?: boolean;
+  style?: Omit<CSSProperties, 'touchAction' | 'userSelect'>;
+  unavailableValueText?: string;
+}
+```
+
+`onRotationPreview` is ephemeral display output. `onRotationChange` is one terminal intent, not a
+canonical-state or persistence acknowledgement. A host must render pointer preview separately and must
+not feed preview degrees back into the controlled `degrees` prop during the active gesture. The control
+freezes `interactionEpoch` only after it accepts/captures a pointer or when it handles a keyboard key and
+echoes that exact value on every preview/terminal payload. The host maps this token to its source revision/
+identity CAS; reject, stale and effective no-op outcomes create zero history records. When the optional
+epoch is omitted, the payload property is omitted rather than filled with `undefined`.
+
+#### Frozen numeric semantics
+
+1. All coordinates, degrees, range endpoints, snap origin and steps must be finite. The closed canonical
+   range is a rotation cycle, not a clamp constraint: maximum must be greater than minimum and the span
+   must be exactly `360°`. A narrower product constraint belongs to host admission. Supplied snap step must
+   be greater than zero. Center subtraction and every
+   derived normalized component, cross, dot, segment degree, accumulator, snap quotient/product and
+   final degree are checked for finiteness. Invalid input returns `null` without caller-data mutation.
+2. Pointer and center coordinates are frozen in the same DOM viewport CSS-pixel space: positive X is
+   right and positive Y is down. Before cross/dot, independently scale each center-relative vector by
+   its maximum absolute component, then normalize it to unit length. This avoids overflow/underflow for
+   finite hostile magnitudes. A zero or non-finite normalized radius is rejected.
+3. For normalized `from` and `to`, segment delta is
+   `atan2(cross(from, to), dot(from, to)) * 180 / Math.PI`; positive is clockwise. Exact antipodal input
+   (`cross === 0 && dot < 0`) is directionally ambiguous and fails closed rather than selecting a signed
+   `180°` from platform signed-zero behavior. Same-direction/radial movement is a valid unchanged result
+   and stores the latest pointer; it is not an invalid projection or terminal change.
+4. Add each valid signed segment to the raw `state.accumulatedDeltaDegrees`. The unwrapped, unsnapped
+   accumulator makes branch-cut crossings continuous and permits multiple turns. Snapping never mutates
+   that accumulator, so a controlled snap toggle reprojects without drift.
+5. `initialDegrees` must be inside the closed inclusive host range. `unwrappedDegrees` is
+   `initialDegrees + deltaDegrees`. When snapping is active, compute exactly
+   `snapped = origin + roundHalfAwayFromZero((unwrapped - origin) / step) * step`, where
+   `origin = snapOriginDegrees ?? minimumDegrees`, then wrap **once** to the closed range. Do not
+   decimal-round or pre-wrap before snapping. An effective zero or integral-full-turn displacement
+   preserves the exact initial value, including either endpoint. Otherwise a result exactly on the cycle
+   seam selects `maximum` for positive delta and `minimum` for negative delta; all other results lie
+   strictly between them. This makes `Home=minimum`, `End=maximum` and `aria-valuemin/max` truthful without
+   platform signed-zero rules.
+6. Equal frozen input produces deep-equal output. Returned point/state objects are detached from caller
+   input. Helpers are O(1) and read no DOM, identity, descriptors, documents, preferences or time.
+7. Angular projection remains valid under uniform scale and rotation when center and pointer are in the
+   same viewport space. A host with non-uniform scale, mirror or skew must disable/fail closed unless it
+   first maps both values through a verified inverse transform. The Kit does not infer that transform.
+
+#### Frozen controlled-slider, touch and accessibility semantics
+
+1. Render a focusable `role="slider"` with controlled `aria-valuemin/max/now/valuetext`. Valid `degrees`
+   must be finite and inside the closed range. Invalid canonical range uses the exact safe ARIA tuple
+   `{min: 0, max: 360, now: 0}`. A valid range with invalid degree, center, epoch or snap/step config uses
+   the supplied min/max and the overflow-safe midpoint `minimum + 180`. Both cases set
+   `aria-disabled="true"`, use the unavailable text and start no interaction. A valid explicitly disabled
+   control instead preserves its controlled degree/value text.
+2. Default steps are `1` and `15`; an explicitly supplied non-finite/non-positive step disables the whole
+   slider so role semantics are never pointer-only. Supplied snap step must be finite and positive,
+   supplied snap origin finite, and `snapActive=true` requires a snap step. A snap origin without an
+   active step is permitted and dormant. Numeric epoch must be finite; string epoch must be non-empty.
+3. Internal ARIA owns value/range/disabled. `label` maps to `aria-label` and a blank/invalid label falls
+   back to **Rotate**; consumer `aria-label`/`aria-labelledby` cannot conflict. A non-blank
+   `descriptionId` maps to `aria-describedby`, otherwise it is omitted. Default degree formatting is
+   exactly `` `${String(canonicalizeSignedZero(degrees))}°` `` with no decimal rounding or `Intl` locale
+   transform; throwing, blank or non-string formatter output falls back to that same string.
+   Valid-disabled output uses the same rule. Blank/invalid unavailable copy falls back to
+   **Rotation unavailable**.
+4. Start only for a primary pointer (`isPrimary`) using primary mouse button or primary touch/pen.
+   Invoke the consumer pointer-down handler first and abort on `preventDefault`; otherwise capture that
+   pointer and, by default, stop propagation so an ancestor move/selection gesture cannot also start.
+   `stopPropagation={false}` is the explicit neutral opt-out. Freeze center/value/range/step/epoch, apply
+   internal `touch-action: none`, `user-select: none` and `draggable=false` after consumer style/props so
+   they cannot be overridden. Compose the forwarded and internal refs for mount/null cleanup. Focus the
+   slider immediately after accepted capture. Other pointers pass through unchanged.
+5. Active pointer move emits preview only. Pointer up first reprojects from its own final viewport client
+   coordinates even when they differ from the last move event, then releases capture and emits one
+   terminal change only when the final bounded value differs from the controlled start value.
+   Same-direction, unchanged and full-turn-equivalent results end with no change and no synthetic cancel.
+   Every accepted pointer gesture emits `onRotationPreview(null)` exactly once before its terminal change,
+   unchanged end or cancel callback so the host can clear preview without reproducing pointer lifecycle.
+   `pointercancel`, lost capture, Escape, unmount or invalid projection cancels at most once; no path emits
+   both cancel and change.
+6. Changing `snapActive` alone during a gesture reprojects from the raw accumulator and emits preview
+   even while the pointer is stationary. A replacement center object with equal finite `x`/`y` scalar
+   values is stable; only a coordinate change cancels. Changing controlled degrees, a center scalar,
+   range, snap origin/step, keyboard steps, interaction epoch or disabled state cancels once. Numeric
+   comparisons canonicalize signed zero so ordinary `{x, y}` recreation does not cancel. Host preview
+   self-echo is forbidden; a genuine accepted canonical change arrives after the terminal intent and ends
+   the gesture normally.
+7. With no pointer active, `ArrowLeft`/`ArrowDown` request `-stepDegrees` and
+   `ArrowRight`/`ArrowUp` request `+stepDegrees`; Shift uses `largeStepDegrees`. Defaults are `1` and `15`.
+   Keyboard changes clamp to the closed range rather than circularly wrap, so increase/decrease remains
+   truthful at ARIA endpoints; a clamped unchanged result emits no callback. `Home` and `End` request the
+   exact inclusive minimum and maximum directly. Pointer projection alone uses the 360° wrap rules. Each
+   handled keydown prevents scrolling and emits at most one terminal intent. Enter/Space have no invented
+   button semantics.
+8. Invoke consumer handlers first. `preventDefault` suppresses only an inactive pointer-down start or
+   inactive keyboard mutation. Once a pointer is captured, move/up/cancel/lost-capture handlers must
+   always complete identity-safe preview/terminal cleanup even if the consumer prevents default; pointer
+   up still reprojects its final coordinates and follows the frozen terminal rules. A host cancels an
+   accepted gesture through Escape or controlled epoch/disabled change, not by stranding capture in a
+   prevented active event. Focus stays on the slider after keyboard completion and pointer release/cancel
+   unless host selection removes it. The host provides a deterministic selected-item fallback when the
+   handle disappears.
+9. The control owns pointer identity, controlled interaction state, projection and semantic value only.
+   It never owns selected-node identity, center measurement, property/command IDs, canonical revision,
+   admission, persistence or history.
+
+#### State flow and ownership
+
+```text
+selected Canvas item + controlled degree/range/center/epoch
+  -> semantic rotation slider (pointer/touch/keyboard)
+  -> pure stable pointer/degree projection
+  -> host-owned ephemeral preview
+  -> one pointer release or one keyboard step terminal intent
+  -> host source-revision/identity CAS
+  -> existing createWorkbenchAuthoringPropertyActionV3
+  -> existing admission/session/history
+```
+
+| Concern                                                 | Owner / decision                                  |
+| ------------------------------------------------------- | ------------------------------------------------- |
+| Stable angle, raw accumulator, wrap and optional snap   | React authoring pure helpers                      |
+| Pointer/touch lifecycle and semantic controlled slider  | React layout rotation control                     |
+| Whether a node supports rotation and property mapping   | integrating host descriptor/product policy        |
+| Product range, normalization, step and snap copy        | integrating host; supplied to the neutral control |
+| Center measurement, preview, revision CAS, focus return | integrating Canvas                                |
+| Inspector display and dirty-draft reconciliation        | integrating host over the same authored property  |
+| Command, transaction and Undo/Redo                      | existing V3 path; unchanged                       |
+
+#### Scope / non-scope
+
+Scope: additive pure rotation types/helpers, one controlled accessible neutral Canvas rotation slider,
+root/subpath exports, exact-optional declarations, deterministic numeric/pointer/touch/keyboard/cancel
+tests, one required Chromium Storybook scenario, packed-consumer proof and current CSS/token conventions.
+
+Non-scope: built-in Image/media meaning, a `rotationDeg` property, placement/layout rotation fields,
+descriptor/schema changes, selected-node state, center/DOM measurement, host preview scheduling/CAS,
+Inspector dirty-draft policy, guides, multi-selection/group rotation, crop, persistence, provider/AI,
+Electron/native, package release/publish or host-specific examples. `WB-NS-070J` remains the owner of
+inverse-rotated resizing and center-origin opposite-anchor compensation.
+
+#### Ordered implementation tasks
+
+1. Reverify the exact base, current frame controls, V3 property action and focused React tests. Align the
+   independent implementation with reviewed `WB-NS-070J` center-origin/viewport terminology and return
+   to design if either packet's coordinate convention drifts.
+2. Implement stable normalized-vector projection, range wrapping and drift-free optional snapping as
+   detached fail-closed pure helpers.
+3. Implement the controlled semantic slider using the current pointer capture/release patterns without
+   changing frame/resize behavior; include primary touch, controlled-change cancellation and preview/
+   terminal separation.
+4. Add token-based styling, root/layout/authoring exports and exact-optional/public declaration fixtures;
+   consume exports from one packed external fixture without private imports.
+5. Add numeric hostile-input, seam/multi-turn/snap-toggle, pointer-ID/touch/cancel, controlled-prop,
+   keyboard/ARIA/focus and formatter-fallback tests plus one required Chromium Storybook interaction.
+6. Freeze one candidate for producer-distinct source review. Do not add a host adapter or release here.
+
+#### Validation and evidence
+
+- pure tests cover clockwise/counter-clockwise quarter turns, both branch-cut directions, at least two
+  full accumulated turns, radial/no-op/full-turn equivalence, fractional degrees, custom range/origin,
+  snap half-steps and stationary snap toggles;
+- hostile tests cover near-`Number.MAX_VALUE` and subnormal finite coordinates, subtraction overflow,
+  exact antipodes/signed zero, accumulator/snap overflow, NaN/infinity, zero radii and invalid range/
+  steps, proving null/no mutation and no callback;
+- React DOM tests prove in-range controlled ARIA value/range/text, exact-360-cycle validity, invalid-range
+  safe tuple, overflow-safe midpoint, invalid-config whole-control disable and valid-disabled value
+  preservation, label/description/unavailable/formatter fallback, exact unrounded default degree text,
+  signed-zero canonicalization and internal ARIA precedence,
+  primary mouse/touch/pen identity, capture/release, browser drag suppression, preview versus terminal,
+  composed refs/focus, non-overridable touch/drag suppression, default ancestor-gesture suppression/
+  explicit opt-out, equal-center object stability, scalar-center and controlled-change cancellation,
+  consumer-prevented active move/up cleanup, Escape/lost-capture/unmount exactly-once cleanup and focus
+  return;
+- keyboard tests prove Arrow/Shift clamp at both endpoints, exact inclusive Home/End, unchanged-boundary
+  callback `0`, Enter/Space no-op, no page scroll and one terminal intent per handled keydown;
+- required Chromium Storybook play proves mouse and emulated-touch preview/release, preview-null cleanup
+  for change/no-op/cancel, stationary snap reprojection, pointer-up-final-coordinate projection,
+  visible focus, accessibility-tree slider value, 200% text/forced-colors, frozen epoch echo, external
+  epoch cancellation and console/page-error zero;
+- a neutral host fixture freezes the epoch before dispatch, maps one terminal degree through the existing
+  property action and proves stale state is blocked before factory/dispatch, accepted change creates one
+  complete action, and admission-rejected/effective-no-op outcomes create zero transaction/revision/
+  history; Inspector-equivalent input emits a byte-equivalent accepted value/action;
+- run focused React tests and package typecheck during development. At the frozen candidate run
+  `pnpm validate:static`, `pnpm validate:fast`, `pnpm validate:ui`,
+  `pnpm check:public-exports`, packed-consumer validation, `pnpm check:commit-safety` and
+  `git diff --check`.
+
+Projection must remain deterministic O(1), allocate only its detached fixed-size result and perform no
+work proportional to document, sibling or DOM size. Record an informational fixed-workload benchmark
+only if it helps diagnose a regression; timer ratios are not a release gate. Electron is not required
+because no native boundary changes.
+
+Done requires stable continuous clockwise-positive output across branch cuts and multiple turns;
+host-bounded drift-free snap; controlled preview/terminal separation; semantic slider value/range;
+mouse/touch/keyboard/focus support; controlled drift/cancel zero change; existing one-property command/
+history composition; public/packed consumption; real Chromium evidence; O(1) projection; no schema/
+layout-property/product/native expansion; and producer-distinct review with no P0/P1/P2 target mismatch.
+
+Reject a candidate that computes raw cross/dot on hostile magnitudes; selects ambiguous exact antipodes;
+stores snapped deltas in the raw accumulator; feeds preview into controlled canonical value; commits on
+move/cancel; permits stale external state to be overwritten; uses a button without slider value/range;
+loses primary-touch identity/focus; assumes non-uniform transforms preserve angle; adds rotation to Canvas
+placement; creates a second command/history path; uses private imports; or claims host integration,
+release or native acceptance.
+
+Producer-distinct review of the frozen documentation candidate returned
+`PASS / P0 none / P1 none / P2 none` on exact source/API base
+`542123e03b6b2d372c942c9f6adb6aff54838a7e`. Review covered hostile numeric projection, the 360° closed
+cycle, controlled slider value/range and disabled fallbacks, pointer/touch/keyboard lifecycle, preview
+teardown and epoch echo, focus/ARIA, public neutrality, host CAS/action/history ownership, O(1) work and
+Chromium/packed-consumer gates. This receipt promotes documentation readiness only; source implementation,
+commit, integration, package publication, release and host adoption remain separate closed claims.
 
 ### Acceptance direction
 
