@@ -470,6 +470,8 @@ WB-NS-070F provider-neutral generative UI parity [DONE; root API included in ins
 WB-NS-070G provider-neutral source-to-input compatibility + V2 candidate planning [DONE; independent of 070F]
 WB-NS-070I component rendering contract + visual conformance prerequisite [DESIGNING; does not reopen 070F core completion]
 WB-NS-070H descriptor-aware V3 command admission + direct-manipulation bridge [SOURCE_REVIEW_PASS; READY_FOR_RELEASE]
+        ↓
+WB-NS-070M host mutation-policy admission hook [DESIGN_REVALIDATION_REQUIRED; SOURCE_CLOSED; dependency: released WB-NS-070H]
 WB-NS-071A graph node type/property-input foundation [DONE; independent after WB-NS-070A/C/D]
         ↓
 WB-NS-071B component/node development requirement flow [DONE]
@@ -6887,6 +6889,191 @@ explicit unsupported diagnostics, keyboard/a11y and update/reorder/reparent/disp
 behavior. A headless plan PASS is not a visual PASS. Issue #430 must close its
 existing scope disagreement before that layout path is included in a conformance
 claim. Source integration, package availability and host adoption stay separate.
+
+### `WB-NS-070M` bounded packet — host mutation-policy admission hook
+
+- **Status:** `DESIGN_REVALIDATION_REQUIRED / SOURCE_CLOSED`; documentation-only candidate, no source work started.
+- **Integration reconciliation (2026-09-29):** the incoming mutation-policy branch used
+  `WB-NS-070I`, which already identifies the shared component rendering contract in
+  the integration baseline. This packet is now `WB-NS-070M`; `070I` retains its
+  existing owner. The incoming packet's `READY_FOR_IMPLEMENTATION` decision applied
+  to the historical base below. Re-review against the combined source before new
+  implementation admission; merging this design does not grant it.
+- **Exact source/API base:** `origin/develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`
+- **Target owner:** `@workbench-kit/jdw` existing V3 semantic admission module
+- **Dependencies:** the `WB-NS-070H` admission API is published in the exact `0.2.48` package
+  cohort; `UiDocumentV3`, `UiDocumentAtomicCommandV3`,
+  `UiDocumentCommandV3AdmissionContext`, sequential replay and the existing session Apply remain
+  canonical
+- **Trigger:** current admission can narrow literal values, while an integrating host cannot reject
+  an otherwise valid atomic mutation from every producer at the same canonical boundary. React
+  `readOnly` is whole-surface presentation state and does not authorize individual node mutations;
+  guarding Canvas, Inspector, keyboard, catalog and batch producers separately would duplicate
+  policy and leave bypass paths.
+
+#### Goal / user outcome
+
+Let an integrating host define one optional, renderer-neutral mutation policy that sees each already
+generically valid atomic command against the exact transient document immediately before that atom.
+The policy can reject a mutation before session Apply, regardless of whether it came from pointer,
+keyboard, Inspector, catalog insertion or another admitted producer. One rejected atom rejects the
+complete outer command or batch while preserving document, ordered selection, past and future object
+identity.
+
+This packet does not add a built-in locked state. A host may interpret its own authored properties,
+capabilities or permissions inside the policy and may separately project the same decision into its
+UI affordances.
+
+#### Public contract
+
+Extend the existing additive admission context under the current public JDW authoring exports:
+
+```ts
+interface UiDocumentMutationPolicyInput {
+  readonly document: UiDocumentV3;
+  readonly command: UiDocumentAtomicCommandV3;
+  readonly batchIndex?: number;
+}
+
+type UiDocumentMutationPolicy = (input: UiDocumentMutationPolicyInput) => string | null | undefined;
+
+interface UiDocumentCommandV3AdmissionContext extends UiDocumentCommandV3Context {
+  readonly validateLiteral?: UiDocumentLiteralPolicy;
+  readonly validateMutation?: UiDocumentMutationPolicy;
+}
+```
+
+`batchIndex` is the zero-based outer-batch child index and is omitted for a non-batch atomic
+command. `document` is the detached, deeply frozen transient document before `command`; `command` is
+the detached, deeply frozen atom from the already snapshotted outer command. The callback returns
+`null` or `undefined` to permit the atom and a non-empty string to reject it. A thrown exception,
+blank string or any other runtime return rejects deterministically without exposing the thrown or
+returned value.
+
+Add `mutation-policy-rejected` to the closed
+`UiDocumentCommandV3AdmissionDiagnosticCode` union. The public diagnostic uses a stable sanitized
+message and existing command/node/property identifiers when available. Host-provided text is not
+copied into diagnostics, logs or document state.
+
+`validateUiDocumentV3AgainstContext` remains a document/descriptor validator and does not invoke the
+mutation policy because no attempted command exists. The optional `validateLiteral` contract and all
+existing callers remain source-compatible.
+
+#### Admission, state and batch semantics
+
+1. Snapshot/freeze the outer command and admission context using the existing hostile-input-safe
+   path. Capture the optional callback once without retaining the caller's mutable context object.
+2. Complete the existing generic descriptor/layout/subtree replay for the entire outer command before
+   invoking any host policy. A policy cannot mutate catalogs or widen generic acceptance for a later
+   atom.
+3. If either optional host policy exists, create one detached, deeply frozen starting-document
+   snapshot and run one policy replay. For each atom, first repeat generic semantic validation, then
+   invoke literal policy where applicable, then mutation policy, and only then advance the transient
+   replay document.
+4. Later batch atoms observe accepted earlier transient results. Therefore a host-authorized state
+   change followed by a dependent edit may pass, while the reverse order may fail. Any failure
+   discards the complete candidate and returns one rejection for the original outer command.
+5. Accepted admission returns the existing frozen outer command. The existing
+   `applyAdmittedUiAuthoringSessionCommandV3` delegates to session Apply exactly once; it does not
+   retain policy callbacks in document, transaction, history or persistence.
+
+The mutation callback runs at most once for each atom reached in policy replay. It performs no IO or
+Apply through Workbench Kit. Determinism of a host callback for identical frozen inputs is a host
+contract; Workbench fails closed for runtime exceptions and malformed results.
+
+#### Ownership and state flow
+
+| Concern                                                   | Owner / decision                                                           |
+| --------------------------------------------------------- | -------------------------------------------------------------------------- |
+| Generic structural, descriptor and layout validity        | existing JDW admission; unchanged                                          |
+| Sequential atomic replay and all-or-nothing rejection     | JDW mutation-policy admission hook                                         |
+| Meaning of a host property, capability or permission      | integrating host                                                           |
+| Per-node disabled/hidden affordances and explanatory copy | integrating host presentation adapter                                      |
+| Whole-surface `readOnly`                                  | existing React presentation contract; not reused as per-node authorization |
+| Document, transaction, selection and Undo/Redo            | existing V3 session; no parallel state                                     |
+
+The data flow is `producer action -> existing UiDocumentCommandV3 -> generic preflight -> optional
+literal/mutation policy replay -> existing session Apply once -> existing transaction/history`.
+There is no policy registry, command wrapper, permission document, second history or raw patch path.
+
+#### Scope / non-scope
+
+Scope: additive JDW public types, safe admission-context snapshot, detached frozen policy inputs,
+generic-first sequential batch policy replay, deterministic closed rejection, existing-root exports,
+focused backendless/hostile-input tests and packed-consumer proof.
+
+Non-scope: a built-in lock/permission schema; component descriptors or host data models; React
+per-node affordances; Canvas/Inspector rendering; persistence or migration; provider/AI; DOM;
+Electron/native; package release/publish; consumer names, examples or fixtures.
+
+#### Ordered implementation tasks
+
+1. Add the optional mutation-policy input/callback types and closed rejection diagnostic beside the
+   existing literal-policy admission contract.
+2. Extend the hostile-input-safe admission-context snapshot to capture the callback once while
+   preserving exact optional-property semantics and existing catalog/layout snapshots.
+3. Refactor semantic policy replay so literal and mutation policies share one post-generic replay,
+   with one safe starting-document snapshot and the exact transient pre-atom document supplied to
+   mutation policy.
+4. Catch thrown/malformed policy results, emit one sanitized deterministic diagnostic and preserve
+   the original admission/session state on rejection.
+5. Export only through the existing `@workbench-kit/jdw` roots and authoring V3 subpath; update the
+   packed public consumer without adding a package or private deep import.
+6. Add focused atomic-family, batch-order, hostile callback/input, unchanged-state and compatibility
+   tests; freeze one candidate for producer-distinct source review.
+
+#### Focused tests and validation
+
+- exercise insertion, removal, replacement, movement, property/input/layout and responsive atomic
+  families through one recording policy so no producer-compatible command family bypasses admission;
+- prove a two-atom state-change-then-edit batch is accepted against sequential transient state and
+  the reverse order is rejected with no partial document, revision, selection or history mutation;
+- prove generic invalidity completes before policy invocation and a policy cannot widen descriptors,
+  layout support or structural validity;
+- prove thrown, blank and non-string runtime returns fail closed with sanitized diagnostics;
+- prove policy inputs are detached/deeply frozen and caller mutation after admission cannot change an
+  accepted command;
+- prove absent `validateMutation` is byte/result compatible with current admission and that
+  `validateUiDocumentV3AgainstContext` never invokes it;
+- prove one accepted outer batch still creates one transaction/history entry and exact Undo/Redo,
+  while rejection returns the original session object;
+- include public-export type fixtures and a packed consumer using both policies together.
+
+During implementation run focused JDW admission/session tests and package typecheck. At the frozen
+candidate run `pnpm validate:static`, `pnpm validate:fast`, `pnpm check:public-exports`, focused packed
+consumer validation, `pnpm check:commit-safety` and `git diff --check`. Chromium is unnecessary for
+this renderer-neutral policy packet; Electron is unnecessary because no native boundary changes.
+
+#### Performance and compatibility budget
+
+For a deterministic 500-node document and 100-atom batch, admission with one no-op mutation policy
+must remain within `2.0x` the same command's current descriptor-aware admission median after warm-up,
+with five measured iterations in the repository's Node environment. The implementation may take one
+detached starting-document snapshot for policy replay but must not deep-clone the complete document
+once per atom. Record workload, Node version and medians in source-review evidence; treat the budget as
+a regression gate, not a cross-machine absolute latency promise.
+
+The context property is optional and additive. Existing commands, admission results, literal policy,
+session semantics and public subpaths remain compatible. No migration or compatibility shim is
+required. If the released `WB-NS-070H` source shape differs from the exact base during implementation,
+return the packet to `DESIGNING` rather than adding a parallel admission helper.
+
+#### Acceptance / source-review gate
+
+Done requires one integrating-host policy to reject any targeted atomic family from the canonical
+admission boundary, with generic validation first, sequential transient batch semantics and no partial
+state/history mutation. Absent policy preserves existing behavior; accepted outer commands still
+Apply once; policy inputs are detached/frozen; errors are sanitized; public exports and packed
+consumption pass; the performance workload stays within budget; and producer-distinct review finds no
+P0/P1/P2 target mismatch.
+
+Reject a candidate that encodes a built-in lock or permission model; relies on React `readOnly` as
+authorization; checks only one producer or command family; invokes policy before complete generic
+preflight; exposes caller-owned mutable document/command/context; clones the whole document per atom;
+leaks callback errors or text; keeps callbacks in canonical state/history; adds a second command,
+transaction, registry or permission document; changes existing behavior when the property is absent;
+uses private deep imports; introduces product/provider/DOM/Electron concerns; or claims release or
+consumer integration.
 
 ### Acceptance direction
 
