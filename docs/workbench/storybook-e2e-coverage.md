@@ -172,9 +172,11 @@ component and integration tiers without a tier-specific reason.
 | `pnpm check:storybook-play-tags`    | Static orphan-play / sample-tag discipline gate                     |
 | `pnpm test:storybook-play:required` | Required play stories only                                          |
 | `pnpm test:storybook-play:sample`   | Sample-host play subset (`storybook-play-sample`)                   |
-| `pnpm validate:ui`                  | `build:storybook` + `test:storybook-play:required`                  |
-| `pnpm validate:ui:sample`           | `build:storybook` + `test:storybook-play:sample`                    |
-| `pnpm validate:full`                | Static/unit gates plus Storybook UI validation                      |
+| `pnpm validate:ui`                  | Required gate + `build:storybook` + required play                   |
+| `pnpm validate:ui:sample`           | Required gate + `build:storybook` + sample play                     |
+| `pnpm validate:packaging`           | Packed consumer + platform CJS leaf checks                          |
+| `pnpm validate`                     | Fast + packaging + required UI lanes                                |
+| `pnpm validate:full`                | Fast + packaging + full UI lanes                                    |
 
 `scripts/test-storybook-play.mjs` starts Storybook on port `61009` when needed, then
 invokes `test-storybook` with `--includeTags` for the selected gate

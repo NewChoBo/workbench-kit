@@ -9,13 +9,6 @@ on:
     branches:
       - develop
       - main
-      - 'chore/**'
-      - 'codex/**'
-      - 'docs/**'
-      - 'feature/**'
-      - 'fix/**'
-      - 'refactor/**'
-      - 'test/**'
 
 permissions:
   contents: read
@@ -53,5 +46,5 @@ jobs:
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Validate
-        # validate:full = validate + required storybook baseline play runs
+        # validate:full runs the fast, packaging, and full UI validation lanes.
         run: pnpm validate:full

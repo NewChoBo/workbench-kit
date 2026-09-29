@@ -11,15 +11,15 @@ lockfile updates.
 
 ## Validation Lanes
 
-| Changed surface                         | Minimum validation                                                                                     | Extended validation                                            |
-| --------------------------------------- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------- |
-| Workspace, package exports, lockfile    | affected build/typecheck + `pnpm check:public-exports` + packed consumer when export/packaging changes | `pnpm validate` at integration/release                         |
-| `packages/tokens` CSS variables         | Prettier on touched CSS + `pnpm check:plan-a-css`                                                      | Storybook visual check; `pnpm validate` at integration/release |
-| `packages/react` primitives             | `pnpm --filter @workbench-kit/react typecheck`                                                         | `pnpm validate`, browser smoke                                 |
-| `examples/workbench-sample` UI behavior | `pnpm --filter workbench-sample typecheck` + browser/preview smoke                                     | `pnpm validate:ui` (optional CI parity)                        |
-| Storybook config or stories             | `pnpm build:storybook` and/or interactive Storybook UI                                                 | `pnpm validate:ui` / `pnpm validate:full`                      |
-| Lint/format config                      | `pnpm lint && pnpm format:check`                                                                       | `pnpm validate`                                                |
-| README and conventions                  | Manual docs review + Prettier on touched files                                                         | `pnpm check:public-references` if naming changed               |
+| Changed surface                         | Minimum validation                                                                                               | Extended validation                                            |
+| --------------------------------------- | ---------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------- |
+| Workspace, package exports, lockfile    | affected build/typecheck + `pnpm check:public-exports` + `pnpm validate:packaging` when export/packaging changes | `pnpm validate` at integration/release                         |
+| `packages/tokens` CSS variables         | Prettier on touched CSS + `pnpm check:plan-a-css`                                                                | Storybook visual check; `pnpm validate` at integration/release |
+| `packages/react` primitives             | `pnpm --filter @workbench-kit/react typecheck`                                                                   | `pnpm validate`, browser smoke                                 |
+| `examples/workbench-sample` UI behavior | `pnpm --filter workbench-sample typecheck` + browser/preview smoke                                               | `pnpm validate:ui` (optional CI parity)                        |
+| Storybook config or stories             | `pnpm build:storybook` and/or interactive Storybook UI                                                           | `pnpm validate:ui` / `pnpm validate:full`                      |
+| Lint/format config                      | `pnpm lint && pnpm format:check`                                                                                 | `pnpm validate`                                                |
+| README and conventions                  | Manual docs review + Prettier on touched files                                                                   | `pnpm check:public-references` if naming changed               |
 
 Reuse a prior validation result only when the related source, tests,
 dependencies, configuration, and artifact inputs are unchanged. Record the
@@ -34,12 +34,11 @@ are available. It never runs or approves checks; uncertain inputs fall through
 silently.
 
 The packed-consumer check normally runs one fresh six-package workspace build
-followed by 19 pnpm packs. Use
-`pnpm check:packed-consumer --with-platform-cjs-leaves` to run the same 19-pack
-consumer checks and both isolated npm-pack CommonJS checks with that single
-fresh build. The standalone `pnpm check:platform-cjs-leaves` continues to build
-its two packages separately and npm-pack each one. Both packer checks remain
-part of the automated static validation lane.
+followed by 19 pnpm packs. `pnpm validate:packaging` runs the 19-pack consumer
+checks and both isolated npm-pack CommonJS checks with that single fresh build.
+The standalone `pnpm check:platform-cjs-leaves` continues to build its two
+packages separately and npm-pack each one. Packaging validation runs in
+`pnpm validate` and `pnpm validate:full`, separately from the static lane.
 
 ## Changed-Package Matrix (inner loop)
 

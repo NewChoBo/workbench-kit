@@ -145,19 +145,22 @@ Use these root scripts:
   "test:storybook-play:required": "pnpm exec node ./scripts/test-storybook-play.mjs --required",
   "test:storybook-play:sample": "pnpm exec node ./scripts/test-storybook-play.mjs --sample",
   "check:storybook-play-tags": "node ./scripts/check-storybook-play-tags.mjs",
-  "validate:ui": "pnpm build:storybook && pnpm test:storybook-play:required",
-  "validate:ui:sample": "pnpm build:storybook && pnpm test:storybook-play:sample",
-  "validate:ui:full": "pnpm build:storybook && pnpm test:storybook-play:required",
-  "validate": "pnpm validate:fast && pnpm validate:ui",
-  "validate:full": "pnpm validate:fast && pnpm validate:ui:full"
+  "validate:ui": "pnpm test:storybook-play:required-gate && pnpm build:storybook && pnpm test:storybook-play:required",
+  "validate:ui:sample": "pnpm test:storybook-play:required-gate && pnpm build:storybook && pnpm test:storybook-play:sample",
+  "validate:ui:full": "pnpm test:storybook-play:required-gate && pnpm build:storybook && pnpm test:storybook-play:required",
+  "validate:packaging": "pnpm check:packed-consumer --with-platform-cjs-leaves",
+  "validate": "pnpm validate:fast && pnpm validate:packaging && pnpm validate:ui",
+  "validate:full": "pnpm validate:fast && pnpm validate:packaging && pnpm validate:ui:full"
 }
 ```
 
-`pnpm validate` includes `build:storybook` and required Storybook interaction playback
-(`test:storybook-play:required`) so Storybook drift and key UI regressions are caught with the
-rest of the package gate. `pnpm validate:fast` skips Storybook playback but still runs
-`check:storybook-play-tags` via `validate:static`. `pnpm validate:ui:sample` is the
-faster sample-host-only play gate after a Storybook build.
+`pnpm validate` and `pnpm validate:full` run the fast, packaging, and UI lanes.
+Each UI lane runs `test:storybook-play:required-gate` before the Storybook build
+and its selected play gate. `pnpm validate:fast` skips Storybook playback but
+still runs `check:storybook-play-tags` via `validate:static`.
+`pnpm validate:packaging` runs the packed-consumer check with both platform CJS
+leaf checks. `pnpm validate:ui:sample` runs the sample-host play subset after a
+Storybook build.
 
 ## Interaction Tests
 
