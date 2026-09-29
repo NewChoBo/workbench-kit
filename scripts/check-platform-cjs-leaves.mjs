@@ -2,45 +2,59 @@ import { createRequire } from 'node:module';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
-import { fileURLToPath } from 'node:url';
+import { fileURLToPath, pathToFileURL } from 'node:url';
 
 import { runCommand } from './lib/run-command.mjs';
+import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
-function packWorkspacePackage(packageName, directoryName, fixturePrefix) {
-  const packageDir = path.join(repoRoot, 'packages', directoryName);
+function buildWorkspacePackage(packageName) {
   console.log(`[check-platform-cjs-leaves] Building ${packageName}…`);
   runCommand('pnpm', ['--filter', packageName, 'build'], {
     cwd: repoRoot,
     stdio: 'inherit',
   });
+}
 
+function createFixture(fixturePrefix) {
   const fixtureRoot = fs.mkdtempSync(path.join(os.tmpdir(), fixturePrefix));
-  const packDir = path.join(fixtureRoot, 'pack');
-  const consumerDir = path.join(fixtureRoot, 'consumer');
-  fs.mkdirSync(packDir, { recursive: true });
-  fs.mkdirSync(consumerDir, { recursive: true });
-
-  console.log(`[check-platform-cjs-leaves] Packing ${packageName}…`);
-  const packOutput = runCommand('npm', ['pack', '--pack-destination', packDir], {
-    cwd: packageDir,
-    encoding: 'utf8',
-    stdio: ['ignore', 'pipe', 'inherit'],
-  });
-  const tarballName = packOutput.trim().split(/\r?\n/u).filter(Boolean).at(-1);
-  if (!tarballName) {
-    throw new Error(`npm pack did not print a tarball name for ${packageName}.`);
+  try {
+    const packDir = path.join(fixtureRoot, 'pack');
+    const consumerDir = path.join(fixtureRoot, 'consumer');
+    fs.mkdirSync(packDir, { recursive: true });
+    fs.mkdirSync(consumerDir, { recursive: true });
+    return { consumerDir, fixtureRoot, packDir };
+  } catch (error) {
+    removeOwnedFixtureRoot(fixtureRoot, error);
+    throw error;
   }
+}
 
-  runCommand('tar', ['-xzf', path.join(packDir, tarballName), '-C', packDir], {
-    stdio: 'inherit',
-  });
-  return {
-    consumerDir,
-    fixtureRoot,
-    packedRoot: path.join(packDir, 'package'),
-  };
+function packWorkspacePackage(packageName, directoryName, fixturePrefix) {
+  const packageDir = path.join(repoRoot, 'packages', directoryName);
+  const fixture = createFixture(fixturePrefix);
+  const { packDir } = fixture;
+  try {
+    console.log(`[check-platform-cjs-leaves] Packing ${packageName}…`);
+    const packOutput = runCommand('npm', ['pack', '--pack-destination', packDir], {
+      cwd: packageDir,
+      encoding: 'utf8',
+      stdio: ['ignore', 'pipe', 'inherit'],
+    });
+    const tarballName = packOutput.trim().split(/\r?\n/u).filter(Boolean).at(-1);
+    if (!tarballName) {
+      throw new Error(`npm pack did not print a tarball name for ${packageName}.`);
+    }
+
+    runCommand('tar', ['-xzf', path.join(packDir, tarballName), '-C', packDir], {
+      stdio: 'inherit',
+    });
+    return { ...fixture, packedRoot: path.join(packDir, 'package') };
+  } catch (error) {
+    removeOwnedFixtureRoot(fixture.fixtureRoot, error);
+    throw error;
+  }
 }
 
 function linkPackedPackage(consumerDir, packedRoot, directoryName) {
@@ -51,6 +65,7 @@ function linkPackedPackage(consumerDir, packedRoot, directoryName) {
 
 function verifyPlatformLeaves() {
   const fixture = packWorkspacePackage('@workbench-kit/platform', 'platform', 'wbk-platform-cjs-');
+  let failure;
   try {
     for (const leaf of [
       'allowlisted-https-fetch.cjs',
@@ -173,8 +188,11 @@ function verifyPlatformLeaves() {
       cwd: fixture.consumerDir,
       stdio: 'inherit',
     });
+  } catch (error) {
+    failure = error;
+    throw error;
   } finally {
-    fs.rmSync(fixture.fixtureRoot, { recursive: true, force: true });
+    removeOwnedFixtureRoot(fixture.fixtureRoot, failure);
   }
 }
 
@@ -218,6 +236,7 @@ function verifyElectronShellLeaves() {
     'electron-shell',
     'wbk-electron-shell-cjs-',
   );
+  let failure;
   try {
     for (const leaf of [
       'assets/privileged-asset-protocol.js',
@@ -323,11 +342,69 @@ function verifyElectronShellLeaves() {
       cwd: fixture.consumerDir,
       stdio: 'inherit',
     });
+  } catch (error) {
+    failure = error;
+    throw error;
   } finally {
-    fs.rmSync(fixture.fixtureRoot, { recursive: true, force: true });
+    removeOwnedFixtureRoot(fixture.fixtureRoot, failure);
   }
 }
 
-verifyPlatformLeaves();
-verifyElectronShellLeaves();
-console.log('[check-platform-cjs-leaves] OK');
+function removeOwnedFixtureRoot(fixtureRoot, primaryError) {
+  try {
+    if (
+      path.dirname(path.resolve(fixtureRoot)) !== path.resolve(os.tmpdir()) ||
+      !/^wbk-(?:platform|electron-shell)-cjs-[^/\\]+$/u.test(path.basename(fixtureRoot))
+    ) {
+      throw new Error(`Refusing to remove unexpected CJS fixture path: ${fixtureRoot}`);
+    }
+    fs.rmSync(fixtureRoot, { recursive: true, force: true });
+  } catch (cleanupError) {
+    if (!primaryError) throw cleanupError;
+    console.error('[check-platform-cjs-leaves] Fixture cleanup also failed:', cleanupError);
+  }
+}
+
+function runCjsChecks() {
+  verifyPlatformLeaves();
+  verifyElectronShellLeaves();
+  console.log('[check-platform-cjs-leaves] OK');
+}
+
+export function prepareSameRunPlatformCjsChecks() {
+  buildFreshWorkspaceArtifacts({
+    logPrefix: 'check-platform-cjs-leaves',
+    repoRoot,
+  });
+  let called = false;
+  return () => {
+    if (called) throw new Error('Prepared platform CJS checks may only run once.');
+    called = true;
+    runCjsChecks();
+  };
+}
+
+export async function runSameRunPackedAggregate({
+  assertFixture,
+  runPackedConsumer,
+  cleanupParent,
+}) {
+  try {
+    assertFixture();
+    const runCjsChecks = prepareSameRunPlatformCjsChecks();
+    await runPackedConsumer();
+    runCjsChecks();
+  } finally {
+    cleanupParent();
+  }
+}
+
+async function runStandaloneChecks() {
+  buildWorkspacePackage('@workbench-kit/platform');
+  buildWorkspacePackage('@workbench-kit/electron-shell');
+  runCjsChecks();
+}
+
+if (process.argv[1] && import.meta.url === pathToFileURL(path.resolve(process.argv[1])).href) {
+  await runStandaloneChecks();
+}

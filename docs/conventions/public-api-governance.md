@@ -94,6 +94,13 @@ That script emits declaration files, then typechecks
 `| undefined` from remaining public props (settings/schema, editors, workspace)
 and keep the fixture green.
 
+The combined `pnpm typecheck:exact-optional` path runs the React emit and
+consumer check before the shell-react declaration emit and consumer check,
+reusing that React declaration output within the same serial run. The standalone React and
+shell-react commands still prepare their own declaration inputs. A concurrent
+writer or changed source, configuration, or artifact input invalidates the
+reused evidence; rerun the affected checks before relying on it.
+
 ## Public API Change Checklist
 
 Before committing a public API change:

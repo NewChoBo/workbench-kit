@@ -995,8 +995,13 @@ async function dragOutlineNode(
   const { clientY } = mockDropRect(target, placement);
   const dataTransfer = createDataTransfer();
 
+  const expectedDropPosition = targetPathKey === '$' ? 'inside' : placement;
+
   fireEvent.dragStart(source, { dataTransfer });
-  fireEvent.dragOver(target, { clientY, dataTransfer });
+  await waitFor(() => {
+    fireEvent.dragOver(target, { clientY, dataTransfer });
+    expect(target).toHaveAttribute('data-drop-position', expectedDropPosition);
+  });
   fireEvent.drop(target, { clientY, dataTransfer });
 }
 

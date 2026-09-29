@@ -28,6 +28,19 @@ only or SHA-only change does not require rerunning product gates; review and
 format the touched documents instead. Release readiness still requires
 `pnpm validate` on the exact release tip.
 
+For direct Codex validation commands, the project-local advisory may suggest a
+narrower docs-only review when the merge base and complete changed-path union
+are available. It never runs or approves checks; uncertain inputs fall through
+silently.
+
+The packed-consumer check normally runs one fresh six-package workspace build
+followed by 19 pnpm packs. Use
+`pnpm check:packed-consumer --with-platform-cjs-leaves` to run the same 19-pack
+consumer checks and both isolated npm-pack CommonJS checks with that single
+fresh build. The standalone `pnpm check:platform-cjs-leaves` continues to build
+its two packages separately and npm-pack each one. Both packer checks remain
+part of the automated static validation lane.
+
 ## Changed-Package Matrix (inner loop)
 
 Use package-scoped commands during frequent iteration. Reserve `pnpm validate:fast`

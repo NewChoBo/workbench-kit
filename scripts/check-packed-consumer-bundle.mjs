@@ -10,6 +10,16 @@ import { verifyNativeCheckboxHosts } from './lib/native-checkbox-hosts.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
+import { runSameRunPackedAggregate } from './check-platform-cjs-leaves.mjs';
+
+const aggregateArguments = process.argv.slice(2);
+if (
+  aggregateArguments.length > 1 ||
+  (aggregateArguments.length === 1 && aggregateArguments[0] !== '--with-platform-cjs-leaves')
+) {
+  throw new Error(`Unknown argument: ${aggregateArguments.join(' ')}`);
+}
+const includePlatformCjsLeaves = aggregateArguments.length === 1;
 
 const repoRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const fixtureBase = path.resolve(os.tmpdir());
@@ -72,12 +82,7 @@ const expectedVersion = readJson(path.join(repoRoot, 'package.json')).version;
 fs.mkdirSync(packDir, { recursive: true });
 fs.mkdirSync(nodeModulesDir, { recursive: true });
 
-try {
-  assertExternalFixture();
-  buildFreshWorkspaceArtifacts({
-    logPrefix: 'check-packed-consumer',
-    repoRoot,
-  });
+async function runPackedConsumerChecks() {
   NPM_PUBLISH_ORDER.forEach(packPackage);
   verifyPackedPackageCohort();
   verifyPrivateTestSupportFilesExcluded('@workbench-kit/field-remap');
@@ -458,7 +463,28 @@ try {
 
   buildFocusedConsumer('focused-layout');
   await executeFocusedConsumer('focused layout', focusedLayoutOutputDir);
-} finally {
+}
+
+if (includePlatformCjsLeaves) {
+  await runSameRunPackedAggregate({
+    assertFixture: assertExternalFixture,
+    runPackedConsumer: runPackedConsumerChecks,
+    cleanupParent: cleanupParentFixture,
+  });
+} else {
+  try {
+    assertExternalFixture();
+    buildFreshWorkspaceArtifacts({
+      logPrefix: 'check-packed-consumer',
+      repoRoot,
+    });
+    await runPackedConsumerChecks();
+  } finally {
+    cleanupParentFixture();
+  }
+}
+
+function cleanupParentFixture() {
   assertSafeFixturePath();
   fs.rmSync(fixtureRoot, { recursive: true, force: true });
 }

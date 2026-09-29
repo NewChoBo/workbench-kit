@@ -47,7 +47,7 @@ jobs:
 
       - name: Electron quit guard smoke
         # The hosted runner cannot preserve Electron's SUID chrome-sandbox mode.
-        run: xvfb-run -a pnpm test:electron-quit-guard:ci
+        run: xvfb-run -a pnpm exec electron --no-sandbox ./scripts/test-electron-quit-guard.mjs
 
       - name: Install Playwright browser
         run: pnpm exec playwright install --with-deps chromium
