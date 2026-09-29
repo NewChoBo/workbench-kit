@@ -127,9 +127,8 @@ specific failing behavior is part of the task.
 For user-authorized coordinated work, the lead continuously assigns bounded
 tasks and owns final acceptance. Follow the [agent execution
 workflow](docs/conventions/agent-execution-workflow.md) for packet admission,
-review, implementation and acceptance. Use smart-model design with independent
-review, then the fast model explicitly selected for the session; do not silently
-change user-chosen models or infer scheduled-task permission. Keep one writer
+review, implementation and acceptance. Model selection is made for each session;
+preserve user choices and do not infer scheduled-task permission. Keep one writer
 per file and preserve existing commit, push, integration and release authority.
 
 ## Project layout
@@ -193,15 +192,15 @@ type: feat | fix | security | question | docs | extract
 intent: implement | discuss | clarify
 ```
 
-| Situation                 | Do                                                                                          |
-| ------------------------- | ------------------------------------------------------------------------------------------- |
-| Simple usage/API question | `type: question` — answer from public kit sources; no PR                                    |
-| Ambiguous / thin request  | Do **not** guess — one structured reverse-question comment; `status:needs-human`            |
-| Want implementation       | Quality bar first, then `run agent` **or** label `status:queued`                            |
-| `type: security`          | No public PoC / no drive-by fix — advisory / private channel                                |
-| Parent/child links        | Read linked `#N` issues; summarize dependencies in the comment                              |
-| Idle hours (automation)   | Only with no `ACTION_REQUIRED` or queued item, cron may open one small internal refactor PR |
-| Weekly structural (auto)  | Monday lane may open one bolder architecture PR; **humans merge** — never auto              |
+| Situation                 | Do                                                                                                                     |
+| ------------------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| Simple usage/API question | `type: question` — answer from public kit sources; no PR                                                               |
+| Ambiguous / thin request  | Do **not** guess — one structured reverse-question comment; `status:needs-human`                                       |
+| Want implementation       | Quality bar first, then `run agent` **or** label `status:queued`                                                       |
+| `type: security`          | No public PoC / no drive-by fix — advisory / private channel                                                           |
+| Parent/child links        | Read linked `#N` issues; summarize dependencies in the comment                                                         |
+| Idle hours (automation)   | Only with no `ACTION_REQUIRED` or queued item, cron may open one small internal refactor PR                            |
+| Weekly structural (auto)  | Monday lane may open an architecture PR; scheduled runs leave it unmerged; interactive lead may merge after gates pass |
 
 Status labels: `status:queued` · `in-progress` · `pr-open` · `needs-human` ·
 `skipped`. Automation posts use the HTML marker documented in
@@ -209,7 +208,9 @@ Status labels: `status:queued` · `in-progress` · `pr-open` · `needs-human` ·
 
 ## Git
 
-Follow [`docs/conventions/git-workflow.md`](docs/conventions/git-workflow.md). Do not commit, push, or tag unless the user explicitly requests it.
+Follow [`docs/conventions/git-workflow.md`](docs/conventions/git-workflow.md)
+for standing non-main commit and merge authority, the separate standalone-push
+boundary, and explicit authorization for every main update and release action.
 
 For ordinary new work, refresh remote refs and branch from the latest
 `origin/develop` in an isolated topic worktree. Reuse a free checkout where

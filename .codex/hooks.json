@@ -1,0 +1,17 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "^Bash$",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$(git rev-parse --show-toplevel)/.codex/hooks/validation-scope.mjs\"",
+            "commandWindows": "node -e \"const { execFileSync } = require('node:child_process'); const { pathToFileURL } = require('node:url'); const path = require('node:path'); const root = execFileSync('git', ['rev-parse', '--show-toplevel'], { encoding: 'utf8' }).trim(); import(pathToFileURL(path.join(root, '.codex/hooks/validation-scope.mjs')).href)\"",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -38,11 +38,11 @@ Never commit or hardcode secrets anywhere in the tree:
 ## Tooling
 
 - For user-authorized coordinated work, the lead continuously assigns bounded
-  tasks and accepts results. Use smart-model design plus independent review,
-  then the explicitly session-selected fast model for implementation; never
-  silently change user-chosen models or infer scheduling permission. One writer
-  per file. See `docs/conventions/agent-execution-workflow.md` for packet
-  admission and review; existing IssueOps authorization still applies.
+  tasks and accepts results. Assign design, implementation and review roles
+  using the models selected for that session; preserve user choices and never
+  infer scheduling permission. One writer per file. See
+  `docs/conventions/agent-execution-workflow.md` for packet admission, resource
+  ownership and review; existing IssueOps authorization still applies.
 
 - Use **pnpm** only (`npm install` is blocked).
 - UI copy in English; structure for i18n later.
@@ -50,7 +50,7 @@ Never commit or hardcode secrets anywhere in the tree:
   and lint/Prettier on touched files. Documentation-only edits need no package
   test suite. Use `pnpm validate:fast` for cross-package integration and
   `pnpm validate` on the release tip; run `pnpm check:commit-safety` before a
-  requested commit.
+  commit.
 - Public API changes: `pnpm check:public-exports`.
 - Commit safety (refs + secrets): `pnpm check:commit-safety`.
 - JDW profile/schema changes: `pnpm check:jdw-schemas`.
@@ -90,7 +90,9 @@ Never commit or hardcode secrets anywhere in the tree:
   active item, otherwise one eligible `status:queued` item. Only when neither
   exists may the run open one small idle-refactor PR (no API breaks), with the
   documented `source=idle-refactor` marker. Weekly (Mon): one
-  structural/architecture PR — **never auto-merge**; human review. See
+  structural/architecture PR — unattended weekly work and later scheduled
+  reconciliation never merge it; an interactive lead may integrate after all
+  gates pass. See
   `issueops-autohandler-instructions.md`.
 - Automation may close only its own Issue after required linked PR
   review/integration and the Issue acceptance criteria are verified. Never
@@ -107,7 +109,13 @@ Never commit or hardcode secrets anywhere in the tree:
 - For visible shell behavior, exercise the assembled Sample in a browser or
   renderer; a Storybook frame or generated image does not prove that flow.
 - Commit messages: English Conventional Commits per `docs/conventions/git-workflow.md` and `docs/conventions/language-policy.md`.
-- Do not commit or push unless the user asks.
+- Follow `docs/conventions/git-workflow.md`: accepted non-main work may be
+  committed and merged, including into `develop`, after affected-input
+  self-validation and producer-distinct current-candidate review with no
+  blockers. Standalone pushes and any main update need their separate authority;
+  tags and releases remain explicit gates. Interactive authorized leads may
+  integrate accepted non-main work; unattended weekly structural runs and later
+  scheduled reconciliation leave those PRs unmerged.
 - Do not force-push `main` / `master`.
 
 ## Release work

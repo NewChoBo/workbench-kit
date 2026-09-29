@@ -4,13 +4,34 @@ Keep `main` as a validated, releasable baseline. Integrate daily work on
 `develop`, use short-lived topic branches, preserve logical commits, and verify
 the selected validation lane plus the public boundary before merging.
 
+## Commit and merge authority
+
+Within the authorized task and reviewed scope, agents may commit on non-main
+branches and merge accepted changes into non-main targets, including `develop`,
+without renewed user permission. Before updating `develop`, complete affected
+input self-validation and a current-candidate code review by a reviewer distinct
+from the producer; resolve all blockers. Reuse unchanged evidence when its
+inputs are identical. Verify source and target, preserve unrelated work, and
+satisfy applicable validation, independent review, and public-boundary checks.
+In coordinated work, the lead alone integrates.
+
+This includes merging an existing PR whose verified base is non-main. It does
+not independently authorize publishing a branch with `git push`; standalone
+pushes require existing explicit user or automation authorization. Any update
+to `main`, including a local commit or merge, remote PR merge, or push, needs
+specific user authorization. Tags, publishing, release, package, and deploy
+operations remain separate gates requiring explicit authorization. This policy
+grants no new scheduled-run, force-push, branch-deletion, or scope-expansion
+authority.
+
 ## Branches
 
 ### main
 
 - Keep it releasable (publish / tag source of truth).
 - Do not use it for experiments.
-- Promote from `develop` after validation (see Merge flow).
+- Promote from `develop` only with separate explicit user authorization (see
+  Commit and merge authority).
 - Confirm that public source does not contain private product names, customer
   names, server addresses, credentials, or private repository paths.
 - Run `pnpm check:commit-safety` before every commit (included in
@@ -20,7 +41,8 @@ the selected validation lane plus the public boundary before merging.
 
 - Daily integration target. Feature / fix / docs PRs land here first.
 - Keep it green: run the selected validation lane before merge.
-- Promote to `main` when ready to release or keep `main` current.
+- Promote to `main` only with separate explicit user authorization (see Commit
+  and merge authority).
 - Use lowercase branch name exactly: `develop`.
 - For ordinary new work, refresh remote refs and base the topic branch on the
   latest `origin/develop`.
@@ -80,9 +102,13 @@ git worktree add ..\workbench-kit-worktrees\chatting-ui -b feature/codex/chattin
    changed.
 7. Confirm that no private knowledge, credentials, or secret files entered
    public source (`pnpm check:commit-safety`).
-8. Open a PR into `develop` (or merge locally per policy below).
-9. After `develop` is validated, promote to `main` when releasing or syncing
-   the release line.
+8. Prepare the current candidate for a PR into `develop` or local integration;
+   do not update the target yet.
+9. Before any develop ref update, finish affected-input self-validation and
+   producer-distinct review of the exact current candidate with no blockers.
+   Reuse evidence whose inputs are unchanged. If the candidate or target inputs
+   change, refresh affected evidence. Main promotion is separately authorized
+   only (see above).
 
 ```powershell
 git switch develop
@@ -97,6 +123,7 @@ forced deletion.
 
 ```powershell
 # Promote develop → main (single commit tip: prefer FF; otherwise --no-ff)
+# Example for separately authorized main promotion only.
 git switch main
 git pull --ff-only
 git merge --ff-only develop   # or: git merge --no-ff develop
@@ -158,6 +185,7 @@ When using a merge commit, pass `--no-ff` and explain why fast-forward was not
 used in the merge commit body.
 
 ```powershell
+# Example for separately authorized main promotion only.
 git switch main
 git merge --no-ff develop
 ```
@@ -167,24 +195,41 @@ commits are reserved for integration events worth preserving.
 
 ## Grouped landing on develop
 
-When several topic branches should validate together before `main`:
+When several topic branches should validate together before `main`, accept the
+candidate only after its combined state passes affected-input self-validation
+and producer-distinct current-candidate review with no blockers. Reuse evidence
+when its inputs are unchanged. Main promotion commands below are examples for
+separately authorized promotion only.
 
 ```text
-1. Ensure develop is up to date (`git switch develop; git pull --ff-only`).
-2. Merge topic branches into develop (FF when possible).
-3. Validate the combined state on develop.
-4. Promote develop → main (FF or --no-ff as needed).
+1. Ensure develop is current and its local work is accounted for.
+2. Create a short-lived integration branch from the exact develop tip.
+3. Merge the topic branches into that candidate branch (FF when possible).
+4. Run affected-input self-validation on the combined candidate.
+5. Have a reviewer distinct from the candidate producer review its exact diff;
+   resolve every blocker. Reuse evidence when its inputs are unchanged.
+6. Merge the accepted candidate into develop only after those gates pass. If
+   the develop target or candidate inputs changed, refresh affected validation
+   and review evidence before updating develop.
+7. Main promotion (FF or --no-ff as needed) requires separate explicit user
+   authorization.
 ```
 
 ```powershell
 git switch develop
 git pull --ff-only
+git switch -c integration/codex/grouped-landing
 git merge --ff-only feature/codex/chat-service-hardening
-git merge --ff-only feature/codex/save-service-tests
+# The independent second branch diverges; record its integration explicitly.
+git merge --no-ff feature/codex/save-service-tests
 pnpm validate:fast  # Or choose the minimum lane for the changed combined surface.
+# Have a reviewer distinct from the producer review this exact candidate diff.
+git switch develop
+git merge --ff-only integration/codex/grouped-landing
 ```
 
 ```powershell
+# Example for separately authorized main promotion only.
 git switch main
 git merge --ff-only develop
 pnpm validate
@@ -229,23 +274,34 @@ pnpm install
 pnpm validate:static
 ```
 
-Merge order:
+Merge order (main promotion is separately authorized only):
 
 1. Commit work in each worktree.
 2. Run the selected validation lane in each worktree.
-3. Return to the main workspace and merge into `develop` first.
-4. Try `git merge --ff-only <branch>`.
-5. If it fails, rebase or resolve conflicts in the branch worktree.
-6. After merging, run validation again on `develop`.
-7. Prefer reusing a free checkout. If a managed Codex worktree is no longer
+3. In an integration checkout, create a short-lived candidate branch from the
+   exact `develop` tip and merge the completed topic branches into it.
+4. Run affected-input self-validation on that combined candidate, then require
+   producer-distinct review of its exact diff with no blockers. Reuse unchanged
+   evidence.
+5. Merge the accepted candidate into `develop` only after both gates pass. If
+   the target or candidate inputs changed, refresh affected validation and
+   review before updating `develop`.
+6. Prefer reusing a free checkout. If a managed Codex worktree is no longer
    needed, archive it after ongoing use has stopped and dirty, untracked, and
    needed ignored files have been accounted for.
-8. Promote `develop` → `main` when ready.
+7. Promote `develop` → `main` only with separate explicit user authorization.
 
 ```powershell
 git switch develop
+git switch -c integration/codex/parallel-workspaces
 git merge --ff-only feature/codex/chatting-ui
+# The independent second branch diverges; record its integration explicitly.
+git merge --no-ff chore/storybook/react-vite-baseline
 pnpm validate:static
+# Have a reviewer distinct from the candidate producer review this exact diff.
+# Refresh affected evidence here if the candidate or develop target inputs changed.
+git switch develop
+git merge --ff-only integration/codex/parallel-workspaces
 ```
 
 Before retiring a branch or checkout, verify exact ancestry or fully reviewed

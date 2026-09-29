@@ -85,7 +85,7 @@ Missing or contradictory event metadata does not authorize mutation.
 | **Clarify**             | ambiguous / thin quality bar                            | No                    |
 | **Implement**           | explicit run request or eligible scheduled pickup       | Yes, PR to `develop`  |
 | **Idle refactor**       | no actionable active or queued work                     | One small internal PR |
-| **Structural refactor** | weekly architecture lane                                | Yes, never auto-merge |
+| **Structural refactor** | unattended weekly architecture lane                     | No scheduled merge    |
 | **Security**            | security-sensitive request                              | No public PoC         |
 
 ### Status labels
@@ -131,7 +131,13 @@ DONE
 Rules:
 
 1. `WAITING_CI`, `WAITING_REVIEW`, and `WAITING_DEPENDENCY` do **not** consume the run's source-change slot. Keep state, emit no heartbeat, continue bounded reconciliation.
-2. `READY_TO_MERGE` may be merged in the same run when exact-head gates and repository authority are satisfied; verify `develop`, acceptance, owned-Issue closure, and branch cleanup.
+2. Route merge readiness through the current-candidate gates in
+   [`git-workflow.md`](./git-workflow.md): before updating `develop`, run
+   affected-input self-validation and producer-distinct review with no blockers.
+   Reuse evidence when inputs are unchanged. A scheduled worker, including later
+   hourly reconciliation, does not merge a weekly structural PR; an interactive
+   lead may integrate accepted work under the user's non-main authority. Verify
+   `develop`, acceptance, owned-Issue closure, and branch cleanup.
 3. `DONE` requires actual integration + acceptance evidence before closure.
 4. `ACTION_REQUIRED` active work is preferred for the one source-changing slot.
 5. If no active owned work requires a source change, select one eligible `status:queued` Issue.
@@ -164,7 +170,9 @@ A waiting PR must not monopolize every hourly execution while unrelated actionab
 ## Idle / Weekly
 
 - **Idle refactor:** only when there is no `ACTION_REQUIRED` owned work and no eligible queued Issue. One small internal tidy-up; no API break, product bet, broad refactor, security work, or major dependency/release change.
-- **Weekly structural:** one architecture-oriented theme; human review required and never auto-merged.
+- **Weekly structural:** one architecture-oriented theme; the unattended weekly
+  worker and later scheduled reconciliation leave its PR unmerged. An interactive
+  lead may integrate it after the canonical validation and review gates pass.
 
 ## Verification lanes
 
@@ -175,7 +183,13 @@ A waiting PR must not monopolize every hourly execution while unrelated actionab
 | React UI                      | unit + matching Storybook story; UI gate when required                |
 | Docs / templates only         | Prettier on touched files; public-reference check when naming changes |
 
-Automation source changes must pass `pnpm check:commit-safety` and applicable validation. Merge only when current required gates are satisfied. After merge, verify acceptance before closing the owned Issue. Never push `main` from automation.
+Automation source changes must pass `pnpm check:commit-safety` and applicable
+validation. Before updating `develop`, require affected-input self-validation
+and producer-distinct review of the current candidate with no blockers, reusing
+evidence whose inputs are unchanged. A scheduled run must not merge weekly
+structural work, including during later reconciliation. An interactive lead may
+integrate accepted non-main work under the user's authority. After merge, verify
+acceptance before closing the owned Issue. Never push `main` from automation.
 
 ## Agent defaults
 
