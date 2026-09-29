@@ -1,14 +1,16 @@
 # WB-SHELL-FOCUS-001 — Quick Open focus completion
 
-**Status: `READY_FOR_IMPLEMENTATION` for this packet only.** This admission is
-limited to the behavior and seven-file source boundary below. It does not admit
-other Northstar or shell work.
+**Status: `DONE` for this packet only.** Implementation, independent source
+review and the bounded runtime acceptance below are complete. The seven-file
+source boundary does not admit other Northstar or shell work.
 
 **Design evidence:** independent design review accepted v2 on 2026-09-30
 (SHA-256 `BD18EEB402C3440C062EB31B63CAC714A406E2E9287E2102899679D231F8CD57`).
 The review examined source base
-`9e098e6886f64318f5c012126abf5000e4eb89bd`. This document records design
-admission; no implementation or runtime result is claimed.
+`9e098e6886f64318f5c012126abf5000e4eb89bd`. Implementation started from the
+packet-bearing `develop@246363d1a757fc6790f1bad4b8a012caf9560296` after confirming
+the reviewed source inputs were unchanged. Design admission and the later
+implementation receipt below are separate evidence.
 
 ## Behavior and invariant
 
@@ -72,7 +74,7 @@ behavior when no participating private scope and target exist.
 
 ## Allowed source and test files
 
-Only these seven files may be edited for this packet:
+Implementation was limited to these seven files:
 
 - `packages/shell-react/src/workbench/quick-open-focus.tsx` (new private module)
 - `packages/shell-react/src/shell/shell.tsx`
@@ -82,11 +84,9 @@ Only these seven files may be edited for this packet:
 - `packages/shell-react/src/workbench/command-host-controller.test.tsx`
 - `packages/shell-react/src/workbench/quick-open-editor-focus.test.tsx` (new)
 
-Before source work, reconcile the checkout to the current packet-bearing HEAD
-and confirm these source inputs still match the reviewed base above. The
-admission changes documentation only. If any allowed source/test input differs
-from the reviewed base, stop and return for source review; do not reset a
-checkout or infer that the reviewed base equals the current documentation HEAD.
+The source-input reconciliation was completed before implementation. A future
+change needs its own current-source review; this completed packet does not
+renew admission for an arbitrary later checkout.
 
 ## Acceptance and verification
 
@@ -122,6 +122,44 @@ commit/cleanup acknowledgements in low-level tests; mounted checks inspect real
 tab focus after effects. Do not add new browser infrastructure, unrelated panel
 smoke, Storybook, Electron, full repository validation, or extra product gates
 for this inner loop. These checks were not run as part of design admission.
+Complete artifact-producing checks before starting the Sample session so fresh
+builds cannot invalidate its live module inputs.
+
+## Implementation receipt — 2026-09-30
+
+Independent source review accepted the private coordinator, effective-modal
+origin lifetime, identity guards and committed selected-tab registration. The
+final candidate passed all four focused test files (50 tests), shell-react
+typecheck, exact-optional typecheck, and touched-file ESLint/Prettier checks.
+
+One existing Sample session on `/` with its normal StrictMode composition
+verified actual `document.activeElement`, selected tab and active group:
+
+- Editor origin to a new `README.md` tab by Enter.
+- Toolbar origin to an existing `App.tsx` tab by pointer.
+- Repeated Quick Open invocation to `Button.tsx` by Enter.
+- Toolbar origin through Command Palette to Quick Open and `App.tsx` by Enter.
+- Escape restoration to the original toolbar control.
+
+The final coordinator source SHA-256 was
+`05FD6BB822D71F6122D19C057E9FB8B514EA71437CE1293C08E916BF27ABE300`; controller
+SHA-256 was `98E9EC025853BB3D300D03A99DAD9CE164BA01A6E95CD0E0A8AE1DDEB67C6161`.
+
+The Sample also exposed a pre-existing CSS defect: the shared command overlay
+inherited `pointer-events: none` from the intentionally inert overlay host.
+A separate, independently reviewed maintenance correction added only
+`pointer-events: auto` in
+`packages/react/src/workbench/command-palette/command-palette.css`. Actual
+Quick Open and Palette pointer selection, Palette close/backdrop behavior and
+closed-host hit testing passed. This companion does not expand the seven-file
+focus mechanism or enable pointer input on the shared empty host.
+
+An earlier successful packed-consumer run is reused only for the unchanged
+import, declaration and package-cohort boundary, as independently accepted.
+Later private guard corrections and the separate stylesheet change are covered
+by the final focused and Sample evidence above. The earlier packed bytes are
+not the final runtime candidate; this receipt is not exact-tip packed or release
+validation. No package publication or consumer dependency change is claimed.
 
 ## Non-goals
 

@@ -3,6 +3,7 @@ import {
   useMemo,
   useRef,
   useState,
+  useLayoutEffect,
   type DragEvent as ReactDragEvent,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -22,6 +23,7 @@ import './area.css';
 
 import { useEditorDocumentViewProviders, useEditorService, useEditorState } from './use-editor.js';
 import { useWorkbench } from '../shell/provider.js';
+import { useQuickOpenFocusCoordinator } from '../workbench/quick-open-focus.js';
 import { type EditorDocumentViewProvider } from './view-providers.js';
 import { EditorHostSurface } from './host-surface.js';
 import type { EditorViewMode } from './pane-visibility.js';
@@ -265,6 +267,7 @@ function EditorGroupPane({
   viewProviders: readonly EditorDocumentViewProvider[];
 }) {
   const editorService = useEditorService();
+  const quickOpenFocus = useQuickOpenFocusCoordinator();
   const { commands, executeCommand, menus } = useWorkbench();
   const tabs = group.tabs;
   const activeTabId = group.activeTabId ?? tabs[0]?.id ?? '';
@@ -281,6 +284,33 @@ function EditorGroupPane({
     x: number;
     y: number;
   } | null>(null);
+  const groupPaneRef = useRef<HTMLElement | null>(null);
+  const focusRegistrationOwner = useRef<object>({}).current;
+  useLayoutEffect(() => {
+    if (!active || !quickOpenFocus || !activeTab) return undefined;
+    const element = groupPaneRef.current;
+    if (!element) return undefined;
+    const selectedTabs = element.querySelectorAll<HTMLElement>(
+      ':scope > [role="tablist"] [role="tab"][aria-selected="true"][tabindex="0"]',
+    );
+    if (selectedTabs.length !== 1) return undefined;
+    return quickOpenFocus.registerCommittedTarget(
+      focusRegistrationOwner,
+      {
+        groupId: group.id,
+        tabId: activeTab.id,
+        resourceUri: activeTab.resourceUri,
+      },
+      selectedTabs[0]!,
+    );
+  }, [
+    active,
+    activeTab?.id,
+    activeTab?.resourceUri,
+    focusRegistrationOwner,
+    group.id,
+    quickOpenFocus,
+  ]);
   const editorTabs = useMemo(
     () =>
       tabs.map((tab) =>
@@ -595,6 +625,7 @@ function EditorGroupPane({
 
   return (
     <section
+      ref={groupPaneRef}
       aria-label={active ? 'Active editor group' : 'Editor group'}
       className={[
         'workbench-editor-area__group-pane',

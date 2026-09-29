@@ -12,6 +12,7 @@ import type {
   WorkbenchCommandDescriptor,
 } from '@workbench-kit/react/workbench/command-ui';
 import { describe, expect, it, vi } from 'vitest';
+import { createQuickOpenFocusCoordinator, QuickOpenFocusProvider } from './quick-open-focus.js';
 
 import {
   WorkbenchCommandHostController,
@@ -297,6 +298,133 @@ describe('WorkbenchCommandHostController', () => {
     }
   });
 
+  it('does not let a late scoped completion close a query the user edited', async () => {
+    let finish: ((value: unknown) => void) | undefined;
+    const executeCommand = vi.fn(
+      () =>
+        new Promise((resolve) => {
+          finish = resolve;
+        }),
+    );
+    const target = { groupId: 'g', tabId: 't', resourceUri: 'workspace://file/docs/README.md' };
+    const coordinator = createQuickOpenFocusCoordinator({
+      resolveSuccessfulTarget: () => target,
+      readActiveTarget: () => target,
+      subscribeActiveTargetChange: () => () => undefined,
+    });
+    const mounted = await mountController(
+      { commands: [], executeCommand, quickOpenProviders: [QUICK_OPEN_PROVIDER] },
+      coordinator,
+    );
+    try {
+      await dispatchShortcut('p', { ctrlKey: true });
+      const option = await waitForElement(
+        () => mounted.container.querySelector<HTMLElement>('[role="option"]') ?? undefined,
+      );
+      await clickElement(option);
+      expect(executeCommand).toHaveBeenCalled();
+      const dialog = getDialog(mounted.container, 'Quick Open');
+      const input = dialog.querySelector<HTMLInputElement>('input')!;
+      const setValue = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value')?.set;
+      setValue?.call(input, 'edited query');
+      await act(async () => input.dispatchEvent(new Event('input', { bubbles: true })));
+      expect(input.value).toBe('edited query');
+      await act(async () => finish?.({ paths: ['docs/README.md'] }));
+      expect(getDialog(mounted.container, 'Quick Open')).toBeDefined();
+    } finally {
+      await mounted.dispose();
+    }
+  });
+
+  it('keeps reopened Quick Open and Palette safe from older scoped completions', async () => {
+    const completions: Array<(value: unknown) => void> = [];
+    const executeCommand = vi.fn(() => new Promise((resolve) => completions.push(resolve)));
+    const target = { groupId: 'g', tabId: 't', resourceUri: 'workspace://file/docs/README.md' };
+    const coordinator = createQuickOpenFocusCoordinator({
+      resolveSuccessfulTarget: () => target,
+      readActiveTarget: () => target,
+      subscribeActiveTargetChange: () => () => undefined,
+    });
+    const mounted = await mountController(
+      { commands: COMMANDS, executeCommand, quickOpenProviders: [QUICK_OPEN_PROVIDER] },
+      coordinator,
+    );
+    try {
+      await openQuickOpenAndSelect(mounted.container, 'README.md');
+      await dispatchShortcut('Escape');
+      await dispatchShortcut('p', { ctrlKey: true });
+      await act(async () => completions[0]?.({ paths: ['docs/README.md'] }));
+      expect(getDialog(mounted.container, 'Quick Open')).toBeDefined();
+      await openQuickOpenAndSelect(mounted.container, 'README.md');
+      await dispatchShortcut('p', { ctrlKey: true, shiftKey: true });
+      await act(async () => completions[1]?.({ paths: ['docs/README.md'] }));
+      expect(getDialog(mounted.container, 'Command Palette')).toBeDefined();
+    } finally {
+      await mounted.dispose();
+    }
+  });
+
+  it('keeps only a newer selection current and lets disabled or unmounted hosts finish commands', async () => {
+    const completions: Array<(value: unknown) => void> = [];
+    const executeCommand = vi.fn(() => new Promise((resolve) => completions.push(resolve)));
+    const target = { groupId: 'g', tabId: 't', resourceUri: 'workspace://file/docs/README.md' };
+    const coordinator = createQuickOpenFocusCoordinator({
+      resolveSuccessfulTarget: () => target,
+      readActiveTarget: () => target,
+      subscribeActiveTargetChange: () => () => undefined,
+    });
+    const mounted = await mountController(
+      { commands: [], executeCommand, quickOpenProviders: [QUICK_OPEN_PROVIDER] },
+      coordinator,
+    );
+    try {
+      await openQuickOpenAndSelect(mounted.container, 'README.md');
+      await clickElement(
+        await waitForElement(
+          () => mounted.container.querySelector<HTMLElement>('[role="option"]') ?? undefined,
+        ),
+      );
+      expect(executeCommand).toHaveBeenCalledTimes(2);
+      await act(async () => completions[0]?.({ paths: ['docs/README.md'] }));
+      expect(getDialog(mounted.container, 'Quick Open')).toBeDefined();
+      await act(async () => completions[1]?.({ paths: ['docs/README.md'] }));
+      expect(mounted.container.querySelector('[role="dialog"]')).toBeNull();
+    } finally {
+      await mounted.dispose();
+    }
+
+    const disabled = await mountController(
+      { commands: [], executeCommand, quickOpenProviders: [QUICK_OPEN_PROVIDER] },
+      coordinator,
+    );
+    await openQuickOpenAndSelect(disabled.container, 'README.md');
+    await disabled.rerender({ commands: [], enableQuickOpen: false, executeCommand });
+    expect(disabled.container.querySelector('[role="dialog"]')).toBeNull();
+    await act(async () => completions[2]?.({ paths: ['docs/README.md'] }));
+    expect(disabled.container.querySelector('[role="dialog"]')).toBeNull();
+    await disabled.rerender({
+      commands: [],
+      enableQuickOpen: true,
+      executeCommand,
+      quickOpenProviders: [QUICK_OPEN_PROVIDER],
+    });
+    expect(disabled.container.querySelector('[role="dialog"]')).toBeNull();
+    await openQuickOpenAndSelect(disabled.container, 'README.md');
+    expect(executeCommand).toHaveBeenCalledTimes(4);
+    await act(async () => completions[3]?.({ paths: ['docs/README.md'] }));
+    expect(disabled.container.querySelector('[role="dialog"]')).toBeNull();
+    await disabled.dispose();
+
+    const unmounted = await mountController(
+      { commands: [], executeCommand, quickOpenProviders: [QUICK_OPEN_PROVIDER] },
+      coordinator,
+    );
+    await openQuickOpenAndSelect(unmounted.container, 'README.md');
+    await unmounted.dispose();
+    await act(async () => completions[4]?.({ paths: ['docs/README.md'] }));
+    expect(executeCommand).toHaveBeenCalledTimes(5);
+  });
+
   it('passes explicit bindings and effective projections through shortcutBridge', async () => {
     interface ShortcutContext {
       readonly calls: string[];
@@ -372,11 +500,12 @@ interface MountedController<TContext> {
 
 async function mountController<TContext = unknown>(
   props: WorkbenchCommandHostControllerProps<TContext>,
+  coordinator?: ReturnType<typeof createQuickOpenFocusCoordinator>,
 ): Promise<MountedController<TContext>> {
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
-  await renderController(root, props);
+  await renderController(root, props, coordinator);
 
   return {
     container,
@@ -384,15 +513,26 @@ async function mountController<TContext = unknown>(
       await act(async () => root.unmount());
       container.remove();
     },
-    rerender: (nextProps) => renderController(root, nextProps),
+    rerender: (nextProps) => renderController(root, nextProps, coordinator),
   };
 }
 
 async function renderController<TContext>(
   root: Root,
   props: WorkbenchCommandHostControllerProps<TContext>,
+  coordinator?: ReturnType<typeof createQuickOpenFocusCoordinator>,
 ): Promise<void> {
-  await act(async () => root.render(<WorkbenchCommandHostController {...props} />));
+  await act(async () =>
+    root.render(
+      coordinator ? (
+        <QuickOpenFocusProvider value={coordinator}>
+          <WorkbenchCommandHostController {...props} />
+        </QuickOpenFocusProvider>
+      ) : (
+        <WorkbenchCommandHostController {...props} />
+      ),
+    ),
+  );
 }
 
 async function dispatchShortcut(

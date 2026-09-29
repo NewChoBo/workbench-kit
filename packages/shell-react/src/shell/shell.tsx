@@ -20,6 +20,7 @@ import {
   type StatusBarSectionModel,
 } from '@workbench-kit/react/workbench/shell';
 import { filterActivitiesByWhenClause } from '@workbench-kit/workbench-core';
+import { formatWorkspaceResourceUri, normalizeWorkspacePath } from '@workbench-kit/workspace';
 import type {
   ExtensionCatalogTrustPolicy,
   WorkbenchSettingsCapability,
@@ -51,6 +52,10 @@ import {
   type WorkbenchTranslate,
 } from './chrome-labels.js';
 import { WorkbenchCommandHost, type WorkbenchCommandHostProps } from '../workbench/command-host.js';
+import {
+  createQuickOpenFocusCoordinator,
+  QuickOpenFocusProvider,
+} from '../workbench/quick-open-focus.js';
 import {
   MANAGE_ACCOUNTS_COMMAND_ID,
   MANAGE_COMMANDS_COMMAND_ID,
@@ -228,6 +233,7 @@ export function WorkbenchShell({
     configurations,
     contextKeyService,
     executeCommand,
+    editorService,
     extensionActivation,
     extensionCatalog,
     layoutService,
@@ -240,6 +246,66 @@ export function WorkbenchShell({
     viewHostFactories,
     views,
   } = useWorkbench();
+  const quickOpenFocus = useMemo(
+    () =>
+      createQuickOpenFocusCoordinator({
+        resolveSuccessfulTarget: (path, result) => {
+          try {
+            if (typeof result !== 'object' || result === null || Array.isArray(result))
+              return undefined;
+            const prototype = Object.getPrototypeOf(result);
+            if (prototype !== Object.prototype && prototype !== null) return undefined;
+            const descriptor = Object.getOwnPropertyDescriptor(result, 'paths');
+            if (!descriptor || !('value' in descriptor) || !Array.isArray(descriptor.value))
+              return undefined;
+            const paths = descriptor.value as unknown[];
+            if (Object.getPrototypeOf(paths) !== Array.prototype) return undefined;
+            const lengthDescriptor = Object.getOwnPropertyDescriptor(paths, 'length');
+            if (
+              !lengthDescriptor ||
+              !('value' in lengthDescriptor) ||
+              typeof lengthDescriptor.value !== 'number'
+            )
+              return undefined;
+            const normalized = normalizeWorkspacePath(path);
+            let includesRequestedPath = false;
+            for (let index = 0; index < lengthDescriptor.value; index += 1) {
+              const item = Object.getOwnPropertyDescriptor(paths, String(index));
+              if (!item || !('value' in item) || typeof item.value !== 'string') continue;
+              try {
+                if (normalizeWorkspacePath(item.value) === normalized) includesRequestedPath = true;
+              } catch {
+                /* Ignore unusable receipt entries. */
+              }
+            }
+            if (!includesRequestedPath) return undefined;
+            const resourceUri = formatWorkspaceResourceUri({ kind: 'file', path: normalized });
+            const state = editorService.getState();
+            const group = state.groups.find((candidate) => candidate.id === state.activeGroupId);
+            const tab = group?.tabs.find((candidate) => candidate.id === group.activeTabId);
+            return tab?.resourceUri === resourceUri
+              ? { groupId: group!.id, tabId: tab.id, resourceUri }
+              : undefined;
+          } catch {
+            return undefined;
+          }
+        },
+        readActiveTarget: () => {
+          const state = editorService.getState();
+          const group = state.groups.find((candidate) => candidate.id === state.activeGroupId);
+          const tab = group?.tabs.find((candidate) => candidate.id === group.activeTabId);
+          return group && tab
+            ? { groupId: group.id, tabId: tab.id, resourceUri: tab.resourceUri }
+            : undefined;
+        },
+        subscribeActiveTargetChange: (listener) => {
+          const disposable = editorService.onDidChangeEditors(listener);
+          return () => disposable.dispose();
+        },
+      }),
+    [editorService],
+  );
+  useEffect(() => () => quickOpenFocus.reset(), [quickOpenFocus]);
   const appearanceThemeOptions = createWorkbenchThemeOptionSnapshot(themeOptions);
   const appearanceCatalog = createWorkbenchAppearanceCatalogSnapshot({
     hostOptions: appearanceThemeOptions,
@@ -799,7 +865,9 @@ export function WorkbenchShell({
       }}
       rootClassName={rootClassName}
       rootStyle={rootAppearanceStyle}
-      secondaryArea={resolvedEditorArea}
+      secondaryArea={
+        <QuickOpenFocusProvider value={quickOpenFocus}>{resolvedEditorArea}</QuickOpenFocusProvider>
+      }
       statusSections={resolvedStatusSections}
       titleBar={resolvedTitleBar}
       theme={appearancePresentation.theme}
@@ -810,10 +878,12 @@ export function WorkbenchShell({
         <>
           {overlays}
           {commandHost !== false ? (
-            <WorkbenchCommandHost
-              {...(resolvedCommandHost === false ? {} : resolvedCommandHost)}
-              onOpenSettings={() => openSettings()}
-            />
+            <QuickOpenFocusProvider value={quickOpenFocus}>
+              <WorkbenchCommandHost
+                {...(resolvedCommandHost === false ? {} : resolvedCommandHost)}
+                onOpenSettings={() => openSettings()}
+              />
+            </QuickOpenFocusProvider>
           ) : null}
           {isSettingsOpen ? (
             <WorkbenchSettingsModal

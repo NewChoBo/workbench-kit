@@ -1,6 +1,7 @@
 .ui-workbench-command-palette-overlay {
   position: fixed;
   inset: 0;
+  pointer-events: auto;
   z-index: 250;
   display: grid;
   align-items: start;
