@@ -90,7 +90,7 @@ For the selected source item:
 3. sync safely from develop without overwriting another owner;
 4. implement the smallest remaining acceptance slice;
 5. run pnpm check:commit-safety before commit;
-6. code -> pnpm validate:fast; docs -> pnpm validate:static; public exports -> pnpm check:public-exports; JDW -> pnpm check:jdw-schemas as applicable;
+6. code -> affected package checks, then pnpm validate:fast for integration; docs -> Prettier on touched files and public-reference check when naming changes; public exports -> pnpm check:public-exports plus packed consumer proof; JDW -> pnpm check:jdw-schemas as applicable;
 7. open/update PR -> develop and keep the Issue status:pr-open while review/integration/acceptance remains unresolved;
 8. merge only when current required gates are satisfied and policy authorizes it;
 9. after merge verify develop + acceptance, then close only the owned Issue when actually complete.

@@ -594,6 +594,52 @@ describe('WorkbenchCommandHost', () => {
     container.remove();
   });
 
+  it('bases repeated focus-mode commands on the current LayoutService state', async () => {
+    let services: CapturedWorkbenchServices | undefined;
+    const container = document.createElement('div');
+    const root = createRoot(container);
+
+    await act(async () => {
+      root.render(
+        <WorkbenchProvider
+          persistEditorState={false}
+          persistKeybindingOverrides={false}
+          persistLayout={false}
+          persistLocalPreferences={false}
+        >
+          <WorkbenchCommandHost
+            enableCommandPalette={false}
+            enableExtensionKeybindings={false}
+            enableQuickOpen={false}
+            enableShortcutBridge={false}
+            onOpenSettings={() => undefined}
+          />
+          <WorkbenchServicesProbe
+            onCapture={(capturedServices) => {
+              services = capturedServices;
+            }}
+          />
+        </WorkbenchProvider>,
+      );
+    });
+    await flushReactEffects();
+
+    const toggleFocusMode = services?.commands.getCommand('workbench.toggleFocusMode')?.handler;
+    expect(toggleFocusMode).toBeDefined();
+
+    act(() => {
+      void toggleFocusMode?.();
+      void toggleFocusMode?.();
+    });
+
+    expect(services?.layoutService.isFocusModeActive()).toBe(false);
+
+    await act(async () => {
+      root.unmount();
+    });
+    container.remove();
+  });
+
   it('keeps activity shell commands, palette, and management aligned with context keys', async () => {
     const extension = createConditionalActivityCommandProbeExtension();
     let services: CapturedWorkbenchServices | undefined;
@@ -683,10 +729,15 @@ describe('WorkbenchCommandHost', () => {
       container.querySelector('[data-testid="management-command-ids"]')?.textContent,
     ).toContain('workbench.showActivity.lab');
 
+    act(() => {
+      services?.layoutService.setSideBarVisible(false);
+    });
+
     await act(async () => {
       await services?.executeCommand('workbench.showActivity.lab');
     });
     expect(services?.layoutService.getState().sideBar.activeViewContainer).toBe('lab');
+    expect(services?.layoutService.getState().sideBar.visible).toBe(true);
 
     await act(async () => {
       services?.contextKeyService.set('workbench.test.labEnabled', false);

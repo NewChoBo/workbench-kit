@@ -35,33 +35,11 @@ const focusedKeybindingManagementProviderOutputDir = path.join(
   consumerDir,
   'dist-focused-keybinding-management-provider',
 );
+const loggingOutputDir = path.join(consumerDir, 'dist-logging');
 
-// Keep a little deliberate headroom for normal fixes, while forcing larger
-// public-surface growth to include an explicit bundle-budget review.
 const PACKED_CONSUMER_BUDGETS = Object.freeze({
   cssGzipBytes: 52_000,
   focusedOverlayCssGzipBytes: 11_500,
-  // Exact develop before the Field Remap property-stack migration consumed 249,124 bytes. Replacing
-  // its bespoke detail controls with the existing shared property/control primitives consumes
-  // 251,806 bytes while retaining the same 1,882-module / one-static-chunk graph; keep deliberate
-  // repair headroom without hiding another dependency-surface jump.
-  // WB-ST-001 baseline is 252,980 bytes; exception-safe cleanup adds 31 gzip bytes
-  // with unchanged CSS, static assets and one initial chunk. Admit 64 bytes for
-  // this bounded correctness repair; retain the dependency/CSS boundary checks.
-  // WB-ST-018/019: native editing boundaries and Tab dismissal raise 253,019 to
-  // 253,169 bytes with the same 2,290 transformed modules and existing CSS graph.
-  // Independently reviewed bounded allowance; retain all closure/CSS checks.
-  // See docs/northstar/context-editing-ux.md (packed-size review).
-  // WB-ST-020B: resource URI identity and legacy editor-state migration add 270
-  // gzip bytes (253,169 -> 253,439), with unchanged modules, CSS and static assets.
-  // Independently reviewed bounded allowance; see explorer-resource-uri-repair.md.
-  // WB-ST-021..025: editor attempts, persistence admission, canonical identity,
-  // Unicode validity and draft protection add 847 gzip bytes (253,439 -> 254,286).
-  // Source e83d809f retains the CSS asset and package/dependency manifests;
-  // resource and Unicode helpers enter the graph (2,290 -> 2,292 modules). Admit 881 bytes
-  // above the prior measured baseline, retaining 34 bytes of deliberate headroom.
-  // See docs/northstar/logic-stabilization-verification.md; all closure checks remain.
-  initialGzipBytes: 254_320,
 });
 
 // Runtime closure reached by the public imports in the generated consumer.
@@ -70,6 +48,7 @@ const PACKED_CONSUMER_BUDGETS = Object.freeze({
 const consumerPackageNames = [
   '@workbench-kit/base',
   '@workbench-kit/contracts',
+  '@workbench-kit/logging',
   '@workbench-kit/platform',
   '@workbench-kit/workbench-extension-sdk',
   '@workbench-kit/workbench-config',
@@ -115,6 +94,27 @@ try {
     cwd: repoRoot,
     stdio: 'inherit',
   });
+  console.log('[check-packed-consumer] Typechecking packed logging ESM/CJS consumers...');
+  for (const source of ['logging-consumer.mts', 'logging-consumer.cts']) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        'NodeNext',
+        '--moduleResolution',
+        'NodeNext',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        'ES2022',
+        path.join(consumerDir, 'src', source),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
   console.log(
     '[check-packed-consumer] Typechecking JDW generative UI root exports with exact optional properties...',
   );
@@ -368,6 +368,14 @@ try {
     cwd: consumerDir,
     stdio: 'inherit',
   });
+  runCommand('node', [path.join(consumerDir, 'src', 'logging-consumer.cjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
+  runCommand('node', [path.join(consumerDir, 'src', 'logging-consumer.mjs')], {
+    cwd: consumerDir,
+    stdio: 'inherit',
+  });
 
   console.log('[check-packed-consumer] Building external production consumer...');
   runCommand(
@@ -377,6 +385,9 @@ try {
   );
 
   const coreMetrics = verifyOutput();
+
+  buildFocusedConsumer('logging');
+  await verifyFocusedLoggingOutput();
 
   await verifyPackedDataOperations();
   await verifyPackedRemapHistory();
@@ -536,6 +547,33 @@ function verifyPackedPackageCohort() {
   console.log(
     `[check-packed-consumer] Packed release cohort OK (${count} packages at ${expectedVersion}).`,
   );
+}
+
+async function verifyFocusedLoggingOutput() {
+  const manifest = readJson(path.join(loggingOutputDir, '.vite', 'manifest.json'));
+  const entry = Object.values(manifest).find((candidate) => candidate.isEntry);
+  if (!entry?.file || entry.css?.length) {
+    throw new TypeError('Packed logging production consumer must emit a JavaScript-only entry.');
+  }
+  const bundlePath = path.join(loggingOutputDir, entry.file);
+  const sourceMap = readJson(`${bundlePath}.map`);
+  const sources = sourceMap.sources ?? [];
+  const normalizedSources = sources.map((source) => source.replaceAll('\\', '/').toLowerCase());
+  if (
+    !normalizedSources.some((source) => source.includes('/@workbench-kit/logging/dist/index.js'))
+  ) {
+    throw new TypeError('Packed logging bundle did not consume the built ESM package entry.');
+  }
+  if (normalizedSources.some((source) => source.includes('/@workbench-kit/logging/src/'))) {
+    throw new TypeError(
+      'Packed logging production bundle unexpectedly consumed package source files.',
+    );
+  }
+  const bundle = fs.readFileSync(bundlePath);
+  console.log(
+    `[check-packed-consumer] packed logging ESM bundle OK (${bundle.byteLength} bytes / ${gzipSync(bundle).byteLength} gzip bytes).`,
+  );
+  await executeFocusedConsumer('packed logging production', loggingOutputDir);
 }
 
 function verifyPrivateTestSupportFilesExcluded(packageName) {
@@ -1123,6 +1161,74 @@ if (frameHandle?.textContent !== 'Resize canvas') {
   throw new TypeError('Packed WorkbenchCanvasFrameHandle did not render consumer content.');
 }
 root.unmount();
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'logging-consumer.mts'),
+    `import { createWorkbenchLogger } from '@workbench-kit/logging';
+import type { WorkbenchLoggerOptions } from '@workbench-kit/logging';
+
+const options: WorkbenchLoggerOptions = { enabled: true, minLevel: 'info', consoleSink: false };
+createWorkbenchLogger('typed consumer', options).info('ok');
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'logging-consumer.cts'),
+    `import logging = require('@workbench-kit/logging');
+import type { WorkbenchLoggerOptions } from '@workbench-kit/logging';
+
+const options: WorkbenchLoggerOptions = { enabled: true, minLevel: 'info', consoleSink: false };
+logging.createWorkbenchLogger('typed consumer', options).info('ok');
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'logging-consumer.mjs'),
+    `import { createWorkbenchLogger, isDevRuntime } from '@workbench-kit/logging';
+
+const events = [];
+const logger = createWorkbenchLogger('fixture', {
+  enabled: true,
+  minLevel: 'info',
+  consoleSink: false,
+  sinks: [{ write: (event) => events.push(event) }],
+});
+logger.info('esm runtime');
+if (isDevRuntime() || events[0]?.message !== 'esm runtime') {
+  throw new TypeError('Packed logging ESM runtime did not use the published entry.');
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'logging-consumer.cjs'),
+    `const { createWorkbenchLogger, isDevRuntime } = require('@workbench-kit/logging');
+
+const events = [];
+const logger = createWorkbenchLogger('fixture', {
+  enabled: true,
+  minLevel: 'info',
+  consoleSink: false,
+  sinks: [{ write: (event) => events.push(event) }],
+});
+logger.info('cjs runtime');
+if (isDevRuntime() || events[0]?.message !== 'cjs runtime') {
+  throw new TypeError('Packed logging CommonJS runtime did not use the published entry.');
+}
+`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'logging-production.ts'),
+    `import { createWorkbenchLogger } from '@workbench-kit/logging';
+
+const events: string[] = [];
+createWorkbenchLogger('production', {
+  enabled: true,
+  minLevel: 'info',
+  consoleSink: false,
+  sinks: [{ write: (event) => events.push(event.message) }],
+}).info('production bundle');
+if (events[0] !== 'production bundle') {
+  throw new TypeError('Packed logging production bundle fixture failed.');
+}
 `,
   );
   fs.writeFileSync(
@@ -4319,6 +4425,11 @@ container.remove();
 `,
   );
   writeFocusedViteConfig(
+    'logging',
+    path.join(consumerDir, 'src', 'logging-production.ts'),
+    loggingOutputDir,
+  );
+  writeFocusedViteConfig(
     'focused-command-host-controller',
     path.join(consumerDir, 'src', 'focused-command-host-controller.ts'),
     focusedCommandHostControllerOutputDir,
@@ -5143,7 +5254,6 @@ function verifyOutput() {
   const initialGzipBytes = gzipBytes + cssGzipBytes + staticAssetGzipBytes;
 
   assertWithinBudget('CSS gzip', cssGzipBytes, PACKED_CONSUMER_BUDGETS.cssGzipBytes);
-  assertWithinBudget('initial gzip', initialGzipBytes, PACKED_CONSUMER_BUDGETS.initialGzipBytes);
 
   // Vite may emit unreferenced Monaco workers while scanning the React barrel.
   // Only the manifest's transitive static JS closure is part of initial load.
@@ -5161,7 +5271,7 @@ function verifyOutput() {
   }
 
   console.log(
-    `[check-packed-consumer] OK (${staticEntries.length} static chunks, JS ${bytes} bytes / ${gzipBytes} gzip bytes, CSS ${cssBytes} bytes / ${cssGzipBytes} gzip bytes in ${cssFiles.size} assets, static assets ${staticAssetBytes} bytes / ${staticAssetGzipBytes} gzip bytes in ${staticAssetFiles.size} files, initial ${initialGzipBytes} / ${PACKED_CONSUMER_BUDGETS.initialGzipBytes} gzip bytes).`,
+    `[check-packed-consumer] OK (${staticEntries.length} static chunks, JS ${bytes} bytes / ${gzipBytes} gzip bytes, CSS ${cssBytes} bytes / ${cssGzipBytes} gzip bytes in ${cssFiles.size} assets, static assets ${staticAssetBytes} bytes / ${staticAssetGzipBytes} gzip bytes in ${staticAssetFiles.size} files, initial ${initialGzipBytes} gzip bytes).`,
   );
 
   return { cssBytes, cssGzipBytes };

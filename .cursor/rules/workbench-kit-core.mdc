@@ -38,8 +38,11 @@ Never commit or hardcode secrets anywhere in the tree:
 
 - Use **pnpm** only (`npm install` is blocked).
 - UI copy in English; structure for i18n later.
-- Default agent validation: `pnpm validate:static` or `pnpm validate:fast`
-  (plus `pnpm check:commit-safety` before commit).
+- Default inner-loop validation: affected package typecheck, focused tests,
+  and lint/Prettier on touched files. Documentation-only edits need no package
+  test suite. Use `pnpm validate:fast` for cross-package integration and
+  `pnpm validate` on the release tip; run `pnpm check:commit-safety` before a
+  requested commit.
 - Public API changes: `pnpm check:public-exports`.
 - Commit safety (refs + secrets): `pnpm check:commit-safety`.
 - JDW profile/schema changes: `pnpm check:jdw-schemas`.
@@ -89,6 +92,12 @@ Never commit or hardcode secrets anywhere in the tree:
 ## Change discipline
 
 - Minimize scope; match existing patterns in touched packages.
+- For shell refactors, use `AGENTS.md` § Refactor protocol: record the exact
+  checkout/dirty state, trace the owning service, and change one tested vertical
+  slice. Read `docs/workbench/current-state.md` and
+  `docs/workbench/workbench-change-guidelines.md`, then verify current source.
+- For visible shell behavior, exercise the assembled Sample in a browser or
+  renderer; a Storybook frame or generated image does not prove that flow.
 - Commit messages: English Conventional Commits per `docs/conventions/git-workflow.md` and `docs/conventions/language-policy.md`.
 - Do not commit or push unless the user asks.
 - Do not force-push `main` / `master`.

@@ -32,6 +32,11 @@ pnpm format:check
 pnpm format
 ```
 
+During routine edits, run `pnpm exec eslint <touched-code-files>` and
+`pnpm exec prettier --check <touched-files>` where applicable. Full-repository
+`pnpm lint` and `pnpm format:check` are integration/release checks; they are
+unnecessary for a documentation-only inner loop.
+
 `pnpm validate` runs `validate:fast` (static checks + unit tests) then
 `validate:ui` (Storybook build + required play tests). Use
 `pnpm validate:static` for typecheck, lint, format check, and the other static

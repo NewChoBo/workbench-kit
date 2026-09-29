@@ -168,12 +168,12 @@ A waiting PR must not monopolize every hourly execution while unrelated actionab
 
 ## Verification lanes
 
-| Change type                   | Minimum                                                          |
-| ----------------------------- | ---------------------------------------------------------------- |
-| Pure logic / platform helpers | package unit tests + `pnpm validate:fast` or targeted equivalent |
-| Public export surface         | `pnpm check:public-exports`                                      |
-| React UI                      | unit + matching Storybook story; UI gate when required           |
-| Docs / templates only         | `pnpm validate:static` / public-reference checks                 |
+| Change type                   | Minimum                                                               |
+| ----------------------------- | --------------------------------------------------------------------- |
+| Pure logic / platform helpers | package unit tests + `pnpm validate:fast` or targeted equivalent      |
+| Public export surface         | `pnpm check:public-exports`                                           |
+| React UI                      | unit + matching Storybook story; UI gate when required                |
+| Docs / templates only         | Prettier on touched files; public-reference check when naming changes |
 
 Automation source changes must pass `pnpm check:commit-safety` and applicable validation. Merge only when current required gates are satisfied. After merge, verify acceptance before closing the owned Issue. Never push `main` from automation.
 

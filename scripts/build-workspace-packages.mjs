@@ -1,6 +1,7 @@
 import { runCommand } from './lib/run-command.mjs';
 
 const packages = [
+  '@workbench-kit/logging',
   '@workbench-kit/contracts',
   '@workbench-kit/electron-shell',
   '@workbench-kit/jdw',

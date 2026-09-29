@@ -15,6 +15,7 @@ import {
 import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import { useContextKeyRevision } from '../commands/use-context-key-revision.js';
+import { createWorkbenchShellLayoutActions } from '../shell/layout-actions.js';
 import { useWorkbench } from '../shell/provider.js';
 import { WorkbenchCommandHostController } from './command-host-controller.js';
 import { registerWorkbenchShellCommandHandlers } from './shell-command-registration.js';
@@ -109,6 +110,10 @@ export function WorkbenchCommandHost({
     workspaceHostPort,
   } = useWorkbench();
   const [layout, setLayout] = useState(() => layoutService.getState());
+  const layoutActions = useMemo(
+    () => createWorkbenchShellLayoutActions(layoutService),
+    [layoutService],
+  );
   const [extensionKeybindingRevision, setExtensionKeybindingRevision] = useState(
     () => keybindings.revision,
   );
@@ -180,47 +185,54 @@ export function WorkbenchCommandHost({
     .map((activity) => (visibleShellActivityIdSet.has(activity.id) ? '1' : '0'))
     .join('');
 
-  const shellCommandDefinitions = useMemo(
+  const managedShellCommandDefinitions = useMemo(
     () =>
       createWorkbenchShellCommands({
-        activities: managedShellActivities.filter(
-          (_activity, index) => visibleShellActivitySignature[index] === '1',
-        ),
+        activities: managedShellActivities,
         includeSettings: true,
         includeSidebarToggle: true,
+        includePanelToggle: true,
+        includeAuxiliarySidebarToggle: true,
       }),
-    [managedShellActivities, visibleShellActivitySignature],
+    [managedShellActivities],
+  );
+
+  const shellCommandDefinitions = useMemo(
+    () =>
+      // Preset emits activity commands first, in input order; the visibility signature uses that order.
+      managedShellCommandDefinitions.filter(
+        (_command, index) =>
+          index >= managedShellActivities.length || visibleShellActivitySignature[index] === '1',
+      ),
+    [managedShellActivities.length, managedShellCommandDefinitions, visibleShellActivitySignature],
   );
 
   const managedShellCommandIds = useMemo(
-    () =>
-      new Set(
-        createWorkbenchShellCommands({
-          activities: managedShellActivities,
-          includeSettings: true,
-          includeSidebarToggle: true,
-        }).map((command) => command.id),
-      ),
-    [managedShellActivities],
+    () => new Set(managedShellCommandDefinitions.map((command) => command.id)),
+    [managedShellCommandDefinitions],
   );
 
   const shellContext = useMemo<WorkbenchShellCommandContext>(
     () => ({
       isFocusModeActive: layoutService.isFocusModeActive(),
       isPrimarySidebarVisible: layout.sideBar.visible,
+      isPanelVisible: layout.panel.visible,
+      isAuxiliarySidebarVisible: layout.auxiliaryBar.visible,
       openSettings: onOpenSettings,
-      showActivity: (activityId) => {
-        layoutService.setActiveViewContainer(activityId);
-        layoutService.setSideBarVisible(true);
-      },
-      toggleFocusMode: () => {
-        layoutService.setFocusModeActive(!layoutService.isFocusModeActive());
-      },
-      togglePrimarySidebar: () => {
-        layoutService.setSideBarVisible(!layout.sideBar.visible);
-      },
+      showActivity: layoutActions.showActivity,
+      togglePanel: layoutActions.togglePanel,
+      toggleAuxiliarySidebar: layoutActions.toggleAuxiliarySidebar,
+      toggleFocusMode: layoutActions.toggleFocusMode,
+      togglePrimarySidebar: layoutActions.togglePrimarySidebar,
     }),
-    [layout.sideBar.visible, layoutService, onOpenSettings],
+    [
+      layout.auxiliaryBar.visible,
+      layout.panel.visible,
+      layout.sideBar.visible,
+      layoutActions,
+      layoutService,
+      onOpenSettings,
+    ],
   );
 
   shellContextRef.current = shellContext;

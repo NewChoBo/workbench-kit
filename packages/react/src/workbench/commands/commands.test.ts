@@ -6,7 +6,9 @@ import {
 import { describe, expect, it } from 'vitest';
 import {
   WORKBENCH_OPEN_SETTINGS_COMMAND_ID,
+  WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID,
   WORKBENCH_TOGGLE_FOCUS_MODE_COMMAND_ID,
+  WORKBENCH_TOGGLE_PANEL_COMMAND_ID,
   WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID,
   WORKBENCH_COMMAND_SURFACE_ACTIVITY_BAR,
   WORKBENCH_COMMAND_SURFACE_EDITOR,
@@ -117,6 +119,65 @@ function createSearchResultContext(
 }
 
 describe('workbench shell command presets', () => {
+  it('keeps panel commands opt-in and derives their label and enabled state from context', () => {
+    const defaultCommands = createWorkbenchShellCommands({ activities });
+    expect(
+      defaultCommands.some((command) => command.id === WORKBENCH_TOGGLE_PANEL_COMMAND_ID),
+    ).toBe(false);
+    expect(
+      defaultCommands.some(
+        (command) => command.id === WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID,
+      ),
+    ).toBe(false);
+
+    const calls: string[] = [];
+    const commands = createWorkbenchShellCommands<TestActivityId>({
+      activities,
+      includePanelToggle: true,
+      includeAuxiliarySidebarToggle: true,
+    });
+    const panelCommand = commands.find(
+      (command) => command.id === WORKBENCH_TOGGLE_PANEL_COMMAND_ID,
+    );
+    const auxiliaryCommand = commands.find(
+      (command) => command.id === WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID,
+    );
+    expect(panelCommand?.isEnabled?.(createContext())).toBe(false);
+    expect(auxiliaryCommand?.isEnabled?.(createContext())).toBe(false);
+
+    const context = createContext({
+      isPanelVisible: true,
+      isAuxiliarySidebarVisible: false,
+      togglePanel: () => calls.push('panel'),
+      toggleAuxiliarySidebar: () => calls.push('auxiliary'),
+    });
+    const registry = createCommandRegistry(commands);
+    const menuItems = resolveCommandMenuItems({
+      context,
+      entries: createWorkbenchShellMenuEntries<TestActivityId>({
+        activities: [],
+        includeFocusModeToggle: false,
+        includeSettings: false,
+        includeSidebarToggle: false,
+        includePanelToggle: true,
+        includeAuxiliarySidebarToggle: true,
+      }),
+      registry,
+    });
+
+    expect(menuItems.map((item) => item.type === 'command' && item.label)).toEqual([
+      'Hide Panel',
+      'Show Secondary Side Bar',
+    ]);
+    expect(menuItems.map((item) => item.type === 'command' && item.disabled)).toEqual([
+      false,
+      false,
+    ]);
+    executeCommand(registry, WORKBENCH_TOGGLE_PANEL_COMMAND_ID, context);
+    executeCommand(registry, WORKBENCH_TOGGLE_AUXILIARY_SIDEBAR_COMMAND_ID, context);
+    expect(calls).toEqual(['panel', 'auxiliary']);
+  });
+
   it('creates activity, sidebar, and settings menu items', () => {
     const registry = createCommandRegistry(createWorkbenchShellCommands({ activities }));
     const items = resolveCommandMenuItems({
