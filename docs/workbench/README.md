@@ -23,6 +23,10 @@ Active implementation sequence: [Workbench shell refactor plan](./shell-refactor
 records current source findings and the ordered shell slices. It does not
 replace [Current State](./current-state.md).
 
+Current proposal: [Workbench UI/UX improvement](./ux-improvement-proposal.md)
+records observed Sample behavior and ordered acceptance criteria. It does not
+replace the status and roadmap in [Current State](./current-state.md).
+
 ## Consumer integration
 
 | Document                                                              | Purpose                                                                                        |
