@@ -13,6 +13,10 @@ are not kept as active documents. Their conclusions are folded into
 
 ## Active Source Of Truth
 
+Start sequencing and branch reconciliation with the
+[execution plan](./execution-plan.md). It distinguishes local consolidation from
+remote integration, publication and capability acceptance.
+
 | Document                                                            | Purpose                                                                                                   |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | [**Current State**](./current-state.md)                             | **Status and direction:** Lane A completion, host-backed storage/install-state policy, validation ladder. |

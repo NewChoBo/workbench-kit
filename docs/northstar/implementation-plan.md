@@ -6,6 +6,17 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## Evidence baselines
 
+- **2026-09-29 local consolidation:** combined source
+  `d7edb02899216877afb6df9c28fac32bf551c430` joins preview, shell/package work and
+  the independent authoring designs. Remote `develop` was verified at
+  `11147a5bea222385a5697206b08672bae9adf270`; see the
+  [execution plan](../workbench/execution-plan.md) for exact branch dispositions
+  and current validation. Consolidation does not renew historical source
+  admission. `070I` keeps component rendering; imported mutation policy is
+  `070M` and requires revalidation. J/K/L remain source closed, with L dependent
+  on J source integration. Older commit/push/release flags below describe their
+  named snapshots, not the current documentation checkout.
+
 - **Historical source-bearing integration baseline:**
   `develop@8750bccb88971d4ea5deec28d15c67db0e856dd7` / PR #424. This exact tree is
   the recorded baseline after the focused keybinding command runtime correction,

@@ -2,7 +2,15 @@
 
 This document is the compact outcome-oriented roadmap projection for Workbench Kit. Detailed architecture, packet acceptance, source-review evidence, and implementation status remain owned by the focused Northstar documents and GitHub Issues.
 
-## Current checkpoint
+## Current reconciliation
+
+See the [execution plan](../workbench/execution-plan.md) for the 2026-09-29 branch
+inventory and local consolidation. The checkpoints below are historical evidence,
+not a claim that their named SHA is the latest remote source. Independent
+framework-neutral capabilities and optional shell composition retain separate
+acceptance; no global completion or packet promotion follows from consolidation.
+
+## Historical checkpoint
 
 - **Historical reviewed checkpoint:** `develop@abde7236cb48ebaf3758363ddd3df88bec0e7aa9` records the completed data-only `WB-NS-071C` projection; its focused candidate is `850735555e59c925aed9d30045abf3d325184a14`.
 - **2026-09-05 rendering audit:** observed remote `develop@542123e03b6b2d372c942c9f6adb6aff54838a7e`. The [component rendering contract](./component-rendering-contract.md) records the scoped current-source gaps and JDW `.48` artifact evidence. This does not requalify unrelated packets or claim visual/runtime completion.

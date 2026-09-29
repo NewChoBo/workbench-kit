@@ -28,6 +28,15 @@ maintain parallel full copies per tool.
 
 When a Cursor rule and `AGENTS.md` disagree, update **both** in the same change.
 
+## Coordinated execution
+
+[Agent execution workflow](./agent-execution-workflow.md) defines the lead design,
+independent review, bounded implementation and acceptance handoffs. Session model
+selection belongs there, not in architecture contracts or packet identifiers.
+The [execution plan](../workbench/execution-plan.md) records the reconciled branch
+baseline and next work. `CLAUDE.md` continues to import `AGENTS.md`; it needs no
+duplicate workflow.
+
 ## Mandatory checks (all tools)
 
 Before every `git commit` / `git push`:

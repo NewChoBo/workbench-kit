@@ -64,10 +64,15 @@ Do not copy a host file verbatim into the public package. Extract the behavior,
 rename the public concepts neutrally, and keep product data and policy in the
 host.
 
-### 3. Release before consumption
+### 3. Local co-development and registry release
 
-For explicitly requested local co-development, a consumer may link a separate Kit checkout and validate
-unreleased changes without waiting for publication. Keep pnpm workspaces and peer installations isolated.
+Local co-development with an integrating host is a valid development lane. Use a
+separate Kit checkout and record its exact SHA, relevant dirty/source fingerprint,
+build outputs, and link mode with the validation evidence. Keep pnpm workspaces
+and peer installations isolated; never add this repository's `packages/*` to the
+host workspace. Host manifests and lockfiles retain exact published registry
+pins as their committed baseline. Local links are development-only and are not
+release evidence.
 `pnpm watch:workspace` builds package outputs serially, coalesces edits during a build and writes
 `.cache/workspace-build.json` only after a successful build. A consumer may use that completion marker to
 reload its renderer and restart development processes that cache CommonJS modules. Source-exported UI
@@ -76,16 +81,26 @@ session ends. Local compatibility evidence does not replace packed-package or re
 Watch builds retain existing outputs while compiling so active consumers do not lose their entrypoints.
 Normal builds still clean those outputs; use a normal build before packed-package validation.
 
-The committed consumer baseline uses published registry packages.
+Use local co-development to develop and validate compatible changes together.
+Host source work may be committed on a co-development branch while validation
+uses a local dependency link. Keep that link out of host manifests and lockfiles;
+they retain exact published Kit pins, and the host must not absorb Kit packages
+into its workspace. For registry-based consumer changes or release-ready host
+promotion, complete Kit release before merging a host change that requires the
+new API.
 
 ```text
 Kit implementation → Kit validation → develop merge → release tag → npm publish
 → host exact-version bump → host adapter cleanup → host validation
 ```
 
-Do not merge a host change that requires an unreleased Kit API. Temporary local
-`link:` or `file:` checks are allowed only as uncommitted verification and must
-be removed before a host commit or pull request.
+Do not promote a registry-based or release-ready host change that requires an
+unreleased Kit API. During ordinary local co-development, an uncommitted
+`node_modules` link to the separate Kit checkout may support host source work,
+including a co-development commit or review. Keep dependency manifests and
+lockfiles pinned to the exact published cohort; never add Kit `packages/*` to
+the host workspace. Record the Kit SHA, dirty/source fingerprint, build outputs
+and link mode with the local validation evidence.
 
 ### 4. No permanent dual implementation
 
@@ -190,8 +205,9 @@ Host: product policy + adapter + end-to-end composition
 
 ### Phase C — release
 
-1. Validate the release tip according to the npm release convention.
-2. Promote and tag only with explicit release approval.
+1. Validate the exact release tip with `pnpm validate` according to the npm
+   release convention.
+2. Promote or tag only after explicit user release authorization.
 3. Confirm the intended package version is visible under the `prototype` dist
    tag.
 
@@ -221,7 +237,9 @@ For behavior changes spanning Kit and a host:
 5. host `develop` merge after green checks.
 
 Documentation-only coordination may land in both repositories without a package
-release. Source changes must preserve the release-before-consume order.
+release. Local source co-development may use a separately checked-out Kit and
+recorded build/link evidence; registry consumption still follows the release
+order above.
 
 Do not combine unrelated Kit and host refactors merely because the same agent can
 access both repositories. Each pull request should explain its own ownership and
@@ -236,14 +254,18 @@ At the start of a task:
 
 1. inspect the existing Kit surface and the relevant host behavior;
 2. classify each responsibility as generic, product policy, or composition;
-3. state the Kit-first sequence and release dependency;
+3. state the Kit-first sequence and whether local co-development or registry
+   consumption is intended;
 4. identify temporary compatibility code and its deletion condition.
 
 During implementation:
 
 - use separate branches or worktrees for Kit and host changes;
 - keep public Kit text neutral and free of private host references;
-- implement and validate the Kit side before committing a host dependency on it;
+- implement and validate the Kit side before committing a registry dependency
+  or promoting release-ready host work;
+- for local co-development, record the exact Kit SHA, dirty/source fingerprint,
+  build outputs and link mode;
 - do not make a committed local link the integration mechanism;
 - keep host adapters narrow and delete replaced mechanics.
 

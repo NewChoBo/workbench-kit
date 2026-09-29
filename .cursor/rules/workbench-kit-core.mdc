@@ -23,9 +23,10 @@ Never commit or hardcode secrets anywhere in the tree:
   only (`YOUR_API_KEY`, `<token>`, `changeme`)
 
 - Prefer neutral capability language (`integrating host`, `consumer app`).
-- Hosts should **release-then-consume**: land generic work here, publish
-  `@prototype`, then bump pins in the integrating host (see `AGENTS.md`
-  workspace isolation and `docs/workbench/current-state.md`).
+- Local co-development is valid: record the Kit SHA, dirty/source fingerprint,
+  build outputs and link mode. Registry manifests and locks keep exact published
+  pins; release-then-consume governs registry/release-ready promotion. See
+  `docs/architecture/consumer-driven-development.md`.
 - Applies to source, docs, `AGENTS.md`, Cursor rules/hooks, commits, and PRs.
 - **Before every commit/push:** run `pnpm check:commit-safety` yourself
   (public-references + secrets). Do not skip this even if a Cursor hook exists.
@@ -35,6 +36,13 @@ Never commit or hardcode secrets anywhere in the tree:
   Layout: `docs/conventions/agent-guidance.md`.
 
 ## Tooling
+
+- For user-authorized coordinated work, the lead continuously assigns bounded
+  tasks and accepts results. Use smart-model design plus independent review,
+  then the explicitly session-selected fast model for implementation; never
+  silently change user-chosen models or infer scheduling permission. One writer
+  per file. See `docs/conventions/agent-execution-workflow.md` for packet
+  admission and review; existing IssueOps authorization still applies.
 
 - Use **pnpm** only (`npm install` is blocked).
 - UI copy in English; structure for i18n later.

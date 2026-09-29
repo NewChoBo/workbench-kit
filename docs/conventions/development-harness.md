@@ -21,6 +21,13 @@ lockfile updates.
 | Lint/format config                      | `pnpm lint && pnpm format:check`                                                                       | `pnpm validate`                                                |
 | README and conventions                  | Manual docs review + Prettier on touched files                                                         | `pnpm check:public-references` if naming changed               |
 
+Reuse a prior validation result only when the related source, tests,
+dependencies, configuration, and artifact inputs are unchanged. Record the
+validated base SHA and those input fingerprints with the result. A documentation-
+only or SHA-only change does not require rerunning product gates; review and
+format the touched documents instead. Release readiness still requires
+`pnpm validate` on the exact release tip.
+
 ## Changed-Package Matrix (inner loop)
 
 Use package-scoped commands during frequent iteration. Reserve `pnpm validate:fast`
@@ -75,7 +82,10 @@ environment issue.
 When multiple worktrees are active, split validation before and after merge.
 
 - Run the minimum validation lane in each worktree.
-- After merging into `main`, run `pnpm validate` again.
+- After integration, rerun lanes only for changed validation inputs. Before a
+  release tag, require a recorded full `pnpm validate` result for the release-tip
+  inputs; reuse it only when the related sources, tests, dependencies,
+  configuration, and artifact inputs are unchanged.
 - If two branches touched the same component or CSS token, run browser smoke or
   Storybook build again after merge.
 - Use different dev server ports per worktree to avoid mixing results.

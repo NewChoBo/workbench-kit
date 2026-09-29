@@ -2,6 +2,15 @@
 
 Updated: 2026-08-08
 
+## Current reconciliation
+
+The [execution plan](./execution-plan.md), updated 2026-09-29, records the current
+branch inventory, local consolidation and ordered next work. This document owns
+shell behavior and storage policy; it does not make the optional shell a global
+prerequisite for independent processing or HTML/React/Vue/Svelte capabilities.
+Completion statements below retain their original evidence scope. A locally
+combined candidate is not remote develop integration or published availability.
+
 This is the active source of truth for the Workbench Kit workbench track. Older
 session, slice, closeout, delegation, dated review, and recommendation notes
 were folded into this file and removed. Git history remains the archive.
@@ -33,13 +42,13 @@ were folded into this file and removed. Git history remains the archive.
 
 ## Active Documents
 
-| Document                                                             | Owns                                                    |
-| -------------------------------------------------------------------- | ------------------------------------------------------- |
-| [`../../PLAN.ko.md`](../../PLAN.ko.md)                               | Current priorities and release checklist                |
-| [README.md](./README.md)                                             | Workbench doc index and lifecycle rules                 |
-| [current-state.md](./current-state.md)                               | Current status, direction, storage/install-state policy |
-| [consumer-capabilities.md](./consumer-capabilities.md)               | Public integration contract and capability inventory    |
-| [consumer-integration-backlog.md](./consumer-integration-backlog.md) | Evidence-backed reusable gaps                           |
+| Document                                                             | Owns                                                       |
+| -------------------------------------------------------------------- | ---------------------------------------------------------- |
+| [execution-plan.md](./execution-plan.md)                             | Current branch reconciliation, next work and handoff gates |
+| [README.md](./README.md)                                             | Workbench doc index and lifecycle rules                    |
+| [current-state.md](./current-state.md)                               | Current status, direction, storage/install-state policy    |
+| [consumer-capabilities.md](./consumer-capabilities.md)               | Public integration contract and capability inventory       |
+| [consumer-integration-backlog.md](./consumer-integration-backlog.md) | Evidence-backed reusable gaps                              |
 
 JDW completion and reference documents remain capability history. They do not
 set shell priority while JDW expansion is paused.

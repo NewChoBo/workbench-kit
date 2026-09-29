@@ -1,8 +1,13 @@
 # Workbench Kit — 작업 계획
 
-> 현재 상태·우선순위 정본. 상세 소비 API는
-> [`consumer-capabilities.md`](./docs/workbench/consumer-capabilities.md), 구조는
-> [`current-state.md`](./docs/workbench/current-state.md)를 따른다.
+> **Historical shell-track snapshot (2026-08-08).** Current branch reconciliation,
+> sequencing and execution ownership are maintained in the
+> [execution plan](./docs/workbench/execution-plan.md). The older priorities below
+> are retained as context, not current source admission or release evidence.
+
+> Public consumer APIs remain in
+> [consumer capabilities](./docs/workbench/consumer-capabilities.md); shell policy
+> remains in [current state](./docs/workbench/current-state.md).
 
 **갱신:** 2026-08-08
 

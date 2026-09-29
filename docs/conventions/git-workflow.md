@@ -77,8 +77,13 @@ git switch -c feature/codex/chatting-ui
 ```powershell
 git switch develop
 git merge --ff-only feature/codex/chatting-ui
-git branch -d feature/codex/chatting-ui
 ```
+
+Retire a branch only after verifying its exact ancestry or fully reviewed
+equivalence, confirming there are no open PRs, active uses, or unique work, and
+making a recovery backup. Recheck the fresh branch SHA and active checkout/use
+leases immediately before deletion. Patch equivalence alone never authorizes
+forced deletion.
 
 ```powershell
 # Promote develop → main (single commit tip: prefer FF; otherwise --no-ff)
@@ -87,7 +92,8 @@ git pull --ff-only
 git merge --ff-only develop   # or: git merge --no-ff develop
 pnpm validate                 # required before any release tag on this tip
 git push origin main
-# Only after validate passes: git tag -a v… && git push origin <tag>
+# Tag/publish only after `pnpm validate` passes and the user explicitly
+# authorizes this release operation.
 ```
 
 If a branch has too many experiment, fixup, or revert commits, clean it up
@@ -165,15 +171,15 @@ git switch develop
 git pull --ff-only
 git merge --ff-only feature/codex/chat-service-hardening
 git merge --ff-only feature/codex/save-service-tests
-pnpm validate:static
+pnpm validate:fast  # Or choose the minimum lane for the changed combined surface.
 ```
 
 ```powershell
 git switch main
 git merge --ff-only develop
-pnpm validate:static
-git tag -a v0.0.2-prototype.x.y.z -m "Release …"
-git push origin main --follow-tags
+pnpm validate
+# Full validation on this exact release tip is required before tagging.
+# Tagging and publishing also require explicit user release authorization.
 ```
 
 ## Parallel Workspaces
@@ -215,16 +221,23 @@ Merge order:
 4. Try `git merge --ff-only <branch>`.
 5. If it fails, rebase or resolve conflicts in the branch worktree.
 6. After merging, run validation again on `develop`.
-7. Remove the merged worktree and delete the branch.
+7. Prefer reusing a free checkout. If a managed Codex worktree is no longer
+   needed, archive it after ongoing use has stopped and dirty, untracked, and
+   needed ignored files have been accounted for.
 8. Promote `develop` → `main` when ready.
 
 ```powershell
 git switch develop
 git merge --ff-only feature/codex/chatting-ui
 pnpm validate:static
-git worktree remove ..\workbench-kit-worktrees\chatting-ui
-git branch -d feature/codex/chatting-ui
 ```
+
+Before retiring a branch or checkout, verify exact ancestry or fully reviewed
+equivalence, check PRs, active use and unique work, create a recovery backup,
+then recheck its fresh SHA and active-use leases. Patch equivalence alone does
+not authorize forced deletion. Prefer a free checkout for the next task; archive
+a managed Codex worktree only when it is no longer needed and its dirty,
+untracked, and needed ignored files are accounted for.
 
 Use separate dev server ports for simultaneous worktrees. For example, keep the
 main Storybook server on `61009` and run another worktree with

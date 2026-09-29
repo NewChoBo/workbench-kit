@@ -27,9 +27,12 @@ monorepo must not include this repository’s `packages/*` in its own
 - Host apps should depend on registry pins (`@prototype`), not by absorbing packages into the host workspace. Temporary `link:` / `file:` is host-local exception only and must not be the committed baseline.
 - `pnpm check:workspace-isolation` fails when any `node_modules` symlink resolves outside this repository.
 
-**Release-then-consume:** implement generic workbench/UI gaps in this repo, publish via
-tag → `publish.yml`, then hosts bump pins. Do not expect hosts to ship product commits that
-require unreleased kit APIs.
+Local co-development with an integrating host is a valid development lane. Record
+the Kit checkout SHA, relevant dirty/source fingerprint, build outputs and link
+mode so the result is reproducible. Registry manifests and lockfiles must retain
+exact published Kit pins; do not absorb this repository's packages into the host
+workspace. Release-then-consume is required for registry-based or release-ready
+promotion. A host may not make a registry dependency on an unreleased Kit API.
 
 ## Consumer-driven ownership
 
@@ -47,7 +50,8 @@ For cross-repository tasks, Codex must:
 1. classify responsibilities as generic, product policy, or composition;
 2. implement and validate generic behavior in Workbench Kit first;
 3. merge the Kit PR into `develop` only after required checks pass;
-4. publish before a host commits a dependency on the new API;
+4. use a recorded local Kit checkout for authorized co-development, and publish
+   before a host commits a registry dependency on the new API;
 5. bump the host to one exact published Kit version cohort;
 6. keep only product policy and a narrow adapter in the host;
 7. delete replaced mechanics or record an exact compatibility-shim removal trigger.
@@ -62,9 +66,11 @@ and [`docs/workbench/workbench-change-guidelines.md`](docs/workbench/workbench-c
 then inspect the current code and tests. A plan or prior validation result never
 overrides the checked-out source.
 
-1. For Northstar source work, confirm the relevant packet in
-   [`docs/northstar/implementation-plan.md`](docs/northstar/implementation-plan.md) is
-   `READY_FOR_IMPLEMENTATION`; otherwise return to design/documentation only.
+1. Northstar new APIs, schemas, product policy, `SOURCE_CLOSED` work, or unresolved
+   ownership require formally reviewed admission. Documentation/test maintenance
+   and clear fixes restoring an existing contract may use a closed, reviewed
+   packet with reproduction or invariant, exact base, allowed files, non-goals,
+   and minimum checks. Do not change packet states without authorization.
 2. Read surrounding code and match existing naming, exports, and validation lanes.
 3. Keep diffs focused — no drive-by refactors.
 4. Run the smallest validation lane that covers your change (`typecheck`, `lint`,
@@ -116,12 +122,15 @@ specific failing behavior is part of the task.
    candidate or is integrated and published. Do not claim release from local
    green tests.
 
-For delegated implementation, the planning/review agent states the source
-finding, invariant, counterexample, file ownership, and acceptance checks
-before handing off. The implementation agent owns its assigned files and
-reports the exact diff and verification results. The planning/review agent
-inspects the resulting diff, resolves contract questions, and records any
-unverified behavior. Do not split a single file between concurrent agents.
+## Coordinated design and implementation
+
+For user-authorized coordinated work, the lead continuously assigns bounded
+tasks and owns final acceptance. Follow the [agent execution
+workflow](docs/conventions/agent-execution-workflow.md) for packet admission,
+review, implementation and acceptance. Use smart-model design with independent
+review, then the fast model explicitly selected for the session; do not silently
+change user-chosen models or infer scheduled-task permission. Keep one writer
+per file and preserve existing commit, push, integration and release authority.
 
 ## Project layout
 
