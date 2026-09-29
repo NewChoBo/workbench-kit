@@ -6,6 +6,14 @@ Existing `docs/architecture`, `docs/workbench`, source code, tests, pull request
 
 ## Documents
 
+Use the implementation plan as the focused packet admission and acceptance
+authority, not as a report that local acceptance implies integration. For current
+queue order see the [workbench execution plan](../workbench/execution-plan.md);
+durable shell and consumer policy lives in [current state](../workbench/current-state.md),
+and current package constraints live in [architecture](../architecture/README.md).
+Design readiness, source review, local validation, develop integration,
+publication and consumer adoption remain distinct states.
+
 - [`roadmap.md`](./roadmap.md) — compact outcome horizons, dependency/effect gates, and current Northstar sequencing without duplicating focused packet acceptance
 - [`target-architecture.md`](./target-architecture.md) — target capabilities, package/module/class/API structure, state/data flows, runtime boundaries, extensibility, persistence, testing and performance model
 - [`implementation-plan.md`](./implementation-plan.md) — CURRENT → TARGET gaps, dependency order, tool-neutral `READY_FOR_IMPLEMENTATION` packets, and implementation source-review results

@@ -13,6 +13,13 @@ extension system, repository migration, and target architecture.
 
 ## Start Here
 
+For current work routing, use the [workbench queue projection](../workbench/execution-plan.md),
+focused [Northstar implementation packets](../northstar/implementation-plan.md)
+for admission and acceptance, and [current state](../workbench/current-state.md)
+for durable shell and consumer policy. This directory owns current package
+constraints; Northstar documents own target design. Local validation, develop
+integration, publication and consumer adoption are separate states.
+
 - [Guides](../guides/README.md) — use cases, extension development, and API
   reference index.
 - [Package Map](./package-map.md) — every package's current role, target role,

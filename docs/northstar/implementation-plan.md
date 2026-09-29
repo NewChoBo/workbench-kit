@@ -33,18 +33,20 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-SHELL-FOCUS-001 — Quick Open focus completion
 
-- **Status:** `READY_FOR_IMPLEMENTATION` for this bounded packet only.
+- **Status:** `DONE` for this bounded packet only; independently reviewed source
+  and actual Sample acceptance are recorded in its canonical contract.
 - **Owner:** `shell-react`; private assembled-shell focus coordination.
 - **Reviewed source base:** `9e098e6886f64318f5c012126abf5000e4eb89bd`.
 - **Design review:** independently accepted v2 on 2026-09-30; design SHA-256
   `BD18EEB402C3440C062EB31B63CAC714A406E2E9287E2102899679D231F8CD57`.
 - **Canonical contract:** [Quick Open focus completion](./quick-open-focus-completion.md)
   defines the behavior, source/test allowlist, compatibility boundary and
-  minimum verification. Reconcile the implementation checkout to the current
-  packet-bearing HEAD, then verify the allowed source/test inputs still match
-  the reviewed base. Any drift returns to source review.
-- **Admission boundary:** documentation-only registration does not report source
-  implementation or validation. Only this packet is admitted; broad shell R2,
+  minimum verification and final receipt: four focused files / 50 tests,
+  typechecks, touched-file checks and five actual Sample focus flows. The
+  implementation was based on packet-bearing `develop@246363d1` with unchanged
+  reviewed source inputs; the earlier packed proof has a separately stated
+  boundary rather than claiming final runtime bytes.
+- **Completion boundary:** only this packet is complete; broad shell R2,
   other `DESIGNING` / `SOURCE_CLOSED` work and all other packet states remain
   unchanged.
 

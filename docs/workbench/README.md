@@ -13,9 +13,12 @@ are not kept as active documents. Their conclusions are folded into
 
 ## Active Source Of Truth
 
-Start sequencing and branch reconciliation with the
-[execution plan](./execution-plan.md). It distinguishes local consolidation from
-remote integration, publication and capability acceptance.
+Use the [execution plan](./execution-plan.md) as the current queue projection.
+Focused Northstar packets own implementation admission and acceptance;
+[current-state](./current-state.md) owns durable shell and consumer policy.
+Architecture documents own current package constraints, while Northstar documents
+own target design. Keep local validation, develop integration, publication and
+consumer adoption as separate states.
 
 | Document                                                            | Purpose                                                                                                   |
 | ------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
@@ -23,9 +26,9 @@ remote integration, publication and capability acceptance.
 | [**JDW Editor UX Plan**](./jdw-editor-ux-plan.md)                   | **JDW editor policy:** landed authoring UX, remaining zoom/pan decision, JDW persistence boundary.        |
 | [**Workbench Change Guidelines**](./workbench-change-guidelines.md) | **Implementation guardrails:** VS Code/Theia baselines, existing-logic-first workflow, review checklist.  |
 
-Active implementation sequence: [Workbench shell refactor plan](./shell-refactor-plan.md)
-records current source findings and the ordered shell slices. It does not
-replace [Current State](./current-state.md).
+The [Workbench shell refactor plan](./shell-refactor-plan.md) is a supporting
+record of source findings and proposed shell slices; it is not an independent
+current queue or admission authority.
 
 Current proposal: [Workbench UI/UX improvement](./ux-improvement-proposal.md)
 records observed Sample behavior and ordered acceptance criteria. It does not

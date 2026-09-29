@@ -38,10 +38,12 @@ does not need the consumer redesign to finish its generic contracts and fixtures
 | Consumer preparation | Product UX, input commit policy, selection/draft lifetime and composition plan | One current-source input/Inspector inventory plus before/after/error scenarios      | Current consumer source and existing published API          | Adoption of unpublished Kit exports             |
 | Integration          | Exact artifacts, compatibility and end-to-end evidence                         | One capability-specific adoption packet after release                               | Independently completed capability and consumer preparation | Blanket migration of all features               |
 
-Processing and controls are separate queues. With one Kit implementation owner,
-advance one admitted source packet at a time; a consumer planning owner can work
-in another checkout concurrently. Parallelism does not mean simultaneous edits
-to shared exports, the unit registry or the release manifest.
+Processing and controls are separate queues. Concurrent implementation is
+appropriate when admitted packets have disjoint files and contracts and isolated
+outputs/processes. Shared exports, the unit registry, release manifest, and
+build/pack/install artifacts need a named owner and serialized updates. Consumer
+planning may proceed in another checkout when its files and runtime resources are
+independent.
 
 ## Next packet boundaries
 
@@ -99,8 +101,10 @@ cross-checkout installs, committed local package links, shared source copies or
 automatic release are needed to prepare concurrently. Keep product planning
 separate from product implementation authorization.
 
-Kit documentation-only changes run formatting and commit-safety checks. Kit source
-changes require their admitted unit tests and the relevant full checks. Consumer
-planning follows its own documentation gate; product code later follows its own
-renderer/host/persistence gates. Reconcile only changed contracts and completed
-receipts at handoff, rather than waiting for the entire Kit roadmap to finish.
+Kit documentation-only changes use touched-file formatting, link review and
+applicable public-reference checks. Kit source changes use their admitted focused
+checks, then affected combined validation after integration; release requires the
+existing full release gate. Consumer planning follows its documentation gate;
+product code later follows its renderer/host/persistence gates. Reconcile changed
+contracts and completed receipts at handoff, rather than waiting for the entire
+Kit roadmap to finish.

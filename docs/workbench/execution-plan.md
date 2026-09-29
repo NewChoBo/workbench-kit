@@ -1,11 +1,24 @@
 # Workbench Kit execution plan
 
-Updated: 2026-09-29. This plan sequences work against the reconciled integration
-candidate. Source and tests determine behavior; Northstar packets own detailed
-contracts. The shell is an optional composition. Independent processing and
-HTML/React/Vue/Svelte capability goals remain separate completion tracks.
+Updated: 2026-09-30. This document is the queue projection; the dated baseline and
+evidence below are historical. Source and tests determine behavior; Northstar
+packets own detailed contracts. The shell is an optional composition. Independent
+processing and HTML/React/Vue/Svelte capability goals remain separate completion
+tracks.
 
-## Reconciled baseline
+## Current local candidate
+
+Based on `develop@246363d1a757fc6790f1bad4b8a012caf9560296`, this dirty local
+candidate combines guidance architecture, advisory validation scope, Quick Open
+focus, exact-optional declaration validation, Electron preparation, packed-build
+reuse, and Storybook Widget Tree Phase A readiness. Structural, focused, declaration,
+actual packed-consumer, direct Windows Electron, and Sample-route checks passed.
+The bounded WidgetTreeLab static and dev routes both passed 18/18. The two hook
+files pass focused ESLint after explicit Node built-in imports; CSS remains outside
+the existing ESLint configuration. Final independent rereview of these repairs is
+pending; this is not a develop promotion or release result.
+
+## Reconciled baseline (historical; 2026-09-29)
 
 The original checkout was clean on `main`. Live remote heads were checked on
 2026-09-29; there were no open PRs. No remote branch, tag or package was changed
@@ -41,7 +54,7 @@ integration branch. The unique historical release-state receipt and all active
 worktrees remain. Remote `main` and `develop` did not move; no release occurred.
 Workflow and execution-plan edits are still local, uncommitted documentation.
 
-## Integration decisions and evidence
+## Integration decisions and evidence (historical; 2026-09-29)
 
 - The packed-consumer conflict now preserves both the executable layout fixture
   and all five logging fixtures, including their build/type/runtime paths.
@@ -74,26 +87,27 @@ Workflow and execution-plan edits are still local, uncommitted documentation.
 
 ## Ordered work after consolidation
 
-| Order | Work                                                                        | Completion boundary                                                                                                                                 |
-| ----- | --------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 0     | Combined source validation and independent integration review completed     | Local candidate accepted; remote develop promotion and release remain separate                                                                      |
-| 1     | Align AGENTS, thin tool mirrors and handoff rules                           | Lead designs, independent reviewer verifies, Luna implements the frozen unit; source review and combined tests close it                             |
-| 2     | [Implement WB-SHELL-FOCUS-001](../northstar/quick-open-focus-completion.md) | Selected-tab focus after a qualified Quick Open success; other shell acceptance gaps remain separate design work and are not admitted here          |
-| 3     | Design one independent Universal UI PropertyRow unit                        | Label/control/diagnostic ownership, optional wrappers, no required shell, one artifact tested in HTML/React/Vue/Svelte                              |
-| 4     | Revalidate one authoring packet on the consolidated base                    | Reuse incumbent rendering ownership; choose a bounded J, K or M unit only after current-source review; L waits for J                                |
-| 5     | Expand distribution and provider work only with evidence                    | Logging is the first compiled leaf; each further package has its own packed checks. Provider decomposition needs characterization before extraction |
+| Order | Work                                                                       | Completion boundary                                                                                                                                             |
+| ----- | -------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 0     | Seven-candidate dirty-local Kit combination                                | Affected checks, including fresh static/dev WidgetTreeLab 18/18 and focused hook ESLint, passed; final independent rereview pending                             |
+| 1     | Align AGENTS, thin tool mirrors and handoff rules                          | Guidance architecture is locally combined and its exact source disposition is accepted; combined candidate verification and independent rereview remain pending |
+| 2     | [Complete WB-SHELL-FOCUS-001](../northstar/quick-open-focus-completion.md) | Selected-tab focus after a qualified Quick Open success is accepted; other shell gaps remain separate design work                                               |
+| 3     | Design one independent Universal UI PropertyRow unit                       | Label/control/diagnostic ownership, optional wrappers, no required shell, one artifact tested in HTML/React/Vue/Svelte                                          |
+| 4     | Revalidate one authoring packet on the consolidated base                   | Reuse incumbent rendering ownership; choose a bounded J, K or M unit only after current-source review; L waits for J                                            |
+| 5     | Expand distribution and provider work only with evidence                   | Logging is the first compiled leaf; each further package has its own packed checks. Provider decomposition needs characterization before extraction             |
 
 Steps 3 and 4 are design queues, not permission to start every lane. An independent
-capability need not wait for all shell features. With one implementation worker,
-finish one admitted unit at a time; design reviews may proceed separately. The
+capability need not wait for all shell features. Admit parallel implementation only for disjoint file and contract ownership, with
+isolated processes and artifacts. Shared writers and builds stay serialized;
+independent design reviews may proceed separately. The
 processing queue also retains validation/filter operations, callable ownership
 and Recipe/Mapping contracts from the
 [stabilization roadmap](../northstar/stabilization-roadmap.md); it is not reset or
 declared complete by this integration.
 
-## Admitted source handoff: WB-SHELL-FOCUS-001
+## Completed source handoff: WB-SHELL-FOCUS-001
 
-**State: `READY_FOR_IMPLEMENTATION` for this packet only.** The canonical
+**State: `DONE` for this packet only.** The canonical
 [Quick Open focus completion packet](../northstar/quick-open-focus-completion.md)
 contains the accepted v2 contract, exact seven-file source/test allowlist,
 compatibility boundaries and minimum checks. Independent design review accepted
@@ -101,9 +115,13 @@ v2 on 2026-09-30 (SHA-256
 `BD18EEB402C3440C062EB31B63CAC714A406E2E9287E2102899679D231F8CD57`) against
 source base `9e098e6886f64318f5c012126abf5000e4eb89bd`.
 
-Before source work, reconcile to the current packet-bearing HEAD and confirm the
-allowed source/test inputs still match that reviewed base. Any source drift
-returns to review. This admission does not change the status of other work.
+Implementation reconciled the unchanged reviewed source inputs against
+packet-bearing `develop@246363d1`. Independent source review, four focused
+files / 50 tests, package and exact-optional typechecks, touched-file checks and
+five actual Sample focus flows passed. The canonical receipt distinguishes the
+earlier packed boundary proof from final runtime evidence and records a separate
+one-declaration command-overlay pointer correction. This completion does not
+change the status of other work.
 Command availability, activity-intent transitions, persisted restoration and
 other shell R2 gaps remain separate design work; provider extraction, broad UI
 redesign and new storage policy are outside this packet.
@@ -112,7 +130,8 @@ redesign and new storage policy are outside this packet.
 
 **State: `DESIGNING`; no source dispatch.** This table preserves the existing
 broader shell concerns; it does not expand the focus packet's source allowlist
-or verification set. Only WB-SHELL-FOCUS-001 above is `READY_FOR_IMPLEMENTATION`.
+or verification set. WB-SHELL-FOCUS-001 above is complete; this queue remains
+undispatched.
 
 | Concern                    | Required design and acceptance                                                                                                                                                                        |
 | -------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |

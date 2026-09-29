@@ -1,15 +1,16 @@
 # Workbench Current State
 
-Updated: 2026-08-08
+Status snapshot: 2026-08-08 (historical; not a current branch or integration report)
 
 ## Current reconciliation
 
-The [execution plan](./execution-plan.md), updated 2026-09-29, records the current
-branch inventory, local consolidation and ordered next work. This document owns
-shell behavior and storage policy; it does not make the optional shell a global
-prerequisite for independent processing or HTML/React/Vue/Svelte capabilities.
-Completion statements below retain their original evidence scope. A locally
-combined candidate is not remote develop integration or published availability.
+The [execution plan](./execution-plan.md) is the current queue projection and
+branch reconciliation record. Focused Northstar packets own implementation
+admission and acceptance. This document owns durable shell behavior and storage
+policy; it does not make the optional shell a global prerequisite for independent
+processing or HTML/React/Vue/Svelte capabilities. Completion statements below
+retain their original evidence scope. A locally combined candidate is not remote
+develop integration or published availability.
 
 This is the active source of truth for the Workbench Kit workbench track. Older
 session, slice, closeout, delegation, dated review, and recommendation notes
@@ -135,13 +136,15 @@ state.
 
 ## Consumer Adoption Policy
 
-Workbench Kit adoption in host applications is not "add another UI stack"; it is
-a standardization and source-reduction path:
+Workbench Kit adoption in consumer applications is a standardization and
+source-reduction path. See [consumer-driven development](../architecture/consumer-driven-development.md)
+for the canonical local co-development and registry-consumption lanes:
 
 - **Release then consume** — land generic workbench/UI work in this repository,
-  publish `@prototype`, then integrating hosts bump version pins and thin
-  adapters. Hosts should not commit baselines that require unreleased kit APIs
-  (temporary local `link:` is an exception for validation only).
+  publish `@prototype`, then consumer apps bump version pins and thin adapters.
+  Local source co-development is allowed with an exact checkout and source
+  fingerprint. Registry manifests and lockfiles keep exact published versions;
+  consumers may not commit registry dependencies on unreleased Kit APIs.
 - direct feature imports from `@workbench-kit/react` should stay behind thin
   product adapters
 - existing local UI code is deleted only when a Kit adapter fully replaces the

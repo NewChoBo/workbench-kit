@@ -1,8 +1,16 @@
 # Operation invocation performance
 
-## WB-ST-003B admission
+## WB-ST-003B historical design and measurement
 
-Status: `READY_FOR_IMPLEMENTATION`. Owner: runtime invocation. Prerequisite:
+Historical status (2026-09-30): the `READY_FOR_IMPLEMENTATION` label below is
+superseded and does not dispatch new work. The [stabilization roadmap](./stabilization-roadmap.md)
+records ST-003B lookup optimization as implemented, and the exact implementation
+commit `aedc12e6cd4efa19cf1c1df92ee9296a6b41980b` is an ancestor of the current
+documentation base. Retain the original design and
+measurement details as historical evidence; do not treat this old admission
+label as current readiness.
+
+Original status: `READY_FOR_IMPLEMENTATION`. Owner: runtime invocation. Prerequisite:
 WB-ST-003A local candidate `57e1e2e9`. No unresolved design decisions.
 
 Scope: measure repeated successful calls and remove serialized registry lookup
