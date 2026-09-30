@@ -10,6 +10,7 @@ import { NPM_PUBLISH_ORDER } from './npm-publish-config.mjs';
 
 const shared = vi.hoisted(() => ({
   events: [] as string[],
+  fixtureSources: [] as string[],
   runCommand: vi.fn(),
   buildFreshWorkspaceArtifacts: vi.fn(),
   failCommand: null as null | ((command: string, args: string[]) => boolean),
@@ -80,6 +81,7 @@ function createParentFixture() {
 describe('same-run platform CJS checks', () => {
   beforeEach(() => {
     shared.events.length = 0;
+    shared.fixtureSources.length = 0;
     shared.failCommand = null;
     shared.runCommand.mockReset();
     shared.runCommand.mockImplementation((command, args) => {
@@ -87,6 +89,15 @@ describe('same-run platform CJS checks', () => {
       if (shared.failCommand?.(command, args)) throw new Error(`${command} failed`);
       if (command === 'npm') return 'fake-package.tgz\n';
       if (command === 'tar') writeExtractedLeaves(args.at(-1)!);
+      if (command === 'pnpm' && args.includes('tsc')) {
+        const config = args.at(-1)!;
+        shared.fixtureSources.push(
+          fs.readFileSync(path.join(path.dirname(config), 'smoke.ts'), 'utf8'),
+        );
+      }
+      if (command === process.execPath && String(args[0]).endsWith('smoke.cjs')) {
+        shared.fixtureSources.push(fs.readFileSync(args[0], 'utf8'));
+      }
       return '';
     });
     shared.buildFreshWorkspaceArtifacts.mockReset();
@@ -119,6 +130,25 @@ describe('same-run platform CJS checks', () => {
     } finally {
       owned.restore();
     }
+  });
+
+  it('probes public residency resolver types and real packed CJS fallback semantics', async () => {
+    const module = await import('./check-platform-cjs-leaves.mjs');
+    module.prepareSameRunPlatformCjsChecks()();
+    const typeProbe = shared.fixtureSources.find((source) =>
+      source.includes('const zOrderPolicyInput:'),
+    );
+    const runtimeProbe = shared.fixtureSources.find((source) =>
+      source.includes('assert.deepEqual(resolveWindowZOrderPolicy'),
+    );
+    expect(typeProbe).toContain('type ResolveWindowZOrderPolicyInput, type WindowZOrderPolicy');
+    expect(typeProbe).toContain(
+      'const zOrderPolicy: WindowZOrderPolicy = resolveWindowZOrderPolicy(zOrderPolicyInput)',
+    );
+    expect(runtimeProbe).toContain(
+      'effectiveZOrder: "default", focusable: true, reason: "back-unavailable"',
+    );
+    expect(runtimeProbe).toContain('"back-approximation"');
   });
 
   it('does not pack when the fresh workspace build fails', async () => {

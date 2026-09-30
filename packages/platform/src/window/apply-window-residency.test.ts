@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from 'vitest';
 import {
   applyWindowFocusablePolicy,
   applyWindowResidencyPolicy,
+  resolveWindowZOrderPolicy,
   type ResidencyWindowSurface,
 } from './apply-window-residency.js';
 
@@ -44,6 +45,33 @@ function createFakeWindow(): ResidencyWindowSurface & {
 }
 
 describe('applyWindowResidencyPolicy', () => {
+  it('uses normal focusable ordering for an unsupported back request and preserves pointer policy', () => {
+    const windowSurface = createFakeWindow();
+    applyWindowResidencyPolicy(windowSurface, {
+      zOrder: 'back',
+      supportsUnfocusableBack: false,
+      pointerPassthrough: 'all',
+      forwardPointerWhenIgnoring: false,
+      skipTaskbar: true,
+    });
+    expect(windowSurface.calls.setAlwaysOnTop).toEqual([[false]]);
+    expect(windowSurface.calls.setFocusable).toEqual([[true]]);
+    expect(windowSurface.calls.setSkipTaskbar).toEqual([[true]]);
+    expect(windowSurface.calls.blur).toBe(0);
+    expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([[true]]);
+  });
+
+  it('reapplies the same requested mode when host capability changes', () => {
+    const windowSurface = createFakeWindow();
+    applyWindowResidencyPolicy(windowSurface, { zOrder: 'back', pointerPassthrough: 'off' });
+    applyWindowResidencyPolicy(windowSurface, {
+      zOrder: 'back',
+      pointerPassthrough: 'off',
+      supportsUnfocusableBack: false,
+    });
+    expect(windowSurface.calls.setFocusable).toEqual([[false], [true]]);
+    expect(windowSurface.calls.blur).toBe(1);
+  });
   it('applies top z-order with pointer off', () => {
     const windowSurface = createFakeWindow();
     applyWindowResidencyPolicy(windowSurface, {
@@ -158,6 +186,63 @@ describe('applyWindowResidencyPolicy', () => {
     expect(windowSurface.calls.setAlwaysOnTop).toEqual([]);
     expect(windowSurface.calls.setFocusable).toEqual([]);
     expect(windowSurface.calls.setIgnoreMouseEvents).toEqual([]);
+  });
+});
+
+describe('resolveWindowZOrderPolicy', () => {
+  it.each(['top', 'default'] as const)(
+    'keeps %s intent with or without focusability support',
+    (zOrder) => {
+      for (const supportsUnfocusableBack of [undefined, false, true]) {
+        expect(
+          resolveWindowZOrderPolicy({
+            zOrder,
+            ...(supportsUnfocusableBack === undefined ? {} : { supportsUnfocusableBack }),
+          }),
+        ).toEqual({
+          requestedZOrder: zOrder,
+          effectiveZOrder: zOrder,
+          focusable: true,
+          reason: null,
+        });
+      }
+    },
+  );
+
+  it('names legacy back behavior as approximation, never native always-bottom', () => {
+    expect(resolveWindowZOrderPolicy({ zOrder: 'back' })).toEqual({
+      requestedZOrder: 'back',
+      effectiveZOrder: 'back-approximation',
+      focusable: false,
+      reason: 'back-approximation',
+    });
+  });
+
+  it('keeps requested back while resolving an explicit unavailable fallback', () => {
+    const input = Object.freeze({ zOrder: 'back', supportsUnfocusableBack: false } as const);
+    expect(resolveWindowZOrderPolicy(input)).toEqual({
+      requestedZOrder: 'back',
+      effectiveZOrder: 'default',
+      focusable: true,
+      reason: 'back-unavailable',
+    });
+    expect(input.zOrder).toBe('back');
+  });
+
+  it('position mode is temporary and the unchanged request resolves again on exit', () => {
+    for (const supportsUnfocusableBack of [true, false]) {
+      expect(
+        resolveWindowZOrderPolicy({ zOrder: 'back', positionMode: true, supportsUnfocusableBack }),
+      ).toEqual({
+        requestedZOrder: 'back',
+        effectiveZOrder: 'default',
+        focusable: true,
+        reason: 'position-mode',
+      });
+      expect(resolveWindowZOrderPolicy({ zOrder: 'back', supportsUnfocusableBack }).reason).toBe(
+        supportsUnfocusableBack ? 'back-approximation' : 'back-unavailable',
+      );
+    }
   });
 });
 

@@ -13,6 +13,57 @@
 
 export type WindowZOrder = 'top' | 'default' | 'back';
 
+export interface ResolveWindowZOrderPolicyInput {
+  readonly zOrder: WindowZOrder;
+  readonly positionMode?: boolean;
+  /** Whether the host can keep a window unfocused. This is not always-bottom support. */
+  readonly supportsUnfocusableBack?: boolean;
+}
+
+/** Intended native policy, not compositor readback or proof of effective stacking. */
+export interface WindowZOrderPolicy {
+  readonly requestedZOrder: WindowZOrder;
+  readonly effectiveZOrder: 'top' | 'default' | 'back-approximation';
+  readonly focusable: boolean;
+  readonly reason: null | 'back-approximation' | 'back-unavailable' | 'position-mode';
+}
+
+/** Omitted capability preserves the legacy unfocused approximation, never native always-bottom. */
+export function resolveWindowZOrderPolicy(
+  input: ResolveWindowZOrderPolicyInput,
+): WindowZOrderPolicy {
+  if (input.zOrder !== 'back') {
+    return {
+      requestedZOrder: input.zOrder,
+      effectiveZOrder: input.zOrder,
+      focusable: true,
+      reason: null,
+    };
+  }
+  if (input.positionMode) {
+    return {
+      requestedZOrder: 'back',
+      effectiveZOrder: 'default',
+      focusable: true,
+      reason: 'position-mode',
+    };
+  }
+  if (input.supportsUnfocusableBack === false) {
+    return {
+      requestedZOrder: 'back',
+      effectiveZOrder: 'default',
+      focusable: true,
+      reason: 'back-unavailable',
+    };
+  }
+  return {
+    requestedZOrder: 'back',
+    effectiveZOrder: 'back-approximation',
+    focusable: false,
+    reason: 'back-approximation',
+  };
+}
+
 /**
  * Orthogonal pointer policy for secondary windows.
  * - `off` — never ignore mouse
@@ -54,10 +105,8 @@ export interface ResidencyWindowSurface extends FocusableWindowSurface {
   blur?: () => void;
 }
 
-export interface ApplyWindowResidencyPolicyInput {
-  readonly zOrder: WindowZOrder;
+export interface ApplyWindowResidencyPolicyInput extends ResolveWindowZOrderPolicyInput {
   readonly pointerPassthrough: WindowPointerPassthroughPolicy;
-  readonly positionMode?: boolean;
   readonly dynamicPointerPassthrough?: boolean;
   /**
    * When ignoring mouse events, pass `{ forward: true }` to the surface.
@@ -90,10 +139,9 @@ export function applyWindowResidencyPolicy(
     throw new Error('Window surface does not support taskbar visibility changes.');
   }
 
-  const effectiveZOrder: WindowZOrder =
-    positionMode && input.zOrder === 'back' ? 'default' : input.zOrder;
+  const policy = resolveWindowZOrderPolicy(input);
 
-  if (effectiveZOrder === 'top') {
+  if (policy.effectiveZOrder === 'top') {
     if (level === undefined) {
       windowSurface.setAlwaysOnTop(true);
     } else {
@@ -106,11 +154,11 @@ export function applyWindowResidencyPolicy(
   applyWindowFocusablePolicy(
     windowSurface,
     input.skipTaskbar === undefined
-      ? { focusable: effectiveZOrder !== 'back' }
-      : { focusable: effectiveZOrder !== 'back', skipTaskbar: input.skipTaskbar },
+      ? { focusable: policy.focusable }
+      : { focusable: policy.focusable, skipTaskbar: input.skipTaskbar },
   );
 
-  if (effectiveZOrder === 'back') {
+  if (policy.effectiveZOrder === 'back-approximation') {
     windowSurface.blur?.();
   }
 
