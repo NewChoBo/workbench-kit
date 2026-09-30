@@ -39,6 +39,31 @@ describe('usePreviewViewport helpers', () => {
     ).toBe(1);
   });
 
+  it('preserves legacy results and permits passive fits below five percent', () => {
+    const viewport = { width: 72, height: 52 };
+    const content = { width: 10000, height: 4000 };
+    expect(computePreviewViewportFitScale(viewport, content, 0)).toBe(0.05);
+    expect(computePreviewViewportFitScale(viewport, content, 0, 0)).toBe(0.0072);
+    for (const width of [0, -1, 72, Infinity, NaN]) {
+      for (const height of [0, 52, Infinity, NaN]) {
+        const legacy =
+          width <= 0 || height <= 0
+            ? 1
+            : Math.min(
+                1,
+                Math.max(0.05, Math.max(0, width - 48) / 10000),
+                Math.max(0.05, Math.max(0, height - 48) / 4000),
+              );
+        expect(computePreviewViewportFitScale({ width, height }, content)).toBe(legacy);
+      }
+    }
+    for (const minimum of [-1, 1.1, Infinity, NaN]) {
+      expect(() => computePreviewViewportFitScale(viewport, content, 0, minimum)).toThrow(
+        RangeError,
+      );
+    }
+  });
+
   it('keeps the cursor point stable when zooming toward a point', () => {
     const nextPan = computeZoomPanTowardPoint({
       currentPan: { x: 10, y: -20 },

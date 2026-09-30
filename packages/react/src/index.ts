@@ -803,3 +803,6 @@ export type {
   WorkbenchAuthoringSurfaceProps,
   WorkbenchAuthoringSurfacePropsV3,
 } from './authoring';
+
+export { WorkbenchFitPreview } from './layout/WorkbenchFitPreview';
+export type { WorkbenchFitPreviewProps } from './layout/WorkbenchFitPreview';

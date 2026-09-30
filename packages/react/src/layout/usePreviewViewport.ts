@@ -58,7 +58,11 @@ export function computePreviewViewportFitScale(
   viewportSize: PreviewViewportSize,
   contentSize: PreviewViewportSize,
   padding = 48,
+  minimumScale = 0.05,
 ): number {
+  if (!Number.isFinite(minimumScale) || minimumScale < 0 || minimumScale > 1) {
+    throw new RangeError('minimumScale must be finite and between 0 and 1.');
+  }
   if (
     viewportSize.width <= 0 ||
     viewportSize.height <= 0 ||
@@ -73,8 +77,8 @@ export function computePreviewViewportFitScale(
 
   return Math.min(
     1,
-    Math.max(0.05, availableWidth / contentSize.width),
-    Math.max(0.05, availableHeight / contentSize.height),
+    Math.max(minimumScale, availableWidth / contentSize.width),
+    Math.max(minimumScale, availableHeight / contentSize.height),
   );
 }
 

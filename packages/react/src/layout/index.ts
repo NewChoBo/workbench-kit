@@ -170,3 +170,6 @@ export type {
   UsePreviewViewportOptions,
   UsePreviewViewportResult,
 } from './usePreviewViewport';
+
+export { WorkbenchFitPreview } from './WorkbenchFitPreview';
+export type { WorkbenchFitPreviewProps } from './WorkbenchFitPreview';

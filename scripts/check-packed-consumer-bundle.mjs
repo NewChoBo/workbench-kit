@@ -1151,9 +1151,11 @@ import type { WorkbenchHostShellProps } from '@workbench-kit/shell-react/host-sh
 import { CatalogBrowsePane, type CatalogBrowsePaneProps } from '@workbench-kit/react/primitives';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle } from '@workbench-kit/react';
+import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle, WorkbenchFitPreview as RootWorkbenchFitPreview, type WorkbenchFitPreviewProps as RootFitPreviewProps } from '@workbench-kit/react';
 import {
   WorkbenchCanvasFrameHandle,
+  WorkbenchFitPreview,
+  type WorkbenchFitPreviewProps,
   WorkbenchInteractionSurface,
   type WorkbenchInteractionEffect,
 } from '@workbench-kit/react/layout';
@@ -1161,6 +1163,26 @@ import {
 if (RootWorkbenchCanvasFrameHandle !== WorkbenchCanvasFrameHandle) {
   throw new TypeError('Packed CanvasFrameHandle root and layout exports do not share identity.');
 }
+
+if (RootWorkbenchFitPreview !== WorkbenchFitPreview) {
+  throw new TypeError('Packed Fit Preview root and layout exports do not share identity.');
+}
+const fitProps: WorkbenchFitPreviewProps = {
+  contentWidth: 608, contentHeight: 368, label: 'Packed fit overview',
+  children: createElement('button', null, 'Inert content'),
+} satisfies RootFitPreviewProps;
+const fitContainer = document.createElement('div');
+document.body.append(fitContainer);
+const fitRoot = createRoot(fitContainer);
+flushSync(() => fitRoot.render(createElement(WorkbenchFitPreview, fitProps)));
+const fitSummary = fitContainer.querySelector('[data-fit-state]');
+if (fitSummary?.getAttribute('role') !== 'img' ||
+    fitSummary.getAttribute('aria-label') !== 'Packed fit overview' ||
+    !fitSummary.querySelector('[inert][aria-hidden="true"]')) {
+  throw new TypeError('Packed Fit Preview must expose one passive summary and an inert stage.');
+}
+fitRoot.unmount();
+fitContainer.remove();
 
 const effect: WorkbenchInteractionEffect = 'lift';
 const container = document.createElement('div');
