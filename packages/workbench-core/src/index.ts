@@ -238,9 +238,11 @@ export {
   type WorkbenchExtensionResolution,
 } from './extension/resolution.js';
 export {
+  createWorkbenchLayoutActions,
   createWorkbenchLayoutState,
   DEFAULT_WORKBENCH_LAYOUT_STATE,
   LayoutService,
+  type WorkbenchLayoutActions,
   type WorkbenchLayoutChangeEvent,
   type WorkbenchLayoutState,
   type WorkbenchLayoutStateInput,
