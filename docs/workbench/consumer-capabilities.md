@@ -62,6 +62,21 @@ provide their co-located leaf styles. Workbench shell routes should retain `core
 the focused entries deliberately omit unrelated feature hubs. See the React package
 README for the exact ownership matrix.
 
+### Host-shell utility actions
+
+`WorkbenchHostShell` accepts optional `secondaryActivityItems` and
+`onSecondaryActivityActivate`. Items use the existing public `ActivityBarItem`
+contract (stable ID, icon, accessible label, optional title, active and disabled).
+Use IDs distinct from contributed primary activities. Omission preserves the
+existing shell with no utility actions.
+
+Kit's ActivityBar renders utilities after its flexible spacer: at the bottom of a
+vertical bar and the end of a horizontal bar. Utility activation invokes only the
+host callback; it does not select a sidebar, reorder primary activities, or write
+layout preferences. Utilities are not draggable or included in primary activity
+order/hidden-item persistence. The host owns the action or dialog opened by the
+callback; this option does not create a second Settings owner.
+
 ---
 
 ## Shell and editor chrome

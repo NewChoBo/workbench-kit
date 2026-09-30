@@ -4266,6 +4266,7 @@ void rootCompatibleManagementSettings;
 
 const commandId = 'packed.focused.command';
 let dispatchCount = 0;
+let utilityActivationCount = 0;
 let setOverride: ((commandId: string, key: string) => void) | undefined;
 let resetOverride: ((commandId: string) => void) | undefined;
 
@@ -4325,6 +4326,10 @@ function createPackedApp(settingsKey: string) {
         createElement(WorkbenchHostShell, {
           editorArea: createElement('main', null, 'Packed editor'),
           key: 'shell',
+          secondaryActivityItems: [{ id: 'packed.utility.settings', icon: 'S', label: 'Packed settings' }],
+          onSecondaryActivityActivate: (item) => {
+            if (item.id === 'packed.utility.settings') utilityActivationCount += 1;
+          },
           overlays: createElement(PackedManagementSettings, { key: settingsKey }),
         }),
         createElement(WorkbenchCommandHost, {
@@ -4349,6 +4354,10 @@ await new Promise((resolve) => setTimeout(resolve, 0));
 if (!container.textContent?.includes('Keyboard Shortcuts')) {
   throw new TypeError('Packed focused management leaf did not render under the live Provider.');
 }
+const utilityButton = container.querySelector<HTMLButtonElement>('button[aria-label="Packed settings"]');
+if (!utilityButton) throw new TypeError('Packed host-shell utility action did not render.');
+utilityButton.click();
+if (utilityActivationCount !== 1) throw new TypeError('Packed host-shell utility activation was not routed.');
 if (!container.textContent.includes('Packed editor')) {
   throw new TypeError('Packed focused host shell did not share the live Provider.');
 }

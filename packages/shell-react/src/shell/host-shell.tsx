@@ -4,6 +4,7 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
   type WorkbenchShellProps as ReactWorkbenchShellProps,
+  type ActivityBarItem,
 } from '@workbench-kit/react/workbench/shell';
 import {
   filterActivityBarItems,
@@ -32,6 +33,10 @@ export interface WorkbenchHostShellProps {
   overlays?: ReactNode;
   primarySidebar?: ReactNode;
   rootClassName?: string | undefined;
+  /** Utility actions at the bottom of a vertical bar, or end of a horizontal bar. */
+  secondaryActivityItems?: ActivityBarItem[] | undefined;
+  /** Utility activation does not change sidebar selection or persisted primary activity order. */
+  onSecondaryActivityActivate?: ((item: ActivityBarItem) => void) | undefined;
   shellPreset?: string | undefined;
   statusBarAriaLabel?: string | undefined;
   statusSections?: StatusBarSectionModel[] | undefined;
@@ -52,6 +57,8 @@ export function WorkbenchHostShell({
   overlays,
   primarySidebar,
   rootClassName,
+  secondaryActivityItems = [],
+  onSecondaryActivityActivate,
   shellPreset,
   statusBarAriaLabel = 'Status bar',
   statusSections = [],
@@ -112,9 +119,16 @@ export function WorkbenchHostShell({
       activityBar={{
         'aria-label': activityBarAriaLabel,
         items: activityItems,
+        secondaryItems: secondaryActivityItems,
         reorderable: true,
         visible: layout.activityBar.visible,
-        onItemActivate: (item) => layoutService.focusSideBarViewContainer(item.id),
+        onItemActivate: (item) => {
+          if (secondaryActivityItems.includes(item)) {
+            onSecondaryActivityActivate?.(item);
+            return;
+          }
+          layoutService.focusSideBarViewContainer(item.id);
+        },
         onItemsReorder: (itemIds) => {
           const preserved =
             layout.activityBar.itemOrder?.filter((itemId) => !itemIds.includes(itemId)) ?? [];

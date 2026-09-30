@@ -1051,6 +1051,81 @@ describe('WorkbenchProvider', () => {
     expect(markup).not.toContain('aria-label="Settings"');
   });
 
+  it.each(['left', 'top'] as const)(
+    'routes lean-shell utility actions without changing saved primary layout at %s',
+    async (activityBarPosition) => {
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      const onSecondaryActivityActivate = vi.fn();
+      let layoutService: LayoutService | undefined;
+      function CaptureLayout() {
+        const workbench = useWorkbench();
+        useEffect(() => {
+          layoutService = workbench.layoutService;
+        }, [workbench.layoutService]);
+        return null;
+      }
+      await act(async () => {
+        root.render(
+          <WorkbenchProvider
+            availableExtensions={BUILTIN_WORKBENCH_EXTENSIONS}
+            extensionsConfig={{ enabled: ['workbench-kit.builtin.explorer'], recommendations: [] }}
+            initialLayout={{
+              activityBar: { itemOrder: ['explorer'], hiddenItemIds: ['search'], visible: true },
+              sideBar: { activeViewContainer: 'explorer', sizePercent: 31, visible: true },
+            }}
+          >
+            <CaptureLayout />
+            <WorkbenchHostShell
+              activityBarPosition={activityBarPosition}
+              editorArea={<main>Editor</main>}
+              secondaryActivityItems={[
+                { id: 'utility.settings', icon: 'S', label: 'Settings', title: 'Open settings' },
+                { id: 'utility.disabled', icon: 'D', label: 'Disabled utility', disabled: true },
+              ]}
+              onSecondaryActivityActivate={onSecondaryActivityActivate}
+            />
+          </WorkbenchProvider>,
+        );
+      });
+      try {
+        expect(layoutService).toBeDefined();
+        const before = structuredClone(layoutService!.getState());
+        const settings = container.querySelector<HTMLButtonElement>(
+          'button[aria-label="Settings"]',
+        )!;
+        const disabled = container.querySelector<HTMLButtonElement>(
+          'button[aria-label="Disabled utility"]',
+        )!;
+        expect(settings.title).toBe('Open settings');
+        expect(settings.draggable).toBe(false);
+        expect(
+          settings.closest('nav')?.classList.contains('ui-workbench-activity-bar--horizontal'),
+        ).toBe(activityBarPosition === 'top');
+        expect(
+          settings.parentElement?.previousElementSibling?.classList.contains(
+            'ui-workbench-activity-bar__spacer',
+          ),
+        ).toBe(true);
+        settings.focus();
+        expect(document.activeElement).toBe(settings);
+        await act(async () => {
+          settings.click();
+          disabled.click();
+        });
+        expect(onSecondaryActivityActivate).toHaveBeenCalledTimes(1);
+        expect(onSecondaryActivityActivate).toHaveBeenCalledWith(
+          expect.objectContaining({ id: 'utility.settings' }),
+        );
+        expect(layoutService!.getState()).toEqual(before);
+      } finally {
+        await act(async () => root.unmount());
+        container.remove();
+      }
+    },
+  );
+
   it('composes host overlays inside the workbench overlay container', async () => {
     const container = document.createElement('div');
     document.body.append(container);
