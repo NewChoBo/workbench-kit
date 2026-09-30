@@ -13,6 +13,8 @@ import { WorkbenchModalPortal } from '../chrome/WorkbenchModalPortal';
 
 describe('SplitView', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     document.body.innerHTML = '';
     document.documentElement.classList.remove(
       'ui-workbench-split-view-resizing',
@@ -230,6 +232,182 @@ describe('SplitView', () => {
     expect(document.body.querySelector('.ui-workbench-pane-overlays')).toBeNull();
     geometry.mockRestore();
   });
+
+  it.each([
+    { minPrimarySizePercent: 32, maxPrimarySizePercent: 32 },
+    { primarySizeUnit: 'pixels' as const, minPrimarySizePx: 32, maxPrimarySizePx: 32 },
+    { layoutMode: 'secondary-fixed' as const, minSecondarySizePx: 32, maxSecondarySizePx: 32 },
+  ])('keeps a fixed track gutter without an interactive separator (%j)', async (bounds) => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const committed = vi.fn();
+    const previewed = vi.fn();
+    await act(async () =>
+      root.render(
+        <SplitView
+          {...bounds}
+          primary={<aside>Primary</aside>}
+          secondary={<main>Secondary</main>}
+          onPrimarySizePercentChange={committed}
+          onPrimarySizePxChange={committed}
+          onSecondarySizePxChange={committed}
+          onPrimarySizePercentPreviewChange={previewed}
+          onPrimarySizePxPreviewChange={previewed}
+          onSecondarySizePxPreviewChange={previewed}
+        />,
+      ),
+    );
+    const split = container.querySelector<HTMLElement>('.ui-workbench-split-view')!;
+    const separator = split.querySelector<HTMLElement>('.ui-workbench-split-view__separator')!;
+    expect(separator.hidden).toBe(false);
+    expect(separator.hasAttribute('inert')).toBe(true);
+    expect(separator.getAttribute('aria-hidden')).toBe('true');
+    expect(separator.hasAttribute('role')).toBe(false);
+    expect(separator.hasAttribute('aria-valuenow')).toBe(false);
+    expect(separator.hasAttribute('aria-valuemin')).toBe(false);
+    expect(separator.hasAttribute('aria-valuemax')).toBe(false);
+    expect(separator.tabIndex).toBe(-1);
+    expect(split.querySelector('[hidden]')).toBeNull();
+    expect(split.classList.contains('ui-workbench-split-view--primary-collapsed')).toBe(false);
+    expect(split.classList.contains('ui-workbench-split-view--secondary-collapsed')).toBe(false);
+    const key = new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true });
+    await act(async () => {
+      separator.dispatchEvent(key);
+      separator.dispatchEvent(createPointerLikeEvent('pointerdown', 250, 0));
+      separator.dispatchEvent(createPointerLikeEvent('pointermove', 300, 0));
+      separator.dispatchEvent(createPointerLikeEvent('pointerup', 300, 0));
+    });
+    expect(key.defaultPrevented).toBe(false);
+    expect(split.classList.contains('is-dragging')).toBe(false);
+    expect(committed).not.toHaveBeenCalled();
+    expect(previewed).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
+  it.each(['primary-fixed', 'secondary-fixed'] as const)(
+    'suspends a drag when the effective %s range becomes zero in a tiny container',
+    async (layoutMode) => {
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      const committed = vi.fn();
+      const previewed = vi.fn();
+      let height = 600;
+      let resize = () => {};
+      const geometry = vi
+        .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+        .mockImplementation(() => ({
+          x: 0,
+          y: 0,
+          top: 0,
+          left: 0,
+          width: 800,
+          height,
+          right: 800,
+          bottom: height,
+          toJSON: () => ({}),
+        }));
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(callback: () => void) {
+            resize = callback;
+          }
+          observe() {}
+          disconnect() {}
+        },
+      );
+      const request = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(17);
+      const cancel = vi.spyOn(window, 'cancelAnimationFrame');
+      await act(async () =>
+        root.render(
+          <SplitView
+            layoutMode={layoutMode}
+            orientation="vertical"
+            primarySizeUnit="pixels"
+            primarySizePx={240}
+            secondarySizePx={200}
+            minPrimarySizePx={200}
+            minSecondarySizePx={140}
+            maxPrimarySizePx={400}
+            maxSecondarySizePx={360}
+            primary={<aside>Primary</aside>}
+            secondary={<main>Secondary</main>}
+            onPrimarySizePxChange={committed}
+            onSecondarySizePxChange={committed}
+            onPrimarySizePxPreviewChange={previewed}
+            onSecondarySizePxPreviewChange={previewed}
+          />,
+        ),
+      );
+      const split = container.querySelector<HTMLElement>('.ui-workbench-split-view')!;
+      const separator = split.querySelector<HTMLElement>('.ui-workbench-split-view__separator')!;
+      const release = vi.fn();
+      Object.defineProperties(separator, {
+        setPointerCapture: { value: vi.fn(), configurable: true },
+        hasPointerCapture: { value: () => true, configurable: true },
+        releasePointerCapture: { value: release, configurable: true },
+      });
+      separator.focus();
+      await act(async () => {
+        separator.dispatchEvent(createPointerLikeEvent('pointerdown', 0, 240));
+        separator.dispatchEvent(createPointerLikeEvent('pointermove', 0, 260));
+      });
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(split.classList.contains('is-dragging')).toBe(true);
+      await act(async () => {
+        height = 300;
+        resize();
+      });
+      expect(cancel).toHaveBeenCalledWith(17);
+      expect(release).toHaveBeenCalledWith(1);
+      expect(document.activeElement).not.toBe(separator);
+      expect(separator.hidden).toBe(false);
+      expect(separator.hasAttribute('inert')).toBe(true);
+      expect(separator.getAttribute('role')).toBeNull();
+      expect(split.classList.contains('is-dragging')).toBe(false);
+      expect(document.documentElement.classList.contains('ui-workbench-split-view-resizing')).toBe(
+        false,
+      );
+      expect(
+        split.style.getPropertyValue(
+          layoutMode === 'secondary-fixed'
+            ? '--ui-workbench-split-secondary-size'
+            : '--ui-workbench-split-primary-size',
+        ),
+      ).toBe(layoutMode === 'secondary-fixed' ? '140px' : '200px');
+      await act(async () => {
+        separator.dispatchEvent(createPointerLikeEvent('pointerup', 0, 280));
+        separator.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      });
+      expect(committed).not.toHaveBeenCalled();
+      expect(previewed).not.toHaveBeenCalled();
+      await act(async () => {
+        height = 600;
+        resize();
+      });
+      expect(separator.getAttribute('role')).toBe('separator');
+      expect(separator.tabIndex).toBe(0);
+      expect(separator.hasAttribute('inert')).toBe(false);
+      expect(
+        split.style.getPropertyValue(
+          layoutMode === 'secondary-fixed'
+            ? '--ui-workbench-split-secondary-size'
+            : '--ui-workbench-split-primary-size',
+        ),
+      ).toBe(layoutMode === 'secondary-fixed' ? '200px' : '240px');
+      await act(async () => {
+        separator.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      });
+      expect(committed).toHaveBeenCalledWith(layoutMode === 'secondary-fixed' ? 184 : 256);
+      await act(async () => root.unmount());
+      request.mockRestore();
+      cancel.mockRestore();
+      geometry.mockRestore();
+      vi.unstubAllGlobals();
+    },
+  );
 
   it('previews pointer resizing without committing parent state until release', async () => {
     const onPrimarySizePercentChange = vi.fn();

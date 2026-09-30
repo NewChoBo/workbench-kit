@@ -202,3 +202,9 @@ html.ui-workbench-split-view-resizing--vertical * {
 .ui-workbench-pane-overlays[hidden] {
   display: none;
 }
+
+/* A fixed effective range keeps its gutter without presenting a resize control. */
+.ui-workbench-split-view .ui-workbench-split-view__separator[data-resize-disabled] {
+  cursor: default;
+  pointer-events: none;
+}

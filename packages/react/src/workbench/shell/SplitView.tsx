@@ -115,8 +115,7 @@ export function SplitView({
   secondarySizePx: controlledSecondarySizePx,
 }: SplitViewProps) {
   const presentationActive = useWorkbenchPresentationScope()?.active !== false;
-  const separatorInactive =
-    !presentationActive || primaryHidden === true || secondaryHidden === true;
+  const separatorHidden = !presentationActive || primaryHidden === true || secondaryHidden === true;
   const isSecondaryFixed = layoutMode === 'secondary-fixed';
   const isPixels = isSecondaryFixed || primarySizeUnit === 'pixels';
   const [uncontrolledPrimarySizePercent, setUncontrolledPrimarySizePercent] =
@@ -131,6 +130,7 @@ export function SplitView({
    */
   const [dragSize, setDragSize] = useState<number | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const separatorRef = useRef<HTMLDivElement>(null);
   const dragStateRef = useRef<{
     nextSize: number;
     pointerId: number;
@@ -186,7 +186,18 @@ export function SplitView({
     : isPixels
       ? clampPrimaryPixels(controlledPrimarySizePx ?? uncontrolledPrimarySizePx, containerSizePx)
       : clampPercent(controlledPrimarySizePercent ?? uncontrolledPrimarySizePercent);
-  const displayedSize = dragSize ?? committedSize;
+  const allowedMin = isSecondaryFixed
+    ? minSecondarySizePx
+    : isPixels
+      ? minPrimarySizePx
+      : minPrimarySizePercent;
+  const allowedMax = isSecondaryFixed
+    ? clampSecondaryPixels(maxSecondarySizePx, containerSizePx)
+    : isPixels
+      ? clampPrimaryPixels(maxPrimarySizePx, containerSizePx)
+      : clampPercent(maxPrimarySizePercent);
+  const separatorInactive = separatorHidden || allowedMax <= allowedMin;
+  const displayedSize = separatorInactive ? committedSize : (dragSize ?? committedSize);
 
   useEffect(() => {
     if (!isPixels || !containerRef.current || typeof ResizeObserver === 'undefined') {
@@ -337,16 +348,20 @@ export function SplitView({
 
   useLayoutEffect(() => {
     if (!separatorInactive) return;
+    if (document.activeElement === separatorRef.current) {
+      separatorRef.current?.blur();
+    }
     const dragState = dragStateRef.current;
-    if (!dragState) return;
     if (previewFrameRef.current) {
       cancelFrame(previewFrameRef.current);
       previewFrameRef.current = 0;
     }
     dragStateRef.current = null;
-    releasePointerCapture(dragState.separator, dragState.pointerId);
-    dragState.separator.classList.remove('is-dragging');
-    setResizeClass(false);
+    if (dragState) {
+      releasePointerCapture(dragState.separator, dragState.pointerId);
+      dragState.separator.classList.remove('is-dragging');
+      setResizeClass(false);
+    }
     setDragSize(null);
   }, [separatorInactive]);
 
@@ -458,17 +473,6 @@ export function SplitView({
     }
   };
 
-  const ariaMin = isSecondaryFixed
-    ? minSecondarySizePx
-    : isPixels
-      ? minPrimarySizePx
-      : minPrimarySizePercent;
-  const ariaMax = isSecondaryFixed
-    ? maxSecondarySizePx
-    : isPixels
-      ? maxPrimarySizePx
-      : maxPrimarySizePercent;
-
   const style = {
     ...(isSecondaryFixed
       ? {
@@ -512,13 +516,18 @@ export function SplitView({
         </WorkbenchRetainedPane>
       </div>
       <div
-        aria-orientation={orientation === 'vertical' ? 'horizontal' : 'vertical'}
-        aria-valuemax={ariaMax}
-        aria-valuemin={ariaMin}
-        aria-valuenow={Math.round(displayedSize)}
+        ref={separatorRef}
+        aria-hidden={separatorInactive || undefined}
+        aria-orientation={
+          separatorInactive ? undefined : orientation === 'vertical' ? 'horizontal' : 'vertical'
+        }
+        aria-valuemax={separatorInactive ? undefined : allowedMax}
+        aria-valuemin={separatorInactive ? undefined : allowedMin}
+        aria-valuenow={separatorInactive ? undefined : Math.round(displayedSize)}
         className="ui-workbench-split-view__separator"
-        role="separator"
-        hidden={separatorInactive || undefined}
+        data-resize-disabled={separatorInactive || undefined}
+        role={separatorInactive ? undefined : 'separator'}
+        hidden={separatorHidden || undefined}
         inert={separatorInactive || undefined}
         tabIndex={separatorInactive ? -1 : 0}
         onKeyDown={onSeparatorKeyDown}
