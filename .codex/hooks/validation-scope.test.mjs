@@ -5,7 +5,7 @@ import { copyFileSync, mkdtempSync, mkdirSync, readFileSync, rmSync, writeFileSy
 import os from 'node:os';
 import path from 'node:path';
 import { fileURLToPath, URL } from 'node:url';
-import test from 'node:test';
+import { test } from 'vitest';
 
 const hookPath = fileURLToPath(new URL('./validation-scope.mjs', import.meta.url));
 
@@ -19,7 +19,7 @@ function git(cwd, ...args) {
 
 function fixture(t) {
   const root = mkdtempSync(path.join(os.tmpdir(), 'validation-scope-'));
-  t.after(() => rmSync(root, { recursive: true, force: true }));
+  t.onTestFinished(() => rmSync(root, { recursive: true, force: true }));
   git(root, 'init', '-b', 'develop');
   git(root, 'config', 'user.name', 'Fixture');
   git(root, 'config', 'user.email', 'fixture@example.invalid');
