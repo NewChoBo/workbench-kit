@@ -63,6 +63,7 @@ export default meta;
 type Story = StoryObj<typeof meta>;
 
 export const Catalog: Story = {
+  tags: ['storybook-play-baseline'],
   play: async ({ canvasElement }) => {
     const summary = within(canvasElement).getByRole('img');
     await waitFor(() => expect(summary).toHaveAttribute('data-fit-state', 'ready'));
