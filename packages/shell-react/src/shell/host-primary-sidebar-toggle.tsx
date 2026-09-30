@@ -12,9 +12,9 @@ export type WorkbenchHostPrimarySidebarToggleProps = Pick<
   'primarySidebarHideLabel' | 'primarySidebarShowLabel'
 >;
 
-/** Provider-bound title-bar control; requires the canonical shell command handler. */
+/** Provider-bound title-bar control; reflects canonical command handler and context enablement. */
 export function WorkbenchHostPrimarySidebarToggle(props: WorkbenchHostPrimarySidebarToggleProps) {
-  const { commands, executeCommand, layoutService } = useWorkbench();
+  const { commands, contextKeyService, executeCommand, layoutService } = useWorkbench();
   const subscribeLayout = useCallback(
     (onStoreChange: () => void) => {
       const subscription = layoutService.onDidChangeLayout(onStoreChange);
@@ -33,15 +33,19 @@ export function WorkbenchHostPrimarySidebarToggle(props: WorkbenchHostPrimarySid
   );
   const subscribeCommands = useCallback(
     (onStoreChange: () => void) => {
-      const subscription = commands.onDidChangeCommands(onStoreChange);
-      return () => subscription.dispose();
+      const commandsSubscription = commands.onDidChangeCommands(onStoreChange);
+      const contextSubscription = contextKeyService.onDidChangeContext(onStoreChange);
+      return () => {
+        commandsSubscription.dispose();
+        contextSubscription.dispose();
+      };
     },
-    [commands],
+    [commands, contextKeyService],
   );
-  const getCommandAvailable = useCallback(
-    () => Boolean(commands.getCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID)?.handler),
-    [commands],
-  );
+  const getCommandAvailable = useCallback(() => {
+    const command = commands.getCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID);
+    return Boolean(command?.handler && contextKeyService.evaluateWhen(command.enablement));
+  }, [commands, contextKeyService]);
   const commandAvailable = useSyncExternalStore(
     subscribeCommands,
     getCommandAvailable,

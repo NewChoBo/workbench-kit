@@ -3,6 +3,7 @@
 import { act, useLayoutEffect } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { CommandService } from '@workbench-kit/platform';
 import { WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID } from '@workbench-kit/react/workbench/commands';
 
 import { BUILTIN_WORKBENCH_EXTENSIONS } from '../extensions/builtin-extensions.js';
@@ -246,6 +247,69 @@ describe('WorkbenchHostPrimarySidebarToggle', () => {
     expect(harness.toggle.disabled).toBe(true);
     await act(async () => registration?.dispose());
     expect(harness.toggle.disabled).toBe(true);
+  });
+
+  it('tracks canonical enablement when only context keys change', async () => {
+    const harness = await createHarness();
+    const { commands, contextKeyService, layoutService } = harness.workbench;
+    const command = commands.getCommand(WORKBENCH_TOGGLE_PRIMARY_SIDEBAR_COMMAND_ID)!;
+    const canonical = new CommandService({ registry: commands, contextKeys: contextKeyService });
+    const dispatch = vi.spyOn(command, 'handler');
+    await act(async () => {
+      command.enablement = 'review.sidebarAllowed';
+      commands.notifyCommandChanged(command.id);
+      contextKeyService.set('review.sidebarAllowed', false);
+    });
+    const button = harness.toggle;
+    const before = structuredClone(layoutService.getState());
+    expect(canonical.canExecute(command.id)).toBe(false);
+    expect(button.disabled).toBe(true);
+    await act(async () => button.click());
+    expect(dispatch).not.toHaveBeenCalled();
+    expect(layoutService.getState()).toEqual(before);
+
+    const registryChanges = vi.fn();
+    const subscription = commands.onDidChangeCommands(registryChanges);
+    await act(async () => contextKeyService.set('review.sidebarAllowed', true));
+    expect(registryChanges).not.toHaveBeenCalled();
+    expect(canonical.canExecute(command.id)).toBe(true);
+    expect(harness.toggle).toBe(button);
+    expect(button.disabled).toBe(false);
+    await act(async () => button.click());
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    const after = structuredClone(layoutService.getState());
+    expect(after.sideBar.visible).toBe(false);
+
+    await act(async () => contextKeyService.delete('review.sidebarAllowed'));
+    expect(registryChanges).not.toHaveBeenCalled();
+    expect(canonical.canExecute(command.id)).toBe(false);
+    expect(button.disabled).toBe(true);
+    await act(async () => button.click());
+    expect(dispatch).toHaveBeenCalledTimes(1);
+    expect(layoutService.getState()).toEqual(after);
+    subscription.dispose();
+  });
+
+  it('disposes the context enablement subscription when the toggle unmounts', async () => {
+    const harness = await createHarness({ commandHost: false, toggle: false });
+    const { contextKeyService } = harness.workbench;
+    const subscribe = contextKeyService.onDidChangeContext;
+    const dispose = vi.fn();
+    vi.spyOn(contextKeyService, 'onDidChangeContext').mockImplementation((listener) => {
+      const subscription = subscribe(listener);
+      return {
+        dispose: () => {
+          dispose();
+          subscription.dispose();
+        },
+      };
+    });
+    await harness.render({ commandHost: false, toggle: true });
+    expect(contextKeyService.onDidChangeContext).toHaveBeenCalledTimes(1);
+    await harness.render({ commandHost: false, toggle: false });
+    expect(dispose).toHaveBeenCalledTimes(1);
+    await act(async () => contextKeyService.set('review.sidebarAllowed', true));
+    expect(harness.container.querySelector('button')).toBeNull();
   });
 
   it('reports rejection without leaking raw errors or falling back to a layout setter', async () => {
