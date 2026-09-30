@@ -77,6 +77,31 @@ layout preferences. Utilities are not draggable or included in primary activity
 order/hidden-item persistence. The host owns the action or dialog opened by the
 callback; this option does not create a second Settings owner.
 
+### Host-shell primary sidebar toggle
+
+`WorkbenchHostPrimarySidebarToggle` is exported from
+`@workbench-kit/shell-react/host-shell`. Place it in host-owned title-bar content
+under the same `WorkbenchProvider` as `WorkbenchHostShell` and
+`WorkbenchCommandHost`. It reuses `WorkbenchShellTitleBarLayoutControls`, including
+its native icon button, focus behavior, tooltip, and visibility-driven
+`aria-pressed` state. The optional `primarySidebarShowLabel` and
+`primarySidebarHideLabel` override the existing accessible labels and tooltips.
+
+Visibility is read directly from `LayoutService`, so command and activity changes
+stay synchronized. Activation dispatches `workbench.togglePrimarySidebar`; it
+does not hold a separate visibility state, set layout directly, or change the
+saved sidebar width, activity order, or selected activity.
+
+The toggle is disabled when the canonical command has no registered handler,
+including when `WorkbenchCommandHost` is absent. It responds to registration,
+handler changes, and disposal without remounting. Hosts may instead register an
+equivalent handler for that same command. A rejected command leaves the current
+service state authoritative and emits the bounded diagnostic
+`Workbench layout command failed: workbench.togglePrimarySidebar` through
+`console.error`, matching the assembled shell; no raw error details are exposed
+and there is no direct-layout fallback. The presentational layout control's
+optional `primarySidebarDisabled` defaults to `false` for existing consumers.
+
 ---
 
 ## Shell and editor chrome

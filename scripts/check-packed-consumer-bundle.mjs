@@ -919,7 +919,7 @@ import {
   type FieldRemapPreviewState,
   type FieldRemapSelection,
 } from '@workbench-kit/shell-react/field-remap';
-import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
+import { WorkbenchHostPrimarySidebarToggle, WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
 import {
   WorkbenchProvider,
@@ -965,6 +965,7 @@ if (
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 const packedFocusedShellEntries = Object.freeze({
   WorkbenchCommandHost,
+  WorkbenchHostPrimarySidebarToggle,
   WorkbenchHostShell,
   WorkbenchKeybindingManagementSettingsView,
   WorkbenchProvider,
@@ -4250,7 +4251,7 @@ import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { WorkbenchKeybindingManagementSettings as RootWorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react';
 import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
-import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
+import { WorkbenchHostPrimarySidebarToggle, WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
 import {
   WorkbenchProvider,
@@ -4326,6 +4327,11 @@ function createPackedApp(settingsKey: string) {
         createElement(WorkbenchHostShell, {
           editorArea: createElement('main', null, 'Packed editor'),
           key: 'shell',
+          primarySidebar: createElement('aside', null, 'Packed sidebar'),
+          titleBar: createElement(WorkbenchHostPrimarySidebarToggle, {
+            primarySidebarHideLabel: 'Hide packed sidebar',
+            primarySidebarShowLabel: 'Show packed sidebar',
+          }),
           secondaryActivityItems: [{ id: 'packed.utility.settings', icon: 'S', label: 'Packed settings' }],
           onSecondaryActivityActivate: (item) => {
             if (item.id === 'packed.utility.settings') utilityActivationCount += 1;
@@ -4358,6 +4364,26 @@ const utilityButton = container.querySelector<HTMLButtonElement>('button[aria-la
 if (!utilityButton) throw new TypeError('Packed host-shell utility action did not render.');
 utilityButton.click();
 if (utilityActivationCount !== 1) throw new TypeError('Packed host-shell utility activation was not routed.');
+const sidebarToggle = container.querySelector<HTMLButtonElement>('.workbench-shell-titlebar__layout-control');
+if (!sidebarToggle || sidebarToggle.disabled) {
+  throw new TypeError('Packed host sidebar toggle did not share the live command registry.');
+}
+const sidebarWasVisible = sidebarToggle.getAttribute('aria-pressed') === 'true';
+sidebarToggle.click();
+await new Promise((resolve) => setTimeout(resolve, 0));
+await new Promise((resolve) => setTimeout(resolve, 0));
+if (sidebarToggle.getAttribute('aria-pressed') !== String(!sidebarWasVisible)) {
+  throw new TypeError('Packed host sidebar toggle did not dispatch the canonical layout command.');
+}
+if (sidebarToggle.getAttribute('aria-label') !== (sidebarWasVisible ? 'Show packed sidebar' : 'Hide packed sidebar')) {
+  throw new TypeError('Packed host sidebar toggle did not update its accessible label.');
+}
+sidebarToggle.click();
+await new Promise((resolve) => setTimeout(resolve, 0));
+await new Promise((resolve) => setTimeout(resolve, 0));
+if (sidebarToggle.getAttribute('aria-pressed') !== String(sidebarWasVisible)) {
+  throw new TypeError('Packed host sidebar toggle did not restore sidebar visibility.');
+}
 if (!container.textContent.includes('Packed editor')) {
   throw new TypeError('Packed focused host shell did not share the live Provider.');
 }

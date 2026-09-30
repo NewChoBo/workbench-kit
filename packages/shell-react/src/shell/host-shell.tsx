@@ -22,6 +22,11 @@ import {
   workbenchHostPrimarySidebarSizePxFromPercent,
 } from './layout-metrics.js';
 
+export {
+  WorkbenchHostPrimarySidebarToggle,
+  type WorkbenchHostPrimarySidebarToggleProps,
+} from './host-primary-sidebar-toggle.js';
+
 export interface WorkbenchHostShellProps {
   activityBarAriaLabel?: string | undefined;
   activityBarPosition?: ReactWorkbenchShellProps['activityBarPosition'];

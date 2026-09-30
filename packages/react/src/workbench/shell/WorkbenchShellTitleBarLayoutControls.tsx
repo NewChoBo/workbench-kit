@@ -13,6 +13,7 @@ export interface WorkbenchShellTitleBarLayoutControlsProps {
   readonly onTogglePrimarySidebar: () => void;
   readonly panelHideLabel?: string;
   readonly panelShowLabel?: string;
+  readonly primarySidebarDisabled?: boolean;
   readonly primarySidebarHideLabel?: string;
   readonly primarySidebarShowLabel?: string;
   readonly secondarySidebarHideLabel?: string;
@@ -28,6 +29,7 @@ export function WorkbenchShellTitleBarLayoutControls({
   onTogglePrimarySidebar,
   panelHideLabel = 'Hide Panel',
   panelShowLabel = 'Show Panel',
+  primarySidebarDisabled = false,
   primarySidebarHideLabel = 'Hide Primary Side Bar',
   primarySidebarShowLabel = 'Show Primary Side Bar',
   secondarySidebarHideLabel = 'Hide Secondary Side Bar',
@@ -42,6 +44,7 @@ export function WorkbenchShellTitleBarLayoutControls({
           isPrimarySidebarVisible && 'workbench-shell-titlebar__layout-control--active',
         )}
         compact
+        disabled={primarySidebarDisabled}
         icon="codicon-layout-sidebar-left"
         label={isPrimarySidebarVisible ? primarySidebarHideLabel : primarySidebarShowLabel}
         onClick={onTogglePrimarySidebar}
