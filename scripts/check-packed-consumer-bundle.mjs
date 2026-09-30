@@ -1148,6 +1148,7 @@ async function verifyPackedGraphAuthoring(): Promise<{
 import { LayoutService, resolveWorkbenchFrameVisibility, type WorkbenchFrameVisibility, type WorkbenchFramePresentation } from '@workbench-kit/workbench-core';
 import { WorkbenchShell, type WorkbenchShellProps } from '@workbench-kit/react/workbench/shell';
 import type { WorkbenchHostShellProps } from '@workbench-kit/shell-react/host-shell';
+import { CatalogBrowsePane, type CatalogBrowsePaneProps } from '@workbench-kit/react/primitives';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle } from '@workbench-kit/react';
@@ -1227,6 +1228,35 @@ flushSync(() => root.render(createElement(WorkbenchShell, { ...frameProps, prese
 if (container.querySelector('[data-workbench-presentation="docked"] button') !== editor ||
     !canvas.hasAttribute('hidden') || docked.hasAttribute('hidden')) {
   throw new TypeError('Packed frame did not retain content identity across presentation changes.');
+}
+const catalogProps = {
+  clearSearchLabel: 'Clear search',
+  compactToolbar: true,
+  emptyMessage: 'No items',
+  hasMore: false,
+  isLoading: false,
+  isLoadingMore: false,
+  items: [{ id: 'packed-catalog-item', label: 'Packed item' }],
+  loadingMessage: 'Loading',
+  onLoadMore: () => undefined,
+  onOpenItem: () => undefined,
+  onSearchQueryChange: () => undefined,
+  onViewModeChange: () => undefined,
+  searchAriaLabel: 'Search packed catalog',
+  searchPlaceholder: 'Search',
+  searchQuery: '',
+  viewMode: 'grid',
+} satisfies CatalogBrowsePaneProps;
+flushSync(() => root.render(createElement(CatalogBrowsePane, catalogProps)));
+if (!container.querySelector('[data-ui-catalog-browse-compact-toolbar="true"]') ||
+    !container.querySelector('[data-ui-catalog-browse-actions="true"]') ||
+    !container.querySelector('input[aria-label="Search packed catalog"]')) {
+  throw new TypeError('Packed compact catalog must expose its public option and usable controls.');
+}
+flushSync(() => root.render(createElement(CatalogBrowsePane, { ...catalogProps, compactToolbar: false })));
+if (container.querySelector('[data-ui-catalog-browse-compact-toolbar]') ||
+    container.querySelector('[data-ui-catalog-browse-actions]')) {
+  throw new TypeError('Packed catalog must retain legacy toolbar behavior without compact chrome.');
 }
 root.unmount();
 layout.dispose();
