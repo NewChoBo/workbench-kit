@@ -163,6 +163,21 @@ export function renderJdwWithLayout(
 - Container nodes (`row`, `column`, `grid`, `stack`, wrappers) are always positioned from the headless layout result tree.
 - The legacy `renderBuiltinWidgetNode` compatibility export has been removed; builtin definitions call `renderBuiltinWidgetLeaf` directly.
 
+### Root overflow contract
+
+`CssRenderBackendOptions.rootOverflow` accepts `'hidden' | 'auto'`; omission (or
+`undefined`) keeps the existing hidden overflow on every layout node. `'auto'`
+changes only the root layout node into a scrollport. Descendants remain clipped;
+the wrapper, layout rects, authored data and registry rendering are unchanged.
+The host must provide a bounded viewport and avoid a second scrolling owner.
+
+Without `onSelectPath`, the auto root is marked `data-layout-scroll-root="true"`
+and is a named, focusable region (`Widget viewport`, `tabIndex=0`) using native
+browser scrolling. With `onSelectPath`, existing selection roles, selected-path
+tab order and Enter/Space handling are retained; this option adds no selection
+navigation or arrow-key contract. Negative authored coordinates and overflow
+clipped by nested layout nodes are not recovered by this root-only option.
+
 ### Design implication
 
 The CSS backend achieves a **canvas-like, Flutter-layout-parity preview** (single rect tree, design-surface friendly). Registry builders remain useful for **leaf customization** and future `renderJsonWidget`-style recursion, but built-in container layout is centralized in `layoutWidget` so authoring overlays and preview agree on the same geometry.

@@ -26,6 +26,8 @@ import { readNumber } from '../utils/readNumber';
 import { renderBuiltinWidgetLeaf } from './builtins/renderBuiltinWidgetLeaf.js';
 import { BUILTIN_JDW_REGISTRY } from './createBuiltinJdwRegistry.js';
 export interface CssRenderBackendOptions {
+  /** Only the root layout node may scroll; nested nodes keep their clipping. */
+  readonly rootOverflow?: 'hidden' | 'auto' | undefined;
   readonly registry?: WidgetRegistryContract<unknown> | undefined;
   readonly emptyLabel?: string | undefined;
   readonly layoutConstraints?: LayoutConstraints | undefined;
@@ -140,18 +142,27 @@ function renderLayoutNode(
   const leafContent = isLayoutContainer ? null : renderLeafContent(widget, options);
   const selected = options.selectedPath ? widgetPathEquals(path, options.selectedPath) : false;
   const interactive = Boolean(options.onSelectPath);
+  const scrollableRoot = path.length === 0 && options.rootOverflow === 'auto';
 
   return createElement(
     hostTag,
     {
       'aria-selected': interactive ? selected : undefined,
+      'aria-label': scrollableRoot && !interactive ? 'Widget viewport' : undefined,
+      'data-layout-scroll-root': scrollableRoot ? 'true' : undefined,
       'data-layout-node': true,
       'data-widget-interactive': interactive ? 'true' : undefined,
       'data-widget-path': widgetPathKey(path),
       'data-widget-selected': selected ? 'true' : undefined,
       'data-widget-type': widget.type,
-      role: interactive && hostTag === 'div' ? 'button' : undefined,
-      tabIndex: interactive ? (selected ? 0 : -1) : undefined,
+      role: interactive
+        ? hostTag === 'div'
+          ? 'button'
+          : undefined
+        : scrollableRoot
+          ? 'region'
+          : undefined,
+      tabIndex: interactive ? (selected ? 0 : -1) : scrollableRoot ? 0 : undefined,
       onClick: interactive
         ? (event: MouseEvent<HTMLElement>) => {
             event.stopPropagation();
@@ -168,7 +179,10 @@ function renderLayoutNode(
             options.onSelectPath?.(path);
           }
         : undefined,
-      style: layoutNodeStyle(node, parentOrigin, widget),
+      style: {
+        ...layoutNodeStyle(node, parentOrigin, widget),
+        ...(scrollableRoot ? { overflow: 'auto' } : {}),
+      },
     },
     leafContent,
     ...node.children.map((child, index) =>

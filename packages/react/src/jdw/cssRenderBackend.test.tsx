@@ -147,4 +147,60 @@ describe('cssRenderBackend', () => {
     expect(markup).toContain('left:30px');
     expect(markup).toContain('width:20px');
   });
+  it('keeps clipping on every layout node when root overflow is omitted or hidden', () => {
+    const parsed = parseJsonWidgetData(JDW_FIXTURE_ROW_FLEX);
+    for (const options of [{}, { rootOverflow: undefined }, { rootOverflow: 'hidden' as const }]) {
+      const markup = renderToStaticMarkup(<>{renderJdwWithLayout(parsed.value!, options)}</>);
+      expect(markup.match(/overflow:hidden/g)).toHaveLength(3);
+      expect(markup).not.toContain('overflow:auto');
+      expect(markup).not.toContain('data-layout-scroll-root');
+      expect(markup).not.toContain('tabindex');
+    }
+  });
+
+  it('opts only the root into one marked keyboard reachable scroll region', () => {
+    const parsed = parseJsonWidgetData(JDW_FIXTURE_ROW_FLEX);
+    const markup = renderToStaticMarkup(
+      <>{renderJdwWithLayout(parsed.value!, { rootOverflow: 'auto' })}</>,
+    );
+    expect(markup.match(/overflow:auto/g)).toHaveLength(1);
+    expect(markup.match(/overflow:hidden/g)).toHaveLength(2);
+    expect(markup.match(/data-layout-scroll-root="true"/g)).toHaveLength(1);
+    expect(markup).toContain('aria-label="Widget viewport"');
+    expect(markup).toContain('role="region" tabindex="0"');
+  });
+
+  it('preserves selection keyboard semantics when an interactive root opts into scrolling', () => {
+    const parsed = parseJsonWidgetData(JDW_FIXTURE_ROW_FLEX);
+    const markup = renderToStaticMarkup(
+      <>
+        {renderJdwWithLayout(parsed.value!, {
+          rootOverflow: 'auto',
+          selectedPath: [],
+          onSelectPath: () => undefined,
+        })}
+      </>,
+    );
+    expect(markup).toContain('role="button" tabindex="0"');
+    expect(markup).toContain('aria-selected="true"');
+    expect(markup).not.toContain('role="region"');
+  });
+
+  it('preserves an interactive semantic host role when root scrolling is enabled', () => {
+    const parsed = parseJsonWidgetData(JDW_FIXTURE_ROW_FLEX);
+    const registry = createWidgetRegistry([{ type: 'row', hostTag: 'section', build: () => null }]);
+    const markup = renderToStaticMarkup(
+      <>
+        {renderJdwWithLayout(parsed.value!, {
+          registry,
+          rootOverflow: 'auto',
+          selectedPath: [],
+          onSelectPath: () => undefined,
+        })}
+      </>,
+    );
+    expect(markup).toContain('<section aria-selected="true"');
+    expect(markup).not.toContain('role="region"');
+    expect(markup).not.toContain('aria-label="Widget viewport"');
+  });
 });
