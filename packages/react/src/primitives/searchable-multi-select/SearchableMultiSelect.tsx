@@ -1,3 +1,9 @@
+import { readOverlayBounds } from '../../overlay/overlayBounds';
+import {
+  useWorkbenchPresentationScope,
+  isWorkbenchPresentationInactive,
+  hasActiveWorkbenchGlobalModal,
+} from '../../overlay/presentationScope';
 import './searchable-multi-select.css';
 import {
   useCallback,
@@ -18,7 +24,7 @@ import { Chip } from '../chip';
 import { TextInput } from '../text-input/TextInput';
 import {
   isTriggerVisible,
-  measureOverlayPosition,
+  measureOverlayPositionInBounds,
   overlayListboxStyle,
   resolvePortalContainer,
   type OverlayPosition,
@@ -62,6 +68,9 @@ export function SearchableMultiSelect({
   selectedValues,
 }: SearchableMultiSelectProps): ReactNode {
   const listboxId = useId();
+  const presentationScope = useWorkbenchPresentationScope();
+  const presentationActive = presentationScope?.active !== false;
+  const presentationOwned = presentationScope !== undefined;
   const rootRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLInputElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
@@ -104,6 +113,7 @@ export function SearchableMultiSelect({
 
   const updateOverlayPosition = useCallback(() => {
     const trigger = triggerRef.current;
+    if (!presentationActive || isWorkbenchPresentationInactive(trigger)) return;
     if (!trigger) {
       return;
     }
@@ -114,14 +124,18 @@ export function SearchableMultiSelect({
     }
 
     const optionCount = Math.max(visibleOptions.length, 1);
-    const position = measureOverlayPosition(trigger, optionCount);
+    const position = measureOverlayPositionInBounds(
+      trigger,
+      optionCount,
+      readOverlayBounds(trigger, presentationScope?.bounds.current),
+    );
     if (!position) {
       closeListbox();
       return;
     }
 
     setOverlayPosition(position);
-  }, [closeListbox, visibleOptions.length]);
+  }, [closeListbox, visibleOptions.length, presentationActive, presentationScope]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -129,6 +143,7 @@ export function SearchableMultiSelect({
       return;
     }
 
+    if (!presentationActive) return;
     updateOverlayPosition();
     window.addEventListener('resize', updateOverlayPosition);
     window.addEventListener('scroll', updateOverlayPosition, true);
@@ -136,13 +151,18 @@ export function SearchableMultiSelect({
       window.removeEventListener('resize', updateOverlayPosition);
       window.removeEventListener('scroll', updateOverlayPosition, true);
     };
-  }, [open, updateOverlayPosition]);
+  }, [open, presentationActive, updateOverlayPosition]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !presentationActive) {
       return undefined;
     }
     const onPointerDown = (event: PointerEvent) => {
+      if (
+        isWorkbenchPresentationInactive(triggerRef.current) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(document))
+      )
+        return;
       const target = event.target as Node;
       if (rootRef.current?.contains(target)) {
         return;
@@ -156,7 +176,7 @@ export function SearchableMultiSelect({
     return () => {
       window.removeEventListener('pointerdown', onPointerDown, true);
     };
-  }, [closeListbox, open]);
+  }, [closeListbox, open, presentationActive, presentationOwned]);
 
   useEffect(() => {
     if (!open) {
@@ -183,6 +203,8 @@ export function SearchableMultiSelect({
   };
 
   const handleInputKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (!presentationActive || (presentationOwned && hasActiveWorkbenchGlobalModal(document)))
+      return;
     if (disabled) {
       return;
     }
@@ -354,7 +376,12 @@ export function SearchableMultiSelect({
           }}
         />
       </div>
-      {listbox ? createPortal(listbox, resolvePortalContainer(triggerRef.current)) : null}
+      {listbox
+        ? createPortal(
+            listbox,
+            presentationScope?.container ?? resolvePortalContainer(triggerRef.current),
+          )
+        : null}
     </div>
   );
 }

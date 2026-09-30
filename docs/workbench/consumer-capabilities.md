@@ -989,3 +989,62 @@ pnpm validate:static
 ```
 
 Storybook demos for library detail: `examples/workbench-sample` (`LibraryDetailLayout` stories).
+
+## Retained application-frame presentations
+
+The low-level `WorkbenchShell` from `@workbench-kit/react/workbench/shell` and
+`WorkbenchHostShell` from `@workbench-kit/shell-react/host-shell` accept opt-in
+`presentation: 'docked' | 'canvas'`, `canvasArea`, `canvasAriaLabel`,
+`dockedAriaLabel`, and `presentationFocusTargets`. The separate assembled
+`@workbench-kit/shell-react/shell` entrypoint is unchanged. Omit the new props to
+keep the existing DOM and docked behavior. Supply `canvasArea` from the first
+render to retain both presentations; `null` is an intentional empty canvas.
+Canvas mode without that prop, or an unknown runtime mode, fails explicitly.
+Changing whether content is supplied is a structural change, not a mode switch.
+
+Use one frame at the application viewport and one `titleBar` slot. Pass authored
+content through `canvasArea` and tools through `secondaryArea` (low-level) or
+`editorArea` (host adapter). Supply mode-specific actions through the existing
+desktop-titlebar slots, hiding irrelevant layout actions in canvas mode. Do not
+add another application header inside either content slot. The retained wrappers
+are labelled regions. Canvas content sits inside a frame-owned main landmark, so
+supply sections/content there. Docked content supplies its own main landmark;
+Kit `EditorArea` already does this in both empty and open-editor states. Its
+standalone markup remains unchanged.
+
+`resolveWorkbenchFrameVisibility` and its readonly types are exported from
+`@workbench-kit/workbench-core`. The framework-free helper reflects canonical
+layout visibility in docked mode and masks all chrome, including status, in
+canvas mode. It never calls a layout setter or changes persistence, saved sizes,
+activity order, editor state, or the focus-mode snapshot. Explicit commands still
+update canonical layout while a presentation is hidden; returning to docked mode
+reflects those changes. Presentation is a view choice, not a permission gate.
+
+Both bodies and supplied panes stay mounted. Inactive regions, panes, separators,
+and their owned overlay layers are hidden and inert. Focus returns to the last
+available target in the active presentation, then its optional ref fallback, then
+its labelled region. Targets must be connected, enabled, focusable, and inside
+that region; unsuccessful focus attempts continue to the next fallback.
+Global dialogs retain focus ownership during mode changes; closing one whose
+previous target is now hidden restores the active presentation instead.
+
+Kit Select, SearchableMultiSelect, ContextMenu, anchored overlays, and modal portals inherit
+retained ownership. Pane popovers occupy the presentation overlay plane, outside
+split-pane clipping. Placement is clamped to active presentation-content bounds,
+including when space above a trigger is limited by the header. Inactive scopes
+and active global-modal ownership suspend local dismissal/keyboard handlers
+without applying, discarding, or clearing draft state; positions remeasure on
+return. Standalone `SplitView` callers can opt into retained pane ownership with
+`primaryHidden` / `secondaryHidden`: the sibling fills the split, local Kit
+popups stay retained and suspended, and placement uses the split root bounds.
+Omitting those props preserves legacy split/viewport behavior and forwards
+inherited overlay ownership unchanged. Establish pane ownership at mount (pass
+`false` initially) to retain open portal subtrees across every visibility toggle.
+Adding/removing ownership mid-session preserves authored/controller state, but
+may retarget open portals and remount their children; keep draft/model state in
+the retained controller rather than relying on portal-child-local state across
+that structural adoption step. Truly global dialogs belong in the existing `overlays` slot. Arbitrary
+third-party portals to `document.body` and host global event listeners cannot be
+contained automatically: adapt them to Kit overlay primitives or explicitly
+suspend them using the same host presentation choice. Document semantics, dirty
+exit admission, undo/redo, and product selection remain host-owned.

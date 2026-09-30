@@ -34,6 +34,11 @@ export interface WorkbenchHostShellProps {
   bottomPanel?: ReactNode;
   compactStatus?: boolean | undefined;
   editorArea: ReactNode;
+  presentation?: ReactWorkbenchShellProps['presentation'];
+  canvasArea?: ReactNode;
+  canvasAriaLabel?: string;
+  dockedAriaLabel?: string;
+  presentationFocusTargets?: ReactWorkbenchShellProps['presentationFocusTargets'];
   onStatusItemActivate?: ((item: StatusBarItemModel) => void) | undefined;
   overlays?: ReactNode;
   primarySidebar?: ReactNode;
@@ -58,6 +63,11 @@ export function WorkbenchHostShell({
   bottomPanel,
   compactStatus = true,
   editorArea,
+  presentation,
+  canvasArea,
+  canvasAriaLabel,
+  dockedAriaLabel,
+  presentationFocusTargets,
   onStatusItemActivate,
   overlays,
   primarySidebar,
@@ -157,6 +167,11 @@ export function WorkbenchHostShell({
             }
       }
       compactStatus={compactStatus}
+      presentation={presentation}
+      canvasArea={canvasArea}
+      canvasAriaLabel={canvasAriaLabel}
+      dockedAriaLabel={dockedAriaLabel}
+      presentationFocusTargets={presentationFocusTargets}
       onStatusItemActivate={(item) => {
         const contributed = statusBar.getStatusBarItem(item.id);
         if (contributed?.command) {

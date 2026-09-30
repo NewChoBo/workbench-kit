@@ -1,10 +1,13 @@
 /** @vitest-environment jsdom */
 
-import { act } from 'react';
+import { act, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SplitView } from './SplitView';
+import { Select } from '../../primitives/select/Select';
+import { WorkbenchOverlaysProvider } from '../chrome/workbenchOverlaysContext';
+import { WorkbenchModalPortal } from '../chrome/WorkbenchModalPortal';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
@@ -15,6 +18,217 @@ describe('SplitView', () => {
       'ui-workbench-split-view-resizing',
       'ui-workbench-split-view-resizing--vertical',
     );
+  });
+
+  for (const orientation of ['horizontal', 'vertical'] as const) {
+    for (const hiddenSide of ['primary', 'secondary'] as const) {
+      it(`fills the remaining ${orientation} track when the ${hiddenSide} pane is hidden directly`, async () => {
+        const container = document.createElement('div');
+        document.body.append(container);
+        const root = createRoot(container);
+        const mounted = vi.fn();
+        const resized = vi.fn();
+        function StatefulPane({ name }: { name: string }) {
+          const [count, setCount] = useState(0);
+          useEffect(() => {
+            mounted(name);
+          }, [name]);
+          return (
+            <button onClick={() => setCount(count + 1)}>
+              {name}:{count}
+            </button>
+          );
+        }
+        const render = async (hidden: boolean) => {
+          await act(async () =>
+            root.render(
+              <SplitView
+                orientation={orientation}
+                primary={<StatefulPane name="Primary" />}
+                secondary={<StatefulPane name="Secondary" />}
+                primaryHidden={hiddenSide === 'primary' && hidden}
+                secondaryHidden={hiddenSide === 'secondary' && hidden}
+                primarySizePercent={40}
+                onPrimarySizePercentChange={resized}
+              />,
+            ),
+          );
+        };
+        await render(false);
+        const split = container.querySelector<HTMLElement>('.ui-workbench-split-view')!;
+        const primary = split.querySelector<HTMLElement>('.ui-workbench-split-view__primary')!;
+        const secondary = split.querySelector<HTMLElement>('.ui-workbench-split-view__secondary')!;
+        const separator = split.querySelector<HTMLElement>('[role="separator"]')!;
+        const remaining = hiddenSide === 'primary' ? secondary : primary;
+        const inactive = hiddenSide === 'primary' ? primary : secondary;
+        const remainingButton = remaining.querySelector<HTMLButtonElement>('button')!;
+        await act(async () => remainingButton.click());
+        await render(true);
+        // Existing collapse CSS is the shared geometry owner; direct props now select it.
+        expect(split.classList.contains(`ui-workbench-split-view--${hiddenSide}-collapsed`)).toBe(
+          true,
+        );
+        expect(split.dataset.orientation).toBe(orientation);
+        expect(inactive.hidden).toBe(true);
+        expect(inactive.hasAttribute('inert')).toBe(true);
+        expect(remaining.hidden).toBe(false);
+        expect(separator.hidden).toBe(true);
+        expect(separator.hasAttribute('inert')).toBe(true);
+        expect(separator.tabIndex).toBe(-1);
+        expect(remaining.querySelector('button')).toBe(remainingButton);
+        expect(remainingButton.textContent).toContain(':1');
+        expect(mounted).toHaveBeenCalledTimes(2);
+        expect(resized).not.toHaveBeenCalled();
+        await render(false);
+        expect(split.classList.contains(`ui-workbench-split-view--${hiddenSide}-collapsed`)).toBe(
+          false,
+        );
+        expect(split.style.getPropertyValue('--ui-workbench-split-primary-size')).toBe('40%');
+        expect(separator.hidden).toBe(false);
+        expect(remaining.querySelector('button')).toBe(remainingButton);
+        expect(mounted).toHaveBeenCalledTimes(2);
+        await act(async () => root.unmount());
+      });
+    }
+  }
+
+  it.each([false, true])(
+    'passes through omitted overlay ownership without reparenting (inherited=%s)',
+    async (inherited) => {
+      const container = document.createElement('div');
+      const overlays = document.createElement('div');
+      document.body.append(container, overlays);
+      const root = createRoot(container);
+      const render = async (size: number) => {
+        const split = (
+          <SplitView
+            primary={
+              <WorkbenchModalPortal>
+                <div data-test-portal="passthrough">Portal content</div>
+              </WorkbenchModalPortal>
+            }
+            secondary={<main>Editor</main>}
+            primarySizePercent={size}
+          />
+        );
+        await act(async () =>
+          root.render(
+            inherited ? (
+              <WorkbenchOverlaysProvider container={overlays}>{split}</WorkbenchOverlaysProvider>
+            ) : (
+              split
+            ),
+          ),
+        );
+      };
+      await render(40);
+      const portal = document.body.querySelector('[data-test-portal="passthrough"]')!;
+      expect(portal).not.toBeNull();
+      expect(portal.parentElement).toBe(inherited ? overlays : document.body);
+      await render(50);
+      expect(document.body.querySelector('[data-test-portal="passthrough"]')).toBe(portal);
+      expect(portal.parentElement).toBe(inherited ? overlays : document.body);
+      expect(document.body.querySelector('.ui-workbench-pane-overlays')).toBeNull();
+      await act(async () => root.unmount());
+    },
+  );
+
+  it('preserves authored child identity when opt-in hidden props are added and omitted again', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const mounts = vi.fn();
+    function Draft() {
+      const [count, setCount] = useState(0);
+      useEffect(() => {
+        mounts();
+      }, []);
+      return <button onClick={() => setCount((value) => value + 1)}>Draft:{count}</button>;
+    }
+    const render = async (primaryHidden?: boolean) => {
+      await act(async () =>
+        root.render(
+          <SplitView
+            primaryHidden={primaryHidden}
+            primary={<Draft />}
+            secondary={<main>Editor</main>}
+          />,
+        ),
+      );
+    };
+    await render();
+    const draft = container.querySelector<HTMLButtonElement>('button')!;
+    await act(async () => draft.click());
+    await render(true);
+    await render();
+    expect(container.querySelector('button')).toBe(draft);
+    expect(draft.textContent).toBe('Draft:1');
+    expect(mounts).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[data-workbench-split-overlay-scope]')).toBeNull();
+    expect(document.body.querySelector('.ui-workbench-pane-overlays')).toBeNull();
+    await act(async () => root.unmount());
+  });
+
+  it('retains and suspends an open Select in a directly hidden standalone pane', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const changed = vi.fn();
+    const geometry = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        const width = this.classList.contains('ui-workbench-split-view') ? 800 : 160;
+        const height = this.classList.contains('ui-workbench-split-view') ? 500 : 28;
+        return {
+          left: 0,
+          top: 40,
+          width,
+          height,
+          right: width,
+          bottom: 40 + height,
+          x: 0,
+          y: 40,
+          toJSON: () => ({}),
+        };
+      });
+    const render = async (hidden: boolean) => {
+      await act(async () =>
+        root.render(
+          <SplitView
+            primary={
+              <Select aria-label="Direct chooser" onChange={changed}>
+                <option>Alpha</option>
+                <option>Beta</option>
+              </Select>
+            }
+            secondary={<button>Secondary</button>}
+            primaryHidden={hidden}
+          />,
+        ),
+      );
+    };
+    await render(false);
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="combobox"]')!.click());
+    const listbox = document.body.querySelector<HTMLElement>('[role="listbox"]')!;
+    expect(listbox).not.toBeNull();
+    expect(listbox.closest('.ui-workbench-split-view')).toBeNull();
+    await render(true);
+    expect(listbox.closest('[hidden][inert]')).not.toBeNull();
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    await act(async () => {
+      window.dispatchEvent(escape);
+      window.dispatchEvent(new Event('pointerdown'));
+      window.dispatchEvent(new Event('resize'));
+    });
+    expect(escape.defaultPrevented).toBe(false);
+    expect(changed).not.toHaveBeenCalled();
+    await render(false);
+    expect(document.body.querySelector('[role="listbox"]')).toBe(listbox);
+    expect(listbox.closest('[hidden]')).toBeNull();
+    await act(async () => root.unmount());
+    expect(document.body.querySelector('[role="listbox"]')).toBeNull();
+    expect(document.body.querySelector('.ui-workbench-pane-overlays')).toBeNull();
+    geometry.mockRestore();
   });
 
   it('previews pointer resizing without committing parent state until release', async () => {

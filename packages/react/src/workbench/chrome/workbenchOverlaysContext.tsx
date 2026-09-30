@@ -7,7 +7,7 @@ export function WorkbenchOverlaysProvider({
   container,
 }: {
   children: ReactNode;
-  container: HTMLElement | null;
+  container: HTMLElement | null | undefined;
 }): ReactNode {
   return (
     <WorkbenchOverlaysContext.Provider value={container}>

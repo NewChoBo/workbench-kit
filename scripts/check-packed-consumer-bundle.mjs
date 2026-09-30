@@ -1144,7 +1144,10 @@ async function verifyPackedGraphAuthoring(): Promise<{
   );
   fs.writeFileSync(
     path.join(consumerDir, 'src', 'focused-layout.ts'),
-    `import { createElement } from 'react';
+    `import { createElement, createRef } from 'react';
+import { LayoutService, resolveWorkbenchFrameVisibility, type WorkbenchFrameVisibility, type WorkbenchFramePresentation } from '@workbench-kit/workbench-core';
+import { WorkbenchShell, type WorkbenchShellProps } from '@workbench-kit/react/workbench/shell';
+import type { WorkbenchHostShellProps } from '@workbench-kit/shell-react/host-shell';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle } from '@workbench-kit/react';
@@ -1187,7 +1190,46 @@ if (interaction.getAttribute('aria-label') !== 'Packed interaction preview') {
 if (frameHandle?.textContent !== 'Resize canvas') {
   throw new TypeError('Packed WorkbenchCanvasFrameHandle did not render consumer content.');
 }
+const layout = new LayoutService({ sideBar: { visible: true, sizePercent: 31 } });
+const original = JSON.stringify(layout.getState());
+const mode: WorkbenchFramePresentation = 'canvas';
+const visibility: WorkbenchFrameVisibility = resolveWorkbenchFrameVisibility(layout.getState(), mode);
+if (visibility.statusBar || visibility.sideBar || JSON.stringify(layout.getState()) !== original) {
+  throw new TypeError('Packed frame visibility must mask without writing layout.');
+}
+const focusTarget = createRef<HTMLButtonElement>();
+const hostProps = {
+  editorArea: createElement('button', null, 'Editor'),
+  canvasArea: createElement('button', { ref: focusTarget }, 'Canvas'),
+  presentation: mode,
+  canvasAriaLabel: 'Authored content',
+  dockedAriaLabel: 'Docked tools',
+  presentationFocusTargets: { canvas: focusTarget },
+} satisfies WorkbenchHostShellProps;
+const frameProps = {
+  activityBar: { items: [] },
+  secondaryArea: hostProps.editorArea,
+  canvasArea: hostProps.canvasArea,
+  presentation: hostProps.presentation,
+  presentationFocusTargets: hostProps.presentationFocusTargets,
+  canvasAriaLabel: hostProps.canvasAriaLabel,
+  dockedAriaLabel: hostProps.dockedAriaLabel,
+  statusSections: [],
+} satisfies WorkbenchShellProps;
+flushSync(() => root.render(createElement(WorkbenchShell, frameProps)));
+const canvas = container.querySelector('[data-workbench-presentation="canvas"]');
+const docked = container.querySelector('[data-workbench-presentation="docked"]');
+if (!canvas || !docked || !docked.hasAttribute('hidden') || !docked.hasAttribute('inert')) {
+  throw new TypeError('Packed frame must retain and exclude its inactive presentation.');
+}
+const editor = docked.querySelector('button');
+flushSync(() => root.render(createElement(WorkbenchShell, { ...frameProps, presentation: 'docked' })));
+if (container.querySelector('[data-workbench-presentation="docked"] button') !== editor ||
+    !canvas.hasAttribute('hidden') || docked.hasAttribute('hidden')) {
+  throw new TypeError('Packed frame did not retain content identity across presentation changes.');
+}
 root.unmount();
+layout.dispose();
 `,
   );
   fs.writeFileSync(

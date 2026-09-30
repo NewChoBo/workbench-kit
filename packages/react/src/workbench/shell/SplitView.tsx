@@ -10,6 +10,8 @@ import {
   type ReactNode,
 } from 'react';
 import { cx } from '../../utils/cx';
+import { useWorkbenchPresentationScope } from '../../overlay/presentationScope';
+import { WorkbenchRetainedPane } from '../../overlay/WorkbenchRetainedPane';
 
 export type SplitViewOrientation = 'horizontal' | 'vertical';
 export type SplitViewPrimarySizeUnit = 'percent' | 'pixels';
@@ -44,6 +46,9 @@ export interface SplitViewProps {
   onSecondarySizePxPreviewChange?: (secondarySizePx: number) => void;
   orientation?: SplitViewOrientation;
   primary: ReactNode;
+  /** Retain an inactive pane, hide its separator, and let the remaining pane fill the split. */
+  primaryHidden?: boolean;
+  secondaryHidden?: boolean;
   primarySizePercent?: number;
   primarySizePx?: number;
   /** Defaults to `percent` for backward compatibility. Ignored when `layoutMode` is `secondary-fixed`. */
@@ -101,12 +106,17 @@ export function SplitView({
   onSecondarySizePxPreviewChange,
   orientation = 'horizontal',
   primary,
+  primaryHidden,
+  secondaryHidden,
   primarySizePercent: controlledPrimarySizePercent,
   primarySizePx: controlledPrimarySizePx,
   primarySizeUnit = 'percent',
   secondary,
   secondarySizePx: controlledSecondarySizePx,
 }: SplitViewProps) {
+  const presentationActive = useWorkbenchPresentationScope()?.active !== false;
+  const separatorInactive =
+    !presentationActive || primaryHidden === true || secondaryHidden === true;
   const isSecondaryFixed = layoutMode === 'secondary-fixed';
   const isPixels = isSecondaryFixed || primarySizeUnit === 'pixels';
   const [uncontrolledPrimarySizePercent, setUncontrolledPrimarySizePercent] =
@@ -325,6 +335,21 @@ export function SplitView({
     }
   };
 
+  useLayoutEffect(() => {
+    if (!separatorInactive) return;
+    const dragState = dragStateRef.current;
+    if (!dragState) return;
+    if (previewFrameRef.current) {
+      cancelFrame(previewFrameRef.current);
+      previewFrameRef.current = 0;
+    }
+    dragStateRef.current = null;
+    releasePointerCapture(dragState.separator, dragState.pointerId);
+    dragState.separator.classList.remove('is-dragging');
+    setResizeClass(false);
+    setDragSize(null);
+  }, [separatorInactive]);
+
   const finishPointerDrag = (
     event: PointerEvent<HTMLDivElement>,
     options: { commit: boolean; resolveFromEvent?: boolean },
@@ -355,6 +380,7 @@ export function SplitView({
   };
 
   const onPointerDown = (event: PointerEvent<HTMLDivElement>) => {
+    if (separatorInactive) return;
     event.preventDefault();
     try {
       event.currentTarget.setPointerCapture(event.pointerId);
@@ -391,6 +417,7 @@ export function SplitView({
   };
 
   const onSeparatorKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (separatorInactive) return;
     const previousKey = orientation === 'vertical' ? 'ArrowUp' : 'ArrowLeft';
     const nextKey = orientation === 'vertical' ? 'ArrowDown' : 'ArrowRight';
     const step = isPixels ? keyboardStepPx : keyboardStepPercent;
@@ -456,13 +483,34 @@ export function SplitView({
   return (
     <div
       ref={containerRef}
-      className={cx('ui-workbench-split-view', className)}
+      className={cx(
+        'ui-workbench-split-view',
+        primaryHidden && 'ui-workbench-split-view--primary-collapsed',
+        secondaryHidden && 'ui-workbench-split-view--secondary-collapsed',
+        className,
+      )}
+      data-workbench-split-overlay-scope={
+        primaryHidden !== undefined || secondaryHidden !== undefined ? '' : undefined
+      }
       data-layout-mode={layoutMode}
       data-orientation={orientation}
       data-primary-size-unit={isSecondaryFixed ? 'pixels' : primarySizeUnit}
       style={style}
     >
-      <div className="ui-workbench-split-view__primary">{primary}</div>
+      <div
+        className="ui-workbench-split-view__primary"
+        data-workbench-presentation-pane={primaryHidden !== undefined ? '' : undefined}
+        hidden={primaryHidden}
+        inert={primaryHidden}
+      >
+        <WorkbenchRetainedPane
+          enabled={primaryHidden !== undefined}
+          active={!primaryHidden}
+          fallbackBounds={containerRef}
+        >
+          {primary}
+        </WorkbenchRetainedPane>
+      </div>
       <div
         aria-orientation={orientation === 'vertical' ? 'horizontal' : 'vertical'}
         aria-valuemax={ariaMax}
@@ -470,7 +518,9 @@ export function SplitView({
         aria-valuenow={Math.round(displayedSize)}
         className="ui-workbench-split-view__separator"
         role="separator"
-        tabIndex={0}
+        hidden={separatorInactive || undefined}
+        inert={separatorInactive || undefined}
+        tabIndex={separatorInactive ? -1 : 0}
         onKeyDown={onSeparatorKeyDown}
         onPointerCancel={onPointerCancel}
         onPointerDown={onPointerDown}
@@ -479,7 +529,20 @@ export function SplitView({
       >
         <div className="ui-workbench-split-view__handle" />
       </div>
-      <div className="ui-workbench-split-view__secondary">{secondary}</div>
+      <div
+        className="ui-workbench-split-view__secondary"
+        data-workbench-presentation-pane={secondaryHidden !== undefined ? '' : undefined}
+        hidden={secondaryHidden}
+        inert={secondaryHidden}
+      >
+        <WorkbenchRetainedPane
+          enabled={secondaryHidden !== undefined}
+          active={!secondaryHidden}
+          fallbackBounds={containerRef}
+        >
+          {secondary}
+        </WorkbenchRetainedPane>
+      </div>
     </div>
   );
 }

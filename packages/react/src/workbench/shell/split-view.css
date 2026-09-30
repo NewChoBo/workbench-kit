@@ -186,3 +186,19 @@ html.ui-workbench-split-view-resizing--vertical * {
 .ui-workbench-split-view__separator.is-dragging .ui-workbench-split-view__handle {
   opacity: 1;
 }
+
+.ui-workbench-split-view > [hidden] {
+  display: none;
+}
+
+/* Standalone opt-in panes need the same retained portal semantics as a frame. */
+.ui-workbench-pane-overlays {
+  position: absolute;
+  inset: 0;
+  z-index: var(--ui-modal-z-index, 200);
+  pointer-events: none;
+}
+
+.ui-workbench-pane-overlays[hidden] {
+  display: none;
+}

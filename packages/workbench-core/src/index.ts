@@ -273,3 +273,8 @@ export {
   type WorkbenchViewContainerContribution,
   type WorkbenchViewContribution,
 } from './contributions/registries.js';
+export {
+  resolveWorkbenchFrameVisibility,
+  type WorkbenchFramePresentation,
+  type WorkbenchFrameVisibility,
+} from './layout/presentation.js';
