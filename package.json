@@ -5,7 +5,7 @@
   "type": "module",
   "packageManager": "pnpm@11.5.1",
   "scripts": {
-    "preinstall": "node -e \"const execPath = process.env.npm_execpath || ''; if (!/pnpm/.test(execPath)) { console.error('This repository requires pnpm. Please run `pnpm install`.'); process.exit(1); }\"",
+    "preinstall": "node scripts/require-pnpm.mjs",
     "postinstall": "node scripts/postinstall-workspace-build.mjs",
     "build:workbench-extensions": "node scripts/bundle-workbench-extensions.mjs",
     "build:workspace": "node scripts/build-workspace-packages.mjs",
