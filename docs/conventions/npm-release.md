@@ -119,9 +119,10 @@ If CI fails mid-batch:
 **Mandatory:** do **not** create or push a release tag until validation has
 passed on the **exact commit tip** you will tag (usually `main` after promote).
 
-Publish workflow runs `pnpm validate` (`validate:fast` + `validate:ui`, including
-required Storybook play). Local agents must run the same gate before tagging so
-failed play / format / export checks do not burn a tag push:
+Publish workflow runs `pnpm validate` (`validate:fast` + `validate:packaging` +
+`validate:ui`, including packed-consumer checks and required Storybook play).
+Local agents must run the same gate before tagging so failed packaging / play /
+format / export checks do not burn a tag push:
 
 ```powershell
 pnpm validate

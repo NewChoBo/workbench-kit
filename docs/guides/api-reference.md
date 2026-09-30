@@ -185,17 +185,19 @@ Architecture: [Workbench Config](../architecture/workbench-config.md).
 
 ## Validation commands
 
-| Command                          | Checks                                                                                            |
-| -------------------------------- | ------------------------------------------------------------------------------------------------- |
-| `pnpm check:public-exports`      | Export map consistency                                                                            |
-| `pnpm check:extension-manifests` | Extension manifest shape and graph                                                                |
-| `pnpm typecheck`                 | TypeScript across workspace                                                                       |
-| `pnpm validate:static`           | Typecheck, lint, format, manifests, exports, platform CJS leaf smoke, graph, public refs, secrets |
-| `pnpm check:platform-cjs-leaves` | Pack `@workbench-kit/platform` and `require()` atomic-write / tray-close-policy                   |
-| `pnpm check:public-references`   | Fail on denylisted internal / sibling product names in tracked sources                            |
-| `pnpm check:secrets`             | Fail on credential-looking material (keys, tokens, private key files)                             |
-| `pnpm validate:fast`             | `validate:static` plus unit tests                                                                 |
-| `pnpm validate`                  | `validate:fast` plus Storybook UI validation (`validate:ui`)                                      |
+| Command                          | Checks                                                                                                      |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| `pnpm check:public-exports`      | Export map consistency                                                                                      |
+| `pnpm check:extension-manifests` | Extension manifest shape and graph                                                                          |
+| `pnpm typecheck`                 | TypeScript across workspace                                                                                 |
+| `pnpm validate:static`           | Typecheck, lint, format, manifests, exports, graph, public refs, secrets, and other static checks           |
+| `pnpm check:platform-cjs-leaves` | Pack `@workbench-kit/platform` and `require()` atomic-write / tray-close-policy                             |
+| `pnpm check:public-references`   | Fail on denylisted internal / sibling product names in tracked sources                                      |
+| `pnpm check:secrets`             | Fail on credential-looking material (keys, tokens, private key files)                                       |
+| `pnpm validate:fast`             | `validate:static` plus verified unit tests; omits packed-consumer checks                                    |
+| `pnpm validate:packaging`        | Packed-consumer checks plus platform CJS leaf checks                                                        |
+| `pnpm validate`                  | `validate:fast` + `validate:packaging` + required Storybook UI validation (`validate:ui`)                   |
+| `pnpm validate:full`             | Same fast and packaging lanes plus `validate:ui:full`, currently the same required Storybook subset as `ui` |
 
 ---
 
