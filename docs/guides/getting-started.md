@@ -89,6 +89,22 @@ export function AppShell() {
 }
 ```
 
+The canonical `rootClassName="ide-root"` recipe establishes the shell UI font
+family from `--vscode-font-family`, falling back to `--font-family` and then
+`system-ui, sans-serif`. Plain text and overlays contained by this root inherit
+that baseline even when the surrounding page uses another font. A shell using a
+custom root class retains the host's own typography.
+
+Override the theme font token or pass `rootStyle={{ fontFamily: '...' }}` to select
+another root font. Explicit descendant fonts, such as authored content, still
+win over inheritance. These CSS families do not guarantee that a particular font
+or glyph is installed.
+
+The optional `ui-workbench-host` body class also resets page margins, padding and
+overflow and applies full-page sizing, colors and typography. It is not required
+for the canonical root's font baseline; use it only when the host wants those
+page-level styles.
+
 Pass host-owned React nodes for sidebars, editors, and overlays. Keep routing, IPC,
 and product state outside the kit.
 

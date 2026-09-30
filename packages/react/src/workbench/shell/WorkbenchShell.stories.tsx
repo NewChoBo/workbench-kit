@@ -2,7 +2,7 @@ import {
   RetainedOverlayBoundaryDemo,
   verifyRetainedOverlayBoundaries,
 } from '../story/RetainedOverlayBoundaryProbe';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
@@ -628,4 +628,110 @@ export const RetainedFrameOverlayBoundaries: Story = {
   tags: ['storybook-play-required'],
   render: () => <RetainedOverlayBoundaryDemo />,
   play: verifyRetainedOverlayBoundaries,
+};
+
+function TypographyShellDemo({
+  theme,
+  locale,
+  width,
+}: {
+  theme: 'light' | 'dark';
+  locale: 'en' | 'ko';
+  width: number;
+}) {
+  const [override, setOverride] = useState<'default' | 'theme' | 'root' | 'custom'>('default');
+  const themeStyle = {
+    height: 360,
+    ...(override === 'theme' || override === 'root'
+      ? { '--vscode-font-family': 'ui-monospace, monospace' }
+      : {}),
+  } as CSSProperties;
+  return (
+    <div data-typography-host style={{ width, maxWidth: '100%', fontFamily: 'serif' }}>
+      <span data-typography-outside>Outside the canonical root</span>
+      <div>
+        {(['default', 'theme', 'root', 'custom'] as const).map((value) => (
+          <button key={value} onClick={() => setOverride(value)}>
+            Font case: {value}
+          </button>
+        ))}
+      </div>
+      <div style={themeStyle}>
+        <WorkbenchShell
+          theme={theme}
+          themePreset={theme === 'light' ? 'light-plus' : 'dark-plus'}
+          rootClassName={override === 'custom' ? 'custom-typography-root' : 'ide-root'}
+          rootStyle={override === 'root' ? { fontFamily: 'Georgia, serif' } : {}}
+          activityBar={{ items: [] }}
+          statusSections={[]}
+          secondaryArea={
+            <main>
+              <p data-typography-plain>
+                {locale === 'en'
+                  ? 'Choose how the Workbench selects the color scheme.'
+                  : 'Workbench 색 구성을 고르는 방식을 선택합니다.'}
+              </p>
+              <span data-typography-authored style={{ fontFamily: 'cursive' }}>
+                Authored font choice
+              </span>
+              <span hidden className="ui-workbench-host" data-typography-reference />
+            </main>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+const typographyPlay: NonNullable<Story['play']> = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const plain = canvasElement.querySelector<HTMLElement>('[data-typography-plain]')!;
+  const authored = canvasElement.querySelector<HTMLElement>('[data-typography-authored]')!;
+  const outside = canvasElement.querySelector<HTMLElement>('[data-typography-outside]')!;
+  const reference = canvasElement.querySelector<HTMLElement>('[data-typography-reference]')!;
+  const family = (element: Element) => getComputedStyle(element).fontFamily;
+  // Computed CSS families prove inheritance, not installed font or glyph availability.
+  expect(family(outside)).toBe('serif');
+  expect(family(reference)).not.toBe('serif');
+  expect(family(plain)).toBe(family(reference));
+  expect(family(plain.closest('.ide-root')!)).toBe(family(reference));
+  expect(family(authored)).toBe('cursive');
+
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: theme' }));
+  await waitFor(() => expect(family(plain)).toBe('ui-monospace, monospace'));
+  expect(family(authored)).toBe('cursive');
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: root' }));
+  await waitFor(() => expect(family(plain)).toBe('Georgia, serif'));
+  expect(family(authored)).toBe('cursive');
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: custom' }));
+  await waitFor(() => expect(family(plain)).toBe('serif'));
+  expect(family(authored)).toBe('cursive');
+  expect(family(outside)).toBe('serif');
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: default' }));
+  await waitFor(() => expect(family(plain)).toBe(family(reference)));
+};
+
+export const CanonicalTypographyEnglishLight: Story = {
+  name: 'Canonical typography / English / light',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="light" locale="en" width={1188} />,
+  play: typographyPlay,
+};
+export const CanonicalTypographyEnglishDark: Story = {
+  name: 'Canonical typography / English / dark',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="dark" locale="en" width={1188} />,
+  play: typographyPlay,
+};
+export const CanonicalTypographyKoreanLight: Story = {
+  name: 'Canonical typography / Korean / light / narrow',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="light" locale="ko" width={720} />,
+  play: typographyPlay,
+};
+export const CanonicalTypographyKoreanDark: Story = {
+  name: 'Canonical typography / Korean / dark / narrow',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="dark" locale="ko" width={720} />,
+  play: typographyPlay,
 };
