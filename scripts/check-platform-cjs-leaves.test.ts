@@ -60,6 +60,7 @@ function writeExtractedLeaves(packDir: string) {
       ]
     : [
         'assets/privileged-asset-protocol.js',
+        'launch/host-launch.js',
         'lifecycle/application-quit-guard.js',
         'security/open-allowlisted-external-link.js',
         'security/require-owned-window-for-sender.js',
@@ -159,6 +160,23 @@ describe('same-run platform CJS checks', () => {
 
     expect(() => module.prepareSameRunPlatformCjsChecks()).toThrow('build failed');
     expect(shared.runCommand).not.toHaveBeenCalled();
+  });
+
+  it('probes host-launch types and canonical no-shell dispatch with injected ports', async () => {
+    const module = await import('./check-platform-cjs-leaves.mjs');
+    module.prepareSameRunPlatformCjsChecks()();
+    const typeProbe = shared.fixtureSources.find((source) =>
+      source.includes('type HostLaunchService'),
+    );
+    const runtimeProbe = shared.fixtureSources.find((source) =>
+      source.includes('const launchCalls = []'),
+    );
+    expect(typeProbe).toContain("from '@workbench-kit/electron-shell/host-launch'");
+    expect(typeProbe).toContain('const hostLaunchFactory:');
+    expect(runtimeProbe).toContain("require('@workbench-kit/electron-shell/host-launch')");
+    expect(runtimeProbe).toContain('shell: false, detached: true, stdio: "ignore"');
+    expect(runtimeProbe).toContain('"/opt/editor/bin/editor", []');
+    expect(runtimeProbe).toContain('targetPresence: "unknown"');
   });
 
   it.each([

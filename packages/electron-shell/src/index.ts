@@ -1,4 +1,15 @@
 export {
+  createHostLaunchService,
+  type CreateHostLaunchServiceOptions,
+  type HostLaunchAssessment,
+  type HostLaunchChild,
+  type HostLaunchIntent,
+  type HostLaunchPlatform,
+  type HostLaunchReason,
+  type HostLaunchResult,
+  type HostLaunchService,
+} from './launch/host-launch.js';
+export {
   createApplicationQuitGuard,
   type ApplicationQuitDecision,
   type ApplicationQuitEvent,
