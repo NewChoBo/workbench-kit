@@ -19,6 +19,17 @@
         "default": "./dist/index.cjs"
       },
       "default": "./dist/index.js"
+    },
+    "./node": {
+      "import": {
+        "types": "./dist/node.d.ts",
+        "default": "./dist/node.js"
+      },
+      "require": {
+        "types": "./dist/node.d.cts",
+        "default": "./dist/node.cjs"
+      },
+      "default": "./dist/node.js"
     }
   },
   "main": "./dist/index.cjs",
@@ -43,6 +54,14 @@
     "directory": "packages/logging"
   },
   "devDependencies": {
+    "@types/node": "^24.12.0",
     "tsup": "^8.5.0"
+  },
+  "typesVersions": {
+    "*": {
+      "node": [
+        "./dist/node.d.ts"
+      ]
+    }
   }
 }
