@@ -747,3 +747,435 @@ describe('V3 semantic command admission', () => {
     }
   });
 });
+
+describe('composition parameters share V3 admission and history', () => {
+  function definitionDocument(): UiDocumentV3 {
+    const base = fixture();
+    return createUiDocumentV3(
+      'definition',
+      formatWidgetDocumentJson({
+        ...base.root,
+        $authoring: {
+          ...base.root.$authoring,
+          documentSchemaVersion: 3,
+          compositionDefinition: {
+            interfaceVersion: '1',
+            parameters: [
+              {
+                id: 'artwork',
+                label: 'Artwork',
+                target: { nodeId: 'image', propertyId: 'assetRef' },
+              },
+              {
+                id: 'opacity',
+                label: 'Opacity',
+                target: { nodeId: 'image', propertyId: 'opacity' },
+              },
+            ],
+          },
+        },
+      }),
+    ).document!;
+  }
+  function reference(properties: Readonly<Record<string, unknown>> = {}): UiDocumentNode {
+    return {
+      type: 'composition-instance',
+      id: 'instance',
+      $authoring: {
+        component: { id: 'ui-document:definition', version: '1' },
+        properties,
+        layout: { strategyId: 'builtin.canvas', values: { placement } },
+      },
+    } as UiDocumentNode;
+  }
+  function consumer(properties: Readonly<Record<string, unknown>> = {}): UiDocumentV3 {
+    const base = fixture();
+    return createUiDocumentV3(
+      'consumer',
+      formatWidgetDocumentJson({
+        ...base.root,
+        $authoring: { ...base.root.$authoring, documentSchemaVersion: 3 },
+        children: [reference(properties)],
+      }),
+    ).document!;
+  }
+  function compositionContext(available = true): UiDocumentCommandV3AdmissionContext {
+    return {
+      ...context(({ component, property, value }) =>
+        component.id === 'test:image' &&
+        property.id === 'assetRef' &&
+        (typeof value !== 'string' || !value.startsWith('asset:'))
+          ? 'Only managed artwork is allowed.'
+          : null,
+      ),
+      compositionDefinitions: available
+        ? [{ document: definitionDocument(), sourceHash: 'a'.repeat(64) }]
+        : [],
+    };
+  }
+
+  it('admits sparse insertion into legacy source and reset through the same history owner', () => {
+    const state = createUiAuthoringSessionV3(fixture());
+    const inserted = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'insert-node',
+        commandId: 'insert-reference',
+        parentId: 'board',
+        index: 1,
+        node: reference(),
+      },
+      compositionContext(),
+    );
+    expect(inserted.status).toBe('applied');
+    if (inserted.status !== 'applied') return;
+    expect(inserted.state.document.root.$authoring.documentSchemaVersion).toBe(3);
+    expect(undoUiAuthoringSessionV3(inserted.state)!.document.source).toBe(state.document.source);
+    const override = applyAdmittedUiAuthoringSessionCommandV3(
+      inserted.state,
+      {
+        type: 'set-property',
+        commandId: 'override',
+        nodeId: 'instance',
+        propertyId: 'opacity',
+        value: { kind: 'literal', value: 0 },
+      },
+      compositionContext(),
+    );
+    expect(override.status).toBe('applied');
+    const reset = applyAdmittedUiAuthoringSessionCommandV3(
+      override.state,
+      {
+        type: 'set-property',
+        commandId: 'reset',
+        nodeId: 'instance',
+        propertyId: 'opacity',
+      },
+      compositionContext(),
+    );
+    expect(reset.status).toBe('applied');
+    expect(reset.state.document.source).toBe(inserted.state.document.source);
+    expect(undoUiAuthoringSessionV3(reset.state)!.document.source).toBe(
+      override.state.document.source,
+    );
+    expect(redoUiAuthoringSessionV3(undoUiAuthoringSessionV3(reset.state)!)!.document.source).toBe(
+      reset.state.document.source,
+    );
+  });
+
+  it.each([
+    ['artwork', { kind: 'literal', value: 'https://example.invalid/art.png' }],
+    ['opacity', { kind: 'literal', value: 2 }],
+    ['opacity', { kind: 'literal', value: '0' }],
+    ['unknown', { kind: 'literal', value: 'value' }],
+    ['artwork', { kind: 'expression', expressionId: 'dynamic' }],
+    ['artwork', { kind: 'literal', value: { nested: true } }],
+  ])('rejects invalid %s configuration without changing source or history', (propertyId, value) => {
+    const state = createUiAuthoringSessionV3(consumer());
+    const result = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'set-property',
+        commandId: 'invalid',
+        nodeId: 'instance',
+        propertyId: propertyId as string,
+        value: value as never,
+      },
+      compositionContext(),
+    );
+    expect(result.status).toBe('rejected');
+    expect(result.state).toBe(state);
+    expect(state.past).toEqual([]);
+  });
+
+  it('rolls back a valid first override when a later batch member violates original target policy', () => {
+    const state = createUiAuthoringSessionV3(consumer());
+    const result = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'batch',
+        commandId: 'batch',
+        commands: [
+          {
+            type: 'set-property',
+            commandId: 'valid',
+            nodeId: 'instance',
+            propertyId: 'opacity',
+            value: { kind: 'literal', value: 0 },
+          },
+          {
+            type: 'set-property',
+            commandId: 'invalid',
+            nodeId: 'instance',
+            propertyId: 'artwork',
+            value: { kind: 'literal', value: 'https://example.invalid/art.png' },
+          },
+        ],
+      },
+      compositionContext(),
+    );
+    expect(result.status).toBe('rejected');
+    expect(result.state).toBe(state);
+  });
+
+  it('preserves unavailable tuples across unrelated edits, viewport movement and removal', () => {
+    const document = consumer({ unknown: { kind: 'literal', value: '${literal}' } });
+    const state = createUiAuthoringSessionV3(document);
+    const missing = compositionContext(false);
+    const unrelated = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'set-property',
+        commandId: 'unrelated',
+        nodeId: 'board',
+        propertyId: 'label',
+        value: { kind: 'literal', value: 'Updated' },
+      },
+      missing,
+    );
+    expect(unrelated.status).toBe('applied');
+    const moved = applyAdmittedUiAuthoringSessionCommandV3(
+      unrelated.state,
+      {
+        type: 'set-layout',
+        commandId: 'move',
+        nodeId: 'instance',
+        strategyId: 'builtin.canvas',
+        values: {
+          placement: {
+            kind: 'literal',
+            value: { ...placement.value, x: { kind: 'length', value: 100, unit: 'px' } },
+          },
+        },
+      },
+      missing,
+    );
+    expect(moved.status).toBe('applied');
+    const child = (moved.state.document.root.children as UiDocumentNode[])[0]!;
+    expect(child.$authoring.component).toEqual(reference().$authoring.component);
+    expect(child.$authoring.properties).toEqual({
+      unknown: { kind: 'literal', value: '${literal}' },
+    });
+    const changed = applyAdmittedUiAuthoringSessionCommandV3(
+      moved.state,
+      {
+        type: 'set-property',
+        commandId: 'change',
+        nodeId: 'instance',
+        propertyId: 'unknown',
+        value: { kind: 'literal', value: 'changed' },
+      },
+      missing,
+    );
+    expect(changed.status).toBe('rejected');
+    expect(changed.state).toBe(moved.state);
+    const retained = applyAdmittedUiAuthoringSessionCommandV3(
+      moved.state,
+      {
+        type: 'replace-node',
+        commandId: 'retain-tuple',
+        nodeId: 'instance',
+        node: { ...child, note: 'Retained wrapper' },
+      },
+      missing,
+    );
+    expect(retained.status).toBe('applied');
+    const invalidPlacement = createUiDocumentV3(
+      'consumer',
+      formatWidgetDocumentJson({
+        ...document.root,
+        children: [
+          {
+            ...reference(),
+            $authoring: {
+              ...reference().$authoring,
+              layout: {
+                strategyId: 'builtin.canvas',
+                values: { placement: { kind: 'literal', value: 'invalid' } },
+              },
+            },
+          },
+        ],
+      }),
+    ).document!;
+    expect(validateUiDocumentV3AgainstContext(invalidPlacement, missing)[0]?.code).toBe(
+      'invalid-layout-value',
+    );
+    const inserted = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'insert-node',
+        commandId: 'new',
+        parentId: 'board',
+        index: 1,
+        node: { ...reference(), id: 'new' },
+      },
+      missing,
+    );
+    expect(inserted.status).toBe('rejected');
+    const removed = applyAdmittedUiAuthoringSessionCommandV3(
+      moved.state,
+      {
+        type: 'remove-node',
+        commandId: 'remove',
+        nodeId: 'instance',
+      },
+      missing,
+    );
+    expect(removed.status).toBe('applied');
+    expect(undoUiAuthoringSessionV3(removed.state)!.document.source).toBe(
+      moved.state.document.source,
+    );
+  });
+
+  it('allows a known invalid bag to be repaired only when the whole resulting instance is valid', () => {
+    const state = createUiAuthoringSessionV3(
+      consumer({
+        artwork: { kind: 'literal', value: 'https://example.invalid/art.png' },
+        opacity: { kind: 'literal', value: 0 },
+      }),
+    );
+    const incomplete = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'set-property',
+        commandId: 'incomplete',
+        nodeId: 'instance',
+        propertyId: 'opacity',
+        value: { kind: 'literal', value: 0.5 },
+      },
+      compositionContext(),
+    );
+    expect(incomplete.status).toBe('rejected');
+    const repaired = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'set-property',
+        commandId: 'repair',
+        nodeId: 'instance',
+        propertyId: 'artwork',
+      },
+      compositionContext(),
+    );
+    expect(repaired.status).toBe('applied');
+    expect(
+      validateUiDocumentV3AgainstContext(repaired.state.document, compositionContext()),
+    ).toEqual([]);
+  });
+
+  it('keeps generic declaration removal policy-neutral and validates remaining declarations', () => {
+    const state = createUiAuthoringSessionV3(definitionDocument());
+    const removed = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'set-composition-definition',
+        commandId: 'remove-declaration',
+      },
+      compositionContext(),
+    );
+    expect(removed.status).toBe('applied');
+    expect(removed.state.document.root.$authoring.compositionDefinition).toBeUndefined();
+    const targetRemoved = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'remove-node',
+        commandId: 'remove-target',
+        nodeId: 'image',
+      },
+      compositionContext(),
+    );
+    expect(targetRemoved.status).toBe('rejected');
+    expect(targetRemoved.state).toBe(state);
+  });
+});
+
+describe('historical ordinary scalar constraint admission', () => {
+  const descriptor: UiComponentDescriptor = {
+    id: 'test:ordinary-scalar',
+    version: '1',
+    kind: 'atomic',
+    designTime: { label: 'Ordinary scalar' },
+    properties: [
+      { id: 'text', value: { type: 'string', constraints: { minLength: 1, maxLength: 1 } } },
+      { id: 'amount', value: { type: 'number', constraints: { min: 0, max: 1, step: 0.5 } } },
+      { id: 'flag', value: { type: 'boolean' } },
+    ],
+  };
+  const ordinaryContext: UiDocumentCommandV3AdmissionContext = {
+    componentCatalog: {
+      component: (ref) =>
+        ref.id === descriptor.id && ref.version === descriptor.version ? descriptor : undefined,
+      components: () => [descriptor],
+    },
+    layoutProperties: [],
+    layoutStrategies: [],
+  };
+
+  function ordinaryDocument(version: undefined | 1 | 2): UiDocumentV3 {
+    const root: GenericWidget = {
+      type: 'text',
+      id: 'ordinary',
+      $authoring: {
+        ...(version === undefined ? {} : { documentSchemaVersion: version }),
+        component: { id: descriptor.id, version: descriptor.version },
+        properties: {
+          text: { kind: 'literal', value: 'A' },
+          amount: { kind: 'literal', value: 0.5 },
+          flag: { kind: 'literal', value: true },
+        },
+      },
+    };
+    const parsed = createUiDocumentV3('ordinary-document', formatWidgetDocumentJson(root));
+    expect(parsed.issues).toEqual([]);
+    expect(createUiDocumentV3('ordinary-document', parsed.document!.source).document!.source).toBe(
+      parsed.document!.source,
+    );
+    return parsed.document!;
+  }
+
+  describe.each([undefined, 1, 2] as const)('wire %s', (version) => {
+    it.each([
+      ['text', 'AB'],
+      ['text', ''],
+      ['amount', 0.25],
+    ] as const)('preserves historical acceptance for %s = %j', (propertyId, value) => {
+      const document = ordinaryDocument(version);
+      const admitted = admitUiDocumentCommandV3(
+        document,
+        {
+          type: 'set-property',
+          commandId: 'ordinary-edit',
+          nodeId: 'ordinary',
+          propertyId,
+          value: { kind: 'literal', value },
+        },
+        ordinaryContext,
+      );
+      expect(admitted.status).toBe('accepted');
+    });
+
+    it.each([
+      ['text', 42],
+      ['amount', '0.25'],
+      ['amount', -0.25],
+      ['amount', 1.25],
+      ['flag', 'true'],
+    ] as const)('retains historical type/min/max rejection for %s = %j', (propertyId, value) => {
+      const state = createUiAuthoringSessionV3(ordinaryDocument(version));
+      const rejected = applyAdmittedUiAuthoringSessionCommandV3(
+        state,
+        {
+          type: 'set-property',
+          commandId: 'ordinary-invalid',
+          nodeId: 'ordinary',
+          propertyId,
+          value: { kind: 'literal', value },
+        },
+        ordinaryContext,
+      );
+      expect(rejected.status).toBe('rejected');
+      expect(rejected.state).toBe(state);
+      expect(state.past).toEqual([]);
+    });
+  });
+});

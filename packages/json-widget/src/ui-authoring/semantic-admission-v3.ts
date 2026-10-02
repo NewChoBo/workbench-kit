@@ -2,7 +2,6 @@ import {
   isStructurallyValidUiValueSource,
   validateUiLayoutPropertyValue,
   validateUiLayoutStrategyDescriptor,
-  validateUiPropertyValue,
   type UiComponentDescriptor,
   type UiPropertyDescriptor,
   type UiValueSource,
@@ -10,10 +9,23 @@ import {
 
 import { collectWidgetNodes, type GenericWidget } from '../widget/tree.js';
 import { applyUiDocumentCommandV3WithReplayObserver } from './commands-v3.js';
-import { readUiDocumentNodeAuthoringV3 } from './document-v3.js';
-import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutability.js';
+import { createUiDocumentV3FromRoot, readUiDocumentNodeAuthoringV3 } from './document-v3.js';
+import {
+  describeUiCompositionDefinition,
+  validateUiCompositionInstance,
+  type UiCompositionDefinitionSource,
+} from './composition.js';
+import {
+  cloneUiAuthoringJsonValue,
+  deepFreezeUiAuthoringValue,
+  uiAuthoringDeclarativeEqual,
+} from './immutability.js';
 import { createLayoutPropertySupport } from './layout-property-support.js';
 import { applyUiAuthoringSessionCommandV3 } from './session-v3.js';
+import {
+  validateUiDocumentPropertySource,
+  type UiDocumentLiteralPolicy,
+} from './property-source-validation-v3.js';
 import type {
   ApplyUiDocumentCommandV3Result,
   UiAuthoringSessionStateV3,
@@ -33,6 +45,9 @@ export const UI_DOCUMENT_COMMAND_V3_ADMISSION_DIAGNOSTIC_CODES = Object.freeze([
   'invalid-layout-value',
   'invalid-structural-subtree',
   'product-policy-rejected',
+  'composition-unavailable',
+  'invalid-instance-parameters',
+  'invalid-composition-definition',
 ] as const);
 
 export type UiDocumentCommandV3AdmissionDiagnosticCode =
@@ -47,19 +62,14 @@ export interface UiDocumentCommandV3AdmissionDiagnostic {
   readonly propertyId?: string;
 }
 
-export interface UiDocumentLiteralPolicyInput {
-  readonly component: UiComponentDescriptor;
-  readonly nodeId: string;
-  readonly property: UiPropertyDescriptor;
-  readonly value: unknown;
-}
-
-export type UiDocumentLiteralPolicy = (
-  input: UiDocumentLiteralPolicyInput,
-) => string | null | undefined;
+export type {
+  UiDocumentLiteralPolicy,
+  UiDocumentLiteralPolicyInput,
+} from './property-source-validation-v3.js';
 
 export interface UiDocumentCommandV3AdmissionContext extends UiDocumentCommandV3Context {
   readonly validateLiteral?: UiDocumentLiteralPolicy;
+  readonly compositionDefinitions?: readonly UiCompositionDefinitionSource[];
 }
 
 export type UiDocumentCommandV3AdmissionResult =
@@ -125,6 +135,13 @@ function snapshotAdmissionContext(
       cloneUiAuthoringJsonValue(context.layoutStrategies),
     ),
     ...(validateLiteral === undefined ? {} : { validateLiteral }),
+    ...(context.compositionDefinitions === undefined
+      ? {}
+      : {
+          compositionDefinitions: deepFreezeUiAuthoringValue(
+            cloneUiAuthoringJsonValue(context.compositionDefinitions),
+          ),
+        }),
   });
 }
 
@@ -143,33 +160,6 @@ function diagnostic(
     ...(command.nodeId === undefined ? {} : { nodeId: command.nodeId }),
     ...(propertyId === undefined ? {} : { propertyId }),
   });
-}
-
-function declaredLiteralIssue(value: unknown, property: UiPropertyDescriptor): string | null {
-  switch (property.value.type) {
-    case 'string':
-    case 'color':
-    case 'enum':
-      return typeof value === 'string' ? null : 'The property requires a string literal.';
-    case 'number': {
-      if (typeof value !== 'number' || !Number.isFinite(value)) {
-        return 'The property requires a finite number literal.';
-      }
-      const minimum = property.value.constraints?.min;
-      const maximum = property.value.constraints?.max;
-      if (typeof minimum === 'number' && Number.isFinite(minimum) && value < minimum) {
-        return `The property value must be at least ${minimum}.`;
-      }
-      if (typeof maximum === 'number' && Number.isFinite(maximum) && value > maximum) {
-        return `The property value must be at most ${maximum}.`;
-      }
-      return null;
-    }
-    case 'boolean':
-      return typeof value === 'boolean' ? null : 'The property requires a boolean literal.';
-    default:
-      return null;
-  }
 }
 
 function exactComponent(
@@ -231,73 +221,16 @@ function validatePropertySource(
   command: Readonly<{ readonly commandId?: string; readonly nodeId?: string }>,
   path: string,
 ): UiDocumentCommandV3AdmissionDiagnostic | null {
-  if (!isStructurallyValidUiValueSource(source)) {
-    return diagnostic(
-      'invalid-property-value',
-      `Property "${property.id}" has an invalid value source.`,
-      path,
-      command,
-      property.id,
-    );
-  }
-  const genericIssues = validateUiPropertyValue(property, source, {
-    literalValidator: declaredLiteralIssue,
-  });
-  if (genericIssues.length > 0) {
-    return diagnostic(
-      'invalid-property-value',
-      genericIssues[0]!.message,
-      path,
-      command,
-      property.id,
-    );
-  }
-  if (source.kind !== 'literal' || context.validateLiteral === undefined) return null;
-
-  let policyComponent: UiComponentDescriptor;
-  let policyProperty: UiPropertyDescriptor;
-  try {
-    policyComponent = deepFreezeUiAuthoringValue(
-      cloneUiAuthoringJsonValue(component),
-    ) as UiComponentDescriptor;
-    const matchingProperties =
-      policyComponent.properties?.filter((candidate) => candidate.id === property.id) ?? [];
-    if (matchingProperties.length !== 1) throw new TypeError('Property snapshot is unavailable.');
-    policyProperty = matchingProperties[0]!;
-  } catch {
-    return diagnostic(
-      'property-unavailable',
-      `Property "${property.id}" could not be safely exposed to product policy.`,
-      path,
-      command,
-      property.id,
-    );
-  }
-
-  let policyMessage: unknown;
-  try {
-    policyMessage = context.validateLiteral(
-      Object.freeze({
-        component: policyComponent,
-        nodeId,
-        property: policyProperty,
-        value: source.value,
-      }),
-    );
-  } catch {
-    policyMessage = 'Product literal policy rejected the value.';
-  }
-  return policyMessage === undefined || policyMessage === null
+  const issue = validateUiDocumentPropertySource(
+    component,
+    nodeId,
+    property,
+    source,
+    context.validateLiteral,
+  );
+  return issue === null
     ? null
-    : diagnostic(
-        'product-policy-rejected',
-        typeof policyMessage === 'string' && policyMessage.trim().length > 0
-          ? policyMessage.trim()
-          : 'Product literal policy rejected the value.',
-        path,
-        command,
-        property.id,
-      );
+    : diagnostic(issue.code, issue.message, path, command, issue.propertyId);
 }
 
 function validateLayout(
@@ -355,12 +288,98 @@ function validateLayout(
   return null;
 }
 
+function validateInstance(
+  node: GenericWidget,
+  context: UiDocumentCommandV3AdmissionContext,
+  command: Readonly<{ readonly commandId?: string; readonly nodeId?: string }>,
+  path: string,
+): UiDocumentCommandV3AdmissionDiagnostic | null {
+  const first = validateUiCompositionInstance(node, context).diagnostics[0];
+  return first === undefined
+    ? null
+    : diagnostic(
+        first.code === 'invalid-instance-parameters'
+          ? 'invalid-instance-parameters'
+          : 'composition-unavailable',
+        first.message,
+        path,
+        command,
+        first.propertyId,
+      );
+}
+
+function validateInstanceLayout(
+  node: GenericWidget,
+  strategyId: string,
+  values: Readonly<Record<string, UiValueSource>>,
+  context: UiDocumentCommandV3AdmissionContext,
+  command: Readonly<{ readonly commandId?: string; readonly nodeId?: string }>,
+  path: string,
+): UiDocumentCommandV3AdmissionDiagnostic | null {
+  // Wrapper placement is independent of unavailable parameter metadata.
+  const authoring = readUiDocumentNodeAuthoringV3(node)!;
+  const strategies = context.layoutStrategies.filter(
+    (strategy) => strategy.id === strategyId && strategy.kind === 'canvas',
+  );
+  if (
+    strategies.length !== 1 ||
+    Object.keys(values).some(
+      (id) =>
+        !context.layoutProperties.some(
+          (property) => property.id === id && property.scope === 'child',
+        ),
+    )
+  ) {
+    return diagnostic(
+      'invalid-layout-value',
+      'Instance viewports support declared child canvas placement only.',
+      path,
+      command,
+    );
+  }
+  return validateLayout(
+    {
+      ...authoring.component,
+      kind: 'atomic',
+      designTime: { label: 'Composition instance' },
+      layout: { supportedStrategyIds: [strategyId] },
+    },
+    strategyId,
+    values,
+    context,
+    command,
+    path,
+  );
+}
+
 function validateAuthoredNode(
   node: GenericWidget,
   context: UiDocumentCommandV3AdmissionContext,
   command: Readonly<{ readonly commandId?: string; readonly nodeId?: string }>,
   path: string,
 ): UiDocumentCommandV3AdmissionDiagnostic | null {
+  if (node.type === 'composition-instance') {
+    const authoring = readUiDocumentNodeAuthoringV3(node);
+    if (authoring === null)
+      return diagnostic(
+        'invalid-structural-subtree',
+        'The instance authoring envelope is invalid.',
+        path,
+        command,
+      );
+    if (authoring.layout !== undefined) {
+      const issue = validateInstanceLayout(
+        node,
+        authoring.layout.strategyId,
+        authoring.layout.values,
+        context,
+        command,
+        path,
+      );
+      if (issue !== null) return issue;
+    }
+    return validateInstance(node, context, command, path);
+  }
   const component = exactComponent(context, node, command, path);
   if ('code' in component) return component;
   const authoring = readUiDocumentNodeAuthoringV3(node)!;
@@ -443,6 +462,19 @@ export function validateUiDocumentV3AgainstContext(
     );
     if (issue !== null) diagnostics.push(issue);
   }
+  if (readUiDocumentNodeAuthoringV3(document.root)?.compositionDefinition !== undefined) {
+    const first = describeUiCompositionDefinition(document, safeContext).diagnostics[0];
+    if (first !== undefined)
+      diagnostics.push(
+        diagnostic(
+          'invalid-composition-definition',
+          first.message,
+          'document.compositionDefinition',
+          {},
+          first.propertyId,
+        ),
+      );
+  }
   return Object.freeze(diagnostics);
 }
 
@@ -457,14 +489,62 @@ function validateAtomicCommand(
   index: number,
 ): UiDocumentCommandV3AdmissionDiagnostic | null {
   const path = `command${index < 0 ? '' : `.commands[${index}]`}`;
+  if (command.type === 'set-composition-definition') {
+    if (command.definition === undefined) return null;
+    const candidate = createUiDocumentV3FromRoot(document.documentId, document.revision, {
+      ...document.root,
+      $authoring: {
+        ...document.root.$authoring,
+        documentSchemaVersion: 3,
+        compositionDefinition: command.definition,
+      },
+    });
+    if (candidate.document === null)
+      return diagnostic(
+        'invalid-composition-definition',
+        candidate.issues[0]!.message,
+        path,
+        command,
+      );
+    const first = describeUiCompositionDefinition(candidate.document, context).diagnostics[0];
+    return first === undefined
+      ? null
+      : diagnostic(
+          'invalid-composition-definition',
+          first.message,
+          path,
+          command,
+          first.propertyId,
+        );
+  }
   if (command.type === 'insert-node' || command.type === 'replace-node') {
     for (const [subtreeIndex, entry] of collectWidgetNodes(command.node).entries()) {
-      const issue = validateAuthoredNode(
-        entry.widget,
-        context,
-        command,
-        `${path}.node.nodes[${subtreeIndex}]`,
-      );
+      const nodePath = `${path}.node.nodes[${subtreeIndex}]`;
+      const before =
+        command.type === 'replace-node' && typeof entry.widget.id === 'string'
+          ? targetNode(document, entry.widget.id)
+          : undefined;
+      const beforeAuthoring = before === undefined ? null : readUiDocumentNodeAuthoringV3(before);
+      const afterAuthoring = readUiDocumentNodeAuthoringV3(entry.widget);
+      const unchangedInstance =
+        before?.type === 'composition-instance' &&
+        entry.widget.type === 'composition-instance' &&
+        beforeAuthoring !== null &&
+        afterAuthoring !== null &&
+        uiAuthoringDeclarativeEqual(beforeAuthoring.component, afterAuthoring.component) &&
+        uiAuthoringDeclarativeEqual(beforeAuthoring.properties, afterAuthoring.properties);
+      const issue = unchangedInstance
+        ? afterAuthoring.layout === undefined
+          ? null
+          : validateInstanceLayout(
+              entry.widget,
+              afterAuthoring.layout.strategyId,
+              afterAuthoring.layout.values,
+              context,
+              command,
+              nodePath,
+            )
+        : validateAuthoredNode(entry.widget, context, command, nodePath);
       if (issue !== null) return issue;
     }
     return null;
@@ -486,6 +566,40 @@ function validateAtomicCommand(
       `Authored node "${command.nodeId}" is unavailable.`,
       `${path}.nodeId`,
       command,
+    );
+  }
+  if (node.type === 'composition-instance') {
+    if (command.type === 'set-layout') {
+      return validateInstanceLayout(
+        node,
+        command.strategyId,
+        command.values,
+        context,
+        command,
+        path,
+      );
+    }
+    if (command.type !== 'set-property')
+      return diagnostic(
+        'invalid-command',
+        'Instance configuration uses base scalar property commands.',
+        path,
+        command,
+      );
+    const authoring = readUiDocumentNodeAuthoringV3(node)!;
+    const properties = { ...authoring.properties };
+    if (command.value === undefined) delete properties[command.propertyId];
+    else
+      Object.defineProperty(properties, command.propertyId, {
+        enumerable: true,
+        configurable: true,
+        value: command.value,
+      });
+    return validateInstance(
+      { ...node, $authoring: { ...authoring, properties } },
+      context,
+      command,
+      path,
     );
   }
   const component = exactComponent(context, node, command, `${path}.nodeId`);
@@ -541,7 +655,20 @@ function semanticReplayIssue(
     },
   );
   if (semanticIssue !== null) return semanticIssue;
-  if (replay.issues.length === 0) return null;
+  if (replay.issues.length === 0) {
+    if (readUiDocumentNodeAuthoringV3(replay.document.root)?.compositionDefinition !== undefined) {
+      const first = describeUiCompositionDefinition(replay.document, context).diagnostics[0];
+      if (first !== undefined)
+        return diagnostic(
+          'invalid-composition-definition',
+          first.message,
+          'document.compositionDefinition',
+          command,
+          first.propertyId,
+        );
+    }
+    return null;
+  }
   const first = replay.issues[0]!;
   return diagnostic(
     'invalid-command',
@@ -608,6 +735,9 @@ export function admitUiDocumentCommandV3(
     componentCatalog: safeContext.componentCatalog,
     layoutProperties: safeContext.layoutProperties,
     layoutStrategies: safeContext.layoutStrategies,
+    ...(safeContext.compositionDefinitions === undefined
+      ? {}
+      : { compositionDefinitions: safeContext.compositionDefinitions }),
   });
   const genericIssue = semanticReplayIssue(document, safeCommand, genericContext);
   if (genericIssue !== null) return rejectedAdmission(genericIssue);

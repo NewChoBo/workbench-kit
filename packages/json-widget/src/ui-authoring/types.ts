@@ -276,12 +276,25 @@ export interface UiResponsiveNodeOverride {
   };
 }
 
+export interface UiCompositionParameter {
+  readonly id: string;
+  readonly label: string;
+  readonly target: { readonly nodeId: string; readonly propertyId: string };
+}
+
+export interface UiCompositionDefinition {
+  readonly interfaceVersion: string;
+  readonly parameters: readonly UiCompositionParameter[];
+}
+
 export interface UiDocumentNodeAuthoringV3 extends Omit<
   UiDocumentNodeAuthoring,
   'documentSchemaVersion'
 > {
-  /** Root only: omitted = v0, 1 = endpoint-binding format, 2 = responsive format. */
-  readonly documentSchemaVersion?: 1 | 2;
+  /** Root only: omitted = v0, 1 = bindings, 2 = responsive, 3 = compositions. */
+  readonly documentSchemaVersion?: 1 | 2 | 3;
+  /** Root-only declaration. Defaults remain at the authored target properties. */
+  readonly compositionDefinition?: UiCompositionDefinition;
   /** Semantic-root only. */
   readonly responsiveVariants?: readonly UiResponsiveVariantDescriptor[];
   /** Exact root-catalog variant ids mapped to sparse node overrides. */
@@ -306,7 +319,11 @@ export type UiDocumentV3IssueCode =
   | 'nonroot-responsive-variant-catalog'
   | 'invalid-responsive-overrides'
   | 'responsive-variant-not-found'
-  | 'responsive-state-requires-document-schema-version';
+  | 'responsive-state-requires-document-schema-version'
+  | 'composition-state-requires-document-schema-version'
+  | 'invalid-composition-definition'
+  | 'invalid-composition-instance'
+  | 'nonroot-composition-definition';
 
 export interface UiDocumentV3Issue extends Omit<UiDocumentIssue, 'code'> {
   readonly code: UiDocumentV3IssueCode;
@@ -325,6 +342,11 @@ export interface UiDocumentCommandV3Context extends UiDocumentCommandV2Context {
 
 export type UiDocumentAtomicCommandV3 =
   | UiDocumentAtomicCommandV2
+  | {
+      readonly type: 'set-composition-definition';
+      readonly commandId: string;
+      readonly definition?: UiCompositionDefinition;
+    }
   | {
       readonly type: 'upsert-responsive-variant';
       readonly commandId: string;

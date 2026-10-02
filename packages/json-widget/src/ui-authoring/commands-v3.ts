@@ -12,6 +12,7 @@ import { applyUiDocumentCommandV2 } from './commands-v2.js';
 import {
   createUiDocumentV3FromRoot,
   readUiDocumentNodeAuthoringV3,
+  isUiCompositionDefinitionShape,
   toUiDocumentV2CompatibilityView,
   validateUiDocumentRootV3,
 } from './document-v3.js';
@@ -38,6 +39,11 @@ import {
   type UiResponsiveNodeOverride,
   type UiResponsiveVariantDescriptor,
 } from './types.js';
+
+type ResponsiveCommand = Exclude<
+  UiDocumentAtomicCommandV3,
+  UiDocumentAtomicCommandV2 | { readonly type: 'set-composition-definition' }
+>;
 
 type V3Issue =
   | UiDocumentIssue
@@ -71,9 +77,7 @@ function isPlainRecord(value: unknown): value is Readonly<Record<string, unknown
   return prototype === Object.prototype || prototype === null;
 }
 
-function isResponsiveCommand(
-  command: UiDocumentAtomicCommandV3,
-): command is Exclude<UiDocumentAtomicCommandV3, UiDocumentAtomicCommandV2> {
+function isResponsiveCommand(command: UiDocumentAtomicCommandV3): command is ResponsiveCommand {
   return RESPONSIVE_COMMAND_TYPES.includes(
     command.type as (typeof RESPONSIVE_COMMAND_TYPES)[number],
   );
@@ -122,6 +126,12 @@ function knownAtomicCommand(value: unknown): value is UiDocumentAtomicCommandV3 
     ].includes(value.type)
   ) {
     return typeof value.commandId === 'string';
+  }
+  if (value.type === 'set-composition-definition') {
+    return (
+      typeof value.commandId === 'string' &&
+      (value.definition === undefined || isUiCompositionDefinitionShape(value.definition))
+    );
   }
   if (!RESPONSIVE_COMMAND_TYPES.includes(value.type as never)) return false;
   if (typeof value.commandId !== 'string') return false;
@@ -253,10 +263,24 @@ function restoreResponsiveState(
     const authoring = { ...rawAuthoring } as Record<string, unknown>;
     delete authoring.responsiveVariants;
     delete authoring.responsiveOverrides;
-    if (semanticRoot && beforeRootAuthoring.documentSchemaVersion === 2) {
-      authoring.documentSchemaVersion = 2;
+    if (
+      semanticRoot &&
+      (beforeRootAuthoring.documentSchemaVersion === 2 ||
+        beforeRootAuthoring.documentSchemaVersion === 3)
+    ) {
+      authoring.documentSchemaVersion = beforeRootAuthoring.documentSchemaVersion;
       if (Array.isArray(beforeRootAuthoring.responsiveVariants)) {
         authoring.responsiveVariants = beforeRootAuthoring.responsiveVariants;
+      }
+    }
+    if (semanticRoot) {
+      if (beforeRootAuthoring.compositionDefinition !== undefined) {
+        authoring.compositionDefinition = beforeRootAuthoring.compositionDefinition;
+      }
+      if (
+        collectWidgetNodes(afterRoot).some((entry) => entry.widget.type === 'composition-instance')
+      ) {
+        authoring.documentSchemaVersion = 3;
       }
     }
     if (nodeId !== undefined && !excludedNodeIds.has(nodeId)) {
@@ -288,7 +312,9 @@ function payloadContainsResponsiveState(command: UiDocumentAtomicCommandV2): boo
     return (
       Object.prototype.hasOwnProperty.call(authoring, 'responsiveVariants') ||
       Object.prototype.hasOwnProperty.call(authoring, 'responsiveOverrides') ||
-      authoring.documentSchemaVersion === 2
+      Object.prototype.hasOwnProperty.call(authoring, 'compositionDefinition') ||
+      authoring.documentSchemaVersion === 2 ||
+      authoring.documentSchemaVersion === 3
     );
   });
 }
@@ -407,7 +433,7 @@ function replaceTargetAuthoring(
     widget: { ...entry.widget, [UI_DOCUMENT_AUTHORING_ARG]: authoring },
   }).root;
   const rootAuthoring = responsiveAuthoring(root);
-  if (rootAuthoring.documentSchemaVersion !== 2) {
+  if (rootAuthoring.documentSchemaVersion !== 2 && rootAuthoring.documentSchemaVersion !== 3) {
     root = {
       ...root,
       [UI_DOCUMENT_AUTHORING_ARG]: { ...rootAuthoring, documentSchemaVersion: 2 },
@@ -447,7 +473,7 @@ function withResponsiveOverride(
 
 function applyResponsiveCommand(
   document: UiDocumentV3,
-  command: Exclude<UiDocumentAtomicCommandV3, UiDocumentAtomicCommandV2>,
+  command: ResponsiveCommand,
   context: UiDocumentCommandV3Context,
 ): AtomicApplyResult {
   const rootAuthoring = responsiveAuthoring(document.root);
@@ -464,7 +490,7 @@ function applyResponsiveCommand(
       ...document.root,
       [UI_DOCUMENT_AUTHORING_ARG]: {
         ...rootAuthoring,
-        documentSchemaVersion: 2,
+        documentSchemaVersion: rootAuthoring.documentSchemaVersion === 3 ? 3 : 2,
         responsiveVariants: canonicalizeUiResponsiveVariantCatalog(nextCatalog),
       },
     };
@@ -513,7 +539,10 @@ function applyResponsiveCommand(
       };
     }
     const nextCatalog = catalog.filter((variant) => variant.id !== command.variantId);
-    const nextAuthoring = { ...rootAuthoring, documentSchemaVersion: 2 } as Record<string, unknown>;
+    const nextAuthoring = {
+      ...rootAuthoring,
+      documentSchemaVersion: rootAuthoring.documentSchemaVersion === 3 ? 3 : 2,
+    } as Record<string, unknown>;
     if (nextCatalog.length === 0) delete nextAuthoring.responsiveVariants;
     else nextAuthoring.responsiveVariants = canonicalizeUiResponsiveVariantCatalog(nextCatalog);
     const next = createUiDocumentV3FromRoot(document.documentId, document.revision + 1, {
@@ -716,6 +745,25 @@ function applyAtomicCommand(
   command: UiDocumentAtomicCommandV3,
   context: UiDocumentCommandV3Context,
 ): AtomicApplyResult {
+  if (command.type === 'set-composition-definition') {
+    const authoring = { ...responsiveAuthoring(document.root) } as Record<string, unknown>;
+    if (command.definition === undefined) delete authoring.compositionDefinition;
+    else {
+      authoring.compositionDefinition = command.definition;
+      authoring.documentSchemaVersion = 3;
+    }
+    const next = createUiDocumentV3FromRoot(document.documentId, document.revision + 1, {
+      ...document.root,
+      [UI_DOCUMENT_AUTHORING_ARG]: authoring,
+    });
+    return next.document === null
+      ? { document, issues: next.issues, changed: false }
+      : {
+          document: next.document,
+          issues: Object.freeze([]),
+          changed: next.document.source !== document.source,
+        };
+  }
   return isResponsiveCommand(command)
     ? applyResponsiveCommand(document, command, context)
     : applyInheritedCommand(document, command, context);

@@ -219,6 +219,33 @@ async function runPackedConsumerChecks() {
     );
   }
   console.log(
+    '[check-packed-consumer] Typechecking focused V3 composition exports with exact optional properties...',
+  );
+  for (const [moduleKind, moduleResolution, target] of [
+    ['ESNext', 'Bundler', 'ES2022'],
+    ['CommonJS', 'Node', 'ES2020'],
+  ]) {
+    runCommand(
+      'pnpm',
+      [
+        'exec',
+        'tsc',
+        '--module',
+        moduleKind,
+        '--moduleResolution',
+        moduleResolution,
+        '--exactOptionalPropertyTypes',
+        '--noEmit',
+        '--skipLibCheck',
+        '--strict',
+        '--target',
+        target,
+        path.join(consumerDir, 'src', 'composition-types.ts'),
+      ],
+      { cwd: repoRoot, stdio: 'inherit' },
+    );
+  }
+  console.log(
     '[check-packed-consumer] Typechecking focused SchemaForm exports with exact optional properties...',
   );
   for (const [moduleKind, moduleResolution, target] of [
@@ -341,6 +368,12 @@ async function runPackedConsumerChecks() {
     cwd: consumerDir,
     stdio: 'inherit',
   });
+  for (const extension of ['cjs', 'mjs']) {
+    runCommand('node', [path.join(consumerDir, 'src', `composition-runtime.${extension}`)], {
+      cwd: consumerDir,
+      stdio: 'inherit',
+    });
+  }
   runCommand('node', [path.join(consumerDir, 'src', 'authoring-development-runtime.cjs')], {
     cwd: consumerDir,
     stdio: 'inherit',
@@ -3830,6 +3863,11 @@ export function consumeUiDocumentCommandV2(command: UiDocumentCommandV2): string
 
 export function consumeUiDocumentCommandV3(command: UiDocumentCommandV3): string {
   switch (command.type) {
+    case 'set-composition-definition': {
+      const definition: UiDocumentNodeAuthoringV3['compositionDefinition'] = command.definition;
+      void definition;
+      return command.type;
+    }
     case 'insert-node':
     case 'remove-node':
     case 'replace-node':
@@ -4090,6 +4128,168 @@ export const packedAuthoringV3Functions = Object.freeze({
 `,
   );
   fs.writeFileSync(
+    path.join(consumerDir, 'src', 'composition-types.ts'),
+    `import {
+  describeUiCompositionDefinition,
+  resolveUiCompositionInstances,
+  uiCompositionComponentRef,
+  type UiCompositionDefinitionDescription,
+  type UiCompositionNodeProvenance,
+  type UiCompositionParameterDescriptor,
+  type UiCompositionResolution,
+  type UiDocumentCommandV3AdmissionContext,
+  type UiDocumentV3,
+} from '@workbench-kit/jdw/ui-authoring/v3';
+
+declare const document: UiDocumentV3;
+declare const baseContext: UiDocumentCommandV3AdmissionContext;
+
+export const context: UiDocumentCommandV3AdmissionContext = {
+  ...baseContext,
+  compositionDefinitions: [{ document, sourceHash: 'a'.repeat(64) }],
+};
+export const reference = uiCompositionComponentRef(document.documentId, '1');
+export const description: UiCompositionDefinitionDescription =
+  describeUiCompositionDefinition(document, context);
+export const parameters: readonly UiCompositionParameterDescriptor[] = description.parameters;
+export const resolution: UiCompositionResolution = resolveUiCompositionInstances(document, context);
+export const provenance: Readonly<Record<string, UiCompositionNodeProvenance>> = resolution.provenance;
+
+// @ts-expect-error Exact optional properties require omission, not explicit undefined.
+export const invalidContext: UiDocumentCommandV3AdmissionContext = {
+  ...baseContext,
+  compositionDefinitions: undefined,
+};
+`,
+  );
+  const compositionRuntime = `
+const sourceHash = 'a'.repeat(64);
+const components = [
+  {
+    id: 'packed:freeform', version: '1', kind: 'composite',
+    compositionRef: 'packed:freeform', properties: [], designTime: { label: 'Freeform' },
+  },
+  {
+    id: 'packed:text', version: '1', kind: 'atomic',
+    properties: [{ id: 'text', required: true, value: { type: 'string' } }],
+    designTime: { label: 'Text' },
+  },
+];
+const literal = (value) => ({ kind: 'literal', value });
+const context = {
+  componentCatalog: {
+    component: (ref) => components.find((item) => item.id === ref.id && item.version === ref.version),
+    components: () => components,
+  },
+  layoutProperties: [],
+  layoutStrategies: [],
+};
+function parse(documentId, root) {
+  const result = authoringV3.createUiDocumentV3(documentId, authoringV3.formatWidgetDocumentJson(root));
+  assert.deepEqual(result.issues, []);
+  assert.ok(result.document);
+  return result.document;
+}
+function definition(text) {
+  return parse('packed-definition', {
+    id: 'definition-root', type: 'freeform',
+    $authoring: {
+      component: { id: 'packed:freeform', version: '1' }, properties: {},
+      documentSchemaVersion: 3,
+      compositionDefinition: {
+        interfaceVersion: '1',
+        parameters: [{ id: 'title', label: 'Title', target: { nodeId: 'title-node', propertyId: 'text' } }],
+      },
+    },
+    children: [{
+      id: 'title-node', type: 'text',
+      $authoring: { component: { id: 'packed:text', version: '1' }, properties: { text: literal(text) } },
+    }],
+  });
+}
+const template = definition('Template title');
+const definitionContext = { ...context, compositionDefinitions: [{ document: template, sourceHash }] };
+const description = authoringV3.describeUiCompositionDefinition(template, definitionContext);
+assert.deepEqual(description.diagnostics, []);
+assert.equal(description.parameters[0].defaultValue, 'Template title');
+assert.equal(description.parameters[0].property.id, 'text');
+assert.equal(description.descriptor.properties[0].value.type, 'string');
+assert.equal(description.descriptor.properties[0].value.defaultValue, 'Template title');
+const literalTitle = '$' + '{item.title}';
+const reference = authoringV3.uiCompositionComponentRef('packed-definition', '1');
+assert.deepEqual(reference, { id: 'ui-document:packed-definition', version: '1' });
+const document = parse('packed-consumer', {
+  id: 'consumer-root', type: 'freeform',
+  $authoring: {
+    component: { id: 'packed:freeform', version: '1' }, properties: {}, documentSchemaVersion: 3,
+  },
+  children: [
+    { id: 'instance-a', type: 'composition-instance', $authoring: { component: reference, properties: { title: literal(literalTitle) } } },
+    { id: 'instance-b', type: 'composition-instance', $authoring: { component: reference, properties: {} } },
+  ],
+});
+const originalSource = document.source;
+const expanded = authoringV3.resolveUiCompositionInstances(document, definitionContext);
+assert.deepEqual(expanded.diagnostics, []);
+assert.deepEqual(expanded.dependencies, [{ documentId: 'packed-definition', interfaceVersion: '1', sourceHash }]);
+function projectedId(instanceId) {
+  return 'ui-instance:' + Buffer.from(JSON.stringify([
+    'packed-consumer', instanceId, 'packed-definition', 'title-node',
+  ]), 'utf8').toString('base64url');
+}
+function projectedText(result, instanceId) {
+  const projected = authoringV3.collectWidgetNodes(result.root).find(({ widget }) => widget.id === projectedId(instanceId));
+  assert.ok(projected);
+  return projected.widget.$authoring.properties.text.value;
+}
+assert.equal(projectedText(expanded, 'instance-a'), literalTitle);
+assert.equal(projectedText(expanded, 'instance-b'), 'Template title');
+assert.deepEqual(expanded.provenance[projectedId('instance-a')], {
+  consumerDocumentId: 'packed-consumer', instanceNodeId: 'instance-a',
+  definitionDocumentId: 'packed-definition', definitionNodeId: 'title-node',
+  interfaceVersion: '1', sourceHash, parameters: { title: 'override' },
+});
+assert.deepEqual(expanded.provenance[projectedId('instance-b')].parameters, { title: 'template' });
+assert.equal(document.source, originalSource);
+assert.deepEqual(authoringV3.collectWidgetNodes(document.root).map(({ widget }) => widget.id), [
+  'consumer-root', 'instance-a', 'instance-b',
+]);
+const nextHash = 'b'.repeat(64);
+const updated = authoringV3.resolveUiCompositionInstances(document, {
+  ...context, compositionDefinitions: [{ document: definition('Updated title'), sourceHash: nextHash }],
+});
+assert.deepEqual(updated.diagnostics, []);
+assert.equal(projectedText(updated, 'instance-a'), literalTitle);
+assert.equal(projectedText(updated, 'instance-b'), 'Updated title');
+assert.deepEqual(Object.keys(updated.provenance), Object.keys(expanded.provenance));
+assert.equal(updated.dependencies[0].sourceHash, nextHash);
+assert.equal(document.source, originalSource);
+const unavailable = authoringV3.resolveUiCompositionInstances(document, context);
+assert.ok(unavailable.diagnostics.some(({ code }) => code === 'definition-unavailable'));
+assert.deepEqual(unavailable.root.children, document.root.children);
+assert.deepEqual(unavailable.provenance, {});
+const invalidRoot = JSON.parse(JSON.stringify(document.root));
+invalidRoot.children[0].$authoring.properties.title = literal(42);
+const invalid = parse('packed-consumer', invalidRoot);
+const invalidResult = authoringV3.resolveUiCompositionInstances(invalid, definitionContext);
+assert.ok(invalidResult.diagnostics.some(({ code, nodeId }) => code === 'invalid-instance-parameters' && nodeId === 'instance-a'));
+assert.equal(invalidResult.root.children[0].child, undefined);
+assert.deepEqual(invalidResult.root.children[0].$authoring, invalid.root.children[0].$authoring);
+assert.equal(projectedText(invalidResult, 'instance-b'), 'Template title');
+`;
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'composition-runtime.cjs'),
+    `const assert = require('node:assert/strict');
+const authoringV3 = require('@workbench-kit/jdw/ui-authoring/v3');
+${compositionRuntime}`,
+  );
+  fs.writeFileSync(
+    path.join(consumerDir, 'src', 'composition-runtime.mjs'),
+    `import assert from 'node:assert/strict';
+import * as authoringV3 from '@workbench-kit/jdw/ui-authoring/v3';
+${compositionRuntime}`,
+  );
+  fs.writeFileSync(
     path.join(consumerDir, 'src', 'node-ui-authoring-runtime.cjs'),
     `const jdw = require('@workbench-kit/jdw');
 
@@ -4148,6 +4348,8 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
+  '@workbench-kit/jdw/ui-authoring/composition',
+  '@workbench-kit/jdw/ui-authoring/property-source-validation-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -4175,13 +4377,16 @@ for (const name of [
   'collectWidgetNodes',
   'createUiAuthoringSessionV3',
   'createUiDocumentV3',
+  'describeUiCompositionDefinition',
   'formatUiDocumentV3',
   'formatWidgetDocumentJson',
   'getWidgetChildren',
   'readUiDocumentNodeAuthoringV3',
+  'resolveUiCompositionInstances',
   'redoUiAuthoringSessionV3',
   'selectUiDocumentNodesV3',
   'undoUiAuthoringSessionV3',
+  'uiCompositionComponentRef',
   'validateUiDocumentV3AgainstContext',
 ]) {
   if (typeof authoringV3[name] !== 'function') {
@@ -4249,6 +4454,8 @@ for (const name of ['cloneUiAuthoringJsonValue', 'deepFreezeUiAuthoringValue']) 
 for (const subpath of [
   '@workbench-kit/jdw/ui-authoring/generative-plan',
   '@workbench-kit/jdw/ui-authoring/immutability',
+  '@workbench-kit/jdw/ui-authoring/composition',
+  '@workbench-kit/jdw/ui-authoring/property-source-validation-v3',
 ]) {
   let privateSubpathRejected = false;
   try {
@@ -4276,13 +4483,16 @@ for (const name of [
   'collectWidgetNodes',
   'createUiAuthoringSessionV3',
   'createUiDocumentV3',
+  'describeUiCompositionDefinition',
   'formatUiDocumentV3',
   'formatWidgetDocumentJson',
   'getWidgetChildren',
   'readUiDocumentNodeAuthoringV3',
+  'resolveUiCompositionInstances',
   'redoUiAuthoringSessionV3',
   'selectUiDocumentNodesV3',
   'undoUiAuthoringSessionV3',
+  'uiCompositionComponentRef',
   'validateUiDocumentV3AgainstContext',
 ]) {
   if (typeof authoringV3[name] !== 'function') {
@@ -4554,6 +4764,7 @@ container.remove();
         },
         exclude: [
           'src/authoring-development-types.ts',
+          'src/composition-types.ts',
           'src/external-node-catalog-types.ts',
           'src/schema-form-types.ts',
           'src/semantic-admission-types.ts',

@@ -1278,3 +1278,29 @@ describe('generative UI plans', () => {
     ).toBe('stale-design-system');
   });
 });
+
+it('keeps composition declaration authoring outside the planner command allowlist', () => {
+  const state = createUiAuthoringSessionV3(documentFixture(), ['child']);
+  const tracked = trackedCatalog();
+  const admission = admit(requestFixture(state), state, tracked.catalog);
+  if (admission.status !== 'admitted') throw new Error('Expected an admitted request.');
+  const plan = createPlan(
+    admission.request,
+    proposalFixture([
+      {
+        type: 'set-composition-definition',
+        commandId: 'declare-composition',
+        definition: { interfaceVersion: '1', parameters: [] },
+      },
+    ]),
+    state,
+    tracked.catalog,
+  );
+  expect(plan).toMatchObject({
+    blocked: true,
+    commands: [],
+    diagnostics: [{ code: 'invalid-proposal' }],
+  });
+  expect(plan.candidateDocument).toBeUndefined();
+  expect(state.past).toEqual([]);
+});

@@ -8,6 +8,9 @@ export type {
   UiDocumentCommandV3,
   UiDocumentCommandV3Context,
   UiDocumentNode,
+  UiDocumentNodeV3,
+  UiCompositionDefinition,
+  UiCompositionParameter,
   UiDocumentV3,
 } from './types.js';
 export {
@@ -36,3 +39,20 @@ export type {
   UiDocumentLiteralPolicy,
   UiDocumentLiteralPolicyInput,
 } from './semantic-admission-v3.js';
+
+export {
+  uiCompositionComponentRef,
+  describeUiCompositionDefinition,
+  resolveUiCompositionInstances,
+} from './composition.js';
+export type {
+  UiCompositionScalar,
+  UiCompositionDefinitionSource,
+  UiCompositionDependency,
+  UiCompositionParameterDescriptor,
+  UiCompositionDiagnosticCode,
+  UiCompositionDiagnostic,
+  UiCompositionDefinitionDescription,
+  UiCompositionNodeProvenance,
+  UiCompositionResolution,
+} from './composition.js';

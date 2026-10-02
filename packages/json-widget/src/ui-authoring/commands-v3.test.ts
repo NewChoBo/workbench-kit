@@ -435,3 +435,232 @@ describe('UiDocument V3 session and projection', () => {
     });
   });
 });
+
+describe('wire 3 composition commands in the existing V3 session', () => {
+  const declaration = {
+    interfaceVersion: '1',
+    parameters: [{ id: 'title', label: 'Title', target: { nodeId: 'child', propertyId: 'title' } }],
+  };
+  const reference = (id: string): UiDocumentNode => ({
+    id,
+    type: 'composition-instance',
+    $authoring: { component: { id: 'ui-document:definition', version: '1' }, properties: {} },
+  });
+
+  it('promotes a wire2 instance insertion atomically and Undo restores the exact historical source', () => {
+    const responsive = applyUiDocumentCommandV3(
+      fixture(),
+      {
+        type: 'upsert-responsive-variant',
+        commandId: 'responsive',
+        variant: { id: 'wide', hostWidth: { minInclusive: 900 } },
+      },
+      CONTEXT,
+    ).document;
+    const state = createUiAuthoringSessionV3(responsive, ['child']);
+    const applied = applyUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'insert-node',
+        commandId: 'insert',
+        parentId: 'root',
+        index: 1,
+        node: reference('instance'),
+      },
+      CONTEXT,
+    );
+    expect(applied.commandResult.issues).toEqual([]);
+    expect(applied.state.past).toHaveLength(1);
+    expect(authoring(applied.state.document, 'root')).toMatchObject({
+      documentSchemaVersion: 3,
+      responsiveVariants: [{ id: 'wide', hostWidth: { minInclusive: 900 } }],
+    });
+    expect(authoring(applied.state.document, 'instance').properties).toEqual({});
+    const undone = undoUiAuthoringSessionV3(applied.state)!;
+    expect(undone.document.source).toBe(state.document.source);
+    expect(authoring(undone.document, 'root').documentSchemaVersion).toBe(2);
+    expect(redoUiAuthoringSessionV3(undone)!.document.source).toBe(applied.state.document.source);
+  });
+
+  it('keeps declaration, wire and responsive metadata across inherited operations and undo/redo', () => {
+    let state = createUiAuthoringSessionV3(fixture(), ['child']);
+    const declared = applyUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'set-composition-definition',
+        commandId: 'declare',
+        definition: declaration,
+      },
+      CONTEXT,
+    );
+    expect(declared.commandResult.issues).toEqual([]);
+    state = declared.state;
+    const changed = applyUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'batch',
+        commandId: 'edit',
+        commands: [
+          {
+            type: 'set-property',
+            commandId: 'root-label',
+            nodeId: 'root',
+            propertyId: 'title',
+            value: { kind: 'literal', value: 'New label' },
+          },
+          {
+            type: 'set-property',
+            commandId: 'default',
+            nodeId: 'child',
+            propertyId: 'title',
+            value: { kind: 'literal', value: '${item.title}' },
+          },
+          {
+            type: 'upsert-responsive-variant',
+            commandId: 'variant',
+            variant: { id: 'wide', hostWidth: { minInclusive: 900 } },
+          },
+          {
+            type: 'set-input-binding',
+            commandId: 'binding',
+            nodeId: 'child',
+            inputId: 'value',
+            bindingId: 'binding:one',
+          },
+          { type: 'clear-input-binding', commandId: 'clear', nodeId: 'child', inputId: 'value' },
+        ],
+      },
+      CONTEXT,
+    );
+    expect(changed.commandResult.issues).toEqual([]);
+    expect(authoring(changed.state.document, 'root')).toMatchObject({
+      documentSchemaVersion: 3,
+      compositionDefinition: declaration,
+    });
+    expect(authoring(changed.state.document, 'child').properties.title).toEqual({
+      kind: 'literal',
+      value: '${item.title}',
+    });
+    expect(undoUiAuthoringSessionV3(changed.state)!.document.source).toBe(state.document.source);
+    expect(
+      redoUiAuthoringSessionV3(undoUiAuthoringSessionV3(changed.state)!)!.document.source,
+    ).toBe(changed.state.document.source);
+    const removed = applyUiAuthoringSessionCommandV3(
+      changed.state,
+      { type: 'set-composition-definition', commandId: 'remove-declaration' },
+      CONTEXT,
+    );
+    expect(removed.commandResult.issues).toEqual([]);
+    expect(authoring(removed.state.document, 'root').compositionDefinition).toBeUndefined();
+    expect(authoring(removed.state.document, 'root').documentSchemaVersion).toBe(3);
+    expect(undoUiAuthoringSessionV3(removed.state)!.document.source).toBe(
+      changed.state.document.source,
+    );
+  });
+
+  it('promotes replacement/batch reference insertion and rejects copied children without history', () => {
+    const state = createUiAuthoringSessionV3(fixture());
+    const replaced = applyUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'replace-node',
+        commandId: 'replace',
+        nodeId: 'child',
+        node: reference('child'),
+      },
+      CONTEXT,
+    );
+    expect(replaced.commandResult.issues).toEqual([]);
+    expect(authoring(replaced.state.document, 'root').documentSchemaVersion).toBe(3);
+    const failed = applyUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'batch',
+        commandId: 'failed',
+        commands: [
+          {
+            type: 'insert-node',
+            commandId: 'first',
+            parentId: 'root',
+            index: 1,
+            node: reference('first'),
+          },
+          {
+            type: 'insert-node',
+            commandId: 'second',
+            parentId: 'root',
+            index: 2,
+            node: { ...reference('second'), children: [authored('copied', 'text')] },
+          },
+        ],
+      },
+      CONTEXT,
+    );
+    expect(failed.commandResult.changed).toBe(false);
+    expect(failed.state).toBe(state);
+    expect(failed.state.document.source).toBe(state.document.source);
+    expect(failed.state.past).toEqual([]);
+  });
+
+  it('never turns ephemeral projected ids into authored command targets', () => {
+    const state = createUiAuthoringSessionV3(fixture());
+    const result = applyUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'set-property',
+        commandId: 'projected',
+        nodeId: 'ui-instance:projection',
+        propertyId: 'title',
+        value: { kind: 'literal', value: 'invalid' },
+      },
+      CONTEXT,
+    );
+    expect(result.state).toBe(state);
+    expect(result.commandResult.issues[0]?.code).toBe('node-not-found');
+  });
+});
+
+it('rejects promotion of an old-wire authored projected-prefix id without changing source or history', () => {
+  const root = authored('root', 'column', {
+    $authoring: {
+      component: { id: 'test:column', version: '1.0.0' },
+      properties: {},
+      documentSchemaVersion: 2,
+    },
+    children: [authored('ui-instance:legacy-authored', 'text')],
+  });
+  const parsed = createUiDocumentV3('legacy-prefix', formatWidgetDocumentJson(root));
+  expect(parsed.issues).toEqual([]);
+  expect(createUiDocumentV3('legacy-prefix', parsed.document!.source).document!.source).toBe(
+    parsed.document!.source,
+  );
+  const state = createUiAuthoringSessionV3(parsed.document!, ['ui-instance:legacy-authored']);
+  const result = applyUiAuthoringSessionCommandV3(
+    state,
+    {
+      type: 'insert-node',
+      commandId: 'promote',
+      parentId: 'root',
+      index: 1,
+      node: {
+        type: 'composition-instance',
+        id: 'instance',
+        $authoring: {
+          component: { id: 'ui-document:definition', version: '1' },
+          properties: {},
+        },
+      },
+    },
+    CONTEXT,
+  );
+  expect(result.commandResult.changed).toBe(false);
+  expect(result.commandResult.issues.map(({ code }) => code)).toContain(
+    'invalid-composition-instance',
+  );
+  expect(result.state).toBe(state);
+  expect(result.state.document.source).toBe(parsed.document!.source);
+  expect(result.state.document.root.$authoring.documentSchemaVersion).toBe(2);
+  expect(result.state.selectedNodeIds).toEqual(['ui-instance:legacy-authored']);
+  expect(result.state.past).toEqual([]);
+  expect(result.state.future).toEqual([]);
+});

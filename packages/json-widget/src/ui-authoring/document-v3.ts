@@ -19,6 +19,7 @@ import {
 import {
   UI_DOCUMENT_AUTHORING_ARG,
   type CreateUiDocumentV3Result,
+  type UiCompositionDefinition,
   type UiDocument,
   type UiDocumentIssue,
   type UiDocumentNode,
@@ -91,10 +92,106 @@ function validateResponsiveValueMap(
   return Object.freeze(issues);
 }
 
+function isDataRecord(value: unknown): value is Readonly<Record<string, unknown>> {
+  if (!isObjectRecord(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  return (
+    (prototype === Object.prototype || prototype === null) &&
+    Reflect.ownKeys(value).every(
+      (key) => typeof key === 'string' && readOwnDataValue(value, key).valid,
+    )
+  );
+}
+
+function exactKeys(
+  value: unknown,
+  keys: readonly string[],
+): value is Readonly<Record<string, unknown>> {
+  return (
+    isDataRecord(value) &&
+    Object.keys(value).length === keys.length &&
+    keys.every((key) => Object.prototype.hasOwnProperty.call(value, key))
+  );
+}
+
+function canonicalKey(value: unknown): value is string {
+  return isCanonicalText(value) && !['__proto__', 'prototype', 'constructor'].includes(value);
+}
+
+/** Catalogue-independent wire validation; target availability is a separate operation. */
+export function isUiCompositionDefinitionShape(value: unknown): value is UiCompositionDefinition {
+  if (
+    !exactKeys(value, ['interfaceVersion', 'parameters']) ||
+    !isCanonicalText(value.interfaceVersion) ||
+    !Array.isArray(value.parameters) ||
+    Object.getPrototypeOf(value.parameters) !== Array.prototype ||
+    Reflect.ownKeys(value.parameters).length !== value.parameters.length + 1 ||
+    Array.from({ length: value.parameters.length }, (_, index) =>
+      readOwnDataValue(value.parameters as object, String(index)),
+    ).some((entry) => !entry.present || !entry.valid)
+  )
+    return false;
+  const ids = new Set<string>();
+  const targets = new Set<string>();
+  for (const parameter of value.parameters) {
+    if (
+      !exactKeys(parameter, ['id', 'label', 'target']) ||
+      !canonicalKey(parameter.id) ||
+      typeof parameter.label !== 'string' ||
+      parameter.label.trim().length === 0 ||
+      [...parameter.label].length > 80 ||
+      !exactKeys(parameter.target, ['nodeId', 'propertyId']) ||
+      !isCanonicalText(parameter.target.nodeId) ||
+      !canonicalKey(parameter.target.propertyId)
+    )
+      return false;
+    const target = JSON.stringify([parameter.target.nodeId, parameter.target.propertyId]);
+    if (ids.has(parameter.id) || targets.has(target)) return false;
+    ids.add(parameter.id);
+    targets.add(target);
+  }
+  return true;
+}
+
+export function readUiCompositionDocumentId(ref: unknown): string | null {
+  if (
+    !exactKeys(ref, ['id', 'version']) ||
+    !isCanonicalText(ref.version) ||
+    typeof ref.id !== 'string' ||
+    !ref.id.startsWith('ui-document:')
+  )
+    return null;
+  try {
+    const id = decodeURIComponent(ref.id.slice('ui-document:'.length));
+    return isCanonicalText(id) && `ui-document:${encodeURIComponent(id)}` === ref.id ? id : null;
+  } catch {
+    return null;
+  }
+}
+
+export function isUiCompositionScalarMap(value: unknown): boolean {
+  return (
+    isDataRecord(value) &&
+    Object.entries(value).every(
+      ([key, source]) =>
+        canonicalKey(key) &&
+        exactKeys(source, ['kind', 'value']) &&
+        source.kind === 'literal' &&
+        (typeof source.value === 'string' ||
+          typeof source.value === 'boolean' ||
+          (typeof source.value === 'number' && Number.isFinite(source.value))),
+    )
+  );
+}
+
 function compatibilityRoot(root: GenericWidget): GenericWidget {
   const ownAuthoring = readOwnDataValue(root, UI_DOCUMENT_AUTHORING_ARG);
   if (!ownAuthoring.valid || !isObjectRecord(ownAuthoring.value)) return root;
-  if (ownAuthoring.value.documentSchemaVersion !== 2) return root;
+  if (
+    ownAuthoring.value.documentSchemaVersion !== 2 &&
+    ownAuthoring.value.documentSchemaVersion !== 3
+  )
+    return root;
   return {
     ...root,
     [UI_DOCUMENT_AUTHORING_ARG]: {
@@ -116,7 +213,7 @@ export function validateUiDocumentRootV3(
       ? rootAuthoringValue.value
       : undefined;
   const rawVersion = rootAuthoring?.documentSchemaVersion;
-  const supportsResponsiveState = rawVersion === 2;
+  const supportsResponsiveState = rawVersion === 2 || rawVersion === 3;
   const catalogValue =
     rootAuthoring === undefined
       ? { present: false, valid: true }
@@ -166,6 +263,76 @@ export function validateUiDocumentRootV3(
     const authoringValue = readOwnDataValue(entry.widget, UI_DOCUMENT_AUTHORING_ARG);
     if (!authoringValue.valid || !isObjectRecord(authoringValue.value)) continue;
     const authoring = authoringValue.value;
+    const declaration = readOwnDataValue(authoring, 'compositionDefinition');
+    const instance = entry.widget.type === 'composition-instance';
+    const reference =
+      isDataRecord(authoring.component) &&
+      typeof authoring.component.id === 'string' &&
+      authoring.component.id.startsWith('ui-document:');
+    if (declaration.present || instance || reference) {
+      if (rawVersion !== 3) {
+        issues.push(
+          issue(
+            'composition-state-requires-document-schema-version',
+            'Composition state requires UI document schema version 3.',
+            path,
+            nodeId === undefined ? {} : { nodeId },
+          ),
+        );
+      }
+      if (declaration.present && entry.path.length > 0) {
+        issues.push(
+          issue(
+            'nonroot-composition-definition',
+            'Only the semantic root may declare a composition definition.',
+            path,
+          ),
+        );
+      }
+      if (
+        declaration.present &&
+        (!declaration.valid || !isUiCompositionDefinitionShape(declaration.value))
+      ) {
+        issues.push(
+          issue(
+            'invalid-composition-definition',
+            'Composition definitions require exact canonical parameter declarations.',
+            path,
+          ),
+        );
+      }
+      if (instance || reference) {
+        const allowed = ['documentSchemaVersion', 'component', 'properties', 'layout'];
+        if (
+          !instance ||
+          readUiCompositionDocumentId(authoring.component) === null ||
+          !isDataRecord(authoring) ||
+          Object.keys(authoring).some((key) => !allowed.includes(key)) ||
+          !isUiCompositionScalarMap(authoring.properties) ||
+          Object.prototype.hasOwnProperty.call(entry.widget, 'children') ||
+          Object.prototype.hasOwnProperty.call(entry.widget, 'child')
+        ) {
+          issues.push(
+            issue(
+              'invalid-composition-instance',
+              'Composition instances require a canonical reference, scalar overrides and no children or extra authoring state.',
+              path,
+              nodeId === undefined ? {} : { nodeId },
+            ),
+          );
+        }
+      }
+    }
+    if (rawVersion === 3 && nodeId?.startsWith('ui-instance:')) {
+      issues.push(
+        issue(
+          'invalid-composition-instance',
+          'Projected instance identities cannot be authored nodes.',
+          path,
+          { nodeId },
+        ),
+      );
+    }
     const nodeCatalog = readOwnDataValue(authoring, 'responsiveVariants');
     if (entry.path.length > 0 && nodeCatalog.present) {
       issues.push(
@@ -331,12 +498,39 @@ export function canonicalizeUiDocumentRootV3(root: GenericWidget): GenericWidget
   return visit(root, true);
 }
 
+function hasOnlyDataProperties(value: unknown, ancestors = new Set<object>()): boolean {
+  if (typeof value !== 'object' || value === null) return true;
+  if (ancestors.has(value)) return false;
+  const prototype = Object.getPrototypeOf(value);
+  if (prototype !== Object.prototype && prototype !== Array.prototype && prototype !== null)
+    return false;
+  const nextAncestors = new Set(ancestors).add(value);
+  return Reflect.ownKeys(value).every((key) => {
+    if (typeof key !== 'string') return false;
+    if (Array.isArray(value) && key === 'length') return true;
+    const own = readOwnDataValue(value, key);
+    return own.valid && hasOnlyDataProperties(own.value, nextAncestors);
+  });
+}
+
 function createDocument(
   documentId: string,
   revision: number,
   root: GenericWidget,
 ): CreateUiDocumentV3Result {
   const issues: (UiDocumentIssue | UiDocumentV3Issue)[] = [];
+  if (!hasOnlyDataProperties(root)) {
+    return {
+      document: null,
+      issues: Object.freeze([
+        issue(
+          'invalid-source',
+          'Authored document objects must be acyclic enumerable data without accessors.',
+          'root',
+        ),
+      ]),
+    };
+  }
   if (!isCanonicalText(documentId)) {
     issues.push({
       code: 'blank-document-id',
@@ -441,7 +635,7 @@ export function readUiDocumentNodeAuthoringV3(
   if (!authoringValue.valid || !isObjectRecord(authoringValue.value)) return null;
   const raw = authoringValue.value;
   const base = readUiDocumentNodeAuthoring(
-    raw.documentSchemaVersion === 2
+    raw.documentSchemaVersion === 2 || raw.documentSchemaVersion === 3
       ? ({
           ...widget,
           [UI_DOCUMENT_AUTHORING_ARG]: { ...raw, documentSchemaVersion: 1 },
@@ -451,7 +645,12 @@ export function readUiDocumentNodeAuthoringV3(
   if (base === null) return null;
   return {
     ...base,
-    ...(raw.documentSchemaVersion === 1 || raw.documentSchemaVersion === 2
+    ...(isUiCompositionDefinitionShape(raw.compositionDefinition)
+      ? { compositionDefinition: raw.compositionDefinition }
+      : {}),
+    ...(raw.documentSchemaVersion === 1 ||
+    raw.documentSchemaVersion === 2 ||
+    raw.documentSchemaVersion === 3
       ? { documentSchemaVersion: raw.documentSchemaVersion }
       : {}),
     ...(Array.isArray(raw.responsiveVariants) && raw.responsiveVariants.length > 0

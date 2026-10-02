@@ -136,7 +136,12 @@ const ATOMIC_COMMAND_KEYS = Object.freeze({
     'values',
   ]),
   'clear-responsive-layout': Object.freeze(['type', 'commandId', 'nodeId', 'variantId']),
-} satisfies Readonly<Record<UiDocumentAtomicCommandV3['type'], readonly string[]>>);
+} satisfies Readonly<
+  Record<
+    Exclude<UiDocumentAtomicCommandV3['type'], 'set-composition-definition'>,
+    readonly string[]
+  >
+>);
 
 const FALLBACK_DOCUMENT = createUiDocumentV3FromRoot('invalid-generative-plan', 0, {
   type: 'invalid-generative-root',
@@ -588,7 +593,7 @@ function blockedPlan(
   });
 }
 
-function isKnownAtomicType(value: string): value is UiDocumentAtomicCommandV3['type'] {
+function isKnownAtomicType(value: string): value is keyof typeof ATOMIC_COMMAND_KEYS {
   return Object.prototype.hasOwnProperty.call(ATOMIC_COMMAND_KEYS, value);
 }
 
