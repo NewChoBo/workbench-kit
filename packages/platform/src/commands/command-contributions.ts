@@ -29,7 +29,7 @@ export interface CommandMenuCommandEntry<TContext = void> {
   shortcut?: CommandValue<TContext, string | undefined>;
   surfaces?: readonly string[] | undefined;
   type?: 'command';
-  when?: CommandWhenClause<TContext>;
+  when?: CommandWhenClause<TContext> | undefined;
 }
 
 export type CommandMenuEntry<TContext = void> =
@@ -75,7 +75,7 @@ export type CommandMenuItem = ResolvedCommandMenuCommandItem | ResolvedCommandMe
 
 export interface CommandMenuItemsInput<TContext = void> {
   context: TContext;
-  contextKeys?: object;
+  contextKeys?: object | undefined;
   entries: CommandMenuEntry<TContext>[];
   registry: CommandRegistry<TContext>;
   surface?: string;

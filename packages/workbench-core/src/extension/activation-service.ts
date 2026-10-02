@@ -19,7 +19,7 @@ interface PendingActivation {
 }
 
 interface ActiveExtension {
-  readonly deactivate?: DeactivateFunction;
+  readonly deactivate?: DeactivateFunction | undefined;
   readonly epoch: number;
   readonly extensionId: string;
   readonly subscriptions: DisposableStore;

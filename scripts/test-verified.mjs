@@ -23,6 +23,7 @@ try {
   if (!pnpm) throw new Error('Run through pnpm test:verified');
 
   if (
+    run(process.execPath, ['--test', '.codex/hooks/validation-scope.test.mjs']) &&
     run(process.execPath, [
       pnpm,
       'exec',

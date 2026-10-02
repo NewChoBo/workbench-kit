@@ -8,17 +8,17 @@ import {
 export interface EditorTabState {
   readonly dirty: boolean;
   readonly editorId: string;
-  readonly icon?: string;
+  readonly icon?: string | undefined;
   readonly id: string;
   readonly pinned: boolean;
   readonly preview: boolean;
   readonly resourceMissing?: boolean | undefined;
   readonly resourceUri: string;
-  readonly title?: string;
+  readonly title?: string | undefined;
 }
 
 export interface EditorGroupState {
-  readonly activeTabId?: string;
+  readonly activeTabId?: string | undefined;
   readonly id: string;
   readonly tabs: readonly EditorTabState[];
 }
@@ -40,7 +40,7 @@ export interface EditorSplitLayoutNode {
 export type EditorLayoutNode = EditorGroupLayoutNode | EditorSplitLayoutNode;
 
 export interface EditorState {
-  readonly activeGroupId?: string;
+  readonly activeGroupId?: string | undefined;
   readonly groups: readonly EditorGroupState[];
   readonly layout: EditorLayoutNode;
 }

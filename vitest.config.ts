@@ -1,6 +1,6 @@
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { defineConfig } from 'vitest/config';
+import { configDefaults, defineConfig } from 'vitest/config';
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)));
 
@@ -16,6 +16,7 @@ export default defineConfig({
     dedupe: ['react', 'react-dom'],
   },
   test: {
+    exclude: [...configDefaults.exclude, '.codex/hooks/validation-scope.test.mjs'],
     environment: 'node',
     environmentMatchGlobs: [],
   },
