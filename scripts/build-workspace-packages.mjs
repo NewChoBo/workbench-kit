@@ -3,6 +3,7 @@ import { runCommand } from './lib/run-command.mjs';
 const packages = [
   '@workbench-kit/logging',
   '@workbench-kit/contracts',
+  '@workbench-kit/field-remap',
   '@workbench-kit/electron-shell',
   '@workbench-kit/jdw',
   '@workbench-kit/platform',
