@@ -13,6 +13,7 @@ import {
   isWorkbenchSchemaFormSubmittable,
   normalizeWorkbenchSchemaFormValues,
   type WorkbenchSchemaFormField,
+  type WorkbenchSchemaFormTextAreaField,
 } from './SchemaForm';
 import { WorkbenchSettingsCommitProvider } from './settingsCommit';
 
@@ -46,9 +47,11 @@ async function renderSchemaForm(element: ReactElement) {
   };
 }
 
-function changeTextInput(input: HTMLInputElement, value: string) {
+function changeTextInput(input: HTMLInputElement | HTMLTextAreaElement, value: string) {
   const nativeValueSetter = Object.getOwnPropertyDescriptor(
-    HTMLInputElement.prototype,
+    input instanceof HTMLTextAreaElement
+      ? HTMLTextAreaElement.prototype
+      : HTMLInputElement.prototype,
     'value',
   )?.set;
   nativeValueSetter?.call(input, value);
@@ -92,6 +95,39 @@ const fields: WorkbenchSchemaFormField[] = [
 ];
 
 describe('WorkbenchSchemaForm helpers', () => {
+  it('uses text coercion, defaults, and validation for textarea values without rewriting them', () => {
+    const field: WorkbenchSchemaFormTextAreaField = {
+      id: 'details',
+      label: 'Details',
+      required: true,
+      type: 'textarea',
+      validate: vi.fn(() => undefined),
+    };
+    const textField: WorkbenchSchemaFormField = { ...field, type: 'text' };
+    const multiline = '  First line\n\nSecond line 😀  ';
+
+    for (const value of [undefined, null, '', false, 0, 42, multiline]) {
+      expect(coerceWorkbenchSchemaFormFieldValue(field, value)).toBe(
+        coerceWorkbenchSchemaFormFieldValue(textField, value),
+      );
+    }
+    expect(getWorkbenchSchemaFormFieldDefaultValue(field)).toBe('');
+    expect(getWorkbenchSchemaFormFieldDefaultValue({ ...field, defaultValue: 42 })).toBe('42');
+    expect(normalizeWorkbenchSchemaFormValues([{ ...field, defaultValue: multiline }])).toEqual({
+      details: multiline,
+    });
+    expect(getWorkbenchSchemaFormErrors([field], { details: '' })).toEqual({
+      details: 'This field is required.',
+    });
+    expect(getWorkbenchSchemaFormErrors([field], { details: multiline })).toEqual({});
+    expect(field.validate).toHaveBeenLastCalledWith(multiline, { details: multiline }, field);
+    expect(
+      getWorkbenchSchemaFormErrors([{ ...field, validationMessage: 'Invalid details.' }]),
+    ).toEqual({
+      details: 'Invalid details.',
+    });
+  });
+
   it('normalizes defaults and coerces field values', () => {
     expect(getWorkbenchSchemaFormFieldDefaultValue(fields[0])).toBe('Workbench');
     expect(
@@ -146,6 +182,197 @@ describe('WorkbenchSchemaForm helpers', () => {
 });
 
 describe('WorkbenchSchemaForm rendering', () => {
+  it('renders the existing textarea primitive with its label and presentation hints', async () => {
+    const multiline = '  First line\n\nSecond line 😀  ';
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        fields={[
+          {
+            defaultValue: multiline,
+            description: 'Enter multiple lines.',
+            id: 'details',
+            label: 'Details',
+            monospace: true,
+            placeholder: 'Add details',
+            rows: 5,
+            type: 'textarea',
+          },
+        ]}
+      />,
+    );
+
+    try {
+      const textarea = rendered.container.querySelector('textarea');
+      expect(textarea?.value).toBe(multiline);
+      expect(textarea?.rows).toBe(5);
+      expect(textarea?.placeholder).toBe('Add details');
+      expect(textarea?.classList.contains('ui-textarea')).toBe(true);
+      expect(textarea?.classList.contains('ui-input--monospace')).toBe(true);
+      expect(textarea?.getAttribute('data-width')).toBe('full');
+      expect(textarea?.hasAttribute('maxlength')).toBe(false);
+      expect(textarea?.labels?.[0]?.textContent).toBe('Details');
+      expect(rendered.container.textContent).toContain('Enter multiple lines.');
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it.each([
+    ['form disabled', { disabled: true }, {}, true, false],
+    ['field disabled', {}, { disabled: true }, true, false],
+    ['form read-only', { readOnly: true }, {}, false, true],
+    ['field read-only', {}, { readOnly: true }, false, true],
+  ] as const)(
+    'preserves textarea %s state',
+    async (_label, formState, fieldState, disabled, readOnly) => {
+      const rendered = await renderSchemaForm(
+        <WorkbenchSchemaForm
+          fields={[{ id: 'details', label: 'Details', type: 'textarea', ...fieldState }]}
+          {...formState}
+        />,
+      );
+
+      try {
+        const textarea = rendered.container.querySelector('textarea');
+        expect(textarea?.disabled).toBe(disabled);
+        expect(textarea?.readOnly).toBe(readOnly);
+      } finally {
+        await rendered.cleanup();
+      }
+    },
+  );
+
+  it('keeps controlled multiline edits intact and leaves length policy to the validator', async () => {
+    const onFieldChange = vi.fn();
+    const onValuesChange = vi.fn();
+    const onSubmit = vi.fn();
+    const edited = '  First line\n\n😀'.repeat(20);
+    const field: WorkbenchSchemaFormTextAreaField = {
+      id: 'details',
+      label: 'Details',
+      type: 'textarea',
+      validate: (value) => (String(value).length > 8 ? 'Too long.' : undefined),
+    };
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        fields={[field]}
+        values={{ details: 'Initial' }}
+        onFieldChange={onFieldChange}
+        onValuesChange={onValuesChange}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const textarea = rendered.container.querySelector('textarea');
+      await act(async () => {
+        if (textarea) changeTextInput(textarea, edited);
+      });
+      expect(onFieldChange).toHaveBeenCalledExactlyOnceWith({
+        field,
+        fieldId: 'details',
+        value: edited,
+        values: { details: edited },
+      });
+      expect(onValuesChange).toHaveBeenCalledExactlyOnceWith(
+        { details: edited },
+        expect.objectContaining({ value: edited }),
+      );
+      expect(textarea?.value).toBe('Initial');
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      await rendered.rerender(
+        <WorkbenchSchemaForm fields={[field]} values={{ details: edited }} />,
+      );
+      expect(textarea?.value).toBe(edited);
+      expect(textarea?.getAttribute('aria-invalid')).toBe('true');
+      expect(rendered.container.querySelector('[role="alert"]')?.textContent).toBe('Too long.');
+      expect(
+        rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]')?.disabled,
+      ).toBe(true);
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('focuses an invalid textarea after skipping disabled and read-only controls', async () => {
+    const onSubmit = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        fields={[
+          { disabled: true, id: 'disabled', label: 'Disabled', required: true, type: 'textarea' },
+          { readOnly: true, id: 'readonly', label: 'Read only', required: true, type: 'textarea' },
+          { id: 'details', label: 'Details', required: true, type: 'textarea' },
+          { id: 'name', label: 'Name', required: true, type: 'text' },
+        ]}
+        focusFirstInvalidFieldOnSubmit
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      await act(async () => {
+        rendered.container.querySelector<HTMLButtonElement>('button[type="submit"]')?.click();
+      });
+      expect(document.activeElement).toBe(
+        rendered.container.querySelector('[data-field-id="details"] textarea'),
+      );
+      expect(onSubmit).not.toHaveBeenCalled();
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
+  it('leaves textarea Enter and composition events to native editing and the parent handler', async () => {
+    const onKeyDown = vi.fn();
+    const onSubmit = vi.fn();
+    const rendered = await renderSchemaForm(
+      <WorkbenchSchemaForm
+        fields={[{ id: 'details', label: 'Details', type: 'textarea' }]}
+        onKeyDown={onKeyDown}
+        onSubmit={onSubmit}
+      />,
+    );
+
+    try {
+      const textarea = rendered.container.querySelector('textarea');
+      for (const keyOptions of [{}, { ctrlKey: true }, { metaKey: true }, { isComposing: true }]) {
+        const event = new KeyboardEvent('keydown', {
+          bubbles: true,
+          cancelable: true,
+          key: 'Enter',
+          ...keyOptions,
+        });
+        await act(async () => {
+          textarea?.dispatchEvent(event);
+        });
+        expect(event.defaultPrevented).toBe(false);
+        expect(onKeyDown.mock.lastCall?.[0].target).toBe(textarea);
+        expect(onKeyDown.mock.lastCall?.[0].nativeEvent).toBe(event);
+      }
+      expect(onKeyDown).toHaveBeenCalledTimes(4);
+      expect(onSubmit).not.toHaveBeenCalled();
+
+      await rendered.rerender(
+        <WorkbenchSchemaForm
+          fields={[{ id: 'details', label: 'Details', type: 'textarea' }]}
+          onKeyDown={(event) => event.preventDefault()}
+        />,
+      );
+      const parentHandled = new KeyboardEvent('keydown', {
+        bubbles: true,
+        cancelable: true,
+        key: 'Enter',
+      });
+      await act(async () => {
+        textarea?.dispatchEvent(parentHandled);
+      });
+      expect(parentHandled.defaultPrevented).toBe(true);
+    } finally {
+      await rendered.cleanup();
+    }
+  });
+
   it('renders mixed field types and actions', () => {
     const markup = renderToStaticMarkup(
       <WorkbenchSchemaForm
@@ -211,6 +438,12 @@ describe('WorkbenchSchemaForm rendering', () => {
         type: 'select',
         validationMessage: 'Mode is invalid.',
       },
+      {
+        id: 'details',
+        label: 'Details',
+        type: 'textarea',
+        validationMessage: 'Details are invalid.',
+      },
     ];
     const onSubmit = vi.fn();
     const rendered = await renderSchemaForm(
@@ -223,6 +456,7 @@ describe('WorkbenchSchemaForm rendering', () => {
         rendered.container.querySelector<HTMLElement>('[data-field-id="count"] input'),
         rendered.container.querySelector<HTMLElement>('[data-field-id="enabled"] input'),
         rendered.container.querySelector<HTMLElement>('[data-field-id="mode"] [role="combobox"]'),
+        rendered.container.querySelector<HTMLElement>('[data-field-id="details"] textarea'),
       ];
 
       for (const target of targets) {
@@ -467,46 +701,51 @@ describe('WorkbenchSchemaForm rendering', () => {
     }
   });
 
-  it('updates uncontrolled values and gives Cancel the current snapshot', async () => {
-    const onCancel = vi.fn();
-    const onSubmit = vi.fn();
-    const onValuesChange = vi.fn();
-    const rendered = await renderSchemaForm(
-      <WorkbenchSchemaForm
-        defaultValues={{ name: 'Initial' }}
-        fields={[{ id: 'name', label: 'Name', type: 'text' }]}
-        onCancel={onCancel}
-        onSubmit={onSubmit}
-        onValuesChange={onValuesChange}
-      />,
-    );
-
-    try {
-      const input = rendered.container.querySelector<HTMLInputElement>('input');
-      const cancel = Array.from(rendered.container.querySelectorAll('button')).find(
-        (button) => button.textContent === 'Cancel',
+  it.each(['text', 'textarea'] as const)(
+    'updates uncontrolled %s values and gives Cancel the current snapshot',
+    async (type) => {
+      const onCancel = vi.fn();
+      const onSubmit = vi.fn();
+      const onValuesChange = vi.fn();
+      const rendered = await renderSchemaForm(
+        <WorkbenchSchemaForm
+          defaultValues={{ name: 'Initial' }}
+          fields={[{ id: 'name', label: 'Name', type }]}
+          onCancel={onCancel}
+          onSubmit={onSubmit}
+          onValuesChange={onValuesChange}
+        />,
       );
 
-      await act(async () => {
-        if (input) {
-          changeTextInput(input, 'Updated');
-        }
-      });
+      try {
+        const input = rendered.container.querySelector<HTMLInputElement | HTMLTextAreaElement>(
+          'input, textarea',
+        );
+        const cancel = Array.from(rendered.container.querySelectorAll('button')).find(
+          (button) => button.textContent === 'Cancel',
+        );
 
-      expect(onValuesChange).toHaveBeenCalledTimes(1);
-      expect(onValuesChange.mock.calls[0]?.[0]).toEqual({ name: 'Updated' });
+        await act(async () => {
+          if (input) {
+            changeTextInput(input, 'Updated');
+          }
+        });
 
-      await act(async () => {
-        cancel?.click();
-      });
+        expect(onValuesChange).toHaveBeenCalledTimes(1);
+        expect(onValuesChange.mock.calls[0]?.[0]).toEqual({ name: 'Updated' });
 
-      expect(onCancel).toHaveBeenCalledTimes(1);
-      expect(onCancel).toHaveBeenCalledWith({ values: { name: 'Updated' } });
-      expect(onSubmit).not.toHaveBeenCalled();
-    } finally {
-      await rendered.cleanup();
-    }
-  });
+        await act(async () => {
+          cancel?.click();
+        });
+
+        expect(onCancel).toHaveBeenCalledTimes(1);
+        expect(onCancel).toHaveBeenCalledWith({ values: { name: 'Updated' } });
+        expect(onSubmit).not.toHaveBeenCalled();
+      } finally {
+        await rendered.cleanup();
+      }
+    },
+  );
 
   it('keeps immediate commit actionless and emits one preference change', async () => {
     const preferenceChanges: unknown[] = [];

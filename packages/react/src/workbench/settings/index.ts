@@ -160,6 +160,7 @@ export type {
   WorkbenchSchemaFormSelectField,
   WorkbenchSchemaFormSubmitContext,
   WorkbenchSchemaFormTextField,
+  WorkbenchSchemaFormTextAreaField,
   WorkbenchSchemaFormValues,
 } from './SchemaForm';
 export { WorkbenchSettingsModal } from './WorkbenchSettingsModal';

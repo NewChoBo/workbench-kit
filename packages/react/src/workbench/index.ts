@@ -480,6 +480,7 @@ export type {
   WorkbenchSchemaFormSettingsCategoryInput,
   WorkbenchSchemaFormSubmitContext,
   WorkbenchSchemaFormTextField,
+  WorkbenchSchemaFormTextAreaField,
   WorkbenchSchemaFormValues,
   WorkbenchSettingsCategory,
   WorkbenchSettingsCommitContextValue,

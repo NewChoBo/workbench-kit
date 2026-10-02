@@ -12,6 +12,7 @@ import { Checkbox } from '../../primitives/checkbox';
 import { EmptyState } from '../../primitives/empty-state';
 import { Field } from '../../primitives/field';
 import { Select } from '../../primitives/select';
+import { TextArea } from '../../primitives/text-area';
 import { TextInput } from '../../primitives/text-input';
 import { cx } from '../../utils/cx';
 import {
@@ -19,7 +20,7 @@ import {
   type WorkbenchSettingsPreferenceChange,
 } from './settingsCommit';
 
-export type WorkbenchSchemaFormFieldType = 'checkbox' | 'number' | 'select' | 'text';
+export type WorkbenchSchemaFormFieldType = 'checkbox' | 'number' | 'select' | 'text' | 'textarea';
 
 export type WorkbenchSchemaFormFieldValue = boolean | number | string;
 
@@ -55,6 +56,13 @@ export interface WorkbenchSchemaFormTextField extends WorkbenchSchemaFormFieldBa
   type: 'text';
 }
 
+export interface WorkbenchSchemaFormTextAreaField extends WorkbenchSchemaFormFieldBase {
+  monospace?: boolean;
+  placeholder?: string;
+  rows?: number;
+  type: 'textarea';
+}
+
 export interface WorkbenchSchemaFormNumberField extends WorkbenchSchemaFormFieldBase {
   max?: number;
   min?: number;
@@ -77,7 +85,8 @@ export type WorkbenchSchemaFormField =
   | WorkbenchSchemaFormCheckboxField
   | WorkbenchSchemaFormNumberField
   | WorkbenchSchemaFormSelectField
-  | WorkbenchSchemaFormTextField;
+  | WorkbenchSchemaFormTextField
+  | WorkbenchSchemaFormTextAreaField;
 
 export type WorkbenchSchemaFormErrors = Record<string, ReactNode>;
 
@@ -442,6 +451,26 @@ function renderWorkbenchSchemaFormField({
             </option>
           ))}
         </Select>
+      </Field>
+    );
+  }
+
+  if (field.type === 'textarea') {
+    return (
+      <Field description={field.description} htmlFor={id} label={field.label}>
+        <TextArea
+          id={id}
+          aria-describedby={errorId}
+          aria-invalid={invalid || undefined}
+          controlWidth="full"
+          disabled={disabled}
+          monospace={Boolean(field.monospace)}
+          placeholder={field.placeholder}
+          readOnly={readOnly}
+          rows={field.rows}
+          value={String(value)}
+          onChange={(event) => onChange(event.currentTarget.value)}
+        />
       </Field>
     );
   }

@@ -79,7 +79,7 @@ export interface SchemaFormReferenceStructuralRecord {
   };
 }
 
-type SchemaFormFieldType = WorkbenchSchemaFormField['type'];
+type SchemaFormFieldType = (typeof FIELD_TYPES)[number];
 
 type ValidationObserver = (
   value: WorkbenchSchemaFormFieldValue,
