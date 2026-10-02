@@ -103,7 +103,8 @@ import {
   type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
-import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
+import type { FieldRemapHistoryActions } from './history.js';
+import { handleFieldRemapHistoryKeyDown, isFieldRemapEditableShortcutTarget } from './keyboard.js';
 import { FieldRemapPreviewRail, type FieldRemapPreviewState } from './preview.js';
 import './view.css';
 
@@ -441,6 +442,8 @@ export interface FieldRemapFlowMapperProps {
    * mapper-local drafts are disabled. This is not an authorization boundary.
    */
   readonly readOnly?: boolean | undefined;
+  /** Optional host-owned undo/redo commands. Flow never creates a private mapping history. */
+  readonly historyActions?: FieldRemapHistoryActions | undefined;
   /** Document v2 n→m operators (display + authoring when onOperatorsChange is set). */
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
@@ -677,6 +680,7 @@ function FieldRemapFlowCanvas({
   showBindingsList: showBindingsListProp,
   showConvertPalette = true,
   readOnly = false,
+  historyActions,
   operators = [],
   onOperatorsChange,
   sourceTitle,
@@ -1707,6 +1711,9 @@ function FieldRemapFlowCanvas({
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
+      if (handleFieldRemapHistoryKeyDown(event, historyActions, readOnly)) {
+        return;
+      }
       if (event.key === 'Escape') {
         if (event.defaultPrevented || (selection === null && drafts.length === 0)) {
           return;
@@ -1785,6 +1792,7 @@ function FieldRemapFlowCanvas({
       commitBulkDelete,
       detailPresentation,
       emptyDetail,
+      historyActions,
       onOperatorsChange,
       operators,
       previewVisible,

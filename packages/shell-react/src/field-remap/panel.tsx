@@ -48,6 +48,7 @@ import {
   recordFieldRemapHistory,
   redoFieldRemapHistory,
   undoFieldRemapHistory,
+  type FieldRemapHistoryActions,
   type FieldRemapHistorySnapshot,
 } from './history.js';
 import {
@@ -57,11 +58,11 @@ import {
 } from './shape-io-editor.js';
 import { createFieldRemapPreviewController } from './preview-controller.js';
 import type { FieldRemapPreviewState } from './preview.js';
-import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
+import { handleFieldRemapHistoryKeyDown } from './keyboard.js';
 import { FieldRemapDocumentIo, type FieldRemapDocumentImportActionResult } from './document-io.js';
 import './view.css';
 
-export type { FieldRemapHistorySnapshot } from './history.js';
+export type { FieldRemapHistoryActions, FieldRemapHistorySnapshot } from './history.js';
 
 export interface FieldRemapHistoryOwner {
   readonly canUndo: boolean;
@@ -70,13 +71,6 @@ export interface FieldRemapHistoryOwner {
   readonly reset: (next: FieldRemapHistorySnapshot) => void;
   readonly undo: () => FieldRemapHistorySnapshot | undefined;
   readonly redo: () => FieldRemapHistorySnapshot | undefined;
-}
-
-export interface FieldRemapHistoryActions {
-  readonly canUndo: boolean;
-  readonly canRedo: boolean;
-  readonly undo: () => void;
-  readonly redo: () => void;
 }
 
 export interface FieldRemapHistoryAvailability {
@@ -559,38 +553,7 @@ export function FieldRemapPanel({
   };
 
   const handleHistoryKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
-    if (readOnly) {
-      return;
-    }
-    if (
-      event.defaultPrevented ||
-      event.altKey ||
-      (!event.ctrlKey && !event.metaKey) ||
-      isFieldRemapEditableShortcutTarget(event.target)
-    ) {
-      return;
-    }
-
-    const key = event.key.toLowerCase();
-    const requestsUndo = key === 'z' && !event.shiftKey;
-    const requestsRedo =
-      (key === 'z' && event.shiftKey) ||
-      (key === 'y' && event.ctrlKey && !event.metaKey && !event.shiftKey);
-    if (
-      (!requestsUndo && !requestsRedo) ||
-      (requestsUndo && !historyAvailability.canUndo) ||
-      (requestsRedo && !historyAvailability.canRedo)
-    ) {
-      return;
-    }
-
-    event.preventDefault();
-    event.stopPropagation();
-    if (requestsUndo) {
-      undo();
-    } else {
-      redo();
-    }
+    handleFieldRemapHistoryKeyDown(event, { ...historyAvailability, undo, redo }, readOnly);
   };
 
   useImperativeHandle(historyActionsRef, () => ({ ...historyAvailability, undo, redo }), [
