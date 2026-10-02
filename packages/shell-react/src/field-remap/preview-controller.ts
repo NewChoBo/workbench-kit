@@ -28,7 +28,12 @@ export interface FieldRemapPreviewController {
   readonly dispose: () => void;
 }
 
-/** Package-private execution owner. Public Flow surfaces consume only its snapshot. */
+/**
+ * Preview execution owner for hosts embedding Flow. The evaluator defaults to the
+ * shared convertMappedInputs engine; Flow consumes snapshots and never evaluates.
+ * Revisions must change for every input/registry change. Dispose retires this owner;
+ * create a fresh controller for a new lifetime.
+ */
 export function createFieldRemapPreviewController(
   evaluate: FieldRemapPreviewEvaluator = convertMappedInputs,
 ): FieldRemapPreviewController {
