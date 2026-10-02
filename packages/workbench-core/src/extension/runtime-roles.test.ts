@@ -118,6 +118,37 @@ describe('extension runtime roles', () => {
     registries.dispose();
   });
 
+  it('restores an absent command handler without overwriting a newer registration', () => {
+    const registries = new ExtensionRegistry();
+    const subscriptions = new DisposableStore();
+    const commandId = 'workbench-kit.test.api-factory.run';
+    registries.commands.registerCommand({ id: commandId, title: 'Run' });
+    const command = registries.commands.getCommand(commandId);
+    const context = createApiFactory(registries).createContext(
+      createExtension('workbench-kit.test.api-factory'),
+      subscriptions,
+    );
+    const firstHandler = () => 'first';
+    const secondHandler = () => 'second';
+
+    expect(command).toStrictEqual({ id: commandId, title: 'Run' });
+    const registration = context.commands.registerCommand(commandId, firstHandler);
+    expect(command?.handler).toBe(firstHandler);
+
+    registration.dispose();
+    expect(registries.commands.getCommand(commandId)).toBe(command);
+    expect(command).toStrictEqual({ handler: undefined, id: commandId, title: 'Run' });
+
+    const olderRegistration = context.commands.registerCommand(commandId, firstHandler);
+    const newerRegistration = context.commands.registerCommand(commandId, secondHandler);
+    olderRegistration.dispose();
+    expect(command?.handler).toBe(secondHandler);
+
+    newerRegistration.dispose();
+    subscriptions.dispose();
+    registries.dispose();
+  });
+
   it('owns activation state and lifecycle events in ExtensionActivationService', async () => {
     const registries = new ExtensionRegistry();
     const inventory = new ExtensionInventory();

@@ -71,10 +71,27 @@ External marketplace execution remains out of scope until these controls exist.
 ## Expression transforms (Field Remap)
 
 Host-registered `expr:jsonata` evaluations are **bounded** by default in
-`@workbench-kit/shell-react` (`timeoutMs`, `maxExpressionLength`, fail-closed
-`onError: 'throw'`). `convertToShape` accepts an optional `AbortSignal` so stale
-async previews cancel between edges/steps. Residual risk: JSONata is not a full
-VM sandbox — hosts should keep timeout budgets tight for untrusted expressions.
+`@workbench-kit/shell-react` (2,000ms `timeoutMs`, 4,096-character
+`maxExpressionLength`, fail-closed `onError: 'throw'`). The configured timeout is
+passed to JSONata's native evaluation checkpoints and to an outer timer for
+awaited work. Native timeout code `D1012` becomes `JsonataTransformTimeoutError`,
+as does expiration of the outer timer; other evaluation errors remain unchanged.
+Already-aborted signals reject before a nonempty expression is compiled or
+evaluated. An empty expression continues to pass the source value through.
+
+Factory options must be finite and greater than zero. `timeoutMs` must also be
+at most 2,147,483,647ms to fit the runtime timer range. Invalid options throw
+`RangeError` at factory creation. This tightens compatibility: zero, negative,
+`NaN`, and infinite values no longer disable the transform's bounds. Omitted
+options retain the defaults; no additional stack or sequence ceiling is imposed.
+The separately exported `raceJsonataEvaluation` test helper keeps its existing
+nonpositive/nonfinite-timeout behavior; it is not the transform factory policy.
+
+`convertToShape` accepts an optional `AbortSignal` so stale async previews cancel
+between edges/steps. Residual risk: native checkpoints cannot interrupt an
+arbitrary synchronous host callback or regex operation, and an outer timer or
+abort signal cannot preempt blocked JavaScript. JSONata is not a full VM sandbox;
+hosts should keep timeout budgets tight for untrusted expressions.
 
 ## Workspace Trust
 

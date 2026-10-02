@@ -1,5 +1,5 @@
 /** @vitest-environment jsdom */
-import { afterEach, beforeAll, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeAll, describe, expect, expectTypeOf, it, vi } from 'vitest';
 import { createRoot, type Root } from 'react-dom/client';
 import { act, createRef, useState, type ComponentProps } from 'react';
 import {
@@ -12,6 +12,10 @@ import {
   type SourceField,
   type TargetSlot,
 } from '@workbench-kit/field-remap';
+import {
+  createFieldRemapHistoryState,
+  type FieldRemapHistoryState,
+} from '@workbench-kit/field-remap/history';
 
 import { FieldRemapFlowMapper, type FieldRemapFlowActions } from './flow.js';
 import { writeFieldRemapTransformDragData } from './drag-payload.js';
@@ -178,6 +182,177 @@ describe('FieldRemapFlowMapper host chrome', () => {
     });
     return event;
   }
+
+  it('preserves legacy history inference for a React lazy initializer', async () => {
+    function HistoryInitializer() {
+      const [history] = useState(createFieldRemapHistoryState);
+      expectTypeOf(history).toEqualTypeOf<FieldRemapHistoryState>();
+      return (
+        <span>
+          {history.past.length}:{history.future.length}
+        </span>
+      );
+    }
+    container = document.createElement('div');
+    document.body.append(container);
+    root = createRoot(container);
+    await act(async () => {
+      root!.render(<HistoryInitializer />);
+    });
+    expect(container.textContent).toBe('0:0');
+  });
+
+  it('delegates supported history shortcuts once to the external owner within Flow', async () => {
+    const undo = vi.fn();
+    const redo = vi.fn();
+    const onEdgesChange = vi.fn();
+    const onOperatorsChange = vi.fn();
+    await renderMapper({
+      historyActions: { canUndo: true, canRedo: true, undo, redo },
+      onEdgesChange,
+      onOperatorsChange,
+    });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const descendant = container!.querySelector<HTMLElement>(
+      '[data-testid="field-remap-select-edge-e-name"]',
+    )!;
+    const bubbled = vi.fn();
+    document.addEventListener('keydown', bubbled);
+    try {
+      for (const [key, modifiers, action] of [
+        ['z', { ctrlKey: true }, undo],
+        ['Z', { metaKey: true }, undo],
+        ['z', { ctrlKey: true, shiftKey: true }, redo],
+        ['z', { metaKey: true, shiftKey: true }, redo],
+        ['y', { ctrlKey: true }, redo],
+      ] as const) {
+        const before = action.mock.calls.length;
+        const event = await pressKey(descendant, key, modifiers);
+        expect(event.defaultPrevented).toBe(true);
+        expect(action).toHaveBeenCalledTimes(before + 1);
+      }
+      expect(undo).toHaveBeenCalledTimes(2);
+      expect(redo).toHaveBeenCalledTimes(3);
+      expect(bubbled).not.toHaveBeenCalled();
+      expect(onEdgesChange).not.toHaveBeenCalled();
+      expect(onOperatorsChange).not.toHaveBeenCalled();
+
+      expect((await pressKey(document.body, 'z', { ctrlKey: true })).defaultPrevented).toBe(false);
+      expect(bubbled).toHaveBeenCalledTimes(1);
+      expect(undo).toHaveBeenCalledTimes(2);
+      expect((await pressKey(mapper, 'z', { ctrlKey: true })).defaultPrevented).toBe(true);
+      expect(undo).toHaveBeenCalledTimes(3);
+    } finally {
+      document.removeEventListener('keydown', bubbled);
+    }
+  });
+
+  it('uses current history actions and leaves unavailable or read-only keys unconsumed', async () => {
+    await renderMapper();
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    expect((await pressKey(mapper, 'z', { ctrlKey: true })).defaultPrevented).toBe(false);
+    expect((await pressKey(mapper, 'y', { ctrlKey: true })).defaultPrevented).toBe(false);
+
+    const undo = vi.fn();
+    const redo = vi.fn();
+    await rerenderMapper({ historyActions: { canUndo: false, canRedo: true, undo, redo } });
+    expect((await pressKey(mapper, 'z', { ctrlKey: true })).defaultPrevented).toBe(false);
+    expect((await pressKey(mapper, 'y', { ctrlKey: true })).defaultPrevented).toBe(true);
+    expect(undo).not.toHaveBeenCalled();
+    expect(redo).toHaveBeenCalledTimes(1);
+
+    const nextUndo = vi.fn();
+    const nextRedo = vi.fn();
+    const historyActions = { canUndo: true, canRedo: false, undo: nextUndo, redo: nextRedo };
+    await rerenderMapper({ historyActions });
+    expect((await pressKey(mapper, 'z', { metaKey: true })).defaultPrevented).toBe(true);
+    expect((await pressKey(mapper, 'z', { metaKey: true, shiftKey: true })).defaultPrevented).toBe(
+      false,
+    );
+    expect(nextUndo).toHaveBeenCalledTimes(1);
+    expect(nextRedo).not.toHaveBeenCalled();
+    expect(undo).not.toHaveBeenCalled();
+    expect(redo).toHaveBeenCalledTimes(1);
+
+    await rerenderMapper({ readOnly: true, historyActions: { ...historyActions, canRedo: true } });
+    expect((await pressKey(mapper, 'z', { ctrlKey: true })).defaultPrevented).toBe(false);
+    expect((await pressKey(mapper, 'y', { ctrlKey: true })).defaultPrevented).toBe(false);
+    expect(nextUndo).toHaveBeenCalledTimes(1);
+    expect(nextRedo).not.toHaveBeenCalled();
+  });
+
+  it('ignores unsupported modifiers and already-prevented history keys', async () => {
+    const undo = vi.fn();
+    const redo = vi.fn();
+    await renderMapper({ historyActions: { canUndo: true, canRedo: true, undo, redo } });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    for (const [key, modifiers] of [
+      ['z', {}],
+      ['z', { ctrlKey: true, altKey: true }],
+      ['z', { metaKey: true, altKey: true }],
+      ['y', { metaKey: true }],
+      ['y', { ctrlKey: true, metaKey: true }],
+      ['y', { ctrlKey: true, shiftKey: true }],
+      ['z', { shiftKey: true }],
+      ['r', { ctrlKey: true }],
+    ] as const) {
+      expect((await pressKey(mapper, key, modifiers)).defaultPrevented).toBe(false);
+    }
+    mapper.addEventListener('keydown', (event) => event.preventDefault(), { once: true });
+    expect((await pressKey(mapper, 'z', { ctrlKey: true })).defaultPrevented).toBe(true);
+    expect(undo).not.toHaveBeenCalled();
+    expect(redo).not.toHaveBeenCalled();
+  });
+
+  it('preserves native history on editable controls and excluded descendants', async () => {
+    const undo = vi.fn();
+    const redo = vi.fn();
+    await renderMapper({ historyActions: { canUndo: true, canRedo: true, undo, redo } });
+    const mapper = container!.querySelector<HTMLElement>('[data-testid="field-remap-mapper"]')!;
+    const search = container!.querySelector<HTMLInputElement>('input[type="search"]')!;
+    expect((await pressKey(search, 'z', { ctrlKey: true })).defaultPrevented).toBe(false);
+
+    const exclusions: {
+      tag: keyof HTMLElementTagNameMap;
+      attributes?: Record<string, string>;
+      descendant?: boolean;
+    }[] = [
+      { tag: 'input' },
+      { tag: 'textarea' },
+      { tag: 'select' },
+      { tag: 'div', attributes: { contenteditable: 'true' } },
+      { tag: 'div', attributes: { contenteditable: '' }, descendant: true },
+      { tag: 'div', attributes: { role: 'textbox' } },
+      { tag: 'div', attributes: { role: 'textbox' }, descendant: true },
+      { tag: 'div', attributes: { 'data-field-remap-shortcuts': 'ignore' } },
+      { tag: 'div', attributes: { 'data-field-remap-shortcuts': 'ignore' }, descendant: true },
+    ];
+    for (const { tag, attributes = {}, descendant = false } of exclusions) {
+      const surface = document.createElement(tag);
+      for (const [name, value] of Object.entries(attributes)) {
+        surface.setAttribute(name, value);
+      }
+      const target = descendant ? document.createElement('span') : surface;
+      if (descendant) {
+        surface.append(target);
+      }
+      mapper.append(surface);
+      expect((await pressKey(target, 'z', { ctrlKey: true })).defaultPrevented).toBe(false);
+      const redoEvent = await pressKey(target, 'z', { metaKey: true, shiftKey: true });
+      expect(redoEvent.defaultPrevented).toBe(false);
+      expect((await pressKey(target, 'y', { ctrlKey: true })).defaultPrevented).toBe(false);
+      surface.remove();
+    }
+    expect(undo).not.toHaveBeenCalled();
+    expect(redo).not.toHaveBeenCalled();
+
+    const noneditable = document.createElement('div');
+    noneditable.setAttribute('contenteditable', 'false');
+    mapper.append(noneditable);
+    expect((await pressKey(noneditable, 'z', { ctrlKey: true })).defaultPrevented).toBe(true);
+    expect(undo).toHaveBeenCalledTimes(1);
+    noneditable.remove();
+  });
 
   it('resyncs controlled node content when render metadata changes without topology changes', async () => {
     const sources: readonly SourceField[] = [

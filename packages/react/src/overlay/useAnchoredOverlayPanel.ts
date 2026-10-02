@@ -1,3 +1,9 @@
+import { readOverlayBounds } from './overlayBounds';
+import {
+  useWorkbenchPresentationScope,
+  isWorkbenchPresentationInactive,
+  hasActiveWorkbenchGlobalModal,
+} from './presentationScope';
 import {
   useCallback,
   useEffect,
@@ -14,7 +20,7 @@ import {
   resolvePortalContainer,
 } from '../primitives/searchable-multi-select/overlay';
 import {
-  measureAnchoredOverlayPanel,
+  measureAnchoredOverlayPanelInBounds,
   type MeasureAnchoredOverlayPanelOptions,
 } from './measureAnchoredOverlayPanel';
 
@@ -74,6 +80,9 @@ export function useAnchoredOverlayPanel({
   measureOptions,
   isInsideExtra,
 }: UseAnchoredOverlayPanelOptions): UseAnchoredOverlayPanelResult {
+  const presentationScope = useWorkbenchPresentationScope();
+  const presentationActive = presentationScope?.active !== false;
+  const presentationOwned = presentationScope !== undefined;
   const internalPanelRef = useRef<HTMLElement | null>(null);
   const [style, setStyle] = useState<CSSProperties | null>(null);
   const didFocusOnOpenRef = useRef(false);
@@ -88,12 +97,17 @@ export function useAnchoredOverlayPanel({
 
   const remeasure = useCallback(() => {
     const trigger = triggerRef.current;
+    if (!presentationActive || isWorkbenchPresentationInactive(trigger)) return;
     if (!open || !trigger) {
       setStyle(null);
       return;
     }
 
-    const rect = measureAnchoredOverlayPanel(trigger, measureOptions);
+    const rect = measureAnchoredOverlayPanelInBounds(
+      trigger,
+      measureOptions ?? {},
+      readOverlayBounds(trigger, presentationScope?.bounds.current),
+    );
     setStyle({
       position: 'fixed',
       top: rect.top,
@@ -101,7 +115,7 @@ export function useAnchoredOverlayPanel({
       width: rect.width,
       maxHeight: rect.maxHeight,
     });
-  }, [measureOptions, open, triggerRef]);
+  }, [measureOptions, open, presentationActive, presentationScope, triggerRef]);
 
   useLayoutEffect(() => {
     remeasure();
@@ -127,10 +141,10 @@ export function useAnchoredOverlayPanel({
       window.removeEventListener('resize', handleResize);
       window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [open, remeasure]);
+  }, [open, presentationActive, remeasure]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !presentationActive) {
       return;
     }
 
@@ -156,6 +170,11 @@ export function useAnchoredOverlayPanel({
     };
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        isWorkbenchPresentationInactive(triggerRef.current) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(document))
+      )
+        return;
       if (event.key !== 'Escape') {
         return;
       }
@@ -167,6 +186,11 @@ export function useAnchoredOverlayPanel({
     };
 
     const handlePointerDown = (event: PointerEvent) => {
+      if (
+        isWorkbenchPresentationInactive(triggerRef.current) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(document))
+      )
+        return;
       if (event.defaultPrevented) {
         return;
       }
@@ -183,10 +207,10 @@ export function useAnchoredOverlayPanel({
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('pointerdown', handlePointerDown, true);
     };
-  }, [isInsideExtra, onOpenChange, open, triggerRef]);
+  }, [isInsideExtra, onOpenChange, open, presentationActive, presentationOwned, triggerRef]);
 
   useEffect(() => {
-    if (!open) {
+    if (!open || !presentationActive) {
       return;
     }
     if (didFocusOnOpenRef.current) {
@@ -204,11 +228,12 @@ export function useAnchoredOverlayPanel({
       return;
     }
 
+    if (presentationScope && hasActiveWorkbenchGlobalModal(panel.ownerDocument)) return;
     panel.focus();
     didFocusOnOpenRef.current = true;
-  }, [open, style]);
+  }, [open, presentationActive, presentationScope, style]);
 
-  const portalRoot = resolvePortalContainer(triggerRef.current);
+  const portalRoot = presentationScope?.container ?? resolvePortalContainer(triggerRef.current);
 
   return {
     style,

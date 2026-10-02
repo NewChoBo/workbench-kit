@@ -7,6 +7,7 @@ import {
   normalizeViewContainers,
   normalizeViews,
   toCommandDefinition,
+  toKeybindingDefinition,
 } from './contribution-normalizers.js';
 
 describe('extension contribution normalizers', () => {
@@ -25,6 +26,33 @@ describe('extension contribution normalizers', () => {
       icon: 'play',
       id: 'sample.run',
       title: 'Run Sample',
+    });
+  });
+
+  it('retains absent metadata as own undefined properties', () => {
+    expect(
+      toCommandDefinition({
+        command: 'sample.run',
+        title: 'Run Sample',
+      }),
+    ).toStrictEqual({
+      category: undefined,
+      enablement: undefined,
+      icon: undefined,
+      id: 'sample.run',
+      title: 'Run Sample',
+    });
+
+    expect(
+      toKeybindingDefinition({
+        command: 'sample.run',
+        key: 'ctrl+r',
+      }),
+    ).toStrictEqual({
+      args: undefined,
+      command: 'sample.run',
+      key: 'ctrl+r',
+      when: undefined,
     });
   });
 

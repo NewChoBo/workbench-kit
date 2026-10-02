@@ -44,6 +44,31 @@
   width: 100%;
 }
 
+/* Opt-in for short embedded panes; legacy grid chrome remains unchanged. */
+.ui-catalog-browse[data-ui-catalog-browse-compact-toolbar='true'] > .ui-filter-bar {
+  padding: 4px 8px;
+}
+
+.ui-catalog-browse[data-ui-catalog-browse-compact-toolbar='true'] .ui-catalog-browse__toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 6px;
+}
+
+.ui-catalog-browse[data-ui-catalog-browse-compact-toolbar='true'] .ui-catalog-browse__search {
+  flex: 1 1 140px;
+  min-width: 120px;
+}
+
+.ui-catalog-browse__actions {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 4px;
+  margin-inline-start: auto;
+}
+
 .ui-catalog-browse__grid,
 .ui-catalog-browse__list {
   flex: 1 1 auto;

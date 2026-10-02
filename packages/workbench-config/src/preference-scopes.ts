@@ -10,7 +10,9 @@ export const PREFERENCE_SCOPE_MERGE_ORDER: readonly PreferenceScope[] = [
   'local',
 ];
 
-export type PreferenceValuesByScope = Partial<Record<PreferenceScope, WorkbenchSettingsConfig>>;
+export type PreferenceValuesByScope = Partial<
+  Record<PreferenceScope, WorkbenchSettingsConfig | undefined>
+>;
 
 export interface ScopedPreferenceLayer {
   readonly scope: PreferenceScope;

@@ -40,6 +40,32 @@ describe('mergeScopedPreferences', () => {
 });
 
 describe('mergePreferenceValuesByScope', () => {
+  it('treats undefined scope layers as absent while retaining concrete values', () => {
+    expect(
+      mergePreferenceValuesByScope({
+        default: { 'editor.fontSize': 12 },
+        local: undefined,
+        workspace: undefined,
+      }),
+    ).toStrictEqual({ 'editor.fontSize': 12 });
+
+    expect(
+      mergePreferenceValuesByScope({
+        default: undefined,
+        local: undefined,
+        workspace: { 'editor.fontSize': 14 },
+      }),
+    ).toStrictEqual({ 'editor.fontSize': 14 });
+
+    expect(
+      mergePreferenceValuesByScope({
+        default: { 'editor.fontSize': 12, 'editor.tabSize': 2 },
+        local: { 'editor.fontSize': 16 },
+        workspace: undefined,
+      }),
+    ).toStrictEqual({ 'editor.fontSize': 16, 'editor.tabSize': 2 });
+  });
+
   it('merges a values-by-scope map in precedence order', () => {
     expect(
       mergePreferenceValuesByScope({

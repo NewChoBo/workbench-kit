@@ -10,6 +10,7 @@ import { NPM_PUBLISH_ORDER } from './npm-publish-config.mjs';
 
 const shared = vi.hoisted(() => ({
   events: [] as string[],
+  fixtureSources: [] as string[],
   runCommand: vi.fn(),
   buildFreshWorkspaceArtifacts: vi.fn(),
   failCommand: null as null | ((command: string, args: string[]) => boolean),
@@ -59,6 +60,7 @@ function writeExtractedLeaves(packDir: string) {
       ]
     : [
         'assets/privileged-asset-protocol.js',
+        'launch/host-launch.js',
         'lifecycle/application-quit-guard.js',
         'security/open-allowlisted-external-link.js',
         'security/require-owned-window-for-sender.js',
@@ -80,6 +82,7 @@ function createParentFixture() {
 describe('same-run platform CJS checks', () => {
   beforeEach(() => {
     shared.events.length = 0;
+    shared.fixtureSources.length = 0;
     shared.failCommand = null;
     shared.runCommand.mockReset();
     shared.runCommand.mockImplementation((command, args) => {
@@ -87,6 +90,15 @@ describe('same-run platform CJS checks', () => {
       if (shared.failCommand?.(command, args)) throw new Error(`${command} failed`);
       if (command === 'npm') return 'fake-package.tgz\n';
       if (command === 'tar') writeExtractedLeaves(args.at(-1)!);
+      if (command === 'pnpm' && args.includes('tsc')) {
+        const config = args.at(-1)!;
+        shared.fixtureSources.push(
+          fs.readFileSync(path.join(path.dirname(config), 'smoke.ts'), 'utf8'),
+        );
+      }
+      if (command === process.execPath && String(args[0]).endsWith('smoke.cjs')) {
+        shared.fixtureSources.push(fs.readFileSync(args[0], 'utf8'));
+      }
       return '';
     });
     shared.buildFreshWorkspaceArtifacts.mockReset();
@@ -121,6 +133,25 @@ describe('same-run platform CJS checks', () => {
     }
   });
 
+  it('probes public residency resolver types and real packed CJS fallback semantics', async () => {
+    const module = await import('./check-platform-cjs-leaves.mjs');
+    module.prepareSameRunPlatformCjsChecks()();
+    const typeProbe = shared.fixtureSources.find((source) =>
+      source.includes('const zOrderPolicyInput:'),
+    );
+    const runtimeProbe = shared.fixtureSources.find((source) =>
+      source.includes('assert.deepEqual(resolveWindowZOrderPolicy'),
+    );
+    expect(typeProbe).toContain('type ResolveWindowZOrderPolicyInput, type WindowZOrderPolicy');
+    expect(typeProbe).toContain(
+      'const zOrderPolicy: WindowZOrderPolicy = resolveWindowZOrderPolicy(zOrderPolicyInput)',
+    );
+    expect(runtimeProbe).toContain(
+      'effectiveZOrder: "default", focusable: true, reason: "back-unavailable"',
+    );
+    expect(runtimeProbe).toContain('"back-approximation"');
+  });
+
   it('does not pack when the fresh workspace build fails', async () => {
     const module = await import('./check-platform-cjs-leaves.mjs');
     shared.buildFreshWorkspaceArtifacts.mockImplementation(() => {
@@ -129,6 +160,23 @@ describe('same-run platform CJS checks', () => {
 
     expect(() => module.prepareSameRunPlatformCjsChecks()).toThrow('build failed');
     expect(shared.runCommand).not.toHaveBeenCalled();
+  });
+
+  it('probes host-launch types and canonical no-shell dispatch with injected ports', async () => {
+    const module = await import('./check-platform-cjs-leaves.mjs');
+    module.prepareSameRunPlatformCjsChecks()();
+    const typeProbe = shared.fixtureSources.find((source) =>
+      source.includes('type HostLaunchService'),
+    );
+    const runtimeProbe = shared.fixtureSources.find((source) =>
+      source.includes('const launchCalls = []'),
+    );
+    expect(typeProbe).toContain("from '@workbench-kit/electron-shell/host-launch'");
+    expect(typeProbe).toContain('const hostLaunchFactory:');
+    expect(runtimeProbe).toContain("require('@workbench-kit/electron-shell/host-launch')");
+    expect(runtimeProbe).toContain('shell: false, detached: true, stdio: "ignore"');
+    expect(runtimeProbe).toContain('"/opt/editor/bin/editor", []');
+    expect(runtimeProbe).toContain('targetPresence: "unknown"');
   });
 
   it.each([

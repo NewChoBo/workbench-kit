@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, expectTypeOf, it, vi } from 'vitest';
 import {
   areFieldRemapHistorySnapshotsEqual,
   createFieldRemapHistorySnapshot,
@@ -7,6 +7,7 @@ import {
   redoFieldRemapHistory,
   undoFieldRemapHistory,
   type FieldRemapHistorySnapshot,
+  type FieldRemapHistorySnapshotPolicy,
   type FieldRemapHistoryState,
 } from '@workbench-kit/field-remap/history';
 
@@ -228,5 +229,206 @@ describe('headless Field Remap history', () => {
     expect(redone.state.future).toEqual([]);
     expect(state.past[0]?.edges[0]?.id).toBe('past-0');
     expect(state.future).toEqual([future]);
+  });
+});
+
+describe('caller-owned Field Remap history snapshots', () => {
+  it('preserves the legacy defaults and requires a policy for custom snapshot calls', () => {
+    const legacy = createFieldRemapHistoryState();
+    const snapshot = createFieldRemapHistorySnapshot([], []);
+    expectTypeOf(legacy).toEqualTypeOf<FieldRemapHistoryState>();
+    expectTypeOf<
+      ReturnType<typeof createFieldRemapHistoryState>
+    >().toEqualTypeOf<FieldRemapHistoryState>();
+    expectTypeOf(
+      recordFieldRemapHistory(legacy, snapshot, snapshot),
+    ).toEqualTypeOf<FieldRemapHistoryState>();
+    expectTypeOf(undoFieldRemapHistory(legacy, snapshot)).toEqualTypeOf<{
+      readonly state: FieldRemapHistoryState;
+      readonly snapshot: FieldRemapHistorySnapshot;
+    } | null>();
+    expectTypeOf(redoFieldRemapHistory(legacy, snapshot)).toEqualTypeOf<{
+      readonly state: FieldRemapHistoryState;
+      readonly snapshot: FieldRemapHistorySnapshot;
+    } | null>();
+
+    const policy: FieldRemapHistorySnapshotPolicy<number> = {
+      capture: (value) => value,
+      areEqual: Object.is,
+    };
+    const state = createFieldRemapHistoryState<number>();
+    expectTypeOf(recordFieldRemapHistory(state, 0, 1, policy)).toEqualTypeOf<
+      FieldRemapHistoryState<number>
+    >();
+    expectTypeOf(undoFieldRemapHistory(state, 1, policy)).toEqualTypeOf<{
+      readonly state: FieldRemapHistoryState<number>;
+      readonly snapshot: number;
+    } | null>();
+    expectTypeOf(redoFieldRemapHistory(state, 1, policy)).toEqualTypeOf<{
+      readonly state: FieldRemapHistoryState<number>;
+      readonly snapshot: number;
+    } | null>();
+
+    // Typechecked only: the policy-free overload must never accept custom snapshots.
+    const missingPolicy = () => {
+      // @ts-expect-error Custom snapshots require their capture/equality policy.
+      recordFieldRemapHistory(state, 0, 1);
+      // @ts-expect-error Custom snapshots require their capture/equality policy.
+      undoFieldRemapHistory(state, 1);
+      // @ts-expect-error Custom snapshots require their capture/equality policy.
+      redoFieldRemapHistory(state, 1);
+    };
+    expectTypeOf(missingPolicy).returns.toEqualTypeOf<void>();
+  });
+
+  it('captures complete opaque snapshots without rebuilding projected mappings', () => {
+    const initial = {
+      ops: [
+        { kind: 'filter', spec: { future: new Map([['threshold', 2n]]), optional: undefined } },
+        { kind: 'mapping', spec: { source: 'name', target: 'title' } },
+        { kind: 'hidden', spec: { source: 'debug', target: 'metadata' } },
+        { kind: 'compute', spec: { nested: [{ mode: 'future' }], enabled: false } },
+        { kind: 'format', spec: { template: '{name}', future: new Date('2026-01-01T00:00:00Z') } },
+      ],
+      futureMetadata: { revision: 7, nested: ['opaque'] },
+    };
+    type Snapshot = typeof initial;
+    const expected = structuredClone(initial);
+    const next: Snapshot = { ...initial, ops: initial.ops.filter((_, index) => index !== 1) };
+    const capture = vi.fn((value: Snapshot): Snapshot => structuredClone(value));
+    const policy: FieldRemapHistorySnapshotPolicy<Snapshot> = {
+      capture,
+      areEqual: Object.is,
+    };
+    const empty = createFieldRemapHistoryState<Snapshot>();
+    const recorded = recordFieldRemapHistory(empty, initial, next, policy);
+
+    expect(capture).toHaveBeenCalledExactlyOnceWith(initial);
+    expect(initial).toEqual(expected);
+    expect(empty).toEqual({ past: [], future: [] });
+    expect(recorded.past[0]).toEqual(expected);
+    expect(recorded.past[0]).not.toBe(initial);
+    expect(recorded.past[0]?.ops).not.toBe(initial.ops);
+    initial.futureMetadata.nested.push('later caller mutation');
+    initial.ops[0]!.spec.future = new Map([['threshold', 99n]]);
+    expect(recorded.past[0]).toEqual(expected);
+
+    const expectedNext = structuredClone(next);
+    const undone = undoFieldRemapHistory(recorded, next, policy)!;
+    expect(undone.snapshot).toBe(recorded.past[0]);
+    expect(undone.snapshot).toEqual(expected);
+    expect(undone.state.future[0]).toEqual(expectedNext);
+    expect(undone.state.future[0]).not.toBe(next);
+    const redone = redoFieldRemapHistory(undone.state, undone.snapshot, policy)!;
+    expect(redone.snapshot).toBe(undone.state.future[0]);
+    expect(redone.snapshot).toEqual(expectedNext);
+    expect(redone.state.past[0]).toEqual(expected);
+    expect(recorded.past[0]).toEqual(expected);
+    expect(capture).toHaveBeenCalledTimes(3);
+  });
+
+  it('preserves redo on semantic no-ops and clears it on changed records', () => {
+    type Snapshot = { readonly value: number; readonly metadata: string };
+    const current: Snapshot = { value: 1, metadata: 'first' };
+    const future: Snapshot = { value: 2, metadata: 'future' };
+    const state: FieldRemapHistoryState<Snapshot> = Object.freeze({
+      past: Object.freeze([]),
+      future: Object.freeze([future]),
+    });
+    const capture = vi.fn((value: Snapshot): Snapshot => Object.freeze({ ...value }));
+    const policy: FieldRemapHistorySnapshotPolicy<Snapshot> = {
+      capture,
+      areEqual: (left, right) => left.value === right.value,
+    };
+    const unchanged = recordFieldRemapHistory(
+      state,
+      current,
+      { value: 1, metadata: 'equal clone' },
+      policy,
+    );
+    expect(unchanged).toBe(state);
+    expect(unchanged.future).toBe(state.future);
+    expect(capture).not.toHaveBeenCalled();
+    expect(redoFieldRemapHistory(unchanged, current, policy)?.snapshot).toBe(future);
+
+    capture.mockClear();
+    const branched = recordFieldRemapHistory(
+      state,
+      current,
+      { value: 3, metadata: 'branch' },
+      policy,
+    );
+    expect(branched.past).toEqual([current]);
+    expect(branched.past[0]).not.toBe(current);
+    expect(branched.future).toEqual([]);
+    expect(redoFieldRemapHistory(branched, current, policy)).toBeNull();
+    expect(capture).toHaveBeenCalledExactlyOnceWith(current);
+    expect(state.future).toEqual([future]);
+  });
+
+  it.each([0, false, '', null, undefined] as const)(
+    'restores falsy snapshot %s from a nonempty stack in both directions',
+    (snapshot) => {
+      type Snapshot = number | boolean | string | null | undefined;
+      const capture = vi.fn((value: Snapshot): Snapshot => value);
+      const policy: FieldRemapHistorySnapshotPolicy<Snapshot> = { capture, areEqual: Object.is };
+      const empty = createFieldRemapHistoryState<Snapshot>();
+      expect(undoFieldRemapHistory(empty, snapshot, policy)).toBeNull();
+      expect(redoFieldRemapHistory(empty, snapshot, policy)).toBeNull();
+      expect(capture).not.toHaveBeenCalled();
+
+      const recorded = recordFieldRemapHistory(empty, snapshot, 'next', policy);
+      const undone = undoFieldRemapHistory(recorded, 'next', policy)!;
+      expect(undone).not.toBeNull();
+      expect(undone.snapshot).toBe(snapshot);
+      expect(undone.state.past).toEqual([]);
+      expect(undone.state.future).toEqual(['next']);
+      const reverse = undoFieldRemapHistory({ past: ['next'], future: [] }, snapshot, policy)!;
+      const redone = redoFieldRemapHistory(reverse.state, reverse.snapshot, policy)!;
+      expect(redone).not.toBeNull();
+      expect(redone.snapshot).toBe(snapshot);
+      expect(redone.state).toEqual({ past: ['next'], future: [] });
+    },
+  );
+
+  it('retains the existing one-hundred-step bound for custom snapshots and branching', () => {
+    const policy: FieldRemapHistorySnapshotPolicy<number> = {
+      capture: (value) => value,
+      areEqual: Object.is,
+    };
+    let state = createFieldRemapHistoryState<number>();
+    for (let value = 1; value <= 105; value += 1) {
+      state = recordFieldRemapHistory(state, value - 1, value, policy);
+    }
+    expect(state.past).toEqual(Array.from({ length: 100 }, (_, index) => index + 5));
+    let current = 105;
+    for (let value = 104; value >= 5; value -= 1) {
+      const undone = undoFieldRemapHistory(state, current, policy)!;
+      expect(undone.snapshot).toBe(value);
+      state = undone.state;
+      current = undone.snapshot;
+    }
+    expect(undoFieldRemapHistory(state, current, policy)).toBeNull();
+    for (let value = 6; value <= 105; value += 1) {
+      const redone = redoFieldRemapHistory(state, current, policy)!;
+      expect(redone.snapshot).toBe(value);
+      state = redone.state;
+      current = redone.snapshot;
+    }
+    expect(state.past).toHaveLength(100);
+    expect(state.past[0]).toBe(5);
+    expect(redoFieldRemapHistory(state, current, policy)).toBeNull();
+    const undone = undoFieldRemapHistory(state, current, policy)!;
+    const branched = recordFieldRemapHistory(undone.state, undone.snapshot, 200, policy);
+    expect(branched.past).toHaveLength(100);
+    expect(branched.past[99]).toBe(104);
+    expect(branched.future).toEqual([]);
+
+    const suppliedFullHistory = { past: state.past, future: [106] };
+    const redone = redoFieldRemapHistory(suppliedFullHistory, current, policy)!;
+    expect(redone.state.past).toHaveLength(100);
+    expect(redone.state.past[0]).toBe(6);
+    expect(redone.state.past[99]).toBe(105);
+    expect(suppliedFullHistory.past[0]).toBe(5);
   });
 });

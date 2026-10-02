@@ -1,3 +1,4 @@
+import { readOverlayBounds, type OverlayBounds } from '../../overlay/overlayBounds';
 import type { CSSProperties } from 'react';
 import type { ListboxPlacement, OverlayPosition } from './types';
 
@@ -23,6 +24,15 @@ export function measureOverlayPosition(
   trigger: HTMLElement,
   optionCount: number,
 ): OverlayPosition | null {
+  return measureOverlayPositionInBounds(trigger, optionCount, readOverlayBounds(trigger));
+}
+
+/** Internal scoped adapter entry; legacy callers keep viewport placement. */
+export function measureOverlayPositionInBounds(
+  trigger: HTMLElement,
+  optionCount: number,
+  bounds: OverlayBounds,
+): OverlayPosition | null {
   const rect = trigger.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return null;
 
@@ -30,8 +40,8 @@ export function measureOverlayPosition(
     LISTBOX_MAX_HEIGHT,
     optionCount * LISTBOX_OPTION_HEIGHT + LISTBOX_PADDING,
   );
-  const spaceBelow = Math.max(0, window.innerHeight - rect.bottom - VIEWPORT_PADDING);
-  const spaceAbove = Math.max(0, rect.top - VIEWPORT_PADDING);
+  const spaceBelow = Math.max(0, bounds.bottom - rect.bottom - VIEWPORT_PADDING);
+  const spaceAbove = Math.max(0, rect.top - bounds.top - VIEWPORT_PADDING);
   const placement: ListboxPlacement =
     spaceBelow >= idealHeight
       ? 'bottom'
@@ -41,15 +51,36 @@ export function measureOverlayPosition(
           ? 'bottom'
           : 'top';
   const available = placement === 'bottom' ? spaceBelow : spaceAbove;
-  const maxHeight = resolveListboxMaxHeight(idealHeight, available);
+  const maxHeight = bounds.scoped
+    ? Math.min(idealHeight, available)
+    : resolveListboxMaxHeight(idealHeight, available);
 
+  const width = bounds.scoped
+    ? Math.min(rect.width, Math.max(0, bounds.width - VIEWPORT_PADDING * 2))
+    : rect.width;
+  const left = bounds.scoped
+    ? Math.max(
+        bounds.left + VIEWPORT_PADDING,
+        Math.min(rect.left, bounds.right - VIEWPORT_PADDING - width),
+      )
+    : rect.left;
   return {
     placement,
-    left: rect.left,
-    width: rect.width,
+    left,
+    width,
     maxHeight,
-    triggerTop: rect.top,
-    triggerBottom: rect.bottom,
+    triggerTop: bounds.scoped
+      ? Math.max(
+          bounds.top + VIEWPORT_PADDING,
+          Math.min(rect.top, bounds.bottom - VIEWPORT_PADDING),
+        )
+      : rect.top,
+    triggerBottom: bounds.scoped
+      ? Math.max(
+          bounds.top + VIEWPORT_PADDING,
+          Math.min(rect.bottom, bounds.bottom - VIEWPORT_PADDING),
+        )
+      : rect.bottom,
   };
 }
 

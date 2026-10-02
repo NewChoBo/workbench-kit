@@ -1,21 +1,413 @@
 /** @vitest-environment jsdom */
 
-import { act } from 'react';
+import { act, useEffect, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { SplitView } from './SplitView';
+import { Select } from '../../primitives/select/Select';
+import { WorkbenchOverlaysProvider } from '../chrome/workbenchOverlaysContext';
+import { WorkbenchModalPortal } from '../chrome/WorkbenchModalPortal';
 
 (globalThis as { IS_REACT_ACT_ENVIRONMENT?: boolean }).IS_REACT_ACT_ENVIRONMENT = true;
 
 describe('SplitView', () => {
   afterEach(() => {
+    vi.restoreAllMocks();
+    vi.unstubAllGlobals();
     document.body.innerHTML = '';
     document.documentElement.classList.remove(
       'ui-workbench-split-view-resizing',
       'ui-workbench-split-view-resizing--vertical',
     );
   });
+
+  for (const orientation of ['horizontal', 'vertical'] as const) {
+    for (const hiddenSide of ['primary', 'secondary'] as const) {
+      it(`fills the remaining ${orientation} track when the ${hiddenSide} pane is hidden directly`, async () => {
+        const container = document.createElement('div');
+        document.body.append(container);
+        const root = createRoot(container);
+        const mounted = vi.fn();
+        const resized = vi.fn();
+        function StatefulPane({ name }: { name: string }) {
+          const [count, setCount] = useState(0);
+          useEffect(() => {
+            mounted(name);
+          }, [name]);
+          return (
+            <button onClick={() => setCount(count + 1)}>
+              {name}:{count}
+            </button>
+          );
+        }
+        const render = async (hidden: boolean) => {
+          await act(async () =>
+            root.render(
+              <SplitView
+                orientation={orientation}
+                primary={<StatefulPane name="Primary" />}
+                secondary={<StatefulPane name="Secondary" />}
+                primaryHidden={hiddenSide === 'primary' && hidden}
+                secondaryHidden={hiddenSide === 'secondary' && hidden}
+                primarySizePercent={40}
+                onPrimarySizePercentChange={resized}
+              />,
+            ),
+          );
+        };
+        await render(false);
+        const split = container.querySelector<HTMLElement>('.ui-workbench-split-view')!;
+        const primary = split.querySelector<HTMLElement>('.ui-workbench-split-view__primary')!;
+        const secondary = split.querySelector<HTMLElement>('.ui-workbench-split-view__secondary')!;
+        const separator = split.querySelector<HTMLElement>('[role="separator"]')!;
+        const remaining = hiddenSide === 'primary' ? secondary : primary;
+        const inactive = hiddenSide === 'primary' ? primary : secondary;
+        const remainingButton = remaining.querySelector<HTMLButtonElement>('button')!;
+        await act(async () => remainingButton.click());
+        await render(true);
+        // Existing collapse CSS is the shared geometry owner; direct props now select it.
+        expect(split.classList.contains(`ui-workbench-split-view--${hiddenSide}-collapsed`)).toBe(
+          true,
+        );
+        expect(split.dataset.orientation).toBe(orientation);
+        expect(inactive.hidden).toBe(true);
+        expect(inactive.hasAttribute('inert')).toBe(true);
+        expect(remaining.hidden).toBe(false);
+        expect(separator.hidden).toBe(true);
+        expect(separator.hasAttribute('inert')).toBe(true);
+        expect(separator.tabIndex).toBe(-1);
+        expect(remaining.querySelector('button')).toBe(remainingButton);
+        expect(remainingButton.textContent).toContain(':1');
+        expect(mounted).toHaveBeenCalledTimes(2);
+        expect(resized).not.toHaveBeenCalled();
+        await render(false);
+        expect(split.classList.contains(`ui-workbench-split-view--${hiddenSide}-collapsed`)).toBe(
+          false,
+        );
+        expect(split.style.getPropertyValue('--ui-workbench-split-primary-size')).toBe('40%');
+        expect(separator.hidden).toBe(false);
+        expect(remaining.querySelector('button')).toBe(remainingButton);
+        expect(mounted).toHaveBeenCalledTimes(2);
+        await act(async () => root.unmount());
+      });
+    }
+  }
+
+  it.each([false, true])(
+    'passes through omitted overlay ownership without reparenting (inherited=%s)',
+    async (inherited) => {
+      const container = document.createElement('div');
+      const overlays = document.createElement('div');
+      document.body.append(container, overlays);
+      const root = createRoot(container);
+      const render = async (size: number) => {
+        const split = (
+          <SplitView
+            primary={
+              <WorkbenchModalPortal>
+                <div data-test-portal="passthrough">Portal content</div>
+              </WorkbenchModalPortal>
+            }
+            secondary={<main>Editor</main>}
+            primarySizePercent={size}
+          />
+        );
+        await act(async () =>
+          root.render(
+            inherited ? (
+              <WorkbenchOverlaysProvider container={overlays}>{split}</WorkbenchOverlaysProvider>
+            ) : (
+              split
+            ),
+          ),
+        );
+      };
+      await render(40);
+      const portal = document.body.querySelector('[data-test-portal="passthrough"]')!;
+      expect(portal).not.toBeNull();
+      expect(portal.parentElement).toBe(inherited ? overlays : document.body);
+      await render(50);
+      expect(document.body.querySelector('[data-test-portal="passthrough"]')).toBe(portal);
+      expect(portal.parentElement).toBe(inherited ? overlays : document.body);
+      expect(document.body.querySelector('.ui-workbench-pane-overlays')).toBeNull();
+      await act(async () => root.unmount());
+    },
+  );
+
+  it('preserves authored child identity when opt-in hidden props are added and omitted again', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const mounts = vi.fn();
+    function Draft() {
+      const [count, setCount] = useState(0);
+      useEffect(() => {
+        mounts();
+      }, []);
+      return <button onClick={() => setCount((value) => value + 1)}>Draft:{count}</button>;
+    }
+    const render = async (primaryHidden?: boolean) => {
+      await act(async () =>
+        root.render(
+          <SplitView
+            primaryHidden={primaryHidden}
+            primary={<Draft />}
+            secondary={<main>Editor</main>}
+          />,
+        ),
+      );
+    };
+    await render();
+    const draft = container.querySelector<HTMLButtonElement>('button')!;
+    await act(async () => draft.click());
+    await render(true);
+    await render();
+    expect(container.querySelector('button')).toBe(draft);
+    expect(draft.textContent).toBe('Draft:1');
+    expect(mounts).toHaveBeenCalledTimes(1);
+    expect(container.querySelector('[data-workbench-split-overlay-scope]')).toBeNull();
+    expect(document.body.querySelector('.ui-workbench-pane-overlays')).toBeNull();
+    await act(async () => root.unmount());
+  });
+
+  it('retains and suspends an open Select in a directly hidden standalone pane', async () => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const changed = vi.fn();
+    const geometry = vi
+      .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+      .mockImplementation(function (this: HTMLElement) {
+        const width = this.classList.contains('ui-workbench-split-view') ? 800 : 160;
+        const height = this.classList.contains('ui-workbench-split-view') ? 500 : 28;
+        return {
+          left: 0,
+          top: 40,
+          width,
+          height,
+          right: width,
+          bottom: 40 + height,
+          x: 0,
+          y: 40,
+          toJSON: () => ({}),
+        };
+      });
+    const render = async (hidden: boolean) => {
+      await act(async () =>
+        root.render(
+          <SplitView
+            primary={
+              <Select aria-label="Direct chooser" onChange={changed}>
+                <option>Alpha</option>
+                <option>Beta</option>
+              </Select>
+            }
+            secondary={<button>Secondary</button>}
+            primaryHidden={hidden}
+          />,
+        ),
+      );
+    };
+    await render(false);
+    await act(async () => container.querySelector<HTMLButtonElement>('[role="combobox"]')!.click());
+    const listbox = document.body.querySelector<HTMLElement>('[role="listbox"]')!;
+    expect(listbox).not.toBeNull();
+    expect(listbox.closest('.ui-workbench-split-view')).toBeNull();
+    await render(true);
+    expect(listbox.closest('[hidden][inert]')).not.toBeNull();
+    const escape = new KeyboardEvent('keydown', { key: 'Escape', cancelable: true });
+    await act(async () => {
+      window.dispatchEvent(escape);
+      window.dispatchEvent(new Event('pointerdown'));
+      window.dispatchEvent(new Event('resize'));
+    });
+    expect(escape.defaultPrevented).toBe(false);
+    expect(changed).not.toHaveBeenCalled();
+    await render(false);
+    expect(document.body.querySelector('[role="listbox"]')).toBe(listbox);
+    expect(listbox.closest('[hidden]')).toBeNull();
+    await act(async () => root.unmount());
+    expect(document.body.querySelector('[role="listbox"]')).toBeNull();
+    expect(document.body.querySelector('.ui-workbench-pane-overlays')).toBeNull();
+    geometry.mockRestore();
+  });
+
+  it.each([
+    { minPrimarySizePercent: 32, maxPrimarySizePercent: 32 },
+    { primarySizeUnit: 'pixels' as const, minPrimarySizePx: 32, maxPrimarySizePx: 32 },
+    { layoutMode: 'secondary-fixed' as const, minSecondarySizePx: 32, maxSecondarySizePx: 32 },
+  ])('keeps a fixed track gutter without an interactive separator (%j)', async (bounds) => {
+    const container = document.createElement('div');
+    document.body.append(container);
+    const root = createRoot(container);
+    const committed = vi.fn();
+    const previewed = vi.fn();
+    await act(async () =>
+      root.render(
+        <SplitView
+          {...bounds}
+          primary={<aside>Primary</aside>}
+          secondary={<main>Secondary</main>}
+          onPrimarySizePercentChange={committed}
+          onPrimarySizePxChange={committed}
+          onSecondarySizePxChange={committed}
+          onPrimarySizePercentPreviewChange={previewed}
+          onPrimarySizePxPreviewChange={previewed}
+          onSecondarySizePxPreviewChange={previewed}
+        />,
+      ),
+    );
+    const split = container.querySelector<HTMLElement>('.ui-workbench-split-view')!;
+    const separator = split.querySelector<HTMLElement>('.ui-workbench-split-view__separator')!;
+    expect(separator.hidden).toBe(false);
+    expect(separator.hasAttribute('inert')).toBe(true);
+    expect(separator.getAttribute('aria-hidden')).toBe('true');
+    expect(separator.hasAttribute('role')).toBe(false);
+    expect(separator.hasAttribute('aria-valuenow')).toBe(false);
+    expect(separator.hasAttribute('aria-valuemin')).toBe(false);
+    expect(separator.hasAttribute('aria-valuemax')).toBe(false);
+    expect(separator.tabIndex).toBe(-1);
+    expect(split.querySelector('[hidden]')).toBeNull();
+    expect(split.classList.contains('ui-workbench-split-view--primary-collapsed')).toBe(false);
+    expect(split.classList.contains('ui-workbench-split-view--secondary-collapsed')).toBe(false);
+    const key = new KeyboardEvent('keydown', { key: 'End', bubbles: true, cancelable: true });
+    await act(async () => {
+      separator.dispatchEvent(key);
+      separator.dispatchEvent(createPointerLikeEvent('pointerdown', 250, 0));
+      separator.dispatchEvent(createPointerLikeEvent('pointermove', 300, 0));
+      separator.dispatchEvent(createPointerLikeEvent('pointerup', 300, 0));
+    });
+    expect(key.defaultPrevented).toBe(false);
+    expect(split.classList.contains('is-dragging')).toBe(false);
+    expect(committed).not.toHaveBeenCalled();
+    expect(previewed).not.toHaveBeenCalled();
+    await act(async () => root.unmount());
+  });
+
+  it.each(['primary-fixed', 'secondary-fixed'] as const)(
+    'suspends a drag when the effective %s range becomes zero in a tiny container',
+    async (layoutMode) => {
+      const container = document.createElement('div');
+      document.body.append(container);
+      const root = createRoot(container);
+      const committed = vi.fn();
+      const previewed = vi.fn();
+      let height = 600;
+      let resize = () => {};
+      const geometry = vi
+        .spyOn(HTMLElement.prototype, 'getBoundingClientRect')
+        .mockImplementation(() => ({
+          x: 0,
+          y: 0,
+          top: 0,
+          left: 0,
+          width: 800,
+          height,
+          right: 800,
+          bottom: height,
+          toJSON: () => ({}),
+        }));
+      vi.stubGlobal(
+        'ResizeObserver',
+        class {
+          constructor(callback: () => void) {
+            resize = callback;
+          }
+          observe() {}
+          disconnect() {}
+        },
+      );
+      const request = vi.spyOn(window, 'requestAnimationFrame').mockReturnValue(17);
+      const cancel = vi.spyOn(window, 'cancelAnimationFrame');
+      await act(async () =>
+        root.render(
+          <SplitView
+            layoutMode={layoutMode}
+            orientation="vertical"
+            primarySizeUnit="pixels"
+            primarySizePx={240}
+            secondarySizePx={200}
+            minPrimarySizePx={200}
+            minSecondarySizePx={140}
+            maxPrimarySizePx={400}
+            maxSecondarySizePx={360}
+            primary={<aside>Primary</aside>}
+            secondary={<main>Secondary</main>}
+            onPrimarySizePxChange={committed}
+            onSecondarySizePxChange={committed}
+            onPrimarySizePxPreviewChange={previewed}
+            onSecondarySizePxPreviewChange={previewed}
+          />,
+        ),
+      );
+      const split = container.querySelector<HTMLElement>('.ui-workbench-split-view')!;
+      const separator = split.querySelector<HTMLElement>('.ui-workbench-split-view__separator')!;
+      const release = vi.fn();
+      Object.defineProperties(separator, {
+        setPointerCapture: { value: vi.fn(), configurable: true },
+        hasPointerCapture: { value: () => true, configurable: true },
+        releasePointerCapture: { value: release, configurable: true },
+      });
+      separator.focus();
+      await act(async () => {
+        separator.dispatchEvent(createPointerLikeEvent('pointerdown', 0, 240));
+        separator.dispatchEvent(createPointerLikeEvent('pointermove', 0, 260));
+      });
+      expect(request).toHaveBeenCalledTimes(1);
+      expect(split.classList.contains('is-dragging')).toBe(true);
+      await act(async () => {
+        height = 300;
+        resize();
+      });
+      expect(cancel).toHaveBeenCalledWith(17);
+      expect(release).toHaveBeenCalledWith(1);
+      expect(document.activeElement).not.toBe(separator);
+      expect(separator.hidden).toBe(false);
+      expect(separator.hasAttribute('inert')).toBe(true);
+      expect(separator.getAttribute('role')).toBeNull();
+      expect(split.classList.contains('is-dragging')).toBe(false);
+      expect(document.documentElement.classList.contains('ui-workbench-split-view-resizing')).toBe(
+        false,
+      );
+      expect(
+        split.style.getPropertyValue(
+          layoutMode === 'secondary-fixed'
+            ? '--ui-workbench-split-secondary-size'
+            : '--ui-workbench-split-primary-size',
+        ),
+      ).toBe(layoutMode === 'secondary-fixed' ? '140px' : '200px');
+      await act(async () => {
+        separator.dispatchEvent(createPointerLikeEvent('pointerup', 0, 280));
+        separator.dispatchEvent(new KeyboardEvent('keydown', { key: 'End', bubbles: true }));
+      });
+      expect(committed).not.toHaveBeenCalled();
+      expect(previewed).not.toHaveBeenCalled();
+      await act(async () => {
+        height = 600;
+        resize();
+      });
+      expect(separator.getAttribute('role')).toBe('separator');
+      expect(separator.tabIndex).toBe(0);
+      expect(separator.hasAttribute('inert')).toBe(false);
+      expect(
+        split.style.getPropertyValue(
+          layoutMode === 'secondary-fixed'
+            ? '--ui-workbench-split-secondary-size'
+            : '--ui-workbench-split-primary-size',
+        ),
+      ).toBe(layoutMode === 'secondary-fixed' ? '200px' : '240px');
+      await act(async () => {
+        separator.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
+      });
+      expect(committed).toHaveBeenCalledWith(layoutMode === 'secondary-fixed' ? 184 : 256);
+      await act(async () => root.unmount());
+      request.mockRestore();
+      cancel.mockRestore();
+      geometry.mockRestore();
+      vi.unstubAllGlobals();
+    },
+  );
 
   it('previews pointer resizing without committing parent state until release', async () => {
     const onPrimarySizePercentChange = vi.fn();

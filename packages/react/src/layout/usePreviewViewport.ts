@@ -43,9 +43,18 @@ export interface UsePreviewViewportResult {
   readonly isPanning: boolean;
   /** False until the host has a positive laid-out size (avoids fitScale=1 close-up flash). */
   readonly isViewportReady: boolean;
+  /** Return to the current fit scale and center the content frame. */
   readonly resetView: () => void;
+  /**
+   * Set one logical content unit per CSS pixel, independent of fit and wheel limits.
+   * Center a finite content-space point, or the content frame when omitted.
+   * Point centering requires finite positive content dimensions; invalid input
+   * throws RangeError before changing the view. Scale and pan persist on resize.
+   */
+  readonly zoomToActualSize: (contentPoint?: PreviewViewportPoint) => void;
   readonly setViewportElement: RefCallback<HTMLDivElement>;
   readonly stageStyle: CSSProperties;
+  /** Equivalent fit multiplier (effectiveZoom / fitScale); can exceed wheel limits in absolute mode. */
   readonly userZoom: number;
   readonly viewportSize: PreviewViewportSize;
 }
@@ -58,7 +67,11 @@ export function computePreviewViewportFitScale(
   viewportSize: PreviewViewportSize,
   contentSize: PreviewViewportSize,
   padding = 48,
+  minimumScale = 0.05,
 ): number {
+  if (!Number.isFinite(minimumScale) || minimumScale < 0 || minimumScale > 1) {
+    throw new RangeError('minimumScale must be finite and between 0 and 1.');
+  }
   if (
     viewportSize.width <= 0 ||
     viewportSize.height <= 0 ||
@@ -73,8 +86,8 @@ export function computePreviewViewportFitScale(
 
   return Math.min(
     1,
-    Math.max(0.05, availableWidth / contentSize.width),
-    Math.max(0.05, availableHeight / contentSize.height),
+    Math.max(minimumScale, availableWidth / contentSize.width),
+    Math.max(minimumScale, availableHeight / contentSize.height),
   );
 }
 
@@ -167,14 +180,17 @@ export function usePreviewViewport({
   viewportPadding = 48,
   zoomWheelScale = 0.003,
 }: UsePreviewViewportOptions = {}): UsePreviewViewportResult {
-  const [userZoom, setUserZoom] = useState(1);
+  const [zoom, setZoom] = useState<{ readonly mode: 'fit' | 'absolute'; readonly value: number }>({
+    mode: 'fit',
+    value: 1,
+  });
   const [pan, setPan] = useState<PreviewViewportPoint>({ x: 0, y: 0 });
   const [isPanning, setIsPanning] = useState(false);
   const [viewportElement, setViewportElementState] = useState<HTMLDivElement | null>(null);
   const [viewportSize, setViewportSize] = useState<PreviewViewportSize>({ width: 0, height: 0 });
 
   const panRef = useRef(pan);
-  const userZoomRef = useRef(userZoom);
+  const zoomRef = useRef(zoom);
   const fitScaleRef = useRef(1);
 
   const fitScale = useMemo(() => {
@@ -195,24 +211,57 @@ export function usePreviewViewport({
     );
   }, [contentHeight, contentWidth, viewportPadding, viewportSize]);
 
-  const effectiveZoom = userZoom * fitScale;
+  const effectiveZoom = zoom.mode === 'absolute' ? zoom.value : zoom.value * fitScale;
+  const userZoom = zoom.mode === 'absolute' ? effectiveZoom / fitScale : zoom.value;
 
   useLayoutEffect(() => {
     panRef.current = pan;
   }, [pan]);
 
   useLayoutEffect(() => {
-    userZoomRef.current = userZoom;
-  }, [userZoom]);
+    zoomRef.current = zoom;
+  }, [zoom]);
 
   useLayoutEffect(() => {
     fitScaleRef.current = fitScale;
   }, [fitScale]);
 
   const resetView = useCallback(() => {
-    setUserZoom(1);
-    setPan({ x: 0, y: 0 });
+    zoomRef.current = { mode: 'fit', value: 1 };
+    panRef.current = { x: 0, y: 0 };
+    setZoom(zoomRef.current);
+    setPan(panRef.current);
   }, []);
+
+  const zoomToActualSize = useCallback(
+    (contentPoint?: PreviewViewportPoint) => {
+      let nextPan: PreviewViewportPoint = { x: 0, y: 0 };
+      if (contentPoint !== undefined) {
+        if (!Number.isFinite(contentPoint?.x) || !Number.isFinite(contentPoint?.y)) {
+          throw new RangeError('contentPoint coordinates must be finite.');
+        }
+        if (
+          contentWidth === undefined ||
+          contentHeight === undefined ||
+          !Number.isFinite(contentWidth) ||
+          !Number.isFinite(contentHeight) ||
+          contentWidth <= 0 ||
+          contentHeight <= 0
+        ) {
+          throw new RangeError('Point centering requires finite positive content dimensions.');
+        }
+        nextPan = { x: contentWidth / 2 - contentPoint.x, y: contentHeight / 2 - contentPoint.y };
+        if (!Number.isFinite(nextPan.x) || !Number.isFinite(nextPan.y)) {
+          throw new RangeError('Point centering must produce finite pan coordinates.');
+        }
+      }
+      zoomRef.current = { mode: 'absolute', value: 1 };
+      panRef.current = nextPan;
+      setZoom(zoomRef.current);
+      setPan(nextPan);
+    },
+    [contentHeight, contentWidth],
+  );
 
   const setViewportElement = useCallback<RefCallback<HTMLDivElement>>((node) => {
     setViewportElementState(node);
@@ -343,33 +392,37 @@ export function usePreviewViewport({
       event.preventDefault();
 
       if (event.ctrlKey || event.metaKey) {
-        const currentUserZoom = userZoomRef.current;
-        const nextUserZoom = clampPreviewViewportZoom(
-          currentUserZoom - event.deltaY * zoomWheelScale,
-          minZoom,
-          maxZoom,
+        const currentZoom = zoomRef.current;
+        const isAbsolute = currentZoom.mode === 'absolute';
+        const nextZoom = clampPreviewViewportZoom(
+          currentZoom.value - event.deltaY * zoomWheelScale,
+          isAbsolute ? Math.min(minZoom, 1) : minZoom,
+          isAbsolute ? Math.max(maxZoom, 1) : maxZoom,
         );
-        if (nextUserZoom === currentUserZoom) {
+        if (nextZoom === currentZoom.value) {
           return;
         }
 
         const rect = viewportElement.getBoundingClientRect();
-        const currentEffectiveZoom = currentUserZoom * fitScaleRef.current;
-        const nextEffectiveZoom = nextUserZoom * fitScaleRef.current;
+        const currentEffectiveZoom = isAbsolute
+          ? currentZoom.value
+          : currentZoom.value * fitScaleRef.current;
+        const nextEffectiveZoom = isAbsolute ? nextZoom : nextZoom * fitScaleRef.current;
         const pointFromCenter = {
           x: event.clientX - rect.left - rect.width / 2,
           y: event.clientY - rect.top - rect.height / 2,
         };
 
-        setPan(
-          computeZoomPanTowardPoint({
-            currentPan: panRef.current,
-            currentZoom: currentEffectiveZoom,
-            nextZoom: nextEffectiveZoom,
-            pointFromCenter,
-          }),
-        );
-        setUserZoom(nextUserZoom);
+        const nextPan = computeZoomPanTowardPoint({
+          currentPan: panRef.current,
+          currentZoom: currentEffectiveZoom,
+          nextZoom: nextEffectiveZoom,
+          pointFromCenter,
+        });
+        panRef.current = nextPan;
+        zoomRef.current = { mode: currentZoom.mode, value: nextZoom };
+        setPan(nextPan);
+        setZoom(zoomRef.current);
         return;
       }
 
@@ -420,6 +473,7 @@ export function usePreviewViewport({
     isPanning,
     isViewportReady,
     resetView,
+    zoomToActualSize,
     setViewportElement,
     stageStyle,
     userZoom,

@@ -1,4 +1,10 @@
-import { useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
+import {
+  WorkbenchFrameFocusContext,
+  useWorkbenchPresentationScope,
+  isWorkbenchPresentationInactive,
+  hasActiveWorkbenchGlobalModal,
+} from '../overlay/presentationScope';
+import { useContext, useEffect, useLayoutEffect, useRef, type RefObject } from 'react';
 
 const FOCUSABLE_SELECTOR = [
   'a[href]',
@@ -53,13 +59,19 @@ export function useModalFocusTrap({
   onClose,
   restoreFocusOnClose = true,
 }: UseModalFocusTrapOptions): void {
+  const frameRestoreFocus = useContext(WorkbenchFrameFocusContext);
+  const presentationScope = useWorkbenchPresentationScope();
+  const presentationActive = presentationScope?.active !== false;
+  const presentationOwned = presentationScope !== undefined;
+  const presentationActiveRef = useRef(presentationActive);
+  presentationActiveRef.current = presentationActive;
   const onCloseRef = useRef(onClose);
   useLayoutEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
   useEffect(() => {
-    if (!enabled) {
+    if (!enabled || !presentationActive) {
       return;
     }
 
@@ -68,7 +80,11 @@ export function useModalFocusTrap({
 
     const focusInitial = () => {
       const container = containerRef.current;
-      if (!container) {
+      if (
+        !container ||
+        isWorkbenchPresentationInactive(container) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(container.ownerDocument))
+      ) {
         return;
       }
 
@@ -93,6 +109,11 @@ export function useModalFocusTrap({
     const frame = window.requestAnimationFrame(focusInitial);
 
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (
+        isWorkbenchPresentationInactive(containerRef.current) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(document))
+      )
+        return;
       if (event.key === 'Escape' && closeOnEscape) {
         event.preventDefault();
         event.stopPropagation();
@@ -105,7 +126,11 @@ export function useModalFocusTrap({
       }
 
       const container = containerRef.current;
-      if (!container) {
+      if (
+        !container ||
+        isWorkbenchPresentationInactive(container) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(container.ownerDocument))
+      ) {
         return;
       }
 
@@ -139,9 +164,19 @@ export function useModalFocusTrap({
     return () => {
       window.cancelAnimationFrame(frame);
       window.removeEventListener('keydown', handleKeyDown, true);
-      if (restoreFocusOnClose && previousFocus?.isConnected) {
-        previousFocus.focus();
+      if (restoreFocusOnClose && presentationActiveRef.current) {
+        if (frameRestoreFocus) frameRestoreFocus(previousFocus);
+        else if (previousFocus?.isConnected) previousFocus.focus();
       }
     };
-  }, [closeOnEscape, containerRef, enabled, initialFocusRef, restoreFocusOnClose]);
+  }, [
+    closeOnEscape,
+    containerRef,
+    enabled,
+    frameRestoreFocus,
+    initialFocusRef,
+    presentationActive,
+    presentationOwned,
+    restoreFocusOnClose,
+  ]);
 }

@@ -1,8 +1,8 @@
 export interface KeybindingDefinition {
-  args?: readonly unknown[];
+  args?: readonly unknown[] | undefined;
   command: string;
   key: string;
-  when?: string;
+  when?: string | undefined;
 }
 
 export interface KeybindingMatch extends KeybindingDefinition {

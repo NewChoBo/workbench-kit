@@ -103,7 +103,8 @@ import {
   type FieldRemapDraftTransform,
   type FieldRemapSelection,
 } from './flow-ops.js';
-import { isFieldRemapEditableShortcutTarget } from './keyboard.js';
+import type { FieldRemapHistoryActions } from './history.js';
+import { handleFieldRemapHistoryKeyDown, isFieldRemapEditableShortcutTarget } from './keyboard.js';
 import { FieldRemapPreviewRail, type FieldRemapPreviewState } from './preview.js';
 import './view.css';
 
@@ -441,6 +442,8 @@ export interface FieldRemapFlowMapperProps {
    * mapper-local drafts are disabled. This is not an authorization boundary.
    */
   readonly readOnly?: boolean | undefined;
+  /** Optional host-owned undo/redo commands. Flow never creates a private mapping history. */
+  readonly historyActions?: FieldRemapHistoryActions | undefined;
   /** Document v2 n→m operators (display + authoring when onOperatorsChange is set). */
   readonly operators?: readonly MappingOperator[] | undefined;
   readonly onOperatorsChange?: ((operators: readonly MappingOperator[]) => void) | undefined;
@@ -677,6 +680,7 @@ function FieldRemapFlowCanvas({
   showBindingsList: showBindingsListProp,
   showConvertPalette = true,
   readOnly = false,
+  historyActions,
   operators = [],
   onOperatorsChange,
   sourceTitle,
@@ -1180,24 +1184,67 @@ function FieldRemapFlowCanvas({
     [onFlowEdgesChange],
   );
 
-  // Depending directly on `nodesWithSelection` (a new array after each graph
-  // calculation) re-enters XYFlow's StoreUpdater. The explicit signature keeps
-  // that loop guard while still tracking every value copied into rendered nodes.
-  const graphSyncKey = createFieldRemapGraphSyncKey({
-    nodes: nodesWithSelection,
-    edges: flowEdgesWithSelection,
-    selection,
+  // Explicit signatures avoid re-entering XYFlow's StoreUpdater for equivalent
+  // projections. Selection must not replace measured nodes with raw graph nodes:
+  // that invalidates handle bounds and temporarily removes the focused edge.
+  const nodeProjectionKey = createFieldRemapGraphSyncKey({
+    nodes: graph.nodes,
+    edges: [],
+    selection: null,
     transformRegistrySignature,
   });
+  const nodeSyncKey = createFieldRemapGraphSyncKey({
+    nodes: nodesWithSelection,
+    edges: [],
+    selection: null,
+    transformRegistrySignature,
+  });
+  const edgeSyncKey = createFieldRemapGraphSyncKey({
+    nodes: [],
+    edges: flowEdgesWithSelection,
+    selection: null,
+    transformRegistrySignature: '',
+  });
+  const previousNodeProjectionKeyRef = useRef(nodeProjectionKey);
   const nodesWithSelectionRef = useRef(nodesWithSelection);
   const graphEdgesRef = useRef(flowEdgesWithSelection);
   nodesWithSelectionRef.current = nodesWithSelection;
   graphEdgesRef.current = flowEdgesWithSelection;
 
   useEffect(() => {
-    setNodes(nodesWithSelectionRef.current);
+    const projected = nodesWithSelectionRef.current;
+    const projectionChanged = previousNodeProjectionKeyRef.current !== nodeProjectionKey;
+    previousNodeProjectionKeyRef.current = nodeProjectionKey;
+    setNodes((current) => {
+      // Changed fields, handles or transform metadata need fresh measurements.
+      if (projectionChanged) {
+        return projected;
+      }
+      const currentById = new Map(current.map((node) => [node.id, node]));
+      const next = projected.map((node) => {
+        const currentNode = currentById.get(node.id);
+        if (!currentNode) {
+          return node;
+        }
+        if (currentNode.selected === node.selected) {
+          return currentNode;
+        }
+        return {
+          ...currentNode,
+          selected: node.selected,
+          data: node.data,
+          domAttributes: node.domAttributes,
+        };
+      });
+      return next.length === current.length && next.every((node, index) => node === current[index])
+        ? current
+        : next;
+    });
+  }, [nodeProjectionKey, nodeSyncKey, setNodes]);
+
+  useEffect(() => {
     setFlowEdges(graphEdgesRef.current);
-  }, [graphSyncKey, setFlowEdges, setNodes]);
+  }, [edgeSyncKey, setFlowEdges]);
 
   useEffect(() => {
     const pending = pendingBulkFocusRef.current;
@@ -1664,6 +1711,9 @@ function FieldRemapFlowCanvas({
 
   const onKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
+      if (handleFieldRemapHistoryKeyDown(event, historyActions, readOnly)) {
+        return;
+      }
       if (event.key === 'Escape') {
         if (event.defaultPrevented || (selection === null && drafts.length === 0)) {
           return;
@@ -1742,6 +1792,7 @@ function FieldRemapFlowCanvas({
       commitBulkDelete,
       detailPresentation,
       emptyDetail,
+      historyActions,
       onOperatorsChange,
       operators,
       previewVisible,

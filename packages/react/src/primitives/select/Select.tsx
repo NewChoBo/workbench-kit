@@ -1,3 +1,9 @@
+import { readOverlayBounds } from '../../overlay/overlayBounds';
+import {
+  useWorkbenchPresentationScope,
+  isWorkbenchPresentationInactive,
+  hasActiveWorkbenchGlobalModal,
+} from '../../overlay/presentationScope';
 import './select.css';
 import './select.app.css';
 import {
@@ -17,7 +23,7 @@ import { cxCodicon } from '../../utils/codicon';
 import { cx } from '../../utils/cx';
 import { getEnabledOptionIndex, parseOptions } from './options';
 import { resolvePortalContainer } from '../searchable-multi-select/overlay';
-import { isTriggerVisible, measureOverlayPosition, overlayListboxStyle } from './overlay';
+import { isTriggerVisible, measureOverlayPositionInBounds, overlayListboxStyle } from './overlay';
 import type { OverlayPosition, ParsedOption } from './types';
 
 export interface SelectProps extends ComponentPropsWithRef<'select'> {
@@ -43,6 +49,9 @@ export function Select({
 }: SelectProps) {
   const options = parseOptions(children);
   const listboxId = useId();
+  const presentationScope = useWorkbenchPresentationScope();
+  const presentationActive = presentationScope?.active !== false;
+  const presentationOwned = presentationScope !== undefined;
   const containerRef = useRef<HTMLDivElement>(null);
   const triggerRef = useRef<HTMLButtonElement>(null);
   const listboxRef = useRef<HTMLUListElement>(null);
@@ -99,6 +108,7 @@ export function Select({
 
   const updateOverlayPosition = useCallback(() => {
     const trigger = triggerRef.current;
+    if (!presentationActive || isWorkbenchPresentationInactive(trigger)) return;
     if (!trigger) return;
 
     if (!isTriggerVisible(trigger)) {
@@ -106,14 +116,18 @@ export function Select({
       return;
     }
 
-    const position = measureOverlayPosition(trigger, options.length);
+    const position = measureOverlayPositionInBounds(
+      trigger,
+      options.length,
+      readOverlayBounds(trigger, presentationScope?.bounds.current),
+    );
     if (!position) {
       closeListbox();
       return;
     }
 
     setOverlayPosition(position);
-  }, [closeListbox, options.length]);
+  }, [closeListbox, options.length, presentationActive, presentationScope]);
 
   useLayoutEffect(() => {
     if (!open) {
@@ -121,6 +135,7 @@ export function Select({
       return;
     }
 
+    if (!presentationActive) return;
     updateOverlayPosition();
     window.addEventListener('resize', updateOverlayPosition);
     window.addEventListener('scroll', updateOverlayPosition, true);
@@ -128,12 +143,17 @@ export function Select({
       window.removeEventListener('resize', updateOverlayPosition);
       window.removeEventListener('scroll', updateOverlayPosition, true);
     };
-  }, [open, updateOverlayPosition]);
+  }, [open, presentationActive, updateOverlayPosition]);
 
   useEffect(() => {
-    if (!open) return;
+    if (!open || !presentationActive) return;
 
     const handlePointerDown = (event: PointerEvent) => {
+      if (
+        isWorkbenchPresentationInactive(triggerRef.current) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(document))
+      )
+        return;
       const target = event.target as Node;
       if (containerRef.current?.contains(target)) return;
       if (listboxRef.current?.contains(target)) return;
@@ -141,6 +161,11 @@ export function Select({
     };
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
+      if (
+        isWorkbenchPresentationInactive(triggerRef.current) ||
+        (presentationOwned && hasActiveWorkbenchGlobalModal(document))
+      )
+        return;
       if (event.key === 'Escape') closeListbox();
     };
 
@@ -150,9 +175,11 @@ export function Select({
       window.removeEventListener('pointerdown', handlePointerDown, true);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [closeListbox, open]);
+  }, [closeListbox, open, presentationActive, presentationOwned]);
 
   const handleTriggerKeyDown = (event: KeyboardEvent<HTMLButtonElement>) => {
+    if (!presentationActive || (presentationOwned && hasActiveWorkbenchGlobalModal(document)))
+      return;
     if (disabled) return;
 
     switch (event.key) {
@@ -255,7 +282,12 @@ export function Select({
         </span>
       </button>
 
-      {listbox ? createPortal(listbox, resolvePortalContainer(triggerRef.current)) : null}
+      {listbox
+        ? createPortal(
+            listbox,
+            presentationScope?.container ?? resolvePortalContainer(triggerRef.current),
+          )
+        : null}
 
       <select
         ref={nativeSelectRef}

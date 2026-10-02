@@ -47,6 +47,8 @@ export interface CatalogBrowseItemRenderState {
 
 export interface CatalogBrowsePaneProps extends Omit<ComponentPropsWithRef<'div'>, 'children'> {
   readonly clearSearchLabel: string;
+  /** Wrap toolbar controls and preserve a usable search width in bounded panes. */
+  readonly compactToolbar?: boolean;
   readonly emptyMessage: string;
   readonly errorMessage?: string | null;
   /** Slot between search and sort/view controls (facet trigger, chips, etc.). */
@@ -91,6 +93,7 @@ export interface CatalogBrowsePaneProps extends Omit<ComponentPropsWithRef<'div'
 export function CatalogBrowsePane({
   className,
   clearSearchLabel,
+  compactToolbar = false,
   emptyMessage,
   errorMessage = null,
   facetStrip = null,
@@ -140,10 +143,44 @@ export function CatalogBrowsePane({
   const hasSort =
     resolvedSortOptions.length > 0 && typeof onSortChange === 'function' && sort !== undefined;
 
+  const toolbarActions = (
+    <>
+      <SegmentedControl
+        ariaLabel={viewModeAriaLabel}
+        compact
+        onChange={onViewModeChange}
+        options={[
+          {
+            ariaLabel: typeof gridLabel === 'string' ? undefined : (gridAriaLabel ?? 'Grid'),
+            label: gridLabel,
+            value: 'grid',
+          },
+          {
+            ariaLabel: typeof listLabel === 'string' ? undefined : (listAriaLabel ?? 'List'),
+            label: listLabel,
+            value: 'list',
+          },
+        ]}
+        value={viewMode}
+      />
+      {toolbarTrailing}
+      {onRefresh ? (
+        <IconButton
+          data-ui-catalog-browse-refresh="true"
+          disabled={isLoading}
+          icon="codicon-refresh"
+          label={refreshLabel ?? 'Refresh'}
+          onClick={onRefresh}
+        />
+      ) : null}
+    </>
+  );
+
   return (
     <div
       className={cx('ui-workbench-column', 'ui-catalog-browse', className)}
       data-ui-catalog-browse="true"
+      data-ui-catalog-browse-compact-toolbar={compactToolbar ? 'true' : undefined}
       {...props}
     >
       <FilterBar>
@@ -181,34 +218,13 @@ export function CatalogBrowsePane({
               </Select>
             </div>
           ) : null}
-          <SegmentedControl
-            ariaLabel={viewModeAriaLabel}
-            compact
-            onChange={onViewModeChange}
-            options={[
-              {
-                ariaLabel: typeof gridLabel === 'string' ? undefined : (gridAriaLabel ?? 'Grid'),
-                label: gridLabel,
-                value: 'grid',
-              },
-              {
-                ariaLabel: typeof listLabel === 'string' ? undefined : (listAriaLabel ?? 'List'),
-                label: listLabel,
-                value: 'list',
-              },
-            ]}
-            value={viewMode}
-          />
-          {toolbarTrailing}
-          {onRefresh ? (
-            <IconButton
-              data-ui-catalog-browse-refresh="true"
-              disabled={isLoading}
-              icon="codicon-refresh"
-              label={refreshLabel ?? 'Refresh'}
-              onClick={onRefresh}
-            />
-          ) : null}
+          {compactToolbar ? (
+            <div className="ui-catalog-browse__actions" data-ui-catalog-browse-actions="true">
+              {toolbarActions}
+            </div>
+          ) : (
+            toolbarActions
+          )}
         </FilterBarRow>
       </FilterBar>
 

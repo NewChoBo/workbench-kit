@@ -35,4 +35,31 @@ describe('Select', () => {
     expect(trigger).toContain('aria-invalid="true"');
     expect(nativeSelect).toContain('aria-invalid="true"');
   });
+
+  it.each([
+    ['default', { defaultValue: 'Beta' }],
+    ['controlled', { value: 'Beta' }],
+  ])('renders the inferred selected label for a %s value', (_name, props) => {
+    const markup = renderToStaticMarkup(
+      <Select aria-label="Implicit choice" {...props}>
+        <option>Alpha</option>
+        <option>Beta</option>
+      </Select>,
+    );
+
+    expect(markup).toContain('class="ui-select__value">Beta</span>');
+    expect(markup).toContain('<option selected="">Beta</option>');
+  });
+
+  it('initializes from the first enabled inferred value during server rendering', () => {
+    const markup = renderToStaticMarkup(
+      <Select aria-label="Enabled choice">
+        <option disabled>Unavailable</option>
+        <option>Beta</option>
+      </Select>,
+    );
+
+    expect(markup).toContain('class="ui-select__value">Beta</span>');
+    expect(markup).toContain('<option selected="">Beta</option>');
+  });
 });

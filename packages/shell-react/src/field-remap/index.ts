@@ -23,6 +23,11 @@ export {
 } from './flow.js';
 export type { FieldRemapPreviewState } from './preview.js';
 export {
+  createFieldRemapPreviewController,
+  type FieldRemapPreviewController,
+  type FieldRemapPreviewCommand,
+} from './preview-controller.js';
+export {
   defaultFieldRemapChromeLabels,
   fieldRemapChromeLabelKeys,
   resolveFieldRemapChromeLabels,

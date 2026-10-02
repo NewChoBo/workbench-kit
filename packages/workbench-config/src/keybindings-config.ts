@@ -8,10 +8,10 @@ import {
 import { WorkbenchConfigValidationError } from './validation-error.js';
 
 export interface WorkbenchKeybindingDefinition {
-  readonly args?: readonly unknown[];
+  readonly args?: readonly unknown[] | undefined;
   readonly command: string;
   readonly key: string;
-  readonly when?: string;
+  readonly when?: string | undefined;
 }
 
 export function parseWorkbenchKeybindingsConfig(

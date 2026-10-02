@@ -4,6 +4,7 @@ import {
   type StatusBarItemModel,
   type StatusBarSectionModel,
   type WorkbenchShellProps as ReactWorkbenchShellProps,
+  type ActivityBarItem,
 } from '@workbench-kit/react/workbench/shell';
 import {
   filterActivityBarItems,
@@ -21,6 +22,11 @@ import {
   workbenchHostPrimarySidebarSizePxFromPercent,
 } from './layout-metrics.js';
 
+export {
+  WorkbenchHostPrimarySidebarToggle,
+  type WorkbenchHostPrimarySidebarToggleProps,
+} from './host-primary-sidebar-toggle.js';
+
 export interface WorkbenchHostShellProps {
   activityBarAriaLabel?: string | undefined;
   activityBarPosition?: ReactWorkbenchShellProps['activityBarPosition'];
@@ -28,10 +34,19 @@ export interface WorkbenchHostShellProps {
   bottomPanel?: ReactNode;
   compactStatus?: boolean | undefined;
   editorArea: ReactNode;
+  presentation?: ReactWorkbenchShellProps['presentation'];
+  canvasArea?: ReactNode;
+  canvasAriaLabel?: string;
+  dockedAriaLabel?: string;
+  presentationFocusTargets?: ReactWorkbenchShellProps['presentationFocusTargets'];
   onStatusItemActivate?: ((item: StatusBarItemModel) => void) | undefined;
   overlays?: ReactNode;
   primarySidebar?: ReactNode;
   rootClassName?: string | undefined;
+  /** Utility actions at the bottom of a vertical bar, or end of a horizontal bar. */
+  secondaryActivityItems?: ActivityBarItem[] | undefined;
+  /** Utility activation does not change sidebar selection or persisted primary activity order. */
+  onSecondaryActivityActivate?: ((item: ActivityBarItem) => void) | undefined;
   shellPreset?: string | undefined;
   statusBarAriaLabel?: string | undefined;
   statusSections?: StatusBarSectionModel[] | undefined;
@@ -48,10 +63,17 @@ export function WorkbenchHostShell({
   bottomPanel,
   compactStatus = true,
   editorArea,
+  presentation,
+  canvasArea,
+  canvasAriaLabel,
+  dockedAriaLabel,
+  presentationFocusTargets,
   onStatusItemActivate,
   overlays,
   primarySidebar,
   rootClassName,
+  secondaryActivityItems = [],
+  onSecondaryActivityActivate,
   shellPreset,
   statusBarAriaLabel = 'Status bar',
   statusSections = [],
@@ -112,9 +134,16 @@ export function WorkbenchHostShell({
       activityBar={{
         'aria-label': activityBarAriaLabel,
         items: activityItems,
+        secondaryItems: secondaryActivityItems,
         reorderable: true,
         visible: layout.activityBar.visible,
-        onItemActivate: (item) => layoutService.focusSideBarViewContainer(item.id),
+        onItemActivate: (item) => {
+          if (secondaryActivityItems.includes(item)) {
+            onSecondaryActivityActivate?.(item);
+            return;
+          }
+          layoutService.focusSideBarViewContainer(item.id);
+        },
         onItemsReorder: (itemIds) => {
           const preserved =
             layout.activityBar.itemOrder?.filter((itemId) => !itemIds.includes(itemId)) ?? [];
@@ -138,6 +167,11 @@ export function WorkbenchHostShell({
             }
       }
       compactStatus={compactStatus}
+      presentation={presentation}
+      canvasArea={canvasArea}
+      canvasAriaLabel={canvasAriaLabel}
+      dockedAriaLabel={dockedAriaLabel}
+      presentationFocusTargets={presentationFocusTargets}
       onStatusItemActivate={(item) => {
         const contributed = statusBar.getStatusBarItem(item.id);
         if (contributed?.command) {

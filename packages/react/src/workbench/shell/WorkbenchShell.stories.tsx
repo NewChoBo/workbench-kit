@@ -1,9 +1,19 @@
-import { useEffect, useRef, useState } from 'react';
+import {
+  RetainedOverlayBoundaryDemo,
+  verifyRetainedOverlayBoundaries,
+} from '../story/RetainedOverlayBoundaryProbe';
+import { useEffect, useRef, useState, type CSSProperties } from 'react';
 import type { Meta, StoryObj } from '@storybook/react-vite';
 import { expect, userEvent, waitFor, within } from 'storybook/test';
 
 import '../../styles.css';
 import { WorkbenchShell } from './WorkbenchShell';
+import { WorkbenchDesktopTitleBar } from './WorkbenchDesktopTitleBar';
+import { IconButton } from '../../primitives/icon-button/IconButton';
+import { Select } from '../../primitives/select/Select';
+import { Modal } from '../../modal/Modal';
+import { WorkbenchModalPortal } from '../chrome/WorkbenchModalPortal';
+import type { WorkbenchFramePresentation } from '@workbench-kit/workbench-core';
 import {
   expectCollapsedPrimarySidebarShowsFullWidthSecondary,
   expectCollapsedSecondarySplitShowsFullWidthPrimary,
@@ -11,6 +21,10 @@ import {
   expectExpandedPrimarySidebar,
 } from '../story/shellStory';
 import { StoryWorkbenchShellFrame } from '../story/StoryWorkbenchShellFrame';
+import {
+  DirectSplitHiddenDemo,
+  verifyDirectSplitHiddenGeometry,
+} from '../story/SplitViewPresentationProbe';
 
 const meta = {
   title: 'Workbench UI/Shell',
@@ -350,4 +364,374 @@ export const RegionPlayground: Story = {
     });
   },
   tags: ['storybook-play-baseline'],
+};
+
+function RetainedFrameDemo({
+  width = 1188,
+  theme = 'dark',
+  korean = false,
+  shellPreset = 'default',
+  textScale = 1,
+}: {
+  width?: number;
+  theme?: 'light' | 'dark';
+  korean?: boolean;
+  shellPreset?: string;
+  textScale?: number;
+}) {
+  const [presentation, setPresentation] = useState<WorkbenchFramePresentation>('canvas');
+  const [sidebar, setSidebar] = useState(true);
+  const [modal, setModal] = useState(false);
+  const canvasTarget = useRef<HTMLInputElement>(null);
+  const dockedTarget = useRef<HTMLInputElement>(null);
+  const switchPresentation = () =>
+    setPresentation((current) => (current === 'canvas' ? 'docked' : 'canvas'));
+  return (
+    <div style={{ width, maxWidth: '100%', height: 640, fontSize: `${textScale}rem` }}>
+      <WorkbenchShell
+        rootClassName="ide-root"
+        rootStyle={{ fontSize: `${textScale}rem` }}
+        theme={theme}
+        themePreset={theme === 'light' ? 'light-plus' : 'dark-plus'}
+        shellPreset={shellPreset}
+        presentation={presentation}
+        presentationFocusTargets={{ canvas: canvasTarget, docked: dockedTarget }}
+        canvasAriaLabel={korean ? '작성 영역' : 'Authored canvas'}
+        dockedAriaLabel={korean ? '작업 공간' : 'Docked tools'}
+        titleBar={
+          <WorkbenchDesktopTitleBar
+            leading={
+              <IconButton
+                icon="arrow-swap"
+                label="Switch presentation"
+                onClick={switchPresentation}
+              />
+            }
+            centerSlot={
+              <span>{korean ? '한 창에서 작성하고 관리하기' : 'One application frame'}</span>
+            }
+            trailing={
+              <>
+                <IconButton
+                  icon="layout-sidebar-left"
+                  label="Toggle pane"
+                  onClick={() => setSidebar((value) => !value)}
+                />
+                <IconButton icon="lock" label="Open global dialog" onClick={() => setModal(true)} />
+              </>
+            }
+            windowControls={{
+              isMaximized: false,
+              onClose: () => undefined,
+              onMinimize: () => undefined,
+              onToggleMaximized: () => undefined,
+            }}
+          />
+        }
+        activityBar={{ items: [{ id: 'files', label: 'Files', icon: 'F' }] }}
+        primarySidebar={{
+          isVisible: sidebar,
+          primarySizePx: 260,
+          node: (
+            <section>
+              <label>
+                Pane property
+                <Select aria-label="Pane property">
+                  <option>One</option>
+                  <option>Two</option>
+                </Select>
+              </label>
+            </section>
+          ),
+        }}
+        auxiliarySidebar={{ isVisible: true, node: <section>Auxiliary content</section> }}
+        bottomPanel={{ isVisible: true, sizePercent: 30, node: <section>Panel content</section> }}
+        secondaryArea={
+          <main>
+            <RetainedDraftProbe name="Editor" inputRef={dockedTarget} />
+          </main>
+        }
+        canvasArea={
+          <section style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 12 }}>
+            <RetainedDraftProbe name="Canvas" inputRef={canvasTarget} />
+            <label>
+              Property
+              <Select aria-label="Canvas property">
+                <option>Alpha</option>
+                <option>Beta</option>
+              </Select>
+            </label>
+          </section>
+        }
+        statusSections={[{ id: 'status', items: [{ id: 'ready', label: 'Ready' }] }]}
+        overlays={
+          modal ? (
+            <WorkbenchModalPortal>
+              <Modal
+                title="Global confirmation"
+                onClose={() => setModal(false)}
+                footer={<button onClick={() => setModal(false)}>Keep draft</button>}
+              >
+                <button onClick={switchPresentation}>Switch behind dialog</button>
+              </Modal>
+            </WorkbenchModalPortal>
+          ) : null
+        }
+      />
+    </div>
+  );
+}
+
+function RetainedDraftProbe({
+  name,
+  inputRef,
+}: {
+  name: string;
+  inputRef: React.RefObject<HTMLInputElement | null>;
+}) {
+  const mounts = useRef(0);
+  const root = useRef<HTMLElement>(null);
+  const [draft, setDraft] = useState('Uncommitted content');
+  useEffect(() => {
+    mounts.current++;
+    root.current?.setAttribute('data-mount-count', String(mounts.current));
+  }, []);
+  return (
+    <section ref={root} data-draft-probe={name}>
+      <label>
+        {name} draft
+        <input
+          ref={inputRef}
+          aria-label={`${name} draft`}
+          value={draft}
+          onChange={(event) => setDraft(event.target.value)}
+        />
+      </label>
+    </section>
+  );
+}
+
+const retainedFramePlay: NonNullable<Story['play']> = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const frame = canvasElement.querySelector<HTMLElement>('.ui-workbench-frame')!;
+  const canvasRegion = frame.querySelector<HTMLElement>('[data-workbench-presentation="canvas"]')!;
+  const dockedRegion = frame.querySelector<HTMLElement>('[data-workbench-presentation="docked"]')!;
+  const title = frame.querySelector<HTMLElement>('.ui-workbench-titlebar')!;
+  const switchButton = canvas.getByRole('button', { name: 'Switch presentation' });
+  const draft = canvas.getByRole('textbox', { name: 'Canvas draft' });
+  await userEvent.clear(draft);
+  await userEvent.type(draft, 'Retained edit');
+  expect(dockedRegion.getBoundingClientRect().height).toBe(0);
+  expect(dockedRegion).toHaveAttribute('inert');
+  expect(title.getBoundingClientRect().top).toBe(frame.getBoundingClientRect().top);
+  expect(frame.querySelectorAll('.ui-workbench-titlebar')).toHaveLength(1);
+  const nativeTitle = frame.querySelector<HTMLElement>('.ui-workbench-desktop-titlebar')!;
+  expect(getComputedStyle(nativeTitle).getPropertyValue('-webkit-app-region')).toBe('drag');
+  const leading = nativeTitle.querySelector<HTMLElement>(
+    '.ui-workbench-desktop-titlebar__leading',
+  )!;
+  expect(getComputedStyle(leading).getPropertyValue('-webkit-app-region')).toBe('no-drag');
+  const buttons = Array.from(nativeTitle.querySelectorAll<HTMLElement>('button'));
+  for (const button of buttons) {
+    const rect = button.getBoundingClientRect();
+    expect(rect.left).toBeGreaterThanOrEqual(title.getBoundingClientRect().left);
+    expect(rect.right).toBeLessThanOrEqual(title.getBoundingClientRect().right);
+  }
+  await userEvent.click(canvas.getByRole('combobox', { name: 'Canvas property' }));
+  const listbox = canvas.getByRole('listbox');
+  // Programmatic mode changes retain the open chooser rather than outside-click dismissing it.
+  switchButton.click();
+  await waitFor(() => expect(canvasRegion.getBoundingClientRect().height).toBe(0));
+  expect(listbox.getBoundingClientRect().height).toBe(0);
+  expect(canvas.queryByRole('listbox')).toBeNull();
+  expect(canvas.getAllByRole('main')).toHaveLength(1);
+  switchButton.click();
+  await waitFor(() => expect(canvasRegion.getBoundingClientRect().height).toBeGreaterThan(0));
+  expect(canvas.getByRole('listbox')).toBe(listbox);
+  expect(listbox.getBoundingClientRect().width).toBeGreaterThan(0);
+  expect(draft).toHaveValue('Retained edit');
+  expect(frame.querySelector('[data-draft-probe="Canvas"]')).toHaveAttribute(
+    'data-mount-count',
+    '1',
+  );
+  expect(frame.querySelector('[data-draft-probe="Editor"]')).toHaveAttribute(
+    'data-mount-count',
+    '1',
+  );
+  await userEvent.keyboard('{Escape}');
+  draft.focus();
+  canvas.getByRole('button', { name: 'Open global dialog' }).click();
+  const modal = await canvas.findByRole('dialog', { name: 'Global confirmation' });
+  await userEvent.click(within(modal).getByRole('button', { name: 'Switch behind dialog' }));
+  expect(modal.contains(modal.ownerDocument.activeElement)).toBe(true);
+  await userEvent.click(within(modal).getByRole('button', { name: 'Keep draft' }));
+  await waitFor(() => expect(canvas.getByRole('textbox', { name: 'Editor draft' })).toHaveFocus());
+  await userEvent.click(canvas.getByRole('combobox', { name: 'Pane property' }));
+  const paneListbox = canvas.getByRole('listbox');
+  canvas.getByRole('button', { name: 'Toggle pane' }).click();
+  await waitFor(() => expect(paneListbox.getBoundingClientRect().height).toBe(0));
+  expect(canvas.queryByRole('listbox')).toBeNull();
+  canvas.getByRole('button', { name: 'Toggle pane' }).click();
+  await waitFor(() => expect(canvas.getByRole('listbox')).toBe(paneListbox));
+  const option = within(paneListbox).getByRole('option', { name: 'Two' });
+  const box = option.getBoundingClientRect();
+  expect(
+    option.contains(
+      option.ownerDocument.elementFromPoint(box.left + box.width / 2, box.top + box.height / 2),
+    ),
+  ).toBe(true);
+  await userEvent.click(option);
+};
+
+export const RetainedFrameDark: Story = {
+  name: 'Retained frame / dark / 1188',
+  tags: ['storybook-play-required'],
+  render: () => <RetainedFrameDemo />,
+  play: retainedFramePlay,
+};
+export const RetainedFrameNarrowLight: Story = {
+  name: 'Retained frame / light / 720 / Korean / large text',
+  tags: ['storybook-play-required'],
+  render: () => (
+    <RetainedFrameDemo width={720} theme="light" korean shellPreset="workbench" textScale={1.25} />
+  ),
+  play: retainedFramePlay,
+};
+
+export const DirectSplitPrimaryHiddenHorizontal: Story = {
+  name: 'Direct SplitView / hidden primary / horizontal',
+  tags: ['storybook-play-required'],
+  render: () => <DirectSplitHiddenDemo hiddenSide="primary" orientation="horizontal" />,
+  play: verifyDirectSplitHiddenGeometry,
+};
+export const DirectSplitSecondaryHiddenHorizontal: Story = {
+  name: 'Direct SplitView / hidden secondary / horizontal',
+  tags: ['storybook-play-required'],
+  render: () => <DirectSplitHiddenDemo hiddenSide="secondary" orientation="horizontal" />,
+  play: verifyDirectSplitHiddenGeometry,
+};
+export const DirectSplitPrimaryHiddenVertical: Story = {
+  name: 'Direct SplitView / hidden primary / vertical',
+  tags: ['storybook-play-required'],
+  render: () => <DirectSplitHiddenDemo hiddenSide="primary" orientation="vertical" />,
+  play: verifyDirectSplitHiddenGeometry,
+};
+export const DirectSplitSecondaryHiddenVertical: Story = {
+  name: 'Direct SplitView / hidden secondary / vertical',
+  tags: ['storybook-play-required'],
+  render: () => <DirectSplitHiddenDemo hiddenSide="secondary" orientation="vertical" />,
+  play: verifyDirectSplitHiddenGeometry,
+};
+
+export const RetainedFrameOverlayBoundaries: Story = {
+  name: 'Retained frame / content bounds and global overlay priority',
+  tags: ['storybook-play-required'],
+  render: () => <RetainedOverlayBoundaryDemo />,
+  play: verifyRetainedOverlayBoundaries,
+};
+
+function TypographyShellDemo({
+  theme,
+  locale,
+  width,
+}: {
+  theme: 'light' | 'dark';
+  locale: 'en' | 'ko';
+  width: number;
+}) {
+  const [override, setOverride] = useState<'default' | 'theme' | 'root' | 'custom'>('default');
+  const themeStyle = {
+    height: 360,
+    ...(override === 'theme' || override === 'root'
+      ? { '--vscode-font-family': 'ui-monospace, monospace' }
+      : {}),
+  } as CSSProperties;
+  return (
+    <div data-typography-host style={{ width, maxWidth: '100%', fontFamily: 'serif' }}>
+      <span data-typography-outside>Outside the canonical root</span>
+      <div>
+        {(['default', 'theme', 'root', 'custom'] as const).map((value) => (
+          <button key={value} onClick={() => setOverride(value)}>
+            Font case: {value}
+          </button>
+        ))}
+      </div>
+      <div style={themeStyle}>
+        <WorkbenchShell
+          theme={theme}
+          themePreset={theme === 'light' ? 'light-plus' : 'dark-plus'}
+          rootClassName={override === 'custom' ? 'custom-typography-root' : 'ide-root'}
+          rootStyle={override === 'root' ? { fontFamily: 'Georgia, serif' } : {}}
+          activityBar={{ items: [] }}
+          statusSections={[]}
+          secondaryArea={
+            <main>
+              <p data-typography-plain>
+                {locale === 'en'
+                  ? 'Choose how the Workbench selects the color scheme.'
+                  : 'Workbench 색 구성을 고르는 방식을 선택합니다.'}
+              </p>
+              <span data-typography-authored style={{ fontFamily: 'cursive' }}>
+                Authored font choice
+              </span>
+              <span hidden className="ui-workbench-host" data-typography-reference />
+            </main>
+          }
+        />
+      </div>
+    </div>
+  );
+}
+
+const typographyPlay: NonNullable<Story['play']> = async ({ canvasElement }) => {
+  const canvas = within(canvasElement);
+  const plain = canvasElement.querySelector<HTMLElement>('[data-typography-plain]')!;
+  const authored = canvasElement.querySelector<HTMLElement>('[data-typography-authored]')!;
+  const outside = canvasElement.querySelector<HTMLElement>('[data-typography-outside]')!;
+  const reference = canvasElement.querySelector<HTMLElement>('[data-typography-reference]')!;
+  const family = (element: Element) => getComputedStyle(element).fontFamily;
+  // Computed CSS families prove inheritance, not installed font or glyph availability.
+  expect(family(outside)).toBe('serif');
+  expect(family(reference)).not.toBe('serif');
+  expect(family(plain)).toBe(family(reference));
+  expect(family(plain.closest('.ide-root')!)).toBe(family(reference));
+  expect(family(authored)).toBe('cursive');
+
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: theme' }));
+  await waitFor(() => expect(family(plain)).toBe('ui-monospace, monospace'));
+  expect(family(authored)).toBe('cursive');
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: root' }));
+  await waitFor(() => expect(family(plain)).toBe('Georgia, serif'));
+  expect(family(authored)).toBe('cursive');
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: custom' }));
+  await waitFor(() => expect(family(plain)).toBe('serif'));
+  expect(family(authored)).toBe('cursive');
+  expect(family(outside)).toBe('serif');
+  await userEvent.click(canvas.getByRole('button', { name: 'Font case: default' }));
+  await waitFor(() => expect(family(plain)).toBe(family(reference)));
+};
+
+export const CanonicalTypographyEnglishLight: Story = {
+  name: 'Canonical typography / English / light',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="light" locale="en" width={1188} />,
+  play: typographyPlay,
+};
+export const CanonicalTypographyEnglishDark: Story = {
+  name: 'Canonical typography / English / dark',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="dark" locale="en" width={1188} />,
+  play: typographyPlay,
+};
+export const CanonicalTypographyKoreanLight: Story = {
+  name: 'Canonical typography / Korean / light / narrow',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="light" locale="ko" width={720} />,
+  play: typographyPlay,
+};
+export const CanonicalTypographyKoreanDark: Story = {
+  name: 'Canonical typography / Korean / dark / narrow',
+  tags: ['storybook-play-baseline'],
+  render: () => <TypographyShellDemo theme="dark" locale="ko" width={720} />,
+  play: typographyPlay,
 };

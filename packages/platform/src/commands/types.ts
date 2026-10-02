@@ -5,10 +5,10 @@ export type CommandServiceHandler = (...args: unknown[]) => unknown | Promise<un
 export type CommandWhenClause<TContext> = string | CommandPredicate<TContext>;
 
 export interface CommandDefinition<TContext = void> {
-  category?: string;
+  category?: string | undefined;
   danger?: CommandValue<TContext, boolean | undefined>;
-  enablement?: string;
-  handler?: CommandServiceHandler;
+  enablement?: string | undefined;
+  handler?: CommandServiceHandler | undefined;
   icon?: CommandValue<TContext, string | undefined>;
   id: string;
   isEnabled?: CommandPredicate<TContext>;

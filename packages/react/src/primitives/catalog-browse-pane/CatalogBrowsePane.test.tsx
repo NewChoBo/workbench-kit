@@ -12,6 +12,7 @@ import {
 function renderPane(
   viewMode: CatalogBrowseViewMode,
   renderItem?: (label: string) => ReactNode,
+  props: Partial<CatalogBrowsePaneProps> = {},
 ): HTMLDivElement {
   const renderOverrides: Partial<CatalogBrowsePaneProps> = renderItem
     ? viewMode === 'grid'
@@ -37,6 +38,7 @@ function renderPane(
       searchQuery=""
       viewMode={viewMode}
       {...renderOverrides}
+      {...props}
     />,
   );
   return container;
@@ -47,6 +49,37 @@ function directListItems(list: Element): Element[] {
 }
 
 describe('CatalogBrowsePane', () => {
+  it('keeps legacy toolbar structure unless compact chrome is requested', () => {
+    const legacy = renderPane('grid');
+    expect(legacy.querySelector('[data-ui-catalog-browse-compact-toolbar]')).toBeNull();
+    expect(legacy.querySelector('[data-ui-catalog-browse-actions]')).toBeNull();
+    expect(
+      legacy.querySelector('.ui-catalog-browse__toolbar > .ui-segmented-control'),
+    ).not.toBeNull();
+  });
+
+  it('groups compact actions while retaining search, facets, sort, and accessible controls', () => {
+    const compact = renderPane('grid', undefined, {
+      compactToolbar: true,
+      facetStrip: <button type="button">Filter items</button>,
+      toolbarTrailing: <button type="button">Unused only</button>,
+      onRefresh: () => undefined,
+      sort: 'title',
+      sortOptions: [{ label: 'Title', value: 'title' }],
+      onSortChange: () => undefined,
+    });
+    expect(compact.querySelector('[data-ui-catalog-browse-compact-toolbar="true"]')).not.toBeNull();
+    const toolbar = compact.querySelector('.ui-catalog-browse__toolbar')!;
+    expect(toolbar.querySelector('input[aria-label="Search"]')).not.toBeNull();
+    expect(toolbar.querySelector('[data-ui-catalog-browse-sort="true"]')).not.toBeNull();
+    const actions = toolbar.querySelector('[data-ui-catalog-browse-actions="true"]')!;
+    expect(actions.querySelector('.ui-segmented-control')).not.toBeNull();
+    expect(actions.querySelector('[data-ui-catalog-browse-refresh="true"]')).not.toBeNull();
+    expect(actions.textContent).toContain('Unused only');
+    expect(actions.textContent).not.toContain('Filter items');
+    expect(compact.querySelector('[data-ui-catalog-browse-grid="true"]')).not.toBeNull();
+  });
+
   it('gives sort its own layout wrapper and fills it with the Select', () => {
     const markup = renderToStaticMarkup(
       <CatalogBrowsePane

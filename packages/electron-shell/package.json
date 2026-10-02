@@ -15,6 +15,9 @@
       "external-links": [
         "src/security/open-allowlisted-external-link.ts"
       ],
+      "host-launch": [
+        "src/launch/host-launch.ts"
+      ],
       "preload": [
         "src/preload/index.ts"
       ],
@@ -59,6 +62,12 @@
       "default": "./src/security/open-allowlisted-external-link.ts"
     },
     "./preload": "./src/preload/index.ts",
+    "./host-launch": {
+      "types": "./src/launch/host-launch.ts",
+      "require": "./dist/launch/host-launch.js",
+      "import": "./src/launch/host-launch.ts",
+      "default": "./src/launch/host-launch.ts"
+    },
     "./secret-vault": {
       "types": "./src/secrets/encrypted-secret-vault.ts",
       "require": "./dist/secrets/encrypted-secret-vault.js",

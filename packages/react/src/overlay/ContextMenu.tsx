@@ -1,3 +1,8 @@
+import {
+  useWorkbenchPresentationScope,
+  isWorkbenchPresentationInactive,
+  hasActiveWorkbenchGlobalModal,
+} from './presentationScope';
 import './context-menu.css';
 import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react';
 import { Button } from '../primitives/button';
@@ -86,6 +91,16 @@ export function ContextMenu({
   onClose,
 }: ContextMenuProps) {
   const ref = useRef<HTMLDivElement>(null);
+  const scope = useWorkbenchPresentationScope();
+  const active = scope?.active !== false;
+  const owned = scope !== undefined;
+  const suspended = useCallback(
+    () =>
+      !active ||
+      isWorkbenchPresentationInactive(ref.current) ||
+      (owned && hasActiveWorkbenchGlobalModal(document)),
+    [active, owned],
+  );
   const tabLeaving = useRef(false);
   const [fallbackReturnFocusTarget] = useState<HTMLElement | null>(() => {
     if (typeof document === 'undefined') {
@@ -111,7 +126,9 @@ export function ContextMenu({
   useFixedOverlayDismiss({ containerRef: ref, onClose, onEscape: restoreFocusOnEscape });
 
   useEffect(() => {
+    if (!active) return;
     const handleContextMenu = (event: MouseEvent) => {
+      if (suspended()) return;
       if (ref.current?.contains(event.target as Node)) {
         event.preventDefault();
         return;
@@ -121,7 +138,7 @@ export function ContextMenu({
 
     window.addEventListener('contextmenu', handleContextMenu, true);
     return () => window.removeEventListener('contextmenu', handleContextMenu, true);
-  }, [onClose]);
+  }, [active, onClose, suspended]);
 
   useEffect(() => {
     setHighlightedIndex((current) =>
@@ -130,7 +147,7 @@ export function ContextMenu({
   }, [enabledIndexes]);
 
   useEffect(() => {
-    if (highlightedIndex < 0) {
+    if (highlightedIndex < 0 || suspended()) {
       return;
     }
 
@@ -138,9 +155,10 @@ export function ContextMenu({
       `[data-menu-index="${highlightedIndex}"]`,
     );
     item?.focus();
-  }, [highlightedIndex]);
+  }, [highlightedIndex, suspended]);
 
   const activateIndex = (index: number) => {
+    if (suspended()) return;
     tabLeaving.current = false;
     const item = items[index];
     if (!item || !isEnabledMenuItem(item)) {
@@ -151,6 +169,7 @@ export function ContextMenu({
   };
 
   const handleMenuKeyDown = (event: KeyboardEvent<HTMLDivElement>) => {
+    if (suspended()) return;
     tabLeaving.current = event.key === 'Tab';
     if (event.key === 'ArrowDown') {
       event.preventDefault();
@@ -198,9 +217,13 @@ export function ContextMenu({
       style={{
         left: position.x,
         top: position.y,
+        ...position.boundsStyle,
       }}
-      onContextMenu={(event) => event.preventDefault()}
+      onContextMenu={(event) => {
+        if (!suspended()) event.preventDefault();
+      }}
       onBlur={(event) => {
+        if (suspended()) return;
         if (tabLeaving.current && !event.currentTarget.contains(event.relatedTarget)) {
           tabLeaving.current = false;
           onClose();
@@ -225,7 +248,7 @@ export function ContextMenu({
               activateIndex(index);
             }}
             onMouseEnter={() => {
-              if (!item.disabled) {
+              if (!item.disabled && !suspended()) {
                 setHighlightedIndex(index);
               }
             }}

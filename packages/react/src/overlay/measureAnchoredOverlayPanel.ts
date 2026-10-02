@@ -1,3 +1,4 @@
+import { readOverlayBounds, type OverlayBounds } from './overlayBounds';
 import { clampNumber } from '../utils/clamp';
 
 export type AnchoredOverlayPlacement = 'side' | 'below' | 'above';
@@ -37,6 +38,15 @@ export function measureAnchoredOverlayPanel(
   trigger: HTMLElement,
   options: MeasureAnchoredOverlayPanelOptions = {},
 ): AnchoredOverlayPanelRect {
+  return measureAnchoredOverlayPanelInBounds(trigger, options, readOverlayBounds(trigger));
+}
+
+/** Internal adapter entry; the public measurement API retains its existing signature. */
+export function measureAnchoredOverlayPanelInBounds(
+  trigger: HTMLElement,
+  options: MeasureAnchoredOverlayPanelOptions,
+  bounds: OverlayBounds,
+): AnchoredOverlayPanelRect {
   const panelWidthPx = options.panelWidthPx ?? DEFAULT_PANEL_WIDTH_PX;
   const viewportPaddingPx = options.viewportPaddingPx ?? DEFAULT_VIEWPORT_PADDING_PX;
   const anchorGapPx = options.anchorGapPx ?? DEFAULT_ANCHOR_GAP_PX;
@@ -44,53 +54,63 @@ export function measureAnchoredOverlayPanel(
   const sidePreferTriggerLeftRatio =
     options.sidePreferTriggerLeftRatio ?? DEFAULT_SIDE_PREFER_TRIGGER_LEFT_RATIO;
 
-  const viewportWidth = window.innerWidth;
-  const viewportHeight = window.innerHeight;
+  const viewportWidth = bounds.width;
+  const viewportHeight = bounds.height;
   const triggerRect = trigger.getBoundingClientRect();
 
   const maxHeight = Math.min(
     viewportHeight * maxHeightRatio,
-    viewportHeight - viewportPaddingPx * 2,
+    Math.max(0, viewportHeight - viewportPaddingPx * 2),
   );
-  const width = Math.min(panelWidthPx, viewportWidth - viewportPaddingPx * 2);
+  const width = Math.min(panelWidthPx, Math.max(0, viewportWidth - viewportPaddingPx * 2));
 
-  const spaceRight = Math.max(0, viewportWidth - triggerRect.right - viewportPaddingPx);
-  const spaceBelow = Math.max(0, viewportHeight - triggerRect.bottom - viewportPaddingPx);
-  const spaceAbove = Math.max(0, triggerRect.top - viewportPaddingPx);
+  const ownedGap = bounds.scoped ? anchorGapPx : 0;
+  const spaceRight = Math.max(0, bounds.right - triggerRect.right - viewportPaddingPx - ownedGap);
+  const spaceBelow = Math.max(0, bounds.bottom - triggerRect.bottom - viewportPaddingPx - ownedGap);
+  const spaceAbove = Math.max(0, triggerRect.top - bounds.top - viewportPaddingPx - ownedGap);
 
   const preferSide =
-    triggerRect.left < sidePreferTriggerLeftRatio * viewportWidth && spaceRight >= width;
+    triggerRect.left - bounds.left < sidePreferTriggerLeftRatio * viewportWidth &&
+    spaceRight >= width;
 
   if (preferSide) {
     const minVisibleHeight = Math.min(SIDE_MIN_VISIBLE_HEIGHT_PX, maxHeight);
     const top = clampNumber(
       triggerRect.top,
-      viewportPaddingPx,
-      viewportHeight - viewportPaddingPx - minVisibleHeight,
+      bounds.top + viewportPaddingPx,
+      bounds.bottom - viewportPaddingPx - minVisibleHeight,
     );
     return {
       placement: 'side',
       top,
       left: triggerRect.right + anchorGapPx,
       width,
-      maxHeight,
+      maxHeight: bounds.scoped
+        ? Math.min(maxHeight, bounds.bottom - viewportPaddingPx - top)
+        : maxHeight,
     };
   }
 
   // Align the panel's right edge toward the trigger's right, then clamp.
   const left = clampNumber(
     triggerRect.right - width,
-    viewportPaddingPx,
-    viewportWidth - viewportPaddingPx - width,
+    bounds.left + viewportPaddingPx,
+    bounds.right - viewportPaddingPx - width,
   );
 
   if (spaceBelow >= BELOW_MIN_SPACE_PX || spaceBelow >= spaceAbove) {
     return {
       placement: 'below',
-      top: triggerRect.bottom + anchorGapPx,
+      top: bounds.scoped
+        ? clampNumber(
+            triggerRect.bottom + anchorGapPx,
+            bounds.top + viewportPaddingPx,
+            bounds.bottom - viewportPaddingPx,
+          )
+        : triggerRect.bottom + anchorGapPx,
       left,
       width,
-      maxHeight,
+      maxHeight: bounds.scoped ? Math.min(maxHeight, spaceBelow) : maxHeight,
     };
   }
 
@@ -100,6 +120,6 @@ export function measureAnchoredOverlayPanel(
     top: triggerRect.top - anchorGapPx - aboveHeight,
     left,
     width,
-    maxHeight,
+    maxHeight: bounds.scoped ? aboveHeight : maxHeight,
   };
 }

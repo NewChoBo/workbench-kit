@@ -1,3 +1,8 @@
+import {
+  useWorkbenchPresentationScope,
+  isWorkbenchPresentationInactive,
+  hasActiveWorkbenchGlobalModal,
+} from './presentationScope';
 import { useEffect, type RefObject } from 'react';
 
 import { isSearchableMultiSelectPortalTarget } from '../primitives/searchable-multi-select/overlay';
@@ -17,8 +22,31 @@ export function useFixedOverlayDismiss({
   onEscape,
   ignoreOutsidePointer = false,
 }: FixedOverlayDismissOptions): void {
+  const presentationScope = useWorkbenchPresentationScope();
+  const presentationActive = presentationScope?.active !== false;
+  const presentationOwned = presentationScope !== undefined;
   useEffect(() => {
+    if (!presentationActive) return;
+    const suspended = () =>
+      isWorkbenchPresentationInactive(containerRef.current) ||
+      (presentationOwned && hasActiveWorkbenchGlobalModal(document));
+    const close = () => {
+      if (!suspended()) onClose();
+    };
+    const handleScroll = (event: Event) => {
+      // Scoped panels can scroll within their bounded content region. Scrolling
+      // that panel does not invalidate its placement or dismiss its actions.
+      if (
+        presentationOwned &&
+        event.target instanceof Node &&
+        containerRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+      close();
+    };
     const handleKeyDown = (event: KeyboardEvent) => {
+      if (suspended()) return;
       if (event.key !== 'Escape') return;
       if (onEscape?.()) return;
 
@@ -27,6 +55,7 @@ export function useFixedOverlayDismiss({
     };
 
     const handlePointerDown = (event: PointerEvent) => {
+      if (suspended()) return;
       if (ignoreOutsidePointer) return;
       if (containerRef.current?.contains(event.target as Node)) return;
       // Portaled SMS listbox is not a DOM child of the overlay root.
@@ -36,14 +65,21 @@ export function useFixedOverlayDismiss({
 
     window.addEventListener('keydown', handleKeyDown);
     window.addEventListener('pointerdown', handlePointerDown, true);
-    window.addEventListener('resize', onClose);
-    window.addEventListener('scroll', onClose, true);
+    window.addEventListener('resize', close);
+    window.addEventListener('scroll', handleScroll, true);
 
     return () => {
       window.removeEventListener('keydown', handleKeyDown);
       window.removeEventListener('pointerdown', handlePointerDown, true);
-      window.removeEventListener('resize', onClose);
-      window.removeEventListener('scroll', onClose, true);
+      window.removeEventListener('resize', close);
+      window.removeEventListener('scroll', handleScroll, true);
     };
-  }, [containerRef, ignoreOutsidePointer, onClose, onEscape]);
+  }, [
+    containerRef,
+    ignoreOutsidePointer,
+    onClose,
+    onEscape,
+    presentationActive,
+    presentationOwned,
+  ]);
 }

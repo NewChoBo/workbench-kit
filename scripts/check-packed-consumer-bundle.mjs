@@ -919,7 +919,7 @@ import {
   type FieldRemapPreviewState,
   type FieldRemapSelection,
 } from '@workbench-kit/shell-react/field-remap';
-import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
+import { WorkbenchHostPrimarySidebarToggle, WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
 import {
   WorkbenchProvider,
@@ -965,6 +965,7 @@ if (
 const quickOpenProvider = createWorkspaceFilesQuickOpenProvider({ files: [] });
 const packedFocusedShellEntries = Object.freeze({
   WorkbenchCommandHost,
+  WorkbenchHostPrimarySidebarToggle,
   WorkbenchHostShell,
   WorkbenchKeybindingManagementSettingsView,
   WorkbenchProvider,
@@ -1143,12 +1144,18 @@ async function verifyPackedGraphAuthoring(): Promise<{
   );
   fs.writeFileSync(
     path.join(consumerDir, 'src', 'focused-layout.ts'),
-    `import { createElement } from 'react';
+    `import { createElement, createRef } from 'react';
+import { LayoutService, resolveWorkbenchFrameVisibility, type WorkbenchFrameVisibility, type WorkbenchFramePresentation } from '@workbench-kit/workbench-core';
+import { WorkbenchShell, type WorkbenchShellProps } from '@workbench-kit/react/workbench/shell';
+import type { WorkbenchHostShellProps } from '@workbench-kit/shell-react/host-shell';
+import { CatalogBrowsePane, type CatalogBrowsePaneProps } from '@workbench-kit/react/primitives';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle } from '@workbench-kit/react';
+import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle, WorkbenchFitPreview as RootWorkbenchFitPreview, type WorkbenchFitPreviewProps as RootFitPreviewProps } from '@workbench-kit/react';
 import {
   WorkbenchCanvasFrameHandle,
+  WorkbenchFitPreview,
+  type WorkbenchFitPreviewProps,
   WorkbenchInteractionSurface,
   type WorkbenchInteractionEffect,
 } from '@workbench-kit/react/layout';
@@ -1156,6 +1163,26 @@ import {
 if (RootWorkbenchCanvasFrameHandle !== WorkbenchCanvasFrameHandle) {
   throw new TypeError('Packed CanvasFrameHandle root and layout exports do not share identity.');
 }
+
+if (RootWorkbenchFitPreview !== WorkbenchFitPreview) {
+  throw new TypeError('Packed Fit Preview root and layout exports do not share identity.');
+}
+const fitProps: WorkbenchFitPreviewProps = {
+  contentWidth: 608, contentHeight: 368, label: 'Packed fit overview',
+  children: createElement('button', null, 'Inert content'),
+} satisfies RootFitPreviewProps;
+const fitContainer = document.createElement('div');
+document.body.append(fitContainer);
+const fitRoot = createRoot(fitContainer);
+flushSync(() => fitRoot.render(createElement(WorkbenchFitPreview, fitProps)));
+const fitSummary = fitContainer.querySelector('[data-fit-state]');
+if (fitSummary?.getAttribute('role') !== 'img' ||
+    fitSummary.getAttribute('aria-label') !== 'Packed fit overview' ||
+    !fitSummary.querySelector('[inert][aria-hidden="true"]')) {
+  throw new TypeError('Packed Fit Preview must expose one passive summary and an inert stage.');
+}
+fitRoot.unmount();
+fitContainer.remove();
 
 const effect: WorkbenchInteractionEffect = 'lift';
 const container = document.createElement('div');
@@ -1186,7 +1213,75 @@ if (interaction.getAttribute('aria-label') !== 'Packed interaction preview') {
 if (frameHandle?.textContent !== 'Resize canvas') {
   throw new TypeError('Packed WorkbenchCanvasFrameHandle did not render consumer content.');
 }
+const layout = new LayoutService({ sideBar: { visible: true, sizePercent: 31 } });
+const original = JSON.stringify(layout.getState());
+const mode: WorkbenchFramePresentation = 'canvas';
+const visibility: WorkbenchFrameVisibility = resolveWorkbenchFrameVisibility(layout.getState(), mode);
+if (visibility.statusBar || visibility.sideBar || JSON.stringify(layout.getState()) !== original) {
+  throw new TypeError('Packed frame visibility must mask without writing layout.');
+}
+const focusTarget = createRef<HTMLButtonElement>();
+const hostProps = {
+  editorArea: createElement('button', null, 'Editor'),
+  canvasArea: createElement('button', { ref: focusTarget }, 'Canvas'),
+  presentation: mode,
+  canvasAriaLabel: 'Authored content',
+  dockedAriaLabel: 'Docked tools',
+  presentationFocusTargets: { canvas: focusTarget },
+} satisfies WorkbenchHostShellProps;
+const frameProps = {
+  activityBar: { items: [] },
+  secondaryArea: hostProps.editorArea,
+  canvasArea: hostProps.canvasArea,
+  presentation: hostProps.presentation,
+  presentationFocusTargets: hostProps.presentationFocusTargets,
+  canvasAriaLabel: hostProps.canvasAriaLabel,
+  dockedAriaLabel: hostProps.dockedAriaLabel,
+  statusSections: [],
+} satisfies WorkbenchShellProps;
+flushSync(() => root.render(createElement(WorkbenchShell, frameProps)));
+const canvas = container.querySelector('[data-workbench-presentation="canvas"]');
+const docked = container.querySelector('[data-workbench-presentation="docked"]');
+if (!canvas || !docked || !docked.hasAttribute('hidden') || !docked.hasAttribute('inert')) {
+  throw new TypeError('Packed frame must retain and exclude its inactive presentation.');
+}
+const editor = docked.querySelector('button');
+flushSync(() => root.render(createElement(WorkbenchShell, { ...frameProps, presentation: 'docked' })));
+if (container.querySelector('[data-workbench-presentation="docked"] button') !== editor ||
+    !canvas.hasAttribute('hidden') || docked.hasAttribute('hidden')) {
+  throw new TypeError('Packed frame did not retain content identity across presentation changes.');
+}
+const catalogProps = {
+  clearSearchLabel: 'Clear search',
+  compactToolbar: true,
+  emptyMessage: 'No items',
+  hasMore: false,
+  isLoading: false,
+  isLoadingMore: false,
+  items: [{ id: 'packed-catalog-item', label: 'Packed item' }],
+  loadingMessage: 'Loading',
+  onLoadMore: () => undefined,
+  onOpenItem: () => undefined,
+  onSearchQueryChange: () => undefined,
+  onViewModeChange: () => undefined,
+  searchAriaLabel: 'Search packed catalog',
+  searchPlaceholder: 'Search',
+  searchQuery: '',
+  viewMode: 'grid',
+} satisfies CatalogBrowsePaneProps;
+flushSync(() => root.render(createElement(CatalogBrowsePane, catalogProps)));
+if (!container.querySelector('[data-ui-catalog-browse-compact-toolbar="true"]') ||
+    !container.querySelector('[data-ui-catalog-browse-actions="true"]') ||
+    !container.querySelector('input[aria-label="Search packed catalog"]')) {
+  throw new TypeError('Packed compact catalog must expose its public option and usable controls.');
+}
+flushSync(() => root.render(createElement(CatalogBrowsePane, { ...catalogProps, compactToolbar: false })));
+if (container.querySelector('[data-ui-catalog-browse-compact-toolbar]') ||
+    container.querySelector('[data-ui-catalog-browse-actions]')) {
+  throw new TypeError('Packed catalog must retain legacy toolbar behavior without compact chrome.');
+}
 root.unmount();
+layout.dispose();
 `,
   );
   fs.writeFileSync(
@@ -4250,7 +4345,7 @@ import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
 import { WorkbenchKeybindingManagementSettings as RootWorkbenchKeybindingManagementSettings } from '@workbench-kit/shell-react';
 import { WorkbenchCommandHost } from '@workbench-kit/shell-react/command-host';
-import { WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
+import { WorkbenchHostPrimarySidebarToggle, WorkbenchHostShell } from '@workbench-kit/shell-react/host-shell';
 import { WorkbenchKeybindingManagementSettingsView } from '@workbench-kit/shell-react/keybinding-management-settings';
 import {
   WorkbenchProvider,
@@ -4266,6 +4361,7 @@ void rootCompatibleManagementSettings;
 
 const commandId = 'packed.focused.command';
 let dispatchCount = 0;
+let utilityActivationCount = 0;
 let setOverride: ((commandId: string, key: string) => void) | undefined;
 let resetOverride: ((commandId: string) => void) | undefined;
 
@@ -4325,6 +4421,15 @@ function createPackedApp(settingsKey: string) {
         createElement(WorkbenchHostShell, {
           editorArea: createElement('main', null, 'Packed editor'),
           key: 'shell',
+          primarySidebar: createElement('aside', null, 'Packed sidebar'),
+          titleBar: createElement(WorkbenchHostPrimarySidebarToggle, {
+            primarySidebarHideLabel: 'Hide packed sidebar',
+            primarySidebarShowLabel: 'Show packed sidebar',
+          }),
+          secondaryActivityItems: [{ id: 'packed.utility.settings', icon: 'S', label: 'Packed settings' }],
+          onSecondaryActivityActivate: (item) => {
+            if (item.id === 'packed.utility.settings') utilityActivationCount += 1;
+          },
           overlays: createElement(PackedManagementSettings, { key: settingsKey }),
         }),
         createElement(WorkbenchCommandHost, {
@@ -4348,6 +4453,30 @@ await new Promise((resolve) => setTimeout(resolve, 0));
 await new Promise((resolve) => setTimeout(resolve, 0));
 if (!container.textContent?.includes('Keyboard Shortcuts')) {
   throw new TypeError('Packed focused management leaf did not render under the live Provider.');
+}
+const utilityButton = container.querySelector<HTMLButtonElement>('button[aria-label="Packed settings"]');
+if (!utilityButton) throw new TypeError('Packed host-shell utility action did not render.');
+utilityButton.click();
+if (utilityActivationCount !== 1) throw new TypeError('Packed host-shell utility activation was not routed.');
+const sidebarToggle = container.querySelector<HTMLButtonElement>('.workbench-shell-titlebar__layout-control');
+if (!sidebarToggle || sidebarToggle.disabled) {
+  throw new TypeError('Packed host sidebar toggle did not share the live command registry.');
+}
+const sidebarWasVisible = sidebarToggle.getAttribute('aria-pressed') === 'true';
+sidebarToggle.click();
+await new Promise((resolve) => setTimeout(resolve, 0));
+await new Promise((resolve) => setTimeout(resolve, 0));
+if (sidebarToggle.getAttribute('aria-pressed') !== String(!sidebarWasVisible)) {
+  throw new TypeError('Packed host sidebar toggle did not dispatch the canonical layout command.');
+}
+if (sidebarToggle.getAttribute('aria-label') !== (sidebarWasVisible ? 'Show packed sidebar' : 'Hide packed sidebar')) {
+  throw new TypeError('Packed host sidebar toggle did not update its accessible label.');
+}
+sidebarToggle.click();
+await new Promise((resolve) => setTimeout(resolve, 0));
+await new Promise((resolve) => setTimeout(resolve, 0));
+if (sidebarToggle.getAttribute('aria-pressed') !== String(sidebarWasVisible)) {
+  throw new TypeError('Packed host sidebar toggle did not restore sidebar visibility.');
 }
 if (!container.textContent.includes('Packed editor')) {
   throw new TypeError('Packed focused host shell did not share the live Provider.');

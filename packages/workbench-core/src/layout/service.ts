@@ -2,21 +2,21 @@ import { Emitter, type Disposable } from '@workbench-kit/base';
 
 export interface WorkbenchLayoutState {
   readonly activityBar: {
-    readonly hiddenItemIds?: readonly string[];
-    readonly itemOrder?: readonly string[];
+    readonly hiddenItemIds?: readonly string[] | undefined;
+    readonly itemOrder?: readonly string[] | undefined;
     readonly visible: boolean;
   };
   readonly auxiliaryBar: {
     readonly visible: boolean;
   };
   readonly panel: {
-    readonly activeViewContainer?: string;
-    readonly sizePercent?: number;
+    readonly activeViewContainer?: string | undefined;
+    readonly sizePercent?: number | undefined;
     readonly visible: boolean;
   };
   readonly sideBar: {
-    readonly activeViewContainer?: string;
-    readonly sizePercent?: number;
+    readonly activeViewContainer?: string | undefined;
+    readonly sizePercent?: number | undefined;
     readonly visible: boolean;
   };
 }

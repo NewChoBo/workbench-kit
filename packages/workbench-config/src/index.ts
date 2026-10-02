@@ -30,8 +30,8 @@ export interface WorkbenchExtensionsLock {
 
 export interface WorkbenchLayoutConfig {
   readonly activityBar: {
-    readonly hiddenItemIds?: readonly string[];
-    readonly itemOrder?: readonly string[];
+    readonly hiddenItemIds?: readonly string[] | undefined;
+    readonly itemOrder?: readonly string[] | undefined;
     readonly visible: boolean;
   };
   readonly auxiliaryBar: {
