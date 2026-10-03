@@ -9,6 +9,7 @@ import {
   validateUiCanvasPlacementValue,
   validateUiDimensionValue,
   validateUiFlexChildValue,
+  validateUiLinearChildValue,
   validateUiFlexContainerValue,
   validateUiGridPlacementValue,
   validateUiGridTrackListValue,
@@ -650,5 +651,45 @@ describe('layout strategy descriptors and Inspector grouping', () => {
     };
     expect(validateUiSplitValue(splitSource.value)).toEqual([]);
     expect(validateUiCanvasPlacementValue(canvasSource.value)).toEqual([]);
+  });
+});
+
+describe('linear child literal values', () => {
+  const property: UiLayoutPropertyDescriptor = {
+    id: 'participation',
+    scope: 'child',
+    group: 'flex',
+    strategyKinds: ['flex'],
+    value: { type: 'layout.linear-child', allowedSources: ['literal'] },
+  };
+  it.each([
+    { kind: 'linear-child', sizing: 'fixed' },
+    { kind: 'linear-child', sizing: 'intrinsic' },
+    { kind: 'linear-child', sizing: 'weighted', weight: 0.5, fit: 'tight' },
+    { kind: 'linear-child', sizing: 'weighted', weight: 1000, fit: 'loose' },
+  ])('admits exact generic variants %#', (value) => {
+    expect(validateUiLinearChildValue(value)).toEqual([]);
+    expect(validateUiLayoutPropertyValue(property, { kind: 'literal', value })).toEqual([]);
+  });
+  it.each([
+    null,
+    [],
+    {},
+    { kind: 'linear-child', sizing: 'auto' },
+    { kind: 'linear-child', sizing: 'fixed', weight: 1 },
+    { kind: 'linear-child', sizing: 'intrinsic', extra: true },
+    ...[0, -1, NaN, Infinity, '1', undefined].map((weight) => ({
+      kind: 'linear-child',
+      sizing: 'weighted',
+      weight,
+      fit: 'tight',
+    })),
+    { kind: 'linear-child', sizing: 'weighted', weight: 1, fit: 'fill' },
+    { kind: 'linear-child', sizing: 'weighted', weight: 1, fit: 'tight', basis: 10 },
+  ])('rejects invalid or extra keys %#', (value) => {
+    expect(validateUiLinearChildValue(value).length).toBeGreaterThan(0);
+    expect(
+      validateUiLayoutPropertyValue(property, { kind: 'literal', value }).length,
+    ).toBeGreaterThan(0);
   });
 });

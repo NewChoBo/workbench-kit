@@ -1,3 +1,8 @@
+export { projectUiProportionalLayoutNodeV3 } from './proportional-layout.js';
+export type {
+  UiProportionalLayoutProjectionStrategy,
+  UiProportionalLayoutNodeProjectionV3Input,
+} from './proportional-layout.js';
 export type { GenericWidget } from '../widget/tree.js';
 export { projectUiLayoutNodeV3, createUiContainerLayoutCommandV3 } from './ordered-layout.js';
 export type {

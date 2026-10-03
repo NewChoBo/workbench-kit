@@ -342,6 +342,38 @@ export function validateUiFlexChildValue(value: unknown): readonly UiLayoutValid
   );
 }
 
+export function validateUiLinearChildValue(value: unknown): readonly UiLayoutValidationIssue[] {
+  if (!isRecord(value) || value.kind !== 'linear-child') {
+    return [
+      issue('invalid-flex-value', 'Linear child value is invalid.', '', {
+        valueKind: 'linear-child',
+      }),
+    ];
+  }
+  const keys =
+    value.sizing === 'weighted' ? ['kind', 'sizing', 'weight', 'fit'] : ['kind', 'sizing'];
+  const issues: UiLayoutValidationIssue[] = [
+    ...validateEnum(value.sizing, ['fixed', 'intrinsic', 'weighted'], 'sizing'),
+  ];
+  if (
+    Object.keys(value).length !== keys.length ||
+    keys.some((key) => !Object.prototype.hasOwnProperty.call(value, key))
+  ) {
+    issues.push(
+      issue(
+        'invalid-flex-value',
+        'Linear child value must have exactly the keys for its sizing variant.',
+        '',
+      ),
+    );
+  }
+  if (value.sizing === 'weighted') {
+    issues.push(...validateFiniteNumber(value.weight, 'weight', { min: Number.MIN_VALUE }));
+    issues.push(...validateEnum(value.fit, ['tight', 'loose'], 'fit'));
+  }
+  return withValueKind(issues, 'linear-child');
+}
+
 function validateGridTrack(value: unknown, path: string): readonly UiLayoutValidationIssue[] {
   if (!isRecord(value)) {
     return [issue('invalid-grid-track-list', 'Grid track value is invalid.', path)];
@@ -649,6 +681,7 @@ export function validateUiLayoutPropertyValue<TLiteral>(
     'layout.shadow': validateUiShadowValue,
     'layout.flex-container': validateUiFlexContainerValue,
     'layout.flex-child': validateUiFlexChildValue,
+    'layout.linear-child': validateUiLinearChildValue,
     'layout.grid-tracks': validateUiGridTrackListValue,
     'layout.grid-placement': validateUiGridPlacementValue,
     'layout.split': validateUiSplitValue,

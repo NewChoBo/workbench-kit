@@ -92,6 +92,7 @@ function widgetRect(
 ): Rect {
   const sizeRect = constraintsToRect(constraints);
   const useConstraintSize = widget.flexFit === 'tight';
+  const constrainLoose = widget.flexFit === 'loose';
   const measured =
     options.useIntrinsicSize === false ? {} : readMeasuredSize(widget, constraints, options);
   return {
@@ -101,13 +102,19 @@ function widgetRect(
       0,
       useConstraintSize
         ? sizeRect.width
-        : (readNumber(widget.width) ?? measured.width ?? sizeRect.width),
+        : Math.min(
+            constrainLoose ? sizeRect.width : Infinity,
+            readNumber(widget.width) ?? measured.width ?? sizeRect.width,
+          ),
     ),
     height: Math.max(
       0,
       useConstraintSize
         ? sizeRect.height
-        : (readNumber(widget.height) ?? measured.height ?? sizeRect.height),
+        : Math.min(
+            constrainLoose ? sizeRect.height : Infinity,
+            readNumber(widget.height) ?? measured.height ?? sizeRect.height,
+          ),
     ),
   };
 }
@@ -121,15 +128,43 @@ function rectToConstraints(rect: Rect): LayoutConstraints {
   };
 }
 
+function containsOptInText(widget: GenericWidget): boolean {
+  return (
+    widget.textMetricsMode === 'unicode-pre-line-v1' ||
+    getWidgetChildren(widget).some(containsOptInText)
+  );
+}
+
+function columnChildCrossWidth(
+  child: GenericWidget,
+  parent: GenericWidget,
+  parentRect: Rect,
+): number {
+  const crossWidth = insetRect(parentRect, readNumber(parent.padding) ?? 0).width;
+  const alignment = child.align ?? parent.crossAxisAlignment ?? 'stretch';
+  return alignment === 'start' || alignment === 'center' || alignment === 'end'
+    ? Math.max(0, Math.min(crossWidth, readNumber(child.width) ?? crossWidth))
+    : crossWidth;
+}
+
 function readLinearPlacement(
   child: GenericWidget,
   parentType: 'row' | 'column',
   parentRect: Rect,
   options: LayoutWidgetOptions,
+  parent: GenericWidget,
 ): LinearChildPlacement {
   const align = child.align;
   const flexFit = child.flexFit;
-  const measured = readMeasuredSize(child, rectToConstraints(parentRect), options);
+  const optInCrossWidth =
+    parentType === 'column' && containsOptInText(child)
+      ? columnChildCrossWidth(child, parent, parentRect)
+      : undefined;
+  const measurementConstraints =
+    child.textMetricsMode === 'unicode-pre-line-v1' && optInCrossWidth !== undefined
+      ? { ...rectToConstraints(parentRect), maxWidth: optInCrossWidth }
+      : rectToConstraints(parentRect);
+  const measured = readMeasuredSize(child, measurementConstraints, options);
   let mainSize =
     readNumber(parentType === 'row' ? child.width : child.height) ??
     (parentType === 'row' ? measured.width : measured.height);
@@ -141,7 +176,12 @@ function readLinearPlacement(
   // When a sibling will claim flex space, content children need an intrinsic main size
   // or they collapse to 0 under the linear allocator.
   if (mainSize === undefined && flex === undefined) {
-    const intrinsic = estimateIntrinsicSize(child, rectToConstraints(parentRect), options);
+    const intrinsic = estimateIntrinsicSize(
+      child,
+      rectToConstraints(parentRect),
+      options,
+      optInCrossWidth,
+    );
     mainSize = parentType === 'row' ? intrinsic.width : intrinsic.height;
   }
 
@@ -160,10 +200,17 @@ function estimateIntrinsicSize(
   widget: GenericWidget,
   constraints: LayoutConstraints,
   options: LayoutWidgetOptions,
+  optInCrossWidth?: number,
 ): { readonly width: number; readonly height: number } {
   const explicitWidth = readNumber(widget.width);
   const explicitHeight = readNumber(widget.height);
-  const measured = readMeasuredSize(widget, constraints, {
+  // Carry the actual Column cross constraint only to opted-in text. Legacy
+  // siblings continue receiving exactly the original measurement constraints.
+  const measurementConstraints =
+    widget.textMetricsMode === 'unicode-pre-line-v1' && optInCrossWidth !== undefined
+      ? { ...constraints, maxWidth: optInCrossWidth }
+      : constraints;
+  const measured = readMeasuredSize(widget, measurementConstraints, {
     ...options,
     useIntrinsicSize: true,
   });
@@ -184,7 +231,20 @@ function estimateIntrinsicSize(
   }
 
   if (widget.type === 'column') {
-    const childSizes = children.map((child) => estimateIntrinsicSize(child, constraints, options));
+    const parentRect = {
+      x: 0,
+      y: 0,
+      width: optInCrossWidth ?? explicitWidth ?? constraints.maxWidth,
+      height: constraints.maxHeight,
+    };
+    const childSizes = children.map((child) =>
+      estimateIntrinsicSize(
+        child,
+        constraints,
+        options,
+        containsOptInText(child) ? columnChildCrossWidth(child, widget, parentRect) : undefined,
+      ),
+    );
     const contentWidth = childSizes.reduce((max, size) => Math.max(max, size.width), 0);
     const contentHeight =
       childSizes.reduce((sum, size) => sum + size.height, 0) +
@@ -394,7 +454,7 @@ export function layoutWidget(
           ? { crossAxisAlignment: widget.crossAxisAlignment }
           : {}),
       },
-      children.map((child) => readLinearPlacement(child, linearType, rect, options)),
+      children.map((child) => readLinearPlacement(child, linearType, rect, options, widget)),
       rect,
     );
 

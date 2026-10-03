@@ -1,5 +1,6 @@
 import {
   createElement,
+  Fragment,
   type CSSProperties,
   type KeyboardEvent,
   type MouseEvent,
@@ -41,6 +42,8 @@ export interface CssRenderBackendOptions {
       }
     | undefined;
   readonly renderNodeOverlay?: (node: LayoutNodeResult, path: WidgetPath) => ReactNode;
+  /** Vetted decoration only; rendered behind content, outside the node's native scroller. */
+  readonly renderNodeBackground?: (node: LayoutNodeResult, path: WidgetPath) => ReactNode;
   readonly rootOverflow?: 'hidden' | 'auto' | undefined;
   readonly registry?: WidgetRegistryContract<unknown> | undefined;
   readonly emptyLabel?: string | undefined;
@@ -160,11 +163,15 @@ function renderLayoutNode(
     (options.selectedPath ? widgetPathEquals(path, options.selectedPath) : false);
   const interactive = Boolean(selection || options.onSelectPath);
   const scrollableRoot = path.length === 0 && options.rootOverflow === 'auto';
-  const innerScroller = options.nodeOverflow?.(node, path) === 'auto';
+  const innerScroller =
+    options.nodeOverflow?.(node, path) === 'auto' ||
+    (Boolean(options.renderNodeBackground) && scrollableRoot);
   const scrollable = scrollableRoot || innerScroller;
 
   const content = [
-    leafContent,
+    options.renderNodeBackground
+      ? createElement(Fragment, { key: 'leaf' }, leafContent)
+      : leafContent,
     ...node.children.map((child, index) =>
       createElement(
         'div',
@@ -240,10 +247,32 @@ function renderLayoutNode(
         : undefined,
       style: {
         ...layoutNodeStyle(node, parentOrigin, widget),
-        ...(options.renderNodeOverlay ? { isolation: 'isolate' as const } : {}),
+        ...(options.renderNodeOverlay || options.renderNodeBackground
+          ? { isolation: 'isolate' as const }
+          : {}),
         ...(scrollableRoot && !innerScroller ? { overflow: 'auto' } : {}),
       },
     },
+    options.renderNodeBackground
+      ? createElement(
+          'div',
+          {
+            key: 'background',
+            'data-layout-background': true,
+            'aria-hidden': true,
+            inert: true,
+            style: {
+              position: 'absolute',
+              inset: 0,
+              overflow: 'hidden',
+              pointerEvents: 'none',
+              userSelect: 'none',
+              zIndex: -1,
+            },
+          },
+          options.renderNodeBackground(node, path),
+        )
+      : null,
     renderedContent,
     options.renderNodeOverlay
       ? createElement(

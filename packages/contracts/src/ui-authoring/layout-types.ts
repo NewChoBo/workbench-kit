@@ -8,6 +8,7 @@ export const UI_LAYOUT_VALUE_TYPES = Object.freeze([
   'layout.shadow',
   'layout.flex-container',
   'layout.flex-child',
+  'layout.linear-child',
   'layout.grid-tracks',
   'layout.grid-placement',
   'layout.split',
@@ -182,6 +183,16 @@ export interface UiFlexChildValue {
   readonly order: number;
   readonly alignSelf: UiSelfAlignment;
 }
+
+/** Child participation in a bounded linear allocator; no CSS grow/shrink/basis. */
+export type UiLinearChildValue =
+  | { readonly kind: 'linear-child'; readonly sizing: 'fixed' | 'intrinsic' }
+  | {
+      readonly kind: 'linear-child';
+      readonly sizing: 'weighted';
+      readonly weight: number;
+      readonly fit: 'tight' | 'loose';
+    };
 
 export type UiGridTrackBreadthValue =
   UiLengthValue | UiPercentageValue | UiFlexFractionValue | UiIntrinsicSizeValue;

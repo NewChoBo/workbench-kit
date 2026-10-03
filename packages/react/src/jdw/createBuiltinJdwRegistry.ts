@@ -7,6 +7,7 @@ import type {
 import {
   createWidgetRegistry,
   estimateWrappedTextSize,
+  readUiDocumentNodeAuthoringV3,
   type GenericWidget,
 } from '@workbench-kit/jdw';
 
@@ -90,13 +91,24 @@ function clampMeasure(
 
 function measureText(widget: WidgetTypeShape, constraints: WidgetMeasureConstraints) {
   const record = widget as GenericWidget;
-  const text = readString(record.text) ?? '';
+  const unicodePreLine = record.textMetricsMode === 'unicode-pre-line-v1';
+  const text = unicodePreLine
+    ? typeof record.text === 'string'
+      ? record.text
+      : ''
+    : (readString(record.text) ?? '');
   const fontSize = readNumber(record.fontSize) ?? 14;
   const maxLines = readNumber(record.maxLines);
   const estimated = estimateWrappedTextSize({
     text,
     fontSize,
     maxWidth: constraints.maxWidth,
+    ...(unicodePreLine
+      ? {
+          textMetricsMode: 'unicode-pre-line-v1' as const,
+          fontWeight: record.fontWeight === 700 ? (700 as const) : (400 as const),
+        }
+      : {}),
     ...(maxLines !== undefined ? { maxLines } : {}),
   });
   return clampMeasure({ width: estimated.width, height: estimated.height }, constraints);
@@ -108,12 +120,41 @@ function measureIcon(widget: WidgetTypeShape, constraints: WidgetMeasureConstrai
   return clampMeasure({ width: size, height: size }, constraints);
 }
 
+function readPreferredImageSize(record: GenericWidget): Partial<WidgetMeasureResult> {
+  const authored =
+    typeof record.authoredNode === 'object' && record.authoredNode !== null
+      ? (record.authoredNode as GenericWidget)
+      : record;
+  const authoring =
+    readUiDocumentNodeAuthoringV3(authored) ?? readUiDocumentNodeAuthoringV3(record);
+  const placements = Object.values(authoring?.layout?.values ?? {}).flatMap((source) => {
+    if (source.kind !== 'literal' || typeof source.value !== 'object' || source.value === null) {
+      return [];
+    }
+    const value = source.value as Record<string, unknown>;
+    return value.kind === 'canvas-placement' ? [value] : [];
+  });
+  // Multiple placement values have no unambiguous preferred-size meaning here.
+  if (placements.length !== 1) return {};
+  const placement = placements[0]!;
+  const pxSize = (dimension: unknown): number | undefined => {
+    if (typeof dimension !== 'object' || dimension === null) return undefined;
+    const value = dimension as Record<string, unknown>;
+    const size = readNumber(value.value);
+    return value.kind === 'length' && value.unit === 'px' && size !== undefined && size > 0
+      ? size
+      : undefined;
+  };
+  return { width: pxSize(placement.width), height: pxSize(placement.height) };
+}
+
 function measureImage(widget: WidgetTypeShape, constraints: WidgetMeasureConstraints) {
   const record = widget as GenericWidget;
+  const preferred = readPreferredImageSize(record);
   return clampMeasure(
     {
-      width: readNumber(record.width) ?? 120,
-      height: readNumber(record.height) ?? 80,
+      width: readNumber(record.width) ?? preferred.width ?? 120,
+      height: readNumber(record.height) ?? preferred.height ?? 80,
     },
     constraints,
   );
@@ -146,6 +187,9 @@ export function createBuiltinJdwRegistry(): WidgetRegistryContract<unknown> {
           color: { type: 'string' },
           background: { type: 'string' },
           fontSize: { type: 'number' },
+          textMetricsMode: { type: 'string', enum: ['unicode-pre-line-v1'] },
+          fontWeight: { type: 'number', enum: [400, 700] },
+          textAlign: { type: 'string', enum: ['start', 'center', 'end'] },
         },
       },
       measure: measureText,

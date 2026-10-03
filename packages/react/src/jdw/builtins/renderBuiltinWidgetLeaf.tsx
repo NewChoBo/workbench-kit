@@ -8,10 +8,27 @@ function readString(value: unknown): string | undefined {
 }
 
 function textStyle(widget: GenericWidget): CSSProperties {
+  const unicodePreLine = widget.textMetricsMode === 'unicode-pre-line-v1';
+  const fontSize = readNumber(widget.fontSize);
   return {
     color: typeof widget.color === 'string' ? widget.color : undefined,
     background: typeof widget.background === 'string' ? widget.background : undefined,
-    fontSize: readNumber(widget.fontSize),
+    fontSize: unicodePreLine ? (fontSize !== undefined && fontSize > 0 ? fontSize : 14) : fontSize,
+    ...(unicodePreLine
+      ? {
+          display: 'block',
+          width: '100%',
+          whiteSpace: 'pre-wrap',
+          overflowWrap: 'anywhere',
+          lineHeight: 1.35,
+          fontWeight: widget.fontWeight === 700 ? 700 : 400,
+          fontFamily: 'system-ui, sans-serif',
+          textAlign:
+            widget.textAlign === 'center' || widget.textAlign === 'end'
+              ? widget.textAlign
+              : 'start',
+        }
+      : {}),
   };
 }
 
@@ -70,13 +87,14 @@ function buttonStyle(widget: GenericWidget): CSSProperties {
 
 export function renderBuiltinWidgetLeaf(widget: GenericWidget): ReactNode {
   if (widget.type === 'text') {
+    const text = String(widget.text ?? '');
     return createElement(
       'span',
       {
         'data-widget-type': 'text',
         style: textStyle(widget),
       },
-      String(widget.text ?? ''),
+      widget.textMetricsMode === 'unicode-pre-line-v1' ? text.replace(/\r\n?/g, '\n') : text,
     );
   }
 
