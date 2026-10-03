@@ -20,6 +20,7 @@ describe('field-remap public root consumption', () => {
         default: './src/index.ts',
       },
       './history': './src/history.ts',
+      './preview': './src/preview.ts',
       './data-operations': './src/registry/builtinDataOperations.ts',
       './json-data-operations': './src/registry/jsonDataOperations.ts',
       './utf8-data-operations': './src/registry/utf8DataOperations.ts',
