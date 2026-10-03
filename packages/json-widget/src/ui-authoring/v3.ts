@@ -67,3 +67,20 @@ export type {
   UiCompositionNodeProvenance,
   UiCompositionResolution,
 } from './composition.js';
+
+export { projectUiCollectionInstances } from './collection-repeat.js';
+export type {
+  UiCollectionRepeatSourceNamespace,
+  UiCollectionRepeatIdentity,
+  UiCollectionRepeatRecord,
+  UiCollectionRepeatMapping,
+  UiCollectionRepeatOverride,
+  UiCollectionRepeatResource,
+  UiCollectionRepeatSourceSchema,
+  UiCollectionRepeatTarget,
+  UiCollectionRepeatInput,
+  UiCollectionResourceTargetPolicyInput,
+  UiCollectionRepeatResourceTarget,
+  UiCollectionRepeatDiagnostic,
+  UiCollectionRepeatResult,
+} from './collection-repeat.js';
