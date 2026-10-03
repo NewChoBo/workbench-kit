@@ -24,6 +24,40 @@ demonstrates the schema-column + convert-wire topology with list context; flat O
 pnpm add @workbench-kit/field-remap@prototype
 ```
 
+### Preview execution without a shell
+
+Controller-only consumers can use the neutral preview entry without installing
+React, the workbench shell, XYFlow, or JSONata:
+
+```ts
+import {
+  createFieldRemapPreviewController,
+  type FieldRemapPreviewState,
+} from '@workbench-kit/field-remap/preview';
+
+const preview = createFieldRemapPreviewController();
+const unsubscribe = preview.subscribe(() => {
+  const state: FieldRemapPreviewState = preview.getSnapshot();
+  console.log(state.status);
+});
+
+// Call update({ kind: 'evaluate', revision, input }) with mapping inputs.
+// Retire this owner when its host lifetime ends.
+unsubscribe();
+preview.dispose();
+```
+
+Like `/history`, `/preview` is a TypeScript source-ESM entry for compatible
+bundlers, not a directly executable Node TypeScript or CommonJS entry. It requires
+standard `AbortController` / `AbortSignal` support, with no DOM or React runtime.
+Every durable input or transform implementation change must change the revision.
+Create a fresh controller after disposal. Preview state is ephemeral and does not
+change mapping history or saved documents.
+
+The existing `@workbench-kit/shell-react/field-remap` preview exports remain
+compatible aliases of the same controller and state contracts. Flow and Panel
+consumers still need their existing UI dependencies and styles.
+
 ## Capabilities
 
 | Pattern                                   | Support                                                              |

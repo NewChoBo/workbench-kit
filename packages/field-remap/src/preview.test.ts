@@ -5,7 +5,7 @@ import {
   type ConvertToShapeResult,
 } from '@workbench-kit/field-remap';
 
-import { createFieldRemapPreviewController } from './preview-controller.js';
+import { createFieldRemapPreviewController } from './preview.js';
 
 function deferred<T>(): {
   readonly promise: Promise<T>;
@@ -130,5 +130,47 @@ describe('Field Remap preview controller', () => {
     controller.update({ kind: 'evaluate', revision: 'ignored', input: request('ignored') });
     expect(listener).toHaveBeenCalledTimes(callCount);
     expect(controller.getSnapshot()).toEqual({ status: 'loading' });
+  });
+
+  it('preserves synchronous evaluator errors without starting a second evaluation', () => {
+    const failure = new Error('synchronous preview failure');
+    const evaluate = vi.fn(() => {
+      throw failure;
+    });
+    const controller = createFieldRemapPreviewController(evaluate);
+    const listener = vi.fn();
+    controller.subscribe(listener);
+    const command = {
+      kind: 'evaluate' as const,
+      revision: 'synchronous',
+      input: request('input'),
+    };
+
+    expect(() => controller.update(command)).toThrow(failure);
+    expect(controller.getSnapshot()).toEqual({ status: 'loading' });
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(() => controller.update(command)).not.toThrow();
+    expect(evaluate).toHaveBeenCalledTimes(1);
+    controller.dispose();
+  });
+
+  it('stops delivery after unsubscribe and accepts inert subscriptions after disposal', () => {
+    const controller = createFieldRemapPreviewController();
+    const listener = vi.fn();
+    const unsubscribe = controller.subscribe(listener);
+
+    controller.update({ kind: 'hidden' });
+    expect(listener).toHaveBeenCalledTimes(1);
+    unsubscribe();
+    unsubscribe();
+    controller.update({ kind: 'no-sample' });
+    expect(listener).toHaveBeenCalledTimes(1);
+
+    controller.dispose();
+    const unsubscribeDisposed = controller.subscribe(listener);
+    controller.update({ kind: 'hidden' });
+    unsubscribeDisposed();
+    expect(listener).toHaveBeenCalledTimes(1);
+    expect(controller.getSnapshot()).toEqual({ status: 'unavailable', reason: 'no-sample' });
   });
 });

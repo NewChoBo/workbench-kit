@@ -1,36 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { createBuiltinValueTransformRegistry } from '@workbench-kit/field-remap';
 import {
-  createFieldRemapPreviewController as createNeutralPreviewController,
-  type FieldRemapPreviewCommand as NeutralPreviewCommand,
-  type FieldRemapPreviewController as NeutralPreviewController,
-  type FieldRemapPreviewState as NeutralPreviewState,
-} from '@workbench-kit/field-remap/preview';
-import {
   createFieldRemapPreviewController,
   type FieldRemapPreviewCommand,
   type FieldRemapPreviewController,
-  type FieldRemapPreviewState,
-} from './index.js';
+} from '@workbench-kit/field-remap/preview';
 
-describe('slim public preview controller', () => {
-  it('re-exports the exact neutral factory and canonical contracts', () => {
-    expect(Object.is(createFieldRemapPreviewController, createNeutralPreviewController)).toBe(true);
-    const neutral: NeutralPreviewController = createNeutralPreviewController();
-    const legacy: FieldRemapPreviewController = neutral;
-    const roundTrip: NeutralPreviewController = legacy;
-    const neutralCommand: NeutralPreviewCommand = { kind: 'hidden' };
-    const legacyCommand: FieldRemapPreviewCommand = neutralCommand;
-    const roundTripCommand: NeutralPreviewCommand = legacyCommand;
-    roundTrip.update(roundTripCommand);
-    const neutralState: NeutralPreviewState = roundTrip.getSnapshot();
-    const legacyState: FieldRemapPreviewState = neutralState;
-    const roundTripState: NeutralPreviewState = legacyState;
-    expect(roundTripState).toEqual({ status: 'unavailable', reason: 'hidden' });
-    expect(roundTrip).toBe(neutral);
-    neutral.dispose();
-  });
-
+describe('neutral public preview controller', () => {
   it('exports a working generic owner backed by the existing converter', async () => {
     const controller: FieldRemapPreviewController = createFieldRemapPreviewController();
     const states: string[] = [];

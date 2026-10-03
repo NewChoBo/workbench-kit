@@ -177,3 +177,30 @@ export type {
 
 export { WorkbenchFitPreview } from './WorkbenchFitPreview';
 export type { WorkbenchFitPreviewProps } from './WorkbenchFitPreview';
+
+export { useWorkbenchPaletteDrag } from './useWorkbenchPaletteDrag';
+export type {
+  WorkbenchPaletteDragEventPoint,
+  WorkbenchPaletteDragFeedback,
+  WorkbenchPaletteDragOptions,
+  WorkbenchPaletteDragPreview,
+  WorkbenchPaletteDragResult,
+  WorkbenchPaletteDragSourceProps,
+  WorkbenchPaletteDragTargetProps,
+  WorkbenchPaletteDragTargetResolver,
+} from './useWorkbenchPaletteDrag';
+export { resolveWorkbenchCanvasInsertion } from './canvas-insertion-geometry';
+export type {
+  WorkbenchCanvasInsertionChild,
+  WorkbenchCanvasInsertionInput,
+  WorkbenchCanvasInsertionMode,
+  WorkbenchCanvasInsertionPoint,
+  WorkbenchCanvasInsertionRect,
+  WorkbenchCanvasInsertionResult,
+  WorkbenchCanvasInsertionSize,
+} from './canvas-insertion-geometry';
+export { WorkbenchCanvasDragPreviewFrame, WorkbenchCanvasDropIndicator } from './WorkbenchCanvas';
+export type {
+  WorkbenchCanvasDragPreviewFrameProps,
+  WorkbenchCanvasDropIndicatorProps,
+} from './WorkbenchCanvas';

@@ -7,6 +7,7 @@ import { gzipSync } from 'node:zlib';
 import { validatePackedPackageCohort } from './lib/packed-package-cohort.mjs';
 import { verifyNativeInputHosts } from './lib/native-input-hosts.mjs';
 import { verifyNativeCheckboxHosts } from './lib/native-checkbox-hosts.mjs';
+import { verifyPackedFieldRemapPreview } from './lib/field-remap-preview-consumer.mjs';
 import { runCommand } from './lib/run-command.mjs';
 import { buildFreshWorkspaceArtifacts } from './lib/workspace-export-targets.mjs';
 import { NPM_PUBLISH_ORDER, packageDirectoryNameForPackageName } from './npm-publish-config.mjs';
@@ -89,6 +90,7 @@ async function runPackedConsumerChecks() {
   verifyPrivateTestSupportFilesExcluded('@workbench-kit/react');
   verifyJdwPackageManifest();
   linkExternalPackages();
+  verifyPackedFieldRemapPreview({ repoRoot, fixtureRoot, nodeModulesDir, expectedVersion });
   verifyReactSchemaFormPackageManifest();
   verifyExternalNodeCatalogPackageManifest();
   verifySourceInputCompatibilityPackageManifest();

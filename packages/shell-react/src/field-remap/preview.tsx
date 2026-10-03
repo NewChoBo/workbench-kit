@@ -1,23 +1,11 @@
 import { useMemo, type JSX } from 'react';
-import type { ConvertToShapeResult, MappingEdge } from '@workbench-kit/field-remap';
+import type { MappingEdge } from '@workbench-kit/field-remap';
+import type { FieldRemapPreviewState } from '@workbench-kit/field-remap/preview';
 
 import { defaultFieldRemapChromeLabels, type FieldRemapChromeLabels } from './chrome-labels.js';
 import type { FieldRemapSelection } from './flow-ops.js';
 
-export type FieldRemapPreviewState =
-  | {
-      readonly status: 'unavailable';
-      readonly reason: 'hidden' | 'no-sample';
-    }
-  | { readonly status: 'loading' }
-  | {
-      readonly status: 'ready';
-      readonly result: ConvertToShapeResult;
-    }
-  | {
-      readonly status: 'error';
-      readonly message: string;
-    };
+export type { FieldRemapPreviewState } from '@workbench-kit/field-remap/preview';
 
 export type FieldRemapPreviewProjection =
   | FieldRemapPreviewState
