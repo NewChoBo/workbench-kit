@@ -3863,6 +3863,13 @@ export function consumeUiDocumentCommandV2(command: UiDocumentCommandV2): string
 
 export function consumeUiDocumentCommandV3(command: UiDocumentCommandV3): string {
   switch (command.type) {
+    case 'replace-document-source': {
+      const commandId: string = command.commandId;
+      const expectedSource: string = command.expectedSource;
+      const source: string = command.source;
+      void [commandId, expectedSource, source];
+      return command.type;
+    }
     case 'set-composition-definition': {
       const definition: UiDocumentNodeAuthoringV3['compositionDefinition'] = command.definition;
       void definition;
@@ -3923,6 +3930,17 @@ type PackedSchema2UiDocument = UiDocumentV3 & {
   };
 };
 declare const packedV3Document: PackedSchema2UiDocument;
+export const packedSourceCommand: Extract<UiDocumentCommandV3, { type: 'replace-document-source' }> = {
+  type: 'replace-document-source',
+  commandId: 'packed-source-edit',
+  expectedSource: packedV3Document.source,
+  source: packedV3Document.source,
+};
+export const packedStandaloneSourceCommand: UiDocumentCommandV3 = packedSourceCommand;
+// @ts-expect-error Source replacement is standalone, never a batch-eligible atomic command.
+export const packedInvalidAtomicSourceCommand: UiDocumentAtomicCommandV3 = packedSourceCommand;
+// @ts-expect-error Source replacement must not be accepted as a batch child.
+export const packedInvalidSourceBatchChild: Extract<UiDocumentCommandV3, { type: 'batch' }>['commands'][number] = packedSourceCommand;
 declare const packedLegacyCommand: UiDocumentCommand;
 declare const packedV2Command: UiDocumentCommandV2;
 declare const packedV2Context: UiDocumentCommandV2Context;
