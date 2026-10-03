@@ -288,3 +288,46 @@
   justify-content: center;
   gap: 4px;
 }
+
+/* Optional controlled tree placement; hosts own the acceptance message. */
+.ui-sidebar-tree [data-drop-placement] {
+  position: relative;
+}
+.ui-sidebar-tree [data-drop-accepted='true'][data-drop-placement='inside'] {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -2px;
+}
+.ui-sidebar-tree [data-drop-accepted='true'][data-drop-placement='before']::before,
+.ui-sidebar-tree [data-drop-accepted='true'][data-drop-placement='after']::after {
+  content: '';
+  position: absolute;
+  inset-inline: 0;
+  height: 2px;
+  background: var(--color-accent);
+  pointer-events: none;
+}
+.ui-sidebar-tree [data-drop-placement='before']::before {
+  top: 0;
+}
+.ui-sidebar-tree [data-drop-placement='after']::after {
+  bottom: 0;
+}
+.ui-sidebar-tree [data-drop-accepted='false'] {
+  outline: 1px dashed var(--color-danger);
+  outline-offset: -1px;
+  cursor: not-allowed;
+}
+.ui-sidebar-tree-drop-status {
+  margin: 4px var(--ui-sidebar-inline-padding, 8px);
+  color: var(--color-text-muted);
+  font-size: var(--font-size-sm);
+  overflow-wrap: anywhere;
+}
+.ui-sidebar-tree-drop-status:empty {
+  display: none;
+}
+
+.ui-sidebar-tree [data-drop-pending='true'] {
+  outline: 1px dashed var(--color-border);
+  outline-offset: -1px;
+}

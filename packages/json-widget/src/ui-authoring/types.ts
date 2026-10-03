@@ -388,6 +388,13 @@ export type UiDocumentAtomicCommandV3 =
     };
 
 export type UiDocumentCommandV3 =
+  | {
+      /** A standalone source transaction; never permitted inside a batch. */
+      readonly type: 'replace-document-source';
+      readonly commandId: string;
+      readonly expectedSource: string;
+      readonly source: string;
+    }
   | UiDocumentAtomicCommandV3
   | {
       readonly type: 'batch';

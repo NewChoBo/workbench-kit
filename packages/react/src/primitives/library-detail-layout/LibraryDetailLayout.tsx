@@ -28,6 +28,8 @@ export interface LibraryDetailLayoutProps extends Omit<
   readonly heroImageUrl?: string | null;
   readonly logoImageUrl?: string | null;
   readonly mode?: LibraryDetailLayoutMode;
+  /** Scroll the whole detail in constrained panes; defaults to the existing body-only scroll. */
+  readonly scrollMode?: 'body' | 'all';
   readonly summary?: ReactNode;
   readonly title: ReactNode;
   readonly toolbar?: ReactNode;
@@ -45,6 +47,7 @@ export function LibraryDetailLayout({
   heroImageUrl = null,
   logoImageUrl = null,
   mode = 'banner',
+  scrollMode = 'body',
   summary,
   title,
   toolbar,
@@ -59,75 +62,101 @@ export function LibraryDetailLayout({
           ? 'hero-cover'
           : 'banner';
 
+  const hero =
+    resolvedMode === 'hero-cover' ? (
+      <LibraryDetailHeroCover
+        mediaIdentityKey={
+          scrollMode === 'all'
+            ? JSON.stringify([heroImageUrl ?? backgroundImageUrl, coverImageUrl])
+            : undefined
+        }
+        actions={actions}
+        attribution={scrollMode === 'all' ? undefined : attribution}
+        coverAlt={coverAlt}
+        coverImageUrl={coverImageUrl}
+        description={description}
+        heroImageUrl={heroImageUrl ?? backgroundImageUrl}
+        summary={summary}
+        title={title}
+      />
+    ) : resolvedMode === 'background' ? (
+      <div className="ui-library-detail-layout__band" data-ui-library-detail-band="true">
+        <RecordMediaHero
+          alt={coverAlt}
+          className="ui-library-detail-layout__band-media"
+          fallbackIcon="library"
+          imageUrl={backgroundImageUrl}
+          layout="background"
+        />
+        <div aria-hidden className="ui-library-detail-layout__band-overlay" />
+        <div className="ui-library-detail-layout__band-content">
+          <LibraryDetailIdentity logoImageUrl={logoImageUrl} summary={summary} title={title} />
+          {actions ? <div className="ui-library-detail-layout__actions">{actions}</div> : null}
+          {description ? (
+            <div className="ui-library-detail-layout__description">{description}</div>
+          ) : null}
+        </div>
+      </div>
+    ) : (
+      <div className="ui-library-detail-layout__hero" data-ui-library-detail-hero="true">
+        <RecordMediaHero
+          alt={coverAlt}
+          className="ui-library-detail-layout__cover"
+          fallbackIcon="library"
+          imageUrl={coverImageUrl}
+          layout="compact"
+          logoUrl={logoImageUrl}
+        />
+        <div className="ui-library-detail-layout__hero-content">
+          <div className="ui-library-detail-layout__title">{title}</div>
+          {summary ? <div className="ui-library-detail-layout__summary">{summary}</div> : null}
+          {actions ? <div className="ui-library-detail-layout__actions">{actions}</div> : null}
+          {description ? (
+            <div className="ui-library-detail-layout__description">{description}</div>
+          ) : null}
+        </div>
+      </div>
+    );
+
   return (
     <div
       className={cx(
         'ui-library-detail-layout',
         `ui-library-detail-layout--${resolvedMode}`,
+        scrollMode === 'all' && 'ui-library-detail-layout--scroll-all',
         className,
       )}
       data-ui-library-detail-layout={resolvedMode}
+      data-ui-library-detail-scroll={scrollMode}
       {...props}
     >
       {toolbar}
-      {resolvedMode === 'hero-cover' ? (
-        <LibraryDetailHeroCover
-          actions={actions}
-          attribution={attribution}
-          coverAlt={coverAlt}
-          coverImageUrl={coverImageUrl}
-          description={description}
-          heroImageUrl={heroImageUrl ?? backgroundImageUrl}
-          summary={summary}
-          title={title}
-        />
-      ) : resolvedMode === 'background' ? (
-        <div className="ui-library-detail-layout__band" data-ui-library-detail-band="true">
-          <RecordMediaHero
-            alt={coverAlt}
-            className="ui-library-detail-layout__band-media"
-            fallbackIcon="library"
-            imageUrl={backgroundImageUrl}
-            layout="background"
-          />
-          <div aria-hidden className="ui-library-detail-layout__band-overlay" />
-          <div className="ui-library-detail-layout__band-content">
-            <LibraryDetailIdentity logoImageUrl={logoImageUrl} summary={summary} title={title} />
-            {actions ? <div className="ui-library-detail-layout__actions">{actions}</div> : null}
-            {description ? (
-              <div className="ui-library-detail-layout__description">{description}</div>
-            ) : null}
-          </div>
-        </div>
-      ) : (
-        <div className="ui-library-detail-layout__hero" data-ui-library-detail-hero="true">
-          <RecordMediaHero
-            alt={coverAlt}
-            className="ui-library-detail-layout__cover"
-            fallbackIcon="library"
-            imageUrl={coverImageUrl}
-            layout="compact"
-            logoUrl={logoImageUrl}
-          />
-          <div className="ui-library-detail-layout__hero-content">
-            <div className="ui-library-detail-layout__title">{title}</div>
-            {summary ? <div className="ui-library-detail-layout__summary">{summary}</div> : null}
-            {actions ? <div className="ui-library-detail-layout__actions">{actions}</div> : null}
-            {description ? (
-              <div className="ui-library-detail-layout__description">{description}</div>
-            ) : null}
-          </div>
-        </div>
-      )}
-      {children ? (
-        <ScrollArea
-          className="ui-library-detail-layout__body"
-          data-ui-library-detail-body="true"
-          orientation="vertical"
-        >
-          {children}
+      {scrollMode === 'all' ? (
+        <ScrollArea className="ui-library-detail-layout__scroll" orientation="vertical">
+          {hero}
+          {children ? (
+            <div className="ui-library-detail-layout__body" data-ui-library-detail-body="true">
+              {children}
+            </div>
+          ) : null}
+          {attribution ? (
+            <footer className="ui-library-detail-layout__footer">{attribution}</footer>
+          ) : null}
         </ScrollArea>
-      ) : null}
+      ) : (
+        <>
+          {hero}
+          {children ? (
+            <ScrollArea
+              className="ui-library-detail-layout__body"
+              data-ui-library-detail-body="true"
+              orientation="vertical"
+            >
+              {children}
+            </ScrollArea>
+          ) : null}
+        </>
+      )}
     </div>
   );
 }
@@ -139,6 +168,7 @@ function LibraryDetailHeroCover({
   coverImageUrl,
   description,
   heroImageUrl,
+  mediaIdentityKey,
   summary,
   title,
 }: {
@@ -148,6 +178,7 @@ function LibraryDetailHeroCover({
   coverImageUrl: string | null;
   description?: ReactNode;
   heroImageUrl: string | null;
+  mediaIdentityKey?: string | undefined;
   summary?: ReactNode;
   title: ReactNode;
 }): ReactNode {
@@ -156,11 +187,11 @@ function LibraryDetailHeroCover({
 
   useEffect(() => {
     setHeroFailed(false);
-  }, [heroImageUrl]);
+  }, [heroImageUrl, mediaIdentityKey]);
 
   useEffect(() => {
     setCoverFailed(false);
-  }, [coverImageUrl]);
+  }, [coverImageUrl, mediaIdentityKey]);
 
   const media = resolveLibraryDetailHeroCoverMedia({
     heroImageUrl,
@@ -170,9 +201,14 @@ function LibraryDetailHeroCover({
   });
 
   return (
-    <div className="ui-library-detail-layout__hero-cover" data-ui-library-detail-hero-cover="true">
+    <div
+      className="ui-library-detail-layout__hero-cover"
+      data-ui-library-detail-hero-cover="true"
+      data-has-cover={media.showPortraitCover ? 'true' : 'false'}
+    >
       <div className="ui-library-detail-layout__band" data-ui-library-detail-band="true">
         <RecordMediaHero
+          key={mediaIdentityKey}
           alt={coverAlt}
           className={cx(
             'ui-library-detail-layout__band-media',
@@ -195,6 +231,7 @@ function LibraryDetailHeroCover({
       <div className="ui-library-detail-layout__hero-cover-body">
         {media.showPortraitCover ? (
           <RecordMediaHero
+            key={mediaIdentityKey}
             alt={coverAlt}
             className="ui-library-detail-layout__portrait-cover"
             fallbackIcon="library"

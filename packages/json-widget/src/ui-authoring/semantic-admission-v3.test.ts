@@ -814,6 +814,41 @@ describe('composition parameters share V3 admission and history', () => {
     };
   }
 
+  it('source editing retains unavailable instance tuples but cannot rewrite them or break exposed targets', () => {
+    const document = consumer({ unknown: { kind: 'literal', value: '${literal}' } });
+    const state = createUiAuthoringSessionV3(document);
+    const source = document.source.replace('Board', 'Updated board');
+    const command = {
+      type: 'replace-document-source' as const,
+      commandId: 'retained-instance-source',
+      expectedSource: document.source,
+      source,
+    };
+    expect(
+      applyAdmittedUiAuthoringSessionCommandV3(state, command, compositionContext(false)).status,
+    ).toBe('applied');
+    const rewritten = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      { ...command, source: source.replace('${literal}', 'changed') },
+      compositionContext(false),
+    );
+    expect(rewritten.status).toBe('rejected');
+    expect(rewritten.state).toBe(state);
+    const definition = definitionDocument();
+    const definitionState = createUiAuthoringSessionV3(definition);
+    const broken = applyAdmittedUiAuthoringSessionCommandV3(
+      definitionState,
+      {
+        ...command,
+        expectedSource: definition.source,
+        source: formatWidgetDocumentJson({ ...definition.root, children: [] }),
+      },
+      compositionContext(),
+    );
+    expect(broken.status).toBe('rejected');
+    expect(broken.state).toBe(definitionState);
+  });
+
   it('admits sparse insertion into legacy source and reset through the same history owner', () => {
     const state = createUiAuthoringSessionV3(fixture());
     const inserted = applyAdmittedUiAuthoringSessionCommandV3(
@@ -1177,5 +1212,73 @@ describe('historical ordinary scalar constraint admission', () => {
       expect(rejected.state).toBe(state);
       expect(state.past).toEqual([]);
     });
+  });
+});
+
+describe('source transactions use complete shared V3 admission', () => {
+  it('validates every nested property and host literal policy before recording one transaction', () => {
+    const document = fixture();
+    const state = createUiAuthoringSessionV3(document, ['image']);
+    const command = {
+      type: 'replace-document-source' as const,
+      commandId: 'source-admission',
+      expectedSource: document.source,
+      source: document.source.replace('asset:one', 'asset:two'),
+    };
+    const accepted = applyAdmittedUiAuthoringSessionCommandV3(state, command, context());
+    expect(accepted.status).toBe('applied');
+    expect(accepted.state.past).toHaveLength(1);
+    expect(accepted.state.selectedNodeIds).toEqual(['image']);
+    expect(undoUiAuthoringSessionV3(accepted.state)!.document).toBe(document);
+    const forbidden = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      command,
+      context(({ property, value }) =>
+        property.id === 'assetRef' && value === 'asset:two' ? 'Managed asset denied.' : null,
+      ),
+    );
+    expect(forbidden.status).toBe('rejected');
+    expect(forbidden.state).toBe(state);
+    const unknown = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      { ...command, source: command.source.replace('test:image', 'missing:image') },
+      context(),
+    );
+    expect(unknown.status).toBe('rejected');
+    expect(unknown.state).toBe(state);
+  });
+  it('rejects duplicate IDs and invalid layout values without partial application', () => {
+    const document = fixture();
+    const state = createUiAuthoringSessionV3(document);
+    for (const source of [
+      formatWidgetDocumentJson({ ...document.root, children: [authored('board', 'image')] }),
+      formatWidgetDocumentJson({
+        ...document.root,
+        children: [
+          authored('image', 'image', {
+            $authoring: {
+              component: { id: 'test:image', version: '1' },
+              properties: {
+                assetRef: { kind: 'literal', value: 'asset:one' },
+              },
+              layout: { strategyId: 'missing.layout', values: {} },
+            },
+          }),
+        ],
+      }),
+    ]) {
+      const result = applyAdmittedUiAuthoringSessionCommandV3(
+        state,
+        {
+          type: 'replace-document-source',
+          commandId: 'bad-source',
+          expectedSource: document.source,
+          source,
+        },
+        context(),
+      );
+      expect(result.status).toBe('rejected');
+      expect(result.state).toBe(state);
+    }
   });
 });

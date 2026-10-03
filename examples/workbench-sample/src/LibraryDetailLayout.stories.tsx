@@ -35,3 +35,36 @@ export const MissingMediaPlaceholders: Story = {
     showMedia: false,
   },
 };
+
+export const HeroCover: Story = {
+  args: { mode: 'hero-cover', scrollMode: 'all' },
+  decorators: [
+    (Story) => (
+      <div style={{ width: 640, height: 480 }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const NarrowHeroCover: Story = {
+  args: { mode: 'hero-cover', scrollMode: 'all' },
+  decorators: [
+    (Story) => (
+      <div style={{ width: 320, height: 320 }}>
+        <Story />
+      </div>
+    ),
+  ],
+};
+
+export const MissingHeroCover: Story = {
+  args: { mode: 'hero-cover', scrollMode: 'all', showMedia: false },
+  decorators: [
+    (Story) => (
+      <div style={{ width: 320, height: 320 }}>
+        <Story />
+      </div>
+    ),
+  ],
+};

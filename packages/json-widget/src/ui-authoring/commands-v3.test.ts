@@ -20,6 +20,7 @@ import {
 } from './session-v3.js';
 import type {
   UiDocumentCommandV3Context,
+  UiDocumentCommandV3,
   UiDocumentNode,
   UiDocumentNodeV3,
   UiDocumentV3,
@@ -663,4 +664,62 @@ it('rejects promotion of an old-wire authored projected-prefix id without changi
   expect(result.state.selectedNodeIds).toEqual(['ui-instance:legacy-authored']);
   expect(result.state.past).toEqual([]);
   expect(result.state.future).toEqual([]);
+});
+
+it('applies standalone source edits as one revision and preserves redo on semantic no-op', () => {
+  const before = fixture();
+  const state = createUiAuthoringSessionV3(before, []);
+  const source = before.source.replace('base-child', 'Source changed');
+  const first = applyUiAuthoringSessionCommandV3(
+    state,
+    {
+      type: 'replace-document-source',
+      commandId: 'source-change',
+      expectedSource: before.source,
+      source,
+    },
+    CONTEXT,
+  );
+  expect(first.commandResult.issues).toEqual([]);
+  expect(first.state.document.revision).toBe(before.revision + 1);
+  expect(first.state.past).toHaveLength(1);
+  const undone = undoUiAuthoringSessionV3(first.state)!;
+  expect(undone.document.source).toBe(before.source);
+  const noop = applyUiAuthoringSessionCommandV3(
+    undone,
+    {
+      type: 'replace-document-source',
+      commandId: 'source-noop',
+      expectedSource: before.source,
+      source: JSON.stringify(JSON.parse(before.source)),
+    },
+    CONTEXT,
+  );
+  expect(noop.state).toBe(undone);
+  expect(noop.commandResult.transaction).toBeNull();
+  expect(redoUiAuthoringSessionV3(noop.state)!.document.source).toBe(first.state.document.source);
+});
+
+it('rejects a source edit inside an otherwise valid batch atomically', () => {
+  const before = fixture();
+  const result = applyUiDocumentCommandV3(
+    before,
+    {
+      type: 'batch',
+      commandId: 'source-batch',
+      commands: [
+        {
+          type: 'replace-document-source',
+          commandId: 'nested-source',
+          expectedSource: before.source,
+          source: before.source,
+        },
+      ],
+    } as unknown as UiDocumentCommandV3,
+    CONTEXT,
+  );
+  expect(result.changed).toBe(false);
+  expect(result.document).toBe(before);
+  expect(result.transaction).toBeNull();
+  expect(result.issues[0]!.message).toContain('standalone');
 });

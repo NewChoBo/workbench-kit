@@ -18,6 +18,7 @@ import { Panel, PanelBody } from '../layout/panel';
 import { EmptyState } from '../primitives/empty-state';
 import { IconButton } from '../primitives/icon-button';
 import { cx } from '../utils/cx';
+import { resolveTreeDropPlacement } from '../utils/tree-drop-placement';
 import { readWidgetPlacementAssetDragData } from './widget-placement-asset-dnd.js';
 import {
   isWidgetContextKey,
@@ -408,19 +409,12 @@ export function resolveWidgetTreeDropPlacement({
   offsetY,
   height,
 }: WidgetTreeDropPlacementGeometry): WidgetTreeDropPlacement {
-  const resolvedHeight = Math.max(1, height);
-
-  if (isRootWidgetPath(targetPath) && canAddChildren(targetWidget)) {
-    return 'inside';
-  }
-
-  if (canAddChildren(targetWidget)) {
-    if (offsetY < resolvedHeight / 3) return 'before';
-    if (offsetY > (resolvedHeight * 2) / 3) return 'after';
-    return 'inside';
-  }
-
-  return offsetY < resolvedHeight / 2 ? 'before' : 'after';
+  return resolveTreeDropPlacement({
+    canContain: canAddChildren(targetWidget),
+    insideOnly: isRootWidgetPath(targetPath),
+    offsetY,
+    height,
+  });
 }
 
 function resolveDropPlacementFromEvent(

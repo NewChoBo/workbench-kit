@@ -18,6 +18,7 @@ import {
 } from './document-v3.js';
 import { cloneUiAuthoringJsonValue, deepFreezeUiAuthoringValue } from './immutability.js';
 import { createLayoutPropertySupport } from './layout-property-support.js';
+import { prepareUiSourceEditV3 } from './source-edit-v3.js';
 import {
   canonicalizeUiResponsiveVariantCatalog,
   validateUiResponsiveVariantCatalog,
@@ -39,6 +40,8 @@ import {
   type UiResponsiveNodeOverride,
   type UiResponsiveVariantDescriptor,
 } from './types.js';
+
+type StandaloneCommand = Exclude<UiDocumentCommandV3, { readonly type: 'batch' }>;
 
 type ResponsiveCommand = Exclude<
   UiDocumentAtomicCommandV3,
@@ -111,8 +114,17 @@ function fail(
   });
 }
 
-function knownAtomicCommand(value: unknown): value is UiDocumentAtomicCommandV3 {
+function knownAtomicCommand(value: unknown): value is StandaloneCommand {
   if (!isPlainRecord(value) || typeof value.type !== 'string') return false;
+  if (value.type === 'replace-document-source')
+    return (
+      typeof value.commandId === 'string' &&
+      typeof value.source === 'string' &&
+      typeof value.expectedSource === 'string' &&
+      Object.keys(value).every((key) =>
+        ['type', 'commandId', 'source', 'expectedSource'].includes(key),
+      )
+    );
   if (
     [
       'insert-node',
@@ -742,9 +754,19 @@ function normalizeBatchVersion(base: UiDocumentV3, candidate: UiDocumentV3): UiD
 
 function applyAtomicCommand(
   document: UiDocumentV3,
-  command: UiDocumentAtomicCommandV3,
+  command: StandaloneCommand,
   context: UiDocumentCommandV3Context,
 ): AtomicApplyResult {
+  if (command.type === 'replace-document-source') {
+    const prepared = prepareUiSourceEditV3(document, command.expectedSource, command.source);
+    return prepared.document === undefined
+      ? {
+          document,
+          issues: [commandIssue('invalid-command-payload', prepared.error, command)],
+          changed: false,
+        }
+      : { document: prepared.document, issues: [], changed: prepared.document !== document };
+  }
   if (command.type === 'set-composition-definition') {
     const authoring = { ...responsiveAuthoring(document.root) } as Record<string, unknown>;
     if (command.definition === undefined) delete authoring.compositionDefinition;
@@ -771,7 +793,7 @@ function applyAtomicCommand(
 
 type UiDocumentCommandV3ReplayObserver = (
   document: UiDocumentV3,
-  command: UiDocumentAtomicCommandV3,
+  command: StandaloneCommand,
   index: number,
 ) => boolean;
 
@@ -798,6 +820,21 @@ function applyUiDocumentCommandV3Internal(
     );
   }
   const observedBatch = observer !== undefined && safeCommand.type === 'batch';
+  if (
+    safeCommand.type === 'batch' &&
+    Array.isArray(safeCommand.commands) &&
+    safeCommand.commands.some(
+      (child: unknown) => isPlainRecord(child) && child.type === 'replace-document-source',
+    )
+  )
+    return fail(
+      document,
+      commandIssue(
+        'invalid-command-payload',
+        'A source edit must be a standalone transaction, not a batch child.',
+        safeCommand,
+      ),
+    );
   const commandIssues = observedBatch
     ? !isCanonicalText(safeCommand.commandId)
       ? Object.freeze([
@@ -866,6 +903,14 @@ function applyUiDocumentCommandV3Internal(
 
   if (safeCommand.type === 'batch') working = normalizeBatchVersion(document, working);
 
+  if (working === document && safeCommand.type === 'replace-document-source')
+    return Object.freeze({
+      document,
+      transaction: null,
+      issues: Object.freeze([]),
+      changed: false,
+    });
+
   const next = createUiDocumentV3FromRoot(document.documentId, document.revision + 1, working.root);
   if (next.document === null) return fail(document, ...next.issues);
   if (formatWidgetDocumentJson(document.root) === next.document.source) {
@@ -900,13 +945,38 @@ function applyUiDocumentCommandV3Internal(
   });
 }
 
+type AtomicReplayObserver = (
+  document: UiDocumentV3,
+  command: UiDocumentAtomicCommandV3,
+  index: number,
+) => boolean;
+
+export function applyUiDocumentCommandV3WithReplayObserver(
+  document: UiDocumentV3,
+  command: Exclude<UiDocumentCommandV3, { readonly type: 'replace-document-source' }>,
+  context: UiDocumentCommandV3Context,
+  observer: AtomicReplayObserver,
+): ApplyUiDocumentCommandV3Result;
 export function applyUiDocumentCommandV3WithReplayObserver(
   document: UiDocumentV3,
   command: UiDocumentCommandV3,
   context: UiDocumentCommandV3Context,
   observer: UiDocumentCommandV3ReplayObserver,
+): ApplyUiDocumentCommandV3Result;
+export function applyUiDocumentCommandV3WithReplayObserver(
+  document: UiDocumentV3,
+  command: UiDocumentCommandV3,
+  context: UiDocumentCommandV3Context,
+  observer: AtomicReplayObserver | UiDocumentCommandV3ReplayObserver,
 ): ApplyUiDocumentCommandV3Result {
-  return applyUiDocumentCommandV3Internal(document, command, context, observer);
+  // Batch/atomic callers keep their narrower observer contract. Source commands
+  // are standalone, and source-shaped batch payloads fail before observation.
+  return applyUiDocumentCommandV3Internal(
+    document,
+    command,
+    context,
+    observer as UiDocumentCommandV3ReplayObserver,
+  );
 }
 
 export function applyUiDocumentCommandV3(

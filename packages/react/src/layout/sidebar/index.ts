@@ -25,6 +25,10 @@ export {
   toggleSideBarTreeId,
 } from './SideBarTree';
 export type {
+  SideBarTreeDragAndDrop,
+  SideBarTreeDropFeedback,
+  SideBarTreeDropOperation,
+  SideBarTreeDropPlacement,
   SideBarTreeItem,
   SideBarTreeProps,
   SideBarTreeSelectionMode,

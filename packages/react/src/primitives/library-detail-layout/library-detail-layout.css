@@ -224,3 +224,92 @@
   font-size: var(--shell-font-size-caption, 0.75rem);
   line-height: 1.4;
 }
+
+/* Opt-in whole-detail scrolling uses the pane width, never the window width. */
+.ui-library-detail-layout--scroll-all {
+  container: library-detail / inline-size;
+  gap: 0;
+  overflow: hidden;
+}
+
+.ui-library-detail-layout__scroll {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__band {
+  border: 0;
+  border-radius: 0;
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__band-media {
+  opacity: 0.85;
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__band-overlay {
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--shell-color-surface, var(--color-surface))
+  );
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__hero-cover-body {
+  align-items: flex-start;
+  gap: 20px;
+  padding: 0 20px 20px;
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__hero-content {
+  padding-top: 54px;
+  gap: 12px;
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__title {
+  overflow-wrap: anywhere;
+}
+
+.ui-library-detail-layout--scroll-all
+  .ui-library-detail-layout__hero-cover[data-has-cover='false']
+  .ui-library-detail-layout__hero-cover-body {
+  margin-top: -24px;
+}
+
+.ui-library-detail-layout--scroll-all
+  .ui-library-detail-layout__hero-cover[data-has-cover='false']
+  .ui-library-detail-layout__hero-content {
+  padding-top: 0;
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__body,
+.ui-library-detail-layout__footer {
+  padding: 0 20px 20px;
+}
+
+.ui-library-detail-layout__footer {
+  color: var(--shell-color-text-muted, var(--color-text-muted));
+  font-size: var(--shell-font-size-caption, 0.75rem);
+}
+
+@container library-detail (max-width: 28rem) {
+  .ui-library-detail-layout--scroll-all .ui-library-detail-layout__hero-cover-body {
+    flex-wrap: wrap;
+    gap: 12px;
+    padding-inline: 16px;
+  }
+
+  .ui-library-detail-layout--scroll-all .ui-library-detail-layout__hero-content {
+    flex-basis: 100%;
+    padding-top: 0;
+  }
+
+  .ui-library-detail-layout--scroll-all .ui-library-detail-layout__body,
+  .ui-library-detail-layout__footer {
+    padding-inline: 16px;
+  }
+}
+
+.ui-library-detail-layout--scroll-all .ui-library-detail-layout__portrait-cover {
+  align-self: flex-start;
+}

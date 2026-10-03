@@ -22,6 +22,7 @@ import {
 } from './immutability.js';
 import { createLayoutPropertySupport } from './layout-property-support.js';
 import { applyUiAuthoringSessionCommandV3 } from './session-v3.js';
+import { prepareUiSourceEditV3 } from './source-edit-v3.js';
 import {
   validateUiDocumentPropertySource,
   type UiDocumentLiteralPolicy,
@@ -29,7 +30,6 @@ import {
 import type {
   ApplyUiDocumentCommandV3Result,
   UiAuthoringSessionStateV3,
-  UiDocumentAtomicCommandV3,
   UiDocumentCommandV3,
   UiDocumentCommandV3Context,
   UiDocumentV3,
@@ -482,9 +482,49 @@ function targetNode(document: UiDocumentV3, nodeId: string): GenericWidget | und
   return collectWidgetNodes(document.root).find((entry) => entry.widget.id === nodeId)?.widget;
 }
 
+/** Shared structural admission preserves only unchanged sparse instance tuples. */
+function validateReplacementSubtree(
+  beforeDocument: UiDocumentV3 | null,
+  root: GenericWidget,
+  context: UiDocumentCommandV3AdmissionContext,
+  command: Readonly<{ readonly commandId?: string; readonly nodeId?: string }>,
+  path: string,
+): UiDocumentCommandV3AdmissionDiagnostic | null {
+  for (const [index, entry] of collectWidgetNodes(root).entries()) {
+    const nodePath = `${path}.nodes[${index}]`;
+    const before =
+      beforeDocument !== null && typeof entry.widget.id === 'string'
+        ? targetNode(beforeDocument, entry.widget.id)
+        : undefined;
+    const beforeAuthoring = before === undefined ? null : readUiDocumentNodeAuthoringV3(before);
+    const afterAuthoring = readUiDocumentNodeAuthoringV3(entry.widget);
+    const unchangedInstance =
+      before?.type === 'composition-instance' &&
+      entry.widget.type === 'composition-instance' &&
+      beforeAuthoring !== null &&
+      afterAuthoring !== null &&
+      uiAuthoringDeclarativeEqual(beforeAuthoring.component, afterAuthoring.component) &&
+      uiAuthoringDeclarativeEqual(beforeAuthoring.properties, afterAuthoring.properties);
+    const issue = unchangedInstance
+      ? afterAuthoring.layout === undefined
+        ? null
+        : validateInstanceLayout(
+            entry.widget,
+            afterAuthoring.layout.strategyId,
+            afterAuthoring.layout.values,
+            context,
+            command,
+            nodePath,
+          )
+      : validateAuthoredNode(entry.widget, context, command, nodePath);
+    if (issue !== null) return issue;
+  }
+  return null;
+}
+
 function validateAtomicCommand(
   document: UiDocumentV3,
-  command: UiDocumentAtomicCommandV3,
+  command: Exclude<UiDocumentCommandV3, { readonly type: 'batch' }>,
   context: UiDocumentCommandV3AdmissionContext,
   index: number,
 ): UiDocumentCommandV3AdmissionDiagnostic | null {
@@ -517,38 +557,20 @@ function validateAtomicCommand(
           first.propertyId,
         );
   }
-  if (command.type === 'insert-node' || command.type === 'replace-node') {
-    for (const [subtreeIndex, entry] of collectWidgetNodes(command.node).entries()) {
-      const nodePath = `${path}.node.nodes[${subtreeIndex}]`;
-      const before =
-        command.type === 'replace-node' && typeof entry.widget.id === 'string'
-          ? targetNode(document, entry.widget.id)
-          : undefined;
-      const beforeAuthoring = before === undefined ? null : readUiDocumentNodeAuthoringV3(before);
-      const afterAuthoring = readUiDocumentNodeAuthoringV3(entry.widget);
-      const unchangedInstance =
-        before?.type === 'composition-instance' &&
-        entry.widget.type === 'composition-instance' &&
-        beforeAuthoring !== null &&
-        afterAuthoring !== null &&
-        uiAuthoringDeclarativeEqual(beforeAuthoring.component, afterAuthoring.component) &&
-        uiAuthoringDeclarativeEqual(beforeAuthoring.properties, afterAuthoring.properties);
-      const issue = unchangedInstance
-        ? afterAuthoring.layout === undefined
-          ? null
-          : validateInstanceLayout(
-              entry.widget,
-              afterAuthoring.layout.strategyId,
-              afterAuthoring.layout.values,
-              context,
-              command,
-              nodePath,
-            )
-        : validateAuthoredNode(entry.widget, context, command, nodePath);
-      if (issue !== null) return issue;
-    }
-    return null;
+  if (command.type === 'replace-document-source') {
+    const prepared = prepareUiSourceEditV3(document, command.expectedSource, command.source);
+    if (prepared.document === undefined)
+      return diagnostic('invalid-command', prepared.error, 'source', command);
+    return validateReplacementSubtree(document, prepared.document.root, context, command, 'source');
   }
+  if (command.type === 'insert-node' || command.type === 'replace-node')
+    return validateReplacementSubtree(
+      command.type === 'replace-node' ? document : null,
+      command.node,
+      context,
+      command,
+      `${path}.node`,
+    );
   if (
     command.type !== 'set-property' &&
     command.type !== 'set-layout' &&

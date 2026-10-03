@@ -4,7 +4,7 @@ import type { ComponentPropsWithRef, ReactNode } from 'react';
 import { cx } from '../../utils/cx';
 import { WorkbenchMediaSlot } from '../workbench-media-slot';
 
-export type CatalogBrowseCardVariant = 'cover' | 'row';
+export type CatalogBrowseCardVariant = 'cover' | 'row' | 'poster' | 'compact';
 
 export interface CatalogBrowseCardProps extends Omit<
   ComponentPropsWithRef<'button'>,
@@ -94,7 +94,7 @@ export function CatalogBrowseCard({
 
   const rootClassName = cx(
     'ui-catalog-browse-card',
-    variant === 'cover' && 'ui-catalog-browse-card--cover',
+    variant !== 'row' && `ui-catalog-browse-card--${variant}`,
     selected && 'ui-catalog-browse-card--selected',
     hasTrailing && 'ui-catalog-browse-card--with-trailing',
     className,

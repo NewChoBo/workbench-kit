@@ -81,3 +81,30 @@ describe('CatalogBrowseCard', () => {
     });
   });
 });
+
+describe('CatalogBrowseCard media-first variants', () => {
+  it.each(['poster', 'compact'] as const)(
+    'adds only opt-in %s presentation and preserves the button contract',
+    (variant) => {
+      const markup = renderToStaticMarkup(
+        <CatalogBrowseCard variant={variant} label="A long catalog title" selected disabled />,
+      );
+      expect(markup).toContain(`ui-catalog-browse-card--${variant}`);
+      expect(markup).toContain('ui-catalog-browse-card--selected');
+      expect(markup).toContain('<button');
+      expect(markup).toContain('disabled=""');
+      expect(markup).not.toContain('role="listitem"');
+    },
+  );
+
+  it.each(['row', 'cover'] as const)(
+    'does not add media-first classes to existing %s',
+    (variant) => {
+      const markup = renderToStaticMarkup(
+        <CatalogBrowseCard variant={variant} label="Existing item" />,
+      );
+      expect(markup).not.toContain('ui-catalog-browse-card--poster');
+      expect(markup).not.toContain('ui-catalog-browse-card--compact');
+    },
+  );
+});
