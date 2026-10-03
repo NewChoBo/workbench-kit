@@ -26,7 +26,21 @@ import { readNumber } from '../utils/readNumber';
 import { renderBuiltinWidgetLeaf } from './builtins/renderBuiltinWidgetLeaf.js';
 import { BUILTIN_JDW_REGISTRY } from './createBuiltinJdwRegistry.js';
 export interface CssRenderBackendOptions {
-  /** Only the root layout node may scroll; nested nodes keep their clipping. */
+  /** Nested overflow and selection are opt-in; defaults preserve legacy rendering. */
+  readonly nodeOverflow?: (node: LayoutNodeResult, path: WidgetPath) => 'hidden' | 'auto';
+  readonly nodeSelection?: (
+    node: LayoutNodeResult,
+    path: WidgetPath,
+  ) =>
+    | {
+        readonly elementId?: string;
+        readonly selected: boolean;
+        readonly label: string;
+        readonly onSelect: () => void;
+        readonly onKeyDown?: (event: KeyboardEvent<HTMLElement>) => void;
+      }
+    | undefined;
+  readonly renderNodeOverlay?: (node: LayoutNodeResult, path: WidgetPath) => ReactNode;
   readonly rootOverflow?: 'hidden' | 'auto' | undefined;
   readonly registry?: WidgetRegistryContract<unknown> | undefined;
   readonly emptyLabel?: string | undefined;
@@ -140,50 +154,16 @@ function renderLayoutNode(
   const hostTag = layoutHostTag(widget, options);
   const isLayoutContainer = LAYOUT_CONTAINER_TYPES.has(widget.type);
   const leafContent = isLayoutContainer ? null : renderLeafContent(widget, options);
-  const selected = options.selectedPath ? widgetPathEquals(path, options.selectedPath) : false;
-  const interactive = Boolean(options.onSelectPath);
+  const selection = options.nodeSelection?.(node, path);
+  const selected =
+    selection?.selected ??
+    (options.selectedPath ? widgetPathEquals(path, options.selectedPath) : false);
+  const interactive = Boolean(selection || options.onSelectPath);
   const scrollableRoot = path.length === 0 && options.rootOverflow === 'auto';
+  const innerScroller = options.nodeOverflow?.(node, path) === 'auto';
+  const scrollable = scrollableRoot || innerScroller;
 
-  return createElement(
-    hostTag,
-    {
-      'aria-selected': interactive ? selected : undefined,
-      'aria-label': scrollableRoot && !interactive ? 'Widget viewport' : undefined,
-      'data-layout-scroll-root': scrollableRoot ? 'true' : undefined,
-      'data-layout-node': true,
-      'data-widget-interactive': interactive ? 'true' : undefined,
-      'data-widget-path': widgetPathKey(path),
-      'data-widget-selected': selected ? 'true' : undefined,
-      'data-widget-type': widget.type,
-      role: interactive
-        ? hostTag === 'div'
-          ? 'button'
-          : undefined
-        : scrollableRoot
-          ? 'region'
-          : undefined,
-      tabIndex: interactive ? (selected ? 0 : -1) : scrollableRoot ? 0 : undefined,
-      onClick: interactive
-        ? (event: MouseEvent<HTMLElement>) => {
-            event.stopPropagation();
-            event.currentTarget.focus({ preventScroll: true });
-            options.onSelectPath?.(path);
-          }
-        : undefined,
-      onKeyDown: interactive
-        ? (event: KeyboardEvent<HTMLElement>) => {
-            if (!isKeyboardActivationKey(event.key)) return;
-
-            event.preventDefault();
-            event.stopPropagation();
-            options.onSelectPath?.(path);
-          }
-        : undefined,
-      style: {
-        ...layoutNodeStyle(node, parentOrigin, widget),
-        ...(scrollableRoot ? { overflow: 'auto' } : {}),
-      },
-    },
+  const content = [
     leafContent,
     ...node.children.map((child, index) =>
       createElement(
@@ -197,6 +177,84 @@ function renderLayoutNode(
         ),
       ),
     ),
+  ];
+  const renderedContent = innerScroller
+    ? createElement(
+        'div',
+        {
+          'data-layout-scroll-viewport': 'true',
+          'data-layout-scroll-root': scrollableRoot ? 'true' : undefined,
+          role: !interactive ? 'region' : undefined,
+          'aria-label': !interactive ? 'Widget viewport' : undefined,
+          tabIndex: !interactive ? 0 : undefined,
+          style: { position: 'absolute', inset: 0, overflow: 'auto' },
+        },
+        ...content,
+      )
+    : content;
+
+  return createElement(
+    hostTag,
+    {
+      id: selection?.elementId,
+      'aria-selected': interactive ? selected : undefined,
+      'aria-label':
+        selection?.label ??
+        (scrollable && !interactive && !innerScroller ? 'Widget viewport' : undefined),
+      'data-layout-node-id': typeof widget.id === 'string' ? widget.id : undefined,
+      'data-layout-scroll-viewport': scrollableRoot && !innerScroller ? 'true' : undefined,
+      'data-layout-scroll-root': scrollableRoot && !innerScroller ? 'true' : undefined,
+      'data-layout-node': true,
+      'data-widget-interactive': interactive ? 'true' : undefined,
+      'data-widget-path': widgetPathKey(path),
+      'data-widget-selected': selected ? 'true' : undefined,
+      'data-widget-type': widget.type,
+      role: interactive
+        ? hostTag === 'div'
+          ? 'button'
+          : undefined
+        : scrollable && !innerScroller
+          ? 'region'
+          : undefined,
+      tabIndex: interactive ? (selected ? 0 : -1) : scrollable && !innerScroller ? 0 : undefined,
+      onClick: interactive
+        ? (event: MouseEvent<HTMLElement>) => {
+            event.stopPropagation();
+            event.currentTarget.focus({ preventScroll: true });
+            if (selection) selection.onSelect();
+            else options.onSelectPath?.(path);
+          }
+        : undefined,
+      onKeyDown: interactive
+        ? (event: KeyboardEvent<HTMLElement>) => {
+            // A focused descendant owns its keys; unhandled arrows may scroll natively.
+            if (selection && event.target !== event.currentTarget) return;
+            selection?.onKeyDown?.(event);
+            if (event.defaultPrevented || !isKeyboardActivationKey(event.key)) return;
+
+            event.preventDefault();
+            event.stopPropagation();
+            if (selection) selection.onSelect();
+            else options.onSelectPath?.(path);
+          }
+        : undefined,
+      style: {
+        ...layoutNodeStyle(node, parentOrigin, widget),
+        ...(options.renderNodeOverlay ? { isolation: 'isolate' as const } : {}),
+        ...(scrollableRoot && !innerScroller ? { overflow: 'auto' } : {}),
+      },
+    },
+    renderedContent,
+    options.renderNodeOverlay
+      ? createElement(
+          'div',
+          {
+            'data-layout-overlay': true,
+            style: { position: 'absolute', inset: 0, pointerEvents: 'none', zIndex: 2 },
+          },
+          options.renderNodeOverlay(node, path),
+        )
+      : null,
   );
 }
 

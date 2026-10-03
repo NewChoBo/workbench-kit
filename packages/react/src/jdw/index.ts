@@ -52,3 +52,4 @@ export {
   type CompiledScreenSpecText,
   type ParsedScreenSpec,
 } from '@workbench-kit/jdw';
+export { revealCssLayoutNode } from './revealCssLayoutNode.js';

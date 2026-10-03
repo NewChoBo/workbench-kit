@@ -1,4 +1,10 @@
 export type { GenericWidget } from '../widget/tree.js';
+export { projectUiLayoutNodeV3, createUiContainerLayoutCommandV3 } from './ordered-layout.js';
+export type {
+  UiLayoutProjectionStrategy,
+  UiLayoutNodeProjectionV3Input,
+  UiContainerLayoutCommandV3Input,
+} from './ordered-layout.js';
 export { collectWidgetNodes, getWidgetChildren } from '../widget/tree.js';
 export { formatWidgetDocumentJson } from '../document/document.js';
 
