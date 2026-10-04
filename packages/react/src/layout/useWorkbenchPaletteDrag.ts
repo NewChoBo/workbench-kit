@@ -3,9 +3,17 @@ import { createTypedDragMime, type TypedDragMime } from '../utils/dragMime';
 
 export type WorkbenchPaletteDragFeedback =
   | { readonly accepted: true; readonly message: string }
-  | { readonly accepted: false; readonly reason: string; readonly message: string };
+  | {
+      readonly accepted: false;
+      readonly reason: string;
+      readonly message: string;
+      /** Temporary host preparation permits native release, never final admission. */
+      readonly pending?: true;
+    };
 
 export interface WorkbenchPaletteDragEventPoint {
+  /** Only final release: resolve exact geometry synchronously. Absent during hover. */
+  readonly phase?: 'drop';
   readonly clientX: number;
   readonly clientY: number;
   readonly target: EventTarget | null;
@@ -25,7 +33,7 @@ export interface WorkbenchPaletteDragOptions<Source, Target, PreparedData = neve
   readonly getSourceKey: (source: Source) => string;
   readonly canDrag: (source: Source) => boolean;
   readonly onDragStart?: (source: Source) => void;
-  /** Pure deferred preparation. Return metadata; do not mutate inputs, documents or caches. */
+  /** Pure admission: deferred on hover, synchronous on drop. Never mutate inputs, documents or caches. */
   readonly getDropFeedback: (
     source: Source,
     target: Target,
@@ -271,7 +279,12 @@ export function useWorkbenchPaletteDrag<Source, Target, PreparedData = never>(
         }
         const feedback: WorkbenchPaletteDragFeedback = result.accepted
           ? { accepted: true, message: result.message }
-          : { accepted: false, reason: result.reason, message: result.message };
+          : {
+              accepted: false,
+              reason: result.reason,
+              message: result.message,
+              ...(result.pending ? { pending: true as const } : {}),
+            };
         const ready: Preview = {
           ...pending,
           feedback,
@@ -505,7 +518,9 @@ export function useWorkbenchPaletteDrag<Source, Target, PreparedData = never>(
         pointRef.current = point;
         const next = prepareTarget(gesture, resolve(gesture, point, resolveTarget));
         event.dataTransfer.dropEffect =
-          next && !next.pending && next.feedback.accepted ? 'copy' : 'none';
+          next && (next.pending || next.feedback.accepted || next.feedback.pending)
+            ? 'copy'
+            : 'none';
       },
       onDragLeave: (event) => {
         if (!gestureRef.current) return;
@@ -537,27 +552,58 @@ export function useWorkbenchPaletteDrag<Source, Target, PreparedData = never>(
           endGesture(true, config.unavailableMessage);
           return;
         }
-        const proposal = resolve(gesture, eventPoint(event), resolveTarget);
-        const prepared = preparedRef.current;
-        if (
-          !proposal ||
-          !prepared ||
-          proposal.key !== prepared.key ||
-          prepared.revisionKey !== config.revisionKey ||
-          prepared.pending
-        ) {
-          endGesture(true, proposal ? config.pendingMessage : config.unavailableMessage);
+        const point = { ...eventPoint(event), phase: 'drop' as const };
+        const registration = targetRef.current;
+        if (registration?.element !== point.currentTarget) {
+          endGesture(true, config.unavailableMessage);
           return;
         }
-        if (!prepared.feedback.accepted) {
-          endGesture(true, prepared.feedback.message);
+        const stillCurrent = () => {
+          const valid =
+            mountedRef.current &&
+            currentGesture() === gesture &&
+            targetRef.current === registration &&
+            registration.element.isConnected;
+          // A resolver/admission callback can replace the registration or gesture.
+          // Retire this attempt without canceling a reentrant replacement gesture.
+          if (!valid && gestureRef.current === gesture) endGesture(false);
+          return valid;
+        };
+        const proposal = resolve(gesture, point, registration.resolveTarget);
+        if (!stillCurrent()) return;
+        if (!proposal) {
+          endGesture(true, optionsRef.current.unavailableMessage);
           return;
         }
+        // Hover feedback is advisory. Final resolution and admission must not
+        // depend on a deferred hover timer winning the race with release.
+        let admission: WorkbenchPaletteDragFeedback;
+        try {
+          admission = optionsRef.current.getDropFeedback(gesture.source, proposal.target);
+        } catch {
+          admission = {
+            accepted: false,
+            reason: 'unavailable',
+            message: optionsRef.current.unavailableMessage,
+          };
+        }
+        if (!stillCurrent()) return;
+        const finalProposal = resolve(gesture, point, registration.resolveTarget);
+        if (!stillCurrent()) return;
+        if (!finalProposal || finalProposal.key !== proposal.key) {
+          endGesture(true, optionsRef.current.unavailableMessage);
+          return;
+        }
+        if (!admission.accepted) {
+          endGesture(true, admission.message);
+          return;
+        }
+        const liveConfig = optionsRef.current;
         // Retire the token before calling the host: reentrant/repeated drops cannot commit twice.
         endGesture(false);
         let feedback: WorkbenchPaletteDragFeedback;
         try {
-          feedback = config.onDrop(gesture.source, proposal.target);
+          feedback = liveConfig.onDrop(gesture.source, finalProposal.target);
         } catch {
           feedback = { accepted: false, reason: 'unavailable', message: config.unavailableMessage };
         }
