@@ -1186,9 +1186,12 @@ import type { WorkbenchHostShellProps } from '@workbench-kit/shell-react/host-sh
 import { CatalogBrowsePane, type CatalogBrowsePaneProps } from '@workbench-kit/react/primitives';
 import { flushSync } from 'react-dom';
 import { createRoot } from 'react-dom/client';
-import { WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle, WorkbenchFitPreview as RootWorkbenchFitPreview, type WorkbenchFitPreviewProps as RootFitPreviewProps } from '@workbench-kit/react';
+import { WorkbenchCanvasResizeHandle as RootWorkbenchCanvasResizeHandle, type WorkbenchCanvasResizeHandleProps as RootResizeHandleProps, type WorkbenchCanvasResizeHandlePosition as RootResizeHandlePosition, WorkbenchCanvasFrameHandle as RootWorkbenchCanvasFrameHandle, WorkbenchFitPreview as RootWorkbenchFitPreview, type WorkbenchFitPreviewProps as RootFitPreviewProps } from '@workbench-kit/react';
 import {
   WorkbenchCanvasFrameHandle,
+  WorkbenchCanvasResizeHandle,
+  type WorkbenchCanvasResizeHandleProps,
+  type WorkbenchCanvasResizeHandlePosition,
   WorkbenchFitPreview,
   type WorkbenchFitPreviewProps,
   WorkbenchInteractionSurface,
@@ -1198,6 +1201,19 @@ import {
 if (RootWorkbenchCanvasFrameHandle !== WorkbenchCanvasFrameHandle) {
   throw new TypeError('Packed CanvasFrameHandle root and layout exports do not share identity.');
 }
+
+if (RootWorkbenchCanvasResizeHandle !== WorkbenchCanvasResizeHandle) {
+  throw new TypeError('Packed CanvasResizeHandle root and layout exports do not share identity.');
+}
+const resizePosition: WorkbenchCanvasResizeHandlePosition = 'se' satisfies RootResizeHandlePosition;
+const resizeProps: WorkbenchCanvasResizeHandleProps = {
+  position: resizePosition, label: 'Resize preview',
+} satisfies RootResizeHandleProps;
+const rootResizeProps: RootResizeHandleProps = resizeProps;
+const layoutResizeProps: WorkbenchCanvasResizeHandleProps = rootResizeProps;
+// @ts-expect-error Unknown resize positions must remain rejected.
+const invalidResizePosition: WorkbenchCanvasResizeHandlePosition = 'center';
+void invalidResizePosition;
 
 if (RootWorkbenchFitPreview !== WorkbenchFitPreview) {
   throw new TypeError('Packed Fit Preview root and layout exports do not share identity.');
@@ -1233,6 +1249,7 @@ flushSync(() => {
         effect,
       },
       createElement(WorkbenchCanvasFrameHandle, { label: 'Resize canvas' }),
+      createElement(WorkbenchCanvasResizeHandle, layoutResizeProps),
     ),
   );
 });
@@ -1247,6 +1264,11 @@ if (interaction.getAttribute('aria-label') !== 'Packed interaction preview') {
 }
 if (frameHandle?.textContent !== 'Resize canvas') {
   throw new TypeError('Packed WorkbenchCanvasFrameHandle did not render consumer content.');
+}
+const resizeHandle = container.querySelector('.ui-workbench-canvas-resize-handle');
+if (resizeHandle?.getAttribute('aria-label') !== 'Resize preview' ||
+    resizeHandle.getAttribute('data-position') !== 'se') {
+  throw new TypeError('Packed CanvasResizeHandle did not preserve consumer props.');
 }
 const layout = new LayoutService({ sideBar: { visible: true, sizePercent: 31 } });
 const original = JSON.stringify(layout.getState());

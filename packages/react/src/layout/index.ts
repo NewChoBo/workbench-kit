@@ -157,6 +157,11 @@ export { WorkbenchPreviewCanvas } from './WorkbenchCanvas';
 export type { WorkbenchPreviewCanvasProps } from './WorkbenchCanvas';
 export { WorkbenchCanvasFrameHandle } from './WorkbenchCanvas';
 export type { WorkbenchCanvasFrameHandleProps } from './WorkbenchCanvas';
+export { WorkbenchCanvasResizeHandle } from './WorkbenchCanvas';
+export type {
+  WorkbenchCanvasResizeHandleProps,
+  WorkbenchCanvasResizeHandlePosition,
+} from './WorkbenchCanvas';
 export { WorkbenchInteractionSurface } from './WorkbenchInteractionSurface';
 export type {
   WorkbenchInteractionSurfaceProps,
