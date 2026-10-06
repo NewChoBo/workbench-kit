@@ -146,24 +146,42 @@ type Story = StoryObj<typeof meta>;
 export const CapabilityBoundaries: Story = {
   play: async ({ canvasElement }) => {
     const canvas = within(canvasElement);
+    const actionsStatus = () => canvas.getByText(/^Actions:/, { selector: 'p[role="status"]' });
+    const expectLoading = async () => {
+      const rendered = within(canvas.getByLabelText('Rendered JSON'));
+      const loading = rendered.getByRole('status');
+      await expect(loading).toBeVisible();
+      await expect(loading).toHaveClass('ui-panel-loading');
+      await expect(loading).toHaveTextContent('Loading details');
+      await expect(loading).toHaveAttribute('aria-live', 'polite');
+      await expect(loading.querySelector('.codicon-loading')).toHaveAttribute(
+        'aria-hidden',
+        'true',
+      );
+    };
+    await expectLoading();
     const open = canvas.getByRole('button', { name: 'Open details' });
     const more = canvas.getByRole('button', { name: 'More actions' });
     open.focus();
     await userEvent.keyboard('{Enter}');
-    await expect(canvas.getByRole('status')).toHaveTextContent('Actions: open');
+    await expect(actionsStatus()).toHaveTextContent('Actions: open');
+    await expectLoading();
     await expect(open).toBeDisabled();
     await userEvent.click(canvas.getByRole('button', { name: 'Make ready' }));
     more.focus();
     await userEvent.keyboard(' ');
-    await expect(canvas.getByRole('status')).toHaveTextContent('Actions: open, more');
+    await expect(actionsStatus()).toHaveTextContent('Actions: open, more');
+    await expectLoading();
     await userEvent.click(canvas.getByRole('button', { name: 'Use preview mode' }));
     await userEvent.click(canvas.getByRole('button', { name: 'Make ready' }));
     await expect(open).toBeDisabled();
     await expect(more).toBeDisabled();
+    await expectLoading();
     await userEvent.click(canvas.getByRole('button', { name: 'Revoke image' }));
     await expect(canvasElement.querySelector('.ui-workbench-media-slot img')).toBeNull();
     await userEvent.click(canvas.getByRole('button', { name: 'Replace record' }));
     await expect(canvas.getByRole('img', { name: 'Sample record 2' })).toBeVisible();
+    await expectLoading();
   },
 };
 
