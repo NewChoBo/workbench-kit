@@ -1,6 +1,7 @@
 /** @vitest-environment jsdom */
 import { act, useEffect, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
+import { flushSync } from 'react-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   useWorkbenchPaletteDrag,
@@ -194,6 +195,10 @@ async function mount(overrides: Partial<Options> = {}, consume?: (drag: Result) 
     get result() {
       return latest!;
     },
+    updateNow(next: Partial<Options>) {
+      options = { ...options, ...next };
+      flushSync(() => root.render(<Harness />));
+    },
     async update(next: Partial<Options>) {
       options = { ...options, ...next };
       await render();
@@ -237,7 +242,7 @@ describe('useWorkbenchPaletteDrag', () => {
     expect(view.feedback).not.toHaveBeenCalled();
     expect(view.result.preview?.pending).toBe(true);
     expect(view.result.preview?.feedback.accepted).toBe(false);
-    expect(transfer.dropEffect).toBe('none');
+    expect(transfer.dropEffect).toBe('copy');
     await settle();
     expect(view.feedback).toHaveBeenCalledTimes(1);
     expect(view.result.preview?.pending).toBe(false);
@@ -291,25 +296,260 @@ describe('useWorkbenchPaletteDrag', () => {
     expect(view.commit).toHaveBeenCalledTimes(1);
   });
 
-  it('rejects immediate release while pending and remeasures the exact key at drop', async () => {
+  it('admits immediate release and remeasures a moved final target without a hover delay', async () => {
     const view = await mount();
     const first = new Transfer();
     await dispatch(view.button, 'dragstart', first);
     await dispatch(view.canvas, 'dragover', first);
     await dispatch(view.canvas, 'drop', first);
     await settle();
-    expect(view.feedback).not.toHaveBeenCalled();
-    expect(view.commit).not.toHaveBeenCalled();
-    expect(view.result.message).toContain('Pause briefly');
+    expect(view.feedback).toHaveBeenCalledTimes(1);
+    expect(view.commit).toHaveBeenCalledExactlyOnceWith(source, { x: 10, extent: null });
+    await settle();
+    expect(vi.getTimerCount()).toBe(0);
     const second = new Transfer();
     await dispatch(view.button, 'dragstart', second);
     await dispatch(view.canvas, 'dragover', second);
     await settle();
     await dispatch(view.canvas, 'drop', second, 11);
-    expect(view.commit).not.toHaveBeenCalled();
-    expect(view.result.message).toContain('Pause briefly');
+    expect(view.commit).toHaveBeenCalledTimes(2);
+    expect(view.commit).toHaveBeenLastCalledWith(source, { x: 11, extent: null });
   });
 
+  it('resolves drop-only geometry without consuming pending hover metadata', async () => {
+    const consume = vi.fn();
+    const view = await mount(
+      {
+        getDropFeedback: (_source, target) =>
+          target.extent === 60
+            ? { accepted: true, message: 'Ready' }
+            : {
+                accepted: false,
+                reason: 'extent',
+                message: 'Measuring',
+                data: { extent: 60, cacheKey: 'target' },
+              },
+      },
+      consume,
+    );
+    await view.setResolver((_source, point) => ({
+      key: `${point.clientX}:${point.phase ?? 'hover'}`,
+      target: { x: point.clientX, extent: point.phase === 'drop' ? 60 : null },
+    }));
+    const timers = vi.spyOn(window, 'setTimeout');
+    const transfer = new Transfer();
+    await dispatch(view.button, 'dragstart', transfer);
+    await dispatch(view.canvas, 'dragover', transfer);
+    const oldCallback = timers.mock.calls[timers.mock.calls.length - 1]?.[0];
+    await dispatch(view.canvas, 'drop', transfer, 25);
+    expect(view.commit).toHaveBeenCalledExactlyOnceWith(source, { x: 25, extent: 60 });
+    await act(async () => {
+      if (typeof oldCallback === 'function') oldCallback();
+    });
+    await settle();
+    expect(consume).not.toHaveBeenCalled();
+    expect(view.commit).toHaveBeenCalledTimes(1);
+    expect(view.result.preview).toBeNull();
+  });
+
+  it.each([false, true])(
+    'completed host preparation remains droppable but requires final readiness=%s',
+    async (readyAtDrop) => {
+      const view = await mount({
+        getDropFeedback: (_source, target) =>
+          target.extent === 60
+            ? { accepted: true, message: 'Ready' }
+            : { accepted: false, pending: true, reason: 'measuring', message: 'Measuring' },
+      });
+      await view.setResolver((_source, point) => ({
+        key: point.phase === 'drop' ? 'final' : 'hover',
+        target: { x: point.clientX, extent: point.phase === 'drop' && readyAtDrop ? 60 : null },
+      }));
+      const transfer = new Transfer();
+      await dispatch(view.button, 'dragstart', transfer);
+      await dispatch(view.canvas, 'dragover', transfer);
+      await settle();
+      expect(view.result.preview?.pending).toBe(false);
+      expect(view.result.preview?.feedback).toMatchObject({ accepted: false, pending: true });
+      await dispatch(view.canvas, 'dragover', transfer);
+      expect(transfer.dropEffect).toBe('copy');
+      await dispatch(view.canvas, 'drop', transfer);
+      await dispatch(view.canvas, 'drop', transfer);
+      expect(view.commit).toHaveBeenCalledTimes(readyAtDrop ? 1 : 0);
+      expect(view.result.active).toBe(false);
+      expect(view.result.preview).toBeNull();
+      await settle();
+      expect(vi.getTimerCount()).toBe(0);
+    },
+  );
+
+  it.each(['unsupported', 'pending'])(
+    'unmarked rejected feedback %s never advertises a valid drop',
+    async (reason) => {
+      const view = await mount({
+        getDropFeedback: () => ({ accepted: false, reason, message: 'Unavailable' }),
+      });
+      const transfer = new Transfer();
+      await dispatch(view.button, 'dragstart', transfer);
+      await dispatch(view.canvas, 'dragover', transfer);
+      await settle();
+      await dispatch(view.canvas, 'dragover', transfer);
+      expect(transfer.dropEffect).toBe('none');
+      await dispatch(view.canvas, 'drop', transfer);
+      expect(view.commit).not.toHaveBeenCalled();
+      expect(view.result.active).toBe(false);
+    },
+  );
+
+  it('retires registration replaced by the second final resolution without stranding the gesture', async () => {
+    let resolutions = 0;
+    const view = await mount();
+    await view.setResolver((_source, point) => {
+      if (point.phase === 'drop' && ++resolutions === 2)
+        view.targetProps.ref(view.canvas as HTMLElement);
+      return { key: 'stable', target: { x: point.clientX, extent: 60 } };
+    });
+    const transfer = new Transfer();
+    await dispatch(view.button, 'dragstart', transfer);
+    await dispatch(view.canvas, 'dragover', transfer);
+    await dispatch(view.canvas, 'drop', transfer);
+    expect(view.commit).not.toHaveBeenCalled();
+    expect(view.result.active).toBe(false);
+    expect(view.result.preview).toBeNull();
+    await settle();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it('preserves a new gesture started reentrantly during final resolution', async () => {
+    const view = await mount();
+    const replacement = new Transfer();
+    let replace = true;
+    await view.setResolver((_source, point) => {
+      if (point.phase === 'drop' && replace) {
+        replace = false;
+        const event = new MouseEvent('dragstart', { bubbles: true, cancelable: true });
+        Object.defineProperty(event, 'dataTransfer', { value: replacement });
+        view.button.dispatchEvent(event);
+      }
+      return { key: 'stable', target: { x: point.clientX, extent: 60 } };
+    });
+    const original = new Transfer();
+    await dispatch(view.button, 'dragstart', original);
+    await dispatch(view.canvas, 'drop', original);
+    expect(view.commit).not.toHaveBeenCalled();
+    expect(view.result.active).toBe(true);
+    await dispatch(view.canvas, 'drop', replacement);
+    expect(view.commit).toHaveBeenCalledTimes(1);
+    expect(view.result.active).toBe(false);
+    await settle();
+    expect(vi.getTimerCount()).toBe(0);
+  });
+
+  it.each(['resolver', 'feedback'] as const)(
+    'rechecks source, revision and target invalidation after final %s',
+    async (phase) => {
+      for (const kind of [
+        'cancel',
+        'disabled',
+        'revision',
+        'source',
+        'target',
+        'registration',
+      ] as const) {
+        let invalidate = () => {};
+        const view = await mount({
+          getDropFeedback: () => {
+            if (phase === 'feedback') invalidate();
+            return { accepted: true, message: 'Ready' };
+          },
+        });
+        await view.setResolver((_source, point) => {
+          if (point.phase === 'drop' && phase === 'resolver') invalidate();
+          return { key: 'target', target: { x: point.clientX, extent: 60 } };
+        });
+        invalidate = () => {
+          if (kind === 'cancel') view.result.cancel();
+          if (kind === 'disabled') view.button.disabled = true;
+          if (kind === 'revision') view.updateNow({ revisionKey: 2 });
+          if (kind === 'source') view.updateNow({ getSourceKey: () => 'replaced' });
+          if (kind === 'target') view.targetProps.ref(null);
+          if (kind === 'registration') view.targetProps.ref(view.canvas as HTMLElement);
+        };
+        const transfer = new Transfer();
+        await dispatch(view.button, 'dragstart', transfer);
+        await dispatch(view.canvas, 'dragover', transfer);
+        await dispatch(view.canvas, 'drop', transfer);
+        await settle();
+        expect(view.commit).not.toHaveBeenCalled();
+        expect(view.result.active).toBe(false);
+        expect(view.result.preview).toBeNull();
+        await settle();
+        expect(vi.getTimerCount()).toBe(0);
+      }
+    },
+  );
+
+  it('rechecks formerly accepted feedback and rejects invalid or genuinely pending final targets', async () => {
+    let ready = true;
+    const view = await mount({
+      getDropFeedback: () =>
+        ready
+          ? { accepted: true, message: 'Ready' }
+          : { accepted: false, reason: 'pending', message: 'Still measuring' },
+    });
+    const transfer = new Transfer();
+    await dispatch(view.button, 'dragstart', transfer);
+    await dispatch(view.canvas, 'dragover', transfer);
+    await settle();
+    expect(view.result.preview?.feedback.accepted).toBe(true);
+    ready = false;
+    await dispatch(view.canvas, 'drop', transfer);
+    expect(view.commit).not.toHaveBeenCalled();
+    expect(view.result.message).toBe('Still measuring');
+    const retry = new Transfer();
+    await dispatch(view.button, 'dragstart', retry);
+    await dispatch(view.canvas, 'dragover', retry);
+    await view.setResolver(() => null);
+    await dispatch(view.canvas, 'drop', retry);
+    expect(view.commit).not.toHaveBeenCalled();
+    expect(view.result.message).toBe('Destination unavailable.');
+  });
+
+  it('rejects geometry changed during final feedback and retires before a reentrant commit', async () => {
+    let geometry = 0;
+    const view = await mount({
+      getDropFeedback: () => {
+        geometry += 1;
+        return { accepted: true, message: 'Ready' };
+      },
+    });
+    await view.setResolver((_source, point) => ({
+      key: String(geometry),
+      target: { x: point.clientX, extent: geometry },
+    }));
+    const transfer = new Transfer();
+    await dispatch(view.button, 'dragstart', transfer);
+    await dispatch(view.canvas, 'dragover', transfer);
+    await dispatch(view.canvas, 'drop', transfer);
+    expect(view.commit).not.toHaveBeenCalled();
+    expect(view.result.active).toBe(false);
+    await settle();
+    expect(vi.getTimerCount()).toBe(0);
+    await view.update({ getDropFeedback: () => ({ accepted: true, message: 'Ready' }) });
+    const reentrant = vi.fn<Options['onDrop']>(() => {
+      view.targetProps.onDrop({
+        preventDefault() {},
+        stopPropagation() {},
+        dataTransfer: transfer,
+      } as never);
+      return { accepted: true, message: 'Inserted' };
+    });
+    await view.update({ onDrop: reentrant });
+    await dispatch(view.button, 'dragstart', transfer);
+    await dispatch(view.canvas, 'dragover', transfer);
+    await dispatch(view.canvas, 'drop', transfer);
+    expect(reentrant).toHaveBeenCalledTimes(1);
+  });
   it('drops with freshly resolved target data rather than an earlier prepared object', async () => {
     const view = await mount();
     const transfer = new Transfer();
@@ -389,6 +629,7 @@ describe('useWorkbenchPaletteDrag', () => {
     expect(view.result.preview).toBe(prepared);
     expect(view.result.isCurrentPreview(prepared)).toBe(true);
     expect(view.feedback).toHaveBeenCalledTimes(1);
+    await settle();
     expect(vi.getTimerCount()).toBe(0);
   });
 
@@ -516,6 +757,7 @@ describe('useWorkbenchPaletteDrag', () => {
     expect(view.result.preview!.preparationGeneration).toBeGreaterThan(firstGeneration);
     expect(prepare).toHaveBeenCalledTimes(2);
     expect(consume).toHaveBeenCalledTimes(2);
+    await settle();
     expect(vi.getTimerCount()).toBe(0);
     expect(prepare.mock.calls.every(([, target]) => target.x === 2)).toBe(true);
   });

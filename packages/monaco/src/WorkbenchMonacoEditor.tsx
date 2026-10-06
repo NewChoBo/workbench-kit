@@ -1,4 +1,11 @@
-import { useCallback, type ReactNode } from 'react';
+import {
+  useCallback,
+  useLayoutEffect,
+  useRef,
+  useState,
+  useSyncExternalStore,
+  type ReactNode,
+} from 'react';
 import type { OnMount } from '@monaco-editor/react';
 import type * as Monaco from 'monaco-editor';
 
@@ -78,6 +85,104 @@ export function WorkbenchMonacoEditor({
   theme = 'dark',
   value = '',
 }: WorkbenchMonacoEditorProps) {
+  const [mounted, setMounted] = useState<{
+    editor: Monaco.editor.IStandaloneCodeEditor;
+    monaco: WorkbenchMonaco;
+  } | null>(null);
+  const committed = useRef({ onChange, onMount, value, path, readOnly });
+  const applyingValue = useRef<string | undefined>(undefined);
+  const reconciled = useRef<{
+    model: Monaco.editor.ITextModel;
+    value: string;
+    path: string | undefined;
+  } | null>(null);
+  useLayoutEffect(() => {
+    committed.current = { onChange, onMount, value, path, readOnly };
+  }, [onChange, onMount, value, path, readOnly]);
+
+  const subscribe = useCallback(
+    (notify: () => void) => {
+      if (!mounted) return () => {};
+      const { editor } = mounted;
+      const model = editor.onDidChangeModel(notify);
+      const disposed = editor.onDidDispose(() => {
+        reconciled.current = null;
+        setMounted(null);
+        notify();
+      });
+      return () => {
+        model.dispose();
+        disposed.dispose();
+      };
+    },
+    [mounted],
+  );
+  const snapshot = useCallback(() => {
+    const model = mounted?.editor.getModel();
+    return model && !model.isDisposed() ? model : null;
+  }, [mounted]);
+  const model = useSyncExternalStore(subscribe, snapshot, () => null);
+
+  const reconcile = useCallback(
+    (editor: Monaco.editor.IStandaloneCodeEditor, monaco: WorkbenchMonaco) => {
+      const { value, path, readOnly } = committed.current;
+      const model = editor.getModel();
+      if (!model || model.isDisposed()) return;
+      // The upstream path switch happens later; never write the new value into the old model.
+      if (path && model.uri.toString() !== monaco.Uri.parse(path).toString()) return;
+      if (!path && reconciled.current?.model === model && reconciled.current.path !== path) return;
+      // The upstream options effect is passive too; a newly editable value needs this option now.
+      if (editor.getOption(monaco.editor.EditorOption.readOnly) !== readOnly)
+        editor.updateOptions({ readOnly });
+      if (reconciled.current?.model === model && reconciled.current.value === value) return;
+      if (model.getValue() !== value) {
+        // Match the upstream callback contract: only editable writes suppress their echo.
+        if (readOnly) editor.setValue(value);
+        else {
+          const previousWrite = applyingValue.current;
+          applyingValue.current = value;
+          try {
+            const applied = editor.executeEdits('', [
+              { range: model.getFullModelRange(), text: value, forceMoveMarkers: true },
+            ]);
+            if (!applied) return;
+            editor.pushUndoStop();
+          } finally {
+            applyingValue.current = previousWrite;
+          }
+        }
+      }
+      reconciled.current = { model, value, path };
+    },
+    [],
+  );
+
+  useLayoutEffect(() => {
+    if (mounted) reconcile(mounted.editor, mounted.monaco);
+  }, [mounted, path, value, model, reconcile]);
+
+  const handleMount = useCallback<OnMount>(
+    (editor, monaco) => {
+      // Establish the incoming value before handing the editor to its consumer.
+      reconcile(editor, monaco);
+      let disposed = false;
+      const mounting = editor.onDidDispose(() => {
+        disposed = true;
+      });
+      try {
+        committed.current.onMount?.(editor, monaco);
+      } finally {
+        mounting.dispose();
+      }
+      if (!disposed) setMounted({ editor, monaco });
+    },
+    [reconcile],
+  );
+  const handleChange = useCallback((nextValue: string | undefined) => {
+    if (applyingValue.current === undefined || nextValue !== applyingValue.current)
+      committed.current.onChange?.(nextValue ?? '');
+  }, []);
+
   const handleBeforeMount = useCallback(
     (monacoInstance: WorkbenchMonaco) => {
       prepareMonacoWorkbenchEditor(monacoInstance, theme);
@@ -96,13 +201,17 @@ export function WorkbenchMonacoEditor({
       options={{
         ...defaultEditorOptions,
         ...options,
-        readOnly,
+        // The native editor exists before the upstream mount/change effects are installed.
+        readOnly: mounted ? readOnly : true,
       }}
       path={path}
       theme={monacoThemeForWorkspaceTheme(theme)}
-      value={value}
-      onChange={(nextValue) => onChange?.(nextValue ?? '')}
-      onMount={onMount}
+      // Monaco owns live edits. Kit reconciles changed committed values synchronously;
+      // the upstream passive value effect must not replay an older render over newer input.
+      defaultValue={value}
+      value={undefined}
+      onChange={handleChange}
+      onMount={handleMount}
     />
   );
 }

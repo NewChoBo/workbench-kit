@@ -1,4 +1,5 @@
 import type {
+  UiComponentDescriptor,
   UiLayoutPropertyDescriptor,
   UiLayoutStrategyDescriptor,
   UiLinearChildValue,
@@ -6,15 +7,24 @@ import type {
 } from '@workbench-kit/contracts';
 import { describe, expect, it } from 'vitest';
 
+import { formatWidgetDocumentJson } from '../document/document.js';
+import type { JsonWidgetNode } from '../jdw/node.js';
 import { layoutWidget, type LayoutNodeResult } from '../layout/layout-widget.js';
 import { createWidgetRegistry } from '../widget/registry.js';
 import { getWidgetChildren, type GenericWidget } from '../widget/tree.js';
-import { readUiDocumentNodeAuthoringV3 } from './document-v3.js';
+import { createUiDocumentV3, readUiDocumentNodeAuthoringV3 } from './document-v3.js';
 import { createUiContainerLayoutCommandV3, projectUiLayoutNodeV3 } from './ordered-layout.js';
 import {
   projectUiProportionalLayoutNodeV3,
   type UiProportionalLayoutProjectionStrategy,
 } from './proportional-layout.js';
+import { applyAdmittedUiAuthoringSessionCommandV3 } from './semantic-admission-v3.js';
+import {
+  createUiAuthoringSessionV3,
+  redoUiAuthoringSessionV3,
+  undoUiAuthoringSessionV3,
+} from './session-v3.js';
+import type { UiDocumentNodeAuthoringV3 } from './types.js';
 
 const modes = ['overlay', 'row', 'column', 'vertical-list', 'horizontal-list', 'grid'] as const;
 const kinds = ['canvas', 'flex', 'grid'];
@@ -193,6 +203,162 @@ function byId(root: LayoutNodeResult, id: string): LayoutNodeResult {
 }
 
 describe('proportional V3 adapter', () => {
+  it.each(
+    (['row', 'column'] as const).flatMap((linearMode) =>
+      (['vertical-list', 'horizontal-list', 'grid'] as const).map(
+        (dormantMode) => [linearMode, dormantMode] as const,
+      ),
+    ),
+  )('preserves %s ratios through %s JSON edits, reopen and history', (linearMode, dormantMode) => {
+    const root = node('root', linearMode, [
+      node('one', 'overlay', undefined, { participation: lit(ratio(1)) }),
+      node('two', 'overlay', undefined, { participation: lit(ratio(2)) }),
+    ]);
+    const parsed = createUiDocumentV3('source-layout', formatWidgetDocumentJson(root));
+    expect(parsed.issues).toEqual([]);
+    expect(parsed.document).not.toBeNull();
+    const document = parsed.document!;
+    const originalSource = document.source;
+    const originalChildren = getWidgetChildren(document.root);
+    const component: UiComponentDescriptor = {
+      id: 'test:node',
+      version: '1',
+      kind: 'composite',
+      compositionRef: 'test:node',
+      properties: [],
+      layout: {
+        supportedStrategyIds: [...modes],
+        childSlots: [
+          {
+            id: 'children',
+            cardinality: 'many',
+            allowedComponents: [{ id: 'test:node', version: '1' }],
+          },
+        ],
+      },
+      designTime: { label: 'Node' },
+    };
+    const admission = {
+      ...context,
+      componentCatalog: { components: () => [component], component: () => component },
+    };
+    const state = createUiAuthoringSessionV3(document, ['two']);
+    const raw = JSON.parse(document.source) as JsonWidgetNode;
+    const rootAuthoring = raw.args.$authoring as UiDocumentNodeAuthoringV3;
+    raw.args.$authoring = {
+      ...rootAuthoring,
+      layout: {
+        strategyId: dormantMode,
+        values: { place: rootAuthoring.layout!.values.place, ...containerValues(dormantMode) },
+      },
+    };
+    const second = (raw.args.children as JsonWidgetNode[])[1]!;
+    const secondAuthoring = second.args.$authoring as UiDocumentNodeAuthoringV3;
+    second.args.$authoring = {
+      ...secondAuthoring,
+      layout: {
+        ...secondAuthoring.layout!,
+        values: { ...secondAuthoring.layout!.values, participation: lit(ratio(3)) },
+      },
+    };
+    const applied = applyAdmittedUiAuthoringSessionCommandV3(
+      state,
+      {
+        type: 'replace-document-source',
+        commandId: 'source-dormant',
+        expectedSource: document.source,
+        source: JSON.stringify(raw, null, 4),
+      },
+      admission,
+    );
+    expect(applied.status).toBe('applied');
+    expect(applied.state.document.revision).toBe(document.revision + 1);
+    expect(applied.state.selectedNodeIds).toEqual(['two']);
+    expect(applied.state.past).toHaveLength(1);
+    expect(applied.state.past[0]!.beforeDocument).toBe(document);
+    expect(applied.state.past[0]!.afterDocument).toBe(applied.state.document);
+    expect(applied.state.future).toEqual([]);
+    expect(state.document.source).toBe(originalSource);
+    expect(state.past).toEqual([]);
+    expect(state.future).toEqual([]);
+
+    const reopened = createUiDocumentV3(document.documentId, applied.state.document.source);
+    expect(reopened.issues).toEqual([]);
+    expect(reopened.document!.source).toBe(applied.state.document.source);
+    expect(reopened.document!.root).toEqual(applied.state.document.root);
+    const children = getWidgetChildren(reopened.document!.root);
+    expect(children.map((child) => child.id)).toEqual(['one', 'two']);
+    expect(children[0]).toEqual(originalChildren[0]);
+    expect(children[1]).toEqual({
+      ...originalChildren[1],
+      $authoring: {
+        ...readUiDocumentNodeAuthoringV3(originalChildren[1]!)!,
+        layout: {
+          ...readUiDocumentNodeAuthoringV3(originalChildren[1]!)!.layout!,
+          values: {
+            ...readUiDocumentNodeAuthoringV3(originalChildren[1]!)!.layout!.values,
+            participation: lit(ratio(3)),
+          },
+        },
+      },
+    });
+    const dormantLayout = layout(reopened.document!.root);
+    expect(byId(dormantLayout, 'one').rect).toEqual({ x: 0, y: 0, width: 100, height: 30 });
+    expect(byId(dormantLayout, 'two').rect).toEqual({
+      x: dormantMode === 'vertical-list' ? 0 : 100,
+      y: dormantMode === 'vertical-list' ? 30 : 0,
+      width: 100,
+      height: 30,
+    });
+
+    const backRaw = JSON.parse(reopened.document!.source) as JsonWidgetNode;
+    backRaw.args.$authoring = rootAuthoring;
+    const restored = applyAdmittedUiAuthoringSessionCommandV3(
+      applied.state,
+      {
+        type: 'replace-document-source',
+        commandId: 'source-linear',
+        expectedSource: reopened.document!.source,
+        source: JSON.stringify(backRaw),
+      },
+      admission,
+    );
+    expect(restored.status).toBe('applied');
+    expect(restored.state.document.revision).toBe(document.revision + 2);
+    expect(restored.state.selectedNodeIds).toEqual(['two']);
+    expect(restored.state.past).toHaveLength(2);
+    expect(restored.state.past[0]).toBe(applied.state.past[0]);
+    expect(restored.state.past[1]!.beforeDocument).toBe(applied.state.document);
+    expect(restored.state.past[1]!.afterDocument).toBe(restored.state.document);
+    expect(restored.state.future).toEqual([]);
+    expect(getWidgetChildren(restored.state.document.root)).toEqual(children);
+    expect(readUiDocumentNodeAuthoringV3(restored.state.document.root)).toEqual(rootAuthoring);
+    const result = layout(restored.state.document.root);
+    expect(byId(result, 'one').rect).toEqual(
+      linearMode === 'row'
+        ? { x: 0, y: 0, width: 75, height: 120 }
+        : { x: 0, y: 0, width: 300, height: 30 },
+    );
+    expect(byId(result, 'two').rect).toEqual(
+      linearMode === 'row'
+        ? { x: 75, y: 0, width: 225, height: 120 }
+        : { x: 0, y: 30, width: 300, height: 90 },
+    );
+    const undone = undoUiAuthoringSessionV3(restored.state)!;
+    expect(undone.document).toBe(applied.state.document);
+    expect(undone.document.source).toBe(reopened.document!.source);
+    expect(undone.selectedNodeIds).toEqual(['two']);
+    const original = undoUiAuthoringSessionV3(undone)!;
+    expect(original.document).toBe(document);
+    expect(original.document.source).toBe(originalSource);
+    expect(original.past).toEqual([]);
+    expect(original.future).toEqual(restored.state.past);
+    expect(original.selectedNodeIds).toEqual(['two']);
+    const redone = redoUiAuthoringSessionV3(redoUiAuthoringSessionV3(original)!)!;
+    expect(redone).toEqual(restored.state);
+    expect(redone.document.source).toBe(restored.state.document.source);
+  });
+
   it('allocates 1:2 and nested Row→Column from finite instance constraints without mutation', () => {
     const root = node('root', 'row', [
       node('one', 'overlay', undefined, {

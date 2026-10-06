@@ -169,9 +169,7 @@ function renderLayoutNode(
   const scrollable = scrollableRoot || innerScroller;
 
   const content = [
-    options.renderNodeBackground
-      ? createElement(Fragment, { key: 'leaf' }, leafContent)
-      : leafContent,
+    createElement(Fragment, { key: 'leaf' }, leafContent),
     ...node.children.map((child, index) =>
       createElement(
         'div',

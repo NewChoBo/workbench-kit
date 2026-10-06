@@ -53,3 +53,24 @@ export {
   type ParsedScreenSpec,
 } from '@workbench-kit/jdw';
 export { revealCssLayoutNode } from './revealCssLayoutNode.js';
+export { createKitJdwRegistry } from './kit-primitives/createKitJdwRegistry.js';
+export { decodeKitJdwPrimitive, validateKitJdwLiteral } from './kit-primitives/decode.js';
+export { KIT_JDW_PRIMITIVE_DESCRIPTORS } from './kit-primitives/primitive-specs.js';
+export { KIT_JDW_PRIMITIVES_SAMPLE } from './kit-primitives/neutral-sample.js';
+export type {
+  CreateKitJdwRegistryOptions,
+  KitJdwAction,
+  KitJdwActionState,
+  KitJdwBadgeProps,
+  KitJdwButtonProps,
+  KitJdwDecodeDiagnosticCode,
+  KitJdwDecodeResult,
+  KitJdwHostPort,
+  KitJdwHostSnapshot,
+  KitJdwIconButtonProps,
+  KitJdwIconName,
+  KitJdwMediaResource,
+  KitJdwMediaSlotProps,
+  KitJdwPrimitive,
+  KitJdwPrimitiveType,
+} from './kit-primitives/contracts.js';
