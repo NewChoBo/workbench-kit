@@ -1,10 +1,10 @@
 # Opt-in Kit primitives in JSON
 
-`createKitJdwRegistry` from `@workbench-kit/react/jdw` adds four versioned leaf
+`createKitJdwRegistry` from `@workbench-kit/react/jdw` adds five versioned leaf
 adapters to an existing JDW registry. They render the actual Kit `Button`,
-`IconButton`, `Badge`, and `WorkbenchMediaSlot` components. Existing builtins,
+`IconButton`, `Badge`, `WorkbenchMediaSlot`, and `PanelLoading` components. Existing builtins,
 layout, value bindings, and rendering functions retain their behavior. These
-restrictions apply to the four new adapters; the factory does not turn a mixed
+restrictions apply to the five adapters; the factory does not turn a mixed
 document containing legacy/custom definitions into a security sandbox.
 
 ```tsx
@@ -22,22 +22,23 @@ const preview = renderJdwNode(KIT_JDW_PRIMITIVES_SAMPLE, {
 ```
 
 The host must load the usual Kit theme/codicon styles. Primitive CSS is imported
-by the existing components. The neutral Storybook example is **JDW / Kit Primitives**. Its source is raw JDW, with a column, row, grid, and four
+by the existing components. The neutral Storybook example is **JDW / Kit Primitives**. Its source is raw JDW, with a column, row, grid, and five
 leaves. It has no storage, source-apply workflow, product data, or account actions.
 
 ## Exact leaf contracts
 
-| Type                 | Required props       | Optional props                                                                 |
-| -------------------- | -------------------- | ------------------------------------------------------------------------------ |
-| `kit.button.v1`      | `label`              | `variant`: default/primary/danger; `compact`, `block`, `disabled`; `actionKey` |
-| `kit.icon-button.v1` | `label`, `icon`      | `variant`: default/danger; `compact`, `disabled`; `actionKey`                  |
-| `kit.badge.v1`       | `text`               | `variant`: accent/muted/danger                                                 |
-| `kit.media-slot.v1`  | `resourceKey`, `alt` | `fit`: contain/cover                                                           |
+| Type                   | Required props       | Optional props                                                                 |
+| ---------------------- | -------------------- | ------------------------------------------------------------------------------ |
+| `kit.button.v1`        | `label`              | `variant`: default/primary/danger; `compact`, `block`, `disabled`; `actionKey` |
+| `kit.icon-button.v1`   | `label`, `icon`      | `variant`: default/danger; `compact`, `disabled`; `actionKey`                  |
+| `kit.badge.v1`         | `text`               | `variant`: accent/muted/danger                                                 |
+| `kit.media-slot.v1`    | `resourceKey`, `alt` | `fit`: contain/cover                                                           |
+| `kit.panel-loading.v1` | `label`              | `showSpinner`: boolean, default true                                           |
 
 Labels and badge text must be nonblank and at most 160 Unicode code points.
 Alternative text may be empty for a decorative image and has a 1024-code-point
 limit. Icons are restricted to `add`, `close`, `edit`, `check`, `refresh`, `more`,
-and `info`. Boolean defaults are false; the default variants are default/default/
+and `info`. Boolean defaults are false except `showSpinner`, which defaults to true; the default variants are default/default/
 accent, and default fit is cover. Missing action keys disable the buttons.
 
 Action/resource keys start with an ASCII letter and contain at most 128 letters,
@@ -65,6 +66,28 @@ to the primitive. Component props do not include arbitrary width, height,
 placement, `$authoring`, or `authoredNode` metadata. Intrinsic sizes are bounded
 estimates; host theme metrics and available layout space still matter.
 
+## Panel loading presentation and sizing
+
+`kit.panel-loading.v1` renders the existing `PanelLoading` with the original label
+whitespace preserved. The host owns when it appears and what label resolves. It
+starts no request, timer, subscription, action, or media lookup. The existing
+pre-dispatch snapshot read remains; absent, malformed, or throwing hosts do not
+suppress a valid leaf. Spinner animation uses the unchanged primitive CSS.
+
+The component keeps `role="status"` and `aria-live="polite"`, a visible label, and
+an aria-hidden decorative spinner. Its descriptor has role-only accessibility
+metadata, with no explicit accessible-name mapping. Role, ARIA overrides, DOM
+props, action/resource keys, and children are rejected.
+
+Measurement uses the existing text estimator at font size 13 with 16px total
+inline padding, 48px vertical padding, and a 24px spinner lane when shown. For
+measurement only, ASCII CSS whitespace collapses and trims; original label text
+still renders unchanged. Height includes the larger of text height and the 16px
+spinner. Existing min/max clamps apply, with maximum taking precedence. These
+are intrinsic hints, not browser-exact metrics: default soft-wrap approximations,
+emoji metrics, theme overrides, and actual narrow overflow remain limitations.
+No CSS or layout overflow contract is changed.
+
 ## Current host capabilities
 
 `KitJdwHostPort` is a view of the consumer's existing state owner. Snapshot,
@@ -85,7 +108,7 @@ port's methods remain ordinary function implementations:
   host-vetted `{ imageUrl }` or undefined. It is a read-only lookup, not a fetch.
 - Optional `onActionError(error)` receives synchronous or asynchronous failures.
 
-The adapter subscribes with `useSyncExternalStore`; it owns no history, busy
+Action and media leaves subscribe with `useSyncExternalStore`; it owns no history, busy
 store, command service, or executor. It checks live mode, the current context,
 and fresh ready state again at activation. The builder pins the render context key: a
 store notification alone cannot retarget an old leaf to another record. After

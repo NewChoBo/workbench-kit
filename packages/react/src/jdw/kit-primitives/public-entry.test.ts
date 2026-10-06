@@ -3,6 +3,7 @@ import {
   resolveUiComponentCatalog,
   uiComponentContributionFromWidgetRegistry,
   type UiComponentDescriptor,
+  type UiComponentRef,
   type UiValueSource,
   type WidgetRegistryContract,
 } from '@workbench-kit/contracts';
@@ -30,6 +31,7 @@ import {
   type KitJdwHostSnapshot,
   type KitJdwIconName,
   type KitJdwMediaResource,
+  type KitJdwPanelLoadingProps,
   type KitJdwPrimitive,
   type KitJdwPrimitiveType,
 } from '@workbench-kit/react/jdw';
@@ -48,14 +50,14 @@ function context(withPolicy = true): UiDocumentCommandV3AdmissionContext {
   };
 }
 
-function documentFixture() {
+function documentFixture(component: UiComponentRef = { id: 'kit.button.v1', version: '1' }) {
   const result = createUiDocumentV3(
     'kit-leaf',
     formatWidgetDocumentJson({
-      type: 'kit.button.v1',
+      type: component.id,
       id: 'open-button',
       $authoring: {
-        component: { id: 'kit.button.v1', version: '1' },
+        component,
         properties: { label: { kind: 'literal', value: 'Open' } },
       },
     }),
@@ -64,9 +66,14 @@ function documentFixture() {
   return result.document!;
 }
 
-function admit(propertyId: string, value: UiValueSource, withPolicy = true) {
+function admit(
+  propertyId: string,
+  value: UiValueSource,
+  withPolicy = true,
+  component?: UiComponentRef,
+) {
   return admitUiDocumentCommandV3(
-    documentFixture(),
+    documentFixture(component),
     {
       type: 'set-property',
       commandId: 'update-leaf',
@@ -104,6 +111,31 @@ describe('additive public jdw entry', () => {
     expect(registry.definition('button')).toBe(BUILTIN_JDW_REGISTRY.definition('button'));
   });
 
+  it('exports exact resolved loading props and preserves discriminant narrowing', () => {
+    expectTypeOf<KitJdwPanelLoadingProps>().toEqualTypeOf<{
+      readonly label: string;
+      readonly showSpinner: boolean;
+    }>();
+    expectTypeOf<KitJdwPrimitiveType>().toEqualTypeOf<
+      | 'kit.button.v1'
+      | 'kit.icon-button.v1'
+      | 'kit.badge.v1'
+      | 'kit.media-slot.v1'
+      | 'kit.panel-loading.v1'
+    >();
+    expectTypeOf<Extract<KitJdwPrimitive, { type: 'kit.panel-loading.v1' }>>().toEqualTypeOf<{
+      readonly type: 'kit.panel-loading.v1';
+      readonly props: KitJdwPanelLoadingProps;
+    }>();
+    const decoded = decodeKitJdwPrimitive('kit.panel-loading.v1', { label: 'Loading' });
+    expect(decoded.status).toBe('valid');
+    if (decoded.status === 'valid' && decoded.value.type === 'kit.panel-loading.v1') {
+      expectTypeOf(decoded.value.props).toEqualTypeOf<KitJdwPanelLoadingProps>();
+      expectTypeOf(decoded.value.props.showSpinner).toEqualTypeOf<boolean>();
+      expect(decoded.value.props).toEqual({ label: 'Loading', showSpinner: true });
+    }
+  });
+
   it('keeps the raw JDW sample frozen, serializable, and free of resolved URLs or callbacks', () => {
     const inspect = (value: unknown): void => {
       expect(typeof value).not.toBe('function');
@@ -117,17 +149,18 @@ describe('additive public jdw entry', () => {
     expect(source).toContain('kit.icon-button.v1');
     expect(source).toContain('kit.badge.v1');
     expect(source).toContain('kit.media-slot.v1');
+    expect(source).toContain('kit.panel-loading.v1');
     expect(source).not.toMatch(/https?:|blob:|data:|imageUrl|onClick|commandId/);
   });
 });
 
 describe('existing V3 catalog and literal-policy interoperability', () => {
-  it('resolves the exact four descriptor refs through the existing contribution adapter', () => {
+  it('resolves the exact five descriptor refs through the existing contribution adapter', () => {
     const contribution = uiComponentContributionFromWidgetRegistry('kit', createKitJdwRegistry());
     expect(contribution.components).toEqual(KIT_JDW_PRIMITIVE_DESCRIPTORS);
     const { catalog, issues } = resolveUiComponentCatalog([contribution]);
     expect(issues).toEqual([]);
-    expect(catalog.components()).toHaveLength(4);
+    expect(catalog.components()).toHaveLength(5);
     for (const entry of KIT_JDW_PRIMITIVE_DESCRIPTORS) {
       expect(catalog.component({ id: entry.id, version: '1' })).toBe(entry);
       expect(catalog.component({ id: entry.id, version: '2' })).toBeUndefined();
@@ -227,4 +260,165 @@ describe('existing V3 catalog and literal-policy interoperability', () => {
       }),
     ).toBeUndefined();
   });
+});
+
+describe('PanelLoading V3 command admission', () => {
+  const component = { id: 'kit.panel-loading.v1', version: '1' } as const;
+  const loadingDescriptor = KIT_JDW_PRIMITIVE_DESCRIPTORS.find(
+    (entry) => entry.id === component.id,
+  )!;
+  const labelProperty = loadingDescriptor.properties!.find((entry) => entry.id === 'label')!;
+
+  function admitLoading(propertyId: string, value: UiValueSource, withPolicy = true) {
+    return admit(propertyId, value, withPolicy, component);
+  }
+
+  it('admits bounded labels and both spinner literals and bindings through the existing catalog', () => {
+    expect(validateUiDocumentV3AgainstContext(documentFixture(component), context())).toEqual([]);
+    for (const value of ['Loading panel', '😀'.repeat(160), '  Loading\tpanel\n  ']) {
+      expect(admitLoading('label', { kind: 'literal', value }).status).toBe('accepted');
+    }
+    for (const value of [true, false]) {
+      expect(admitLoading('showSpinner', { kind: 'literal', value }).status).toBe('accepted');
+    }
+    for (const property of ['label', 'showSpinner']) {
+      expect(
+        admitLoading(property, { kind: 'binding', bindingId: 'panel-loading-value' }).status,
+      ).toBe('accepted');
+    }
+  });
+
+  it.each(['', ' \t\r\n\f', '\u00a0', '😀'.repeat(161), '${pending}', 'Loading ${pending}'])(
+    'rejects unresolved or out-of-bounds label %s through actual command admission',
+    (value) => {
+      expect(admitLoading('label', { kind: 'literal', value })).toMatchObject({
+        status: 'rejected',
+        diagnostics: [{ code: 'product-policy-rejected', propertyId: 'label' }],
+      });
+    },
+  );
+
+  it.each([
+    'children',
+    'style',
+    'className',
+    'src',
+    'resourceKey',
+    'actionKey',
+    'role',
+    'aria-label',
+    'aria-live',
+    'aria-busy',
+    'onClick',
+    'onKeyDown',
+  ])('rejects undeclared loading property %s through actual command admission', (property) => {
+    expect(admitLoading(property, { kind: 'literal', value: 'injected' })).toMatchObject({
+      status: 'rejected',
+      diagnostics: [{ code: 'property-unavailable', propertyId: property }],
+    });
+  });
+
+  it.each([
+    ['label', true],
+    ['label', 1],
+    ['label', null],
+    ['label', {}],
+    ['label', []],
+    ['showSpinner', 'true'],
+    ['showSpinner', 'false'],
+    ['showSpinner', 0],
+    ['showSpinner', 1],
+    ['showSpinner', null],
+    ['showSpinner', {}],
+    ['showSpinner', []],
+  ] as const)('rejects incorrect %s literal scalar %o', (property, value) => {
+    expect(admitLoading(property, { kind: 'literal', value })).toMatchObject({
+      status: 'rejected',
+      diagnostics: [{ code: 'invalid-property-value', propertyId: property }],
+    });
+  });
+
+  it.each(['label', 'showSpinner'])(
+    'rejects expression, resource, and token sources for %s',
+    (property) => {
+      for (const value of [
+        { kind: 'expression', expressionId: 'loading-expression' },
+        { kind: 'resource', resourceId: 'loading-resource' },
+        { kind: 'token', tokenId: 'loading-token' },
+      ] as const) {
+        expect(admitLoading(property, value)).toMatchObject({
+          status: 'rejected',
+          diagnostics: [{ code: 'invalid-property-value', propertyId: property }],
+        });
+      }
+    },
+  );
+
+  it('preserves the generic ordinary-string gap when the opt-in policy is absent', () => {
+    for (const value of [' ', '😀'.repeat(161), '${pending}']) {
+      expect(admitLoading('label', { kind: 'literal', value }, false).status).toBe('accepted');
+      expect(admitLoading('label', { kind: 'literal', value }).status).toBe('rejected');
+    }
+  });
+
+  it.each([
+    { id: 'kit.panel-loading', version: '1' },
+    { id: 'kit.panel-loading.v2', version: '1' },
+    { id: 'kit.panel-loading.v1.extra', version: '1' },
+    { id: 'kit.panel-loading.v1', version: '2' },
+  ])(
+    'rejects unavailable loading component $id@$version through actual command admission',
+    (ref) => {
+      expect(admit('label', { kind: 'literal', value: 'Loading' }, true, ref)).toMatchObject({
+        status: 'rejected',
+        diagnostics: [{ code: 'component-unavailable' }],
+      });
+      expect(
+        validateKitJdwLiteral({
+          component: { ...loadingDescriptor, ...ref },
+          nodeId: 'leaf',
+          property: labelProperty,
+          value: 'Loading',
+        }),
+      ).toBeTypeOf('string');
+    },
+  );
+
+  it('rejects undeclared loading fields in the literal policy independently of catalog admission', () => {
+    expect(
+      validateKitJdwLiteral({
+        component: loadingDescriptor,
+        nodeId: 'leaf',
+        property: { ...labelProperty, id: 'actionKey' },
+        value: 'open',
+      }),
+    ).toBeTypeOf('string');
+  });
+
+  it.each(['consumer.panel-loading', 'kit.unrelated', 'kit.panel-loading-extra.v1'])(
+    'preserves unrelated-family pass-through for %s through actual command admission',
+    (id) => {
+      const unrelated: UiComponentDescriptor = { ...loadingDescriptor, id };
+      const admissionContext: UiDocumentCommandV3AdmissionContext = {
+        ...context(),
+        componentCatalog: {
+          component: (ref) => (ref.id === id && ref.version === '1' ? unrelated : undefined),
+          components: () => [unrelated],
+        },
+      };
+      expect(
+        admitUiDocumentCommandV3(
+          documentFixture({ id, version: '1' }),
+          {
+            type: 'set-property',
+            commandId: 'unrelated-label',
+            nodeId: 'open-button',
+            propertyId: 'label',
+            value: { kind: 'literal', value: ' ' },
+          },
+          admissionContext,
+        ).status,
+      ).toBe('accepted');
+    },
+  );
 });

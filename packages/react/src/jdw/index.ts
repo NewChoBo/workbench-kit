@@ -71,6 +71,7 @@ export type {
   KitJdwIconName,
   KitJdwMediaResource,
   KitJdwMediaSlotProps,
+  KitJdwPanelLoadingProps,
   KitJdwPrimitive,
   KitJdwPrimitiveType,
 } from './kit-primitives/contracts.js';

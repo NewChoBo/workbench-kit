@@ -7,6 +7,10 @@ export const KIT_JDW_PRIMITIVES_SAMPLE: JsonWidgetNode = Object.freeze({
     gap: 12,
     children: Object.freeze([
       Object.freeze({
+        type: 'kit.panel-loading.v1',
+        args: Object.freeze({ label: 'Loading details' }),
+      }),
+      Object.freeze({
         type: 'text',
         args: Object.freeze({ text: '${record.title}', fontSize: 18 }),
       }),

@@ -150,7 +150,13 @@ export function verifyPackedKitJdwPrimitives({
   );
   assert.ok(entry?.[1].cssBundle, 'Actual primitive CSS was not included.');
   const css = fs.readFileSync(path.resolve(consumer, entry[1].cssBundle), 'utf8');
-  for (const className of ['ui-button', 'ui-icon-button', 'ui-badge', 'ui-workbench-media-slot']) {
+  for (const className of [
+    'ui-button',
+    'ui-icon-button',
+    'ui-badge',
+    'ui-workbench-media-slot',
+    'ui-panel-loading',
+  ]) {
     assert.ok(css.includes(className), `Missing primitive CSS: ${className}`);
   }
   runCommand(process.execPath, [outputFile], { cwd: consumer, stdio: 'inherit' });
@@ -211,15 +217,19 @@ for (const props of [{ label: 'Unsafe', onClick: 'run' }, { label: 'Unsafe', sty
   if (decodeKitJdwPrimitive('kit.button.v1', props).status !== 'invalid') throw new Error('Unsafe props accepted');
 }
 const contribution = uiComponentContributionFromWidgetRegistry('sample.kit', registry);
-if (contribution.components.length !== 4 || KIT_JDW_PRIMITIVE_DESCRIPTORS.length !== 4) throw new Error('Descriptor contribution changed');
+if (contribution.components.length !== 5 || KIT_JDW_PRIMITIVE_DESCRIPTORS.length !== 5) throw new Error('Descriptor contribution changed');
 const original = JSON.stringify(KIT_JDW_PRIMITIVES_SAMPLE);
 const markup = renderToStaticMarkup(<>{renderJdwNode(KIT_JDW_PRIMITIVES_SAMPLE, { registry, values: { record: { title: 'Packed sample', status: 'Ready' } } })}</>);
-for (const className of ['ui-button', 'ui-icon-button', 'ui-badge', 'ui-workbench-media-slot']) {
+for (const className of ['ui-button', 'ui-icon-button', 'ui-badge', 'ui-workbench-media-slot', 'ui-panel-loading']) {
   if (!markup.includes(className)) throw new Error('Actual primitive missing: ' + className);
 }
 if (!markup.includes('ephemeral-cover.png') || !markup.includes('aria-label="More actions"')) throw new Error('Host resource or accessibility missing');
 if (actions !== 0) throw new Error('SSR invoked an action');
 if (JSON.stringify(KIT_JDW_PRIMITIVES_SAMPLE) !== original || original.includes('ephemeral-cover')) throw new Error('Ephemeral data persisted');
+const loadingMarkup = (showSpinner?: boolean) => renderToStaticMarkup(<>{renderJdwNode({ type: 'kit.panel-loading.v1', args: { label: '  <Loading & details>  ', ...(showSpinner === undefined ? {} : { showSpinner }) } }, { registry })}</>);
+const loading = loadingMarkup();
+if (!loading.includes('role="status"') || !loading.includes('aria-live="polite"') || !loading.includes('aria-hidden="true"') || !loading.includes('  &lt;Loading &amp; details&gt;  ')) throw new Error('Loading SSR contract changed');
+if (loadingMarkup(false).includes('codicon-loading')) throw new Error('Spinner false ignored');
 console.log('Packed Kit JDW runtime passed.');
 `;
 
@@ -227,7 +237,7 @@ const exactSource = `
 import {
   createKitJdwRegistry, decodeKitJdwPrimitive, validateKitJdwLiteral,
   type CreateKitJdwRegistryOptions, type KitJdwHostPort, type KitJdwHostSnapshot,
-  type KitJdwAction, type KitJdwDecodeResult,
+  type KitJdwAction, type KitJdwDecodeResult, type KitJdwPanelLoadingProps, type KitJdwPrimitive,
 } from '@workbench-kit/react/jdw';
 const snapshot: KitJdwHostSnapshot = { mode: 'preview', contextKey: {} };
 const action: KitJdwAction = { state: 'ready', run: () => undefined };
@@ -247,6 +257,18 @@ if (result.status === 'valid' && result.value.type === 'kit.button.v1') {
   const compact: boolean = result.value.props.compact;
   void compact;
 }
+const loadingProps: KitJdwPanelLoadingProps = { label: 'Loading', showSpinner: false };
+const loadingPrimitive: Extract<KitJdwPrimitive, { type: 'kit.panel-loading.v1' }> = { type: 'kit.panel-loading.v1', props: loadingProps };
+const loadingResult = decodeKitJdwPrimitive('kit.panel-loading.v1', { label: 'Loading' });
+if (loadingResult.status === 'valid' && loadingResult.value.type === 'kit.panel-loading.v1') {
+  const spinner: boolean = loadingResult.value.props.showSpinner;
+  void spinner;
+}
+// @ts-expect-error Decoded spinner is required.
+const missingSpinner: KitJdwPanelLoadingProps = { label: 'Loading' };
+// @ts-expect-error Spinner is never undefined in decoded props.
+const undefinedSpinner: KitJdwPanelLoadingProps = { label: 'Loading', showSpinner: undefined };
+void loadingPrimitive; void missingSpinner; void undefinedSpinner;
 const literalResult: string | undefined = validateKitJdwLiteral({ component: { id: 'kit.button.v1', version: '1', kind: 'atomic', designTime: { label: 'Button' } }, nodeId: 'sample', property: { id: 'label', value: { type: 'string' } }, value: 'Strict' });
 void literalResult; void registry;
 // @ts-expect-error A JSON command string is not a host capability.
