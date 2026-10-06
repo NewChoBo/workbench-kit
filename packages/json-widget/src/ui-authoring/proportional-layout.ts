@@ -255,8 +255,35 @@ function linearChild(
   if (!mapping) return fail('Linear children require placement.');
   const value = participation(child, mapping);
   const { width, height, ...rest } = child;
-  const size =
+  let size =
     value.sizing === 'intrinsic' ? (mode === 'row' ? { height } : { width }) : { width, height };
+  if (value.sizing === 'intrinsic') {
+    const contentType =
+      mapping.mode === 'grid'
+        ? 'grid'
+        : mapping.mode === 'horizontal-list'
+          ? 'row'
+          : mapping.mode === 'vertical-list'
+            ? 'column'
+            : undefined;
+    const content =
+      child.type === 'stack' && Array.isArray(child.children) && child.children.length === 1
+        ? child.children[0]
+        : undefined;
+    if (
+      contentType !== undefined &&
+      record(content) &&
+      content.type === contentType &&
+      content.id === undefined &&
+      content.$authoring === undefined
+    ) {
+      const main = mode === 'row' ? 'width' : 'height';
+      const extent = content[main];
+      // Ordered projection already owns the equal-slot content extent.
+      if (typeof extent === 'number' && Number.isFinite(extent) && extent >= 0)
+        size = { ...size, [main]: extent };
+    }
+  }
   // The allocator reads preferred/measured basis first. Fixed/intrinsic then
   // consume that rect, including cross stretch, rather than overriding it.
   if (value.sizing !== 'weighted') return { ...rest, ...size, flexFit: 'tight' };

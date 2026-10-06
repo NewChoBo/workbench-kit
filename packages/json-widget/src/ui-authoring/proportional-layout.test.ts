@@ -423,6 +423,233 @@ describe('proportional V3 adapter', () => {
     expect(layout(small, 50, 40).children[0]?.rect).toEqual({ x: 0, y: 0, width: 20, height: 40 });
   });
 
+  describe.each(['row', 'column'] as const)('intrinsic ordered containers in %s', (direction) => {
+    const main = direction === 'row' ? 'width' : 'height';
+    const cross = direction === 'row' ? 'height' : 'width';
+    const mainOrigin = direction === 'row' ? 'x' : 'y';
+    const crossOrigin = direction === 'row' ? 'y' : 'x';
+    const viewportMain = direction === 'row' ? 300 : 120;
+    const viewportCross = direction === 'row' ? 120 : 300;
+    const authoredCross = direction === 'row' ? 80 : 190;
+    const intrinsic = lit({ kind: 'linear-child', sizing: 'intrinsic' });
+    const weighted = () => node('rest', 'overlay', undefined, { participation: lit(ratio(1)) });
+    const group = (mode: 'grid' | 'horizontal-list' | 'vertical-list', count = 2) =>
+      node(
+        'group',
+        mode,
+        [
+          node('a', 'overlay', undefined, { place: placement(20, 10) }),
+          node('b', 'overlay', undefined, { place: placement(30, 15) }),
+          node('c', 'overlay', undefined, { place: placement(10, 5) }),
+        ].slice(0, count),
+        {
+          participation: intrinsic,
+          place: placement(190, 80),
+          gap: lit(px(4)),
+        },
+      );
+
+    it.each(['grid', 'horizontal-list', 'vertical-list'] as const)(
+      'preserves %s content extent, cross dimension, dormant origins and identity',
+      (mode) => {
+        const child = group(mode);
+        const before = JSON.stringify(child);
+        const extent =
+          mode === 'vertical-list' ? { width: 30, height: 34 } : { width: 64, height: 15 };
+        for (const alignment of ['stretch', 'start', 'end']) {
+          const root = node(
+            'root',
+            direction,
+            [child, weighted()],
+            containerValues(direction, 'start', alignment),
+          );
+          const projected = project(root, undefined, { width: 300, height: 120 });
+          const projectedGroup = getWidgetChildren(projected)[0]!;
+          expect(projectedGroup[main]).toBe(extent[main]);
+          expect(projectedGroup[cross]).toBe(authoredCross);
+          expect(projectedGroup.flexFit).toBe('tight');
+          expect(projectedGroup.$authoring).toBe(child.$authoring);
+          const content = getWidgetChildren(projectedGroup)[0]!;
+          expect(content).toMatchObject(extent);
+          expect(content.id).toBeUndefined();
+          const slots = getWidgetChildren(content);
+          expect(slots.map((slot) => [slot.width, slot.height])).toEqual([
+            [30, 15],
+            [30, 15],
+          ]);
+          expect(
+            slots.flatMap(getWidgetChildren).map((entry) => [entry.left, entry.top, entry.zIndex]),
+          ).toEqual([
+            [0, 0, 0],
+            [0, 0, 0],
+          ]);
+          const result = layout(root);
+          const rect = byId(result, 'group').rect;
+          expect(rect[main]).toBe(extent[main]);
+          expect(rect[cross]).toBe(alignment === 'stretch' ? viewportCross : authoredCross);
+          expect(rect[crossOrigin]).toBe(alignment === 'end' ? viewportCross - authoredCross : 0);
+          expect(byId(result, 'rest').rect[main]).toBe(viewportMain - extent[main]);
+          expect(byId(result, 'rest').rect[mainOrigin]).toBe(extent[main]);
+          expect(byId(result, 'a').rect).toMatchObject({
+            x: rect.x,
+            y: rect.y,
+            width: 20,
+            height: 10,
+          });
+          expect(byId(result, 'b').rect).toMatchObject({
+            x: rect.x + (mode === 'vertical-list' ? 0 : 34),
+            y: rect.y + (mode === 'vertical-list' ? 19 : 0),
+            width: 30,
+            height: 15,
+          });
+          expect(byId(result, 'group').widget.$authoring).toBe(child.$authoring);
+        }
+        expect(JSON.stringify(child)).toBe(before);
+      },
+    );
+
+    it.each(['grid', 'horizontal-list', 'vertical-list'] as const)(
+      'keeps empty %s main extent explicitly zero',
+      (mode) => {
+        const root = node('root', direction, [group(mode, 0), weighted()]);
+        const projectedGroup = getWidgetChildren(project(root))[0]!;
+        expect(projectedGroup[main]).toBe(0);
+        expect(projectedGroup[cross]).toBe(authoredCross);
+        const result = layout(root);
+        expect(byId(result, 'group').rect[main]).toBe(0);
+        expect(byId(result, 'rest').rect[main]).toBe(viewportMain);
+      },
+    );
+
+    it.each([
+      [1, 44, 10],
+      [3, 64, 34],
+    ])('retains equal-slot grid extent with %s children', (count, width, height) => {
+      const root = node('root', direction, [group('grid', count), weighted()]);
+      const result = layout(root);
+      const extent = { width, height };
+      expect(byId(result, 'group').rect[main]).toBe(extent[main]);
+      expect(byId(result, 'rest').rect[main]).toBe(viewportMain - extent[main]);
+      if (count === 3)
+        expect(byId(result, 'c').rect).toMatchObject({ x: 0, y: 19, width: 10, height: 5 });
+    });
+
+    it('subtracts parent gap and padding, preserving end alignment', () => {
+      const child = group('grid');
+      const extent = direction === 'row' ? 64 : 15;
+      const values = {
+        ...containerValues(direction, 'end', 'end'),
+        gap: lit(px(7)),
+        padding: lit(px(5)),
+      };
+      const result = layout(node('root', direction, [child, weighted()], values));
+      expect(byId(result, 'group').rect[main]).toBe(extent);
+      expect(byId(result, 'group').rect[mainOrigin]).toBe(5);
+      expect(byId(result, 'group').rect[crossOrigin]).toBe(viewportCross - 5 - authoredCross);
+      expect(byId(result, 'rest').rect[main]).toBe(viewportMain - 10 - 7 - extent);
+      expect(byId(result, 'rest').rect[mainOrigin]).toBe(5 + extent + 7);
+      const aligned = layout(node('root', direction, [child], values));
+      expect(byId(aligned, 'group').rect[mainOrigin]).toBe(viewportMain - 5 - extent);
+    });
+
+    it.each([0, 10])('does not shrink explicit content in a %s viewport', (size) => {
+      const result = layout(node('root', direction, [group('grid'), weighted()]), size, size);
+      expect(byId(result, 'group').rect[main]).toBe(direction === 'row' ? 64 : 15);
+      expect(byId(result, 'rest').rect[main]).toBe(0);
+    });
+
+    it.each(['fixed', 'weighted'] as const)(
+      'leaves %s ordered participation unchanged',
+      (sizing) => {
+        const child = group('grid');
+        const authoring = readUiDocumentNodeAuthoringV3(child)!;
+        const changed = {
+          ...child,
+          $authoring: {
+            ...authoring,
+            layout: {
+              ...authoring.layout!,
+              values: {
+                ...authoring.layout!.values,
+                participation: lit(
+                  sizing === 'fixed' ? { kind: 'linear-child', sizing } : ratio(1),
+                ),
+              },
+            },
+          },
+        };
+        const result = layout(node('root', direction, [changed, weighted()]));
+        expect(byId(result, 'group').rect[main]).toBe(
+          sizing === 'fixed' ? (direction === 'row' ? 190 : 80) : viewportMain / 2,
+        );
+      },
+    );
+
+    it.each(['grid', 'horizontal-list', 'vertical-list'] as const)(
+      'retains intrinsic leaf fallback for %s without projected children',
+      (mode) => {
+        const child = node('leaf', mode, undefined, { participation: intrinsic });
+        const projectedChild = getWidgetChildren(project(node('root', direction, [child])))[0]!;
+        expect(Object.prototype.hasOwnProperty.call(projectedChild, main)).toBe(false);
+      },
+    );
+
+    it.each(['row', 'grid'] as const)('does not expand an overlay stack containing %s', (type) => {
+      const child = project(
+        node('overlay', 'overlay', [], { participation: intrinsic }),
+        direction,
+      );
+      const projected = projectUiProportionalLayoutNodeV3({
+        ...context,
+        node: node('root', direction),
+        projectedChildren: [{ ...child, children: [{ type, width: 64, height: 15 }] }],
+      });
+      expect(Object.prototype.hasOwnProperty.call(getWidgetChildren(projected)[0]!, main)).toBe(
+        false,
+      );
+    });
+
+    it.each([
+      [],
+      [
+        { type: 'grid', width: 64, height: 15 },
+        { type: 'grid', width: 64, height: 15 },
+      ],
+      [null],
+    ])('keeps fallback without a single generated content node %j', (...children) => {
+      const child = project(group('grid'), direction);
+      const projected = projectUiProportionalLayoutNodeV3({
+        ...context,
+        node: node('root', direction),
+        projectedChildren: [{ ...child, children }],
+      });
+      expect(Object.prototype.hasOwnProperty.call(getWidgetChildren(projected)[0]!, main)).toBe(
+        false,
+      );
+    });
+
+    it.each([
+      { type: 'row', width: 64, height: 15 },
+      { type: 'grid', id: 'authored', width: 64, height: 15 },
+      { type: 'grid', $authoring: {}, width: 64, height: 15 },
+      ...[-1, Number.NaN, Number.POSITIVE_INFINITY, undefined].map((extent) => ({
+        type: 'grid',
+        width: extent,
+        height: extent,
+      })),
+    ])('keeps fallback for a non-generated or invalid ordered content shape %j', (content) => {
+      const child = project(group('grid'), direction);
+      const projected = projectUiProportionalLayoutNodeV3({
+        ...context,
+        node: node('root', direction),
+        projectedChildren: [{ ...child, children: [content] }],
+      });
+      expect(Object.prototype.hasOwnProperty.call(getWidgetChildren(projected)[0]!, main)).toBe(
+        false,
+      );
+    });
+  });
+
   it('recursively estimates intrinsic groups with gap and padding using the existing engine', () => {
     const group = node(
       'group',
