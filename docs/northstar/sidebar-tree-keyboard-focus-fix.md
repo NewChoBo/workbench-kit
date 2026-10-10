@@ -2,7 +2,7 @@
 
 Packet: `WB-REACT-TREE-FOCUS-001`
 
-Status: `SOURCE_REVIEWED / CONSUMER_ACCEPTANCE_PENDING`
+Status: `DONE / LOCAL_CONSUMER_ACCEPTED`
 
 Base: `276fdbc7871b96ca8e42c9d2170fcfe7f01f250d` (`origin/develop`, verified 2026-10-10)
 
@@ -127,3 +127,53 @@ Source/test raw SHA256 at review:
 
 - `SideBarTree.tsx`: `9b0673e2596c4f15eac95cedb6779c1258816be8781d0172f533e61181cadb87`.
 - `SideBarTree.test.tsx`: `5814971de3a0aede9e385dec85c8e02c31f4dbf2ee5a456c23eccd4966dcfe7d`.
+
+## Local consumer validation
+
+Source checkpoint: `e410ce4f2682776574271fbcdba0cc33459bf8e3`. Commit safety passed
+before that checkpoint. A consuming renderer explicitly linked this isolated
+checkout without changing its registry manifest or lockfile. Exact consumer
+source and dependency fingerprints are retained in its private execution receipt.
+
+The first targeted browser attempt was not accepted because dependency caches
+still held asset paths from the old checkout. With all owned validation runtimes
+stopped, the two verified generated cache directories were preserved under new
+names and fresh caches were generated; no filesystem allow-list was widened.
+The affected image-alignment and main-surface suites then passed 13/13 in
+Chromium with no stale-path error. This is focused local working-tree evidence,
+not a full consumer suite or published-package validation.
+
+An additional placement suite failed collection because its fixture imported a
+Node-only hashing module. Its three cases did not execute and are not counted as
+passes. Independent review separated that fixture dependency issue from this
+keyboard contract repair; it remains a consumer test-maintenance gap. The
+existing Kit DnD tests do not substitute for that unexecuted host coverage.
+
+The served renderer import path and tree module were checked against this
+checkout, including the enabled-row helper's `button.focus()` call. The independent
+browser observer then verified the original counterexample in two locales:
+with both rows selected and the second focused, ArrowUp moved actual DOM focus
+to the first while preserving both selections; Enter selected only that same
+focused first row. ArrowDown preserved selection while moving focus, and
+Ctrl+Space toggled selection at the focused row.
+
+Left moved to the parent; another Left collapsed it without moving focus.
+Right expanded it without moving focus, then another Right moved into its first
+child. Selection stayed unchanged throughout. Tab left the tree with the body
+as the observed active element; this does not prove which later form control
+receives Tab. Clicking a separate opacity input retained focus without editing
+its value. External controlled-prop updates while focus is outside remain unit
+test evidence, not an actual-host observation.
+
+The observer reported zero durable document writes, unchanged saved geometry
+and document revision, and zero console warnings/errors. Two memory-only locale
+settings writes were counted separately and the original locale restored. The
+browser tab was closed and the sole actor returned. The lead verified and
+stopped the owned development server; validation ports had no listener.
+Source/test and consumer fixture/dependency fingerprints were unchanged.
+
+Actual-host disabled-parent, single-selection mode, drag/drop, Meta and
+virtualization were not exercised. Unit-covered cases and unsupported scope
+remain distinct; the uncollected placement suite stays open. Final independent
+source and receipt review passed with no blockers. No published cohort, registry acceptance, release,
+native host or whole-product readiness is claimed.

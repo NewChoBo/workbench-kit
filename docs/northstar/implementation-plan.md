@@ -6,10 +6,13 @@ It is not a changelog of the current repository. Current source is recorded only
 
 ## WB-REACT-TREE-FOCUS-001 — sidebar tree keyboard focus repair
 
-- **Status:** `SOURCE_REVIEWED / CONSUMER_ACCEPTANCE_PENDING`; admitted as
+- **Status:** `DONE / LOCAL_CONSUMER_ACCEPTED`; admitted as
   `READY_FOR_IMPLEMENTATION` before bounded restoration of the existing
   arrow-navigation focus contract, not a new capability. Focused tree/DnD 26/26,
-  additional cohort layout 95/95 and independent source review passed.
+  additional cohort layout 95/95 and independent source review passed. Fresh
+  consumer Chromium 13/13 and two-locale actual keyboard observation passed;
+  final independent acceptance passed with no blockers. The uncollected consumer
+  placement suite is a separate documented gap; this is not release acceptance.
 - **Base:** `276fdbc7871b96ca8e42c9d2170fcfe7f01f250d`.
 - **Owner:** `react` sidebar tree; one source/test writer in an isolated topic.
 - **Canonical packet:** [sidebar tree keyboard focus repair](./sidebar-tree-keyboard-focus-fix.md)
