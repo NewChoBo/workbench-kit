@@ -4,6 +4,18 @@ This document decomposes [`target-architecture.md`](./target-architecture.md) an
 
 It is not a changelog of the current repository. Current source is recorded only as evidence for a CURRENT → TARGET gap or as an implementation result to review.
 
+## WB-WORKSPACE-PATH-TYPE-001 — indexed-access source compatibility
+
+- **Status:** `DONE / LOCAL_SOURCE_ACCEPTED`; independently admitted before the repair.
+  Focused paths 8/8, ordinary and strict indexed-access workspace types, lint/format,
+  public/secret safety and independent source/test acceptance passed. Isolated full consumer
+  source-type verification passed separately; no registry, packaging or release claim.
+- **Base:** `cf483132dcc4b930644e7575a928dfe67b417e61` in an isolated topic.
+- **Owner:** workspace structured-data paths; one source/test writer.
+- **Canonical packet:** [structured path indexed-access contract](./structured-path-type-contract.md).
+  Preserve valid public path semantics and strict consumer checking; explicitly guard an absent
+  runtime head. No API, dependency, UI or release change.
+
 ## WB-REACT-TREE-FOCUS-001 — sidebar tree keyboard focus repair
 
 - **Status:** `DONE / LOCAL_CONSUMER_ACCEPTED`; admitted as
