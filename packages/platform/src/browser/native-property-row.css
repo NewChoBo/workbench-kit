@@ -1,0 +1,66 @@
+.ui-native-property-row {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  max-width: 100%;
+  color: var(--color-text, CanvasText);
+  font: inherit;
+}
+
+.ui-native-property-row__label {
+  min-width: 0;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.ui-native-property-row__control {
+  min-width: 0;
+}
+
+.ui-native-property-row__control > input {
+  box-sizing: border-box;
+  max-width: 100%;
+}
+
+.ui-native-property-row__description,
+.ui-native-property-row__error {
+  min-width: 0;
+  margin: 0;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.ui-native-property-row__description {
+  color: var(--color-text-muted, GrayText);
+}
+
+.ui-native-property-row__error {
+  border-inline-start: 2px solid currentColor;
+  padding-inline-start: 6px;
+  color: var(--color-danger, CanvasText);
+}
+
+.ui-native-property-row--checkbox {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  column-gap: 8px;
+}
+
+.ui-native-property-row--checkbox > .ui-native-property-row__control {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.ui-native-property-row--checkbox > .ui-native-property-row__label {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+.ui-native-property-row--checkbox > .ui-native-property-row__description,
+.ui-native-property-row--checkbox > .ui-native-property-row__error {
+  grid-column: 2;
+}
+
+.ui-native-property-row [hidden] {
+  display: none;
+}

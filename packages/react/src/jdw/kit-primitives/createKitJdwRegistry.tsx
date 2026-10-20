@@ -6,8 +6,9 @@ import type {
   WidgetTypeDefinition,
   WidgetTypeShape,
 } from '@workbench-kit/contracts';
-import { createWidgetRegistry } from '@workbench-kit/jdw';
+import { createWidgetRegistry, estimateWrappedTextSize } from '@workbench-kit/jdw';
 
+import { PanelLoading } from '../../primitives/panel-loading/PanelLoading.js';
 import { Button } from '../../primitives/button/Button.js';
 import { IconButton } from '../../primitives/icon-button/IconButton.js';
 import { Badge } from '../../primitives/badge/Badge.js';
@@ -263,6 +264,10 @@ function renderPrimitive(primitive: KitJdwPrimitive, host: SafeHost): ReactNode 
     case 'kit.button.v1':
     case 'kit.icon-button.v1':
       return <ActionLeaf primitive={primitive} host={host} renderContextKey={renderContextKey} />;
+    case 'kit.panel-loading.v1':
+      return (
+        <PanelLoading label={primitive.props.label} showSpinner={primitive.props.showSpinner} />
+      );
     case 'kit.badge.v1':
       return <Badge variant={primitive.props.variant}>{primitive.props.text}</Badge>;
     case 'kit.media-slot.v1':
@@ -320,6 +325,25 @@ function measurePrimitive(
     case 'kit.media-slot.v1':
       width = 120;
       height = 80;
+      break;
+    case 'kit.panel-loading.v1': {
+      const maxWidth =
+        constraints.maxWidth === Infinity
+          ? Infinity
+          : Number.isFinite(constraints.maxWidth)
+            ? Math.max(0, constraints.maxWidth)
+            : 0;
+      const spinnerLane = primitive.props.showSpinner ? 24 : 0;
+      // Intrinsic hints only: existing estimator defaults are not browser font metrics.
+      const text = estimateWrappedTextSize({
+        text: primitive.props.label.replace(/[ \t\r\n\f]+/g, ' ').replace(/^ | $/g, ''),
+        fontSize: 13,
+        maxWidth: Math.max(0, maxWidth - 16 - spinnerLane),
+      });
+      width = text.width + 16 + spinnerLane;
+      height = 48 + Math.max(text.height, primitive.props.showSpinner ? 16 : 0);
+      break;
+    }
   }
   const clamp = (value: number, min: number, max: number): number => {
     const maximum = max === Infinity ? Infinity : Number.isFinite(max) ? Math.max(0, max) : 0;
@@ -350,7 +374,7 @@ function checkIdentities(
 }
 
 /**
- * Adds four strict leaf adapters without replacing or mutating any supplied definition.
+ * Adds five strict leaf adapters without replacing or mutating any supplied definition.
  * Use strictKnownTypes at the existing renderer boundary to reject unknown document types.
  */
 export function createKitJdwRegistry(

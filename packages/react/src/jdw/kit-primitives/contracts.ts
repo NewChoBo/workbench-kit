@@ -1,7 +1,11 @@
 import type { WidgetRegistryContract } from '@workbench-kit/contracts';
 
 export type KitJdwPrimitiveType =
-  'kit.button.v1' | 'kit.icon-button.v1' | 'kit.badge.v1' | 'kit.media-slot.v1';
+  | 'kit.button.v1'
+  | 'kit.icon-button.v1'
+  | 'kit.badge.v1'
+  | 'kit.media-slot.v1'
+  | 'kit.panel-loading.v1';
 
 export type KitJdwActionState = 'ready' | 'disabled' | 'busy' | 'denied';
 
@@ -71,11 +75,20 @@ export interface KitJdwMediaSlotProps {
   readonly fit: 'contain' | 'cover';
 }
 
+export interface KitJdwPanelLoadingProps {
+  readonly label: string;
+  readonly showSpinner: boolean;
+}
+
 export type KitJdwPrimitive =
   | { readonly type: 'kit.button.v1'; readonly props: KitJdwButtonProps }
   | { readonly type: 'kit.icon-button.v1'; readonly props: KitJdwIconButtonProps }
   | { readonly type: 'kit.badge.v1'; readonly props: KitJdwBadgeProps }
-  | { readonly type: 'kit.media-slot.v1'; readonly props: KitJdwMediaSlotProps };
+  | {
+      readonly type: 'kit.media-slot.v1';
+      readonly props: KitJdwMediaSlotProps;
+    }
+  | { readonly type: 'kit.panel-loading.v1'; readonly props: KitJdwPanelLoadingProps };
 
 export type KitJdwDecodeDiagnosticCode =
   'unknown-type' | 'invalid-props' | 'unknown-property' | 'missing-property' | 'invalid-property';

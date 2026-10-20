@@ -67,7 +67,7 @@ export function validateKitJdwLiteral({
   property,
   value,
 }: UiDocumentLiteralPolicyInput): string | undefined {
-  if (!/^kit\.(?:button|icon-button|badge|media-slot)(?:\.|$)/u.test(component.id))
+  if (!/^kit\.(?:button|icon-button|badge|media-slot|panel-loading)(?:\.|$)/u.test(component.id))
     return undefined;
   const spec = getPrimitiveSpec(component.id);
   if (spec === undefined || component.version !== '1')

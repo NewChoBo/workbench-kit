@@ -8,10 +8,12 @@ import { describe, expect, it } from 'vitest';
 const repositoryRoot = resolve(dirname(fileURLToPath(import.meta.url)), '..');
 const guardPath = join(repositoryRoot, 'scripts/require-pnpm.mjs');
 
-function runGuard(executablePath?: string) {
-  const env = { ...process.env };
-  if (executablePath === undefined) delete env.npm_execpath;
-  else env.npm_execpath = executablePath;
+function runGuard(executablePath?: string, inheritedEnvironment: NodeJS.ProcessEnv = process.env) {
+  const env = { ...inheritedEnvironment };
+  for (const key of Object.keys(env)) {
+    if (key.toLowerCase() === 'npm_execpath') delete env[key];
+  }
+  if (executablePath !== undefined) env.npm_execpath = executablePath;
   return spawnSync(process.execPath, [guardPath], { env, encoding: 'utf8' });
 }
 
@@ -30,6 +32,20 @@ describe('pnpm-only installation guard', () => {
     'rejects unsupported or missing package manager %s with a useful command',
     (executablePath) => {
       const result = runGuard(executablePath);
+      expect(result.status).toBe(1);
+      expect(result.stdout).toBe('');
+      expect(result.stderr).toContain('This repository requires pnpm. Please run `pnpm install`.');
+    },
+  );
+
+  it.each(['/tools/npm/bin/npm-cli.js', undefined])(
+    'isolates rejection of %s from inherited package-manager key casing',
+    (executablePath) => {
+      const result = runGuard(executablePath, {
+        ...process.env,
+        NPM_EXECPATH: '/tools/pnpm/bin/pnpm.cjs',
+        Npm_Execpath: 'C:\\tools\\pnpm\\pnpm.cjs',
+      });
       expect(result.status).toBe(1);
       expect(result.stdout).toBe('');
       expect(result.stderr).toContain('This repository requires pnpm. Please run `pnpm install`.');

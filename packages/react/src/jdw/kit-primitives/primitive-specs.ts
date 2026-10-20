@@ -135,6 +135,15 @@ export const KIT_PRIMITIVE_SPECS: readonly PrimitiveSpec[] = Object.freeze([
       },
     ],
   }),
+  freezeSpec({
+    type: 'kit.panel-loading.v1',
+    label: 'Kit panel loading',
+    role: 'status',
+    fields: [
+      label,
+      { id: 'showSpinner', label: 'Show spinner', kind: 'boolean', defaultValue: true },
+    ],
+  }),
 ]);
 
 export function getPrimitiveSpec(type: unknown): PrimitiveSpec | undefined {
@@ -198,14 +207,16 @@ export const KIT_JDW_PRIMITIVE_DESCRIPTORS: readonly UiComponentDescriptor[] = O
       version: '1',
       kind: 'atomic' as const,
       properties: Object.freeze(spec.fields.map(fieldDescriptor)),
-      ...(spec.nameProperty === undefined
+      ...(spec.nameProperty === undefined && spec.role === undefined
         ? {}
         : {
             accessibility: Object.freeze({
               ...(spec.role === undefined
                 ? {}
                 : { supportedRoles: Object.freeze([spec.role]), defaultRole: spec.role }),
-              accessibleNamePropertyId: spec.nameProperty,
+              ...(spec.nameProperty === undefined
+                ? {}
+                : { accessibleNamePropertyId: spec.nameProperty }),
             }),
           }),
       designTime: Object.freeze({ label: spec.label, category: 'Kit primitives' }),

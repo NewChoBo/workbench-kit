@@ -335,3 +335,41 @@ function areSameStringArrays(
   if (!left || !right || left.length !== right.length) return false;
   return left.every((value, index) => value === right[index]);
 }
+
+export interface WorkbenchLayoutActions {
+  focusActivity(activityId: string): void;
+  showActivity(activityId: string): void;
+  toggleAuxiliarySidebar(): void;
+  toggleFocusMode(): void;
+  togglePanel(): void;
+  togglePrimarySidebar(): void;
+}
+
+/** User initiated shell layout transitions, evaluated against the current service state. */
+export function createWorkbenchLayoutActions(layoutService: LayoutService): WorkbenchLayoutActions {
+  return {
+    focusActivity(activityId: string): void {
+      layoutService.focusSideBarViewContainer(activityId);
+    },
+    showActivity(activityId: string): void {
+      layoutService.update({
+        sideBar: {
+          activeViewContainer: activityId,
+          visible: true,
+        },
+      });
+    },
+    toggleAuxiliarySidebar(): void {
+      layoutService.setAuxiliaryBarVisible(!layoutService.getState().auxiliaryBar.visible);
+    },
+    toggleFocusMode(): void {
+      layoutService.setFocusModeActive(!layoutService.isFocusModeActive());
+    },
+    togglePanel(): void {
+      layoutService.setPanelVisible(!layoutService.getState().panel.visible);
+    },
+    togglePrimarySidebar(): void {
+      layoutService.setSideBarVisible(!layoutService.getState().sideBar.visible);
+    },
+  };
+}

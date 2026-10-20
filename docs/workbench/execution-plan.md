@@ -1,12 +1,22 @@
 # Workbench Kit execution plan
 
-Updated: 2026-09-30. This document is the queue projection; the dated baseline and
+Updated: 2026-10-20. This document is the queue projection; the dated baseline and
 evidence below are historical. Source and tests determine behavior; Northstar
 packets own detailed contracts. The shell is an optional composition. Independent
 processing and HTML/React/Vue/Svelte capability goals remain separate completion
 tracks.
 
 ## Current local integration
+
+The [2026-10-20 capability reconciliation](./branch-integration-2026-10-20.md)
+records the accepted current-base integration for JSON PanelLoading, portable layout
+actions and optional native PropertyRow. It preserves current frame exports and
+separate Node hook validation. Combined fast validation, packed consumers,
+scoped browser checks and independent source reviews passed. The merge is
+accepted for local `develop`; remote push and publication remain separate.
+The historical queue below is not current source admission.
+
+## Historical local integration — 2026-09-30
 
 The reviewed candidate is integrated into local `develop` at
 `79996e8edc3307a43e9fc559a6ec8d1f56c7f44e`, and independent source acceptance is

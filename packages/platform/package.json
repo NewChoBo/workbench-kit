@@ -89,7 +89,13 @@
       "require": "./dist/window-geometry.cjs",
       "import": "./src/window/window-geometry.ts",
       "default": "./src/window/window-geometry.ts"
-    }
+    },
+    "./native-property-row": {
+      "types": "./src/browser/native-property-row.ts",
+      "import": "./dist/browser/native-property-row.js",
+      "default": "./dist/browser/native-property-row.js"
+    },
+    "./native-property-row.css": "./src/browser/native-property-row.css"
   },
   "dependencies": {
     "@workbench-kit/base": "workspace:*"
