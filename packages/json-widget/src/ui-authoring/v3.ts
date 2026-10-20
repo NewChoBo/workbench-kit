@@ -84,3 +84,34 @@ export type {
   UiCollectionRepeatDiagnostic,
   UiCollectionRepeatResult,
 } from './collection-repeat.js';
+
+export {
+  parseUiCollectionRegionFilterConfig,
+  admitUiCollectionRegionFilter,
+  reconcileUiCollectionRegionSelection,
+  filterUiCollectionRegionRecords,
+} from './collection-region-filter.js';
+export type {
+  UiCollectionRegionScalar,
+  UiCollectionRegionChoice,
+  UiCollectionRegionFilterConfig,
+  UiCollectionRegionFilterField,
+  UiCollectionRegionValueProvider,
+  UiCollectionRegionOption,
+  UiCollectionRegionFilterBinding,
+  UiCollectionRegionFilterScope,
+  UiCollectionRegionFilterDiagnostic,
+  UiCollectionRegionFilterParseResult,
+  UiCollectionRegionFilterAdmissionInput,
+  UiCollectionRegionFilterAdmission,
+  UiCollectionRegionFilterAdmissionResult,
+  UiCollectionRegionOptionsSnapshot,
+  UiCollectionRegionSelectionEvent,
+  UiCollectionRegionSelection,
+  UiCollectionRegionReconcileInput,
+  UiCollectionRegionSelectionResult,
+  UiCollectionRegionFilterRow,
+  UiCollectionRegionFilterCapture,
+  UiCollectionRegionFilterInput,
+  UiCollectionRegionFilterResult,
+} from './collection-region-filter.js';

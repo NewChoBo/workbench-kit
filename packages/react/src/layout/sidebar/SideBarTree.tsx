@@ -341,6 +341,14 @@ export function SideBarTree({
     [onSelectedIdsChange, selectedIds, selectionMode],
   );
 
+  const focusEnabledRow = useCallback((id: string): boolean => {
+    const button = buttonRefs.current.get(id);
+    if (!button || button.disabled) return false;
+    setFocusedId(id);
+    button.focus();
+    return true;
+  }, []);
+
   const handleItemClick = useCallback(
     (event: MouseEvent<HTMLButtonElement>, node: SideBarTreeVisibleNode) => {
       if (node.item.disabled) {
@@ -371,10 +379,9 @@ export function SideBarTree({
       if (event.key === 'ArrowDown') {
         event.preventDefault();
         const next = visibleNodes[Math.min(visibleNodes.length - 1, focusIndex + 1)];
-        if (!next || next.item.disabled) {
+        if (!next || next.item.disabled || !focusEnabledRow(next.item.id)) {
           return;
         }
-        setFocusedId(next.item.id);
         if (selectionMode === 'single') {
           onSelectedIdsChange(new Set([next.item.id]));
         }
@@ -384,10 +391,9 @@ export function SideBarTree({
       if (event.key === 'ArrowUp') {
         event.preventDefault();
         const next = visibleNodes[Math.max(0, focusIndex - 1)];
-        if (!next || next.item.disabled) {
+        if (!next || next.item.disabled || !focusEnabledRow(next.item.id)) {
           return;
         }
-        setFocusedId(next.item.id);
         if (selectionMode === 'single') {
           onSelectedIdsChange(new Set([next.item.id]));
         }
@@ -404,8 +410,7 @@ export function SideBarTree({
           return;
         }
         const firstChild = current.item.children?.[0];
-        if (firstChild && !firstChild.disabled) {
-          setFocusedId(firstChild.id);
+        if (firstChild && !firstChild.disabled && focusEnabledRow(firstChild.id)) {
           if (selectionMode === 'single') {
             onSelectedIdsChange(new Set([firstChild.id]));
           }
@@ -420,9 +425,11 @@ export function SideBarTree({
           return;
         }
         if (current.parentId) {
-          setFocusedId(current.parentId);
-          if (selectionMode === 'single') {
-            onSelectedIdsChange(new Set([current.parentId]));
+          const parent = visibleNodes.find(({ item }) => item.id === current.parentId);
+          if (parent && !parent.item.disabled && focusEnabledRow(parent.item.id)) {
+            if (selectionMode === 'single') {
+              onSelectedIdsChange(new Set([parent.item.id]));
+            }
           }
         }
         return;
@@ -441,6 +448,7 @@ export function SideBarTree({
     },
     [
       expandedIds,
+      focusEnabledRow,
       focusIndex,
       keyboardNavigation,
       onSelectedIdsChange,

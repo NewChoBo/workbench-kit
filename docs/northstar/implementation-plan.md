@@ -4,6 +4,46 @@ This document decomposes [`target-architecture.md`](./target-architecture.md) an
 
 It is not a changelog of the current repository. Current source is recorded only as evidence for a CURRENT → TARGET gap or as an implementation result to review.
 
+## WB-JDW-COLLECTION-FILTER-001 — scoped collection filtering
+
+- **Status:** `DONE / LOCAL_SOURCE_ACCEPTED`; two independent reviewers accepted the four-file
+  candidate. Focused 55/55, affected types/builds, public exports/safety and 19-package packed
+  consumer checks passed. Exact source fingerprints are in the packet. The combined local
+  integration passed fresh validation on 2026-10-21; see the
+  [integration receipt](../workbench/local-integration-2026-10-21.md). Not published.
+- **Base:** `61786ccf5e6ee598474b40c6ea01f38ef8472a92`, isolated topic.
+- **Owner:** json-widget pure filtering/admission; one source/test writer, lead-owned documentation.
+- **Canonical packet:** [scoped collection filtering](./collection-region-filter.md).
+  Four neutral functions reuse the existing repeat projection and controlled UI boundaries. No
+  layout, history, event bus, subscription, host policy, dependency or release change is admitted.
+
+## WB-WORKSPACE-PATH-TYPE-001 — indexed-access source compatibility
+
+- **Status:** `DONE / LOCAL_SOURCE_ACCEPTED`; independently admitted before the repair.
+  Focused paths 8/8, ordinary and strict indexed-access workspace types, lint/format,
+  public/secret safety and independent source/test acceptance passed. Isolated full consumer
+  source-type verification passed separately; no registry, packaging or release claim.
+- **Base:** `cf483132dcc4b930644e7575a928dfe67b417e61` in an isolated topic.
+- **Owner:** workspace structured-data paths; one source/test writer.
+- **Canonical packet:** [structured path indexed-access contract](./structured-path-type-contract.md).
+  Preserve valid public path semantics and strict consumer checking; explicitly guard an absent
+  runtime head. No API, dependency, UI or release change.
+
+## WB-REACT-TREE-FOCUS-001 — sidebar tree keyboard focus repair
+
+- **Status:** `DONE / LOCAL_CONSUMER_ACCEPTED`; admitted as
+  `READY_FOR_IMPLEMENTATION` before bounded restoration of the existing
+  arrow-navigation focus contract, not a new capability. Focused tree/DnD 26/26,
+  additional cohort layout 95/95 and independent source review passed. Fresh
+  consumer Chromium 13/13 and two-locale actual keyboard observation passed;
+  final independent acceptance passed with no blockers. The uncollected consumer
+  placement suite is a separate documented gap; this is not release acceptance.
+- **Base:** `276fdbc7871b96ca8e42c9d2170fcfe7f01f250d`.
+- **Owner:** `react` sidebar tree; one source/test writer in an isolated topic.
+- **Canonical packet:** [sidebar tree keyboard focus repair](./sidebar-tree-keyboard-focus-fix.md)
+  records the counterexample, two-file source/test scope, non-goals, independent
+  review and focused validation/consumer-cohort boundaries.
+
 ## Evidence baselines
 
 - **2026-09-29 local consolidation:** combined source

@@ -98,6 +98,7 @@ export function setWorkbenchStructuredDataPathValue(
   if (path.length === 0) return value;
 
   const [segment, ...rest] = path;
+  if (segment === undefined) return data;
   const root = cloneWorkspaceContainer(data, segment);
   const key = Array.isArray(root) ? getWorkbenchStructuredDataArrayIndex(segment) : String(segment);
   if (key === null) return root;

@@ -5,11 +5,60 @@ import {
   getWorkbenchStructuredDataValue,
   isWorkbenchStructuredDataRecord,
   setWorkbenchStructuredDataPathValue,
+  setWorkbenchStructuredDataPathOrRootValue,
   setWorkbenchStructuredDataValue,
   type WorkbenchStructuredDataRecord,
 } from './structured-path';
 
 describe('structured data paths', () => {
+  it('keeps each setter empty-path contract', () => {
+    const source = { value: 'old' };
+    const replacement = { value: 'new' };
+
+    expect(getWorkbenchStructuredDataValue(source, [])).toBe(source);
+    expect(setWorkbenchStructuredDataValue(source, [], replacement)).toBe(source);
+    expect(setWorkbenchStructuredDataPathValue(source, [], replacement)).toBe(replacement);
+    expect(
+      setWorkbenchStructuredDataPathOrRootValue({ data: source, path: [], value: replacement }),
+    ).toBe(replacement);
+    expect(source.value).toBe('old');
+  });
+
+  it('writes numeric zero and empty-string object keys in a nested immutable copy', () => {
+    const source = { settings: { '0': { '': 'old' }, other: 'keep' } };
+
+    const next = setWorkbenchStructuredDataValue(source, ['settings', 0, ''], 'new');
+
+    expect(getWorkbenchStructuredDataValue(next, ['settings', 0, ''])).toBe('new');
+    expect(getWorkbenchStructuredDataValue(next, ['settings', 'other'])).toBe('keep');
+    expect(next).not.toBe(source);
+    expect(getWorkbenchStructuredDataValue(next, ['settings'])).not.toBe(source.settings);
+    expect(getWorkbenchStructuredDataValue(next, ['settings', 0])).not.toBe(source.settings['0']);
+    expect(getWorkbenchStructuredDataValue(source, ['settings', 0, ''])).toBe('old');
+  });
+
+  it('ignores an absent root path segment without cloning or writing an undefined key', () => {
+    const absentHead = new Array<string | number>(1);
+    const objectSource = { value: 'old' };
+    const arraySource = ['old'];
+
+    expect(0 in absentHead).toBe(false);
+    expect(setWorkbenchStructuredDataPathValue(objectSource, absentHead, 'new')).toBe(objectSource);
+    expect(setWorkbenchStructuredDataValue(objectSource, absentHead, 'new')).toBe(objectSource);
+    expect(
+      setWorkbenchStructuredDataPathOrRootValue({
+        data: objectSource,
+        path: absentHead,
+        value: 'new',
+      }),
+    ).toBe(objectSource);
+    expect(setWorkbenchStructuredDataPathValue(arraySource, absentHead, 'new')).toBe(arraySource);
+    expect(Object.prototype.hasOwnProperty.call(objectSource, 'undefined')).toBe(false);
+    expect(Object.prototype.hasOwnProperty.call(arraySource, 'undefined')).toBe(false);
+    expect(objectSource).toEqual({ value: 'old' });
+    expect(arraySource).toEqual(['old']);
+  });
+
   it('reads and writes reserved-looking keys as own data without changing prototypes', () => {
     const source = { profile: {} };
     const next = setWorkbenchStructuredDataValue(source, ['profile', '__proto__', 'name'], 'safe');
