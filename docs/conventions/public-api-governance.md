@@ -4,6 +4,75 @@ Public APIs are the package entrypoints declared in each package
 `package.json` `exports` map. Source files, story files, tests, fixtures, and
 private helpers are implementation details even when they are published in the
 prototype package files.
+An exported package specifier may legitimately resolve to `src/`; the boundary
+is the public specifier and its exports, not the target's directory name.
+
+## Consumer contract and scope
+
+A supported call must satisfy all five parts of the contract:
+
+1. **Entrypoint:** the exact consumed package declares the import path in `exports`.
+2. **Symbol:** that entry actually exports the function, component or type. Its
+   TypeScript declaration owns parameters, props, results and events; do not
+   maintain a second signature catalog in a host.
+3. **Runtime:** the selected browser, Node, Electron main or preload entry and
+   its `import`/`require` conditions support the caller's runtime.
+4. **Behavior:** the documented state owner, effects, failure, cancellation,
+   disposal and persistence semantics match the consuming flow. Matching names
+   or assignable types alone do not establish interchangeable behavior.
+5. **Version:** the entry and symbol exist in the exact consumed cohort. A local
+   checkout's public source API is not evidence that a registry version provides it.
+
+Use [API Reference](../guides/api-reference.md) for the package inventory,
+[Consumer Capabilities](../workbench/consumer-capabilities.md) for UI behavior,
+and the exported declarations for exact signatures. Source and contract tests
+resolve current behavior when prose is stale; correct the prose without silently
+changing the public contract. Target plans do not create available APIs.
+
+| Responsibility                           | Canonical owner                               | Host responsibility                                      |
+| ---------------------------------------- | --------------------------------------------- | -------------------------------------------------------- |
+| Commands, context keys and keybindings   | `platform`                                    | Register product actions and policy                      |
+| Workspace resources and transactions     | `workspace`                                   | Supply product data and I/O adapters                     |
+| Assembled layout, editors and lifecycle  | `workbench-core`, wired by `shell-react`      | Compose slots and host effects; use the owning service   |
+| Controlled UI, tree and editor rendering | `react`, `monaco`                             | Pass values, labels and callbacks                        |
+| Widget authoring and remap mechanics     | `jdw`, `field-remap`                          | Supply catalog, schema and workflow policy               |
+| Filesystem and Electron mechanics        | Focused `platform` / `electron-shell` entries | Supply roots, allowlists, IPC names and lifecycle policy |
+
+Do not mirror a Kit-owned state machine in a host. The opt-in standalone React
+shell has a separate contract; it does not replace an assembled `LayoutService`.
+An action callback owns only its documented surface and context.
+
+### Storage and explorer boundary
+
+`@workbench-kit/react/workbench/workspace` exposes `buildWorkspaceTree`,
+`WorkspaceExplorerPanel`, `WorkspaceEditor` and `WorkspaceFile`: they consume
+host-supplied tree/file data and callbacks. `useWorkspaceExplorerController`
+operates on a `WorkspaceExplorerControllerPort` snapshot and mutation methods;
+it does not load a remote tree or provide a lazy directory/read-preview lifecycle.
+Node path confinement, quarantine and atomic writes use focused
+`@workbench-kit/platform/node` and `@workbench-kit/platform/atomic-write` entries.
+Store catalogs, redaction, preview limits, roots and reveal policy remain injected.
+
+An asynchronous read/cache owner cannot be deleted merely by adopting the
+presentational explorer. A reusable loader needs a separately reviewed contract
+for owner changes, stale results, refresh ordering, errors and disposal before
+it can replace a host implementation.
+
+### Review each consuming change
+
+Record the exact cohort or local source/build/link fingerprint, public entry,
+used symbols, runtime and state owner. Trace one action through the adapter to
+the effect. Check imports and re-exports against `exports`, then typecheck the
+consumer and validate the affected behavior. Import-path checks cannot detect a
+duplicated state machine, and typechecks cannot prove failure or focus semantics.
+
+If a needed generic contract is absent, record that gap and follow
+[Consumer-driven Development](../architecture/consumer-driven-development.md).
+Do not bridge it with private imports, source aliases, casts that conceal a
+missing contract, or a permanent host fork. Remove the replaced path in the
+same migration slice. Report Kit and host source deltas separately: moving code
+between them is not by itself a reduction. Registry acceptance requires the
+published cohort; local co-development evidence stays explicitly local.
 
 ## Entrypoint Rules
 

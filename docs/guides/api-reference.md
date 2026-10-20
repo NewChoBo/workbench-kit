@@ -6,7 +6,12 @@ Index of public APIs, contract types, and reference backend specifications for W
 
 ## Public package exports
 
-Public APIs are the entrypoints declared in each package `package.json` `exports` map. Do not import from `src/` paths in consuming apps.
+Public APIs are the entrypoints declared in the exact consumed package's
+`package.json` `exports` map and the symbols reachable from those entries.
+Exported TypeScript declarations specify inputs, outputs, props and events;
+the [consumer contract](../conventions/public-api-governance.md#consumer-contract-and-scope)
+also constrains runtime, state ownership, behavior and version. Do not import
+private source paths or infer published availability from a local checkout.
 
 Verify export maps after changes:
 
@@ -16,25 +21,35 @@ pnpm check:public-exports
 
 Governance: [Public API Governance](../conventions/public-api-governance.md).
 
-### Published packages (`@prototype` tag)
+### Public publish set (`@prototype` tag)
+
+The following 19 packages match `NPM_PUBLISH_ORDER` in
+`scripts/npm-publish-config.mjs`. For available entries and symbols, inspect the
+exact installed release or recorded local source, not this package-level table.
 
 | Package                                  | Directory                          | Primary surface                                       |
 | ---------------------------------------- | ---------------------------------- | ----------------------------------------------------- |
 | `@workbench-kit/base`                    | `packages/base`                    | Disposables, events, lifecycle utilities              |
 | `@workbench-kit/contracts`               | `packages/contracts`               | Chat, patch, library, plugin, widget, sample host API |
+| `@workbench-kit/logging`                 | `packages/logging`                 | Structured logging and focused Node sinks             |
 | `@workbench-kit/platform`                | `packages/platform`                | Commands, context keys, keybindings, services         |
 | `@workbench-kit/workbench-extension-sdk` | `packages/workbench-extension-sdk` | Extension manifest types, `ExtensionContext`          |
 | `@workbench-kit/workbench-config`        | `packages/workbench-config`        | `.workbench` config parsing                           |
+| `@workbench-kit/workbench-core`          | `packages/workbench-core`          | Layout, editor, registry and lifecycle state          |
 | `@workbench-kit/jdw`                     | `packages/json-widget`             | JDW parse, layout, screen-spec compile                |
 | `@workbench-kit/runtime`                 | `packages/runtime`                 | Runtime events and mock utilities                     |
 | `@workbench-kit/tokens`                  | `packages/tokens`                  | CSS variables and theme tokens                        |
 | `@workbench-kit/workspace`               | `packages/workspace`               | Workspace state and path utilities                    |
+| `@workbench-kit/monaco`                  | `packages/monaco`                  | Monaco editor integration and environment setup       |
 | `@workbench-kit/adapters`                | `packages/adapters`                | Repository and transport adapters                     |
 | `@workbench-kit/services`                | `packages/services`                | Workbench flow orchestration                          |
 | `@workbench-kit/react`                   | `packages/react`                   | React primitives and workbench components             |
 | `@workbench-kit/jdw-editor`              | `packages/jdw-editor`              | Compile-once template explorer for WidgetTreeLab      |
+| `@workbench-kit/field-remap`             | `packages/field-remap`             | Framework-neutral mapping and history mechanics       |
+| `@workbench-kit/shell-react`             | `packages/shell-react`             | Provider and assembled shell wiring                   |
+| `@workbench-kit/electron-shell`          | `packages/electron-shell`          | Injectable main/preload host boundaries               |
 
-**Private preview (monorepo only):** `workbench-core`, `shell-react`, `monaco`.
+Sample extensions and unexported demo modules remain repository-only.
 
 Install example:
 
@@ -152,7 +167,9 @@ import { WorkbenchShell } from '@workbench-kit/react/workbench';
 
 Check `packages/react/package.json` `exports` for the current subpath list.
 
-Storybook (`pnpm storybook`) documents component behavior. Integrated shell demo: `@workbench-kit/react/workbench/demo`.
+Storybook (`pnpm storybook`) documents component behavior. The assembled shell
+sample is `examples/workbench-sample`; `@workbench-kit/react/workbench/demo`
+is not a public import.
 
 ---
 
