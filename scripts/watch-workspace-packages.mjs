@@ -37,7 +37,7 @@ export function createBuildQueue(build, reportError = console.error) {
   };
 }
 
-export function watchWorkspacePackages(repository = root) {
+export function watchWorkspacePackages(repository = root, { initialBuild = true } = {}) {
   let child;
   let timer;
   const watchers = [];
@@ -149,10 +149,14 @@ export function watchWorkspacePackages(repository = root) {
   process.once('SIGINT', stop);
   process.once('SIGTERM', stop);
   previousFingerprint = fingerprint();
-  void queue.request();
+  if (initialBuild) void queue.request();
   return stop;
 }
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
-  watchWorkspacePackages();
+  const args = process.argv.slice(2);
+  if (args.length > 1 || (args.length === 1 && args[0] !== '--skip-initial-build')) {
+    throw new Error('Usage: watch-workspace-packages.mjs [--skip-initial-build]');
+  }
+  watchWorkspacePackages(root, { initialBuild: args.length === 0 });
 }

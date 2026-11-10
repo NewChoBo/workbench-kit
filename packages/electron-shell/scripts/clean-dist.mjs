@@ -1,4 +1,6 @@
 import { rm } from 'node:fs/promises';
 import { URL } from 'node:url';
+import process from 'node:process';
 
-await rm(new URL('../dist/', import.meta.url), { force: true, recursive: true });
+if (process.env.WORKBENCH_KIT_WATCH !== '1')
+  await rm(new URL('../dist/', import.meta.url), { force: true, recursive: true });

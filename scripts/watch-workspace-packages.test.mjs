@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
 import { createBuildQueue, watchWorkspacePackages } from './watch-workspace-packages.mjs';
+import { spawnSync } from 'node:child_process';
 
 test('edits during a build coalesce into one subsequent build without overlap', async () => {
   let finish;
@@ -42,6 +43,61 @@ test('a failed build can recover on the next edit and stop drops queued work', a
   await queue.request();
   assert.equal(calls, 2);
   assert.equal(errors.length, 1);
+});
+
+test('a prebuilt workspace skips the initial build but rebuilds on the next source edit', async () => {
+  const repository = mkdtempSync(join(tmpdir(), 'kit-watch-prebuilt-'));
+  const source = join(repository, 'packages/example/src/index.ts');
+  const output = join(repository, 'output.txt');
+  mkdirSync(join(repository, 'packages/example/src'), { recursive: true });
+  mkdirSync(join(repository, 'scripts'));
+  writeFileSync(source, 'initial');
+  writeFileSync(
+    join(repository, 'scripts/build-workspace-packages.mjs'),
+    "import fs from 'node:fs'; fs.writeFileSync('output.txt', fs.readFileSync('packages/example/src/index.ts'));",
+  );
+  const stop = watchWorkspacePackages(repository, { initialBuild: false });
+  onTestFinished(() => {
+    stop();
+    rmSync(repository, { recursive: true, force: true });
+  });
+  await delay(500);
+  assert.equal(existsSync(output), false);
+  writeFileSync(source, 'edited');
+  const deadline = Date.now() + 5_000;
+  while (!existsSync(output)) {
+    assert.ok(Date.now() < deadline, 'the next edit did not build');
+    await delay(25);
+  }
+  assert.equal(readFileSync(output, 'utf8'), 'edited');
+});
+
+test('watch builds retain compiled entries while full builds still clean stale output', () => {
+  for (const packageName of ['json-widget', 'electron-shell']) {
+    const repository = mkdtempSync(join(tmpdir(), 'kit-watch-output-'));
+    onTestFinished(() => rmSync(repository, { recursive: true, force: true }));
+    mkdirSync(join(repository, 'scripts'));
+    mkdirSync(join(repository, 'dist'));
+    const output = join(repository, 'dist/api.d.ts');
+    writeFileSync(output, 'existing public declarations');
+    const script = join(repository, 'scripts/clean-dist.mjs');
+    writeFileSync(
+      script,
+      readFileSync(new URL(`../packages/${packageName}/scripts/clean-dist.mjs`, import.meta.url)),
+    );
+    const watching = spawnSync(process.execPath, [script], {
+      env: { ...process.env, WORKBENCH_KIT_WATCH: '1' },
+      encoding: 'utf8',
+    });
+    assert.equal(watching.status, 0, watching.stderr);
+    assert.equal(readFileSync(output, 'utf8'), 'existing public declarations');
+    const full = spawnSync(process.execPath, [script], {
+      env: { ...process.env, WORKBENCH_KIT_WATCH: '0' },
+      encoding: 'utf8',
+    });
+    assert.equal(full.status, 0, full.stderr);
+    assert.equal(existsSync(output), false);
+  }
 });
 
 test(

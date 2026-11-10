@@ -56,6 +56,15 @@ release closeout.
 
 ## UI Smoke
 
+When a consumer has already built the workspace, start
+`pnpm watch:workspace --skip-initial-build` to watch subsequent edits without a
+duplicate startup build. The default still performs the initial build. Watch
+builds retain existing compiled entries while rebuilding; normal full builds
+clean stale output. Consumers reload only after the completed-build marker.
+The skip flag assumes the current source was built before registering the
+watcher. If source is edited during that startup interval, rebuild before using
+the flag; use the default initial build for an independently started watcher.
+
 For UI changes, verify the result in a real browser or tool preview whenever
 practical. Playwright-driven `pnpm validate:ui` is **optional** for day-to-day
 agent and local work; prefer Cursor browser MCP, IDE simple browser, Storybook
