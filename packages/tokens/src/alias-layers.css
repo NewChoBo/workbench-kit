@@ -64,9 +64,9 @@
   --color-accent-hover: var(--color-accent-hover-default);
   --color-accent-foreground: var(--color-accent-on);
   --color-focus-border: var(--color-accent-default);
-  --color-input-bg: var(--color-bg-elevated);
-  --color-input-border: var(--color-border-default);
-  --color-input-text: var(--color-fg-default);
+  --color-input-bg: var(--color-surface-elevated);
+  --color-input-border: var(--color-border);
+  --color-input-text: var(--color-text);
   --color-danger: var(--color-danger-default);
   --color-danger-hover: var(--color-danger-hover-default);
 
@@ -126,9 +126,9 @@
   --color-accent-hover: var(--color-accent-hover-default);
   --color-accent-foreground: var(--color-accent-on);
   --color-focus-border: var(--color-accent-default);
-  --color-input-bg: var(--color-bg-elevated);
-  --color-input-border: var(--color-border-default);
-  --color-input-text: var(--color-fg-default);
+  --color-input-bg: var(--color-surface-elevated);
+  --color-input-border: var(--color-border);
+  --color-input-text: var(--color-text);
   --color-danger: var(--color-danger-default);
   --color-danger-hover: var(--color-danger-hover-default);
 
