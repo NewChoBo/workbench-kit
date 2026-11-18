@@ -102,6 +102,8 @@
 }
 
 .ui-editor-tabs__label {
+  /* Short labels in min-width tabs keep trailing controls at the inline end. */
+  margin-inline-end: auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
